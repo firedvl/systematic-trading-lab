@@ -1,10 +1,10 @@
 # Current state
 
-- Milestone: closing M2 baseline coverage before the M4 paper-execution foundation; no candidate qualified.
+- Milestone: M4 paper-execution safety design; no candidate qualified.
 - Completed: all prior capabilities plus human approval of all 17 `qualification-gates-v1` thresholds, strict sealed training-plan preregistration, and controlled-run report verification for qualification evidence. Registry-only reproduction formally rejects moving average on four gates and momentum on three; both recent portfolio candidates fail their predeclared training screens. No holdout authorization exists.
-- Work in progress: the two bootstrap baselines omitted from M2—moving-average mean reversion and volatility-targeted exposure. No market data was read, and no campaign, qualification, risk, or broker control changed.
+- Work in progress: reviewed M4 trust boundaries, protected paper authorization, state ownership, pending-capacity and single-submitter claims, retry rules, strict order envelope, paper endpoint allowlist, reconciliation, and emergency-disable design. No broker code, executable risk limit, credential access, or order submission is included.
 - Known limitations: the relative-strength family will not proceed to validation. Its best training result was the 168-session neighbor with 0.025127 total return, 0.161472 Sharpe, 0.150061 maximum drawdown, and 45 trades. The risk-managed momentum base lost 0.063431 with a -0.229125 Sharpe ratio. The volatility-balanced base lost 0.034052 with a -0.050968 Sharpe ratio, 0.239707 maximum drawdown, and 0.636804 top-instrument profit share. Fixed-weight beat both earlier short-horizon trend baselines in every validation year, and the rejected long-horizon momentum family lost money across all training parameters. Alpaca IEX common coverage begins on 2020-07-27; the installed XNYS calendar begins on 2006-08-02. The 2023–2026 data remains untouched by all four training-only campaigns, and the 2026 segment remains untouched by all research. There is no qualified candidate, broker, or execution system.
 - Test status: 82 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Approved passing controlled evidence can authorize one exact holdout; manual, legacy, unbound, tampered, or approved failing evidence cannot. Live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
-- Next task: review and merge complete baseline coverage, then perform a separate M4 threat-model and risk-ownership review before adding any paper writer.
-- Branch: `codex/m2-complete-baselines`.
+- Next task: implement broker-free execution intents, configuration fingerprints, durable dedupe, and append-only hash-chain evidence.
+- Branch: `codex/m4-paper-safety-design`.
