@@ -7,7 +7,7 @@ import json
 import os
 import sys
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -15,6 +15,7 @@ from . import __version__
 from .config import ConfigurationError, Settings, load_settings
 from .datasets import DatasetService, DatasetValidationError, fixture_request, fixture_symbols
 from .domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
+from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, ExperimentSplit
 from .providers import AlpacaHistoricalProvider, FixtureProvider
 from .reporting import benchmark_suite, build_report, report_json, strategy_result, write_report
 from .storage import StorageLayout
@@ -48,6 +49,37 @@ def parser() -> argparse.ArgumentParser:
         default="cash",
     )
     fixture_backtest.add_argument("--output", type=Path)
+    experiment = commands.add_parser("experiment", help="manage durable research experiments")
+    experiment_commands = experiment.add_subparsers(dest="experiment_command", required=True)
+    campaign = experiment_commands.add_parser("create-campaign")
+    campaign.add_argument("campaign_id")
+    campaign.add_argument("--name", required=True)
+    campaign.add_argument("--budget", required=True, type=int)
+    create = experiment_commands.add_parser("create")
+    create.add_argument("experiment_id")
+    create.add_argument("--campaign", required=True)
+    create.add_argument("--strategy-id", required=True)
+    create.add_argument("--strategy-version", required=True)
+    create.add_argument("--strategy-family", required=True)
+    create.add_argument("--code-commit", required=True)
+    create.add_argument("--dataset-id", required=True)
+    create.add_argument("--dataset-fingerprint", required=True)
+    create.add_argument("--split", choices=("training", "validation"), required=True)
+    create.add_argument("--start", required=True)
+    create.add_argument("--end", required=True)
+    create.add_argument("--reason", required=True)
+    for name in ("claim", "status"):
+        experiment_commands.add_parser(name).add_argument("experiment_id")
+    complete = experiment_commands.add_parser("complete")
+    complete.add_argument("experiment_id")
+    complete.add_argument(
+        "--metric", action="append", required=True, help="repeatable NAME=VALUE metric"
+    )
+    fail = experiment_commands.add_parser("fail")
+    fail.add_argument("experiment_id")
+    fail.add_argument("--reason", required=True)
+    recover = experiment_commands.add_parser("recover")
+    recover.add_argument("--max-age-minutes", type=int, required=True)
     return root
 
 
@@ -56,7 +88,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         arguments = parser().parse_args(argv)
         settings = load_settings()
         return run(arguments, settings)
-    except (ConfigurationError, DatasetValidationError, KeyError, OSError, ValueError) as error:
+    except (
+        ConfigurationError,
+        DatasetValidationError,
+        ExperimentError,
+        KeyError,
+        OSError,
+        ValueError,
+    ) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
 
@@ -64,6 +103,51 @@ def main(argv: Sequence[str] | None = None) -> int:
 def run(arguments: argparse.Namespace, settings: Settings) -> int:
     layout = StorageLayout(settings.home)
     service = DatasetService(layout)
+    if arguments.command == "experiment":
+        registry = ExperimentRegistry(layout.experiments)
+        if arguments.experiment_command == "create-campaign":
+            _print(
+                registry.create_campaign(arguments.campaign_id, arguments.name, arguments.budget)
+            )
+        elif arguments.experiment_command == "create":
+            registry.create_experiment(
+                ExperimentSpec(
+                    experiment_id=arguments.experiment_id,
+                    campaign_id=arguments.campaign,
+                    strategy_id=arguments.strategy_id,
+                    strategy_version=arguments.strategy_version,
+                    strategy_family=arguments.strategy_family,
+                    code_commit=arguments.code_commit,
+                    dataset_id=arguments.dataset_id,
+                    dataset_fingerprint=arguments.dataset_fingerprint,
+                    universe_id="liquid-etfs-v1",
+                    parameters={},
+                    cost_model_version="conservative-bps-v1",
+                    execution_model_version="next-bar-v1",
+                    split=ExperimentSplit(arguments.split),
+                    start_timestamp=_parse_utc(arguments.start),
+                    end_timestamp=_parse_utc(arguments.end),
+                    random_seed=0,
+                    creation_reason=arguments.reason,
+                )
+            )
+            _print(registry.get(arguments.experiment_id))
+        elif arguments.experiment_command == "claim":
+            registry.claim(arguments.experiment_id)
+            _print(registry.get(arguments.experiment_id))
+        elif arguments.experiment_command == "complete":
+            registry.complete(arguments.experiment_id, _parse_metrics(arguments.metric))
+            _print(registry.get(arguments.experiment_id))
+        elif arguments.experiment_command == "fail":
+            registry.fail(arguments.experiment_id, arguments.reason)
+            _print(registry.get(arguments.experiment_id))
+        elif arguments.experiment_command == "recover":
+            _print(
+                {"recovered": registry.recover_stale(timedelta(minutes=arguments.max_age_minutes))}
+            )
+        else:
+            _print(registry.get(arguments.experiment_id))
+        return 0
     if arguments.command == "backtest":
         records = FixtureProvider().fetch(fixture_symbols(), Timeframe.DAILY, fixture_request())
         bars = tuple(OHLCVBar.from_record(record) for record in records)
@@ -156,6 +240,16 @@ def _parse_utc(value: str) -> datetime:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=UTC)
     return parsed.astimezone(UTC)
+
+
+def _parse_metrics(values: Sequence[str]) -> dict[str, object]:
+    metrics: dict[str, object] = {}
+    for value in values:
+        name, separator, metric = value.partition("=")
+        if not separator or not name or not metric or name in metrics:
+            raise ValueError("metrics must be unique NAME=VALUE pairs")
+        metrics[name] = metric
+    return metrics
 
 
 def _print(value: object) -> None:
