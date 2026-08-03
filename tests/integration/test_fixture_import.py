@@ -56,6 +56,29 @@ def test_fixture_import_is_immutable_describable_and_rebuildable(tmp_path: Path)
     assert DatasetService(layout).validate(first.dataset_id)["valid"] is True
 
 
+def test_range_loader_reads_only_complete_requested_sessions(tmp_path: Path) -> None:
+    service = DatasetService(StorageLayout(tmp_path))
+    imported = service.import_from(
+        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
+    )
+    requested = TimestampRange(datetime(2025, 1, 8, tzinfo=UTC), datetime(2025, 1, 9, tzinfo=UTC))
+
+    bars = service.load_bars_range(
+        imported.dataset_id,
+        requested,
+        expected_fingerprint=imported.fingerprint,
+        expected_universe_id=UNIVERSE.universe_id,
+        expected_universe_fingerprint=UNIVERSE.universe_fingerprint,
+    )
+
+    assert len(bars) == 10
+    assert {bar.timestamp for bar in bars} == {
+        datetime(2025, 1, 8, tzinfo=UTC),
+        datetime(2025, 1, 9, tzinfo=UTC),
+    }
+    assert {bar.symbol.value for bar in bars} == {"SPY", "QQQ", "IWM", "TLT", "GLD"}
+
+
 def test_invalid_provider_data_is_rejected_with_evidence(tmp_path: Path) -> None:
     class InvalidProvider(FixtureProvider):
         name = "invalid-test-provider"

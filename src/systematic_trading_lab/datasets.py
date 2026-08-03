@@ -20,7 +20,7 @@ from .domain import (
     TimestampRange,
 )
 from .fingerprints import canonical_json, canonicalize, fingerprint
-from .parquet import from_parquet, to_parquet
+from .parquet import from_parquet, from_parquet_range, to_parquet
 from .providers import MarketDataProvider
 from .storage import StorageLayout
 from .universe import UniverseDefinition
@@ -279,12 +279,86 @@ class DatasetService:
             raise DatasetValidationError("loaded dataset fingerprint changed after validation")
         return bars
 
+    def load_bars_range(
+        self,
+        dataset_id: str,
+        requested: TimestampRange,
+        *,
+        expected_fingerprint: str,
+        expected_universe_id: str,
+        expected_universe_fingerprint: str,
+    ) -> tuple[OHLCVBar, ...]:
+        """Load and validate only one authorized range from a sealed dataset."""
+        manifest = self.describe(dataset_id)
+        identity = manifest.get("identity")
+        if not isinstance(identity, dict) or identity.get("dataset_id") != dataset_id:
+            raise DatasetValidationError("cataloged dataset identity is invalid")
+        if identity.get("fingerprint") != expected_fingerprint:
+            raise DatasetValidationError("cataloged dataset fingerprint differs")
+        if (
+            manifest.get("universe_id") != expected_universe_id
+            or manifest.get("universe_fingerprint") != expected_universe_fingerprint
+        ):
+            raise DatasetValidationError("cataloged dataset universe differs")
+
+        dataset_path = self.layout.dataset(dataset_id)
+        stored_manifest = json.loads((dataset_path / "manifest.json").read_text(encoding="utf-8"))
+        if stored_manifest != manifest:
+            raise DatasetValidationError("catalog differs from the stored dataset manifest")
+
+        actual_range = manifest.get("actual_range")
+        if not isinstance(actual_range, dict):
+            raise DatasetValidationError("cataloged dataset range is invalid")
+        actual = TimestampRange(
+            _parse_utc_timestamp(actual_range.get("start")),
+            _parse_utc_timestamp(actual_range.get("end")),
+        )
+        if requested.start < actual.start or requested.end > actual.end:
+            raise DatasetValidationError("requested range exceeds the dataset range")
+
+        symbols = manifest.get("symbols")
+        if not isinstance(symbols, list) or any(
+            not isinstance(symbol, dict) or not isinstance(symbol.get("value"), str)
+            for symbol in symbols
+        ):
+            raise DatasetValidationError("cataloged dataset symbols are invalid")
+        try:
+            timeframe = Timeframe(manifest["timeframe"])
+        except (KeyError, ValueError) as error:
+            raise DatasetValidationError("cataloged dataset timeframe is invalid") from error
+        records = from_parquet_range(dataset_path / "bars.parquet", requested.start, requested.end)
+        checked = validate_records(
+            records,
+            timeframe,
+            expected_sessions(requested.start, requested.end),
+            tuple(str(symbol["value"]) for symbol in symbols),
+        )
+        if not checked.result.valid:
+            raise DatasetValidationError("requested dataset range failed validation")
+        if not checked.bars or any(
+            bar.timestamp < requested.start or bar.timestamp > requested.end for bar in checked.bars
+        ):
+            raise DatasetValidationError("range loader returned bars outside the requested range")
+        return checked.bars
+
     def rebuild_catalog(self) -> int:
         return self.catalog.rebuild(self.layout.datasets)
 
 
 def fixture_request() -> TimestampRange:
     return TimestampRange(datetime(2025, 1, 6, tzinfo=UTC), datetime(2025, 1, 10, tzinfo=UTC))
+
+
+def _parse_utc_timestamp(value: object) -> datetime:
+    if not isinstance(value, str):
+        raise DatasetValidationError("cataloged dataset timestamp is invalid")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise DatasetValidationError("cataloged dataset timestamp is invalid") from error
+    if parsed.tzinfo is None or parsed.utcoffset() != UTC.utcoffset(parsed):
+        raise DatasetValidationError("cataloged dataset timestamp must be UTC")
+    return parsed.astimezone(UTC)
 
 
 def fixture_symbols() -> tuple[Symbol, ...]:

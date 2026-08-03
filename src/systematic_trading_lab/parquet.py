@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from io import BytesIO
+from pathlib import Path
 from typing import Any
 
 import pyarrow as pa  # type: ignore[import-untyped]
@@ -52,6 +53,27 @@ def to_parquet(bars: Iterable[OHLCVBar]) -> bytes:
 
 def from_parquet(contents: bytes) -> tuple[dict[str, Any], ...]:
     table = pq.read_table(BytesIO(contents))
+    return _records(table)
+
+
+def from_parquet_range(path: Path, start: datetime, end: datetime) -> tuple[dict[str, Any], ...]:
+    if (
+        start.tzinfo is None
+        or start.utcoffset() != UTC.utcoffset(start)
+        or end.tzinfo is None
+        or end.utcoffset() != UTC.utcoffset(end)
+    ):
+        raise ValueError("Parquet range timestamps must be UTC-aware")
+    if start > end:
+        raise ValueError("Parquet range start must not follow end")
+    table = pq.read_table(
+        path,
+        filters=[("timestamp", ">=", start), ("timestamp", "<=", end)],
+    )
+    return _records(table)
+
+
+def _records(table: pa.Table) -> tuple[dict[str, Any], ...]:
     records: list[dict[str, Any]] = []
     for row in table.to_pylist():
         timestamp = row["timestamp"]

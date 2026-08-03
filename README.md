@@ -16,6 +16,7 @@ uv run trading-lab backtest fixture --strategy buy-and-hold
 uv run trading-lab backtest fixture --strategy all --output .trading-lab/reports/baselines.json
 uv run trading-lab experiment create-campaign baseline-v1 --name "Baseline campaign" --budget 20
 uv run trading-lab experiment run --help
+uv run trading-lab experiment run-holdout --help
 uv run trading-lab experiment compare candidate-1 candidate-2
 uv run trading-lab experiment evaluate-qualification --evidence-manifest config/research/qualification-evidence-v3.json --proposal config/research/qualification-proposal.json
 ```
@@ -26,7 +27,7 @@ The CLI loads supported settings from an ignored repository-local `.env` file. C
 
 The Alpaca command is read-only, requires research mode and the `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY` environment variables, requests fully provider-adjusted bars, and writes only immutable local data artifacts. Imports enforce issuer-sourced point-in-time membership before provider access. Corrections create parent-linked dataset versions; unadjusted inputs are rejected. It never submits orders.
 
-Experiment commands create durable pending records before work begins, require an explicit claim before completion, retain failures, enforce campaign search budgets, and recover stale runs as failed evidence. The bounded `experiment run` command loads and verifies an immutable cataloged dataset before executing a training or validation candidate. Manual and executed experiments take dataset and universe provenance from the catalog. `experiment evaluate-qualification` verifies the named registry records and their roles, aggregates the proposed gate metrics, and writes a content-addressed report without loading market data. `experiment authorize-holdout` reruns that evaluation and can store one authorization only for approved, passing evidence. The current proposal and candidates fail closed. Ordinary commands cannot create or reveal holdout results.
+Experiment commands create durable pending records before work begins, require an explicit claim before completion, retain failures, enforce campaign search budgets, and recover stale runs as failed evidence. The bounded `experiment run` command loads and verifies an immutable cataloged dataset before executing a training or validation candidate. Manual and executed experiments take dataset and universe provenance from the catalog. `experiment evaluate-qualification` verifies the named registry records and their roles, aggregates the proposed gate metrics, and writes a content-addressed report without loading market data. `experiment authorize-holdout` reruns that evaluation and can store one authorization only for approved, passing evidence. `experiment run-holdout` consumes that authorization before reading Parquet, loads only the bound timestamp range, and stores metrics without returning them or writing a report. The current proposal and candidates fail closed. Ordinary commands cannot create or reveal holdout results.
 
 ## Quality gates
 

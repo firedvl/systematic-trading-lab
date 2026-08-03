@@ -16,7 +16,12 @@ from .backtesting import CostModel
 from .config import ConfigurationError, Settings, load_dotenv, load_settings
 from .datasets import DatasetService, DatasetValidationError, fixture_request, fixture_symbols
 from .domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
-from .experiment_runner import comparison_report, execution_model_version, run_experiment
+from .experiment_runner import (
+    comparison_report,
+    execution_model_version,
+    run_experiment,
+    run_holdout_experiment,
+)
 from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, ExperimentSplit
 from .providers import AlpacaHistoricalProvider, FixtureProvider
 from .qualification import load_qualification_proposal
@@ -29,6 +34,26 @@ from .qualification_evidence import (
 from .reporting import benchmark_suite, build_report, report_json, strategy_result, write_report
 from .storage import StorageLayout
 from .universe import load_research_universe
+
+
+def _add_execution_arguments(command: argparse.ArgumentParser) -> None:
+    command.add_argument("experiment_id")
+    command.add_argument("--campaign", required=True)
+    command.add_argument(
+        "--strategy",
+        choices=("cash", "buy-and-hold", "fixed-weight", "moving-average", "momentum"),
+        required=True,
+    )
+    command.add_argument("--code-commit", required=True)
+    command.add_argument("--dataset", required=True)
+    command.add_argument("--start", required=True)
+    command.add_argument("--end", required=True)
+    command.add_argument("--reason", required=True)
+    command.add_argument("--parameter", action="append", default=[], help="repeatable NAME=INTEGER")
+    command.add_argument("--slippage-bps", type=_decimal_argument, default=Decimal("5"))
+    command.add_argument("--commission-bps", type=_decimal_argument, default=Decimal("1"))
+    command.add_argument("--cost-version")
+    command.add_argument("--fill-delay-bars", type=int, default=1)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -92,25 +117,15 @@ def parser() -> argparse.ArgumentParser:
     execute = experiment_commands.add_parser(
         "run", help="record and run a bounded training or validation experiment"
     )
-    execute.add_argument("experiment_id")
-    execute.add_argument("--campaign", required=True)
-    execute.add_argument(
-        "--strategy",
-        choices=("cash", "buy-and-hold", "fixed-weight", "moving-average", "momentum"),
-        required=True,
-    )
-    execute.add_argument("--code-commit", required=True)
-    execute.add_argument("--dataset", required=True)
+    _add_execution_arguments(execute)
     execute.add_argument("--split", choices=("training", "validation"), required=True)
-    execute.add_argument("--start", required=True)
-    execute.add_argument("--end", required=True)
-    execute.add_argument("--reason", required=True)
     execute.add_argument("--parent-candidate")
-    execute.add_argument("--parameter", action="append", default=[], help="repeatable NAME=INTEGER")
-    execute.add_argument("--slippage-bps", type=_decimal_argument, default=Decimal("5"))
-    execute.add_argument("--commission-bps", type=_decimal_argument, default=Decimal("1"))
-    execute.add_argument("--cost-version")
-    execute.add_argument("--fill-delay-bars", type=int, default=1)
+    holdout = experiment_commands.add_parser(
+        "run-holdout", help="consume one stored authorization and run its exact holdout"
+    )
+    _add_execution_arguments(holdout)
+    holdout.add_argument("--authorization", required=True)
+    holdout.add_argument("--parent-candidate", required=True)
     compare = experiment_commands.add_parser("compare")
     compare.add_argument("experiment_ids", nargs="+")
     qualify = experiment_commands.add_parser(
@@ -201,13 +216,14 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             _print(
                 {"recovered": registry.recover_stale(timedelta(minutes=arguments.max_age_minutes))}
             )
-        elif arguments.experiment_command == "run":
+        elif arguments.experiment_command in {"run", "run-holdout"}:
             manifest = service.describe(arguments.dataset)
             identity = manifest["identity"]
             cost_model = _cost_model(arguments)
             strategy_id, strategy_family = _strategy_identity(arguments.strategy)
             parameters = _parse_parameters(arguments.parameter)
             _validate_strategy_parameters(arguments.strategy, parameters)
+            is_holdout = arguments.experiment_command == "run-holdout"
             spec = ExperimentSpec(
                 experiment_id=arguments.experiment_id,
                 campaign_id=arguments.campaign,
@@ -222,21 +238,31 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                 parameters=parameters,
                 cost_model_version=cost_model.version,
                 execution_model_version=execution_model_version(arguments.fill_delay_bars),
-                split=ExperimentSplit(arguments.split),
+                split=(ExperimentSplit.HOLDOUT if is_holdout else ExperimentSplit(arguments.split)),
                 start_timestamp=_parse_utc(arguments.start),
                 end_timestamp=_parse_utc(arguments.end),
                 random_seed=0,
                 creation_reason=arguments.reason,
                 parent_candidate=arguments.parent_candidate,
             )
-            run_experiment(
-                registry,
-                spec,
-                service.load_bars(arguments.dataset),
-                layout.reports,
-                cost_model=cost_model,
-                fill_delay_bars=arguments.fill_delay_bars,
-            )
+            if is_holdout:
+                run_holdout_experiment(
+                    registry,
+                    service,
+                    arguments.authorization,
+                    spec,
+                    cost_model=cost_model,
+                    fill_delay_bars=arguments.fill_delay_bars,
+                )
+            else:
+                run_experiment(
+                    registry,
+                    spec,
+                    service.load_bars(arguments.dataset),
+                    layout.reports,
+                    cost_model=cost_model,
+                    fill_delay_bars=arguments.fill_delay_bars,
+                )
             _print(registry.get(arguments.experiment_id))
         elif arguments.experiment_command == "compare":
             _print(comparison_report(registry, arguments.experiment_ids))
