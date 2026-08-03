@@ -32,7 +32,7 @@ class StorageLayout:
         self.datasets.mkdir(parents=True, exist_ok=True)
         self.quarantine.mkdir(parents=True, exist_ok=True)
 
-    def publish(self, dataset_id: str, files: dict[str, str]) -> bool:
+    def publish(self, dataset_id: str, files: dict[str, str | bytes]) -> bool:
         self.prepare()
         destination = self.dataset(dataset_id)
         if destination.exists():
@@ -58,7 +58,13 @@ class StorageLayout:
         return path
 
 
-def _write_file(path: Path, contents: str) -> None:
+def _write_file(path: Path, contents: str | bytes) -> None:
+    if isinstance(contents, bytes):
+        with path.open("xb") as file:
+            file.write(contents)
+            file.flush()
+            os.fsync(file.fileno())
+        return
     with path.open("x", encoding="utf-8", newline="\n") as file:
         file.write(contents)
         file.flush()

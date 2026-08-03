@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from .domain import OHLCVBar, Timeframe, ValidationResult
@@ -18,7 +18,12 @@ class ValidatedBars:
     quarantined: tuple[dict[str, Any], ...]
 
 
-def validate_records(records: Sequence[dict[str, Any]], timeframe: Timeframe) -> ValidatedBars:
+def validate_records(
+    records: Sequence[dict[str, Any]],
+    timeframe: Timeframe,
+    expected_sessions: Sequence[date] | None = None,
+    expected_symbols: Sequence[str] | None = None,
+) -> ValidatedBars:
     parsed: list[OHLCVBar] = []
     quarantined: list[dict[str, Any]] = []
     errors: list[str] = []
@@ -53,14 +58,27 @@ def validate_records(records: Sequence[dict[str, Any]], timeframe: Timeframe) ->
     by_symbol: dict[str, list[OHLCVBar]] = defaultdict(list)
     for bar in parsed:
         by_symbol[bar.symbol.value].append(bar)
-    if timeframe is Timeframe.DAILY:
-        for symbol, bars in by_symbol.items():
+    symbols = tuple(expected_symbols or by_symbol)
+    if timeframe is Timeframe.DAILY and expected_sessions is None:
+        for symbol in symbols:
+            bars = by_symbol.get(symbol, [])
             for earlier, later in zip(bars, bars[1:], strict=False):
                 current = earlier.timestamp + timedelta(days=1)
                 while current < later.timestamp:
                     if current.weekday() < 5:
                         missing.append(f"{symbol}@{current.date().isoformat()}")
                     current += timedelta(days=1)
+    elif timeframe is Timeframe.DAILY:
+        for symbol in symbols:
+            bars = by_symbol.get(symbol, [])
+            present = {bar.timestamp.date() for bar in bars}
+            if not bars:
+                errors.append(f"no records for expected symbol {symbol}")
+            missing.extend(
+                f"{symbol}@{session.isoformat()}"
+                for session in expected_sessions or ()
+                if session not in present
+            )
 
     result = ValidationResult(
         errors=tuple(errors),

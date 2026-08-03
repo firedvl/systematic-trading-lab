@@ -11,9 +11,12 @@ uv sync --dev
 uv run trading-lab doctor
 uv run trading-lab data import-fixture
 uv run trading-lab data describe
+TRADING_LAB_MODE=research trading-lab data import-alpaca --start 2025-01-01 --end 2025-01-31
 ```
 
 Runtime state defaults to `.trading-lab/` and is not committed. Set `TRADING_LAB_HOME` to use another directory. `TRADING_LAB_MODE` defaults to `offline`; accepted modes are `offline`, `research`, `replay`, `shadow`, `paper`, and the deliberately non-operational `live-disabled`.
+
+The Alpaca command is read-only, requires research mode and the `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY` environment variables, and writes only immutable local data artifacts. It never submits orders.
 
 ## Quality gates
 
