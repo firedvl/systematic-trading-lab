@@ -22,7 +22,7 @@ from .reconciliation import (
 )
 
 if TYPE_CHECKING:
-    from .broker_events import BrokerEventStore, BrokerOrderEvent
+    from .broker_events import BrokerEventStore, BrokerOrderEvent, OrderLookupNotFoundEvidence
     from .reconciliation import ReconciliationStore
 
 PAPER_ORIGIN = "https://paper-api.alpaca.markets"
@@ -52,6 +52,10 @@ _Clock = Callable[[], datetime]
 
 class AlpacaPaperError(RuntimeError):
     """A sanitized paper-state read or validation failure."""
+
+
+class _OrderLookupNotFound(AlpacaPaperError):
+    pass
 
 
 @dataclass(frozen=True)
@@ -272,13 +276,26 @@ class AlpacaPaperReader:
 
     def record_order_lookup(
         self, store: BrokerEventStore, *, client_order_id: str
-    ) -> BrokerOrderEvent:
+    ) -> BrokerOrderEvent | OrderLookupNotFoundEvidence:
         if not self._allows_persistence:
             raise AlpacaPaperError("injected transport cannot produce durable paper provenance")
-        from .broker_events import BrokerOrderEvent
+        from .broker_events import _ALPACA_READER_CAPABILITY, BrokerOrderEvent
         from .orders import OrderState
 
-        snapshot = self.read_order(client_order_id)
+        try:
+            snapshot = self.read_order(client_order_id)
+        except _OrderLookupNotFound:
+            account = self._get_object("/v2/account")
+            if _text(account, "id", "account") != self._account_id:
+                raise AlpacaPaperError(
+                    "Alpaca paper response is for an unexpected account"
+                ) from None
+            return store._record_lookup_not_found(
+                client_order_id=client_order_id,
+                account_id=self._account_id,
+                observed_at=self._now(),
+                _capability=_ALPACA_READER_CAPABILITY,
+            )
         state = {
             "partially_filled": OrderState.PARTIALLY_FILLED,
             "filled": OrderState.FILLED,
@@ -371,6 +388,8 @@ class AlpacaPaperReader:
         try:
             return json.loads(self._transport(request))
         except HTTPError as error:
+            if error.code == 404 and path == "/v2/orders:by_client_order_id":
+                raise _OrderLookupNotFound("Alpaca paper order was not found") from None
             raise AlpacaPaperError(
                 f"Alpaca paper request failed with HTTP status {error.code}"
             ) from None

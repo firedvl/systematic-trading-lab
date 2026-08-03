@@ -226,3 +226,10 @@
 - Context: storing valid evidence without applying it leaves local state stale, while applying an invalid or out-of-order event can hide drift or free capacity incorrectly.
 - Consequences: accepted events are exact-idempotent, cancellation and rejection release capacity, fills remain reserved for reconciliation, and raw broker responses never enter the execution database.
 - Revisit when: polling and streaming event sources both exist and need one reviewed precedence rule.
+
+## 2026-08-03 — A missing exact lookup is evidence, not retry authority
+
+- Decision: persist a sanitized Alpaca-paper 404 only from the production exact-client-order lookup path and only for a local `submission-unknown` order. The record does not change order state or release capacity.
+- Context: a broker can return a transient or stale negative lookup after an unknown submission outcome.
+- Consequences: the result remains immutable historical evidence. Any future retry assessment must bind it to later full clean reconciliation; no retry or broker writer exists.
+- Revisit when: observed paper behavior supports a stricter negative-confirmation rule.
