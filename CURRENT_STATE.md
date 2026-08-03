@@ -7,4 +7,4 @@
 - Test status: 12 tests pass; ruff format and lint, strict mypy, and secret scan pass on Python 3.12.13. Fixture backtest smoke produced deterministic cash and buy-and-hold fingerprints; offline broker/data modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
 - Next task: finish M2 with fixed-weight periodic rebalance, moving-average and momentum baselines, benchmark comparison, and deterministic report artifacts.
-- Branch: `codex/m2-backtester`; pull request pending and will be a regular non-draft PR per user instruction.
+- Branch: `codex/m2-backtester`; regular pull request: https://github.com/firedvl/systematic-trading-lab/pull/4.
