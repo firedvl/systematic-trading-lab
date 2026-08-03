@@ -20,7 +20,9 @@ A timeout or crash after submission requires lookup by that ID before retry. Bro
 a broker-free evidence store that deduplicates exact provider event identity and normalized content,
 checks forward state and cumulative fill quantity, and binds each event to one known local order.
 Storage accepts only schema-validated normalized fields and excludes raw bodies, headers, URLs, and
-exception text. Applying events to local lifecycle state remains a separate protected transition.
+exception text. A valid event advances local order state in the same transaction as its evidence;
+cancellation or rejection also releases capacity. Conflicting identity, order, quantity, sequence,
+or local state restores persistent emergency disable before the event is rejected.
 Conflicting duplicates, unknown statuses, out-of-order transitions, or position drift trigger
 emergency disable. Each submit, cancel, and cancel-all mutation is journaled before the call and has
 an unknown-outcome state resolved by lookup and reconciliation before retry. No order submission is

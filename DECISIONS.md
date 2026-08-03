@@ -219,3 +219,10 @@
 - Context: releasing a filled order immediately would allow another decision to reuse capacity while portfolio snapshots may still show the pre-fill state.
 - Consequences: cancellation and rejection free capacity without a broker-position change. Fill handling remains conservative until normalized broker events and reconciliation can replace the reservation with verified position exposure.
 - Revisit when: fill events and expected-position advancement share one verified transaction.
+
+## 2026-08-03 — Broker evidence applies state or disables execution
+
+- Decision: one normalized broker event and its forward local order transition share a transaction; identity, quantity, sequence, or local-state conflicts restore persistent emergency disable and reject the event.
+- Context: storing valid evidence without applying it leaves local state stale, while applying an invalid or out-of-order event can hide drift or free capacity incorrectly.
+- Consequences: accepted events are exact-idempotent, cancellation and rejection release capacity, fills remain reserved for reconciliation, and raw broker responses never enter the execution database.
+- Revisit when: polling and streaming event sources both exist and need one reviewed precedence rule.
