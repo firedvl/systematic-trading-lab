@@ -9,6 +9,7 @@ from systematic_trading_lab.reporting import (
     benchmark_suite,
     build_report,
     report_json,
+    strategy_result,
     write_report,
 )
 from systematic_trading_lab.strategies import (
@@ -67,3 +68,33 @@ def test_benchmark_report_is_deterministic_and_immutable(tmp_path: Path) -> None
     write_report(output, results)
     with pytest.raises(FileExistsError):
         write_report(output, results)
+
+
+def test_trend_baselines_split_exposure_across_the_dataset_symbols() -> None:
+    start = datetime(2025, 1, 6, tzinfo=UTC)
+    bars = tuple(
+        OHLCVBar(
+            Symbol(symbol),
+            start + timedelta(days=index),
+            Decimal(str(100 + index)),
+            Decimal(str(102 + index)),
+            Decimal(str(99 + index)),
+            Decimal(str(101 + index)),
+            100,
+        )
+        for symbol in ("QQQ", "SPY")
+        for index in range(3)
+    )
+
+    for strategy, parameters in (
+        ("moving-average", {"window": 2}),
+        ("momentum", {"lookback": 1}),
+    ):
+        result = strategy_result(strategy, bars, Decimal("1000"), parameters=parameters)
+        active_weights = {
+            target.weight
+            for decision in result.decisions
+            for target in decision.targets
+            if target.weight > 0
+        }
+        assert active_weights == {Decimal("0.5")}

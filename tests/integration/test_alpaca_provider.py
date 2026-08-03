@@ -59,6 +59,8 @@ def test_alpaca_provider_paginates_and_normalizes_daily_bars() -> None:
     assert records[0]["timestamp"] == "2025-01-06T00:00:00Z"
     assert len(requests) == 2
     assert provider.adjustment_policy is AdjustmentPolicy.PROVIDER_ADJUSTED_ALL
-    assert parse_qs(urlparse(str(requests[0].full_url)).query)["adjustment"] == ["all"]
+    first_query = parse_qs(urlparse(str(requests[0].full_url)).query)
+    assert first_query["adjustment"] == ["all"]
+    assert first_query["end"] == ["2025-01-08T00:00:00Z"]
     assert parse_qs(urlparse(str(requests[1].full_url)).query)["page_token"] == ["page-2"]
     assert requests[0].headers["Apca-api-key-id"] == "test-key"

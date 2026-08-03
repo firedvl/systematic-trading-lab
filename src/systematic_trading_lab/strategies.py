@@ -73,33 +73,41 @@ class FixedWeightStrategy:
 @dataclass(frozen=True)
 class MovingAverageTrendStrategy:
     window: int = 20
+    target_weight: Decimal = Decimal("1")
     strategy_id: str = "moving-average-trend"
     version: str = "1"
 
     def __post_init__(self) -> None:
         if self.window < 2:
             raise ValueError("moving-average window must be at least two bars")
+        if not Decimal("0") < self.target_weight <= Decimal("1"):
+            raise ValueError("moving-average target weight must be in (0, 1]")
 
     def on_bar(self, bar: OHLCVBar, history: Sequence[OHLCVBar]) -> Sequence[TargetPosition]:
         if len(history) < self.window:
             return ()
         average = sum((item.close for item in history[-self.window :]), Decimal("0")) / self.window
-        weight = Decimal("1") if bar.close > average else Decimal("0")
+        weight = self.target_weight if bar.close > average else Decimal("0")
         return (TargetPosition(bar.symbol, weight, "close-vs-moving-average"),)
 
 
 @dataclass(frozen=True)
 class TimeSeriesMomentumStrategy:
     lookback: int = 20
+    target_weight: Decimal = Decimal("1")
     strategy_id: str = "time-series-momentum"
     version: str = "1"
 
     def __post_init__(self) -> None:
         if self.lookback < 1:
             raise ValueError("momentum lookback must be positive")
+        if not Decimal("0") < self.target_weight <= Decimal("1"):
+            raise ValueError("momentum target weight must be in (0, 1]")
 
     def on_bar(self, bar: OHLCVBar, history: Sequence[OHLCVBar]) -> Sequence[TargetPosition]:
         if len(history) <= self.lookback:
             return ()
-        weight = Decimal("1") if bar.close > history[-self.lookback - 1].close else Decimal("0")
+        weight = (
+            self.target_weight if bar.close > history[-self.lookback - 1].close else Decimal("0")
+        )
         return (TargetPosition(bar.symbol, weight, "close-vs-lookback"),)

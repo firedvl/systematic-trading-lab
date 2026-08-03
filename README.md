@@ -21,6 +21,8 @@ uv run trading-lab experiment compare candidate-1 candidate-2
 
 Runtime state defaults to `.trading-lab/` and is not committed. Set `TRADING_LAB_HOME` to use another directory. `TRADING_LAB_MODE` defaults to `offline`; accepted modes are `offline`, `research`, `replay`, `shadow`, `paper`, and the deliberately non-operational `live-disabled`.
 
+The CLI loads supported settings from an ignored repository-local `.env` file. Copy `.env.example`, set `TRADING_LAB_MODE=research`, and fill in the two Alpaca values. Existing process environment variables take precedence. The loader rejects unknown names and never enables live trading.
+
 The Alpaca command is read-only, requires research mode and the `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY` environment variables, requests fully provider-adjusted bars, and writes only immutable local data artifacts. Imports enforce issuer-sourced point-in-time membership before provider access. Corrections create parent-linked dataset versions; unadjusted inputs are rejected. It never submits orders.
 
 Experiment commands create durable pending records before work begins, require an explicit claim before completion, retain failures, enforce campaign search budgets, and recover stale runs as failed evidence. The bounded `experiment run` command loads and verifies an immutable cataloged dataset before executing a training or validation candidate. Manual and executed experiments take dataset and universe provenance from the catalog. Ordinary commands cannot create or reveal holdout results.

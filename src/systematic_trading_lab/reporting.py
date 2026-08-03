@@ -96,6 +96,8 @@ def strategy_result(
     fill_delay_bars: int = 1,
 ) -> BacktestResult:
     parameters = parameters or {}
+    symbols = tuple(sorted({bar.symbol for bar in bars}, key=lambda symbol: symbol.value))
+    target_weight = Decimal("1") / Decimal(len(symbols)) if symbols else Decimal("1")
     if name == "buy-and-hold":
         symbol = min((bar.symbol for bar in bars), key=lambda item: item.value)
         bars = tuple(bar for bar in bars if bar.symbol == symbol)
@@ -108,11 +110,13 @@ def strategy_result(
         )
     elif name in ("moving-average", "moving-average-trend"):
         strategy = MovingAverageTrendStrategy(
-            window=_positive_int_parameter(parameters, "window", 20)
+            window=_positive_int_parameter(parameters, "window", 20),
+            target_weight=target_weight,
         )
     elif name in ("momentum", "time-series-momentum"):
         strategy = TimeSeriesMomentumStrategy(
-            lookback=_positive_int_parameter(parameters, "lookback", 20)
+            lookback=_positive_int_parameter(parameters, "lookback", 20),
+            target_weight=target_weight,
         )
     else:
         raise ValueError(f"unknown backtest strategy: {name}")

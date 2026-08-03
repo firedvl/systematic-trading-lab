@@ -13,7 +13,7 @@ from pathlib import Path
 
 from . import __version__
 from .backtesting import CostModel
-from .config import ConfigurationError, Settings, load_settings
+from .config import ConfigurationError, Settings, load_dotenv, load_settings
 from .datasets import DatasetService, DatasetValidationError, fixture_request, fixture_symbols
 from .domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
 from .experiment_runner import comparison_report, execution_model_version, run_experiment
@@ -112,6 +112,7 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     try:
         arguments = parser().parse_args(argv)
+        load_dotenv()
         settings = load_settings()
         return run(arguments, settings)
     except (
@@ -247,7 +248,7 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             "runtime_path_is_not_repository_root": settings.home != Path.cwd().resolve(),
             "research_credentials_present_or_not_required": settings.mode
             is not TradingMode.RESEARCH
-            or all(name in os.environ for name in ("APCA_API_KEY_ID", "APCA_API_SECRET_KEY")),
+            or all(os.environ.get(name) for name in ("APCA_API_KEY_ID", "APCA_API_SECRET_KEY")),
         }
         checks["storage_writable"] = _storage_writable(layout)
         _print({"mode": settings.mode.value, "home": str(settings.home), "checks": checks})

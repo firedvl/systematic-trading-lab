@@ -63,7 +63,9 @@ class AlpacaHistoricalProvider:
             "symbols": ",".join(symbol.value for symbol in symbols),
             "timeframe": "1Day",
             "start": requested.start.isoformat().replace("+00:00", "Z"),
-            "end": requested.end.isoformat().replace("+00:00", "Z"),
+            # Alpaca's end boundary is exclusive. Extend it by one day so the
+            # repository's inclusive daily TimestampRange retains its final session.
+            "end": (requested.end + timedelta(days=1)).isoformat().replace("+00:00", "Z"),
             "adjustment": "all",
             "feed": "iex",
             "sort": "asc",
