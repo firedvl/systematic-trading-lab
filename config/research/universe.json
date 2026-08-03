@@ -1,1 +1,36 @@
-{"id":"liquid-etfs-v1","symbols":["SPY","QQQ","IWM","TLT","GLD"],"timeframe":"1d"}
+{
+  "id": "liquid-etfs-v1",
+  "timeframe": "1d",
+  "memberships": [
+    {
+      "symbol": "SPY",
+      "start": "1993-01-22",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-500-etf-trust-spy"
+    },
+    {
+      "symbol": "QQQ",
+      "start": "1999-03-09",
+      "end": null,
+      "source": "https://www.invesco.com/qqq-etf/en/about.html"
+    },
+    {
+      "symbol": "IWM",
+      "start": "2000-05-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239710/ishares-russell-2000-etf"
+    },
+    {
+      "symbol": "TLT",
+      "start": "2002-07-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239454/ishares-20-year-treasury-bond-etf"
+    },
+    {
+      "symbol": "GLD",
+      "start": "2004-11-18",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/spdr-gold-shares-gld"
+    }
+  ]
+}

@@ -1,10 +1,10 @@
 # Current state
 
-- Milestone: M1 correction-lineage and corporate-action control slice complete.
-- Completed: all prior capabilities plus immutable dataset version IDs that bind provider, request, adjustment policy, processing versions, and normalized-bar fingerprint; parent links for provider corrections; exact-repeat deduplication; cross-provider metadata isolation; provider adjustment declarations; and fail-closed rejection of unadjusted data. Alpaca requests `adjustment=all`; the deterministic fixture declares that it contains no actions.
-- Work in progress: none.
-- Known limitations: no local processor for unadjusted splits, dividends, symbol changes, or delistings; no point-in-time universe, approved financial thresholds, controlled holdout runner, broker, or execution system. Walk-forward and sensitivity APIs exist, but no reviewed financial campaign has been run. Current reports remain fixture evidence, not financial qualification.
-- Test status: 25 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Lineage, adjustment-policy, catalog recovery and rebuild, Alpaca, and experiment CLI checks pass; live and broker modes remain rejected.
+- Milestone: M1 point-in-time fixed-universe slice complete.
+- Completed: all prior capabilities plus issuer-sourced membership intervals for SPY, QQQ, IWM, TLT, and GLD; fail-closed full-range membership checks before provider access; and universe IDs and fingerprints bound into datasets, correction lineage, and experiment records. Manual experiment creation now reads dataset and universe provenance from the catalog instead of accepting a caller-supplied fingerprint.
+- Work in progress: draft pull request pending publication from `codex/m1-universe`.
+- Known limitations: no local processor for unadjusted splits, dividends, symbol changes, or delistings; approved financial thresholds, reviewed provider dataset, controlled holdout runner, broker, or execution system. The first universe version supports one membership interval per symbol. Walk-forward and sensitivity APIs exist, but no reviewed financial campaign has been run. Current reports remain fixture evidence, not financial qualification.
+- Test status: 28 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Universe, lineage, adjustment-policy, catalog recovery and rebuild, Alpaca, and experiment CLI checks pass; live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
-- Next task: acquire and seal a reviewed provider-adjusted historical dataset for the first walk-forward and sensitivity campaign, then document proposed qualification thresholds for human review. Point-in-time universe work remains before research expands beyond the fixed ETF set.
-- Branch: `codex/m1-lineage`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/9.
+- Next task: acquire and seal a reviewed provider-adjusted historical dataset for the first walk-forward and sensitivity campaign, then document proposed qualification thresholds for human review. Alpaca acquisition requires research credentials that are not present in the current environment.
+- Branch: `codex/m1-universe`; draft pull request: pending publication.

@@ -1,5 +1,6 @@
 import json
 from collections.abc import Sequence
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,9 @@ from systematic_trading_lab.datasets import (
 from systematic_trading_lab.domain import AdjustmentPolicy, Symbol, Timeframe, TimestampRange
 from systematic_trading_lab.providers import FixtureProvider
 from systematic_trading_lab.storage import StorageLayout
+from systematic_trading_lab.universe import load_research_universe
+
+UNIVERSE = load_research_universe()
 
 
 def test_fixture_import_is_immutable_describable_and_rebuildable(tmp_path: Path) -> None:
@@ -22,17 +26,20 @@ def test_fixture_import_is_immutable_describable_and_rebuildable(tmp_path: Path)
     service = DatasetService(layout)
 
     first = service.import_from(
-        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
     )
     second = service.import_from(
-        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
     )
 
     assert first.created is True
     assert second.created is False
     assert first.fingerprint == second.fingerprint
     assert first.bar_count == 25
-    assert service.describe()["identity"]["dataset_id"] == first.dataset_id
+    manifest = service.describe()
+    assert manifest["identity"]["dataset_id"] == first.dataset_id
+    assert manifest["universe_id"] == UNIVERSE.universe_id
+    assert manifest["universe_fingerprint"] == UNIVERSE.universe_fingerprint
     assert service.validate()["valid"] is True
     assert len(service.load_bars(first.dataset_id)) == 25
 
@@ -43,7 +50,7 @@ def test_fixture_import_is_immutable_describable_and_rebuildable(tmp_path: Path)
 
     layout.catalog.unlink()
     recovered = DatasetService(layout).import_from(
-        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
     )
     assert recovered.created is False
     assert DatasetService(layout).validate(first.dataset_id)["valid"] is True
@@ -70,7 +77,7 @@ def test_invalid_provider_data_is_rejected_with_evidence(tmp_path: Path) -> None
     service = DatasetService(layout)
     try:
         service.import_from(
-            InvalidProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+            InvalidProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
         )
     except ValueError as error:
         assert "dataset rejected" in str(error)
@@ -112,19 +119,23 @@ def test_provider_corrections_link_versions_without_cross_provider_collisions(
     layout = StorageLayout(tmp_path)
     service = DatasetService(layout)
     original = service.import_from(
-        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
     )
     raw_correction = service.import_from(
-        RawRepresentationCorrection(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+        RawRepresentationCorrection(),
+        fixture_symbols(),
+        Timeframe.DAILY,
+        fixture_request(),
+        UNIVERSE,
     )
     corrected = service.import_from(
-        CorrectedFixture(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+        CorrectedFixture(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
     )
     duplicate = service.import_from(
-        CorrectedFixture(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+        CorrectedFixture(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
     )
     other = service.import_from(
-        OtherProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+        OtherProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
     )
 
     assert raw_correction.fingerprint == original.fingerprint
@@ -144,11 +155,28 @@ def test_provider_corrections_link_versions_without_cross_provider_collisions(
     assert rebuilt.describe(corrected.dataset_id)["parent_dataset_id"] == raw_correction.dataset_id
 
 
+def test_universe_revision_creates_a_separate_dataset_lineage(tmp_path: Path) -> None:
+    service = DatasetService(StorageLayout(tmp_path))
+    original = service.import_from(
+        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
+    )
+    revised = service.import_from(
+        FixtureProvider(),
+        fixture_symbols(),
+        Timeframe.DAILY,
+        fixture_request(),
+        replace(UNIVERSE, universe_fingerprint="reviewed-universe-revision"),
+    )
+
+    assert revised.dataset_id != original.dataset_id
+    assert revised.parent_dataset_id is None
+
+
 def test_unadjusted_data_is_rejected_without_a_corporate_action_processor(tmp_path: Path) -> None:
     class UnadjustedFixture(FixtureProvider):
         adjustment_policy = AdjustmentPolicy.UNADJUSTED
 
     with pytest.raises(DatasetValidationError, match="corporate-action processing"):
         DatasetService(StorageLayout(tmp_path)).import_from(
-            UnadjustedFixture(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+            UnadjustedFixture(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
         )

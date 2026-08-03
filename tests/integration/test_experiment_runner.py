@@ -53,6 +53,7 @@ def spec(source: tuple[OHLCVBar, ...], experiment_id: str = "candidate") -> Expe
         dataset_id="fixture",
         dataset_fingerprint=fingerprint(tuple(bar.to_record() for bar in source)),
         universe_id="liquid-etfs-v1",
+        universe_fingerprint="universe-fingerprint-1",
         parameters={},
         cost_model_version="conservative-bps-v1",
         execution_model_version="next-bar-v1",

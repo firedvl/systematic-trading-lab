@@ -26,6 +26,7 @@ def spec(experiment_id: str, split: ExperimentSplit = ExperimentSplit.TRAINING) 
         dataset_id="dataset-1",
         dataset_fingerprint="fingerprint-1",
         universe_id="liquid-etfs-v1",
+        universe_fingerprint="universe-fingerprint-1",
         parameters={"window": 20},
         cost_model_version="conservative-bps-v1",
         execution_model_version="next-bar-v1",
