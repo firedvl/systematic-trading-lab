@@ -18,6 +18,7 @@ from systematic_trading_lab.fingerprints import fingerprint
 from systematic_trading_lab.reconciliation import (
     PortfolioSnapshot,
     PositionSnapshot,
+    ReconciliationEvidence,
     ReconciliationStore,
     SnapshotSource,
 )
@@ -46,6 +47,7 @@ def _limits() -> RiskLimits:
         max_strategy_drawdown=Decimal("0.10"),
         max_price_deviation_bps=Decimal("50"),
         max_snapshot_age_seconds=30,
+        min_reconciliation_stability_seconds=5,
         reviewed_by="test-reviewer",
         review_reason="test fixture only",
         effective_at=NOW - timedelta(days=1),
@@ -188,6 +190,8 @@ def _record_adapter_snapshot(
     store: ReconciliationStore,
     snapshot: PortfolioSnapshot,
     monkeypatch: pytest.MonkeyPatch,
+    *,
+    recorded_at: datetime = NOW,
 ) -> PortfolioSnapshot:
     responses: dict[str, object] = {
         "/v2/account": {
@@ -247,7 +251,7 @@ def _record_adapter_snapshot(
         allowed_symbols=symbols,
         clock=lambda: next(observations),
     )
-    return reader.record_portfolio(store, recorded_at=NOW)
+    return reader.record_portfolio(store, recorded_at=recorded_at)
 
 
 def test_paper_authorization_is_exact_immutable_and_restart_safe(tmp_path: Path) -> None:
@@ -437,3 +441,118 @@ def test_paper_snapshot_attestation_is_immutable_and_journal_bound(
 
     with pytest.raises(JournalIntegrityError, match="attestation"):
         ReconciliationStore(path)
+
+
+def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store = ReconciliationStore(tmp_path / "execution.sqlite3")
+    limits = _limits()
+    report = _evidence()
+    authorization = _authorization(report, limits)
+    store.authorize_paper(authorization, report, limits)
+    expected = _flat_snapshot(SnapshotSource.LOCAL_EXPECTED, "stable-expected")
+    first_observed = _record_adapter_snapshot(
+        store,
+        _flat_snapshot(
+            SnapshotSource.ALPACA_PAPER,
+            "stable-observed-0",
+            account_observed_at=NOW,
+            positions_observed_at=NOW,
+            orders_observed_at=NOW,
+        ),
+        monkeypatch,
+    )
+    store.record_snapshot(expected, recorded_at=NOW)
+    baseline = store.create_flat_baseline(
+        baseline_id="stable-baseline",
+        authorization_id=authorization.authorization_id,
+        expected_snapshot_id=expected.snapshot_id,
+        observed_snapshot_id=first_observed.snapshot_id,
+        limits=limits,
+        operator="test-operator",
+        reason="stable readiness test",
+        created_at=NOW,
+    )
+    samples: list[ReconciliationEvidence] = [
+        store.record_reconciliation(
+            baseline_id=baseline.baseline_id,
+            observed_snapshot_id=first_observed.snapshot_id,
+            compared_at=NOW,
+            unresolved_mutations=0,
+        )
+    ]
+    assert store.assess_emergency_clear_readiness(
+        baseline_id=baseline.baseline_id, limits=limits, assessed_at=NOW
+    ).reasons == ("insufficient-clean-samples",)
+
+    for seconds in (4, 8, 13, 18):
+        observed_at = NOW + timedelta(seconds=seconds)
+        observed = _flat_snapshot(
+            SnapshotSource.ALPACA_PAPER,
+            f"stable-observed-{seconds}",
+            account_observed_at=observed_at,
+            positions_observed_at=observed_at,
+            orders_observed_at=observed_at,
+        )
+        observed = _record_adapter_snapshot(store, observed, monkeypatch, recorded_at=observed_at)
+        samples.append(
+            store.record_reconciliation(
+                baseline_id=baseline.baseline_id,
+                observed_snapshot_id=observed.snapshot_id,
+                compared_at=observed_at,
+                unresolved_mutations=0,
+            )
+        )
+        if seconds == 8:
+            assert (
+                "samples-not-stable"
+                in store.assess_emergency_clear_readiness(
+                    baseline_id=baseline.baseline_id,
+                    limits=limits,
+                    assessed_at=observed_at,
+                ).reasons
+            )
+
+    readiness = store.assess_emergency_clear_readiness(
+        baseline_id=baseline.baseline_id,
+        limits=limits,
+        assessed_at=NOW + timedelta(seconds=18),
+    )
+    assert readiness.ready
+    assert readiness.evidence_ids == tuple(item.evidence_id for item in samples[-3:])
+    assert readiness.proof_fingerprint
+    stale = store.assess_emergency_clear_readiness(
+        baseline_id=baseline.baseline_id,
+        limits=limits,
+        assessed_at=NOW + timedelta(seconds=49),
+    )
+    assert stale.reasons == ("latest-sample-stale-or-future",)
+    mismatched = store.assess_emergency_clear_readiness(
+        baseline_id=baseline.baseline_id,
+        limits=replace(limits, min_reconciliation_stability_seconds=6),
+        assessed_at=NOW + timedelta(seconds=18),
+    )
+    assert "authority-or-limits-mismatch" in mismatched.reasons
+
+    dirty_at = NOW + timedelta(seconds=23)
+    dirty = _flat_snapshot(
+        SnapshotSource.ALPACA_PAPER,
+        "stable-observed-dirty",
+        cash=Decimal("69999"),
+        account_observed_at=dirty_at,
+        positions_observed_at=dirty_at,
+        orders_observed_at=dirty_at,
+    )
+    dirty = _record_adapter_snapshot(store, dirty, monkeypatch, recorded_at=dirty_at)
+    store.record_reconciliation(
+        baseline_id=baseline.baseline_id,
+        observed_snapshot_id=dirty.snapshot_id,
+        compared_at=dirty_at,
+        unresolved_mutations=1,
+    )
+    reset = store.assess_emergency_clear_readiness(
+        baseline_id=baseline.baseline_id, limits=limits, assessed_at=dirty_at
+    )
+    assert not reset.ready
+    assert reset.reasons == ("latest-samples-not-clean",)

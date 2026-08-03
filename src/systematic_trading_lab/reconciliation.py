@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from enum import StrEnum
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -305,6 +306,47 @@ class ReconciliationEvidence:
             or self.unresolved_mutations < 0
         ):
             raise ValueError("reconciliation evidence limits are invalid")
+
+
+@dataclass(frozen=True)
+class EmergencyClearReadiness:
+    ready: bool
+    reasons: tuple[str, ...]
+    baseline_id: str
+    authorization_id: str
+    risk_configuration_fingerprint: str
+    evidence_ids: tuple[str, ...]
+    observed_snapshot_ids: tuple[str, ...]
+    attestation_fingerprints: tuple[str, ...]
+    emergency_generation: int
+    assessed_at: datetime
+
+    def __post_init__(self) -> None:
+        if self.ready != (not self.reasons and len(self.evidence_ids) == 3):
+            raise ValueError("clear readiness must match its proof and reasons")
+        if any(not reason for reason in self.reasons):
+            raise ValueError("clear-readiness reasons must be nonempty")
+        _bounded_text("baseline ID", self.baseline_id)
+        _bounded_text("authorization ID", self.authorization_id)
+        _sha256("risk configuration", self.risk_configuration_fingerprint)
+        if not (
+            len(self.evidence_ids)
+            == len(self.observed_snapshot_ids)
+            == len(self.attestation_fingerprints)
+            <= 3
+        ):
+            raise ValueError("clear-readiness proof fields must align")
+        for value in self.evidence_ids:
+            _sha256("reconciliation evidence", value)
+        for value in self.attestation_fingerprints:
+            _sha256("paper attestation", value)
+        if self.emergency_generation < 1:
+            raise ValueError("emergency generation must be positive")
+        _utc("clear-readiness assessment", self.assessed_at)
+
+    @property
+    def proof_fingerprint(self) -> str:
+        return fingerprint(self)
 
 
 @dataclass(frozen=True)
@@ -714,6 +756,101 @@ class ReconciliationStore(RiskStore):
                 connection.rollback()
                 raise
         return evidence
+
+    def assess_emergency_clear_readiness(
+        self,
+        *,
+        baseline_id: str,
+        limits: RiskLimits,
+        assessed_at: datetime,
+    ) -> EmergencyClearReadiness:
+        _bounded_text("baseline ID", baseline_id)
+        _utc("clear-readiness assessment", assessed_at)
+        with self._connect() as connection:
+            connection.execute("BEGIN")
+            snapshots, attestations, baselines, evidence_by_id = self._verify_all(connection)
+            emergency = self._verify_emergency(connection)
+            authorizations = self._verify_authorizations(connection)
+            try:
+                baseline = baselines[baseline_id]
+                authorization = authorizations[baseline.authorization_id]
+            except KeyError as error:
+                raise HoldoutAccessError("clear-readiness authority is missing") from error
+            sequenced = [
+                (row[1], evidence_by_id[row[0]])
+                for row in connection.execute(
+                    "SELECT evidence_id, journal_sequence FROM reconciliation_evidence"
+                ).fetchall()
+                if evidence_by_id[row[0]].baseline_id == baseline_id
+            ]
+            latest = [item[1] for item in sorted(sequenced)[-3:]]
+
+        reasons: list[str] = []
+        if not emergency.disabled:
+            reasons.append("emergency-already-clear")
+        if (
+            baseline.risk_configuration_fingerprint != limits.configuration_fingerprint
+            or authorization.risk_configuration_fingerprint != limits.configuration_fingerprint
+            or authorization.account_id != limits.account_id
+        ):
+            reasons.append("authority-or-limits-mismatch")
+        if (
+            assessed_at < limits.effective_at
+            or assessed_at >= limits.expires_at
+            or assessed_at < authorization.authorized_at
+            or assessed_at >= authorization.expires_at
+        ):
+            reasons.append("authority-or-limits-inactive")
+        if len(latest) < 3:
+            reasons.append("insufficient-clean-samples")
+        elif any(not item.result.clean or item.unresolved_mutations for item in latest):
+            reasons.append("latest-samples-not-clean")
+
+        snapshot_ids = tuple(item.observed_snapshot_id for item in latest)
+        compared_at = tuple(item.result.compared_at for item in latest)
+        attestation_values = tuple(attestations[snapshot_id] for snapshot_id in snapshot_ids)
+        completion_times = tuple(value.completed_at for value in attestation_values)
+        if len(set(snapshot_ids)) != len(snapshot_ids):
+            reasons.append("samples-not-distinct")
+        if len(latest) == 3:
+            stability = limits.min_reconciliation_stability_seconds
+            if completion_times[0] < baseline.created_at:
+                reasons.append("samples-predate-baseline")
+            if any(
+                later <= earlier or (later - earlier).total_seconds() < stability
+                for earlier, later in pairwise(compared_at)
+            ) or any(
+                later <= earlier or (later - earlier).total_seconds() < stability
+                for earlier, later in pairwise(completion_times)
+            ):
+                reasons.append("samples-not-stable")
+            latest_snapshot = snapshots[snapshot_ids[-1]]
+            if compared_at[-1] > assessed_at or any(
+                observed > assessed_at
+                or (assessed_at - observed).total_seconds() > limits.max_snapshot_age_seconds
+                for observed in (
+                    latest_snapshot.account_observed_at,
+                    latest_snapshot.positions_observed_at,
+                    latest_snapshot.orders_observed_at,
+                )
+            ):
+                reasons.append("latest-sample-stale-or-future")
+
+        unique_reasons = tuple(dict.fromkeys(reasons))
+        return EmergencyClearReadiness(
+            ready=not unique_reasons and len(latest) == 3,
+            reasons=unique_reasons,
+            baseline_id=baseline_id,
+            authorization_id=baseline.authorization_id,
+            risk_configuration_fingerprint=limits.configuration_fingerprint,
+            evidence_ids=tuple(item.evidence_id for item in latest),
+            observed_snapshot_ids=snapshot_ids,
+            attestation_fingerprints=tuple(
+                value.attestation_fingerprint for value in attestation_values
+            ),
+            emergency_generation=emergency.generation,
+            assessed_at=assessed_at,
+        )
 
     def _verify_all(
         self, connection: sqlite3.Connection

@@ -33,6 +33,7 @@ class RiskLimits:
     max_strategy_drawdown: Decimal
     max_price_deviation_bps: Decimal
     max_snapshot_age_seconds: int
+    min_reconciliation_stability_seconds: int
     reviewed_by: str
     review_reason: str
     effective_at: datetime
@@ -67,8 +68,13 @@ class RiskLimits:
             raise ValueError("maximum strategy drawdown cannot exceed one")
         if self.max_open_orders < 1 or self.max_orders_per_minute < 1:
             raise ValueError("order limits must be positive")
-        if self.max_snapshot_age_seconds < 1:
+        if isinstance(self.max_snapshot_age_seconds, bool) or self.max_snapshot_age_seconds < 1:
             raise ValueError("snapshot maximum age must be positive")
+        if (
+            isinstance(self.min_reconciliation_stability_seconds, bool)
+            or self.min_reconciliation_stability_seconds < 1
+        ):
+            raise ValueError("reconciliation stability interval must be positive")
         _utc("risk effective time", self.effective_at)
         _utc("risk expiry", self.expires_at)
         if self.expires_at <= self.effective_at:

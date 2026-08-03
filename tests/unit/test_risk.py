@@ -47,6 +47,7 @@ def _limits(**changes: object) -> RiskLimits:
         max_strategy_drawdown=Decimal("0.10"),
         max_price_deviation_bps=Decimal("50"),
         max_snapshot_age_seconds=30,
+        min_reconciliation_stability_seconds=5,
         reviewed_by="test-reviewer",
         review_reason="test fixture only",
         effective_at=NOW - timedelta(days=1),
@@ -133,6 +134,8 @@ def test_limits_reject_implicit_or_invalid_values() -> None:
         _limits(max_daily_loss=Decimal("0"))
     with pytest.raises(ValueError, match="expiry"):
         _limits(expires_at=NOW - timedelta(days=2))
+    with pytest.raises(ValueError, match="stability interval"):
+        _limits(min_reconciliation_stability_seconds=0)
 
 
 def test_emergency_disable_is_default_persistent_and_journal_bound(tmp_path: Path) -> None:
