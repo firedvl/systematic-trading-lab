@@ -88,6 +88,7 @@ def test_cli_runs_cataloged_experiment_and_compares_candidates(
     ]
     record = ExperimentRegistry(layout.experiments).get("candidate")
     assert record["status"] == "completed"
+    assert record["execution_provenance"] == "controlled-run"
     stored_spec = record["spec_json"]
     assert isinstance(stored_spec, dict)
     assert stored_spec["execution_model_version"] == "delayed-2-bars-v1"

@@ -28,6 +28,7 @@ def test_registry_adds_plan_fingerprint_to_existing_database(tmp_path: Path) -> 
     with sqlite3.connect(path) as connection:
         columns = {row[1] for row in connection.execute("PRAGMA table_info(experiments)")}
     assert "campaign_plan_fingerprint" in columns
+    assert "execution_provenance" in columns
 
 
 def test_sealed_training_plan_preregisters_and_runs_only_stored_spec(
@@ -138,4 +139,6 @@ def test_sealed_training_plan_preregisters_and_runs_only_stored_spec(
     assert reads == [
         TimestampRange(datetime(2025, 1, 6, tzinfo=UTC), datetime(2025, 1, 10, tzinfo=UTC))
     ]
-    assert registry.get("sealed-benchmark")["status"] == "completed"
+    completed = registry.get("sealed-benchmark")
+    assert completed["status"] == "completed"
+    assert completed["execution_provenance"] == "controlled-run"

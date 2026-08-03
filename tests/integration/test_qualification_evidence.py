@@ -15,6 +15,7 @@ from systematic_trading_lab.experiments import (
     ExperimentSplit,
     HoldoutAccessError,
 )
+from systematic_trading_lab.fingerprints import canonical_json, fingerprint
 from systematic_trading_lab.qualification import load_qualification_proposal
 from systematic_trading_lab.qualification_evidence import (
     CandidateEvidenceSpec,
@@ -77,9 +78,22 @@ def _metrics(total_return: str, index: int, *, trade_count: int | None = None) -
 def _complete(
     registry: ExperimentRegistry, spec: ExperimentSpec, metrics: dict[str, object]
 ) -> None:
+    report: dict[str, object] = {
+        "schema_version": "backtest-report-v2",
+        "results": {spec.experiment_id: metrics},
+        "comparisons": {},
+    }
+    report["report_fingerprint"] = fingerprint(report)
+    report_path = registry.path.parent / f"{spec.experiment_id}.json"
+    report_path.write_text(canonical_json(report) + "\n", encoding="utf-8")
     registry.create_experiment(spec)
     registry.claim(spec.experiment_id)
-    registry.complete(spec.experiment_id, metrics)
+    registry._complete_controlled(
+        spec.experiment_id,
+        metrics,
+        [str(report_path)],
+        [str(report["report_fingerprint"])],
+    )
 
 
 def _seed_registry(path: Path, *, corrupt_cost: bool = False) -> ExperimentRegistry:
@@ -284,6 +298,53 @@ def test_registry_evidence_aggregates_and_qualifies_approved_evidence(
         registry.get_holdout_run_authorization("authorization-approved")["candidate_id"]
         == "candidate-20"
     )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (
+        ("execution_provenance", "legacy-manual"),
+        ("artifact_locations_json", "[]"),
+        ("artifact_hashes_json", "[]"),
+    ),
+)
+def test_qualification_rejects_uncontrolled_or_unbound_evidence(
+    tmp_path: Path, field: str, value: str
+) -> None:
+    path = tmp_path / "experiments.sqlite3"
+    registry = _seed_registry(path)
+    with registry._connect() as connection:
+        connection.execute(
+            f"UPDATE experiments SET {field} = ? WHERE experiment_id = 'base-1'", (value,)
+        )
+    proposal = replace(
+        load_qualification_proposal(Path("config/research/qualification-proposal.json")),
+        evidence_campaign_id="campaign-evidence",
+    )
+
+    with pytest.raises(ValueError, match="invalid qualification evidence experiment: base-1"):
+        build_evidence_reports(registry, _manifest(), proposal)
+
+
+@pytest.mark.parametrize("replacement", (None, "{}"))
+def test_qualification_rejects_missing_or_tampered_report(
+    tmp_path: Path, replacement: str | None
+) -> None:
+    registry = _seed_registry(tmp_path / "experiments.sqlite3")
+    locations = registry.get("base-1")["artifact_locations_json"]
+    assert isinstance(locations, list) and isinstance(locations[0], str)
+    report_path = Path(locations[0])
+    if replacement is None:
+        report_path.unlink()
+    else:
+        report_path.write_text(replacement, encoding="utf-8")
+    proposal = replace(
+        load_qualification_proposal(Path("config/research/qualification-proposal.json")),
+        evidence_campaign_id="campaign-evidence",
+    )
+
+    with pytest.raises(ValueError, match="invalid qualification evidence report: base-1"):
+        build_evidence_reports(registry, _manifest(), proposal)
 
 
 def test_approved_evidence_creates_one_exact_holdout_authorization(tmp_path: Path) -> None:

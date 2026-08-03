@@ -196,6 +196,7 @@ def test_runner_records_completion_failure_and_blocks_holdout(tmp_path: Path) ->
     record = registry.get("candidate")
     assert result.metrics.trade_count == 1
     assert record["status"] == "completed"
+    assert record["execution_provenance"] == "legacy-manual"
     assert record["artifact_hashes_json"]
 
     broken = replace(spec(source, "broken"), strategy_id="unknown")
