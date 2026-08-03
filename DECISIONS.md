@@ -205,3 +205,10 @@
 - Reasoning: three consecutive samples expose a repeated state without adding a scheduler, while binding the interval into reviewed limits prevents a caller from shortening it at clear time.
 - Consequences: any dirty record among the latest three resets readiness; the latest state must remain fresh at assessment. Readiness is read-only and does not clear emergency state.
 - Revisit when: measured paper polling cadence or broker consistency data supports a stricter reviewed rule.
+
+## 2026-08-03 — Approved risk decisions reserve capacity atomically
+
+- Decision: an approved risk decision creates one immutable reservation for cash, gross exposure, order notional, and order count in the same SQLite transaction; active reservations are included in later evaluations until their bound expiry.
+- Context: a risk approval without durable pending capacity can be duplicated across workers or restarts before an order lifecycle exists.
+- Consequences: rejected decisions remain evidence, approved decisions cannot exist without a matching reservation, and reservation release waits for the reviewed forward-only order lifecycle slice.
+- Revisit when: order submission, fill, cancellation, and reservation-release states are implemented and independently reconciled.
