@@ -69,7 +69,7 @@
 - Context: files alone cannot distinguish a crash from completion or enforce search-volume accounting.
 - Alternatives: report-directory discovery or an in-memory job queue.
 - Reasoning: SQLite transactions provide a small durable registry, explicit search budgets, and restart-safe state without a service dependency.
-- Consequences: stale running experiments become failed evidence; completion cannot overwrite a failed or completed record.
+- Consequences: stale running experiments become failed evidence; completion cannot overwrite a failed or completed record. Each walk-forward fold and cost or delay variant consumes its own candidate, links to its parent, and remains visible in comparison reports even when it fails.
 - Revisit when: concurrent distributed workers exceed SQLite's measured write capacity.
 
 ## 2026-08-04 — Holdout access requires a logged event

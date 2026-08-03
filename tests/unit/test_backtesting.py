@@ -5,7 +5,7 @@ import pytest
 
 from systematic_trading_lab.backtesting import BacktestEngine, BacktestError, CostModel
 from systematic_trading_lab.domain import OHLCVBar, Symbol
-from systematic_trading_lab.strategies import BuyAndHoldStrategy, CashStrategy
+from systematic_trading_lab.strategies import BuyAndHoldStrategy, CashStrategy, FixedWeightStrategy
 
 
 def bars() -> tuple[OHLCVBar, ...]:
@@ -55,3 +55,11 @@ def test_duplicate_bars_and_final_bar_orders_fail_closed() -> None:
     result = engine.run((bars()[0],), BuyAndHoldStrategy())
     assert result.trades == ()
     assert result.orders[-1].reason == "no-future-fill"
+
+
+def test_delayed_fill_waits_for_the_configured_symbol_bar() -> None:
+    result = BacktestEngine(Decimal("1000"), fill_delay_bars=2).run(
+        bars(), FixedWeightStrategy((Symbol("SPY"),), rebalance_every=1)
+    )
+    assert result.trades[0].fill_timestamp == bars()[2].timestamp
+    assert any(event.reason == "pending-order-exists" for event in result.orders)
