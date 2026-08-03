@@ -1,5 +1,23 @@
 # Alpaca risk-managed momentum training v6
 
+## Outcome
+
+The four-record training campaign completed under code commit
+`e561c60c8928c310aa31a7149665be97e4abdb57`. The 126-session base lost 6.34%, trailed
+fixed-weight, had a negative Sharpe ratio, and assigned all net instrument profit to one ETF. The
+168-session neighbor also lost money. The family fails the predeclared advancement screen and
+stops before validation.
+
+| Record | Lookback | Return | Sharpe | Max drawdown | Top-instrument profit share | Fills |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `m3-rmm-fixed-weight-training` | — | -0.001359 | 0.069103 | 0.257724 | 0.436930 | 557 |
+| `m3-rmm-lookback-84-training` | 84 | 0.062350 | 0.283304 | 0.189912 | 0.454073 | 278 |
+| `m3-rmm-lookback-126-training` | 126 | -0.063431 | -0.229125 | 0.187283 | 1.000000 | 239 |
+| `m3-rmm-lookback-168-training` | 168 | -0.037064 | -0.144726 | 0.174520 | 0.618685 | 195 |
+
+No 2023–2026 bars, validation data, or holdout results were read. The local immutable registry and
+content-addressed reports retain all four records.
+
 ## Predeclared design
 
 This training-only campaign tests one allocation change on the existing complete-session
