@@ -130,6 +130,8 @@ class DatasetManifest:
     schema_version: str
     adjustment_policy: str
     calendar_policy: str
+    universe_id: str
+    universe_fingerprint: str
     validation: ValidationResult
     parent_dataset_id: str | None = None
 

@@ -80,3 +80,12 @@
 - Reasoning: registry-enforced access makes the protected transition explicit and auditable.
 - Consequences: holdout creation and evaluation use a separate controlled code path; routine experiment CLI excludes holdout creation.
 - Revisit when: remote authorization and immutable external audit storage replace the local registry.
+
+## 2026-08-02 — Universe provenance is part of dataset identity
+
+- Decision: define fixed-universe membership as sourced time intervals and bind the universe ID and content fingerprint into dataset versions, correction lineage, and experiment records.
+- Context: a symbol list alone cannot show whether every instrument was available for the full research range, and a mutable universe name cannot reproduce the exact membership rule.
+- Alternatives: keep one unsourced symbol list, infer membership from available bars, or record only the universe name.
+- Reasoning: an explicit interval check rejects incomplete or inception-crossing requests before acquisition, while the fingerprint preserves the exact reviewed definition used by a sealed dataset.
+- Consequences: imports must include exactly the full-range members; changing membership creates a separate dataset lineage even when the bars match. The first format permits one interval per symbol.
+- Revisit when: exits, re-entry, symbol changes, or a larger universe require multiple intervals or a dedicated membership source.

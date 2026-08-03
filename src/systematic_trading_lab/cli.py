@@ -21,6 +21,7 @@ from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, Ex
 from .providers import AlpacaHistoricalProvider, FixtureProvider
 from .reporting import benchmark_suite, build_report, report_json, strategy_result, write_report
 from .storage import StorageLayout
+from .universe import load_research_universe
 
 
 def parser() -> argparse.ArgumentParser:
@@ -65,7 +66,6 @@ def parser() -> argparse.ArgumentParser:
     create.add_argument("--strategy-family", required=True)
     create.add_argument("--code-commit", required=True)
     create.add_argument("--dataset-id", required=True)
-    create.add_argument("--dataset-fingerprint", required=True)
     create.add_argument("--split", choices=("training", "validation"), required=True)
     create.add_argument("--start", required=True)
     create.add_argument("--end", required=True)
@@ -129,6 +129,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 def run(arguments: argparse.Namespace, settings: Settings) -> int:
     layout = StorageLayout(settings.home)
     service = DatasetService(layout)
+    universe = load_research_universe()
     if arguments.command == "experiment":
         registry = ExperimentRegistry(layout.experiments)
         if arguments.experiment_command == "create-campaign":
@@ -136,6 +137,10 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                 registry.create_campaign(arguments.campaign_id, arguments.name, arguments.budget)
             )
         elif arguments.experiment_command == "create":
+            if not service.validate(arguments.dataset_id)["valid"]:
+                raise DatasetValidationError("dataset integrity validation failed")
+            manifest = service.describe(arguments.dataset_id)
+            identity = manifest["identity"]
             registry.create_experiment(
                 ExperimentSpec(
                     experiment_id=arguments.experiment_id,
@@ -144,9 +149,10 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                     strategy_version=arguments.strategy_version,
                     strategy_family=arguments.strategy_family,
                     code_commit=arguments.code_commit,
-                    dataset_id=arguments.dataset_id,
-                    dataset_fingerprint=arguments.dataset_fingerprint,
-                    universe_id="liquid-etfs-v1",
+                    dataset_id=identity["dataset_id"],
+                    dataset_fingerprint=identity["fingerprint"],
+                    universe_id=manifest["universe_id"],
+                    universe_fingerprint=manifest["universe_fingerprint"],
                     parameters={},
                     cost_model_version="conservative-bps-v1",
                     execution_model_version="next-bar-v1",
@@ -187,7 +193,8 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                 code_commit=arguments.code_commit,
                 dataset_id=identity["dataset_id"],
                 dataset_fingerprint=identity["fingerprint"],
-                universe_id="liquid-etfs-v1",
+                universe_id=manifest["universe_id"],
+                universe_fingerprint=manifest["universe_fingerprint"],
                 parameters=parameters,
                 cost_model_version=cost_model.version,
                 execution_model_version=execution_model_version(arguments.fill_delay_bars),
@@ -257,7 +264,7 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         return 0
     if arguments.data_command == "import-fixture":
         imported = service.import_from(
-            FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+            FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), universe
         )
         _print(imported.__dict__)
         return 0
@@ -272,6 +279,7 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             fixture_symbols(),
             Timeframe.DAILY,
             TimestampRange(_parse_utc(arguments.start), _parse_utc(arguments.end)),
+            universe,
         )
         _print(imported.__dict__)
         return 0

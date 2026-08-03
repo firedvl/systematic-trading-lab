@@ -53,6 +53,7 @@ class ExperimentSpec:
     dataset_id: str
     dataset_fingerprint: str
     universe_id: str
+    universe_fingerprint: str
     parameters: Mapping[str, object]
     cost_model_version: str
     execution_model_version: str

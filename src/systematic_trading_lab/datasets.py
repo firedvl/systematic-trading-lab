@@ -23,6 +23,7 @@ from .fingerprints import canonical_json, canonicalize, fingerprint
 from .parquet import from_parquet, to_parquet
 from .providers import MarketDataProvider
 from .storage import StorageLayout
+from .universe import UniverseDefinition
 from .validation import validate_records
 
 
@@ -59,6 +60,7 @@ class DatasetService:
         symbols: Sequence[Symbol],
         timeframe: Timeframe,
         requested: TimestampRange,
+        universe: UniverseDefinition,
     ) -> ImportResult:
         if not provider.name:
             raise DatasetValidationError("provider name is required")
@@ -77,6 +79,7 @@ class DatasetService:
             raise DatasetValidationError(
                 "unadjusted data requires reviewed corporate-action processing"
             )
+        universe.require_full_coverage(tuple(symbols), timeframe, requested)
         records = provider.fetch(symbols, timeframe, requested)
         validated = validate_records(
             records,
@@ -113,6 +116,8 @@ class DatasetService:
             "normalization_version": _NORMALIZATION_VERSION,
             "schema_version": _SCHEMA_VERSION,
             "calendar_policy": _CALENDAR_POLICY,
+            "universe_id": universe.universe_id,
+            "universe_fingerprint": universe.universe_fingerprint,
             "data_fingerprint": data_fingerprint,
             "raw_fingerprint": raw_fingerprint,
         }
@@ -129,7 +134,7 @@ class DatasetService:
                 existing.get("parent_dataset_id"),
             )
         parent_dataset_id = self._lineage_parent(
-            provider.name, symbols, timeframe, requested, adjustment_policy
+            provider.name, symbols, timeframe, requested, adjustment_policy, universe
         )
         identity = DatasetIdentity(dataset_id=dataset_id, fingerprint=data_fingerprint)
         actual = TimestampRange(
@@ -148,6 +153,8 @@ class DatasetService:
             schema_version=_SCHEMA_VERSION,
             adjustment_policy=adjustment_policy.value,
             calendar_policy=_CALENDAR_POLICY,
+            universe_id=universe.universe_id,
+            universe_fingerprint=universe.universe_fingerprint,
             validation=validated.result,
             parent_dataset_id=parent_dataset_id,
         )
@@ -186,6 +193,7 @@ class DatasetService:
         timeframe: Timeframe,
         requested: TimestampRange,
         adjustment_policy: AdjustmentPolicy,
+        universe: UniverseDefinition,
     ) -> str | None:
         expected = {
             "provider": provider,
@@ -196,6 +204,8 @@ class DatasetService:
             "normalization_version": _NORMALIZATION_VERSION,
             "schema_version": _SCHEMA_VERSION,
             "calendar_policy": _CALENDAR_POLICY,
+            "universe_id": universe.universe_id,
+            "universe_fingerprint": universe.universe_fingerprint,
         }
         for manifest in self.catalog.list_manifests():
             candidate = {
@@ -207,6 +217,8 @@ class DatasetService:
                 "normalization_version": manifest.get("normalization_version"),
                 "schema_version": manifest.get("schema_version"),
                 "calendar_policy": manifest.get("calendar_policy"),
+                "universe_id": manifest.get("universe_id"),
+                "universe_fingerprint": manifest.get("universe_fingerprint"),
             }
             if candidate == expected:
                 return str(manifest["identity"]["dataset_id"])
