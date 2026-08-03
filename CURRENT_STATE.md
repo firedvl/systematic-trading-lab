@@ -7,4 +7,4 @@
 - Test status: 40 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Evidence aggregation, relationship validation, immutable-write, and CLI checks pass; live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
 - Next task: replace the raw holdout-creation boolean with a stored authorization tied to approved, passing qualification evidence. Current candidates cannot receive that authorization.
-- Branch: `codex/m3-qualification-evidence`; pull request not yet opened.
+- Branch: `codex/m3-qualification-evidence`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/14.
