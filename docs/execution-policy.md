@@ -16,9 +16,11 @@ A separate read-only adapter now permits only `GET /v2/account`, `/v2/positions`
 `/v2/clock` at `https://paper-api.alpaca.markets`. It blocks redirects, rejects unexpected accounts,
 symbols, values, and open-order states, and fails if a 500-order response cannot prove completeness.
 It exposes no submit, cancel, replace, close-position, or other mutation method.
-A timeout or crash after submission requires lookup by that ID before retry. Broker events are
-deduplicated by provider event identity and sanitized payload hash. Broker storage accepts only
-schema-validated normalized fields and excludes raw bodies, headers, URLs, and exception text.
+A timeout or crash after submission requires lookup by that ID before retry. Broker events now have
+a broker-free evidence store that deduplicates exact provider event identity and normalized content,
+checks forward state and cumulative fill quantity, and binds each event to one known local order.
+Storage accepts only schema-validated normalized fields and excludes raw bodies, headers, URLs, and
+exception text. Applying events to local lifecycle state remains a separate protected transition.
 Conflicting duplicates, unknown statuses, out-of-order transitions, or position drift trigger
 emergency disable. Each submit, cancel, and cancel-all mutation is journaled before the call and has
 an unknown-outcome state resolved by lookup and reconciliation before retry. No order submission is

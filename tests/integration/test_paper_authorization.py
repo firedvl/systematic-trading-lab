@@ -12,6 +12,7 @@ import pytest
 
 import systematic_trading_lab.alpaca_paper as alpaca_paper
 from systematic_trading_lab.alpaca_paper import AlpacaPaperReader
+from systematic_trading_lab.broker_events import BrokerEventStore, BrokerOrderEvent
 from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityError
 from systematic_trading_lab.experiments import HoldoutAccessError
 from systematic_trading_lab.fingerprints import fingerprint
@@ -599,15 +600,49 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             submitter_id="worker-2",
             claimed_at=NOW + timedelta(seconds=19),
         )
+    broker_events = BrokerEventStore(store.path)
+    acknowledged = BrokerOrderEvent(
+        event_id="broker-event-1",
+        broker_order_id="broker-order-1",
+        client_order_id=delta.client_order_id,
+        state=OrderState.ACKNOWLEDGED,
+        cumulative_filled_quantity=0,
+        provider_timestamp=NOW + timedelta(seconds=19),
+        observed_at=NOW + timedelta(seconds=20),
+    )
+    assert broker_events.record(acknowledged) == acknowledged
+    assert BrokerEventStore(store.path).record(acknowledged) == acknowledged
+    with pytest.raises(JournalIntegrityError, match="different content"):
+        broker_events.record(replace(acknowledged, state=OrderState.FILLED))
+    partial = BrokerOrderEvent(
+        event_id="broker-event-2",
+        broker_order_id="broker-order-1",
+        client_order_id=delta.client_order_id,
+        state=OrderState.PARTIALLY_FILLED,
+        cumulative_filled_quantity=3,
+        provider_timestamp=NOW + timedelta(seconds=20),
+        observed_at=NOW + timedelta(seconds=21),
+    )
+    broker_events.record(partial)
+    with pytest.raises(JournalIntegrityError, match="out of order"):
+        broker_events.record(
+            replace(
+                partial,
+                event_id="broker-event-3",
+                cumulative_filled_quantity=2,
+                provider_timestamp=NOW + timedelta(seconds=21),
+                observed_at=NOW + timedelta(seconds=22),
+            )
+        )
     orders.transition(
         delta.client_order_id,
         OrderState.SUBMISSION_UNKNOWN,
-        changed_at=NOW + timedelta(seconds=20),
+        changed_at=NOW + timedelta(seconds=22),
     )
     orders.transition(
         delta.client_order_id,
         OrderState.REJECTED,
-        changed_at=NOW + timedelta(seconds=21),
+        changed_at=NOW + timedelta(seconds=23),
     )
     with sqlite3.connect(store.path) as connection:
         assert connection.execute(
