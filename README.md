@@ -13,6 +13,7 @@ uv run trading-lab data import-fixture
 uv run trading-lab data describe
 TRADING_LAB_MODE=research trading-lab data import-alpaca --start 2025-01-01 --end 2025-01-31
 uv run trading-lab backtest fixture --strategy buy-and-hold
+uv run trading-lab backtest fixture --strategy all --output .trading-lab/reports/baselines.json
 ```
 
 Runtime state defaults to `.trading-lab/` and is not committed. Set `TRADING_LAB_HOME` to use another directory. `TRADING_LAB_MODE` defaults to `offline`; accepted modes are `offline`, `research`, `replay`, `shadow`, `paper`, and the deliberately non-operational `live-disabled`.
