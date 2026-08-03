@@ -7,4 +7,4 @@
 - Test status: 50 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Complete-session history, atomic portfolio rejection, sell-before-buy reallocation, next-session fills, bounded research reads, holdout controls, evidence integrity, and one-time access checks pass; live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
 - Next task: implement a predeclared diversified, lower-turnover portfolio strategy on this boundary, then run it only on the 2020–2022 training range. Keep it separate from broker authority and qualification-control changes. Do not access 2023–2026 data for candidate development.
-- Branch: `codex/m3-session-portfolio-boundary`; draft pull request pending.
+- Branch: `codex/m3-session-portfolio-boundary`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/19.
