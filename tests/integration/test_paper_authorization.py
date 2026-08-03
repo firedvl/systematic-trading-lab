@@ -604,6 +604,16 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         OrderState.SUBMISSION_UNKNOWN,
         changed_at=NOW + timedelta(seconds=20),
     )
+    orders.transition(
+        delta.client_order_id,
+        OrderState.REJECTED,
+        changed_at=NOW + timedelta(seconds=21),
+    )
+    with sqlite3.connect(store.path) as connection:
+        assert connection.execute(
+            "SELECT reason FROM capacity_releases WHERE reservation_id = ?",
+            (reservation_id,),
+        ).fetchone() == ("order-rejected",)
     OrderLifecycleStore(store.path)
     assert (
         store.clear_emergency(

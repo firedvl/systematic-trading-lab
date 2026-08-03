@@ -10,6 +10,8 @@ Only the Alpaca paper host may be selected. Long-only whole-share deltas produce
 broker-free client order ID per intent and target/current quantity pair. Staging requires the exact
 active capacity reservation and matching immutable intent. One submitter ID is claimed atomically
 with `staged -> submitting`; later callers cannot claim or bypass that transition.
+Cancellation or rejection releases reserved capacity in the same transaction as the terminal local
+order transition. Filled orders retain capacity until reconciliation proves the resulting position.
 A separate read-only adapter now permits only `GET /v2/account`, `/v2/positions`, `/v2/orders`, and
 `/v2/clock` at `https://paper-api.alpaca.markets`. It blocks redirects, rejects unexpected accounts,
 symbols, values, and open-order states, and fails if a 500-order response cannot prove completeness.

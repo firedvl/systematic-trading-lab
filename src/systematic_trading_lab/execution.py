@@ -25,6 +25,7 @@ _KNOWN_EVENT_TYPES = {
     "paper-authorized",
     "risk-decided",
     "capacity-reserved",
+    "capacity-released",
     "order-staged",
     "order-submitter-claimed",
     "order-transitioned",
