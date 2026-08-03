@@ -49,4 +49,7 @@ The read-only clear-readiness proof selects the latest three evidence records fo
 three must use distinct adapter-attested snapshots, be clean with no unresolved mutation, and have
 strictly increasing comparison and observation times separated by the reviewed stability interval.
 It rechecks current snapshot freshness, active exact authorization and limits, and the current
-emergency generation. A dirty latest sample resets readiness. The proof cannot clear emergency state.
+emergency generation. A dirty latest sample resets readiness. The proof cannot clear emergency
+state by itself. A separate operator clear request is bounded, idempotent, and journaled; it
+recomputes the proof in the same immediate transaction that changes emergency state. A dirty
+reconciliation journals and restores disable atomically.

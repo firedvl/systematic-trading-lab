@@ -522,12 +522,42 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     assert readiness.ready
     assert readiness.evidence_ids == tuple(item.evidence_id for item in samples[-3:])
     assert readiness.proof_fingerprint
+    cleared = store.clear_emergency(
+        clear_id="clear-stable-1",
+        baseline_id=baseline.baseline_id,
+        limits=limits,
+        operator="test-operator",
+        reason="stable proof reviewed",
+        cleared_at=NOW + timedelta(seconds=18),
+    )
+    assert not cleared.disabled
+    assert cleared.generation == 2
+    assert (
+        store.clear_emergency(
+            clear_id="clear-stable-1",
+            baseline_id=baseline.baseline_id,
+            limits=limits,
+            operator="test-operator",
+            reason="stable proof reviewed",
+            cleared_at=NOW + timedelta(seconds=18),
+        )
+        == cleared
+    )
+    with pytest.raises(JournalIntegrityError, match="different content"):
+        store.clear_emergency(
+            clear_id="clear-stable-1",
+            baseline_id=baseline.baseline_id,
+            limits=limits,
+            operator="other-operator",
+            reason="changed",
+            cleared_at=NOW + timedelta(seconds=18),
+        )
     stale = store.assess_emergency_clear_readiness(
         baseline_id=baseline.baseline_id,
         limits=limits,
         assessed_at=NOW + timedelta(seconds=49),
     )
-    assert stale.reasons == ("latest-sample-stale-or-future",)
+    assert stale.reasons == ("emergency-already-clear", "latest-sample-stale-or-future")
     mismatched = store.assess_emergency_clear_readiness(
         baseline_id=baseline.baseline_id,
         limits=replace(limits, min_reconciliation_stability_seconds=6),
@@ -551,8 +581,10 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         compared_at=dirty_at,
         unresolved_mutations=1,
     )
+    assert store.get_emergency().disabled
     reset = store.assess_emergency_clear_readiness(
         baseline_id=baseline.baseline_id, limits=limits, assessed_at=dirty_at
     )
     assert not reset.ready
     assert reset.reasons == ("latest-samples-not-clean",)
+    assert ReconciliationStore(store.path).get_emergency().disabled

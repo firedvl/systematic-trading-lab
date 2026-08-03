@@ -635,18 +635,37 @@ class RiskStore(ExecutionStore):
             "reason": str(row[2]),
             "operator": str(row[3]),
         }
+        try:
+            event_payload = json.loads(event[4]) if event is not None else None
+        except json.JSONDecodeError:
+            event_payload = None
         if (
             event is None
             or event[0] != row[4]
-            or event[1:]
-            != (
-                "emergency-initialized",
-                "emergency-state",
-                "global",
-                canonical_json(payload),
-            )
+            or event[2] != "emergency-state"
+            or event[3] != "global"
+            or event[1] not in {"emergency-initialized", "emergency-cleared", "emergency-disabled"}
+            or not isinstance(event_payload, dict)
+            or any(event_payload.get(key) != value for key, value in payload.items())
         ):
             raise JournalIntegrityError("emergency state does not match its journal event")
+        if event[1] == "emergency-initialized" and (
+            not payload["disabled"] or payload["generation"] != 1
+        ):
+            raise JournalIntegrityError("emergency initialization is invalid")
+        if event[1] == "emergency-cleared" and payload["disabled"]:
+            raise JournalIntegrityError("emergency clear state is invalid")
+        if event[1] == "emergency-disabled" and not payload["disabled"]:
+            raise JournalIntegrityError("emergency disable state is invalid")
+        if event[1] in {"emergency-cleared", "emergency-disabled"} and not isinstance(
+            event_payload.get("cause_fingerprint"), str
+        ):
+            raise JournalIntegrityError("emergency transition proof is missing")
+        if event[1] in {"emergency-cleared", "emergency-disabled"}:
+            try:
+                _sha256("emergency transition cause", event_payload["cause_fingerprint"])
+            except (KeyError, ValueError) as error:
+                raise JournalIntegrityError("emergency transition proof is invalid") from error
         return EmergencyState(
             disabled=bool(row[0]),
             generation=int(row[1]),
