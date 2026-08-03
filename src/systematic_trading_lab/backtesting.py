@@ -6,6 +6,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
+from itertools import groupby
+from types import MappingProxyType
 from typing import Protocol
 
 from .domain import OHLCVBar, Symbol
@@ -21,6 +23,20 @@ class Strategy(Protocol):
     def version(self) -> str: ...
 
     def on_bar(self, bar: OHLCVBar, history: Sequence[OHLCVBar]) -> Sequence[TargetPosition]: ...
+
+
+class PortfolioStrategy(Protocol):
+    @property
+    def strategy_id(self) -> str: ...
+
+    @property
+    def version(self) -> str: ...
+
+    def on_session(
+        self,
+        bars: Sequence[OHLCVBar],
+        history: Mapping[Symbol, Sequence[OHLCVBar]],
+    ) -> Sequence[TargetPosition]: ...
 
 
 @dataclass(frozen=True)
@@ -47,6 +63,14 @@ class CostModel:
 class Decision:
     timestamp: datetime
     symbol: Symbol
+    strategy_id: str
+    strategy_version: str
+    targets: tuple[TargetPosition, ...]
+
+
+@dataclass(frozen=True)
+class SessionDecision:
+    timestamp: datetime
     strategy_id: str
     strategy_version: str
     targets: tuple[TargetPosition, ...]
@@ -116,7 +140,7 @@ class BacktestResult:
     strategy_version: str
     initial_cash: Decimal
     equity_curve: tuple[EquityPoint, ...]
-    decisions: tuple[Decision, ...]
+    decisions: tuple[Decision | SessionDecision, ...]
     orders: tuple[OrderEvent, ...]
     trades: tuple[Trade, ...]
     metrics: BacktestMetrics
@@ -145,11 +169,7 @@ class BacktestEngine:
     def run(self, bars: Sequence[OHLCVBar], strategy: Strategy) -> BacktestResult:
         ordered = tuple(sorted(bars, key=lambda bar: (bar.timestamp, bar.symbol.value)))
         self._check_bars(ordered)
-        next_bar: dict[tuple[Symbol, datetime], OHLCVBar] = {}
-        for symbol in {bar.symbol for bar in ordered}:
-            symbol_bars = tuple(bar for bar in ordered if bar.symbol == symbol)
-            for index, bar in enumerate(symbol_bars[: -self.fill_delay_bars]):
-                next_bar[(symbol, bar.timestamp)] = symbol_bars[index + self.fill_delay_bars]
+        next_bar = self._next_bars(ordered)
         cash = self.initial_cash
         positions: dict[Symbol, Decimal] = {}
         marks: dict[Symbol, Decimal] = {}
@@ -210,7 +230,110 @@ class BacktestEngine:
                     order.symbol, order.earliest_fill_timestamp, "rejected", "no-future-fill"
                 )
             )
-        metrics = self._metrics(curve, trades, ordered, positions, marks)
+        return self._result(strategy, curve, decisions, orders, trades, ordered, positions, marks)
+
+    def run_portfolio(
+        self, bars: Sequence[OHLCVBar], strategy: PortfolioStrategy
+    ) -> BacktestResult:
+        ordered = tuple(sorted(bars, key=lambda bar: (bar.timestamp, bar.symbol.value)))
+        self._check_bars(ordered)
+        next_bar = self._next_bars(ordered)
+        universe = {bar.symbol for bar in ordered}
+        cash = self.initial_cash
+        positions: dict[Symbol, Decimal] = {}
+        marks: dict[Symbol, Decimal] = {}
+        history: dict[Symbol, list[OHLCVBar]] = {}
+        pending: dict[Symbol, Order] = {}
+        decisions: list[Decision | SessionDecision] = []
+        orders: list[OrderEvent] = []
+        trades: list[Trade] = []
+        curve: list[EquityPoint] = []
+
+        for timestamp, grouped in groupby(ordered, key=lambda bar: bar.timestamp):
+            session = tuple(grouped)
+            session_symbols = {bar.symbol for bar in session}
+            if session_symbols != universe:
+                raise BacktestError("portfolio backtest requires complete symbol sessions")
+
+            for bar in session:
+                marks[bar.symbol] = bar.open
+            due: list[tuple[OHLCVBar, Order]] = []
+            for bar in session:
+                pending_order = pending.get(bar.symbol)
+                if (
+                    pending_order is not None
+                    and bar.timestamp >= pending_order.earliest_fill_timestamp
+                ):
+                    due.append((bar, pending_order))
+            due.sort(
+                key=lambda item: (
+                    not self._reduces_position(item[1], item[0].open, cash, positions, marks),
+                    item[0].symbol.value,
+                )
+            )
+            for bar, pending_order in due:
+                pending.pop(bar.symbol)
+                cash, event, trade = self._execute(pending_order, bar.open, cash, positions, marks)
+                orders.append(event)
+                if trade is not None:
+                    trades.append(trade)
+
+            for bar in session:
+                marks[bar.symbol] = bar.close
+                history.setdefault(bar.symbol, []).append(bar)
+            frozen_history = MappingProxyType(
+                {
+                    symbol: tuple(symbol_history)
+                    for symbol, symbol_history in sorted(
+                        history.items(), key=lambda item: item[0].value
+                    )
+                }
+            )
+            targets = tuple(
+                sorted(
+                    strategy.on_session(session, frozen_history),
+                    key=lambda target: target.symbol.value,
+                )
+            )
+            decisions.append(
+                SessionDecision(timestamp, strategy.strategy_id, strategy.version, targets)
+            )
+            rejection = self._portfolio_rejection(
+                targets, timestamp, session_symbols, pending, next_bar
+            )
+            if rejection is not None:
+                orders.extend(
+                    OrderEvent(target.symbol, timestamp, "rejected", rejection)
+                    for target in targets
+                )
+            else:
+                for target in targets:
+                    following = next_bar[(target.symbol, timestamp)]
+                    pending[target.symbol] = Order(
+                        target.symbol, timestamp, timestamp, following.timestamp, target
+                    )
+            curve.append(self._equity_point(timestamp, cash, positions, marks))
+
+        for order in pending.values():
+            orders.append(
+                OrderEvent(
+                    order.symbol, order.earliest_fill_timestamp, "rejected", "no-future-fill"
+                )
+            )
+        return self._result(strategy, curve, decisions, orders, trades, ordered, positions, marks)
+
+    def _result(
+        self,
+        strategy: Strategy | PortfolioStrategy,
+        curve: Sequence[EquityPoint],
+        decisions: Sequence[Decision | SessionDecision],
+        orders: Sequence[OrderEvent],
+        trades: Sequence[Trade],
+        bars: Sequence[OHLCVBar],
+        positions: Mapping[Symbol, Decimal],
+        marks: Mapping[Symbol, Decimal],
+    ) -> BacktestResult:
+        metrics = self._metrics(curve, trades, bars, positions, marks)
         result = BacktestResult(
             strategy.strategy_id,
             strategy.version,
@@ -233,6 +356,54 @@ class BacktestEngine:
             result.metrics,
             fingerprint(result),
         )
+
+    def _next_bars(self, bars: Sequence[OHLCVBar]) -> dict[tuple[Symbol, datetime], OHLCVBar]:
+        next_bar: dict[tuple[Symbol, datetime], OHLCVBar] = {}
+        for symbol in {bar.symbol for bar in bars}:
+            symbol_bars = tuple(bar for bar in bars if bar.symbol == symbol)
+            for index, bar in enumerate(symbol_bars[: -self.fill_delay_bars]):
+                next_bar[(symbol, bar.timestamp)] = symbol_bars[index + self.fill_delay_bars]
+        return next_bar
+
+    @staticmethod
+    def _portfolio_rejection(
+        targets: Sequence[TargetPosition],
+        timestamp: datetime,
+        session_symbols: set[Symbol],
+        pending: Mapping[Symbol, Order],
+        next_bars: Mapping[tuple[Symbol, datetime], OHLCVBar],
+    ) -> str | None:
+        symbols = tuple(target.symbol for target in targets)
+        if len(symbols) != len(set(symbols)):
+            return "duplicate-portfolio-target"
+        if targets and set(symbols) != session_symbols:
+            return "portfolio-symbols-differ"
+        if any(not Decimal("0") <= target.weight <= Decimal("1") for target in targets):
+            return "weight-out-of-range"
+        if sum((target.weight for target in targets), Decimal("0")) > Decimal("1"):
+            return "portfolio-weight-out-of-range"
+        if any(symbol in pending for symbol in symbols):
+            return "pending-order-exists"
+        if any((symbol, timestamp) not in next_bars for symbol in symbols):
+            return "no-future-fill"
+        return None
+
+    def _reduces_position(
+        self,
+        order: Order,
+        market_price: Decimal,
+        cash: Decimal,
+        positions: Mapping[Symbol, Decimal],
+        marks: Mapping[Symbol, Decimal],
+    ) -> bool:
+        current = positions.get(order.symbol, Decimal("0"))
+        equity = cash + sum(
+            (quantity * marks[symbol] for symbol, quantity in positions.items()), Decimal("0")
+        )
+        desired_buy = (
+            equity * order.target.weight / self.cost_model.fill_price(market_price, Decimal("1"))
+        )
+        return desired_buy < current
 
     def _execute(
         self,
