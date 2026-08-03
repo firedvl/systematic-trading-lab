@@ -12,8 +12,9 @@ active capacity reservation and matching immutable intent. One submitter ID is c
 with `staged -> submitting`; later callers cannot claim or bypass that transition.
 Cancellation or rejection releases reserved capacity in the same transaction as the terminal local
 order transition. Filled orders retain capacity until reconciliation proves the resulting position.
-A separate read-only adapter now permits only `GET /v2/account`, `/v2/positions`, `/v2/orders`, and
-`/v2/clock` at `https://paper-api.alpaca.markets`. It blocks redirects, rejects unexpected accounts,
+A separate read-only adapter permits only `GET /v2/account`, `/v2/positions`, `/v2/orders`,
+`/v2/clock`, and exact `GET /v2/orders:by_client_order_id` at
+`https://paper-api.alpaca.markets`. It blocks redirects, rejects unexpected accounts,
 symbols, values, and open-order states, and fails if a 500-order response cannot prove completeness.
 It exposes no submit, cancel, replace, close-position, or other mutation method.
 A timeout or crash after submission requires lookup by that ID before retry. Broker events now have
