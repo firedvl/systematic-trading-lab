@@ -98,3 +98,12 @@
 - Reasoning: daily strategies need daily qualification periods, while the full ledger remains useful for accounting and debugging.
 - Consequences: report schema v2 adds 252-session zero-rate Sharpe and volatility, gross exposure, session and instrument profit concentration, and SPY up/down-regime returns. Earlier campaign metrics remain immutable evidence under their original schema.
 - Revisit when: intraday data requires an explicit event-time return and benchmark policy or a reviewed nonzero reference-rate series.
+
+## 2026-08-03 — Qualification evidence uses explicit registry roles
+
+- Decision: commit a strict evidence manifest that names each base, benchmark, cost, delay, and parameter-neighbor experiment used for qualification aggregation.
+- Context: the first campaign summary derived gate metrics by hand, which could explain results but could not safely authorize holdout access.
+- Alternatives: infer roles from experiment names or accept caller-supplied aggregate metrics.
+- Reasoning: explicit IDs make the evidence set reviewable, while registry checks bind every value to a completed validation record, its parent, period, strategy, dataset, universe, parameters, cost model, and execution model.
+- Consequences: qualification evaluation writes a content-addressed report and stops on missing or inconsistent records. Adding a candidate or sensitivity role requires a reviewed manifest change.
+- Revisit when: a typed campaign planner records these roles at candidate creation and can generate the same manifest without weakening review.

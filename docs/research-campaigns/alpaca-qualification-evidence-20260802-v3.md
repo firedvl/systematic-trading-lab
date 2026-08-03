@@ -41,3 +41,7 @@ For the 2025 fold, doubled costs reduced moving-average return from 0.104700 to 
 ## Remaining decision
 
 Financial gates remain unapproved. A reviewer must approve explicit benchmark, drawdown, Sharpe, exposure, concentration, cost, delay, parameter-neighborhood, regime-coverage, trade-count, turnover, and search-volume thresholds before any controlled holdout run.
+
+## Registry-backed reproduction
+
+`config/research/qualification-evidence-v3.json` now names every registry record used by the gate evaluation. The evaluator reproduced the documented aggregate values without loading market data. It wrote local content-addressed report `qualification-00042a45089801dc5c5b64aa7540028244537692150a253b184e3d67732968d6.json` with candidate evidence fingerprints `4dec55fa1f83f13b253c7327e4ad33c579baf2503e26f16dbd8b1cf0ad1ce8ec` for moving average and `e2646c4aa03c4afa93892f8f744541a84977981718aac207ccf04d24eb28fe2f` for momentum. Both states remain `unapproved`, with the same four and three failed gates listed above. The report stays in ignored runtime storage; the committed manifest and registry records reproduce it.

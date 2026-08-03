@@ -19,6 +19,12 @@ from .domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
 from .experiment_runner import comparison_report, execution_model_version, run_experiment
 from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, ExperimentSplit
 from .providers import AlpacaHistoricalProvider, FixtureProvider
+from .qualification import load_qualification_proposal
+from .qualification_evidence import (
+    build_evidence_reports,
+    load_evidence_manifest,
+    write_evidence_reports,
+)
 from .reporting import benchmark_suite, build_report, report_json, strategy_result, write_report
 from .storage import StorageLayout
 from .universe import load_research_universe
@@ -106,6 +112,12 @@ def parser() -> argparse.ArgumentParser:
     execute.add_argument("--fill-delay-bars", type=int, default=1)
     compare = experiment_commands.add_parser("compare")
     compare.add_argument("experiment_ids", nargs="+")
+    qualify = experiment_commands.add_parser(
+        "evaluate-qualification",
+        help="aggregate registered validation evidence without reading holdout data",
+    )
+    qualify.add_argument("--evidence-manifest", type=Path, required=True)
+    qualify.add_argument("--proposal", type=Path, required=True)
     return root
 
 
@@ -217,6 +229,20 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             _print(registry.get(arguments.experiment_id))
         elif arguments.experiment_command == "compare":
             _print(comparison_report(registry, arguments.experiment_ids))
+        elif arguments.experiment_command == "evaluate-qualification":
+            reports = build_evidence_reports(
+                registry,
+                load_evidence_manifest(arguments.evidence_manifest),
+                load_qualification_proposal(arguments.proposal),
+            )
+            path = write_evidence_reports(layout.reports, reports)
+            _print(
+                {
+                    "report": str(path),
+                    "candidate_ids": [report["candidate_id"] for report in reports],
+                    "evidence_fingerprints": [report["evidence_fingerprint"] for report in reports],
+                }
+            )
         else:
             _print(registry.get(arguments.experiment_id))
         return 0
