@@ -82,6 +82,8 @@ external or signed checkpoint.
    risk decisions, and persistent emergency disable.
 3. Delta construction, deterministic client IDs, reservation-bound staging, forward-only local
    lifecycle states, and atomic single-submitter claims now exist. No broker mutation method exists.
+4. Normalized broker-event evidence now has immutable exact dedupe, order binding, forward-state
+   checks, and cumulative fill checks. It does not yet advance local order state.
 4. Paper-only Alpaca REST adapter behind a mockable protocol and an exact host/path allowlist.
 5. Broker-event ingestion, reconciliation, restart recovery, and cancel-all evidence.
 6. Fake-adapter end-to-end tests and paper operations runbooks.
