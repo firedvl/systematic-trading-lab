@@ -7,4 +7,4 @@
 - Test status: 41 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Evidence-integrity, authorization-refusal, exact-binding, atomic-consumption, and one-time-read checks pass; live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
 - Next task: add a controlled holdout executor that loads only the authorized time range after consuming a valid authorization. Current candidates cannot reach that path.
-- Branch: `codex/m3-holdout-authorization`; pull request not yet opened.
+- Branch: `codex/m3-holdout-authorization`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/15.
