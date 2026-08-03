@@ -3,12 +3,19 @@ from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
-from systematic_trading_lab.execution import ExecutionIntent
+from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityError
 from systematic_trading_lab.experiments import HoldoutAccessError
 from systematic_trading_lab.fingerprints import fingerprint
+from systematic_trading_lab.reconciliation import (
+    PortfolioSnapshot,
+    PositionSnapshot,
+    ReconciliationStore,
+    SnapshotSource,
+)
 from systematic_trading_lab.risk import (
     PaperAuthorization,
     RiskContext,
@@ -152,6 +159,24 @@ def _context() -> RiskContext:
     )
 
 
+def _flat_snapshot(
+    source: SnapshotSource, snapshot_id: str, **changes: object
+) -> PortfolioSnapshot:
+    value = PortfolioSnapshot(
+        snapshot_id=snapshot_id,
+        source=source,
+        account_id="paper-account",
+        cash=Decimal("70000"),
+        equity=Decimal("70000"),
+        positions=(),
+        open_client_order_ids=(),
+        account_observed_at=NOW - timedelta(seconds=5),
+        positions_observed_at=NOW - timedelta(seconds=5),
+        orders_observed_at=NOW - timedelta(seconds=5),
+    )
+    return replace(value, **cast(Any, changes))
+
+
 def test_paper_authorization_is_exact_immutable_and_restart_safe(tmp_path: Path) -> None:
     path = tmp_path / "execution.sqlite3"
     limits = _limits()
@@ -208,3 +233,85 @@ def test_durable_risk_decision_uses_persistent_emergency_state(tmp_path: Path) -
     assert replay == receipt
     assert not receipt.approved
     assert receipt.reasons == ("emergency-disabled",)
+
+
+def test_reconciliation_store_persists_flat_baseline_and_results(tmp_path: Path) -> None:
+    path = tmp_path / "execution.sqlite3"
+    limits = _limits()
+    report = _evidence()
+    authorization = _authorization(report, limits)
+    store = ReconciliationStore(path)
+    store.authorize_paper(authorization, report, limits)
+    expected = _flat_snapshot(SnapshotSource.LOCAL_EXPECTED, "expected-1")
+    observed = _flat_snapshot(SnapshotSource.ALPACA_PAPER, "observed-1")
+    store.record_snapshot(expected, recorded_at=NOW)
+    store.record_snapshot(observed, recorded_at=NOW)
+    baseline = store.create_flat_baseline(
+        baseline_id="baseline-1",
+        authorization_id=authorization.authorization_id,
+        expected_snapshot_id=expected.snapshot_id,
+        observed_snapshot_id=observed.snapshot_id,
+        limits=limits,
+        operator="test-operator",
+        reason="flat test baseline",
+        created_at=NOW,
+    )
+
+    clean = store.record_reconciliation(
+        baseline_id=baseline.baseline_id,
+        observed_snapshot_id=observed.snapshot_id,
+        compared_at=NOW,
+        unresolved_mutations=0,
+    )
+    dirty_snapshot = _flat_snapshot(
+        SnapshotSource.ALPACA_PAPER, "observed-2", cash=Decimal("69999")
+    )
+    store.record_snapshot(dirty_snapshot, recorded_at=NOW)
+    dirty = store.record_reconciliation(
+        baseline_id=baseline.baseline_id,
+        observed_snapshot_id=dirty_snapshot.snapshot_id,
+        compared_at=NOW,
+        unresolved_mutations=1,
+    )
+
+    assert clean.result.clean
+    assert not dirty.result.clean
+    assert dirty.result.reasons == ("cash-mismatch", "unresolved-broker-mutation")
+    ReconciliationStore(path)
+
+
+def test_reconciliation_store_rejects_nonflat_or_changed_baseline(tmp_path: Path) -> None:
+    path = tmp_path / "execution.sqlite3"
+    limits = _limits()
+    report = _evidence()
+    authorization = _authorization(report, limits)
+    store = ReconciliationStore(path)
+    store.authorize_paper(authorization, report, limits)
+    expected = _flat_snapshot(
+        SnapshotSource.LOCAL_EXPECTED,
+        "expected-positioned",
+        positions=(PositionSnapshot("SPY", 1),),
+        equity=Decimal("70100"),
+    )
+    observed = _flat_snapshot(
+        SnapshotSource.ALPACA_PAPER,
+        "observed-positioned",
+        positions=(PositionSnapshot("SPY", 1),),
+        equity=Decimal("70100"),
+    )
+    store.record_snapshot(expected, recorded_at=NOW)
+    store.record_snapshot(observed, recorded_at=NOW)
+
+    with pytest.raises(HoldoutAccessError, match="flat state"):
+        store.create_flat_baseline(
+            baseline_id="unsafe-baseline",
+            authorization_id=authorization.authorization_id,
+            expected_snapshot_id=expected.snapshot_id,
+            observed_snapshot_id=observed.snapshot_id,
+            limits=limits,
+            operator="test-operator",
+            reason="must reject positions",
+            created_at=NOW,
+        )
+    with pytest.raises(JournalIntegrityError, match="different normalized state"):
+        store.record_snapshot(replace(expected, cash=Decimal("1")), recorded_at=NOW)

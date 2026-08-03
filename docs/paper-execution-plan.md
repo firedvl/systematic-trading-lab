@@ -99,10 +99,10 @@ verified emergency state in one transaction before journaling the result. No fin
 committed, and emergency disable prevents approvals. Capacity reservations and emergency clear wait
 for stable reconciliation evidence rather than accepting a placeholder proof.
 
-The slice 5 foundation now defines strict normalized local-expected and Alpaca-paper portfolio
-snapshots plus a pure comparison result. It fails on source, account, cash, equity, position,
-open-order, freshness, or unresolved-mutation differences. Persistence, adapter provenance, stable
-repeat evidence, and emergency-clear authority remain absent.
+The slice 5 foundation now journals strict normalized local-expected and Alpaca-paper portfolio
+snapshots, a reviewed flat baseline, and later clean or dirty comparison results. It fails on source,
+account, cash, equity, position, open-order, freshness, timing, authorization, or unresolved-mutation
+differences. Adapter provenance, stable repeat evidence, and emergency-clear authority remain absent.
 
 ## Alpaca contract
 
