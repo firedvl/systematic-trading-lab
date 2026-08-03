@@ -38,6 +38,12 @@ class TradingMode(StrEnum):
     LIVE_DISABLED = "live-disabled"
 
 
+class AdjustmentPolicy(StrEnum):
+    PROVIDER_ADJUSTED_ALL = "provider-adjusted-all-v1"
+    SYNTHETIC_NO_ACTIONS = "synthetic-no-actions-v1"
+    UNADJUSTED = "unadjusted-v1"
+
+
 @dataclass(frozen=True)
 class TimestampRange:
     start: datetime

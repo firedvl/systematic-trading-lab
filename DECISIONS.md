@@ -20,11 +20,11 @@
 
 ## 2026-08-02 — Content-addressed immutable datasets
 
-- Decision: derive dataset directories from a SHA-256 fingerprint of canonical normalized bars and write artifacts atomically; re-import returns the existing version.
+- Decision: derive dataset directories from a SHA-256 fingerprint of the immutable version envelope: provider, request, adjustment policy, processing versions, raw artifact hash, and canonical normalized-bar fingerprint. Write artifacts atomically; an exact re-import returns the existing version.
 - Context: evidence must not be silently overwritten and identical inputs must reproduce.
 - Alternatives: mutable named files or database blobs.
-- Reasoning: content addressing makes deduplication, integrity checks, and catalog reconstruction direct.
-- Consequences: corrected data becomes a new version; metadata that varies by retrieval is outside the data fingerprint.
+- Reasoning: content addressing makes deduplication, integrity checks, and catalog reconstruction direct. Binding stable metadata prevents identical bars from different providers or requests from sharing one manifest.
+- Consequences: corrected data becomes a linked version; the normalized-bar fingerprint remains separate so experiments can verify exact inputs. Retrieval time does not change the version identity.
 - Revisit when: remote object storage requires a different atomic publication protocol.
 
 ## 2026-08-03 — XNYS calendar for session completeness

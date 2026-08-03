@@ -11,12 +11,13 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from .domain import Symbol, Timeframe, TimestampRange
+from .domain import AdjustmentPolicy, Symbol, Timeframe, TimestampRange
 
 
 class MarketDataProvider(Protocol):
     name: str
     retrieval_timestamp: datetime
+    adjustment_policy: AdjustmentPolicy
 
     def fetch(
         self, symbols: Sequence[Symbol], timeframe: Timeframe, requested: TimestampRange
@@ -30,6 +31,7 @@ class AlpacaHistoricalProvider:
     """Read-only adapter for Alpaca's historical stock-bars endpoint."""
 
     name = "alpaca-historical-v2"
+    adjustment_policy = AdjustmentPolicy.PROVIDER_ADJUSTED_ALL
 
     def __init__(
         self,
@@ -97,6 +99,7 @@ class AlpacaHistoricalProvider:
 class FixtureProvider:
     name = "deterministic-fixture-v1"
     retrieval_timestamp = datetime(2025, 1, 10, tzinfo=UTC)
+    adjustment_policy = AdjustmentPolicy.SYNTHETIC_NO_ACTIONS
 
     def fetch(
         self, symbols: Sequence[Symbol], timeframe: Timeframe, requested: TimestampRange

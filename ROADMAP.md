@@ -8,7 +8,7 @@ Package, safe configuration, CLI, CI, persistent documentation, initial domain t
 
 ## M1 — Market data
 
-Provider-neutral acquisition, Alpaca historical adapter, fixtures, immutable raw and normalized storage, catalog, validation and quarantine, calendar and corporate-action policy, and data CLI. Gate: adjusted daily data for the fixed universe is reproducible; provider corrections create versions; invalid data cannot silently enter a dataset; catalog reconstruction works. The current slice covers XNYS calendar validation, raw JSONL and Parquet artifacts, deterministic fixtures, and read-only paginated Alpaca acquisition. Provider correction lineage and corporate-action processing remain before M1 is complete.
+Provider-neutral acquisition, Alpaca historical adapter, fixtures, immutable raw and normalized storage, catalog, validation and quarantine, calendar and corporate-action policy, and data CLI. Gate: adjusted daily data for the fixed universe is reproducible; provider corrections create versions; invalid data cannot silently enter a dataset; catalog reconstruction works. The fixed-universe gate now covers XNYS calendar validation, raw JSONL and Parquet artifacts, deterministic fixtures, read-only paginated Alpaca acquisition, immutable correction lineage, cross-provider version isolation, provider-adjusted action handling, and rejection of unadjusted data. A local unadjusted corporate-action processor and point-in-time membership remain out of scope for this slice.
 
 ## M2 — Backtester and baselines
 
