@@ -22,3 +22,11 @@ envelope is allowlisted U.S. ETFs, positive whole-share quantities, long-only po
 simple `day` market or limit orders, and `extended_hours=false`. The reviewed limits must cover
 account, symbol, per-order notional, buying power, cash, position, gross exposure, open orders, and
 order rate.
+
+The broker-free risk model now implements this envelope without supplying any financial value. Each
+`RiskLimits` value is explicit, reviewed, effective, and expiring. Evaluation binds the complete
+context and configuration fingerprints and returns every failed gate plus the cash, order-notional,
+and gross-exposure capacity a later transaction must reserve. A risk decision alone grants no paper
+or broker authority. The execution database initializes emergency disable as active and journals it;
+missing or changed emergency state fails closed. Clearing it remains unavailable until the protected
+authorization, reconciliation, operator, and journal-proof checks exist.

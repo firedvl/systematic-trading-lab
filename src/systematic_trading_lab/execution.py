@@ -17,6 +17,7 @@ from .fingerprints import canonical_json, canonicalize, fingerprint
 
 _SCHEMA_VERSION = "execution-intent-journal-v1"
 _GENESIS_HASH = "0" * 64
+_KNOWN_EVENT_TYPES = {"intent-recorded", "emergency-initialized"}
 _FINGERPRINT = re.compile(r"[0-9a-f]{64}")
 _SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,15}")
 
@@ -191,33 +192,14 @@ class ExecutionStore:
                 if received >= intent.expires_at:
                     raise ExecutionStoreError("cannot record an expired intent")
 
-                previous = connection.execute(
-                    "SELECT sequence, event_hash FROM journal ORDER BY sequence DESC LIMIT 1"
-                ).fetchone()
-                sequence = 1 if previous is None else int(previous[0]) + 1
-                previous_hash = _GENESIS_HASH if previous is None else str(previous[1])
                 occurred_at = _utc_text(received)
-                event_hash = _event_hash(
-                    sequence=sequence,
-                    occurred_at=occurred_at,
+                sequence = self._append_event(
+                    connection,
+                    occurred_at=received,
                     event_type="intent-recorded",
                     entity_type="intent",
                     entity_id=intent.idempotency_key,
                     payload=json.loads(intent_json),
-                    previous_hash=previous_hash,
-                )
-                connection.execute(
-                    "INSERT INTO journal VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                    (
-                        sequence,
-                        occurred_at,
-                        "intent-recorded",
-                        "intent",
-                        intent.idempotency_key,
-                        intent_json,
-                        previous_hash,
-                        event_hash,
-                    ),
                 )
                 connection.execute(
                     "INSERT INTO intents VALUES (?, ?, ?, ?, ?, ?)",
@@ -229,10 +211,6 @@ class ExecutionStore:
                         occurred_at,
                         sequence,
                     ),
-                )
-                connection.execute(
-                    "UPDATE journal_head SET event_count = ?, event_hash = ? WHERE singleton = 1",
-                    (sequence, event_hash),
                 )
                 connection.commit()
             except DuplicateIntentError:
@@ -318,6 +296,7 @@ class ExecutionStore:
             )
             if (
                 row[0] != expected_sequence
+                or row[2] not in _KNOWN_EVENT_TYPES
                 or row[5] != canonical_payload
                 or row[6] != previous_hash
                 or row[7] != expected_hash
@@ -325,6 +304,9 @@ class ExecutionStore:
                 raise JournalIntegrityError("journal sequence or hash chain is invalid")
             previous_hash = str(row[7])
 
+        intent_event_count = connection.execute(
+            "SELECT COUNT(*) FROM journal WHERE event_type = 'intent-recorded'"
+        ).fetchone()[0]
         intents = connection.execute(
             """
             SELECT i.idempotency_key, i.intent_fingerprint, i.intent_json,
@@ -333,7 +315,7 @@ class ExecutionStore:
             FROM intents i LEFT JOIN journal j ON j.sequence = i.journal_sequence
             """
         ).fetchall()
-        if len(intents) != len(rows):
+        if len(intents) != intent_event_count:
             raise JournalIntegrityError("intent and journal event counts differ")
         for row in intents:
             try:
@@ -360,6 +342,51 @@ class ExecutionStore:
         if stored_head is None or stored_head[0] != len(rows) or stored_head[1] != previous_hash:
             raise JournalIntegrityError("stored journal head does not match the hash chain")
         return JournalHead(len(rows), previous_hash)
+
+    def _append_event(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        occurred_at: datetime,
+        event_type: str,
+        entity_type: str,
+        entity_id: str,
+        payload: Any,
+    ) -> int:
+        previous = connection.execute(
+            "SELECT sequence, event_hash FROM journal ORDER BY sequence DESC LIMIT 1"
+        ).fetchone()
+        sequence = 1 if previous is None else int(previous[0]) + 1
+        previous_hash = _GENESIS_HASH if previous is None else str(previous[1])
+        occurred_at_text = _utc_text(occurred_at)
+        payload_json = canonical_json(payload)
+        event_hash = _event_hash(
+            sequence=sequence,
+            occurred_at=occurred_at_text,
+            event_type=event_type,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            payload=json.loads(payload_json),
+            previous_hash=previous_hash,
+        )
+        connection.execute(
+            "INSERT INTO journal VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                sequence,
+                occurred_at_text,
+                event_type,
+                entity_type,
+                entity_id,
+                payload_json,
+                previous_hash,
+                event_hash,
+            ),
+        )
+        connection.execute(
+            "UPDATE journal_head SET event_count = ?, event_hash = ? WHERE singleton = 1",
+            (sequence, event_hash),
+        )
+        return sequence
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
