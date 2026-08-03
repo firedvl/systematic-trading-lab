@@ -7,4 +7,4 @@
 - Test status: 25 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Lineage, adjustment-policy, catalog recovery and rebuild, Alpaca, and experiment CLI checks pass; live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
 - Next task: acquire and seal a reviewed provider-adjusted historical dataset for the first walk-forward and sensitivity campaign, then document proposed qualification thresholds for human review. Point-in-time universe work remains before research expands beyond the fixed ETF set.
-- Branch: `codex/m1-lineage`; draft pull request pending.
+- Branch: `codex/m1-lineage`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/9.
