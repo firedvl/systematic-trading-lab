@@ -51,25 +51,28 @@ def test_disqualifying_and_missing_metric_gates_reject() -> None:
     assert missing.gates[1].reason == "metric-missing-or-invalid"
 
 
-def test_proposed_config_loads_and_cannot_qualify() -> None:
+def test_approved_config_loads_and_can_qualify_passing_evidence() -> None:
     proposal = load_qualification_proposal(Path("config/research/qualification-proposal.json"))
     passing_metrics = {gate.spec.metric: gate.spec.threshold for gate in proposal.gates}
 
     report = evaluate("all-gates-pass", passing_metrics, proposal.gate_specs)
 
-    assert proposal.status is ProposalStatus.PROPOSED_UNAPPROVED
+    assert proposal.status is ProposalStatus.APPROVED
     assert len(proposal.gates) == 17
     assert "total_validation_trade_count" in {gate.spec.metric for gate in proposal.gates}
-    assert all(not gate.spec.approved for gate in proposal.gates)
+    assert all(gate.spec.approved for gate in proposal.gates)
     assert all(result.passed for result in report.gates)
-    assert report.state is QualificationState.UNAPPROVED
+    assert report.state is QualificationState.QUALIFIED
 
 
 @pytest.mark.parametrize(
     ("change", "message"),
     [
         ({"unexpected": True}, "fields differ"),
-        ({"status": "approved"}, "approved proposal must contain only approved gates"),
+        (
+            {"status": "proposed-unapproved"},
+            "unapproved proposal cannot contain approved gates",
+        ),
     ],
 )
 def test_proposal_rejects_invalid_root(
@@ -88,14 +91,14 @@ def test_proposal_rejects_invalid_root(
 def test_proposal_rejects_inconsistent_gate_and_duplicate_metric(tmp_path: Path) -> None:
     source = Path("config/research/qualification-proposal.json")
     payload = json.loads(source.read_text(encoding="utf-8"))
-    payload["gates"][0]["approved"] = True
+    payload["gates"][0]["approved"] = False
     target = tmp_path / "proposal.json"
     target.write_text(json.dumps(payload), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="unapproved proposal cannot contain approved gates"):
+    with pytest.raises(ValueError, match="approved proposal must contain only approved gates"):
         load_qualification_proposal(target)
 
-    payload["gates"][0]["approved"] = False
+    payload["gates"][0]["approved"] = True
     payload["gates"][1]["metric"] = payload["gates"][0]["metric"]
     target.write_text(json.dumps(payload), encoding="utf-8")
 

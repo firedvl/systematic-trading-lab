@@ -152,3 +152,12 @@
 - Reasoning: one campaign-wide rule applies to every strategy family and reuses recorded fill counts. Existing return, Sharpe, drawdown, regime, and concentration gates retain per-fold evidence checks.
 - Consequences: the proposed threshold remains 100, but its aggregate metric and proposal fingerprint change. Existing immutable reports remain historical evidence; reevaluation creates new content-addressed reports. This decision does not approve any gate or revive a rejected candidate.
 - Revisit when: execution-capacity analysis or a reviewed effective-sample-size metric can replace raw fill count.
+
+## 2026-08-03 — Qualification gates v1 approved
+
+- Decision: approve all 17 thresholds in `qualification-gates-v1` without changing their values or rationales.
+- Context: the user reviewed the gates' role and explicitly approved them after the trade-count aggregation received its separate review.
+- Alternatives: leave the policy unapproved or revise one or more thresholds before approval.
+- Reasoning: the visible disqualifying gates cover validation stability, benchmark performance, risk, concentration, execution sensitivity, parameter sensitivity, regime coverage, activity, and search volume. Approval locks the rules before another candidate campaign.
+- Consequences: passing evidence can authorize one exact holdout run. Existing moving-average and momentum evidence becomes formally rejected, relative strength remains stopped before validation, and no holdout is authorized. Future gate changes require a separate human-reviewed change and cannot accompany strategy changes.
+- Revisit when: new evidence exposes a gate defect or the research, data, or execution model changes materially.

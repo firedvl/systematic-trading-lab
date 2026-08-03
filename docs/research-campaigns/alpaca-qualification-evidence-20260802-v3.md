@@ -38,13 +38,13 @@ All neighbors remained positive, but the ranges show material parameter dependen
 
 For the 2025 fold, doubled costs reduced moving-average return from 0.104700 to 0.085149 and momentum from 0.156053 to 0.142569. Two-bar delay returned 0.124388 and 0.159301, respectively. Favorable delay outcomes remain separate evidence and do not prove an execution advantage.
 
-## Remaining decision
+## Approval result
 
-Financial gates remain unapproved. A reviewer must approve explicit benchmark, drawdown, Sharpe, exposure, concentration, cost, delay, parameter-neighborhood, regime-coverage, trade-count, turnover, and search-volume thresholds before any controlled holdout run.
+The user approved the explicit benchmark, drawdown, Sharpe, exposure, concentration, cost, delay, parameter-neighborhood, regime-coverage, trade-count, turnover, and search-volume thresholds on 2026-08-03. Approval changes both current candidate states from `unapproved` to `rejected`; it does not authorize a holdout run.
 
 ## Registry-backed reproduction
 
-`config/research/qualification-evidence-v3.json` now names every registry record used by the gate evaluation. The evaluator reproduced the documented aggregate values without loading market data. The candidate-bound report is `qualification-d6fa5ef3dace66b58a5d0df429fa4e44bb08d99a411f1b700d6d5ed9c127c15d.json`, with evidence fingerprints `3e729d6b92549809b9880706b246f25a9b115b1294324531104a44f8eee8df65` for moving average and `cacd96fb5f204fa92dfd9d6a0299a799dbf68df9eb13096a25b7d6882da9bf3f` for momentum. Both states remain `unapproved`, with the same four and three failed gates listed above. A real authorization attempt stored no record. The report stays in ignored runtime storage; the committed manifest and registry records reproduce it.
+`config/research/qualification-evidence-v3.json` now names every registry record used by the gate evaluation. The evaluator reproduced the documented aggregate values without loading market data. The original candidate-bound report is `qualification-d6fa5ef3dace66b58a5d0df429fa4e44bb08d99a411f1b700d6d5ed9c127c15d.json`, with evidence fingerprints `3e729d6b92549809b9880706b246f25a9b115b1294324531104a44f8eee8df65` for moving average and `cacd96fb5f204fa92dfd9d6a0299a799dbf68df9eb13096a25b7d6882da9bf3f` for momentum. In that historical report both states remain `unapproved`, with the same four and three failed gates listed above. A real authorization attempt stored no record. The report stays in ignored runtime storage; the committed manifest and registry records reproduce it.
 
 The separate trade-count policy review changed the proposed aggregate from the minimum in
 one fold to the total across all three base-validation folds. Reproduction under that unapproved
@@ -54,3 +54,10 @@ with evidence fingerprints `c977a933e19faf581a857b54bddd4356dd9eb7332c8a97d4f153
 and `ff84297ddc943bf8137ddee439673314d8537962969e1bd66ce830c36fde73fb`.
 Both candidates retain the same failed gates and remain unapproved. The earlier report remains
 immutable historical evidence.
+
+Reproduction after approval creates
+`qualification-e95d115b70154daaa0bd88df93e3860e8da14551e8f4d943039f62733c89ee88.json`.
+The moving-average evidence fingerprint is
+`da0d1301917dcdc18e94801f566022d883c3efb8eacaf96c4befc57173c967ea`; the momentum
+fingerprint is `7bc79c167049b0950751ba442fc0e899c62bb1fa5ef852ee092c714149b3b701`.
+Moving average is rejected on four gates and momentum on three. No authorization was created.
