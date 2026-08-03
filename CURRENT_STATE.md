@@ -7,4 +7,4 @@
 - Test status: 18 tests pass; ruff format and lint, strict mypy, and secret scan pass on Python 3.12.13. Experiment CLI lifecycle and protected holdout paths pass; live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
 - Next task: continue M3 with a registry-backed experiment runner, walk-forward splits, robustness and cost-sensitivity runs, and candidate comparison reports.
-- Branch: `codex/m3-experiments`; draft pull request pending.
+- Branch: `codex/m3-experiments`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/6.
