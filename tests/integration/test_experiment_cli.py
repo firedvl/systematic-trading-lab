@@ -14,6 +14,23 @@ from systematic_trading_lab.storage import StorageLayout
 from systematic_trading_lab.universe import load_research_universe
 
 
+def test_fixture_all_reports_every_bootstrap_baseline(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    arguments = parser().parse_args(["backtest", "fixture", "--strategy", "all"])
+
+    assert run(arguments, Settings(TradingMode.OFFLINE, tmp_path)) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert {
+        "cash",
+        "fixed-weight",
+        "moving-average",
+        "mean-reversion",
+        "momentum",
+        "volatility-targeted",
+    } <= report["results"].keys()
+
+
 def test_cli_runs_cataloged_experiment_and_compares_candidates(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -140,6 +157,25 @@ def test_cli_runs_cataloged_experiment_and_compares_candidates(
 
     with pytest.raises(ValueError, match="unsupported parameters"):
         run(parser().parse_args(command + ["--parameter", "lookback=2"]), settings)
+
+    for name, parameter in (
+        ("mean-reversion", "window=1"),
+        ("volatility-targeted", "volatility_window=1"),
+    ):
+        campaign_id = f"invalid-{name}"
+        ExperimentRegistry(layout.experiments).create_campaign(campaign_id, name, 1)
+        invalid = [
+            {
+                "candidate": f"invalid-{name}",
+                "campaign": campaign_id,
+                "moving-average": name,
+                "window=2": parameter,
+            }.get(value, value)
+            for value in command
+        ]
+        with pytest.raises(ValueError, match="must be at least 2"):
+            run(parser().parse_args(invalid), settings)
+        assert ExperimentRegistry(layout.experiments).list(campaign_id) == []
 
     ExperimentRegistry(layout.experiments).create_campaign("portfolio-campaign", "Portfolio", 1)
     portfolio = parser().parse_args(
