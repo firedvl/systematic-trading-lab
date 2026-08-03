@@ -6,6 +6,7 @@ import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import Never
 
@@ -56,6 +57,7 @@ class BrokerOrderEvent:
     client_order_id: str
     state: OrderState
     cumulative_filled_quantity: int
+    cumulative_average_fill_price: Decimal | None
     provider_timestamp: datetime
     observed_at: datetime
 
@@ -71,6 +73,15 @@ class BrokerOrderEvent:
             raise ValueError("broker event state is unsupported")
         if isinstance(self.cumulative_filled_quantity, bool) or self.cumulative_filled_quantity < 0:
             raise ValueError("filled quantity must be nonnegative")
+        if self.cumulative_filled_quantity == 0:
+            if self.cumulative_average_fill_price is not None:
+                raise ValueError("unfilled broker event cannot have an average fill price")
+        elif (
+            self.cumulative_average_fill_price is None
+            or not self.cumulative_average_fill_price.is_finite()
+            or self.cumulative_average_fill_price <= 0
+        ):
+            raise ValueError("filled broker event requires a positive average fill price")
         for name, timestamp in (
             ("provider timestamp", self.provider_timestamp),
             ("observation time", self.observed_at),
@@ -394,9 +405,14 @@ class BrokerEventStore(OrderLifecycleStore):
         by_order: dict[str, list[BrokerOrderEvent]] = {}
         for row in rows:
             try:
-                event = _decode_event(json.loads(row[3]))
+                raw_event = json.loads(row[3])
+                event = _decode_event(raw_event)
             except (ValueError, json.JSONDecodeError) as error:
                 raise JournalIntegrityError("stored broker event is invalid") from error
+            legacy = "cumulative_average_fill_price" not in raw_event
+            stored_payload = raw_event if legacy else canonicalize(event)
+            stored_json = canonical_json(stored_payload)
+            stored_fingerprint = fingerprint(stored_payload)
             journal = connection.execute(
                 "SELECT occurred_at, event_type, entity_type, entity_id, payload_json "
                 "FROM journal WHERE sequence = ?",
@@ -407,15 +423,15 @@ class BrokerEventStore(OrderLifecycleStore):
             ).fetchone()
             quantity = None if order is None else int(json.loads(order[0])["quantity"])
             if (
-                row[:3] != (event.event_id, event.event_fingerprint, event.client_order_id)
-                or row[3] != canonical_json(event)
+                row[:3] != (event.event_id, stored_fingerprint, event.client_order_id)
+                or row[3] != stored_json
                 or journal
                 != (
                     _utc_text(event.observed_at),
                     "broker-event-recorded",
                     "broker-event",
                     event.event_id,
-                    canonical_json(event),
+                    stored_json,
                 )
                 or quantity is None
                 or event.cumulative_filled_quantity > quantity
@@ -502,10 +518,22 @@ def _can_follow(prior: list[BrokerOrderEvent], event: BrokerOrderEvent) -> bool:
     if not prior:
         return event.state in _BROKER_STATES
     previous = prior[-1]
+    same_quantity = event.cumulative_filled_quantity == previous.cumulative_filled_quantity
     return (
         event.provider_timestamp >= previous.provider_timestamp
         and event.cumulative_filled_quantity >= previous.cumulative_filled_quantity
+        and (
+            event.cumulative_average_fill_price == previous.cumulative_average_fill_price
+            if same_quantity
+            else _filled_notional(event) > _filled_notional(previous)
+        )
         and event.state in _BROKER_TRANSITIONS[previous.state]
+    )
+
+
+def _filled_notional(event: BrokerOrderEvent) -> Decimal:
+    return Decimal(event.cumulative_filled_quantity) * (
+        event.cumulative_average_fill_price or Decimal("0")
     )
 
 
@@ -513,16 +541,23 @@ def _decode_event(value: object) -> BrokerOrderEvent:
     if not isinstance(value, dict):
         raise ValueError("broker event must be an object")
     try:
+        quantity = int(value["cumulative_filled_quantity"])
+        raw_average_price = value.get("cumulative_average_fill_price")
+        if "cumulative_average_fill_price" not in value and quantity:
+            raise ValueError("legacy positive fill lacks average price")
         return BrokerOrderEvent(
             event_id=str(value["event_id"]),
             broker_order_id=str(value["broker_order_id"]),
             client_order_id=str(value["client_order_id"]),
             state=OrderState(value["state"]),
-            cumulative_filled_quantity=int(value["cumulative_filled_quantity"]),
+            cumulative_filled_quantity=quantity,
+            cumulative_average_fill_price=(
+                None if raw_average_price is None else Decimal(str(raw_average_price))
+            ),
             provider_timestamp=_parse_utc(str(value["provider_timestamp"])),
             observed_at=_parse_utc(str(value["observed_at"])),
         )
-    except (KeyError, TypeError, ValueError) as error:
+    except (KeyError, TypeError, ValueError, ArithmeticError) as error:
         raise ValueError("broker event is invalid") from error
 
 

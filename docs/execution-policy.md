@@ -19,7 +19,10 @@ symbols, values, and open-order states, and fails if a 500-order response cannot
 It exposes no submit, cancel, replace, close-position, or other mutation method.
 A timeout or crash after submission requires lookup by that ID before retry. Broker events now have
 a broker-free evidence store that deduplicates exact provider event identity and normalized content,
-checks forward state and cumulative fill quantity, and binds each event to one known local order.
+checks forward state, cumulative fill quantity, and cumulative average fill price, and binds each
+event to one known local order. Zero fill requires no price; a positive fill requires a positive
+finite average, and later cumulative notional cannot move backward. This evidence does not yet
+advance expected portfolio state or release filled capacity.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

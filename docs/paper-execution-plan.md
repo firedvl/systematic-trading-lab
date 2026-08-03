@@ -141,6 +141,11 @@ replace reconciliation. Orders are whole-share, long-only,
 nonextended-hours ETF `day` market or limit orders for one authorized account. Replace, fractional or
 notional orders, shorts, bulk close, options, crypto, and account mutation stay out of scope.
 
+Positive exact lookups now retain cumulative average fill price with cumulative filled quantity.
+This supports later deterministic incremental position and gross cash calculations. It does not
+invent fees, equity, or buying power, and filled reservations remain held until a separate expected
+state authority and complete reconciliation can prove settlement.
+
 Official references reviewed 2026-08-03:
 
 - <https://docs.alpaca.markets/us/docs/paper-trading>

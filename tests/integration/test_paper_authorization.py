@@ -768,10 +768,59 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         client_order_id=delta.client_order_id,
         state=OrderState.ACKNOWLEDGED,
         cumulative_filled_quantity=0,
+        cumulative_average_fill_price=None,
         provider_timestamp=NOW + timedelta(seconds=19),
         observed_at=NOW + timedelta(seconds=20),
     )
-    assert broker_events.record(acknowledged) == acknowledged
+    legacy_payload = canonicalize(acknowledged)
+    assert isinstance(legacy_payload, dict)
+    legacy_payload.pop("cumulative_average_fill_price")
+    with broker_events._connect() as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        event_sequence = broker_events._append_event(
+            connection,
+            occurred_at=acknowledged.observed_at,
+            event_type="broker-event-recorded",
+            entity_type="broker-event",
+            entity_id=acknowledged.event_id,
+            payload=legacy_payload,
+        )
+        connection.execute(
+            "INSERT INTO broker_events VALUES (?, ?, ?, ?, ?)",
+            (
+                acknowledged.event_id,
+                fingerprint(legacy_payload),
+                acknowledged.client_order_id,
+                canonical_json(legacy_payload),
+                event_sequence,
+            ),
+        )
+        transition = {
+            "order_id": acknowledged.client_order_id,
+            "from_state": OrderState.SUBMISSION_UNKNOWN,
+            "to_state": OrderState.ACKNOWLEDGED,
+            "changed_at": acknowledged.observed_at,
+            "broker_event_id": acknowledged.event_id,
+        }
+        order_sequence = broker_events._append_event(
+            connection,
+            occurred_at=acknowledged.observed_at,
+            event_type="order-transitioned",
+            entity_type="order",
+            entity_id=acknowledged.client_order_id,
+            payload=canonicalize(transition),
+        )
+        connection.execute(
+            "UPDATE orders SET state = ?, changed_at = ?, journal_sequence = ? WHERE order_id = ?",
+            (
+                OrderState.ACKNOWLEDGED,
+                acknowledged.observed_at.isoformat().replace("+00:00", "Z"),
+                order_sequence,
+                acknowledged.client_order_id,
+            ),
+        )
+        connection.commit()
+    assert BrokerEventStore(store.path).record(acknowledged) == acknowledged
     assert not recovery.assess(
         order_id=delta.client_order_id,
         lookup_evidence_id=missing.evidence_id,
@@ -780,13 +829,13 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         assessed_at=recovery_at,
     ).ready_for_review
     assert broker_events.submission_unknown_orders() == ()
-    assert BrokerEventStore(store.path).record(acknowledged) == acknowledged
     partial = BrokerOrderEvent(
         event_id="broker-event-2",
         broker_order_id="broker-order-1",
         client_order_id=delta.client_order_id,
         state=OrderState.PARTIALLY_FILLED,
         cumulative_filled_quantity=3,
+        cumulative_average_fill_price=Decimal("100.25"),
         provider_timestamp=NOW + timedelta(seconds=20),
         observed_at=NOW + timedelta(seconds=21),
     )
@@ -798,6 +847,7 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             client_order_id=delta.client_order_id,
             state=OrderState.CANCELED,
             cumulative_filled_quantity=3,
+            cumulative_average_fill_price=Decimal("100.25"),
             provider_timestamp=NOW + timedelta(seconds=21),
             observed_at=NOW + timedelta(seconds=22),
         )
@@ -846,6 +896,7 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
                 acknowledged,
                 state=OrderState.FILLED,
                 cumulative_filled_quantity=10,
+                cumulative_average_fill_price=Decimal("100.25"),
             )
         )
     assert store.get_emergency().disabled
