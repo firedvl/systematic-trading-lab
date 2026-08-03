@@ -92,21 +92,35 @@ def strategy_result(
     bars: Sequence[OHLCVBar],
     initial_cash: Decimal,
     cost_model: CostModel | None = None,
+    parameters: Mapping[str, object] | None = None,
+    fill_delay_bars: int = 1,
 ) -> BacktestResult:
-    strategies = {
-        "cash": CashStrategy(),
-        "fixed-weight": FixedWeightStrategy(
-            tuple(sorted({bar.symbol for bar in bars}, key=lambda symbol: symbol.value))
-        ),
-        "moving-average": MovingAverageTrendStrategy(),
-        "momentum": TimeSeriesMomentumStrategy(),
-    }
+    parameters = parameters or {}
     if name == "buy-and-hold":
         symbol = min((bar.symbol for bar in bars), key=lambda item: item.value)
         bars = tuple(bar for bar in bars if bar.symbol == symbol)
         strategy: Strategy = BuyAndHoldStrategy()
+    elif name == "cash":
+        strategy = CashStrategy()
+    elif name == "fixed-weight":
+        strategy = FixedWeightStrategy(
+            tuple(sorted({bar.symbol for bar in bars}, key=lambda symbol: symbol.value))
+        )
+    elif name in ("moving-average", "moving-average-trend"):
+        strategy = MovingAverageTrendStrategy(
+            window=_positive_int_parameter(parameters, "window", 20)
+        )
+    elif name in ("momentum", "time-series-momentum"):
+        strategy = TimeSeriesMomentumStrategy(
+            lookback=_positive_int_parameter(parameters, "lookback", 20)
+        )
     else:
-        strategy = strategies.get(name)  # type: ignore[assignment]
-        if strategy is None:
-            raise ValueError(f"unknown backtest strategy: {name}")
-    return BacktestEngine(initial_cash, cost_model).run(bars, strategy)
+        raise ValueError(f"unknown backtest strategy: {name}")
+    return BacktestEngine(initial_cash, cost_model, fill_delay_bars).run(bars, strategy)
+
+
+def _positive_int_parameter(parameters: Mapping[str, object], name: str, default: int) -> int:
+    value = parameters.get(name, default)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"{name} must be a positive integer")
+    return value

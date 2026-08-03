@@ -115,22 +115,28 @@ class BacktestError(ValueError):
 
 
 class BacktestEngine:
-    def __init__(self, initial_cash: Decimal, cost_model: CostModel | None = None) -> None:
+    def __init__(
+        self,
+        initial_cash: Decimal,
+        cost_model: CostModel | None = None,
+        fill_delay_bars: int = 1,
+    ) -> None:
         if initial_cash <= 0:
             raise ValueError("initial cash must be positive")
+        if fill_delay_bars < 1:
+            raise ValueError("fill delay must be at least one bar")
         self.initial_cash = initial_cash
         self.cost_model = cost_model or CostModel()
+        self.fill_delay_bars = fill_delay_bars
 
     def run(self, bars: Sequence[OHLCVBar], strategy: Strategy) -> BacktestResult:
         ordered = tuple(sorted(bars, key=lambda bar: (bar.timestamp, bar.symbol.value)))
         self._check_bars(ordered)
-        next_bar: dict[tuple[Symbol, int], OHLCVBar] = {}
-        next_index: dict[Symbol, int] = {}
-        for index in range(len(ordered) - 1, -1, -1):
-            bar = ordered[index]
-            if bar.symbol in next_index:
-                next_bar[(bar.symbol, index)] = ordered[next_index[bar.symbol]]
-            next_index[bar.symbol] = index
+        next_bar: dict[tuple[Symbol, datetime], OHLCVBar] = {}
+        for symbol in {bar.symbol for bar in ordered}:
+            symbol_bars = tuple(bar for bar in ordered if bar.symbol == symbol)
+            for index, bar in enumerate(symbol_bars[: -self.fill_delay_bars]):
+                next_bar[(symbol, bar.timestamp)] = symbol_bars[index + self.fill_delay_bars]
         cash = self.initial_cash
         positions: dict[Symbol, Decimal] = {}
         marks: dict[Symbol, Decimal] = {}
@@ -141,10 +147,11 @@ class BacktestEngine:
         trades: list[Trade] = []
         curve: list[EquityPoint] = []
 
-        for index, bar in enumerate(ordered):
+        for bar in ordered:
             marks[bar.symbol] = bar.open
-            pending_order = pending.pop(bar.symbol, None)
-            if pending_order is not None:
+            pending_order = pending.get(bar.symbol)
+            if pending_order is not None and bar.timestamp >= pending_order.earliest_fill_timestamp:
+                pending.pop(bar.symbol)
                 cash, event, trade = self._execute(pending_order, bar.open, cash, positions, marks)
                 orders.append(event)
                 if trade is not None:
@@ -168,7 +175,12 @@ class BacktestEngine:
                         OrderEvent(target.symbol, bar.timestamp, "rejected", "weight-out-of-range")
                     )
                     continue
-                following = next_bar.get((bar.symbol, index))
+                if target.symbol in pending:
+                    orders.append(
+                        OrderEvent(target.symbol, bar.timestamp, "rejected", "pending-order-exists")
+                    )
+                    continue
+                following = next_bar.get((bar.symbol, bar.timestamp))
                 if following is None:
                     orders.append(
                         OrderEvent(target.symbol, bar.timestamp, "rejected", "no-future-fill")
