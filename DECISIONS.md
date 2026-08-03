@@ -247,3 +247,10 @@
 - Context: broker events can prove signed whole-share changes but cannot derive account-wide cash, equity, buying power, or fees.
 - Consequences: expected position lineage is replayable and read-only. Bare broker evidence does not gain lineage later, negative positions fail closed, and any positive fill keeps its capacity reservation. Full portfolio reconciliation and filled-capacity release remain separate.
 - Revisit when: a later complete adapter-attested snapshot can prove the expected position generation and settled open-order state.
+
+## 2026-08-03 — Position settlement is separate from account accounting
+
+- Decision: immutable position-settlement evidence binds the current expected-position lineage head to one later complete production-attested paper snapshot with exact positions, no open or nonterminal local orders, fresh observations, and clear emergency state.
+- Context: a fill lineage can predict shares but cannot derive fees, marks, cash, equity, or buying-power treatment.
+- Consequences: the proof records the observed snapshot and its adapter attestation but compares only position and order settlement. It does not create a local portfolio snapshot, change full reconciliation, or release capacity.
+- Revisit when: a reviewed rule can replace pending reservations with fresh adapter-observed risk context without double counting or early reuse.

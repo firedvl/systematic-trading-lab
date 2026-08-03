@@ -24,6 +24,7 @@ from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityEr
 from systematic_trading_lab.experiments import HoldoutAccessError
 from systematic_trading_lab.fingerprints import canonical_json, canonicalize, fingerprint
 from systematic_trading_lab.orders import OrderLifecycleStore, OrderState, build_order_delta
+from systematic_trading_lab.position_settlement import PositionSettlementStore
 from systematic_trading_lab.reconciliation import (
     PortfolioSnapshot,
     PositionSnapshot,
@@ -837,8 +838,8 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         state=OrderState.PARTIALLY_FILLED,
         cumulative_filled_quantity=3,
         cumulative_average_fill_price=Decimal("100.25"),
-        provider_timestamp=NOW + timedelta(seconds=20),
-        observed_at=NOW + timedelta(seconds=21),
+        provider_timestamp=NOW + timedelta(seconds=22),
+        observed_at=NOW + timedelta(seconds=23),
     )
     evidence_only_path = tmp_path / "evidence-only.sqlite3"
     shutil.copy2(store.path, evidence_only_path)
@@ -860,8 +861,8 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         state=OrderState.CANCELED,
         cumulative_filled_quantity=3,
         cumulative_average_fill_price=Decimal("100.25"),
-        provider_timestamp=NOW + timedelta(seconds=21),
-        observed_at=NOW + timedelta(seconds=22),
+        provider_timestamp=NOW + timedelta(seconds=24),
+        observed_at=NOW + timedelta(seconds=25),
     )
     broker_events.record(canceled, baseline_id=baseline.baseline_id)
     canceled_head = broker_events.verify_journal()
@@ -896,6 +897,82 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         connection.commit()
     with pytest.raises(JournalIntegrityError, match="capacity release"):
         RiskStore(legacy_release_path)
+    settlement_at = NOW + timedelta(seconds=26)
+    settled_snapshot = _record_adapter_snapshot(
+        store,
+        replace(
+            _flat_snapshot(
+                SnapshotSource.ALPACA_PAPER,
+                "settled-observed",
+                account_observed_at=settlement_at,
+                positions_observed_at=settlement_at,
+                orders_observed_at=settlement_at,
+            ),
+            cash=Decimal("69000"),
+            equity=Decimal("71000"),
+            buying_power=Decimal("68000"),
+            positions=(PositionSnapshot("SPY", 3),),
+        ),
+        monkeypatch,
+        recorded_at=settlement_at,
+    )
+    settlement_store = PositionSettlementStore(store.path)
+    settlement = settlement_store.record_settlement(
+        proof_id="position-settlement-1",
+        baseline_id=baseline.baseline_id,
+        observed_snapshot_id=settled_snapshot.snapshot_id,
+        settled_at=settlement_at,
+    )
+    settlement_head = settlement_store.verify_journal()
+    assert settlement.advance_fingerprint
+    assert settlement.observed_snapshot_fingerprint == settled_snapshot.snapshot_fingerprint
+    assert (
+        settlement_store.record_settlement(
+            proof_id="position-settlement-1",
+            baseline_id=baseline.baseline_id,
+            observed_snapshot_id=settled_snapshot.snapshot_id,
+            settled_at=settlement_at,
+        )
+        == settlement
+    )
+    assert PositionSettlementStore(store.path).verify_journal() == settlement_head
+    unattested_snapshot = replace(settled_snapshot, snapshot_id="unattested-settlement")
+    store.record_snapshot(unattested_snapshot, recorded_at=settlement_at)
+    with pytest.raises(JournalIntegrityError, match="authority is missing"):
+        settlement_store.record_settlement(
+            proof_id="unattested-proof",
+            baseline_id=baseline.baseline_id,
+            observed_snapshot_id=unattested_snapshot.snapshot_id,
+            settled_at=settlement_at,
+        )
+    mismatch_at = settlement_at + timedelta(seconds=1)
+    mismatched_snapshot = _record_adapter_snapshot(
+        store,
+        _flat_snapshot(
+            SnapshotSource.ALPACA_PAPER,
+            "mismatched-settlement",
+            account_observed_at=mismatch_at,
+            positions_observed_at=mismatch_at,
+            orders_observed_at=mismatch_at,
+        ),
+        monkeypatch,
+        recorded_at=mismatch_at,
+    )
+    with pytest.raises(JournalIntegrityError, match="not complete and current"):
+        settlement_store.record_settlement(
+            proof_id="mismatched-proof",
+            baseline_id=baseline.baseline_id,
+            observed_snapshot_id=mismatched_snapshot.snapshot_id,
+            settled_at=mismatch_at,
+        )
+    with sqlite3.connect(store.path) as connection:
+        assert (
+            connection.execute(
+                "SELECT 1 FROM capacity_releases WHERE reservation_id = ?",
+                (reservation_id,),
+            ).fetchone()
+            is None
+        )
     OrderLifecycleStore(store.path)
     assert (
         store.clear_emergency(

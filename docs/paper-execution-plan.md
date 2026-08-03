@@ -153,6 +153,12 @@ orders for symbol and side, links each checkpoint to its prior fingerprint, and 
 fills, cross-authorization baselines, or negative positions. It does not replace a complete portfolio
 snapshot or release filled capacity.
 
+The next boundary now stores a successful positions-only settlement proof for the current lineage
+head and one later complete production-attested snapshot. It requires exact positions, no broker
+open orders, no nonterminal local orders, fresh post-fill observations, the same account and
+baseline controls, and clear emergency state. The evidence binds but does not derive the observed
+cash, equity, or buying power. It does not alter full reconciliation or release capacity.
+
 Official references reviewed 2026-08-03:
 
 - <https://docs.alpaca.markets/us/docs/paper-trading>
