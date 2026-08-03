@@ -10,6 +10,8 @@ Qualification proposals must name their evidence campaign, record each gate and 
 
 Qualification aggregation must use an explicit evidence manifest and completed registry records. The manifest assigns each record one reviewable role; the evaluator verifies provenance and parent links before calculating campaign metrics. A report must name every source experiment and bind its content to a fingerprint. Hand-copied summaries may explain results but cannot authorize holdout access.
 
+Do not create a holdout experiment from a caller-supplied flag. Store a reviewed authorization from approved, passing registry evidence, bind it to the exact candidate and provenance, and consume it once when creating the holdout record. Refused or mismatched attempts must leave the authorization unused. Reading completed holdout metrics is a separate one-time reviewed event.
+
 Walk-forward training must end before its validation window begins, and validation windows must be chronological and non-overlapping. Record each fold, cost assumption, and delayed-fill variant as a separate candidate linked to its parent. Comparison reports retain failures and missing metrics and do not calculate a hidden aggregate score. The ordinary runner and comparison APIs reject holdout experiments.
 
 CLI runs use only immutable cataloged datasets that pass integrity validation. Dataset manifests supply the dataset fingerprint and exact universe provenance; callers cannot override them. The command records that provenance, code commit, strategy parameters, cost version, execution version, split, and reason before simulation. It rejects parameters the selected strategy would ignore.

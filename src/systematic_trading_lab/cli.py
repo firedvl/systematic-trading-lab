@@ -21,6 +21,7 @@ from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, Ex
 from .providers import AlpacaHistoricalProvider, FixtureProvider
 from .qualification import load_qualification_proposal
 from .qualification_evidence import (
+    authorize_holdout_run,
     build_evidence_reports,
     load_evidence_manifest,
     write_evidence_reports,
@@ -118,6 +119,16 @@ def parser() -> argparse.ArgumentParser:
     )
     qualify.add_argument("--evidence-manifest", type=Path, required=True)
     qualify.add_argument("--proposal", type=Path, required=True)
+    authorize = experiment_commands.add_parser(
+        "authorize-holdout",
+        help="store one holdout-run authorization from approved passing evidence",
+    )
+    authorize.add_argument("authorization_id")
+    authorize.add_argument("--candidate", required=True)
+    authorize.add_argument("--evidence-manifest", type=Path, required=True)
+    authorize.add_argument("--proposal", type=Path, required=True)
+    authorize.add_argument("--reviewer", required=True)
+    authorize.add_argument("--reason", required=True)
     return root
 
 
@@ -241,6 +252,25 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                     "report": str(path),
                     "candidate_ids": [report["candidate_id"] for report in reports],
                     "evidence_fingerprints": [report["evidence_fingerprint"] for report in reports],
+                }
+            )
+        elif arguments.experiment_command == "authorize-holdout":
+            authorization = authorize_holdout_run(
+                registry,
+                load_evidence_manifest(arguments.evidence_manifest),
+                load_qualification_proposal(arguments.proposal),
+                arguments.candidate,
+                arguments.authorization_id,
+                arguments.reviewer,
+                arguments.reason,
+            )
+            _print(
+                {
+                    "authorization_id": authorization["authorization_id"],
+                    "candidate_id": authorization["candidate_id"],
+                    "evidence_fingerprint": authorization["evidence_fingerprint"],
+                    "authorized_at": authorization["authorized_at"],
+                    "consumed_by_experiment_id": authorization["consumed_by_experiment_id"],
                 }
             )
         else:
