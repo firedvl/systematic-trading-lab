@@ -97,6 +97,17 @@ class BacktestMetrics:
     max_drawdown: Decimal
     turnover: Decimal
     trade_count: int
+    annualized_volatility: Decimal
+    sharpe_ratio: Decimal | None
+    average_gross_exposure: Decimal
+    max_gross_exposure: Decimal
+    profitable_session_rate: Decimal
+    top_5_session_profit_share: Decimal | None
+    top_instrument_profit_share: Decimal | None
+    up_regime_return: Decimal | None
+    down_regime_return: Decimal | None
+    up_regime_sessions: int
+    down_regime_sessions: int
 
 
 @dataclass(frozen=True)
@@ -199,7 +210,7 @@ class BacktestEngine:
                     order.symbol, order.earliest_fill_timestamp, "rejected", "no-future-fill"
                 )
             )
-        metrics = self._metrics(curve, trades)
+        metrics = self._metrics(curve, trades, ordered, positions, marks)
         result = BacktestResult(
             strategy.strategy_id,
             strategy.version,
@@ -308,14 +319,151 @@ class BacktestEngine:
             tuple(sorted(positions.items(), key=lambda item: item[0].value)),
         )
 
-    @staticmethod
-    def _metrics(curve: Sequence[EquityPoint], trades: Sequence[Trade]) -> BacktestMetrics:
-        initial = curve[0].equity
-        final = curve[-1].equity
-        peak = initial
+    def _metrics(
+        self,
+        curve: Sequence[EquityPoint],
+        trades: Sequence[Trade],
+        bars: Sequence[OHLCVBar],
+        positions: Mapping[Symbol, Decimal],
+        marks: Mapping[Symbol, Decimal],
+    ) -> BacktestMetrics:
+        sessions = _session_points(curve)
+        final = sessions[-1].equity
+        peak = self.initial_cash
         drawdown = Decimal("0")
-        for point in curve:
+        for point in sessions:
             peak = max(peak, point.equity)
             drawdown = max(drawdown, (peak - point.equity) / peak if peak else Decimal("0"))
-        turnover = sum((trade.gross_notional for trade in trades), Decimal("0")) / initial
-        return BacktestMetrics(final / initial - Decimal("1"), drawdown, turnover, len(trades))
+        turnover = sum((trade.gross_notional for trade in trades), Decimal("0")) / self.initial_cash
+        returns = _session_returns(sessions, self.initial_cash)
+        mean_return = sum(returns, Decimal("0")) / Decimal(len(returns))
+        variance = (
+            sum(((value - mean_return) ** 2 for value in returns), Decimal("0"))
+            / Decimal(len(returns) - 1)
+            if len(returns) > 1
+            else Decimal("0")
+        )
+        daily_volatility = variance.sqrt()
+        annualized_volatility = daily_volatility * Decimal("252").sqrt()
+        sharpe_ratio = (
+            mean_return / daily_volatility * Decimal("252").sqrt() if daily_volatility else None
+        )
+        exposures = tuple(
+            max(Decimal("0"), (point.equity - point.cash) / point.equity)
+            if point.equity
+            else Decimal("0")
+            for point in sessions
+        )
+        session_profits = _session_profits(sessions, self.initial_cash)
+        positive_profits = sorted(
+            (profit for profit in session_profits if profit > 0), reverse=True
+        )
+        total_positive_profit = sum(positive_profits, Decimal("0"))
+        top_session_share = (
+            sum(positive_profits[:5], Decimal("0")) / total_positive_profit
+            if total_positive_profit
+            else None
+        )
+        instrument_share = _top_instrument_profit_share(trades, positions, marks)
+        up_return, down_return, up_sessions, down_sessions = _regime_metrics(
+            bars, sessions, self.initial_cash
+        )
+        return BacktestMetrics(
+            total_return=final / self.initial_cash - Decimal("1"),
+            max_drawdown=drawdown,
+            turnover=turnover,
+            trade_count=len(trades),
+            annualized_volatility=annualized_volatility,
+            sharpe_ratio=sharpe_ratio,
+            average_gross_exposure=sum(exposures, Decimal("0")) / Decimal(len(exposures)),
+            max_gross_exposure=max(exposures),
+            profitable_session_rate=Decimal(len(positive_profits)) / Decimal(len(returns)),
+            top_5_session_profit_share=top_session_share,
+            top_instrument_profit_share=instrument_share,
+            up_regime_return=up_return,
+            down_regime_return=down_return,
+            up_regime_sessions=up_sessions,
+            down_regime_sessions=down_sessions,
+        )
+
+
+def _session_points(curve: Sequence[EquityPoint]) -> tuple[EquityPoint, ...]:
+    by_timestamp: dict[datetime, EquityPoint] = {}
+    for point in curve:
+        by_timestamp[point.timestamp] = point
+    return tuple(by_timestamp.values())
+
+
+def _session_returns(sessions: Sequence[EquityPoint], initial_cash: Decimal) -> tuple[Decimal, ...]:
+    previous = initial_cash
+    returns: list[Decimal] = []
+    for point in sessions:
+        returns.append(point.equity / previous - Decimal("1"))
+        previous = point.equity
+    return tuple(returns)
+
+
+def _session_profits(sessions: Sequence[EquityPoint], initial_cash: Decimal) -> tuple[Decimal, ...]:
+    previous = initial_cash
+    profits: list[Decimal] = []
+    for point in sessions:
+        profits.append(point.equity - previous)
+        previous = point.equity
+    return tuple(profits)
+
+
+def _top_instrument_profit_share(
+    trades: Sequence[Trade],
+    positions: Mapping[Symbol, Decimal],
+    marks: Mapping[Symbol, Decimal],
+) -> Decimal | None:
+    symbols = set(positions) | {trade.symbol for trade in trades}
+    profits: list[Decimal] = []
+    for symbol in symbols:
+        net_investment = sum(
+            (
+                trade.quantity * trade.fill_price + trade.commission
+                for trade in trades
+                if trade.symbol == symbol
+            ),
+            Decimal("0"),
+        )
+        final_value = positions.get(symbol, Decimal("0")) * marks[symbol]
+        profit = final_value - net_investment
+        if profit > 0:
+            profits.append(profit)
+    total = sum(profits, Decimal("0"))
+    return max(profits) / total if total else None
+
+
+def _regime_metrics(
+    bars: Sequence[OHLCVBar],
+    sessions: Sequence[EquityPoint],
+    initial_cash: Decimal,
+) -> tuple[Decimal | None, Decimal | None, int, int]:
+    spy = Symbol("SPY")
+    benchmark = tuple(bar for bar in bars if bar.symbol == spy)
+    if len(benchmark) < 2:
+        return None, None, 0, 0
+    strategy_returns = {
+        point.timestamp: value
+        for point, value in zip(sessions, _session_returns(sessions, initial_cash), strict=True)
+    }
+    up: list[Decimal] = []
+    down: list[Decimal] = []
+    for previous, current in zip(benchmark, benchmark[1:], strict=False):
+        strategy_return = strategy_returns.get(current.timestamp)
+        if strategy_return is None:
+            continue
+        benchmark_return = current.close / previous.close - Decimal("1")
+        (up if benchmark_return >= 0 else down).append(strategy_return)
+    return _compound(up), _compound(down), len(up), len(down)
+
+
+def _compound(returns: Sequence[Decimal]) -> Decimal | None:
+    if not returns:
+        return None
+    value = Decimal("1")
+    for result in returns:
+        value *= Decimal("1") + result
+    return value - Decimal("1")

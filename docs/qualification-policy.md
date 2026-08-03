@@ -7,3 +7,7 @@ Thresholds remain unapproved until a reviewed milestone sets them. The gate eval
 Financial thresholds are explicitly deferred in this milestone. No threshold is approved by the catalog-backed campaign runner.
 
 Cost and delayed-fill sensitivity results remain separate candidates and cannot alter qualification thresholds. Candidate comparisons show each metric, failure, and missing result directly; they do not rank candidates with a composite score.
+
+Report schema v2 calculates qualification metrics from the last equity point in each completed session; the detailed per-symbol ledger remains unchanged. Annualized volatility and the Sharpe ratio use 252 sessions and a zero reference rate. Gross exposure is long market value divided by equity. Period concentration is the share of all positive session profit supplied by the five largest positive sessions. Instrument concentration is the largest positive instrument profit divided by total positive instrument profit after fills and commissions. SPY close-to-close returns classify up and down sessions; strategy returns are compounded separately within each class.
+
+Parameter-neighborhood runs are separate validation candidates linked to the base candidate. They consume campaign budget and may reveal fragility, but they cannot select a new parameter from validation results. Missing regime classes or undefined risk and concentration values fail any gate that requires them.

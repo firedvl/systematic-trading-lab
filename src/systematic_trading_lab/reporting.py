@@ -29,6 +29,17 @@ def summarize(result: BacktestResult) -> dict[str, object]:
         "max_drawdown": result.metrics.max_drawdown,
         "turnover": result.metrics.turnover,
         "trade_count": result.metrics.trade_count,
+        "annualized_volatility": result.metrics.annualized_volatility,
+        "sharpe_ratio": result.metrics.sharpe_ratio,
+        "average_gross_exposure": result.metrics.average_gross_exposure,
+        "max_gross_exposure": result.metrics.max_gross_exposure,
+        "profitable_session_rate": result.metrics.profitable_session_rate,
+        "top_5_session_profit_share": result.metrics.top_5_session_profit_share,
+        "top_instrument_profit_share": result.metrics.top_instrument_profit_share,
+        "up_regime_return": result.metrics.up_regime_return,
+        "down_regime_return": result.metrics.down_regime_return,
+        "up_regime_sessions": result.metrics.up_regime_sessions,
+        "down_regime_sessions": result.metrics.down_regime_sessions,
         "artifact_fingerprint": result.artifact_fingerprint,
     }
 
@@ -36,7 +47,7 @@ def summarize(result: BacktestResult) -> dict[str, object]:
 def build_report(results: Mapping[str, BacktestResult]) -> dict[str, object]:
     cash_return = results["cash"].metrics.total_return if "cash" in results else None
     payload: dict[str, object] = {
-        "schema_version": "backtest-report-v1",
+        "schema_version": "backtest-report-v2",
         "results": {name: summarize(result) for name, result in sorted(results.items())},
         "comparisons": {
             name: {"excess_return_vs_cash": result.metrics.total_return - cash_return}
