@@ -92,6 +92,11 @@ Slice 1 is complete: the broker-free store validates immutable intents, binds co
 fingerprints, deduplicates exact replay across restarts, rejects changed keys, and verifies its
 append-only hash chain and stored head at startup. It has no broker, risk, or network authority.
 
+Slice 2 now has the pure independent risk envelope and persistent default-on emergency state. No
+financial limit is committed, and an in-memory passing decision grants no authority. Protected paper
+authorization, durable decisions, atomic pending-capacity reservations, and guarded emergency clear
+remain before slice 2 is complete.
+
 ## Alpaca contract
 
 The initial adapter uses Trading API 2.0.1 paper endpoints for account, positions, clock, calendar,
