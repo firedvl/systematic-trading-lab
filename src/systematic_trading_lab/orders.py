@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 
-from .execution import ExecutionIntent, ExecutionStore, JournalIntegrityError
+from .execution import ExecutionIntent, JournalIntegrityError
 from .fingerprints import canonical_json, canonicalize, fingerprint
+from .risk import RiskStore
 
 
 class OrderSide(StrEnum):
@@ -29,7 +31,7 @@ class OrderState(StrEnum):
 
 
 _ORDER_TRANSITIONS = {
-    OrderState.STAGED: {OrderState.SUBMITTING},
+    OrderState.STAGED: set(),
     OrderState.SUBMITTING: {OrderState.ACKNOWLEDGED, OrderState.SUBMISSION_UNKNOWN},
     OrderState.ACKNOWLEDGED: {
         OrderState.PARTIALLY_FILLED,
@@ -90,9 +92,11 @@ class StagedOrder:
     delta: OrderDelta
     state: OrderState
     changed_at: datetime
+    submitter_id: str | None = None
+    claimed_at: datetime | None = None
 
 
-class OrderLifecycleStore(ExecutionStore):
+class OrderLifecycleStore(RiskStore):
     """Persist staged local orders without exposing broker mutation authority."""
 
     def __init__(self, path: Path) -> None:
@@ -102,15 +106,105 @@ class OrderLifecycleStore(ExecutionStore):
                 """
                 CREATE TABLE IF NOT EXISTS orders (
                     order_id TEXT PRIMARY KEY,
-                    reservation_id TEXT NOT NULL,
+                    reservation_id TEXT NOT NULL UNIQUE,
                     delta_json TEXT NOT NULL,
                     state TEXT NOT NULL,
                     changed_at TEXT NOT NULL,
+                    submitter_id TEXT,
+                    claimed_at TEXT,
                     journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
                 );
                 """
             )
+            columns = {
+                str(row[1]) for row in connection.execute("PRAGMA table_info(orders)").fetchall()
+            }
+            if "submitter_id" not in columns:
+                connection.execute("ALTER TABLE orders ADD COLUMN submitter_id TEXT")
+            if "claimed_at" not in columns:
+                connection.execute("ALTER TABLE orders ADD COLUMN claimed_at TEXT")
+            connection.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS orders_reservation_unique "
+                "ON orders(reservation_id)"
+            )
             connection.commit()
+            self._verify_orders(connection)
+
+    def _verify_orders(self, connection: sqlite3.Connection) -> None:
+        rows = connection.execute(
+            "SELECT order_id, reservation_id, delta_json, state, changed_at, submitter_id, "
+            "claimed_at, journal_sequence FROM orders"
+        ).fetchall()
+        event_count = connection.execute(
+            "SELECT COUNT(*) FROM journal WHERE entity_type = 'order'"
+        ).fetchone()[0]
+        linked_count = connection.execute(
+            "SELECT COUNT(*) FROM journal j JOIN orders o ON o.order_id = j.entity_id "
+            "WHERE j.entity_type = 'order'"
+        ).fetchone()[0]
+        if event_count != linked_count:
+            raise JournalIntegrityError("order journal contains an unknown order")
+        for row in rows:
+            try:
+                delta = _decode_delta(json.loads(row[2]))
+                state = OrderState(row[3])
+                changed_at = _parse_utc(str(row[4]))
+                claimed_at = None if row[6] is None else _parse_utc(str(row[6]))
+            except (ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError("stored order is invalid") from error
+            reservation = connection.execute(
+                "SELECT intent_id FROM capacity_reservations WHERE reservation_id = ?",
+                (row[1],),
+            ).fetchone()
+            stage_event = connection.execute(
+                "SELECT occurred_at, payload_json FROM journal "
+                "WHERE event_type = 'order-staged' AND entity_id = ?",
+                (row[0],),
+            ).fetchall()
+            latest = connection.execute(
+                "SELECT occurred_at, event_type, entity_type, entity_id, payload_json "
+                "FROM journal WHERE sequence = ?",
+                (row[7],),
+            ).fetchone()
+            if (
+                row[0] != delta.client_order_id
+                or reservation != (delta.intent_id,)
+                or len(stage_event) != 1
+                or json.loads(stage_event[0][1])
+                != canonicalize(
+                    StagedOrder(
+                        row[0],
+                        row[1],
+                        delta,
+                        OrderState.STAGED,
+                        _parse_utc(stage_event[0][0]),
+                    )
+                )
+                or latest is None
+                or latest[0] != row[4]
+                or latest[2:4] != ("order", row[0])
+            ):
+                raise JournalIntegrityError("order does not match its journal or reservation")
+            payload = json.loads(latest[4])
+            if state is OrderState.STAGED:
+                valid_latest = latest[1] == "order-staged" and row[5] is None and claimed_at is None
+            elif state is OrderState.SUBMITTING:
+                valid_latest = (
+                    latest[1] == "order-submitter-claimed"
+                    and payload.get("submitter_id") == row[5]
+                    and payload.get("claimed_at") == row[6]
+                    and claimed_at == changed_at
+                )
+            else:
+                valid_latest = (
+                    latest[1] == "order-transitioned"
+                    and payload.get("to_state") == state
+                    and payload.get("changed_at") == row[4]
+                    and row[5] is not None
+                    and claimed_at is not None
+                )
+            if not valid_latest:
+                raise JournalIntegrityError("order state does not match its latest journal event")
 
     def stage(self, delta: OrderDelta, *, reservation_id: str, staged_at: datetime) -> StagedOrder:
         if not reservation_id or not reservation_id.strip():
@@ -122,8 +216,10 @@ class OrderLifecycleStore(ExecutionStore):
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             self._verify_connection(connection)
+            self._verify_reservations(connection)
+            self._verify_orders(connection)
             existing = connection.execute(
-                "SELECT reservation_id, delta_json, state, changed_at "
+                "SELECT reservation_id, delta_json, state, changed_at, submitter_id, claimed_at "
                 "FROM orders WHERE order_id = ?",
                 (order_id,),
             ).fetchone()
@@ -137,7 +233,25 @@ class OrderLifecycleStore(ExecutionStore):
                     delta,
                     OrderState(existing[2]),
                     _parse_utc(str(existing[3])),
+                    None if existing[4] is None else str(existing[4]),
+                    None if existing[5] is None else _parse_utc(str(existing[5])),
                 )
+            reservation = connection.execute(
+                "SELECT intent_id, reserved_at, expires_at FROM capacity_reservations "
+                "WHERE reservation_id = ?",
+                (reservation_id,),
+            ).fetchone()
+            if reservation is None:
+                raise JournalIntegrityError("capacity reservation is missing")
+            intent = self._read_intent(connection, delta.intent_id)
+            if (
+                reservation[0] != delta.intent_id
+                or intent.intent_fingerprint != delta.intent_fingerprint
+                or delta.created_at < _parse_utc(str(reservation[1]))
+                or staged_at < delta.created_at
+                or staged_at >= _parse_utc(str(reservation[2]))
+            ):
+                raise JournalIntegrityError("order differs from its active capacity reservation")
             sequence = self._append_event(
                 connection,
                 occurred_at=staged_at,
@@ -147,7 +261,7 @@ class OrderLifecycleStore(ExecutionStore):
                 payload=canonicalize(staged),
             )
             connection.execute(
-                "INSERT INTO orders VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO orders VALUES (?, ?, ?, ?, ?, NULL, NULL, ?)",
                 (
                     order_id,
                     reservation_id,
@@ -160,21 +274,101 @@ class OrderLifecycleStore(ExecutionStore):
             connection.commit()
         return staged
 
+    def claim_submitter(
+        self, order_id: str, *, submitter_id: str, claimed_at: datetime
+    ) -> StagedOrder:
+        if not submitter_id or submitter_id != submitter_id.strip():
+            raise ValueError("submitter ID is required")
+        if claimed_at.tzinfo is None or claimed_at.utcoffset() != UTC.utcoffset(claimed_at):
+            raise ValueError("claim time must be UTC-aware")
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            self._verify_connection(connection)
+            self._verify_orders(connection)
+            row = connection.execute(
+                "SELECT reservation_id, delta_json, state, changed_at, submitter_id, claimed_at "
+                "FROM orders WHERE order_id = ?",
+                (order_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(order_id)
+            delta = _decode_delta(json.loads(row[1]))
+            if row[4] is not None:
+                if row[4] != submitter_id or row[5] != _utc_text(claimed_at):
+                    raise JournalIntegrityError("order already has a different submitter claim")
+                connection.commit()
+                return StagedOrder(
+                    order_id,
+                    str(row[0]),
+                    delta,
+                    OrderState(row[2]),
+                    _parse_utc(str(row[3])),
+                    submitter_id,
+                    claimed_at,
+                )
+            if OrderState(row[2]) is not OrderState.STAGED or claimed_at < _parse_utc(str(row[3])):
+                raise JournalIntegrityError("order cannot be claimed from its current state")
+            payload = {
+                "order_id": order_id,
+                "from_state": OrderState.STAGED,
+                "to_state": OrderState.SUBMITTING,
+                "submitter_id": submitter_id,
+                "claimed_at": claimed_at,
+            }
+            sequence = self._append_event(
+                connection,
+                occurred_at=claimed_at,
+                event_type="order-submitter-claimed",
+                entity_type="order",
+                entity_id=order_id,
+                payload=canonicalize(payload),
+            )
+            updated = connection.execute(
+                "UPDATE orders SET state = ?, changed_at = ?, submitter_id = ?, claimed_at = ?, "
+                "journal_sequence = ? WHERE order_id = ? AND state = ? AND submitter_id IS NULL",
+                (
+                    OrderState.SUBMITTING,
+                    _utc_text(claimed_at),
+                    submitter_id,
+                    _utc_text(claimed_at),
+                    sequence,
+                    order_id,
+                    OrderState.STAGED,
+                ),
+            )
+            if updated.rowcount != 1:
+                raise JournalIntegrityError("order submitter claim lost its atomic race")
+            connection.commit()
+        return StagedOrder(
+            order_id,
+            str(row[0]),
+            delta,
+            OrderState.SUBMITTING,
+            claimed_at,
+            submitter_id,
+            claimed_at,
+        )
+
     def transition(self, order_id: str, state: OrderState, *, changed_at: datetime) -> StagedOrder:
         if changed_at.tzinfo is None or changed_at.utcoffset() != UTC.utcoffset(changed_at):
             raise ValueError("transition time must be UTC-aware")
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             self._verify_connection(connection)
+            self._verify_orders(connection)
             row = connection.execute(
-                "SELECT reservation_id, delta_json, state, changed_at "
+                "SELECT reservation_id, delta_json, state, changed_at, submitter_id, claimed_at "
                 "FROM orders WHERE order_id = ?",
                 (order_id,),
             ).fetchone()
             if row is None:
                 raise KeyError(order_id)
             current = OrderState(row[2])
-            if state not in _ORDER_TRANSITIONS[current]:
+            if (
+                state not in _ORDER_TRANSITIONS[current]
+                or row[4] is None
+                or changed_at < _parse_utc(str(row[3]))
+            ):
                 raise JournalIntegrityError(f"invalid order transition: {current} -> {state}")
             delta = _decode_delta(json.loads(row[1]))
             payload = {
@@ -197,7 +391,15 @@ class OrderLifecycleStore(ExecutionStore):
                 (state, _utc_text(changed_at), sequence, order_id),
             )
             connection.commit()
-        return StagedOrder(order_id, str(row[0]), delta, state, changed_at)
+        return StagedOrder(
+            order_id,
+            str(row[0]),
+            delta,
+            state,
+            changed_at,
+            str(row[4]),
+            _parse_utc(str(row[5])),
+        )
 
 
 def build_order_delta(

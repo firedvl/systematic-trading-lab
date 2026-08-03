@@ -80,9 +80,8 @@ external or signed checkpoint.
 1. Validated intents, configuration fingerprints, append-only hash-chain journal, and durable dedupe.
 2. Protected paper authorization, independent risk context, reviewed limits, capacity reservations,
    risk decisions, and persistent emergency disable.
-3. Delta order construction and deterministic client IDs now exist as a broker-free pure boundary.
-   Staged orders and forward-only local lifecycle states are persisted; reservation binding and
-   single-submitter claims remain next.
+3. Delta construction, deterministic client IDs, reservation-bound staging, forward-only local
+   lifecycle states, and atomic single-submitter claims now exist. No broker mutation method exists.
 4. Paper-only Alpaca REST adapter behind a mockable protocol and an exact host/path allowlist.
 5. Broker-event ingestion, reconciliation, restart recovery, and cancel-all evidence.
 6. Fake-adapter end-to-end tests and paper operations runbooks.

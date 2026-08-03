@@ -6,9 +6,10 @@ Portfolio backtests require the full symbol set in every session. The strategy s
 
 Paper flow is strategy intent, protected paper authorization, independent risk, order manager, broker adapter, events, reconciliation, and append-only evidence. Intents require a strategy version, symbol, decision time, target or whole-share quantity, reason, source-data fingerprint, reference price, expiry, and idempotency key. Exact duplicate delivery returns the existing receipt; reuse of a key with different content blocks execution. Authorization binds one qualified candidate and exact strategy, code, data, account, evidence, limits, and expiry; research code cannot grant it.
 
-Only the Alpaca paper host may be selected. Long-only whole-share deltas now produce one
-deterministic broker-free client order ID per intent and target/current quantity pair. Each
-later staged order must preserve that identity through its forward-only lifecycle.
+Only the Alpaca paper host may be selected. Long-only whole-share deltas produce one deterministic
+broker-free client order ID per intent and target/current quantity pair. Staging requires the exact
+active capacity reservation and matching immutable intent. One submitter ID is claimed atomically
+with `staged -> submitting`; later callers cannot claim or bypass that transition.
 A separate read-only adapter now permits only `GET /v2/account`, `/v2/positions`, `/v2/orders`, and
 `/v2/clock` at `https://paper-api.alpaca.markets`. It blocks redirects, rejects unexpected accounts,
 symbols, values, and open-order states, and fails if a 500-order response cannot prove completeness.
