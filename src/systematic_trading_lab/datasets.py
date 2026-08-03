@@ -10,7 +10,7 @@ from typing import Any
 
 from .calendar import expected_sessions
 from .catalog import DatasetCatalog
-from .domain import DatasetIdentity, DatasetManifest, Symbol, Timeframe, TimestampRange
+from .domain import DatasetIdentity, DatasetManifest, OHLCVBar, Symbol, Timeframe, TimestampRange
 from .fingerprints import canonical_json, canonicalize, fingerprint
 from .parquet import from_parquet, to_parquet
 from .providers import MarketDataProvider
@@ -145,6 +145,16 @@ class DatasetService:
             "validation": canonicalize(checked.result),
             "valid": valid,
         }
+
+    def load_bars(self, dataset_id: str | None = None) -> tuple[OHLCVBar, ...]:
+        validation = self.validate(dataset_id)
+        if not validation["valid"]:
+            raise DatasetValidationError("dataset integrity validation failed")
+        path = self.layout.dataset(str(validation["dataset_id"])) / "bars.parquet"
+        bars = tuple(OHLCVBar.from_record(record) for record in from_parquet(path.read_bytes()))
+        if fingerprint(tuple(bar.to_record() for bar in bars)) != validation["fingerprint"]:
+            raise DatasetValidationError("loaded dataset fingerprint changed after validation")
+        return bars
 
     def rebuild_catalog(self) -> int:
         return self.catalog.rebuild(self.layout.datasets)

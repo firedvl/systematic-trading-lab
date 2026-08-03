@@ -24,6 +24,7 @@ def test_fixture_import_is_immutable_describable_and_rebuildable(tmp_path: Path)
     assert first.bar_count == 25
     assert service.describe()["identity"]["dataset_id"] == first.dataset_id
     assert service.validate()["valid"] is True
+    assert len(service.load_bars(first.dataset_id)) == 25
 
     layout.catalog.unlink()
     rebuilt = DatasetService(layout)

@@ -30,6 +30,8 @@ class CostModel:
     commission_bps: Decimal = Decimal("1")
 
     def __post_init__(self) -> None:
+        if not self.version:
+            raise ValueError("cost model version is required")
         if self.slippage_bps < 0 or self.commission_bps < 0:
             raise ValueError("cost rates must not be negative")
 
