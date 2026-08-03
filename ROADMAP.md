@@ -16,7 +16,7 @@ Timestamp semantics, portfolio accounting, deterministic orders and fills, conse
 
 ## M3 — Experiments and qualification
 
-Durable campaigns and experiments, restart recovery, split controls, walk-forward and robustness checks, comparisons, gate-based qualification, and protected holdout workflow. Gate: failures remain evidence; ordinary research cannot read holdout results; no single score can hide a disqualifying failure.
+Durable campaigns and experiments, restart recovery, split controls, walk-forward and robustness checks, comparisons, gate-based qualification, and protected holdout workflow. The current slice covers search budgets, pending/running/completed/failed lifecycle, heartbeats and stale-run recovery, explicit split classification, hidden holdout metrics with logged access events, and approved/unapproved disqualifying gates. Gate: failures remain evidence; ordinary research cannot read holdout results; no single score can hide a disqualifying failure.
 
 ## M4 — Alpaca paper execution
 

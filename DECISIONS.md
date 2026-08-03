@@ -62,3 +62,21 @@
 - Reasoning: visible per-baseline metrics preserve the evidence needed for later qualification gates.
 - Consequences: report consumers must compare multiple fields; qualification remains a separate M3 authority.
 - Revisit when: a reviewed qualification policy defines explicit disqualifying gates and report schema requirements.
+
+## 2026-08-04 — SQLite experiment lifecycle is authoritative
+
+- Decision: record every campaign candidate in SQLite before execution and move it through guarded pending, running, completed, or failed states.
+- Context: files alone cannot distinguish a crash from completion or enforce search-volume accounting.
+- Alternatives: report-directory discovery or an in-memory job queue.
+- Reasoning: SQLite transactions provide a small durable registry, explicit search budgets, and restart-safe state without a service dependency.
+- Consequences: stale running experiments become failed evidence; completion cannot overwrite a failed or completed record.
+- Revisit when: concurrent distributed workers exceed SQLite's measured write capacity.
+
+## 2026-08-04 — Holdout access requires a logged event
+
+- Decision: ordinary reads hide holdout metrics; completed holdouts require a unique reviewer/reason event before metrics can be read or qualification recorded.
+- Context: repeated holdout inspection turns the holdout into development data.
+- Alternatives: filesystem naming conventions or an honor-system command flag.
+- Reasoning: registry-enforced access makes the protected transition explicit and auditable.
+- Consequences: holdout creation and evaluation use a separate controlled code path; routine experiment CLI excludes holdout creation.
+- Revisit when: remote authorization and immutable external audit storage replace the local registry.

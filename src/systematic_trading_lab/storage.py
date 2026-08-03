@@ -25,6 +25,10 @@ class StorageLayout:
     def catalog(self) -> Path:
         return self.root / "catalog.sqlite3"
 
+    @property
+    def experiments(self) -> Path:
+        return self.root / "experiments.sqlite3"
+
     def dataset(self, dataset_id: str) -> Path:
         return self.datasets / dataset_id
 
