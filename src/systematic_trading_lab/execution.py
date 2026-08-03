@@ -23,6 +23,7 @@ _KNOWN_EVENT_TYPES = {
     "paper-authorized",
     "risk-decided",
     "portfolio-snapshot-recorded",
+    "paper-snapshot-attested",
     "reconciliation-baseline-created",
     "reconciliation-recorded",
 }

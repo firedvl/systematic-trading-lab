@@ -3,6 +3,7 @@ import json
 from datetime import UTC, datetime, timedelta
 from email.message import Message
 from http.client import BadStatusLine
+from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlsplit
 from urllib.request import Request
@@ -14,7 +15,11 @@ from systematic_trading_lab.alpaca_paper import (
     AlpacaPaperReader,
     _validate_request,
 )
-from systematic_trading_lab.reconciliation import PositionSnapshot, SnapshotSource
+from systematic_trading_lab.reconciliation import (
+    PositionSnapshot,
+    ReconciliationStore,
+    SnapshotSource,
+)
 
 NOW = datetime(2026, 8, 3, 20, 0, tzinfo=UTC)
 
@@ -140,7 +145,7 @@ def test_reader_normalizes_complete_portfolio_and_clock_with_get_only_requests()
         for name, value in inspect.getmembers(AlpacaPaperReader, inspect.isfunction)
         if not name.startswith("_")
     }
-    assert public_methods == {"read_clock", "read_portfolio"}
+    assert public_methods == {"read_clock", "read_portfolio", "record_portfolio"}
 
 
 @pytest.mark.parametrize(
@@ -220,6 +225,15 @@ def test_risk_critical_account_and_order_changes_change_snapshot_identity() -> N
 
     assert original.snapshot_id != modified.snapshot_id
     assert original.open_orders != modified.open_orders
+
+
+def test_injected_transport_cannot_create_durable_provenance(tmp_path: Path) -> None:
+    reader = _reader(_payloads())
+
+    with pytest.raises(AlpacaPaperError, match="injected transport"):
+        reader.record_portfolio(
+            ReconciliationStore(tmp_path / "execution.sqlite3"), recorded_at=NOW
+        )
 
 
 @pytest.mark.parametrize(

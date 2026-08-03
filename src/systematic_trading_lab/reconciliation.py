@@ -18,6 +18,7 @@ from .fingerprints import canonical_json, canonicalize, fingerprint
 from .risk import RiskLimits, RiskStore
 
 _SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,15}")
+_ALPACA_READER_CAPABILITY = object()
 
 
 class SnapshotSource(StrEnum):
@@ -306,6 +307,33 @@ class ReconciliationEvidence:
             raise ValueError("reconciliation evidence limits are invalid")
 
 
+@dataclass(frozen=True)
+class _PaperSnapshotAttestation:
+    snapshot: PortfolioSnapshot
+    adapter_version: str
+    paper_origin: str
+    completed_at: datetime
+
+    def __post_init__(self) -> None:
+        if self.snapshot.source is not SnapshotSource.ALPACA_PAPER:
+            raise ValueError("only Alpaca-paper snapshots can be adapter-attested")
+        if self.adapter_version != "alpaca-paper-reader-v1":
+            raise ValueError("paper snapshot adapter version is unsupported")
+        if self.paper_origin != "https://paper-api.alpaca.markets":
+            raise ValueError("paper snapshot origin is unsupported")
+        _utc("paper snapshot completion time", self.completed_at)
+        if self.completed_at != max(
+            self.snapshot.account_observed_at,
+            self.snapshot.positions_observed_at,
+            self.snapshot.orders_observed_at,
+        ):
+            raise ValueError("paper snapshot completion must match its final observation")
+
+    @property
+    def attestation_fingerprint(self) -> str:
+        return fingerprint(self)
+
+
 class ReconciliationStore(RiskStore):
     """Persist normalized snapshots, explicit flat baselines, and comparisons."""
 
@@ -329,6 +357,13 @@ class ReconciliationStore(RiskStore):
                 CREATE TABLE IF NOT EXISTS reconciliation_evidence (
                     evidence_id TEXT PRIMARY KEY,
                     evidence_json TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
+                CREATE TABLE IF NOT EXISTS paper_snapshot_attestations (
+                    snapshot_id TEXT PRIMARY KEY REFERENCES portfolio_snapshots(snapshot_id),
+                    attestation_fingerprint TEXT NOT NULL UNIQUE,
+                    attestation_json TEXT NOT NULL,
+                    recorded_at TEXT NOT NULL,
                     journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
                 );
                 CREATE TRIGGER IF NOT EXISTS portfolio_snapshots_no_update
@@ -355,6 +390,14 @@ class ReconciliationStore(RiskStore):
                 BEFORE DELETE ON reconciliation_evidence BEGIN
                     SELECT RAISE(ABORT, 'reconciliation evidence is immutable');
                 END;
+                CREATE TRIGGER IF NOT EXISTS paper_snapshot_attestations_no_update
+                BEFORE UPDATE ON paper_snapshot_attestations BEGIN
+                    SELECT RAISE(ABORT, 'paper snapshot attestations are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS paper_snapshot_attestations_no_delete
+                BEFORE DELETE ON paper_snapshot_attestations BEGIN
+                    SELECT RAISE(ABORT, 'paper snapshot attestations are immutable');
+                END;
                 """
             )
             connection.commit()
@@ -363,50 +406,12 @@ class ReconciliationStore(RiskStore):
     def record_snapshot(
         self, snapshot: PortfolioSnapshot, *, recorded_at: datetime
     ) -> PortfolioSnapshot:
-        _utc("snapshot record time", recorded_at)
-        if any(
-            observed_at > recorded_at
-            for observed_at in (
-                snapshot.account_observed_at,
-                snapshot.positions_observed_at,
-                snapshot.orders_observed_at,
-            )
-        ):
-            raise ValueError("snapshot record time cannot predate an observation")
-        snapshot_json = canonical_json(snapshot)
+        _validate_snapshot_record(snapshot, recorded_at)
         with self._connect() as connection:
             try:
                 connection.execute("BEGIN IMMEDIATE")
                 self._verify_all(connection)
-                row = connection.execute(
-                    "SELECT snapshot_json FROM portfolio_snapshots WHERE snapshot_id = ?",
-                    (snapshot.snapshot_id,),
-                ).fetchone()
-                if row is not None:
-                    if row[0] != snapshot_json:
-                        raise JournalIntegrityError(
-                            "snapshot ID is bound to different normalized state"
-                        )
-                    connection.commit()
-                    return snapshot
-                sequence = self._append_event(
-                    connection,
-                    occurred_at=recorded_at,
-                    event_type="portfolio-snapshot-recorded",
-                    entity_type="portfolio-snapshot",
-                    entity_id=snapshot.snapshot_id,
-                    payload=canonicalize(snapshot),
-                )
-                connection.execute(
-                    "INSERT INTO portfolio_snapshots VALUES (?, ?, ?, ?, ?)",
-                    (
-                        snapshot.snapshot_id,
-                        snapshot.snapshot_fingerprint,
-                        snapshot_json,
-                        _utc_text(recorded_at),
-                        sequence,
-                    ),
-                )
+                self._record_snapshot(connection, snapshot, recorded_at)
                 connection.commit()
             except sqlite3.IntegrityError as error:
                 connection.rollback()
@@ -415,6 +420,124 @@ class ReconciliationStore(RiskStore):
                 connection.rollback()
                 raise
         return snapshot
+
+    def _record_adapter_snapshot(
+        self,
+        snapshot: PortfolioSnapshot,
+        *,
+        adapter_version: str,
+        paper_origin: str,
+        recorded_at: datetime,
+        _capability: object,
+    ) -> PortfolioSnapshot:
+        if _capability is not _ALPACA_READER_CAPABILITY:
+            raise PermissionError("only the production Alpaca reader can attest a snapshot")
+        attestation = _PaperSnapshotAttestation(
+            snapshot=snapshot,
+            adapter_version=adapter_version,
+            paper_origin=paper_origin,
+            completed_at=snapshot.orders_observed_at,
+        )
+        _validate_snapshot_record(snapshot, recorded_at)
+        if recorded_at < attestation.completed_at:
+            raise ValueError("attestation record time cannot predate completion")
+        attestation_json = canonical_json(attestation)
+        with self._connect() as connection:
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                self._verify_all(connection)
+                existing_snapshot = connection.execute(
+                    "SELECT 1 FROM portfolio_snapshots WHERE snapshot_id = ?",
+                    (snapshot.snapshot_id,),
+                ).fetchone()
+                existing_attestation = connection.execute(
+                    """
+                    SELECT attestation_json FROM paper_snapshot_attestations
+                    WHERE snapshot_id = ?
+                    """,
+                    (snapshot.snapshot_id,),
+                ).fetchone()
+                if existing_snapshot is not None and existing_attestation is None:
+                    raise JournalIntegrityError(
+                        "caller-recorded snapshot cannot gain adapter provenance"
+                    )
+                if existing_attestation is not None:
+                    if existing_attestation[0] != attestation_json:
+                        raise JournalIntegrityError(
+                            "snapshot ID is bound to a different paper attestation"
+                        )
+                    connection.commit()
+                    return snapshot
+                self._record_snapshot(connection, snapshot, recorded_at)
+                snapshot_recorded_at = connection.execute(
+                    "SELECT recorded_at FROM portfolio_snapshots WHERE snapshot_id = ?",
+                    (snapshot.snapshot_id,),
+                ).fetchone()
+                if (
+                    snapshot_recorded_at is None
+                    or _parse_utc(snapshot_recorded_at[0]) > recorded_at
+                ):
+                    raise JournalIntegrityError("paper attestation cannot predate its snapshot")
+                sequence = self._append_event(
+                    connection,
+                    occurred_at=recorded_at,
+                    event_type="paper-snapshot-attested",
+                    entity_type="paper-snapshot-attestation",
+                    entity_id=snapshot.snapshot_id,
+                    payload=canonicalize(attestation),
+                )
+                connection.execute(
+                    "INSERT INTO paper_snapshot_attestations VALUES (?, ?, ?, ?, ?)",
+                    (
+                        snapshot.snapshot_id,
+                        attestation.attestation_fingerprint,
+                        attestation_json,
+                        _utc_text(recorded_at),
+                        sequence,
+                    ),
+                )
+                connection.commit()
+            except sqlite3.IntegrityError as error:
+                connection.rollback()
+                raise JournalIntegrityError("paper snapshot attestation already exists") from error
+            except Exception:
+                connection.rollback()
+                raise
+        return snapshot
+
+    def _record_snapshot(
+        self,
+        connection: sqlite3.Connection,
+        snapshot: PortfolioSnapshot,
+        recorded_at: datetime,
+    ) -> None:
+        snapshot_json = canonical_json(snapshot)
+        row = connection.execute(
+            "SELECT snapshot_json FROM portfolio_snapshots WHERE snapshot_id = ?",
+            (snapshot.snapshot_id,),
+        ).fetchone()
+        if row is not None:
+            if row[0] != snapshot_json:
+                raise JournalIntegrityError("snapshot ID is bound to different normalized state")
+            return
+        sequence = self._append_event(
+            connection,
+            occurred_at=recorded_at,
+            event_type="portfolio-snapshot-recorded",
+            entity_type="portfolio-snapshot",
+            entity_id=snapshot.snapshot_id,
+            payload=canonicalize(snapshot),
+        )
+        connection.execute(
+            "INSERT INTO portfolio_snapshots VALUES (?, ?, ?, ?, ?)",
+            (
+                snapshot.snapshot_id,
+                snapshot.snapshot_fingerprint,
+                snapshot_json,
+                _utc_text(recorded_at),
+                sequence,
+            ),
+        )
 
     def create_flat_baseline(
         self,
@@ -431,7 +554,7 @@ class ReconciliationStore(RiskStore):
         with self._connect() as connection:
             try:
                 connection.execute("BEGIN IMMEDIATE")
-                snapshots, baselines, _ = self._verify_all(connection)
+                snapshots, attestations, baselines, _ = self._verify_all(connection)
                 authorizations = self._verify_authorizations(connection)
                 try:
                     authorization = authorizations[authorization_id]
@@ -457,6 +580,7 @@ class ReconciliationStore(RiskStore):
                     not comparison.clean
                     or expected.positions
                     or expected.open_client_order_ids
+                    or observed_snapshot_id not in attestations
                     or authorization.account_id != expected.account_id
                     or authorization.risk_configuration_fingerprint
                     != limits.configuration_fingerprint
@@ -524,7 +648,7 @@ class ReconciliationStore(RiskStore):
         with self._connect() as connection:
             try:
                 connection.execute("BEGIN IMMEDIATE")
-                snapshots, baselines, evidence_by_id = self._verify_all(connection)
+                snapshots, attestations, baselines, evidence_by_id = self._verify_all(connection)
                 try:
                     baseline = baselines[baseline_id]
                     expected = snapshots[baseline.expected_snapshot_id]
@@ -544,6 +668,7 @@ class ReconciliationStore(RiskStore):
                 ).fetchone()
                 if (
                     compared_at < baseline.created_at
+                    or observed_snapshot_id not in attestations
                     or recorded_at is None
                     or compared_at < _parse_utc(recorded_at[0])
                 ):
@@ -594,6 +719,7 @@ class ReconciliationStore(RiskStore):
         self, connection: sqlite3.Connection
     ) -> tuple[
         dict[str, PortfolioSnapshot],
+        dict[str, _PaperSnapshotAttestation],
         dict[str, ReconciliationBaseline],
         dict[str, ReconciliationEvidence],
     ]:
@@ -607,10 +733,12 @@ class ReconciliationStore(RiskStore):
         self, connection: sqlite3.Connection
     ) -> tuple[
         dict[str, PortfolioSnapshot],
+        dict[str, _PaperSnapshotAttestation],
         dict[str, ReconciliationBaseline],
         dict[str, ReconciliationEvidence],
     ]:
         snapshots: dict[str, PortfolioSnapshot] = {}
+        snapshot_recorded_at: dict[str, datetime] = {}
         rows = connection.execute(
             """
             SELECT snapshot_id, snapshot_fingerprint, snapshot_json, recorded_at, journal_sequence
@@ -621,6 +749,7 @@ class ReconciliationStore(RiskStore):
         for row in rows:
             try:
                 snapshot = _decode_snapshot(json.loads(row[2]))
+                recorded_at = _parse_utc(row[3])
             except (ValueError, json.JSONDecodeError) as error:
                 raise JournalIntegrityError("stored portfolio snapshot is invalid") from error
             if (
@@ -639,6 +768,44 @@ class ReconciliationStore(RiskStore):
             ):
                 raise JournalIntegrityError("portfolio snapshot does not match its journal event")
             snapshots[snapshot.snapshot_id] = snapshot
+            snapshot_recorded_at[snapshot.snapshot_id] = recorded_at
+
+        attestations: dict[str, _PaperSnapshotAttestation] = {}
+        rows = connection.execute(
+            """
+            SELECT snapshot_id, attestation_fingerprint, attestation_json, recorded_at,
+                   journal_sequence
+            FROM paper_snapshot_attestations
+            """
+        ).fetchall()
+        _require_event_count(connection, "paper-snapshot-attested", len(rows))
+        for row in rows:
+            try:
+                attestation = _decode_attestation(json.loads(row[2]))
+                snapshot = snapshots[row[0]]
+                attestation_recorded_at = _parse_utc(row[3])
+            except (KeyError, ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError(
+                    "stored paper snapshot attestation is invalid"
+                ) from error
+            if (
+                attestation.snapshot != snapshot
+                or row[1] != attestation.attestation_fingerprint
+                or row[2] != canonical_json(attestation)
+                or attestation_recorded_at < attestation.completed_at
+                or attestation_recorded_at < snapshot_recorded_at[row[0]]
+                or not _event_matches(
+                    connection,
+                    row[4],
+                    row[3],
+                    "paper-snapshot-attested",
+                    "paper-snapshot-attestation",
+                    row[0],
+                    canonical_json(attestation),
+                )
+            ):
+                raise JournalIntegrityError("paper snapshot attestation differs from its evidence")
+            attestations[row[0]] = attestation
 
         authorizations = self._verify_authorizations(connection)
         baselines: dict[str, ReconciliationBaseline] = {}
@@ -677,6 +844,7 @@ class ReconciliationStore(RiskStore):
                 or baseline.observed_fingerprint != observed.snapshot_fingerprint
                 or expected.positions
                 or expected.open_client_order_ids
+                or baseline.observed_snapshot_id not in attestations
                 or authorization.account_id != baseline.account_id
                 or authorization.risk_configuration_fingerprint
                 != baseline.risk_configuration_fingerprint
@@ -737,6 +905,7 @@ class ReconciliationStore(RiskStore):
                 row[0] != evidence.evidence_id
                 or evidence.evidence_id != expected_id
                 or evidence.result != result
+                or evidence.observed_snapshot_id not in attestations
                 or row[1] != canonical_json(evidence)
                 or result.compared_at < baseline.created_at
                 or observed_recorded_at is None
@@ -753,7 +922,7 @@ class ReconciliationStore(RiskStore):
             ):
                 raise JournalIntegrityError("reconciliation evidence does not match its inputs")
             evidence_by_id[evidence.evidence_id] = evidence
-        return snapshots, baselines, evidence_by_id
+        return snapshots, attestations, baselines, evidence_by_id
 
 
 def _decode_snapshot(value: Any) -> PortfolioSnapshot:
@@ -788,6 +957,20 @@ def _decode_snapshot(value: Any) -> PortfolioSnapshot:
         )
     except (KeyError, TypeError, ArithmeticError) as error:
         raise ValueError("portfolio snapshot fields differ") from error
+
+
+def _decode_attestation(value: Any) -> _PaperSnapshotAttestation:
+    if not isinstance(value, dict):
+        raise ValueError("paper snapshot attestation must be an object")
+    try:
+        return _PaperSnapshotAttestation(
+            snapshot=_decode_snapshot(value["snapshot"]),
+            adapter_version=value["adapter_version"],
+            paper_origin=value["paper_origin"],
+            completed_at=_parse_utc(value["completed_at"]),
+        )
+    except (KeyError, TypeError) as error:
+        raise ValueError("paper snapshot attestation fields differ") from error
 
 
 def _decode_baseline(value: Any) -> ReconciliationBaseline:
@@ -846,6 +1029,19 @@ def _require_event_count(connection: sqlite3.Connection, event_type: str, count:
 def _bounded_text(name: str, value: str) -> None:
     if not value or value != value.strip() or len(value) > 500:
         raise ValueError(f"{name} must be nonempty, trimmed, and at most 500 characters")
+
+
+def _validate_snapshot_record(snapshot: PortfolioSnapshot, recorded_at: datetime) -> None:
+    _utc("snapshot record time", recorded_at)
+    if any(
+        observed_at > recorded_at
+        for observed_at in (
+            snapshot.account_observed_at,
+            snapshot.positions_observed_at,
+            snapshot.orders_observed_at,
+        )
+    ):
+        raise ValueError("snapshot record time cannot predate an observation")
 
 
 def _sha256(name: str, value: str) -> None:

@@ -1,12 +1,17 @@
+import json
 import sqlite3
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast
+from urllib.parse import urlsplit
+from urllib.request import Request
 
 import pytest
 
+import systematic_trading_lab.alpaca_paper as alpaca_paper
+from systematic_trading_lab.alpaca_paper import AlpacaPaperReader
 from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityError
 from systematic_trading_lab.experiments import HoldoutAccessError
 from systematic_trading_lab.fingerprints import fingerprint
@@ -179,6 +184,72 @@ def _flat_snapshot(
     return replace(value, **cast(Any, changes))
 
 
+def _record_adapter_snapshot(
+    store: ReconciliationStore,
+    snapshot: PortfolioSnapshot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> PortfolioSnapshot:
+    responses: dict[str, object] = {
+        "/v2/account": {
+            "id": snapshot.account_id,
+            "status": "ACTIVE" if snapshot.account_ready else "ACCOUNT_UPDATED",
+            "cash": str(snapshot.cash),
+            "equity": str(snapshot.equity),
+            "buying_power": str(snapshot.buying_power),
+            "account_blocked": not snapshot.account_ready,
+            "trading_blocked": False,
+            "trade_suspended_by_user": False,
+        },
+        "/v2/positions": [
+            {"symbol": position.symbol, "qty": str(position.quantity)}
+            for position in snapshot.positions
+        ],
+        "/v2/orders": [
+            {
+                "client_order_id": order.client_order_id,
+                "symbol": order.symbol,
+                "status": order.status,
+                "side": order.side,
+                "qty": str(order.quantity),
+                "filled_qty": str(order.filled_quantity),
+                "type": order.order_type,
+                "limit_price": str(order.limit_price) if order.limit_price is not None else None,
+                "time_in_force": "day",
+                "extended_hours": False,
+                "order_class": "simple",
+                "notional": None,
+                "legs": None,
+            }
+            for order in snapshot.open_orders
+        ],
+    }
+
+    def transport(request: Request) -> bytes:
+        return json.dumps(responses[urlsplit(request.full_url).path]).encode()
+
+    monkeypatch.setattr(alpaca_paper, "_urlopen_bytes", transport)
+    observations = iter(
+        (
+            snapshot.account_observed_at,
+            snapshot.positions_observed_at,
+            snapshot.orders_observed_at,
+        )
+    )
+    symbols = frozenset(
+        {position.symbol for position in snapshot.positions}
+        | {order.symbol for order in snapshot.open_orders}
+        | {"SPY"}
+    )
+    reader = AlpacaPaperReader(
+        "test-key",
+        "test-secret",
+        account_id=snapshot.account_id,
+        allowed_symbols=symbols,
+        clock=lambda: next(observations),
+    )
+    return reader.record_portfolio(store, recorded_at=NOW)
+
+
 def test_paper_authorization_is_exact_immutable_and_restart_safe(tmp_path: Path) -> None:
     path = tmp_path / "execution.sqlite3"
     limits = _limits()
@@ -237,7 +308,9 @@ def test_durable_risk_decision_uses_persistent_emergency_state(tmp_path: Path) -
     assert receipt.reasons == ("emergency-disabled",)
 
 
-def test_reconciliation_store_persists_flat_baseline_and_results(tmp_path: Path) -> None:
+def test_reconciliation_store_persists_flat_baseline_and_results(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     path = tmp_path / "execution.sqlite3"
     limits = _limits()
     report = _evidence()
@@ -245,9 +318,29 @@ def test_reconciliation_store_persists_flat_baseline_and_results(tmp_path: Path)
     store = ReconciliationStore(path)
     store.authorize_paper(authorization, report, limits)
     expected = _flat_snapshot(SnapshotSource.LOCAL_EXPECTED, "expected-1")
-    observed = _flat_snapshot(SnapshotSource.ALPACA_PAPER, "observed-1")
+    caller_observed = _flat_snapshot(SnapshotSource.ALPACA_PAPER, "caller-observed")
     store.record_snapshot(expected, recorded_at=NOW)
-    store.record_snapshot(observed, recorded_at=NOW)
+    store.record_snapshot(caller_observed, recorded_at=NOW)
+    with pytest.raises(HoldoutAccessError, match="matching fresh flat state"):
+        store.create_flat_baseline(
+            baseline_id="baseline-1",
+            authorization_id=authorization.authorization_id,
+            expected_snapshot_id=expected.snapshot_id,
+            observed_snapshot_id=caller_observed.snapshot_id,
+            limits=limits,
+            operator="test-operator",
+            reason="flat test baseline",
+            created_at=NOW,
+        )
+    with pytest.raises(PermissionError, match="production Alpaca reader"):
+        store._record_adapter_snapshot(
+            caller_observed,
+            adapter_version="alpaca-paper-reader-v1",
+            paper_origin="https://paper-api.alpaca.markets",
+            recorded_at=NOW,
+            _capability=object(),
+        )
+    observed = _record_adapter_snapshot(store, caller_observed, monkeypatch)
     baseline = store.create_flat_baseline(
         baseline_id="baseline-1",
         authorization_id=authorization.authorization_id,
@@ -265,10 +358,19 @@ def test_reconciliation_store_persists_flat_baseline_and_results(tmp_path: Path)
         compared_at=NOW,
         unresolved_mutations=0,
     )
+    raw_snapshot = _flat_snapshot(SnapshotSource.ALPACA_PAPER, "observed-raw")
+    store.record_snapshot(raw_snapshot, recorded_at=NOW)
+    with pytest.raises(ValueError, match="durable evidence"):
+        store.record_reconciliation(
+            baseline_id=baseline.baseline_id,
+            observed_snapshot_id=raw_snapshot.snapshot_id,
+            compared_at=NOW,
+            unresolved_mutations=0,
+        )
     dirty_snapshot = _flat_snapshot(
         SnapshotSource.ALPACA_PAPER, "observed-2", cash=Decimal("69999")
     )
-    store.record_snapshot(dirty_snapshot, recorded_at=NOW)
+    dirty_snapshot = _record_adapter_snapshot(store, dirty_snapshot, monkeypatch)
     dirty = store.record_reconciliation(
         baseline_id=baseline.baseline_id,
         observed_snapshot_id=dirty_snapshot.snapshot_id,
@@ -282,7 +384,9 @@ def test_reconciliation_store_persists_flat_baseline_and_results(tmp_path: Path)
     ReconciliationStore(path)
 
 
-def test_reconciliation_store_rejects_nonflat_or_changed_baseline(tmp_path: Path) -> None:
+def test_reconciliation_store_rejects_nonflat_or_changed_baseline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     path = tmp_path / "execution.sqlite3"
     limits = _limits()
     report = _evidence()
@@ -302,7 +406,7 @@ def test_reconciliation_store_rejects_nonflat_or_changed_baseline(tmp_path: Path
         equity=Decimal("70100"),
     )
     store.record_snapshot(expected, recorded_at=NOW)
-    store.record_snapshot(observed, recorded_at=NOW)
+    observed = _record_adapter_snapshot(store, observed, monkeypatch)
 
     with pytest.raises(HoldoutAccessError, match="flat state"):
         store.create_flat_baseline(
@@ -317,3 +421,19 @@ def test_reconciliation_store_rejects_nonflat_or_changed_baseline(tmp_path: Path
         )
     with pytest.raises(JournalIntegrityError, match="different normalized state"):
         store.record_snapshot(replace(expected, cash=Decimal("1")), recorded_at=NOW)
+
+
+def test_paper_snapshot_attestation_is_immutable_and_journal_bound(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "execution.sqlite3"
+    snapshot = _flat_snapshot(SnapshotSource.ALPACA_PAPER, "observed-attested")
+    store = ReconciliationStore(path)
+    snapshot = _record_adapter_snapshot(store, snapshot, monkeypatch)
+
+    with sqlite3.connect(path) as connection:
+        connection.execute("DROP TRIGGER paper_snapshot_attestations_no_update")
+        connection.execute("UPDATE paper_snapshot_attestations SET attestation_json = '{}'")
+
+    with pytest.raises(JournalIntegrityError, match="attestation"):
+        ReconciliationStore(path)

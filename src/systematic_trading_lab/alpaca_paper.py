@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from http.client import HTTPException
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -20,6 +20,9 @@ from .reconciliation import (
     PositionSnapshot,
     SnapshotSource,
 )
+
+if TYPE_CHECKING:
+    from .reconciliation import ReconciliationStore
 
 PAPER_ORIGIN = "https://paper-api.alpaca.markets"
 _ALLOWED_PATHS = frozenset({"/v2/account", "/v2/positions", "/v2/orders", "/v2/clock"})
@@ -93,6 +96,7 @@ class AlpacaPaperReader:
         self._secret_key = secret_key
         self._account_id = account_id
         self._allowed_symbols = allowed_symbols
+        self._allows_persistence = transport is None
         self._transport = transport or _urlopen_bytes
         self._clock = clock or (lambda: datetime.now(UTC))
 
@@ -160,6 +164,22 @@ class AlpacaPaperReader:
             account_observed_at=account_observed_at,
             positions_observed_at=positions_observed_at,
             orders_observed_at=orders_observed_at,
+        )
+
+    def record_portfolio(
+        self, store: ReconciliationStore, *, recorded_at: datetime
+    ) -> PortfolioSnapshot:
+        if not self._allows_persistence:
+            raise AlpacaPaperError("injected transport cannot produce durable paper provenance")
+        from .reconciliation import _ALPACA_READER_CAPABILITY
+
+        snapshot = self.read_portfolio()
+        return store._record_adapter_snapshot(
+            snapshot,
+            adapter_version="alpaca-paper-reader-v1",
+            paper_origin=PAPER_ORIGIN,
+            recorded_at=recorded_at,
+            _capability=_ALPACA_READER_CAPABILITY,
         )
 
     def read_clock(self, *, maximum_age_seconds: int) -> MarketClockSnapshot:

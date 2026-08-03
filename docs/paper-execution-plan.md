@@ -102,15 +102,19 @@ for stable reconciliation evidence rather than accepting a placeholder proof.
 The slice 5 foundation now journals strict normalized local-expected and Alpaca-paper portfolio
 snapshots, a reviewed flat baseline, and later clean or dirty comparison results. It fails on source,
 account, cash, equity, buying power, account readiness, position, complete open-order state,
-freshness, timing, authorization, or unresolved-mutation
-differences. Adapter provenance, stable repeat evidence, and emergency-clear authority remain absent.
+freshness, timing, authorization, or unresolved-mutation differences. Durable adapter provenance now
+exists; stable repeat evidence and emergency-clear
+authority remain absent.
 
 The paper read adapter now permits only fixed-origin GET requests for account, positions, open orders,
 and clock. It validates one expected account, an explicit symbol allowlist, account readiness and
 buying power, positive whole-share positions, full supported open-order state, and UTC timestamps.
 The caller supplies the reviewed clock freshness limit. The reader blocks
 redirects and treats a full 500-order page as incomplete. Tests inject a mock transport; development
-makes no Alpaca request. Persisted adapter provenance remains the next boundary.
+makes no Alpaca request. Only the reader's non-injected production path can atomically persist a
+versioned exact-origin attestation with its normalized snapshot. Injected transports remain read-only,
+and a caller-recorded snapshot cannot gain provenance later. Baselines and later reconciliation
+refuse unattested paper snapshots.
 
 ## Alpaca contract
 
