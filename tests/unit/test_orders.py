@@ -1,9 +1,15 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 
 from systematic_trading_lab.execution import ExecutionIntent
 from systematic_trading_lab.fingerprints import fingerprint
-from systematic_trading_lab.orders import OrderSide, build_order_delta
+from systematic_trading_lab.orders import (
+    OrderLifecycleStore,
+    OrderSide,
+    OrderState,
+    build_order_delta,
+)
 
 NOW = datetime(2026, 8, 3, 20, tzinfo=UTC)
 
@@ -37,3 +43,16 @@ def test_order_delta_is_deterministic_and_long_only() -> None:
     assert replay is not None and replay.client_order_id == buy.client_order_id
     assert sell is not None and sell.side == OrderSide.SELL and sell.quantity == 1
     assert build_order_delta(intent, target_quantity=3, current_quantity=3, created_at=NOW) is None
+
+
+def test_order_lifecycle_is_idempotent_and_forward_only(tmp_path: Path) -> None:
+    delta = build_order_delta(_intent(), target_quantity=10, current_quantity=3, created_at=NOW)
+    assert delta is not None
+    store = OrderLifecycleStore(tmp_path / "execution.sqlite3")
+    staged = store.stage(delta, reservation_id="reservation-1", staged_at=NOW)
+    assert staged.state == OrderState.STAGED
+    assert store.stage(delta, reservation_id="reservation-1", staged_at=NOW) == staged
+    submitting = store.transition(delta.client_order_id, OrderState.SUBMITTING, changed_at=NOW)
+    assert submitting.state == OrderState.SUBMITTING
+    store.transition(delta.client_order_id, OrderState.ACKNOWLEDGED, changed_at=NOW)
+    store.transition(delta.client_order_id, OrderState.FILLED, changed_at=NOW)
