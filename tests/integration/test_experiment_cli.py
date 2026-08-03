@@ -177,3 +177,41 @@ def test_cli_runs_cataloged_experiment_and_compares_candidates(
     assert isinstance(portfolio_spec, dict)
     assert portfolio_spec["strategy_id"] == "relative-strength-portfolio"
     assert portfolio_spec["strategy_family"] == "portfolio-momentum"
+
+    ExperimentRegistry(layout.experiments).create_campaign("risk-campaign", "Risk", 1)
+    risk_managed = parser().parse_args(
+        [
+            "experiment",
+            "run",
+            "risk-candidate",
+            "--campaign",
+            "risk-campaign",
+            "--strategy",
+            "risk-managed-momentum",
+            "--code-commit",
+            "abc123",
+            "--dataset",
+            imported.dataset_id,
+            "--split",
+            "training",
+            "--start",
+            "2025-01-06",
+            "--end",
+            "2025-01-10",
+            "--reason",
+            "Risk-managed CLI integration",
+            "--parameter",
+            "lookback=2",
+            "--parameter",
+            "volatility_window=2",
+            "--parameter",
+            "rebalance_every=1",
+        ]
+    )
+    assert run(risk_managed, settings) == 0
+    risk_record = ExperimentRegistry(layout.experiments).get("risk-candidate")
+    risk_spec = risk_record["spec_json"]
+    assert risk_record["status"] == "completed"
+    assert isinstance(risk_spec, dict)
+    assert risk_spec["strategy_id"] == "risk-managed-momentum-portfolio"
+    assert risk_spec["strategy_family"] == "portfolio-momentum"
