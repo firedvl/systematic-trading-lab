@@ -25,6 +25,8 @@ _KNOWN_EVENT_TYPES = {
     "paper-authorized",
     "risk-decided",
     "capacity-reserved",
+    "order-staged",
+    "order-transitioned",
     "portfolio-snapshot-recorded",
     "paper-snapshot-attested",
     "reconciliation-baseline-created",
