@@ -1,0 +1,62 @@
+import json
+from datetime import UTC, datetime
+from urllib.parse import parse_qs, urlparse
+from urllib.request import Request
+
+from systematic_trading_lab.domain import Symbol, Timeframe, TimestampRange
+from systematic_trading_lab.providers import AlpacaHistoricalProvider
+
+
+def test_alpaca_provider_paginates_and_normalizes_daily_bars() -> None:
+    requests: list[Request] = []
+    payloads = iter(
+        [
+            {
+                "bars": {
+                    "SPY": [
+                        {
+                            "t": "2025-01-06T05:00:00Z",
+                            "o": 100,
+                            "h": 101,
+                            "l": 99,
+                            "c": 100.5,
+                            "v": 10,
+                        }
+                    ]
+                },
+                "next_page_token": "page-2",
+            },
+            {
+                "bars": {
+                    "SPY": [
+                        {
+                            "t": "2025-01-07T05:00:00Z",
+                            "o": 101,
+                            "h": 102,
+                            "l": 100,
+                            "c": 101.5,
+                            "v": 11,
+                        }
+                    ]
+                },
+                "next_page_token": None,
+            },
+        ]
+    )
+
+    def transport(request: Request) -> bytes:
+        requests.append(request)
+        return json.dumps(next(payloads)).encode()
+
+    provider = AlpacaHistoricalProvider("test-key", "test-secret", transport=transport)
+    records = provider.fetch(
+        [Symbol("SPY")],
+        Timeframe.DAILY,
+        TimestampRange(datetime(2025, 1, 6, tzinfo=UTC), datetime(2025, 1, 7, tzinfo=UTC)),
+    )
+
+    assert len(records) == 2
+    assert records[0]["timestamp"] == "2025-01-06T00:00:00Z"
+    assert len(requests) == 2
+    assert parse_qs(urlparse(str(requests[1].full_url)).query)["page_token"] == ["page-2"]
+    assert requests[0].headers["Apca-api-key-id"] == "test-key"

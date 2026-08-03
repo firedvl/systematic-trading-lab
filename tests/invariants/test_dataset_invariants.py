@@ -13,7 +13,7 @@ def test_artifact_tampering_breaks_integrity_check(tmp_path: Path) -> None:
     imported = service.import_from(
         FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request()
     )
-    bars = layout.dataset(imported.dataset_id) / "bars.jsonl"
+    bars = layout.dataset(imported.dataset_id) / "raw.jsonl"
     records = bars.read_text(encoding="utf-8").splitlines()
     changed = json.loads(records[0])
     changed["close"] = "999"

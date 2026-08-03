@@ -8,9 +8,11 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
+from .calendar import expected_sessions
 from .catalog import DatasetCatalog
 from .domain import DatasetIdentity, DatasetManifest, Symbol, Timeframe, TimestampRange
 from .fingerprints import canonical_json, canonicalize, fingerprint
+from .parquet import from_parquet, to_parquet
 from .providers import MarketDataProvider
 from .storage import StorageLayout
 from .validation import validate_records
@@ -41,7 +43,12 @@ class DatasetService:
         requested: TimestampRange,
     ) -> ImportResult:
         records = provider.fetch(symbols, timeframe, requested)
-        validated = validate_records(records, timeframe)
+        validated = validate_records(
+            records,
+            timeframe,
+            expected_sessions(requested.start, requested.end),
+            tuple(symbol.value for symbol in symbols),
+        )
         if not validated.result.valid:
             evidence = {
                 "provider": provider.name,
@@ -77,14 +84,18 @@ class DatasetService:
             normalization_version="ohlcv-normalization-v1",
             schema_version="ohlcv-v1",
             adjustment_policy="provider-adjusted",
-            calendar_policy="weekday-gap-check-v1",
+            calendar_policy="XNYS-v1",
             validation=validated.result,
         )
         manifest_data = canonicalize(manifest)
-        bars_text = "".join(canonical_json(record) + "\n" for record in bar_records)
+        raw_text = "".join(canonical_json(record) + "\n" for record in records)
         created = self.layout.publish(
             identity.dataset_id,
-            {"bars.jsonl": bars_text, "manifest.json": canonical_json(manifest) + "\n"},
+            {
+                "raw.jsonl": raw_text,
+                "bars.parquet": to_parquet(ordered),
+                "manifest.json": canonical_json(manifest) + "\n",
+            },
         )
         manifest_path = self.layout.dataset(identity.dataset_id) / "manifest.json"
         self.catalog.register(manifest_data, manifest_path)
@@ -101,18 +112,37 @@ class DatasetService:
         identity = manifest["identity"]
         path = self.layout.dataset(identity["dataset_id"])
         stored_manifest = json.loads((path / "manifest.json").read_text(encoding="utf-8"))
-        records = [
+        records = from_parquet((path / "bars.parquet").read_bytes())
+        requested = TimestampRange(
+            datetime.fromisoformat(manifest["requested_range"]["start"].replace("Z", "+00:00")),
+            datetime.fromisoformat(manifest["requested_range"]["end"].replace("Z", "+00:00")),
+        )
+        checked = validate_records(
+            records,
+            Timeframe(manifest["timeframe"]),
+            expected_sessions(requested.start, requested.end),
+            tuple(symbol["value"] for symbol in manifest["symbols"]),
+        )
+        actual = fingerprint(tuple(bar.to_record() for bar in checked.bars))
+        raw_records = [
             json.loads(line)
-            for line in (path / "bars.jsonl").read_text(encoding="utf-8").splitlines()
+            for line in (path / "raw.jsonl").read_text(encoding="utf-8").splitlines()
             if line
         ]
-        actual = fingerprint(records)
-        valid = stored_manifest == manifest and actual == identity["fingerprint"]
+        raw_matches = fingerprint(raw_records) == manifest["raw_artifact_hashes"][0]
+        valid = (
+            stored_manifest == manifest
+            and actual == identity["fingerprint"]
+            and raw_matches
+            and checked.result.valid
+        )
         return {
             "dataset_id": identity["dataset_id"],
             "fingerprint": identity["fingerprint"],
             "artifact_fingerprint": actual,
             "catalog_matches_manifest": stored_manifest == manifest,
+            "raw_artifact_matches": raw_matches,
+            "validation": canonicalize(checked.result),
             "valid": valid,
         }
 

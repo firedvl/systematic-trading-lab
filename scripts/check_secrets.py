@@ -8,7 +8,8 @@ import sys
 from pathlib import Path
 
 PATTERNS = (
-    re.compile(r"(?i)(?:secret|token|password|api[_-]?key)\s*=\s*['\"]?[^\s'\"]+"),
+    re.compile(r"(?i)(?:secret|token|password|api[_-]?key)\s*=\s*['\"][^'\"]+['\"]"),
+    re.compile(r"(?m)^\s*(?:APCA_API_KEY_ID|APCA_API_SECRET_KEY)\s*=\s*\S+"),
     re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
 )

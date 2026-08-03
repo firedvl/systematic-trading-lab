@@ -26,3 +26,21 @@
 - Reasoning: content addressing makes deduplication, integrity checks, and catalog reconstruction direct.
 - Consequences: corrected data becomes a new version; metadata that varies by retrieval is outside the data fingerprint.
 - Revisit when: remote object storage requires a different atomic publication protocol.
+
+## 2026-08-03 — XNYS calendar for session completeness
+
+- Decision: use `exchange-calendars` with the XNYS calendar for expected daily sessions.
+- Context: weekday checks accept U.S. market holidays as valid bars.
+- Alternatives: a weekday-only rule or a hand-maintained holiday list.
+- Reasoning: the maintained calendar captures holidays and shortened-session schedules without duplicating dates in this repository.
+- Consequences: calendar version is part of the locked environment; missing expected sessions reject a dataset.
+- Revisit when: a point-in-time calendar policy or multi-venue universe requires explicit calendar ownership.
+
+## 2026-08-03 — Read-only Alpaca HTTP boundary
+
+- Decision: use a small stdlib `urllib` adapter for historical bars and keep credentials at the CLI environment boundary.
+- Context: M1 needs provider access but must not introduce broker authority or make an SDK authoritative.
+- Alternatives: `alpaca-py` or direct broker integration.
+- Reasoning: the endpoint is narrow, pagination is explicit, and the adapter is easy to mock and keep read-only.
+- Consequences: endpoint response mapping is owned and tested here; later broker execution remains a separate module.
+- Revisit when: paper execution needs broker functionality that cannot be isolated behind the same provider boundary.

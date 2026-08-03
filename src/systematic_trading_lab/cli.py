@@ -7,13 +7,14 @@ import json
 import os
 import sys
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 
 from . import __version__
 from .config import ConfigurationError, Settings, load_settings
 from .datasets import DatasetService, DatasetValidationError, fixture_request, fixture_symbols
-from .domain import Timeframe
-from .providers import FixtureProvider
+from .domain import Timeframe, TimestampRange, TradingMode
+from .providers import AlpacaHistoricalProvider, FixtureProvider
 from .storage import StorageLayout
 
 
@@ -27,6 +28,9 @@ def parser() -> argparse.ArgumentParser:
         dest="data_command", required=True
     )
     data.add_parser("import-fixture", help="import deterministic offline bars")
+    alpaca = data.add_parser("import-alpaca", help="import read-only Alpaca historical bars")
+    alpaca.add_argument("--start", required=True, help="UTC date or RFC-3339 start")
+    alpaca.add_argument("--end", required=True, help="UTC date or RFC-3339 end")
     for name in ("validate", "describe"):
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
@@ -52,9 +56,9 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             "python_3_12_or_newer": sys.version_info >= (3, 12),
             "mode_is_explicitly_safe": not settings.broker_writes_allowed,
             "runtime_path_is_not_repository_root": settings.home != Path.cwd().resolve(),
-            "alpaca_secrets_absent": not any(
-                name in os.environ for name in ("APCA_API_KEY_ID", "APCA_API_SECRET_KEY")
-            ),
+            "research_credentials_present_or_not_required": settings.mode
+            is not TradingMode.RESEARCH
+            or all(name in os.environ for name in ("APCA_API_KEY_ID", "APCA_API_SECRET_KEY")),
         }
         checks["storage_writable"] = _storage_writable(layout)
         _print({"mode": settings.mode.value, "home": str(settings.home), "checks": checks})
@@ -72,6 +76,20 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
     if arguments.data_command == "import-fixture":
         imported = service.import_from(
             FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+        )
+        _print(imported.__dict__)
+        return 0
+    if arguments.data_command == "import-alpaca":
+        if settings.mode is not TradingMode.RESEARCH:
+            raise ValueError("Alpaca data import requires TRADING_LAB_MODE=research")
+        provider = AlpacaHistoricalProvider(
+            os.environ.get("APCA_API_KEY_ID", ""), os.environ.get("APCA_API_SECRET_KEY", "")
+        )
+        imported = service.import_from(
+            provider,
+            fixture_symbols(),
+            Timeframe.DAILY,
+            TimestampRange(_parse_utc(arguments.start), _parse_utc(arguments.end)),
         )
         _print(imported.__dict__)
         return 0
@@ -97,6 +115,13 @@ def _storage_writable(layout: StorageLayout) -> bool:
         return True
     except OSError:
         return False
+
+
+def _parse_utc(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
 
 
 def _print(value: object) -> None:

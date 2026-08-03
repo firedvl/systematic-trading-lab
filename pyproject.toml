@@ -9,7 +9,10 @@ description = "Reproducible systematic trading research infrastructure"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "Proprietary" }
-dependencies = []
+dependencies = [
+  "exchange-calendars>=4.13,<5",
+  "pyarrow>=25,<26",
+]
 
 [project.scripts]
 trading-lab = "systematic_trading_lab.cli:main"
