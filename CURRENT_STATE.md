@@ -7,4 +7,4 @@
 - Test status: 37 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Proposal-shape, approval-state, duplicate-gate, finite-threshold, and unapproved-evaluation checks pass; live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
 - Next task: complete human review of the proposed gates. Current candidates do not pass all gates, so approval and controlled holdout evaluation remain blocked.
-- Branch: `codex/m3-threshold-proposal`; pull request not yet opened.
+- Branch: `codex/m3-threshold-proposal`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/13.
