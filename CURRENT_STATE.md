@@ -7,4 +7,4 @@
 - Test status: 44 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Bounded training and validation reads, authorization-before-read, exact holdout-range loading, failed-attempt retention, protected metrics, evidence-integrity, exact-binding, atomic-consumption, and one-time-read checks pass; live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
 - Next task: add a session-level portfolio target boundary for a predeclared diversified, lower-turnover training candidate. Keep it separate from broker authority and qualification-control changes. Separate human review is still required to approve qualification gates. Do not access 2023–2026 data for candidate development.
-- Branch: `codex/m3-long-horizon-training`; draft pull request pending.
+- Branch: `codex/m3-long-horizon-training`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/18.
