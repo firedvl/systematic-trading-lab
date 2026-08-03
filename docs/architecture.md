@@ -9,6 +9,6 @@ provider -> raw snapshot -> normalize/validate -> immutable dataset/catalog
         -> broker events -> reconciliation -> append-only evidence
 ```
 
-Only the first line exists now. Strategies will share semantics across backtest, replay, shadow, and paper, but produce targets or intents rather than orders. Qualification remains separate from strategy code. Risk and order management independently reject unsafe intents. UTC is internal time; money and prices use `Decimal`; dataset evidence is content addressed and catalog metadata is reconstructible from manifests.
+The data and simulation lines now exist for deterministic daily-bar research. Strategies share semantics across backtest, replay, shadow, and paper, but produce targets or intents rather than orders. Qualification remains separate from strategy code. Risk and order management independently reject unsafe intents. UTC is internal time; money and prices use `Decimal`; dataset evidence is content addressed and catalog metadata is reconstructible from manifests.
 
 Runtime data lives under `TRADING_LAB_HOME`: `datasets/<fingerprint>/manifest.json`, `datasets/<fingerprint>/raw.jsonl`, `datasets/<fingerprint>/bars.parquet`, `quarantine/`, and `catalog.sqlite3`. Artifact files are authoritative; SQLite is an index. The Alpaca integration is a read-only HTTP provider; no broker module exists in the current phase.

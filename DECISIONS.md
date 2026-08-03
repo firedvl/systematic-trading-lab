@@ -44,3 +44,12 @@
 - Reasoning: the endpoint is narrow, pagination is explicit, and the adapter is easy to mock and keep read-only.
 - Consequences: endpoint response mapping is owned and tested here; later broker execution remains a separate module.
 - Revisit when: paper execution needs broker functionality that cannot be isolated behind the same provider boundary.
+
+## 2026-08-03 — Next-bar fill semantics for M2
+
+- Decision: signals generated after a completed bar can first fill on the next available bar for that symbol, using its open plus conservative basis-point costs.
+- Context: using the signal bar's close creates an optimistic execution assumption and can hide lookahead.
+- Alternatives: same-bar close fills or a third-party backtesting engine.
+- Reasoning: the rule is explicit, deterministic, and keeps core assumptions owned by this repository.
+- Consequences: the final signal can be rejected for lack of a future fill; event, order, trade, and equity ledgers retain the timestamps.
+- Revisit when: intraday data and a reviewed latency/session model support more detailed event scheduling.

@@ -8,14 +8,17 @@ import os
 import sys
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 
 from . import __version__
+from .backtesting import BacktestEngine
 from .config import ConfigurationError, Settings, load_settings
 from .datasets import DatasetService, DatasetValidationError, fixture_request, fixture_symbols
-from .domain import Timeframe, TimestampRange, TradingMode
+from .domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
 from .providers import AlpacaHistoricalProvider, FixtureProvider
 from .storage import StorageLayout
+from .strategies import BuyAndHoldStrategy, CashStrategy
 
 
 def parser() -> argparse.ArgumentParser:
@@ -35,6 +38,12 @@ def parser() -> argparse.ArgumentParser:
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
     data.add_parser("rebuild-catalog", help="reconstruct the SQLite index from manifests")
+    backtest = commands.add_parser("backtest", help="run deterministic local simulations")
+    backtest_commands = backtest.add_subparsers(dest="backtest_command", required=True)
+    fixture_backtest = backtest_commands.add_parser(
+        "fixture", help="backtest deterministic fixture bars"
+    )
+    fixture_backtest.add_argument("--strategy", choices=("cash", "buy-and-hold"), default="cash")
     return root
 
 
@@ -51,6 +60,24 @@ def main(argv: Sequence[str] | None = None) -> int:
 def run(arguments: argparse.Namespace, settings: Settings) -> int:
     layout = StorageLayout(settings.home)
     service = DatasetService(layout)
+    if arguments.command == "backtest":
+        records = FixtureProvider().fetch(fixture_symbols()[:1], Timeframe.DAILY, fixture_request())
+        bars = tuple(OHLCVBar.from_record(record) for record in records)
+        strategy = CashStrategy() if arguments.strategy == "cash" else BuyAndHoldStrategy()
+        result = BacktestEngine(Decimal("100000")).run(bars, strategy)
+        _print(
+            {
+                "strategy": result.strategy_id,
+                "metrics": {
+                    "total_return": str(result.metrics.total_return),
+                    "max_drawdown": str(result.metrics.max_drawdown),
+                    "turnover": str(result.metrics.turnover),
+                    "trade_count": result.metrics.trade_count,
+                },
+                "artifact_fingerprint": result.artifact_fingerprint,
+            }
+        )
+        return 0
     if arguments.command == "doctor":
         checks = {
             "python_3_12_or_newer": sys.version_info >= (3, 12),
