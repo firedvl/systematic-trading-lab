@@ -288,7 +288,7 @@ class DatasetService:
         expected_universe_id: str,
         expected_universe_fingerprint: str,
     ) -> tuple[OHLCVBar, ...]:
-        """Load and validate only one authorized range from a sealed dataset."""
+        """Load and validate only one bounded range from a sealed dataset."""
         manifest = self.describe(dataset_id)
         identity = manifest.get("identity")
         if not isinstance(identity, dict) or identity.get("dataset_id") != dataset_id:

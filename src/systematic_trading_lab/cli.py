@@ -19,7 +19,7 @@ from .domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
 from .experiment_runner import (
     comparison_report,
     execution_model_version,
-    run_experiment,
+    run_cataloged_experiment,
     run_holdout_experiment,
 )
 from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, ExperimentSplit
@@ -255,10 +255,10 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                     fill_delay_bars=arguments.fill_delay_bars,
                 )
             else:
-                run_experiment(
+                run_cataloged_experiment(
                     registry,
+                    service,
                     spec,
-                    service.load_bars(arguments.dataset),
                     layout.reports,
                     cost_model=cost_model,
                     fill_delay_bars=arguments.fill_delay_bars,

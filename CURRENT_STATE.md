@@ -1,10 +1,10 @@
 # Current state
 
-- Milestone: M3 controlled holdout workflow implemented; no candidate qualified.
+- Milestone: M3 bounded research and controlled holdout workflow; no candidate qualified.
 - Completed: all prior capabilities plus registry-backed qualification evidence, one-time stored holdout-run authorization, and an authorization-first controlled holdout runner. The raw holdout-creation boolean is gone. Authorization rebuilds evidence, requires an approved proposal and all passing gates, binds the exact candidate and provenance, and is consumed atomically by one matching post-validation holdout record. The runner then reads only the authorized Parquet timestamp range, retains post-authorization failures, and stores completed metrics without returning them or writing a report. Completed holdout metrics allow one logged read event.
-- Work in progress: controlled holdout runner under review; every current gate remains unapproved.
+- Work in progress: make ordinary cataloged training and validation runs read only their declared Parquet range; every current gate remains unapproved.
 - Known limitations: every proposed threshold remains unapproved. Fixed-weight beat both trend baselines in every validation year. Moving average fails four proposed gates and momentum fails three. Alpaca IEX common coverage begins on 2020-07-27; the installed XNYS calendar begins on 2006-08-02. The 2026 data remains untouched. There is no qualified candidate, broker, or execution system.
-- Test status: 44 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Authorization-before-read, exact-range loading, failed-attempt retention, protected metrics, evidence-integrity, exact-binding, atomic-consumption, and one-time-read checks pass; live and broker modes remain rejected.
+- Test status: 44 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Bounded training and validation reads, authorization-before-read, exact holdout-range loading, failed-attempt retention, protected metrics, evidence-integrity, exact-binding, atomic-consumption, and one-time-read checks pass; live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
-- Next task: obtain separate human review of the proposed qualification gates or develop a new training-only candidate. The current candidates cannot obtain authorization or enter the holdout path. Do not access 2026 data.
-- Branch: `codex/m3-controlled-holdout-runner`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/16.
+- Next task: develop and record a new training-only candidate through the bounded runner. Separate human review is still required to approve qualification gates. The current candidates cannot obtain authorization or enter the holdout path. Do not access 2026 data.
+- Branch: `codex/m3-bounded-research-runner`; draft pull request pending.

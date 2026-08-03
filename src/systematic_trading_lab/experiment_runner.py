@@ -123,35 +123,59 @@ def run_experiment(
     registry.create_experiment(spec)
     registry.claim(spec.experiment_id)
     try:
-        execution_version = execution_model_version(fill_delay_bars)
-        if spec.cost_model_version != selected_costs.version:
-            raise ExperimentError("experiment cost model does not match the runner")
-        if spec.execution_model_version != execution_version:
-            raise ExperimentError("experiment execution model does not match the runner")
+        _validate_execution_models(spec, selected_costs, fill_delay_bars)
         if fingerprint(tuple(bar.to_record() for bar in bars)) != spec.dataset_fingerprint:
             raise ExperimentError("experiment dataset fingerprint does not match supplied bars")
         ordered = tuple(
             bar for bar in bars if spec.start_timestamp <= bar.timestamp <= spec.end_timestamp
         )
-        registry.heartbeat(spec.experiment_id)
-        result = strategy_result(
-            spec.strategy_id,
+        return _complete_research_run(
+            registry,
+            spec,
             ordered,
+            output_directory,
             initial_cash,
             selected_costs,
-            spec.parameters,
             fill_delay_bars,
         )
-        report = build_report({spec.experiment_id: result})
-        report_path = output_directory / f"{fingerprint(spec)}.json"
-        write_report(report_path, {spec.experiment_id: result})
-        registry.complete(
-            spec.experiment_id,
-            summarize(result),
-            [str(report_path)],
-            [str(report["report_fingerprint"])],
+    except Exception as error:
+        registry.fail(spec.experiment_id, f"{type(error).__name__}: {error}")
+        raise
+
+
+def run_cataloged_experiment(
+    registry: ExperimentRegistry,
+    datasets: DatasetService,
+    spec: ExperimentSpec,
+    output_directory: Path,
+    initial_cash: Decimal = Decimal("100000"),
+    cost_model: CostModel | None = None,
+    fill_delay_bars: int = 1,
+) -> BacktestResult:
+    """Run training or validation from only its cataloged timestamp range."""
+    if spec.split is ExperimentSplit.HOLDOUT:
+        raise HoldoutAccessError("cataloged research runner cannot execute holdout data")
+    selected_costs = cost_model or CostModel()
+    registry.create_experiment(spec)
+    registry.claim(spec.experiment_id)
+    try:
+        _validate_execution_models(spec, selected_costs, fill_delay_bars)
+        bars = datasets.load_bars_range(
+            spec.dataset_id,
+            TimestampRange(spec.start_timestamp, spec.end_timestamp),
+            expected_fingerprint=spec.dataset_fingerprint,
+            expected_universe_id=spec.universe_id,
+            expected_universe_fingerprint=spec.universe_fingerprint,
         )
-        return result
+        return _complete_research_run(
+            registry,
+            spec,
+            bars,
+            output_directory,
+            initial_cash,
+            selected_costs,
+            fill_delay_bars,
+        )
     except Exception as error:
         registry.fail(spec.experiment_id, f"{type(error).__name__}: {error}")
         raise
@@ -170,11 +194,7 @@ def run_holdout_experiment(
     if spec.split is not ExperimentSplit.HOLDOUT:
         raise HoldoutAccessError("controlled holdout runner requires the holdout split")
     selected_costs = cost_model or CostModel()
-    execution_version = execution_model_version(fill_delay_bars)
-    if spec.cost_model_version != selected_costs.version:
-        raise ExperimentError("experiment cost model does not match the runner")
-    if spec.execution_model_version != execution_version:
-        raise ExperimentError("experiment execution model does not match the runner")
+    _validate_execution_models(spec, selected_costs, fill_delay_bars)
 
     registry.create_experiment(spec, holdout_authorization_id=authorization_id)
     try:
@@ -272,3 +292,42 @@ def execution_model_version(fill_delay_bars: int) -> str:
     if fill_delay_bars < 1:
         raise ValueError("fill delay must be at least one bar")
     return "next-bar-v1" if fill_delay_bars == 1 else f"delayed-{fill_delay_bars}-bars-v1"
+
+
+def _validate_execution_models(
+    spec: ExperimentSpec, cost_model: CostModel, fill_delay_bars: int
+) -> None:
+    if spec.cost_model_version != cost_model.version:
+        raise ExperimentError("experiment cost model does not match the runner")
+    if spec.execution_model_version != execution_model_version(fill_delay_bars):
+        raise ExperimentError("experiment execution model does not match the runner")
+
+
+def _complete_research_run(
+    registry: ExperimentRegistry,
+    spec: ExperimentSpec,
+    bars: Sequence[OHLCVBar],
+    output_directory: Path,
+    initial_cash: Decimal,
+    cost_model: CostModel,
+    fill_delay_bars: int,
+) -> BacktestResult:
+    registry.heartbeat(spec.experiment_id)
+    result = strategy_result(
+        spec.strategy_id,
+        bars,
+        initial_cash,
+        cost_model,
+        spec.parameters,
+        fill_delay_bars,
+    )
+    report = build_report({spec.experiment_id: result})
+    report_path = output_directory / f"{fingerprint(spec)}.json"
+    write_report(report_path, {spec.experiment_id: result})
+    registry.complete(
+        spec.experiment_id,
+        summarize(result),
+        [str(report_path)],
+        [str(report["report_fingerprint"])],
+    )
+    return result

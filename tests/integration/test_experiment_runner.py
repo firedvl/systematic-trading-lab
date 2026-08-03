@@ -13,6 +13,7 @@ from systematic_trading_lab.experiment_runner import (
     SensitivityVariant,
     WalkForwardSplit,
     comparison_report,
+    run_cataloged_experiment,
     run_experiment,
     run_holdout_experiment,
     run_sensitivity,
@@ -210,6 +211,13 @@ def test_runner_records_completion_failure_and_blocks_holdout(tmp_path: Path) ->
             registry,
             replace(spec(source, "holdout"), split=ExperimentSplit.HOLDOUT),
             source,
+            tmp_path / "reports",
+        )
+    with pytest.raises(HoldoutAccessError):
+        run_cataloged_experiment(
+            registry,
+            DatasetService(StorageLayout(tmp_path / "data")),
+            replace(spec(source, "cataloged-holdout"), split=ExperimentSplit.HOLDOUT),
             tmp_path / "reports",
         )
 
