@@ -89,3 +89,12 @@
 - Reasoning: an explicit interval check rejects incomplete or inception-crossing requests before acquisition, while the fingerprint preserves the exact reviewed definition used by a sealed dataset.
 - Consequences: imports must include exactly the full-range members; changing membership creates a separate dataset lineage even when the bars match. The first format permits one interval per symbol.
 - Revisit when: exits, re-entry, symbol changes, or a larger universe require multiple intervals or a dedicated membership source.
+
+## 2026-08-02 — Qualification metrics use complete sessions
+
+- Decision: calculate drawdown and qualification metrics from the last equity point in each daily session while retaining every per-symbol ledger point.
+- Context: processing five same-timestamp ETF bars creates intermediate equity states that depend on symbol order and can report a false intraday drawdown.
+- Alternatives: treat every symbol event as a return period or discard the detailed equity ledger.
+- Reasoning: daily strategies need daily qualification periods, while the full ledger remains useful for accounting and debugging.
+- Consequences: report schema v2 adds 252-session zero-rate Sharpe and volatility, gross exposure, session and instrument profit concentration, and SPY up/down-regime returns. Earlier campaign metrics remain immutable evidence under their original schema.
+- Revisit when: intraday data requires an explicit event-time return and benchmark policy or a reviewed nonzero reference-rate series.
