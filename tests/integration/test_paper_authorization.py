@@ -600,7 +600,15 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             submitter_id="worker-2",
             claimed_at=NOW + timedelta(seconds=19),
         )
+    unknown = orders.transition(
+        delta.client_order_id,
+        OrderState.SUBMISSION_UNKNOWN,
+        changed_at=NOW + timedelta(seconds=19, milliseconds=500),
+    )
     broker_events = BrokerEventStore(store.path)
+    journal_head = orders.verify_journal()
+    assert broker_events.submission_unknown_orders() == (unknown,)
+    assert orders.verify_journal() == journal_head
     acknowledged = BrokerOrderEvent(
         event_id="broker-event-1",
         broker_order_id="broker-order-1",
@@ -611,6 +619,7 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         observed_at=NOW + timedelta(seconds=20),
     )
     assert broker_events.record(acknowledged) == acknowledged
+    assert broker_events.submission_unknown_orders() == ()
     assert BrokerEventStore(store.path).record(acknowledged) == acknowledged
     partial = BrokerOrderEvent(
         event_id="broker-event-2",
