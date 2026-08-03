@@ -1,0 +1,81 @@
+{
+  "id": "qualification-evidence-v3",
+  "campaign_id": "alpaca-qualification-evidence-20260802-v3",
+  "benchmark_strategy_id": "fixed-weight",
+  "candidates": [
+    {
+      "id": "moving-average-20",
+      "strategy_id": "moving-average-trend",
+      "base_parameters": {"window": 20},
+      "base_cost_model_version": "conservative-bps-v1",
+      "base_execution_model_version": "next-bar-v1",
+      "cost_sensitivity_model_version": "conservative-bps-2x-v1",
+      "delay_sensitivity_model_version": "delayed-2-bars-v1",
+      "parameter_neighbor_values": [
+        {"window": 15},
+        {"window": 25}
+      ],
+      "base_validation_ids": [
+        "v3-moving-average-wf01-validation",
+        "v3-moving-average-wf02-validation",
+        "v3-moving-average-wf03-validation"
+      ],
+      "benchmark_validation_ids": [
+        "v3-fixed-weight-wf01-validation",
+        "v3-fixed-weight-wf02-validation",
+        "v3-fixed-weight-wf03-validation"
+      ],
+      "cost_sensitivity_ids": [
+        "v3-moving-average-wf03-validation-cost2x"
+      ],
+      "delay_sensitivity_ids": [
+        "v3-moving-average-wf03-validation-delay2"
+      ],
+      "parameter_neighbor_ids": [
+        "v3-moving-average-wf01-validation-window15",
+        "v3-moving-average-wf01-validation-window25",
+        "v3-moving-average-wf02-validation-window15",
+        "v3-moving-average-wf02-validation-window25",
+        "v3-moving-average-wf03-validation-window15",
+        "v3-moving-average-wf03-validation-window25"
+      ]
+    },
+    {
+      "id": "momentum-20",
+      "strategy_id": "time-series-momentum",
+      "base_parameters": {"lookback": 20},
+      "base_cost_model_version": "conservative-bps-v1",
+      "base_execution_model_version": "next-bar-v1",
+      "cost_sensitivity_model_version": "conservative-bps-2x-v1",
+      "delay_sensitivity_model_version": "delayed-2-bars-v1",
+      "parameter_neighbor_values": [
+        {"lookback": 15},
+        {"lookback": 25}
+      ],
+      "base_validation_ids": [
+        "v3-momentum-wf01-validation",
+        "v3-momentum-wf02-validation",
+        "v3-momentum-wf03-validation"
+      ],
+      "benchmark_validation_ids": [
+        "v3-fixed-weight-wf01-validation",
+        "v3-fixed-weight-wf02-validation",
+        "v3-fixed-weight-wf03-validation"
+      ],
+      "cost_sensitivity_ids": [
+        "v3-momentum-wf03-validation-cost2x"
+      ],
+      "delay_sensitivity_ids": [
+        "v3-momentum-wf03-validation-delay2"
+      ],
+      "parameter_neighbor_ids": [
+        "v3-momentum-wf01-validation-lookback15",
+        "v3-momentum-wf01-validation-lookback25",
+        "v3-momentum-wf02-validation-lookback15",
+        "v3-momentum-wf02-validation-lookback25",
+        "v3-momentum-wf03-validation-lookback15",
+        "v3-momentum-wf03-validation-lookback25"
+      ]
+    }
+  ]
+}
