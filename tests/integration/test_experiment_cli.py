@@ -215,3 +215,39 @@ def test_cli_runs_cataloged_experiment_and_compares_candidates(
     assert isinstance(risk_spec, dict)
     assert risk_spec["strategy_id"] == "risk-managed-momentum-portfolio"
     assert risk_spec["strategy_family"] == "portfolio-momentum"
+
+    ExperimentRegistry(layout.experiments).create_campaign("volatility-campaign", "Volatility", 1)
+    volatility_balanced = parser().parse_args(
+        [
+            "experiment",
+            "run",
+            "volatility-candidate",
+            "--campaign",
+            "volatility-campaign",
+            "--strategy",
+            "volatility-balanced",
+            "--code-commit",
+            "abc123",
+            "--dataset",
+            imported.dataset_id,
+            "--split",
+            "training",
+            "--start",
+            "2025-01-06",
+            "--end",
+            "2025-01-10",
+            "--reason",
+            "Volatility-balanced CLI integration",
+            "--parameter",
+            "volatility_window=2",
+            "--parameter",
+            "rebalance_every=1",
+        ]
+    )
+    assert run(volatility_balanced, settings) == 0
+    volatility_record = ExperimentRegistry(layout.experiments).get("volatility-candidate")
+    volatility_spec = volatility_record["spec_json"]
+    assert volatility_record["status"] == "completed"
+    assert isinstance(volatility_spec, dict)
+    assert volatility_spec["strategy_id"] == "volatility-balanced-portfolio"
+    assert volatility_spec["strategy_family"] == "portfolio-allocation"

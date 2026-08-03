@@ -49,6 +49,7 @@ def _add_execution_arguments(command: argparse.ArgumentParser) -> None:
             "momentum",
             "relative-strength",
             "risk-managed-momentum",
+            "volatility-balanced",
         ),
         required=True,
     )
@@ -438,6 +439,7 @@ def _validate_strategy_parameters(name: str, parameters: dict[str, object]) -> N
         "momentum": {"lookback"},
         "relative-strength": {"lookback", "rebalance_every", "selection_count"},
         "risk-managed-momentum": {"lookback", "volatility_window", "rebalance_every"},
+        "volatility-balanced": {"volatility_window", "rebalance_every"},
     }[name]
     unknown = parameters.keys() - allowed
     if unknown:
@@ -475,6 +477,10 @@ def _strategy_identity(name: str) -> tuple[str, str]:
         "risk-managed-momentum": (
             "risk-managed-momentum-portfolio",
             "portfolio-momentum",
+        ),
+        "volatility-balanced": (
+            "volatility-balanced-portfolio",
+            "portfolio-allocation",
         ),
     }[name]
 

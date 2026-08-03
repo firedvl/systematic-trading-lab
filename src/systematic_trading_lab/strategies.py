@@ -16,6 +16,46 @@ class TargetPosition:
     reason: str
 
 
+def _capped_inverse_volatility_weights(
+    symbols: Sequence[Symbol],
+    history: Mapping[Symbol, Sequence[OHLCVBar]],
+    volatility_window: int,
+    cap: Decimal,
+) -> dict[Symbol, Decimal]:
+    inverse_volatility: dict[Symbol, Decimal] = {}
+    for symbol in symbols:
+        closes = tuple(bar.close for bar in history[symbol][-volatility_window - 1 :])
+        returns = tuple(
+            current_close / previous_close - Decimal("1")
+            for previous_close, current_close in zip(closes, closes[1:], strict=False)
+        )
+        mean = sum(returns, Decimal("0")) / Decimal(len(returns))
+        variance = sum(((value - mean) ** 2 for value in returns), Decimal("0")) / Decimal(
+            len(returns) - 1
+        )
+        if variance <= 0:
+            raise ValueError("inverse-volatility allocation requires positive volatility")
+        inverse_volatility[symbol] = Decimal("1") / variance.sqrt()
+
+    weights: dict[Symbol, Decimal] = {}
+    remaining = sorted(inverse_volatility, key=lambda symbol: symbol.value)
+    available = Decimal("1")
+    while remaining:
+        inverse_total = sum((inverse_volatility[symbol] for symbol in remaining), Decimal("0"))
+        provisional = {
+            symbol: available * inverse_volatility[symbol] / inverse_total for symbol in remaining
+        }
+        capped = tuple(symbol for symbol in remaining if provisional[symbol] > cap)
+        if not capped:
+            weights.update(provisional)
+            break
+        for symbol in capped:
+            weights[symbol] = cap
+            remaining.remove(symbol)
+            available -= cap
+    return weights
+
+
 class CashStrategy:
     strategy_id = "cash"
     version = "1"
@@ -212,39 +252,9 @@ class RiskManagedMomentumPortfolioStrategy:
             for symbol in self.symbols
             if current[symbol].close > history[symbol][-self.lookback - 1].close
         )
-        inverse_volatility: dict[Symbol, Decimal] = {}
-        for symbol in eligible:
-            closes = tuple(bar.close for bar in history[symbol][-self.volatility_window - 1 :])
-            returns = tuple(
-                current_close / previous_close - Decimal("1")
-                for previous_close, current_close in zip(closes, closes[1:], strict=False)
-            )
-            mean = sum(returns, Decimal("0")) / Decimal(len(returns))
-            variance = sum(((value - mean) ** 2 for value in returns), Decimal("0")) / Decimal(
-                len(returns) - 1
-            )
-            if variance <= 0:
-                raise ValueError("risk-managed momentum requires positive volatility")
-            inverse_volatility[symbol] = Decimal("1") / variance.sqrt()
-
-        weights: dict[Symbol, Decimal] = {}
-        remaining = sorted(inverse_volatility, key=lambda symbol: symbol.value)
-        available = Decimal("1")
-        cap = Decimal("0.4")
-        while remaining:
-            inverse_total = sum((inverse_volatility[symbol] for symbol in remaining), Decimal("0"))
-            provisional = {
-                symbol: available * inverse_volatility[symbol] / inverse_total
-                for symbol in remaining
-            }
-            capped = tuple(symbol for symbol in remaining if provisional[symbol] > cap)
-            if not capped:
-                weights.update(provisional)
-                break
-            for symbol in capped:
-                weights[symbol] = cap
-                remaining.remove(symbol)
-                available -= cap
+        weights = _capped_inverse_volatility_weights(
+            eligible, history, self.volatility_window, Decimal("0.4")
+        )
 
         return tuple(
             TargetPosition(
@@ -252,5 +262,55 @@ class RiskManagedMomentumPortfolioStrategy:
                 weights.get(symbol, Decimal("0")),
                 "positive-momentum-inverse-volatility" if symbol in weights else "cash-filter",
             )
+            for symbol in sorted(self.symbols, key=lambda item: item.value)
+        )
+
+
+@dataclass(frozen=True)
+class VolatilityBalancedPortfolioStrategy:
+    symbols: tuple[Symbol, ...]
+    volatility_window: int = 63
+    rebalance_every: int = 5
+    strategy_id: str = "volatility-balanced-portfolio"
+    version: str = "1"
+
+    def __post_init__(self) -> None:
+        if len(self.symbols) < 4 or len(set(self.symbols)) != len(self.symbols):
+            raise ValueError("volatility-balanced allocation requires at least four unique symbols")
+        if self.volatility_window < 2 or self.rebalance_every < 1:
+            raise ValueError("volatility-balanced parameters are invalid")
+
+    def on_session(
+        self,
+        bars: Sequence[OHLCVBar],
+        history: Mapping[Symbol, Sequence[OHLCVBar]],
+    ) -> Sequence[TargetPosition]:
+        expected = set(self.symbols)
+        if {bar.symbol for bar in bars} != expected or set(history) != expected:
+            raise ValueError("volatility-balanced session universe differs")
+        lengths = {len(history[symbol]) for symbol in self.symbols}
+        if len(lengths) != 1:
+            raise ValueError("volatility-balanced history lengths differ")
+        session_count = next(iter(lengths))
+        if session_count <= self.volatility_window:
+            return ()
+        if (session_count - self.volatility_window - 1) % self.rebalance_every:
+            return ()
+
+        weights = _capped_inverse_volatility_weights(
+            self.symbols, history, self.volatility_window, Decimal("0.3")
+        )
+        correction = Decimal("1") - sum(weights.values(), Decimal("0"))
+        if correction:
+            adjusted = min(
+                self.symbols,
+                key=lambda symbol: (
+                    weights[symbol] if correction > 0 else -weights[symbol],
+                    symbol.value,
+                ),
+            )
+            weights[adjusted] += correction
+        return tuple(
+            TargetPosition(symbol, weights[symbol], "capped-inverse-volatility")
             for symbol in sorted(self.symbols, key=lambda item: item.value)
         )
