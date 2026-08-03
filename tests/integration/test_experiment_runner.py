@@ -103,6 +103,7 @@ def holdout_setup(
             "strategy_id": "buy-and-hold",
             "strategy_version": "1",
             "strategy_family": "baseline",
+            "code_commit": "abc123",
             "parameters": {},
             "cost_model_version": "conservative-bps-v1",
             "execution_model_version": "next-bar-v1",

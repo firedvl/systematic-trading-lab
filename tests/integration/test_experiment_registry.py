@@ -104,6 +104,7 @@ def test_holdout_metrics_require_a_logged_event(tmp_path: Path) -> None:
             "strategy_id": "moving-average-trend",
             "strategy_version": "1",
             "strategy_family": "trend",
+            "code_commit": "abc123",
             "parameters": {"window": 20},
             "cost_model_version": "conservative-bps-v1",
             "execution_model_version": "next-bar-v1",

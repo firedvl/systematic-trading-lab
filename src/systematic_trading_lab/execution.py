@@ -17,7 +17,7 @@ from .fingerprints import canonical_json, canonicalize, fingerprint
 
 _SCHEMA_VERSION = "execution-intent-journal-v1"
 _GENESIS_HASH = "0" * 64
-_KNOWN_EVENT_TYPES = {"intent-recorded", "emergency-initialized"}
+_KNOWN_EVENT_TYPES = {"intent-recorded", "emergency-initialized", "paper-authorized"}
 _FINGERPRINT = re.compile(r"[0-9a-f]{64}")
 _SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,15}")
 

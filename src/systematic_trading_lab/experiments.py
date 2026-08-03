@@ -276,30 +276,9 @@ class ExperimentRegistry:
     ) -> None:
         if not authorization_id or not reviewer or not reason:
             raise ValueError("authorization ID, reviewer, and reason are required")
-        report = canonicalize(evidence_report)
-        if not isinstance(report, dict):
-            raise HoldoutAccessError("qualification evidence must be an object")
-        _validate_qualification_evidence_report(report)
-        evidence_fingerprint = report.get("evidence_fingerprint")
-        unsigned_report = dict(report)
-        unsigned_report.pop("evidence_fingerprint", None)
-        if (
-            not isinstance(evidence_fingerprint, str)
-            or fingerprint(unsigned_report) != evidence_fingerprint
-        ):
-            raise HoldoutAccessError("qualification evidence fingerprint does not match")
-        qualification = report["qualification"]
-        assert isinstance(qualification, dict)
-        gates = qualification.get("gates")
-        if (
-            not isinstance(gates, list)
-            or not gates
-            or any(
-                not isinstance(gate, dict) or not gate.get("approved") or not gate.get("passed")
-                for gate in gates
-            )
-        ):
-            raise HoldoutAccessError("holdout run requires approved passing gates")
+        report = validate_passing_qualification_evidence(evidence_report)
+        evidence_fingerprint = report["evidence_fingerprint"]
+        assert isinstance(evidence_fingerprint, str)
         candidate_id = report["candidate_id"]
         candidate_spec = report["candidate_specification"]
         assert isinstance(candidate_id, str)
@@ -732,6 +711,7 @@ _CANDIDATE_SPEC_FIELDS = {
     "strategy_id",
     "strategy_version",
     "strategy_family",
+    "code_commit",
     "parameters",
     "cost_model_version",
     "execution_model_version",
@@ -812,6 +792,40 @@ def _validate_qualification_evidence_report(report: Mapping[str, object]) -> Non
         raise HoldoutAccessError("qualification report fingerprint does not match")
 
 
+def validate_passing_qualification_evidence(
+    evidence_report: Mapping[str, object],
+) -> dict[str, object]:
+    """Return canonical evidence only when every approved qualification gate passes."""
+    report = canonicalize(evidence_report)
+    if not isinstance(report, dict):
+        raise HoldoutAccessError("qualification evidence must be an object")
+    _validate_qualification_evidence_report(report)
+    evidence_fingerprint = report.get("evidence_fingerprint")
+    unsigned_report = dict(report)
+    unsigned_report.pop("evidence_fingerprint", None)
+    if (
+        not isinstance(evidence_fingerprint, str)
+        or fingerprint(unsigned_report) != evidence_fingerprint
+    ):
+        raise HoldoutAccessError("qualification evidence fingerprint does not match")
+    qualification = report["qualification"]
+    assert isinstance(qualification, dict)
+    gates = qualification.get("gates")
+    if (
+        not isinstance(gates, list)
+        or not gates
+        or any(
+            not isinstance(gate, dict) or not gate.get("approved") or not gate.get("passed")
+            for gate in gates
+        )
+    ):
+        raise HoldoutAccessError("qualification evidence requires approved passing gates")
+    candidate = report["candidate_specification"]
+    assert isinstance(candidate, dict)
+    _validate_candidate_specification(candidate)
+    return report
+
+
 def _validate_candidate_specification(candidate: Mapping[str, object]) -> None:
     if set(candidate) != _CANDIDATE_SPEC_FIELDS:
         raise HoldoutAccessError("candidate specification fields differ")
@@ -836,6 +850,7 @@ def _validate_holdout_spec(
         "strategy_id",
         "strategy_version",
         "strategy_family",
+        "code_commit",
         "cost_model_version",
         "execution_model_version",
         "dataset_id",

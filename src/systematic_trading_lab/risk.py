@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import json
 import re
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
+from typing import Any
 
 from .execution import ExecutionIntent, ExecutionStore, JournalIntegrityError
+from .experiments import HoldoutAccessError, validate_passing_qualification_evidence
 from .fingerprints import canonical_json, canonicalize, fingerprint
 
 _SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,15}")
@@ -243,6 +246,58 @@ class EmergencyState:
     journal_sequence: int
 
 
+@dataclass(frozen=True)
+class PaperAuthorization:
+    authorization_id: str
+    candidate_id: str
+    strategy_id: str
+    strategy_version: str
+    parameters_fingerprint: str
+    code_commit: str
+    dataset_id: str
+    dataset_fingerprint: str
+    universe_id: str
+    universe_fingerprint: str
+    qualification_evidence_fingerprint: str
+    account_id: str
+    risk_configuration_fingerprint: str
+    authorized_by: str
+    authorization_reason: str
+    authorized_at: datetime
+    expires_at: datetime
+
+    def __post_init__(self) -> None:
+        for name, value in (
+            ("authorization ID", self.authorization_id),
+            ("candidate ID", self.candidate_id),
+            ("strategy ID", self.strategy_id),
+            ("strategy version", self.strategy_version),
+            ("code commit", self.code_commit),
+            ("dataset ID", self.dataset_id),
+            ("universe ID", self.universe_id),
+            ("account ID", self.account_id),
+            ("authorizer", self.authorized_by),
+            ("authorization reason", self.authorization_reason),
+        ):
+            _text(name, value)
+        for name, value in (
+            ("parameters", self.parameters_fingerprint),
+            ("dataset", self.dataset_fingerprint),
+            ("universe", self.universe_fingerprint),
+            ("qualification evidence", self.qualification_evidence_fingerprint),
+            ("risk configuration", self.risk_configuration_fingerprint),
+        ):
+            _sha256(name, value)
+        _utc("authorization time", self.authorized_at)
+        _utc("authorization expiry", self.expires_at)
+        if self.expires_at <= self.authorized_at:
+            raise ValueError("paper authorization expiry must follow authorization time")
+
+    @property
+    def authorization_fingerprint(self) -> str:
+        return fingerprint(self)
+
+
 class RiskStore(ExecutionStore):
     """Extend the execution database with persistent fail-closed emergency state."""
 
@@ -260,6 +315,25 @@ class RiskStore(ExecutionStore):
                     changed_at TEXT NOT NULL,
                     journal_sequence INTEGER NOT NULL REFERENCES journal(sequence)
                 )
+                """
+            )
+            connection.executescript(
+                """
+                CREATE TABLE IF NOT EXISTS paper_authorizations (
+                    authorization_id TEXT PRIMARY KEY,
+                    authorization_fingerprint TEXT NOT NULL UNIQUE,
+                    authorization_json TEXT NOT NULL,
+                    evidence_json TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
+                CREATE TRIGGER IF NOT EXISTS paper_authorizations_no_update
+                BEFORE UPDATE ON paper_authorizations BEGIN
+                    SELECT RAISE(ABORT, 'paper authorizations are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS paper_authorizations_no_delete
+                BEFORE DELETE ON paper_authorizations BEGIN
+                    SELECT RAISE(ABORT, 'paper authorizations are immutable');
+                END;
                 """
             )
             connection.commit()
@@ -293,6 +367,86 @@ class RiskStore(ExecutionStore):
                 )
             connection.commit()
             self._verify_emergency(connection)
+            self._verify_authorizations(connection)
+
+    def authorize_paper(
+        self,
+        authorization: PaperAuthorization,
+        evidence_report: dict[str, object],
+        limits: RiskLimits,
+    ) -> PaperAuthorization:
+        report = validate_passing_qualification_evidence(evidence_report)
+        expected = {
+            **_evidence_bindings(report),
+            "account_id": limits.account_id,
+            "risk_configuration_fingerprint": limits.configuration_fingerprint,
+        }
+        if any(getattr(authorization, key) != value for key, value in expected.items()):
+            raise HoldoutAccessError("paper authorization differs from qualification or limits")
+        if (
+            authorization.authorized_at < limits.effective_at
+            or authorization.authorized_at >= limits.expires_at
+            or authorization.expires_at > limits.expires_at
+        ):
+            raise HoldoutAccessError("paper authorization is outside the risk configuration period")
+        authorization_json = canonical_json(authorization)
+        evidence_json = canonical_json(report)
+        with self._connect() as connection:
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                self._verify_connection(connection)
+                self._verify_emergency(connection)
+                self._verify_authorizations(connection)
+                row = connection.execute(
+                    """
+                    SELECT authorization_json, evidence_json FROM paper_authorizations
+                    WHERE authorization_id = ?
+                    """,
+                    (authorization.authorization_id,),
+                ).fetchone()
+                if row is not None:
+                    if row != (authorization_json, evidence_json):
+                        raise HoldoutAccessError("authorization ID is bound to different content")
+                    connection.commit()
+                    return authorization
+                sequence = self._append_event(
+                    connection,
+                    occurred_at=authorization.authorized_at,
+                    event_type="paper-authorized",
+                    entity_type="paper-authorization",
+                    entity_id=authorization.authorization_id,
+                    payload=canonicalize(authorization),
+                )
+                connection.execute(
+                    "INSERT INTO paper_authorizations VALUES (?, ?, ?, ?, ?)",
+                    (
+                        authorization.authorization_id,
+                        authorization.authorization_fingerprint,
+                        authorization_json,
+                        evidence_json,
+                        sequence,
+                    ),
+                )
+                connection.commit()
+            except sqlite3.IntegrityError as error:
+                connection.rollback()
+                raise HoldoutAccessError("paper authorization already exists") from error
+            except Exception:
+                connection.rollback()
+                raise
+        return authorization
+
+    def get_paper_authorization(self, authorization_id: str) -> PaperAuthorization:
+        _text("authorization ID", authorization_id)
+        with self._connect() as connection:
+            connection.execute("BEGIN")
+            self._verify_connection(connection)
+            self._verify_emergency(connection)
+            authorizations = self._verify_authorizations(connection)
+        try:
+            return authorizations[authorization_id]
+        except KeyError:
+            raise KeyError(authorization_id) from None
 
     def get_emergency(self) -> EmergencyState:
         with self._connect() as connection:
@@ -343,6 +497,59 @@ class RiskStore(ExecutionStore):
             journal_sequence=int(row[5]),
         )
 
+    def _verify_authorizations(
+        self, connection: sqlite3.Connection
+    ) -> dict[str, PaperAuthorization]:
+        rows = connection.execute(
+            """
+            SELECT authorization_id, authorization_fingerprint, authorization_json,
+                   evidence_json, journal_sequence
+            FROM paper_authorizations
+            """
+        ).fetchall()
+        event_count = connection.execute(
+            "SELECT COUNT(*) FROM journal WHERE event_type = 'paper-authorized'"
+        ).fetchone()[0]
+        if len(rows) != event_count:
+            raise JournalIntegrityError("paper authorization and journal counts differ")
+        result: dict[str, PaperAuthorization] = {}
+        for row in rows:
+            try:
+                value: Any = json.loads(row[2])
+                evidence: Any = json.loads(row[3])
+                authorization = _decode_authorization(value)
+                validated_evidence = validate_passing_qualification_evidence(evidence)
+            except (ValueError, HoldoutAccessError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError("stored paper authorization is invalid") from error
+            event = connection.execute(
+                """
+                SELECT occurred_at, event_type, entity_type, entity_id, payload_json
+                FROM journal WHERE sequence = ?
+                """,
+                (row[4],),
+            ).fetchone()
+            if (
+                row[0] != authorization.authorization_id
+                or row[1] != authorization.authorization_fingerprint
+                or row[2] != canonical_json(authorization)
+                or row[3] != canonical_json(validated_evidence)
+                or any(
+                    getattr(authorization, key) != value
+                    for key, value in _evidence_bindings(validated_evidence).items()
+                )
+                or event
+                != (
+                    _utc_text(authorization.authorized_at),
+                    "paper-authorized",
+                    "paper-authorization",
+                    authorization.authorization_id,
+                    canonical_json(authorization),
+                )
+            ):
+                raise JournalIntegrityError("paper authorization does not match its journal event")
+            result[authorization.authorization_id] = authorization
+        return result
+
 
 def _text(name: str, value: str) -> None:
     if not value or value != value.strip():
@@ -369,3 +576,40 @@ def _parse_utc(value: str) -> datetime:
     timestamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
     _utc("stored timestamp", timestamp)
     return timestamp
+
+
+def _decode_authorization(value: Any) -> PaperAuthorization:
+    if not isinstance(value, dict):
+        raise ValueError("paper authorization must be an object")
+    try:
+        return PaperAuthorization(
+            **{
+                **value,
+                "authorized_at": _parse_utc(value["authorized_at"]),
+                "expires_at": _parse_utc(value["expires_at"]),
+            }
+        )
+    except (KeyError, TypeError) as error:
+        raise ValueError("paper authorization fields differ") from error
+
+
+def _evidence_bindings(report: dict[str, object]) -> dict[str, object]:
+    candidate = report["candidate_specification"]
+    assert isinstance(candidate, dict)
+    return {
+        "candidate_id": report["candidate_id"],
+        "strategy_id": candidate["strategy_id"],
+        "strategy_version": candidate["strategy_version"],
+        "parameters_fingerprint": fingerprint(candidate["parameters"]),
+        "code_commit": candidate["code_commit"],
+        "dataset_id": candidate["dataset_id"],
+        "dataset_fingerprint": candidate["dataset_fingerprint"],
+        "universe_id": candidate["universe_id"],
+        "universe_fingerprint": candidate["universe_fingerprint"],
+        "qualification_evidence_fingerprint": report["evidence_fingerprint"],
+    }
+
+
+def _sha256(name: str, value: str) -> None:
+    if re.fullmatch(r"[0-9a-f]{64}", value) is None:
+        raise ValueError(f"{name} fingerprint must be a lowercase SHA-256 value")
