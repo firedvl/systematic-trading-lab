@@ -12,7 +12,14 @@ from typing import Never
 
 from .execution import JournalIntegrityError
 from .fingerprints import canonical_json, canonicalize, fingerprint
-from .orders import OrderLifecycleStore, OrderState, StagedOrder
+from .orders import OrderLifecycleStore, OrderSide, OrderState, StagedOrder, _decode_delta
+from .reconciliation import (
+    PositionSnapshot,
+    ReconciliationBaseline,
+    SnapshotSource,
+    _decode_baseline,
+    _decode_snapshot,
+)
 
 _BROKER_STATES = {
     OrderState.ACKNOWLEDGED,
@@ -97,6 +104,44 @@ class BrokerOrderEvent:
 
 
 @dataclass(frozen=True)
+class ExpectedPositionAdvance:
+    baseline_id: str
+    broker_event_id: str
+    prior_advance_fingerprint: str | None
+    positions: tuple[PositionSnapshot, ...]
+    advanced_at: datetime
+
+    def __post_init__(self) -> None:
+        for name, value in (
+            ("baseline ID", self.baseline_id),
+            ("broker event ID", self.broker_event_id),
+        ):
+            if not value or value != value.strip() or len(value) > 128:
+                raise ValueError(f"{name} is invalid")
+        if self.prior_advance_fingerprint is not None and (
+            len(self.prior_advance_fingerprint) != 64
+            or any(
+                character not in "0123456789abcdef" for character in self.prior_advance_fingerprint
+            )
+        ):
+            raise ValueError("prior advance fingerprint is invalid")
+        if (
+            self.positions != tuple(sorted(self.positions, key=lambda item: item.symbol))
+            or len({item.symbol for item in self.positions}) != len(self.positions)
+            or any(item.quantity < 1 for item in self.positions)
+        ):
+            raise ValueError("expected positions must be sorted, unique, and positive")
+        if self.advanced_at.tzinfo is None or self.advanced_at.utcoffset() != UTC.utcoffset(
+            self.advanced_at
+        ):
+            raise ValueError("position advance time must be UTC-aware")
+
+    @property
+    def advance_fingerprint(self) -> str:
+        return fingerprint(self)
+
+
+@dataclass(frozen=True)
 class OrderLookupNotFoundEvidence:
     client_order_id: str
     account_id: str
@@ -151,6 +196,13 @@ class BrokerEventStore(OrderLifecycleStore):
                     evidence_json TEXT NOT NULL,
                     journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
                 );
+                CREATE TABLE IF NOT EXISTS expected_position_advances (
+                    broker_event_id TEXT PRIMARY KEY REFERENCES broker_events(event_id),
+                    baseline_id TEXT NOT NULL REFERENCES reconciliation_baselines(baseline_id),
+                    advance_fingerprint TEXT NOT NULL UNIQUE,
+                    advance_json TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
                 CREATE TRIGGER IF NOT EXISTS broker_events_no_update
                 BEFORE UPDATE ON broker_events BEGIN
                     SELECT RAISE(ABORT, 'broker events are immutable');
@@ -167,25 +219,61 @@ class BrokerEventStore(OrderLifecycleStore):
                 BEFORE DELETE ON order_lookup_not_found BEGIN
                     SELECT RAISE(ABORT, 'negative order lookups are immutable');
                 END;
+                CREATE TRIGGER IF NOT EXISTS expected_position_advances_no_update
+                BEFORE UPDATE ON expected_position_advances BEGIN
+                    SELECT RAISE(ABORT, 'expected position advances are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS expected_position_advances_no_delete
+                BEFORE DELETE ON expected_position_advances BEGIN
+                    SELECT RAISE(ABORT, 'expected position advances are immutable');
+                END;
                 """
             )
             connection.commit()
-            self._verify_broker_events(connection)
+            events = self._verify_broker_events(connection)
             self._verify_lookup_not_found(connection)
+            self._verify_expected_position_advances(connection, events)
 
-    def record(self, event: BrokerOrderEvent) -> BrokerOrderEvent:
+    def record(
+        self, event: BrokerOrderEvent, *, baseline_id: str | None = None
+    ) -> BrokerOrderEvent:
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             self._verify_connection(connection)
+            self._verify_reservations(connection)
+            self._verify_releases(connection)
             self._verify_orders(connection)
             events = self._verify_broker_events(connection)
             self._verify_lookup_not_found(connection)
+            advances = self._verify_expected_position_advances(connection, events)
             existing = events.get(event.event_id)
             if existing is not None:
                 if existing != event:
                     self._reject_event(
                         connection, event, "broker event ID is bound to different content"
                     )
+                if baseline_id is not None:
+                    ordered = sorted(
+                        (
+                            item
+                            for item in events.values()
+                            if item.client_order_id == event.client_order_id
+                        ),
+                        key=lambda item: (item.provider_timestamp, item.event_id),
+                    )
+                    index = ordered.index(event)
+                    prior_quantity = (
+                        0 if index == 0 else ordered[index - 1].cumulative_filled_quantity
+                    )
+                    existing_advance = advances.get(event.event_id)
+                    if event.cumulative_filled_quantity > prior_quantity and (
+                        existing_advance is None or existing_advance.baseline_id != baseline_id
+                    ):
+                        self._reject_event(
+                            connection,
+                            event,
+                            "broker event cannot gain or change expected-position lineage",
+                        )
                 connection.commit()
                 return existing
             order = connection.execute(
@@ -218,6 +306,36 @@ class BrokerEventStore(OrderLifecycleStore):
                 self._reject_event(
                     connection, event, "broker event conflicts with local order state"
                 )
+            advance = None
+            prior_quantity = 0 if not prior else prior[-1].cumulative_filled_quantity
+            if (
+                baseline_id is not None
+                and event.cumulative_filled_quantity > 0
+                and event.cumulative_filled_quantity == prior_quantity
+                and not any(
+                    item.event_id in advances and advances[item.event_id].baseline_id == baseline_id
+                    for item in prior
+                    if item.cumulative_filled_quantity == event.cumulative_filled_quantity
+                )
+            ):
+                self._reject_event(
+                    connection,
+                    event,
+                    "broker event lacks prior expected-position lineage",
+                )
+            if baseline_id is not None and event.cumulative_filled_quantity > prior_quantity:
+                try:
+                    advance = self._expected_position_advance(
+                        connection,
+                        event=event,
+                        baseline_id=baseline_id,
+                        order_json=str(order[0]),
+                        reservation_id=str(order[2]),
+                        prior_events=prior,
+                        advances=advances,
+                    )
+                except (KeyError, ValueError, json.JSONDecodeError) as error:
+                    self._reject_event(connection, event, str(error))
             sequence = self._append_event(
                 connection,
                 occurred_at=event.observed_at,
@@ -236,6 +354,25 @@ class BrokerEventStore(OrderLifecycleStore):
                     sequence,
                 ),
             )
+            if advance is not None:
+                advance_sequence = self._append_event(
+                    connection,
+                    occurred_at=advance.advanced_at,
+                    event_type="expected-position-advanced",
+                    entity_type="expected-position-advance",
+                    entity_id=advance.broker_event_id,
+                    payload=canonicalize(advance),
+                )
+                connection.execute(
+                    "INSERT INTO expected_position_advances VALUES (?, ?, ?, ?, ?)",
+                    (
+                        advance.broker_event_id,
+                        advance.baseline_id,
+                        advance.advance_fingerprint,
+                        canonical_json(advance),
+                        advance_sequence,
+                    ),
+                )
             if event.state != current:
                 transition = {
                     "order_id": event.client_order_id,
@@ -262,7 +399,10 @@ class BrokerEventStore(OrderLifecycleStore):
                         event.client_order_id,
                     ),
                 )
-                if event.state in {OrderState.CANCELED, OrderState.REJECTED}:
+                if (
+                    event.state in {OrderState.CANCELED, OrderState.REJECTED}
+                    and event.cumulative_filled_quantity == 0
+                ):
                     self._release_capacity(
                         connection,
                         reservation_id=str(order[2]),
@@ -271,6 +411,163 @@ class BrokerEventStore(OrderLifecycleStore):
                     )
             connection.commit()
         return event
+
+    def expected_positions(self, baseline_id: str) -> tuple[PositionSnapshot, ...]:
+        with self._connect() as connection:
+            connection.execute("BEGIN")
+            self._verify_connection(connection)
+            self._verify_reservations(connection)
+            self._verify_releases(connection)
+            self._verify_orders(connection)
+            events = self._verify_broker_events(connection)
+            advances = self._verify_expected_position_advances(connection, events)
+            try:
+                baseline, initial_positions = self._baseline_anchor(connection, baseline_id)
+                self._require_complete_lineage(
+                    connection,
+                    baseline=baseline,
+                    baseline_id=baseline_id,
+                    advances=advances,
+                )
+            except (KeyError, ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError("expected-position lineage is incomplete") from error
+            matching = [item for item in advances.values() if item.baseline_id == baseline_id]
+            if matching:
+                return matching[-1].positions
+            return initial_positions
+
+    def _expected_position_advance(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        event: BrokerOrderEvent,
+        baseline_id: str,
+        order_json: str,
+        reservation_id: str,
+        prior_events: list[BrokerOrderEvent],
+        advances: dict[str, ExpectedPositionAdvance],
+    ) -> ExpectedPositionAdvance:
+        baseline, initial_positions = self._baseline_anchor(connection, baseline_id)
+        reservation = connection.execute(
+            "SELECT authorization_id FROM capacity_reservations WHERE reservation_id = ?",
+            (reservation_id,),
+        ).fetchone()
+        if (
+            reservation is None
+            or str(reservation[0]) != baseline.authorization_id
+            or event.provider_timestamp < baseline.created_at
+            or event.observed_at < baseline.created_at
+        ):
+            raise ValueError("broker event does not match its expected-position baseline")
+        self._require_complete_lineage(
+            connection,
+            baseline=baseline,
+            baseline_id=baseline_id,
+            advances=advances,
+            stop_event_id=event.event_id,
+        )
+        delta = _decode_delta(json.loads(order_json))
+        prior_quantity = 0 if not prior_events else prior_events[-1].cumulative_filled_quantity
+        increment = event.cumulative_filled_quantity - prior_quantity
+        if increment < 1:
+            raise ValueError("expected-position advance requires a new fill")
+        lineage = [item for item in advances.values() if item.baseline_id == baseline_id]
+        positions = {
+            item.symbol: item.quantity
+            for item in (lineage[-1].positions if lineage else initial_positions)
+        }
+        signed_increment = increment if delta.side is OrderSide.BUY else -increment
+        quantity = positions.get(delta.symbol, 0) + signed_increment
+        if quantity < 0:
+            raise ValueError("expected position cannot become negative")
+        if quantity:
+            positions[delta.symbol] = quantity
+        else:
+            positions.pop(delta.symbol, None)
+        return ExpectedPositionAdvance(
+            baseline_id=baseline_id,
+            broker_event_id=event.event_id,
+            prior_advance_fingerprint=(None if not lineage else lineage[-1].advance_fingerprint),
+            positions=tuple(
+                PositionSnapshot(symbol=symbol, quantity=value)
+                for symbol, value in sorted(positions.items())
+            ),
+            advanced_at=event.observed_at,
+        )
+
+    def _require_complete_lineage(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        baseline: ReconciliationBaseline,
+        baseline_id: str,
+        advances: dict[str, ExpectedPositionAdvance],
+        stop_event_id: str | None = None,
+    ) -> None:
+        seen_quantities: dict[str, int] = {}
+        prior_rows = connection.execute(
+            "SELECT b.event_json FROM broker_events b "
+            "JOIN orders o ON o.order_id = b.client_order_id "
+            "JOIN capacity_reservations r ON r.reservation_id = o.reservation_id "
+            "WHERE json_extract(r.reservation_json, '$.account_id') = ? "
+            "ORDER BY b.journal_sequence",
+            (baseline.account_id,),
+        ).fetchall()
+        for prior_row in prior_rows:
+            known_event = _decode_event(json.loads(prior_row[0]))
+            if known_event.event_id == stop_event_id:
+                break
+            known_quantity = seen_quantities.get(known_event.client_order_id, 0)
+            if (
+                known_event.observed_at >= baseline.created_at
+                and known_event.cumulative_filled_quantity > known_quantity
+                and (
+                    known_event.event_id not in advances
+                    or advances[known_event.event_id].baseline_id != baseline_id
+                )
+            ):
+                raise ValueError("expected-position lineage has an unrecorded prior fill")
+            seen_quantities[known_event.client_order_id] = known_event.cumulative_filled_quantity
+
+    def _baseline_anchor(
+        self, connection: sqlite3.Connection, baseline_id: str
+    ) -> tuple[ReconciliationBaseline, tuple[PositionSnapshot, ...]]:
+        row = connection.execute(
+            "SELECT b.baseline_json, b.journal_sequence, s.snapshot_json, "
+            "s.snapshot_fingerprint FROM reconciliation_baselines b "
+            "JOIN portfolio_snapshots s ON s.snapshot_id = "
+            "json_extract(b.baseline_json, '$.expected_snapshot_id') "
+            "WHERE b.baseline_id = ?",
+            (baseline_id,),
+        ).fetchone()
+        if row is None:
+            raise KeyError("expected-position baseline is missing")
+        baseline = _decode_baseline(json.loads(row[0]))
+        snapshot = _decode_snapshot(json.loads(row[2]))
+        journal = connection.execute(
+            "SELECT occurred_at, event_type, entity_type, entity_id, payload_json "
+            "FROM journal WHERE sequence = ?",
+            (row[1],),
+        ).fetchone()
+        if (
+            baseline.baseline_id != baseline_id
+            or row[0] != canonical_json(baseline)
+            or snapshot.source is not SnapshotSource.LOCAL_EXPECTED
+            or snapshot.snapshot_id != baseline.expected_snapshot_id
+            or snapshot.snapshot_fingerprint != baseline.expected_fingerprint
+            or row[2] != canonical_json(snapshot)
+            or row[3] != snapshot.snapshot_fingerprint
+            or journal
+            != (
+                _utc_text(baseline.created_at),
+                "reconciliation-baseline-created",
+                "reconciliation-baseline",
+                baseline.baseline_id,
+                canonical_json(baseline),
+            )
+        ):
+            raise ValueError("expected-position baseline is invalid")
+        return baseline, snapshot.positions
 
     def _record_lookup_not_found(
         self,
@@ -449,6 +746,82 @@ class BrokerEventStore(OrderLifecycleStore):
                 raise JournalIntegrityError("stored broker event sequence is invalid")
         return result
 
+    def _verify_expected_position_advances(
+        self,
+        connection: sqlite3.Connection,
+        events: dict[str, BrokerOrderEvent] | None = None,
+    ) -> dict[str, ExpectedPositionAdvance]:
+        broker_events = events if events is not None else self._verify_broker_events(connection)
+        rows = connection.execute(
+            "SELECT broker_event_id, baseline_id, advance_fingerprint, advance_json, "
+            "journal_sequence FROM expected_position_advances ORDER BY journal_sequence"
+        ).fetchall()
+        count = connection.execute(
+            "SELECT COUNT(*) FROM journal WHERE event_type = 'expected-position-advanced'"
+        ).fetchone()[0]
+        if len(rows) != count:
+            raise JournalIntegrityError("expected-position advance and journal counts differ")
+        result: dict[str, ExpectedPositionAdvance] = {}
+        for row in rows:
+            try:
+                advance = _decode_expected_position_advance(json.loads(row[3]))
+                event = broker_events[advance.broker_event_id]
+                order = connection.execute(
+                    "SELECT delta_json, reservation_id FROM orders WHERE order_id = ?",
+                    (event.client_order_id,),
+                ).fetchone()
+                if order is None:
+                    raise ValueError("expected-position order is missing")
+                prior_row = connection.execute(
+                    "SELECT event_json FROM broker_events WHERE client_order_id = ? "
+                    "AND journal_sequence < (SELECT journal_sequence FROM broker_events "
+                    "WHERE event_id = ?) ORDER BY journal_sequence DESC LIMIT 1",
+                    (event.client_order_id, event.event_id),
+                ).fetchone()
+                prior = [] if prior_row is None else [_decode_event(json.loads(prior_row[0]))]
+                expected = self._expected_position_advance(
+                    connection,
+                    event=event,
+                    baseline_id=advance.baseline_id,
+                    order_json=str(order[0]),
+                    reservation_id=str(order[1]),
+                    prior_events=prior,
+                    advances=result,
+                )
+            except (KeyError, ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError(
+                    "stored expected-position advance is invalid"
+                ) from error
+            payload = canonical_json(advance)
+            journal = connection.execute(
+                "SELECT occurred_at, event_type, entity_type, entity_id, payload_json "
+                "FROM journal WHERE sequence = ?",
+                (row[4],),
+            ).fetchone()
+            if (
+                advance != expected
+                or row[:3]
+                != (
+                    advance.broker_event_id,
+                    advance.baseline_id,
+                    advance.advance_fingerprint,
+                )
+                or row[3] != payload
+                or journal
+                != (
+                    _utc_text(advance.advanced_at),
+                    "expected-position-advanced",
+                    "expected-position-advance",
+                    advance.broker_event_id,
+                    payload,
+                )
+            ):
+                raise JournalIntegrityError(
+                    "expected-position advance does not match its broker event or journal"
+                )
+            result[advance.broker_event_id] = advance
+        return result
+
     def _verify_lookup_not_found(
         self, connection: sqlite3.Connection
     ) -> dict[str, OrderLookupNotFoundEvidence]:
@@ -559,6 +932,25 @@ def _decode_event(value: object) -> BrokerOrderEvent:
         )
     except (KeyError, TypeError, ValueError, ArithmeticError) as error:
         raise ValueError("broker event is invalid") from error
+
+
+def _decode_expected_position_advance(value: object) -> ExpectedPositionAdvance:
+    if not isinstance(value, dict):
+        raise ValueError("expected-position advance must be an object")
+    try:
+        return ExpectedPositionAdvance(
+            baseline_id=str(value["baseline_id"]),
+            broker_event_id=str(value["broker_event_id"]),
+            prior_advance_fingerprint=(
+                None
+                if value["prior_advance_fingerprint"] is None
+                else str(value["prior_advance_fingerprint"])
+            ),
+            positions=tuple(PositionSnapshot(**item) for item in value["positions"]),
+            advanced_at=_parse_utc(str(value["advanced_at"])),
+        )
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("expected-position advance is invalid") from error
 
 
 def _decode_lookup_not_found(value: object) -> OrderLookupNotFoundEvidence:

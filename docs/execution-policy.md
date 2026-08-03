@@ -11,7 +11,8 @@ broker-free client order ID per intent and target/current quantity pair. Staging
 active capacity reservation and matching immutable intent. One submitter ID is claimed atomically
 with `staged -> submitting`; later callers cannot claim or bypass that transition.
 Cancellation or rejection releases reserved capacity in the same transaction as the terminal local
-order transition. Filled orders retain capacity until reconciliation proves the resulting position.
+order transition only when cumulative fill is zero. Any positive fill retains capacity until
+reconciliation proves the resulting position.
 A separate read-only adapter permits only `GET /v2/account`, `/v2/positions`, `/v2/orders`,
 `/v2/clock`, and exact `GET /v2/orders:by_client_order_id` at
 `https://paper-api.alpaca.markets`. It blocks redirects, rejects unexpected accounts,
@@ -22,7 +23,10 @@ a broker-free evidence store that deduplicates exact provider event identity and
 checks forward state, cumulative fill quantity, and cumulative average fill price, and binds each
 event to one known local order. Zero fill requires no price; a positive fill requires a positive
 finite average, and later cumulative notional cannot move backward. This evidence does not yet
-advance expected portfolio state or release filled capacity.
+advance complete expected portfolio state or release filled capacity. An explicit baseline-bound
+path atomically derives each signed fill increment from the immutable local order and stores a
+sorted immutable expected-position checkpoint linked to its prior generation. It does not infer
+cash, equity, buying power, fees, or settlement from fill evidence.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only
@@ -35,8 +39,8 @@ the reservation and emergency-clear state to remain valid, the order to remain u
 other submitting or unknown order. The proof is review evidence only and grants no retry authority.
 Storage accepts only schema-validated normalized fields and excludes raw bodies, headers, URLs, and
 exception text. A valid event advances local order state in the same transaction as its evidence;
-cancellation or rejection also releases capacity. Conflicting identity, order, quantity, sequence,
-or local state restores persistent emergency disable before the event is rejected.
+zero-fill cancellation or rejection also releases capacity. Conflicting identity, order, quantity,
+sequence, or local state restores persistent emergency disable before the event is rejected.
 Only the reader's non-injected production lookup path can convert one normalized lookup result into
 durable broker-event evidence. The event identity binds the complete lookup snapshot, broker update
 time, and local observation time; injected transports remain unable to create provenance.

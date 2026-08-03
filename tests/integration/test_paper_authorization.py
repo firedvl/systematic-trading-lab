@@ -1,4 +1,5 @@
 import json
+import shutil
 import sqlite3
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -839,24 +840,62 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         provider_timestamp=NOW + timedelta(seconds=20),
         observed_at=NOW + timedelta(seconds=21),
     )
-    broker_events.record(partial)
-    broker_events.record(
-        BrokerOrderEvent(
-            event_id="broker-event-3",
-            broker_order_id="broker-order-1",
-            client_order_id=delta.client_order_id,
-            state=OrderState.CANCELED,
-            cumulative_filled_quantity=3,
-            cumulative_average_fill_price=Decimal("100.25"),
-            provider_timestamp=NOW + timedelta(seconds=21),
-            observed_at=NOW + timedelta(seconds=22),
-        )
+    evidence_only_path = tmp_path / "evidence-only.sqlite3"
+    shutil.copy2(store.path, evidence_only_path)
+    evidence_only = BrokerEventStore(evidence_only_path)
+    evidence_only.record(partial)
+    with pytest.raises(JournalIntegrityError, match="lineage is incomplete"):
+        evidence_only.expected_positions(baseline.baseline_id)
+    journal_before_fill = broker_events.verify_journal()
+    assert broker_events.record(partial, baseline_id=baseline.baseline_id) == partial
+    assert broker_events.expected_positions(baseline.baseline_id) == (PositionSnapshot("SPY", 3),)
+    journal_after_fill = broker_events.verify_journal()
+    assert journal_after_fill.event_count == journal_before_fill.event_count + 3
+    assert broker_events.record(partial, baseline_id=baseline.baseline_id) == partial
+    assert broker_events.verify_journal() == journal_after_fill
+    canceled = BrokerOrderEvent(
+        event_id="broker-event-3",
+        broker_order_id="broker-order-1",
+        client_order_id=delta.client_order_id,
+        state=OrderState.CANCELED,
+        cumulative_filled_quantity=3,
+        cumulative_average_fill_price=Decimal("100.25"),
+        provider_timestamp=NOW + timedelta(seconds=21),
+        observed_at=NOW + timedelta(seconds=22),
     )
+    broker_events.record(canceled, baseline_id=baseline.baseline_id)
+    canceled_head = broker_events.verify_journal()
+    assert broker_events.record(canceled, baseline_id=baseline.baseline_id) == canceled
+    assert broker_events.verify_journal() == canceled_head
     with sqlite3.connect(store.path) as connection:
+        assert (
+            connection.execute(
+                "SELECT reason FROM capacity_releases WHERE reservation_id = ?",
+                (reservation_id,),
+            ).fetchone()
+            is None
+        )
         assert connection.execute(
-            "SELECT reason FROM capacity_releases WHERE reservation_id = ?",
-            (reservation_id,),
-        ).fetchone() == ("order-canceled",)
+            "SELECT COUNT(*) FROM expected_position_advances WHERE baseline_id = ?",
+            (baseline.baseline_id,),
+        ).fetchone() == (1,)
+    assert BrokerEventStore(store.path).expected_positions(baseline.baseline_id) == (
+        PositionSnapshot("SPY", 3),
+    )
+    legacy_release_path = tmp_path / "legacy-partial-release.sqlite3"
+    shutil.copy2(store.path, legacy_release_path)
+    legacy_release = BrokerEventStore(legacy_release_path)
+    with legacy_release._connect() as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        legacy_release._release_capacity(
+            connection,
+            reservation_id=reservation_id,
+            reason="order-canceled",
+            released_at=canceled.observed_at,
+        )
+        connection.commit()
+    with pytest.raises(JournalIntegrityError, match="capacity release"):
+        RiskStore(legacy_release_path)
     OrderLifecycleStore(store.path)
     assert (
         store.clear_emergency(
