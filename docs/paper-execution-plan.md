@@ -129,7 +129,9 @@ refuse unattested paper snapshots.
 
 The current read adapter uses Trading API 2.0.1 paper endpoints for account, positions, clock, open
 orders, and exact lookup by deterministic client order ID. The lookup remains fixed-origin, GET-only,
-and schema validated. A later separately reviewed writer may add submission and single-order
+and schema validated. Only its production path can persist the normalized lookup as broker-event
+evidence; injected transports cannot create provenance. A later separately reviewed writer may add
+submission and single-order
 cancellation. Polling is authoritative; streaming may later reduce latency but cannot
 replace reconciliation. Orders are whole-share, long-only,
 nonextended-hours ETF `day` market or limit orders for one authorized account. Replace, fractional or

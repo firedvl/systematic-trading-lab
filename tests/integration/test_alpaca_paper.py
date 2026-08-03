@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 from email.message import Message
 from http.client import BadStatusLine
 from pathlib import Path
+from typing import Any, cast
 from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlsplit
 from urllib.request import Request
@@ -145,7 +146,13 @@ def test_reader_normalizes_complete_portfolio_and_clock_with_get_only_requests()
         for name, value in inspect.getmembers(AlpacaPaperReader, inspect.isfunction)
         if not name.startswith("_")
     }
-    assert public_methods == {"read_clock", "read_order", "read_portfolio", "record_portfolio"}
+    assert public_methods == {
+        "read_clock",
+        "read_order",
+        "read_portfolio",
+        "record_order_lookup",
+        "record_portfolio",
+    }
 
 
 def test_reader_looks_up_one_exact_client_order_id() -> None:
@@ -175,6 +182,50 @@ def test_reader_looks_up_one_exact_client_order_id() -> None:
     assert result.client_order_id == "client-1"
     assert result.status == "filled"
     assert parse_qs(urlsplit(requests[0].full_url).query) == {"client_order_id": ["client-1"]}
+
+
+def test_only_production_lookup_path_can_record_normalized_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = {
+        "id": "broker-order-1",
+        "client_order_id": "client-1",
+        "symbol": "SPY",
+        "status": "filled",
+        "side": "buy",
+        "qty": "2",
+        "filled_qty": "2",
+        "type": "market",
+        "limit_price": None,
+        "time_in_force": "day",
+        "extended_hours": False,
+        "order_class": "simple",
+        "notional": None,
+        "legs": None,
+        "updated_at": "2026-08-03T20:00:00Z",
+    }
+    injected = _reader(_payloads(**{"/v2/orders:by_client_order_id": payload}))
+    with pytest.raises(AlpacaPaperError, match="injected transport"):
+        injected.record_order_lookup(cast(Any, object()), client_order_id="client-1")
+
+    def transport(request: Request) -> bytes:
+        return json.dumps(payload).encode()
+
+    class Sink:
+        def record(self, event: object) -> object:
+            return event
+
+    monkeypatch.setattr("systematic_trading_lab.alpaca_paper._urlopen_bytes", transport)
+    reader = AlpacaPaperReader(
+        "test-key",
+        "test-secret",
+        account_id="paper-account",
+        allowed_symbols=frozenset({"SPY"}),
+        clock=lambda: NOW,
+    )
+    event = reader.record_order_lookup(cast(Any, Sink()), client_order_id="client-1")
+    assert event.client_order_id == "client-1"
+    assert event.cumulative_filled_quantity == 2
 
 
 @pytest.mark.parametrize(

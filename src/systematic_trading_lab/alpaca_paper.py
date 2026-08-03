@@ -22,6 +22,7 @@ from .reconciliation import (
 )
 
 if TYPE_CHECKING:
+    from .broker_events import BrokerEventStore, BrokerOrderEvent
     from .reconciliation import ReconciliationStore
 
 PAPER_ORIGIN = "https://paper-api.alpaca.markets"
@@ -44,7 +45,7 @@ _OPEN_ORDER_STATUSES = frozenset(
         "suspended",
     }
 )
-_ORDER_STATUSES = _OPEN_ORDER_STATUSES | {"filled", "canceled", "expired", "rejected", "replaced"}
+_ORDER_STATUSES = _OPEN_ORDER_STATUSES | {"filled", "canceled", "expired", "rejected"}
 _Transport = Callable[[Request], bytes]
 _Clock = Callable[[], datetime]
 
@@ -86,6 +87,7 @@ class PaperOrderSnapshot:
     limit_price: Decimal | None
     status: str
     updated_at: datetime
+    observed_at: datetime
 
     def __post_init__(self) -> None:
         if self.side not in {"buy", "sell"} or self.order_type not in {"market", "limit"}:
@@ -94,6 +96,8 @@ class PaperOrderSnapshot:
             raise ValueError("paper order quantity is invalid")
         if self.status not in _ORDER_STATUSES:
             raise ValueError("paper order status is unsupported")
+        if self.observed_at < self.updated_at:
+            raise ValueError("paper order cannot be observed before its update time")
 
 
 class AlpacaPaperReader:
@@ -246,6 +250,7 @@ class AlpacaPaperReader:
         value = self._get_object(
             "/v2/orders:by_client_order_id", {"client_order_id": client_order_id}
         )
+        observed_at = self._now()
         if _text(value, "client_order_id", "order") != client_order_id:
             raise AlpacaPaperError("Alpaca paper lookup returned an unexpected client order ID")
         try:
@@ -260,9 +265,37 @@ class AlpacaPaperReader:
                 limit_price=_optional_amount(value, "limit_price"),
                 status=_lookup_status(value),
                 updated_at=_timestamp(value, "updated_at"),
+                observed_at=observed_at,
             )
         except ValueError as error:
             raise AlpacaPaperError("Alpaca paper order is invalid") from error
+
+    def record_order_lookup(
+        self, store: BrokerEventStore, *, client_order_id: str
+    ) -> BrokerOrderEvent:
+        if not self._allows_persistence:
+            raise AlpacaPaperError("injected transport cannot produce durable paper provenance")
+        from .broker_events import BrokerOrderEvent
+        from .orders import OrderState
+
+        snapshot = self.read_order(client_order_id)
+        state = {
+            "partially_filled": OrderState.PARTIALLY_FILLED,
+            "filled": OrderState.FILLED,
+            "canceled": OrderState.CANCELED,
+            "expired": OrderState.CANCELED,
+            "rejected": OrderState.REJECTED,
+        }.get(snapshot.status, OrderState.ACKNOWLEDGED)
+        event = BrokerOrderEvent(
+            event_id=f"alpaca-lookup-{fingerprint(snapshot)}",
+            broker_order_id=snapshot.broker_order_id,
+            client_order_id=snapshot.client_order_id,
+            state=state,
+            cumulative_filled_quantity=snapshot.filled_quantity,
+            provider_timestamp=snapshot.updated_at,
+            observed_at=snapshot.observed_at,
+        )
+        return store.record(event)
 
     def _order_symbol(self, value: dict[str, Any]) -> str:
         symbol = _text(value, "symbol", "order")
