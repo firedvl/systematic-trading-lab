@@ -16,3 +16,9 @@ an unknown-outcome state resolved by lookup and reconciliation before retry. No 
 implemented yet. The broker-free intent store is implemented: it validates immutable intent content,
 persists each new intent and journal event in one transaction, returns the same receipt for exact
 replay, and fails startup when its sequence, hash chain, stored head, schema, or database is invalid.
+
+The broker-free reconciliation boundary accepts only normalized complete local-expected or
+Alpaca-paper snapshots. It compares exact account, cash, equity, whole-share positions, open client
+order IDs, separate account/position/order observation times, and unresolved mutation count. Wrong
+source roles, stale or future observations, or any mismatch produce explicit dirty reasons. A pure
+result is not durable reconciliation evidence and cannot clear emergency disable.
