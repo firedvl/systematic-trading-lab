@@ -7,4 +7,4 @@
 - Test status: 44 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Bounded training and validation reads, authorization-before-read, exact holdout-range loading, failed-attempt retention, protected metrics, evidence-integrity, exact-binding, atomic-consumption, and one-time-read checks pass; live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
 - Next task: develop and record a new training-only candidate through the bounded runner. Separate human review is still required to approve qualification gates. The current candidates cannot obtain authorization or enter the holdout path. Do not access 2026 data.
-- Branch: `codex/m3-bounded-research-runner`; draft pull request pending.
+- Branch: `codex/m3-bounded-research-runner`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/17.
