@@ -7,6 +7,10 @@ Portfolio backtests require the full symbol set in every session. The strategy s
 Paper flow is strategy intent, protected paper authorization, independent risk, order manager, broker adapter, events, reconciliation, and append-only evidence. Intents require a strategy version, symbol, decision time, target or whole-share quantity, reason, source-data fingerprint, reference price, expiry, and idempotency key. Exact duplicate delivery returns the existing receipt; reuse of a key with different content blocks execution. Authorization binds one qualified candidate and exact strategy, code, data, account, evidence, limits, and expiry; research code cannot grant it.
 
 Only the Alpaca paper host may be selected. Each staged order has one deterministic client order ID.
+A separate read-only adapter now permits only `GET /v2/account`, `/v2/positions`, `/v2/orders`, and
+`/v2/clock` at `https://paper-api.alpaca.markets`. It blocks redirects, rejects unexpected accounts,
+symbols, values, and open-order states, and fails if a 500-order response cannot prove completeness.
+It exposes no submit, cancel, replace, close-position, or other mutation method.
 A timeout or crash after submission requires lookup by that ID before retry. Broker events are
 deduplicated by provider event identity and sanitized payload hash. Broker storage accepts only
 schema-validated normalized fields and excludes raw bodies, headers, URLs, and exception text.
@@ -18,8 +22,9 @@ persists each new intent and journal event in one transaction, returns the same 
 replay, and fails startup when its sequence, hash chain, stored head, schema, or database is invalid.
 
 The broker-free reconciliation boundary accepts only normalized complete local-expected or
-Alpaca-paper snapshots. It compares exact account, cash, equity, whole-share positions, open client
-order IDs, separate account/position/order observation times, and unresolved mutation count. Wrong
+Alpaca-paper snapshots. It compares exact account, cash, equity, buying power, account readiness,
+whole-share positions, full supported open-order descriptors, separate account/position/order
+observation times, and unresolved mutation count. Wrong
 source roles, stale or future observations, or any mismatch produce explicit dirty reasons. Snapshots,
 flat baseline creation, and later results now share the execution journal. The baseline binds active
 paper authorization and reviewed freshness limits and must not predate its recorded flat snapshots.
