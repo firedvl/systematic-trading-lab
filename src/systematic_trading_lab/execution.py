@@ -31,6 +31,7 @@ _KNOWN_EVENT_TYPES = {
     "order-transitioned",
     "broker-event-recorded",
     "expected-position-advanced",
+    "position-settlement-proved",
     "order-lookup-not-found",
     "portfolio-snapshot-recorded",
     "paper-snapshot-attested",

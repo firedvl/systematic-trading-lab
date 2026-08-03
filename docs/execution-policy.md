@@ -27,6 +27,11 @@ advance complete expected portfolio state or release filled capacity. An explici
 path atomically derives each signed fill increment from the immutable local order and stores a
 sorted immutable expected-position checkpoint linked to its prior generation. It does not infer
 cash, equity, buying power, fees, or settlement from fill evidence.
+The current lineage head can be bound to a later complete production-attested paper snapshot as
+immutable position-settlement evidence. The snapshot must match exact expected positions, contain
+no open orders, follow every local order transition, remain fresh, and find no nonterminal local
+order. Emergency state must be clear. Cash, equity, and buying power remain broker observations;
+the proof neither compares them to invented local values nor releases filled capacity.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only
