@@ -154,14 +154,14 @@
       "rationale": "Limit annual validation turnover before later execution-capacity analysis."
     },
     {
-      "name": "trade count floor",
-      "metric": "min_trade_count",
+      "name": "validation trade count floor",
+      "metric": "total_validation_trade_count",
       "comparison": ">=",
       "threshold": "100",
       "disqualifying": true,
       "approved": false,
       "scope": "campaign",
-      "rationale": "Require enough trades in every validation fold to avoid a result based on a few fills."
+      "rationale": "Require operational evidence from at least one hundred fills across all predeclared base validation folds; separate gates enforce outcomes within each fold."
     },
     {
       "name": "search-volume cap",

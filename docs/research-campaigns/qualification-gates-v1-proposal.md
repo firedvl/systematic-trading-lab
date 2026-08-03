@@ -30,12 +30,19 @@ visible and disqualifying.
 | Minimum up-regime sessions | >= 50 | Require a useful positive-market sample in every fold. |
 | Minimum down-regime sessions | >= 50 | Require a useful negative-market sample in every fold. |
 | Maximum turnover | <= 30 | Bound turnover before execution-capacity analysis. |
-| Minimum trade count | >= 100 | Avoid evidence based on a few fills. |
+| Total base-validation trade count | >= 100 | Require operational fill evidence across the full predeclared validation campaign. |
 | Campaign candidate count | <= 40 | Bound the search and retain all candidates. |
 
 Every gate has `approved: false`. The loader rejects unknown or missing fields, non-finite
 thresholds, duplicate gate names or metrics, unsupported comparisons or scopes, and any mismatch
 between proposal status and gate approval flags.
+
+The trade-count gate sums fills across the three base-validation folds. The earlier per-fold
+minimum conflated execution count with independent return observations and structurally excluded
+monthly portfolio strategies that cannot produce 100 fills in one year. Per-fold return, Sharpe,
+drawdown, regime, and concentration gates still reject thin or concentrated evidence. The revised
+gate retains the proposed threshold of 100 campaign-wide fills, remains unapproved, and does not
+change any strategy result.
 
 ## Evaluation against validation evidence
 

@@ -59,6 +59,7 @@ def test_proposed_config_loads_and_cannot_qualify() -> None:
 
     assert proposal.status is ProposalStatus.PROPOSED_UNAPPROVED
     assert len(proposal.gates) == 17
+    assert "total_validation_trade_count" in {gate.spec.metric for gate in proposal.gates}
     assert all(not gate.spec.approved for gate in proposal.gates)
     assert all(result.passed for result in report.gates)
     assert report.state is QualificationState.UNAPPROVED
