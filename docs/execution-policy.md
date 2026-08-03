@@ -26,6 +26,10 @@ The production exact-lookup path can store a sanitized immutable 404 result for 
 after a separate account read matches the authorized account. The evidence binds that account, the
 fixed paper origin and path, adapter version, and observation time; it does not change order state,
 release capacity, clear emergency state, or permit retry.
+The read-only recovery proof requires that 404 plus a later complete adapter-attested clean
+reconciliation for the same active account, authorization, and reviewed limits. It also requires
+the reservation and emergency-clear state to remain valid, the order to remain unknown, and no
+other submitting or unknown order. The proof is review evidence only and grants no retry authority.
 Storage accepts only schema-validated normalized fields and excludes raw bodies, headers, URLs, and
 exception text. A valid event advances local order state in the same transaction as its evidence;
 cancellation or rejection also releases capacity. Conflicting identity, order, quantity, sequence,
