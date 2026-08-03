@@ -13,4 +13,6 @@ schema-validated normalized fields and excludes raw bodies, headers, URLs, and e
 Conflicting duplicates, unknown statuses, out-of-order transitions, or position drift trigger
 emergency disable. Each submit, cancel, and cancel-all mutation is journaled before the call and has
 an unknown-outcome state resolved by lookup and reconciliation before retry. No order submission is
-implemented yet.
+implemented yet. The broker-free intent store is implemented: it validates immutable intent content,
+persists each new intent and journal event in one transaction, returns the same receipt for exact
+replay, and fails startup when its sequence, hash chain, stored head, schema, or database is invalid.
