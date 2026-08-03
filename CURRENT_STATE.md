@@ -7,4 +7,4 @@
 - Test status: 14 tests pass; ruff format and lint, strict mypy, and secret scan pass on Python 3.12.13. Fixture report output is deterministic; live and broker/data modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
 - Next task: begin M3 with durable experiment records, campaign/restart state, training-validation-holdout controls, and qualification gates.
-- Branch: `codex/m2-baselines`; draft pull request pending.
+- Branch: `codex/m2-baselines`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/5.
