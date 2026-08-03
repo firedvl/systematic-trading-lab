@@ -18,6 +18,7 @@ from systematic_trading_lab.strategies import (
     RelativeStrengthPortfolioStrategy,
     RiskManagedMomentumPortfolioStrategy,
     TimeSeriesMomentumStrategy,
+    VolatilityBalancedPortfolioStrategy,
 )
 
 
@@ -161,7 +162,7 @@ def test_relative_strength_reporting_uses_session_portfolio_engine() -> None:
             100,
         )
         for day in range(5)
-        for symbol in ("QQQ", "SPY")
+        for symbol in ("GLD", "IWM", "QQQ", "SPY", "TLT")
     )
 
     result = strategy_result(
@@ -183,6 +184,15 @@ def test_relative_strength_reporting_uses_session_portfolio_engine() -> None:
     )
     assert risk_managed.strategy_id == "risk-managed-momentum-portfolio"
     assert risk_managed.metrics.trade_count > 0
+
+    volatility_balanced = strategy_result(
+        "volatility-balanced",
+        source,
+        Decimal("1000"),
+        parameters={"volatility_window": 2, "rebalance_every": 1},
+    )
+    assert volatility_balanced.strategy_id == "volatility-balanced-portfolio"
+    assert volatility_balanced.metrics.trade_count > 0
 
 
 def test_risk_managed_momentum_caps_inverse_volatility_weights() -> None:
@@ -242,6 +252,40 @@ def test_risk_managed_momentum_rejects_zero_volatility() -> None:
         strategy.on_session((history[-1],), {symbol: history})
 
 
+def test_volatility_balanced_caps_and_fully_allocates() -> None:
+    symbols = tuple(Symbol(value) for value in ("GLD", "IWM", "QQQ", "SPY", "TLT"))
+    start = datetime(2025, 1, 6, tzinfo=UTC)
+    closes = (
+        ("100", "101", "103"),
+        ("100", "102", "105"),
+        ("100", "105", "106"),
+        ("100", "101", "104"),
+        ("100", "104", "110"),
+    )
+    history = {
+        symbol: tuple(
+            OHLCVBar(symbol, start + timedelta(days=index), close, close, close, close, 100)
+            for index, close in enumerate(map(Decimal, values))
+        )
+        for symbol, values in zip(symbols, closes, strict=True)
+    }
+    strategy = VolatilityBalancedPortfolioStrategy(symbols, volatility_window=2, rebalance_every=1)
+
+    assert (
+        strategy.on_session(
+            tuple(values[1] for values in history.values()),
+            {symbol: values[:2] for symbol, values in history.items()},
+        )
+        == ()
+    )
+    targets = strategy.on_session(tuple(values[-1] for values in history.values()), history)
+    weights = {target.symbol: target.weight for target in targets}
+    assert max(weights.values()) == Decimal("0.3")
+    assert min(weights.values()) > Decimal("0")
+    assert sum(weights.values(), Decimal("0")) == Decimal("1")
+    assert {target.reason for target in targets} == {"capped-inverse-volatility"}
+
+
 @pytest.mark.parametrize(
     ("lookback", "rebalance_every", "selection_count"),
     (
@@ -276,3 +320,23 @@ def test_risk_managed_momentum_rejects_invalid_parameters(
             volatility_window=volatility_window,
             rebalance_every=rebalance_every,
         )
+
+
+@pytest.mark.parametrize(
+    ("volatility_window", "rebalance_every"),
+    ((1, 1), (2, 0)),
+)
+def test_volatility_balanced_rejects_invalid_parameters(
+    volatility_window: int, rebalance_every: int
+) -> None:
+    with pytest.raises(ValueError):
+        VolatilityBalancedPortfolioStrategy(
+            tuple(Symbol(value) for value in ("GLD", "IWM", "QQQ", "SPY")),
+            volatility_window=volatility_window,
+            rebalance_every=rebalance_every,
+        )
+
+
+def test_volatility_balanced_rejects_underdiversified_universe() -> None:
+    with pytest.raises(ValueError, match="at least four unique symbols"):
+        VolatilityBalancedPortfolioStrategy(tuple(Symbol(value) for value in ("QQQ", "SPY", "TLT")))

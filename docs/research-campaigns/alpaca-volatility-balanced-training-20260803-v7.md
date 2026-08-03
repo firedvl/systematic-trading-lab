@@ -5,7 +5,7 @@
 This training-only campaign tests allocation from trailing volatility without a return signal,
 ranking rule, or momentum cash filter. All five ETFs remain eligible after warm-up. The strategy
 rebalances every five sessions, assigns inverse sample-volatility weights, redistributes weights
-above a fixed 30% per-ETF cap, and targets full unlevered exposure.
+above a fixed 30% per-ETF cap, and targets full unlevered exposure after warm-up.
 
 The cap is a diversification invariant: it is 1.5 times the five-asset equal weight and requires at
 least four holdings for full exposure. It is not a searched parameter. An asset with zero measured
@@ -26,7 +26,7 @@ volatility, incomplete history, or an incomplete session fails the run.
 
 The campaign stops before validation unless the base has positive after-cost return, beats fixed
 weight, reaches a Sharpe ratio of at least 0.5, stays at or below 20% maximum drawdown, 25%
-top-five-session profit share, 50% top-instrument profit share, 30 turnover, and full unlevered
-average gross exposure, and records at least 100 fills. Both neighbors must remain nonnegative and
-retain at least 50% of base return. Invalid or undefined required metrics fail the screen. No gate
-changes, validation reads, holdout access, or execution authority belong in this campaign.
+top-five-session profit share, 50% top-instrument profit share, 30 turnover, and average gross
+exposure of one, and records at least 100 fills. Both neighbors must remain nonnegative and retain at least
+50% of base return. Invalid or undefined required metrics fail the screen. No gate changes,
+validation reads, holdout access, or execution authority belong in this campaign.
