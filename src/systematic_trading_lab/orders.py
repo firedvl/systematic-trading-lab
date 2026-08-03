@@ -217,6 +217,7 @@ class OrderLifecycleStore(RiskStore):
             connection.execute("BEGIN IMMEDIATE")
             self._verify_connection(connection)
             self._verify_reservations(connection)
+            self._verify_releases(connection)
             self._verify_orders(connection)
             existing = connection.execute(
                 "SELECT reservation_id, delta_json, state, changed_at, submitter_id, claimed_at "
@@ -284,6 +285,7 @@ class OrderLifecycleStore(RiskStore):
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             self._verify_connection(connection)
+            self._verify_releases(connection)
             self._verify_orders(connection)
             row = connection.execute(
                 "SELECT reservation_id, delta_json, state, changed_at, submitter_id, claimed_at "
@@ -308,6 +310,18 @@ class OrderLifecycleStore(RiskStore):
                 )
             if OrderState(row[2]) is not OrderState.STAGED or claimed_at < _parse_utc(str(row[3])):
                 raise JournalIntegrityError("order cannot be claimed from its current state")
+            reservation = connection.execute(
+                "SELECT r.expires_at, x.reservation_id FROM capacity_reservations r "
+                "LEFT JOIN capacity_releases x ON x.reservation_id = r.reservation_id "
+                "WHERE r.reservation_id = ?",
+                (row[0],),
+            ).fetchone()
+            if (
+                reservation is None
+                or reservation[1] is not None
+                or claimed_at >= _parse_utc(str(reservation[0]))
+            ):
+                raise JournalIntegrityError("order capacity reservation is not active")
             payload = {
                 "order_id": order_id,
                 "from_state": OrderState.STAGED,
@@ -355,6 +369,7 @@ class OrderLifecycleStore(RiskStore):
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             self._verify_connection(connection)
+            self._verify_releases(connection)
             self._verify_orders(connection)
             row = connection.execute(
                 "SELECT reservation_id, delta_json, state, changed_at, submitter_id, claimed_at "
@@ -390,6 +405,13 @@ class OrderLifecycleStore(RiskStore):
                 "WHERE order_id = ?",
                 (state, _utc_text(changed_at), sequence, order_id),
             )
+            if state in {OrderState.CANCELED, OrderState.REJECTED}:
+                self._release_capacity(
+                    connection,
+                    reservation_id=str(row[0]),
+                    reason=f"order-{state}",
+                    released_at=changed_at,
+                )
             connection.commit()
         return StagedOrder(
             order_id,

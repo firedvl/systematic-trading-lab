@@ -448,6 +448,21 @@ class RiskStore(ExecutionStore):
                 BEFORE DELETE ON capacity_reservations BEGIN
                     SELECT RAISE(ABORT, 'capacity reservations are immutable');
                 END;
+                CREATE TABLE IF NOT EXISTS capacity_releases (
+                    reservation_id TEXT PRIMARY KEY
+                        REFERENCES capacity_reservations(reservation_id),
+                    reason TEXT NOT NULL,
+                    released_at TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
+                CREATE TRIGGER IF NOT EXISTS capacity_releases_no_update
+                BEFORE UPDATE ON capacity_releases BEGIN
+                    SELECT RAISE(ABORT, 'capacity releases are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS capacity_releases_no_delete
+                BEFORE DELETE ON capacity_releases BEGIN
+                    SELECT RAISE(ABORT, 'capacity releases are immutable');
+                END;
                 """
             )
             connection.commit()
@@ -484,6 +499,7 @@ class RiskStore(ExecutionStore):
             self._verify_authorizations(connection)
             self._verify_decisions(connection)
             self._verify_reservations(connection)
+            self._verify_releases(connection)
 
     def authorize_paper(
         self,
@@ -579,6 +595,7 @@ class RiskStore(ExecutionStore):
                 authorizations = self._verify_authorizations(connection)
                 self._verify_decisions(connection)
                 self._verify_reservations(connection)
+                self._verify_releases(connection)
                 try:
                     authorization = authorizations[authorization_id]
                 except KeyError:
@@ -845,10 +862,12 @@ class RiskStore(ExecutionStore):
     ) -> tuple[Decimal, Decimal, int]:
         rows = connection.execute(
             """
-            SELECT reservation_json FROM capacity_reservations
-            WHERE json_extract(reservation_json, '$.account_id') = ?
-              AND expires_at > ?
-              AND (? IS NULL OR intent_id != ?)
+            SELECT r.reservation_json FROM capacity_reservations r
+            LEFT JOIN capacity_releases x ON x.reservation_id = r.reservation_id
+            WHERE json_extract(r.reservation_json, '$.account_id') = ?
+              AND r.expires_at > ?
+              AND x.reservation_id IS NULL
+              AND (? IS NULL OR r.intent_id != ?)
             """,
             (account_id, _utc_text(at), exclude_intent_id, exclude_intent_id),
         ).fetchall()
@@ -909,6 +928,78 @@ class RiskStore(ExecutionStore):
             ).fetchone()
             if decision_row is None or not _decode_decision(json.loads(decision_row[0])).approved:
                 raise JournalIntegrityError("capacity reservation lacks approved risk decision")
+
+    def _release_capacity(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        reservation_id: str,
+        reason: str,
+        released_at: datetime,
+    ) -> None:
+        existing = connection.execute(
+            "SELECT reason, released_at FROM capacity_releases WHERE reservation_id = ?",
+            (reservation_id,),
+        ).fetchone()
+        if existing is not None:
+            if existing != (reason, _utc_text(released_at)):
+                raise JournalIntegrityError("capacity release differs from existing content")
+            return
+        payload = {
+            "reservation_id": reservation_id,
+            "reason": reason,
+            "released_at": released_at,
+        }
+        sequence = self._append_event(
+            connection,
+            occurred_at=released_at,
+            event_type="capacity-released",
+            entity_type="capacity-reservation",
+            entity_id=reservation_id,
+            payload=canonicalize(payload),
+        )
+        connection.execute(
+            "INSERT INTO capacity_releases VALUES (?, ?, ?, ?)",
+            (reservation_id, reason, _utc_text(released_at), sequence),
+        )
+
+    def _verify_releases(self, connection: sqlite3.Connection) -> None:
+        rows = connection.execute(
+            "SELECT reservation_id, reason, released_at, journal_sequence FROM capacity_releases"
+        ).fetchall()
+        count = connection.execute(
+            "SELECT COUNT(*) FROM journal WHERE event_type = 'capacity-released'"
+        ).fetchone()[0]
+        if len(rows) != count:
+            raise JournalIntegrityError("capacity release and journal counts differ")
+        for row in rows:
+            reservation = connection.execute(
+                "SELECT reserved_at FROM capacity_reservations WHERE reservation_id = ?",
+                (row[0],),
+            ).fetchone()
+            payload = {
+                "reservation_id": row[0],
+                "reason": row[1],
+                "released_at": _parse_utc(row[2]),
+            }
+            event = connection.execute(
+                "SELECT occurred_at, event_type, entity_type, entity_id, payload_json "
+                "FROM journal WHERE sequence = ?",
+                (row[3],),
+            ).fetchone()
+            if (
+                reservation is None
+                or _parse_utc(row[2]) < _parse_utc(reservation[0])
+                or event
+                != (
+                    row[2],
+                    "capacity-released",
+                    "capacity-reservation",
+                    row[0],
+                    canonical_json(payload),
+                )
+            ):
+                raise JournalIntegrityError("capacity release does not match its reservation")
 
     def _verify_decisions(self, connection: sqlite3.Connection) -> None:
         rows = connection.execute(

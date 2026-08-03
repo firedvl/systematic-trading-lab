@@ -212,3 +212,10 @@
 - Context: a risk approval without durable pending capacity can be duplicated across workers or restarts before an order lifecycle exists.
 - Consequences: rejected decisions remain evidence, approved decisions cannot exist without a matching reservation, and reservation release waits for the reviewed forward-only order lifecycle slice.
 - Revisit when: order submission, fill, cancellation, and reservation-release states are implemented and independently reconciled.
+
+## 2026-08-03 — Filled orders retain capacity until reconciliation
+
+- Decision: cancellation or rejection releases reserved capacity atomically with the terminal local order transition; a filled order retains its reservation until reconciliation proves the resulting position.
+- Context: releasing a filled order immediately would allow another decision to reuse capacity while portfolio snapshots may still show the pre-fill state.
+- Consequences: cancellation and rejection free capacity without a broker-position change. Fill handling remains conservative until normalized broker events and reconciliation can replace the reservation with verified position exposure.
+- Revisit when: fill events and expected-position advancement share one verified transaction.

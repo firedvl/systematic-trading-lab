@@ -99,7 +99,9 @@ account, limits, reviewer, reason, and expiry. Risk decisions now reload those d
 verified emergency state in one transaction before journaling the result. No financial limit is
 committed, and emergency disable prevents approvals. Approved decisions now create immutable
 cash, gross-exposure, order-notional, and order-count reservations in the same transaction as
-the risk decision. Reservation release waits for the later order lifecycle slice.
+the risk decision. Cancellation or rejection releases the reservation with a separate immutable
+journal event. Filled-order capacity remains reserved until later reconciliation proves the new
+position state; this prevents early reuse against a stale portfolio snapshot.
 
 The slice 5 foundation now journals strict normalized local-expected and Alpaca-paper portfolio
 snapshots, a reviewed flat baseline, and later clean or dirty comparison results. It fails on source,
@@ -108,8 +110,8 @@ freshness, timing, authorization, or unresolved-mutation differences. Durable ad
 exists. Read-only stable-repeat readiness now requires the latest three distinct clean records and
 the reviewed risk configuration's explicit separation interval. Emergency clear is now a bounded,
 idempotent operator transition that recomputes and journals the proof in one transaction; dirty
-reconciliation atomically restores disable. Capacity reservation creation exists; reservation
-release, order lifecycle, and broker writes remain absent.
+reconciliation atomically restores disable. Reservation creation and cancellation/rejection release
+exist; fill reconciliation and broker writes remain absent.
 
 The paper read adapter now permits only fixed-origin GET requests for account, positions, open orders,
 and clock. It validates one expected account, an explicit symbol allowlist, account readiness and
