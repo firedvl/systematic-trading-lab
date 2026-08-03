@@ -30,6 +30,7 @@ from systematic_trading_lab.reconciliation import (
     ReconciliationStore,
     SnapshotSource,
 )
+from systematic_trading_lab.recovery import SubmissionRecoveryStore
 from systematic_trading_lab.risk import (
     PaperAuthorization,
     RiskContext,
@@ -454,6 +455,10 @@ def test_paper_snapshot_attestation_is_immutable_and_journal_bound(
 def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    missing_path = tmp_path / "missing-execution.sqlite3"
+    with pytest.raises(JournalIntegrityError, match="database is missing"):
+        SubmissionRecoveryStore(missing_path)
+    assert not missing_path.exists()
     store = ReconciliationStore(tmp_path / "execution.sqlite3")
     limits = _limits()
     report = _evidence()
@@ -644,6 +649,116 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             ).fetchone()
             is None
         )
+    recovery_at = NOW + timedelta(seconds=21)
+    recovery_snapshot = _record_adapter_snapshot(
+        store,
+        _flat_snapshot(
+            SnapshotSource.ALPACA_PAPER,
+            "recovery-observed",
+            account_observed_at=recovery_at,
+            positions_observed_at=recovery_at,
+            orders_observed_at=recovery_at,
+        ),
+        monkeypatch,
+        recorded_at=recovery_at,
+    )
+    recovery_baseline = store.create_flat_baseline(
+        baseline_id="recovery-baseline",
+        authorization_id=authorization.authorization_id,
+        expected_snapshot_id=expected.snapshot_id,
+        observed_snapshot_id=recovery_snapshot.snapshot_id,
+        limits=limits,
+        operator="test-operator",
+        reason="unknown order recovery test",
+        created_at=recovery_at,
+    )
+    recovery_evidence = store.record_reconciliation(
+        baseline_id=recovery_baseline.baseline_id,
+        observed_snapshot_id=recovery_snapshot.snapshot_id,
+        compared_at=recovery_at,
+        unresolved_mutations=0,
+    )
+    recovery = SubmissionRecoveryStore(store.path)
+    journal_head = orders.verify_journal()
+    proof = recovery.assess(
+        order_id=delta.client_order_id,
+        lookup_evidence_id=missing.evidence_id,
+        reconciliation_evidence_id=recovery_evidence.evidence_id,
+        limits=limits,
+        assessed_at=recovery_at,
+    )
+    assert proof.ready_for_review
+    assert proof.proof_fingerprint
+    assert orders.verify_journal() == journal_head
+    assert not any(
+        hasattr(recovery, name) for name in ("stage", "claim_submitter", "transition", "record")
+    )
+    emergency = store.get_emergency()
+    disabled_at = recovery_at + timedelta(milliseconds=250)
+    changed_at = recovery_at + timedelta(milliseconds=500)
+    with store._connect() as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        disabled_sequence = store._append_event(
+            connection,
+            occurred_at=disabled_at,
+            event_type="emergency-disabled",
+            entity_type="emergency-state",
+            entity_id="global",
+            payload={
+                "cause_fingerprint": fingerprint({"test": "post-lookup-disable"}),
+                "disabled": True,
+                "generation": emergency.generation + 1,
+                "reason": "post-lookup test disable",
+                "operator": "system",
+            },
+        )
+        connection.execute(
+            "UPDATE emergency_state SET disabled = 1, generation = ?, reason = ?, operator = ?, "
+            "changed_at = ?, journal_sequence = ? WHERE singleton = 1",
+            (
+                emergency.generation + 1,
+                "post-lookup test disable",
+                "system",
+                disabled_at.isoformat().replace("+00:00", "Z"),
+                disabled_sequence,
+            ),
+        )
+        cleared_sequence = store._append_event(
+            connection,
+            occurred_at=changed_at,
+            event_type="emergency-cleared",
+            entity_type="emergency-state",
+            entity_id="global",
+            payload={
+                "cause_fingerprint": fingerprint({"test": "post-lookup-clear"}),
+                "disabled": False,
+                "generation": emergency.generation + 2,
+                "reason": "post-lookup test clear",
+                "operator": "test-operator",
+            },
+        )
+        connection.execute(
+            "UPDATE emergency_state SET disabled = 0, generation = ?, reason = ?, operator = ?, "
+            "changed_at = ?, journal_sequence = ? WHERE singleton = 1",
+            (
+                emergency.generation + 2,
+                "post-lookup test clear",
+                "test-operator",
+                changed_at.isoformat().replace("+00:00", "Z"),
+                cleared_sequence,
+            ),
+        )
+        connection.commit()
+    assert (
+        "emergency-state-changed-after-lookup"
+        in recovery.assess(
+            order_id=delta.client_order_id,
+            lookup_evidence_id=missing.evidence_id,
+            reconciliation_evidence_id=recovery_evidence.evidence_id,
+            limits=limits,
+            assessed_at=changed_at,
+        ).reasons
+    )
     journal_head = orders.verify_journal()
     assert broker_events.submission_unknown_orders() == (unknown,)
     assert orders.verify_journal() == journal_head
@@ -657,6 +772,13 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         observed_at=NOW + timedelta(seconds=20),
     )
     assert broker_events.record(acknowledged) == acknowledged
+    assert not recovery.assess(
+        order_id=delta.client_order_id,
+        lookup_evidence_id=missing.evidence_id,
+        reconciliation_evidence_id=recovery_evidence.evidence_id,
+        limits=limits,
+        assessed_at=recovery_at,
+    ).ready_for_review
     assert broker_events.submission_unknown_orders() == ()
     assert BrokerEventStore(store.path).record(acknowledged) == acknowledged
     partial = BrokerOrderEvent(
@@ -695,7 +817,7 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             reason="stable proof reviewed",
             cleared_at=NOW + timedelta(seconds=18),
         )
-        == cleared
+        == store.get_emergency()
     )
     with pytest.raises(JournalIntegrityError, match="different content"):
         store.clear_emergency(
