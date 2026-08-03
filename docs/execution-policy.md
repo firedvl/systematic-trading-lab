@@ -20,5 +20,7 @@ replay, and fails startup when its sequence, hash chain, stored head, schema, or
 The broker-free reconciliation boundary accepts only normalized complete local-expected or
 Alpaca-paper snapshots. It compares exact account, cash, equity, whole-share positions, open client
 order IDs, separate account/position/order observation times, and unresolved mutation count. Wrong
-source roles, stale or future observations, or any mismatch produce explicit dirty reasons. A pure
-result is not durable reconciliation evidence and cannot clear emergency disable.
+source roles, stale or future observations, or any mismatch produce explicit dirty reasons. Snapshots,
+flat baseline creation, and later results now share the execution journal. The baseline binds active
+paper authorization and reviewed freshness limits and must not predate its recorded flat snapshots.
+Caller-normalized Alpaca-paper state is not adapter-attested and cannot clear emergency disable.

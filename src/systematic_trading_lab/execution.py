@@ -22,6 +22,9 @@ _KNOWN_EVENT_TYPES = {
     "emergency-initialized",
     "paper-authorized",
     "risk-decided",
+    "portfolio-snapshot-recorded",
+    "reconciliation-baseline-created",
+    "reconciliation-recorded",
 }
 _FINGERPRINT = re.compile(r"[0-9a-f]{64}")
 _SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,15}")

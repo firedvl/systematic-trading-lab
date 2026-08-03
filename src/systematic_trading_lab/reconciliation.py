@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
+import json
 import re
+import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from enum import StrEnum
+from pathlib import Path
+from typing import Any
 
-from .fingerprints import fingerprint
+from .execution import JournalIntegrityError
+from .experiments import HoldoutAccessError
+from .fingerprints import canonical_json, canonicalize, fingerprint
+from .risk import RiskLimits, RiskStore
 
 _SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,15}")
 
@@ -24,7 +31,7 @@ class PositionSnapshot:
     quantity: int
 
     def __post_init__(self) -> None:
-        if _SYMBOL.fullmatch(self.symbol) is None:
+        if not isinstance(self.symbol, str) or _SYMBOL.fullmatch(self.symbol) is None:
             raise ValueError("position symbol must be an uppercase security identifier")
         if isinstance(self.quantity, bool) or self.quantity < 0:
             raise ValueError("position quantity must be a nonnegative whole share count")
@@ -50,21 +57,28 @@ class PortfolioSnapshot:
             ("snapshot ID", self.snapshot_id),
             ("account ID", self.account_id),
         ):
-            if not text_value or text_value != text_value.strip() or len(text_value) > 128:
+            if (
+                not isinstance(text_value, str)
+                or not text_value
+                or text_value != text_value.strip()
+                or len(text_value) > 128
+            ):
                 raise ValueError(
                     f"{text_name} must be nonempty, trimmed, and at most 128 characters"
                 )
         for amount_name, amount_value in (("cash", self.cash), ("equity", self.equity)):
             if not amount_value.is_finite() or amount_value < 0:
                 raise ValueError(f"{amount_name} must be finite and nonnegative")
-        if self.positions != tuple(sorted(self.positions, key=lambda item: item.symbol)) or len(
-            {position.symbol for position in self.positions}
-        ) != len(self.positions):
-            raise ValueError("positions must be sorted with unique symbols")
-        if self.open_client_order_ids != tuple(sorted(set(self.open_client_order_ids))) or any(
-            not value or value != value.strip() or len(value) > 128
-            for value in self.open_client_order_ids
+        if (
+            any(not isinstance(position, PositionSnapshot) for position in self.positions)
+            or self.positions != tuple(sorted(self.positions, key=lambda item: item.symbol))
+            or len({position.symbol for position in self.positions}) != len(self.positions)
         ):
+            raise ValueError("positions must be sorted with unique symbols")
+        if any(
+            not isinstance(value, str) or not value or value != value.strip() or len(value) > 128
+            for value in self.open_client_order_ids
+        ) or self.open_client_order_ids != tuple(sorted(set(self.open_client_order_ids))):
             raise ValueError(
                 "open client order IDs must be sorted, unique, nonempty, and at most 128 characters"
             )
@@ -92,6 +106,11 @@ class ReconciliationResult:
     def __post_init__(self) -> None:
         if self.clean != (not self.reasons):
             raise ValueError("reconciliation state must match its reasons")
+        if any(not reason or not isinstance(reason, str) for reason in self.reasons):
+            raise ValueError("reconciliation reasons must be nonempty strings")
+        _sha256("expected", self.expected_fingerprint)
+        _sha256("observed", self.observed_fingerprint)
+        _utc("comparison time", self.compared_at)
 
     @property
     def result_fingerprint(self) -> str:
@@ -109,9 +128,9 @@ def reconcile(
     """Compare complete normalized state without changing either authority."""
     if compared_at.tzinfo is None or compared_at.utcoffset() != UTC.utcoffset(compared_at):
         raise ValueError("comparison timestamp must be UTC-aware")
-    if maximum_age_seconds < 1:
+    if isinstance(maximum_age_seconds, bool) or maximum_age_seconds < 1:
         raise ValueError("maximum snapshot age must be positive")
-    if unresolved_mutations < 0:
+    if isinstance(unresolved_mutations, bool) or unresolved_mutations < 0:
         raise ValueError("unresolved mutation count must be nonnegative")
     reasons: list[str] = []
     if expected.source is not SnapshotSource.LOCAL_EXPECTED:
@@ -147,3 +166,616 @@ def reconcile(
         observed_fingerprint=observed.snapshot_fingerprint,
         compared_at=compared_at,
     )
+
+
+@dataclass(frozen=True)
+class ReconciliationBaseline:
+    baseline_id: str
+    authorization_id: str
+    expected_snapshot_id: str
+    observed_snapshot_id: str
+    expected_fingerprint: str
+    observed_fingerprint: str
+    account_id: str
+    risk_configuration_fingerprint: str
+    comparison_fingerprint: str
+    maximum_age_seconds: int
+    operator: str
+    reason: str
+    created_at: datetime
+
+    def __post_init__(self) -> None:
+        for name, value in (
+            ("baseline ID", self.baseline_id),
+            ("authorization ID", self.authorization_id),
+            ("expected snapshot ID", self.expected_snapshot_id),
+            ("observed snapshot ID", self.observed_snapshot_id),
+            ("account ID", self.account_id),
+            ("operator", self.operator),
+            ("reason", self.reason),
+        ):
+            _bounded_text(name, value)
+        for name, value in (
+            ("expected", self.expected_fingerprint),
+            ("observed", self.observed_fingerprint),
+            ("risk configuration", self.risk_configuration_fingerprint),
+            ("comparison", self.comparison_fingerprint),
+        ):
+            _sha256(name, value)
+        _utc("baseline creation time", self.created_at)
+        if isinstance(self.maximum_age_seconds, bool) or self.maximum_age_seconds < 1:
+            raise ValueError("baseline maximum age must be positive")
+
+
+@dataclass(frozen=True)
+class ReconciliationEvidence:
+    evidence_id: str
+    baseline_id: str
+    observed_snapshot_id: str
+    maximum_age_seconds: int
+    unresolved_mutations: int
+    result: ReconciliationResult
+
+    def __post_init__(self) -> None:
+        _sha256("reconciliation evidence", self.evidence_id)
+        _bounded_text("baseline ID", self.baseline_id)
+        _bounded_text("observed snapshot ID", self.observed_snapshot_id)
+        if (
+            isinstance(self.maximum_age_seconds, bool)
+            or isinstance(self.unresolved_mutations, bool)
+            or self.maximum_age_seconds < 1
+            or self.unresolved_mutations < 0
+        ):
+            raise ValueError("reconciliation evidence limits are invalid")
+
+
+class ReconciliationStore(RiskStore):
+    """Persist normalized snapshots, explicit flat baselines, and comparisons."""
+
+    def __init__(self, path: Path) -> None:
+        super().__init__(path)
+        with self._connect() as connection:
+            connection.executescript(
+                """
+                CREATE TABLE IF NOT EXISTS portfolio_snapshots (
+                    snapshot_id TEXT PRIMARY KEY,
+                    snapshot_fingerprint TEXT NOT NULL UNIQUE,
+                    snapshot_json TEXT NOT NULL,
+                    recorded_at TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
+                CREATE TABLE IF NOT EXISTS reconciliation_baselines (
+                    baseline_id TEXT PRIMARY KEY,
+                    baseline_json TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
+                CREATE TABLE IF NOT EXISTS reconciliation_evidence (
+                    evidence_id TEXT PRIMARY KEY,
+                    evidence_json TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
+                CREATE TRIGGER IF NOT EXISTS portfolio_snapshots_no_update
+                BEFORE UPDATE ON portfolio_snapshots BEGIN
+                    SELECT RAISE(ABORT, 'portfolio snapshots are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS portfolio_snapshots_no_delete
+                BEFORE DELETE ON portfolio_snapshots BEGIN
+                    SELECT RAISE(ABORT, 'portfolio snapshots are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS reconciliation_baselines_no_update
+                BEFORE UPDATE ON reconciliation_baselines BEGIN
+                    SELECT RAISE(ABORT, 'reconciliation baselines are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS reconciliation_baselines_no_delete
+                BEFORE DELETE ON reconciliation_baselines BEGIN
+                    SELECT RAISE(ABORT, 'reconciliation baselines are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS reconciliation_evidence_no_update
+                BEFORE UPDATE ON reconciliation_evidence BEGIN
+                    SELECT RAISE(ABORT, 'reconciliation evidence is immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS reconciliation_evidence_no_delete
+                BEFORE DELETE ON reconciliation_evidence BEGIN
+                    SELECT RAISE(ABORT, 'reconciliation evidence is immutable');
+                END;
+                """
+            )
+            connection.commit()
+            self._verify_reconciliation(connection)
+
+    def record_snapshot(
+        self, snapshot: PortfolioSnapshot, *, recorded_at: datetime
+    ) -> PortfolioSnapshot:
+        _utc("snapshot record time", recorded_at)
+        if any(
+            observed_at > recorded_at
+            for observed_at in (
+                snapshot.account_observed_at,
+                snapshot.positions_observed_at,
+                snapshot.orders_observed_at,
+            )
+        ):
+            raise ValueError("snapshot record time cannot predate an observation")
+        snapshot_json = canonical_json(snapshot)
+        with self._connect() as connection:
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                self._verify_all(connection)
+                row = connection.execute(
+                    "SELECT snapshot_json FROM portfolio_snapshots WHERE snapshot_id = ?",
+                    (snapshot.snapshot_id,),
+                ).fetchone()
+                if row is not None:
+                    if row[0] != snapshot_json:
+                        raise JournalIntegrityError(
+                            "snapshot ID is bound to different normalized state"
+                        )
+                    connection.commit()
+                    return snapshot
+                sequence = self._append_event(
+                    connection,
+                    occurred_at=recorded_at,
+                    event_type="portfolio-snapshot-recorded",
+                    entity_type="portfolio-snapshot",
+                    entity_id=snapshot.snapshot_id,
+                    payload=canonicalize(snapshot),
+                )
+                connection.execute(
+                    "INSERT INTO portfolio_snapshots VALUES (?, ?, ?, ?, ?)",
+                    (
+                        snapshot.snapshot_id,
+                        snapshot.snapshot_fingerprint,
+                        snapshot_json,
+                        _utc_text(recorded_at),
+                        sequence,
+                    ),
+                )
+                connection.commit()
+            except sqlite3.IntegrityError as error:
+                connection.rollback()
+                raise JournalIntegrityError("snapshot already exists") from error
+            except Exception:
+                connection.rollback()
+                raise
+        return snapshot
+
+    def create_flat_baseline(
+        self,
+        *,
+        baseline_id: str,
+        authorization_id: str,
+        expected_snapshot_id: str,
+        observed_snapshot_id: str,
+        limits: RiskLimits,
+        operator: str,
+        reason: str,
+        created_at: datetime,
+    ) -> ReconciliationBaseline:
+        with self._connect() as connection:
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                snapshots, baselines, _ = self._verify_all(connection)
+                authorizations = self._verify_authorizations(connection)
+                try:
+                    authorization = authorizations[authorization_id]
+                    expected = snapshots[expected_snapshot_id]
+                    observed = snapshots[observed_snapshot_id]
+                except KeyError as error:
+                    raise HoldoutAccessError("baseline authority or snapshot is missing") from error
+                comparison = reconcile(
+                    expected,
+                    observed,
+                    compared_at=created_at,
+                    maximum_age_seconds=limits.max_snapshot_age_seconds,
+                    unresolved_mutations=0,
+                )
+                recorded_times = connection.execute(
+                    """
+                    SELECT recorded_at FROM portfolio_snapshots
+                    WHERE snapshot_id IN (?, ?)
+                    """,
+                    (expected_snapshot_id, observed_snapshot_id),
+                ).fetchall()
+                if (
+                    not comparison.clean
+                    or expected.positions
+                    or expected.open_client_order_ids
+                    or authorization.account_id != expected.account_id
+                    or authorization.risk_configuration_fingerprint
+                    != limits.configuration_fingerprint
+                    or limits.account_id != expected.account_id
+                    or created_at < authorization.authorized_at
+                    or created_at >= authorization.expires_at
+                    or created_at < limits.effective_at
+                    or created_at >= limits.expires_at
+                    or len(recorded_times) != 2
+                    or any(_parse_utc(row[0]) > created_at for row in recorded_times)
+                ):
+                    raise HoldoutAccessError(
+                        "baseline requires matching fresh flat state and active authorization"
+                    )
+                baseline = ReconciliationBaseline(
+                    baseline_id=baseline_id,
+                    authorization_id=authorization_id,
+                    expected_snapshot_id=expected_snapshot_id,
+                    observed_snapshot_id=observed_snapshot_id,
+                    expected_fingerprint=expected.snapshot_fingerprint,
+                    observed_fingerprint=observed.snapshot_fingerprint,
+                    account_id=expected.account_id,
+                    risk_configuration_fingerprint=limits.configuration_fingerprint,
+                    comparison_fingerprint=comparison.result_fingerprint,
+                    maximum_age_seconds=limits.max_snapshot_age_seconds,
+                    operator=operator,
+                    reason=reason,
+                    created_at=created_at,
+                )
+                existing = baselines.get(baseline_id)
+                if existing is not None:
+                    if existing != baseline:
+                        raise JournalIntegrityError("baseline ID is bound to different content")
+                    connection.commit()
+                    return existing
+                sequence = self._append_event(
+                    connection,
+                    occurred_at=created_at,
+                    event_type="reconciliation-baseline-created",
+                    entity_type="reconciliation-baseline",
+                    entity_id=baseline_id,
+                    payload=canonicalize(baseline),
+                )
+                connection.execute(
+                    "INSERT INTO reconciliation_baselines VALUES (?, ?, ?)",
+                    (baseline_id, canonical_json(baseline), sequence),
+                )
+                connection.commit()
+            except sqlite3.IntegrityError as error:
+                connection.rollback()
+                raise JournalIntegrityError("baseline already exists") from error
+            except Exception:
+                connection.rollback()
+                raise
+        return baseline
+
+    def record_reconciliation(
+        self,
+        *,
+        baseline_id: str,
+        observed_snapshot_id: str,
+        compared_at: datetime,
+        unresolved_mutations: int,
+    ) -> ReconciliationEvidence:
+        with self._connect() as connection:
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                snapshots, baselines, evidence_by_id = self._verify_all(connection)
+                try:
+                    baseline = baselines[baseline_id]
+                    expected = snapshots[baseline.expected_snapshot_id]
+                    observed = snapshots[observed_snapshot_id]
+                except KeyError as error:
+                    raise KeyError("reconciliation baseline or snapshot is missing") from error
+                result = reconcile(
+                    expected,
+                    observed,
+                    compared_at=compared_at,
+                    maximum_age_seconds=baseline.maximum_age_seconds,
+                    unresolved_mutations=unresolved_mutations,
+                )
+                recorded_at = connection.execute(
+                    "SELECT recorded_at FROM portfolio_snapshots WHERE snapshot_id = ?",
+                    (observed_snapshot_id,),
+                ).fetchone()
+                if (
+                    compared_at < baseline.created_at
+                    or recorded_at is None
+                    or compared_at < _parse_utc(recorded_at[0])
+                ):
+                    raise ValueError("reconciliation cannot predate its durable evidence")
+                evidence_id = fingerprint(
+                    {
+                        "baseline_id": baseline_id,
+                        "observed_snapshot_id": observed_snapshot_id,
+                        "maximum_age_seconds": baseline.maximum_age_seconds,
+                        "unresolved_mutations": unresolved_mutations,
+                        "result": result,
+                    }
+                )
+                evidence = ReconciliationEvidence(
+                    evidence_id,
+                    baseline_id,
+                    observed_snapshot_id,
+                    baseline.maximum_age_seconds,
+                    unresolved_mutations,
+                    result,
+                )
+                existing = evidence_by_id.get(evidence_id)
+                if existing is not None:
+                    connection.commit()
+                    return existing
+                sequence = self._append_event(
+                    connection,
+                    occurred_at=compared_at,
+                    event_type="reconciliation-recorded",
+                    entity_type="reconciliation-evidence",
+                    entity_id=evidence_id,
+                    payload=canonicalize(evidence),
+                )
+                connection.execute(
+                    "INSERT INTO reconciliation_evidence VALUES (?, ?, ?)",
+                    (evidence_id, canonical_json(evidence), sequence),
+                )
+                connection.commit()
+            except sqlite3.IntegrityError as error:
+                connection.rollback()
+                raise JournalIntegrityError("reconciliation evidence already exists") from error
+            except Exception:
+                connection.rollback()
+                raise
+        return evidence
+
+    def _verify_all(
+        self, connection: sqlite3.Connection
+    ) -> tuple[
+        dict[str, PortfolioSnapshot],
+        dict[str, ReconciliationBaseline],
+        dict[str, ReconciliationEvidence],
+    ]:
+        self._verify_connection(connection)
+        self._verify_emergency(connection)
+        self._verify_authorizations(connection)
+        self._verify_decisions(connection)
+        return self._verify_reconciliation(connection)
+
+    def _verify_reconciliation(
+        self, connection: sqlite3.Connection
+    ) -> tuple[
+        dict[str, PortfolioSnapshot],
+        dict[str, ReconciliationBaseline],
+        dict[str, ReconciliationEvidence],
+    ]:
+        snapshots: dict[str, PortfolioSnapshot] = {}
+        rows = connection.execute(
+            """
+            SELECT snapshot_id, snapshot_fingerprint, snapshot_json, recorded_at, journal_sequence
+            FROM portfolio_snapshots
+            """
+        ).fetchall()
+        _require_event_count(connection, "portfolio-snapshot-recorded", len(rows))
+        for row in rows:
+            try:
+                snapshot = _decode_snapshot(json.loads(row[2]))
+            except (ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError("stored portfolio snapshot is invalid") from error
+            if (
+                row[0] != snapshot.snapshot_id
+                or row[1] != snapshot.snapshot_fingerprint
+                or row[2] != canonical_json(snapshot)
+                or not _event_matches(
+                    connection,
+                    row[4],
+                    row[3],
+                    "portfolio-snapshot-recorded",
+                    "portfolio-snapshot",
+                    row[0],
+                    canonical_json(snapshot),
+                )
+            ):
+                raise JournalIntegrityError("portfolio snapshot does not match its journal event")
+            snapshots[snapshot.snapshot_id] = snapshot
+
+        authorizations = self._verify_authorizations(connection)
+        baselines: dict[str, ReconciliationBaseline] = {}
+        rows = connection.execute(
+            "SELECT baseline_id, baseline_json, journal_sequence FROM reconciliation_baselines"
+        ).fetchall()
+        _require_event_count(connection, "reconciliation-baseline-created", len(rows))
+        for row in rows:
+            try:
+                baseline = _decode_baseline(json.loads(row[1]))
+                expected = snapshots[baseline.expected_snapshot_id]
+                observed = snapshots[baseline.observed_snapshot_id]
+                authorization = authorizations[baseline.authorization_id]
+                comparison = reconcile(
+                    expected,
+                    observed,
+                    compared_at=baseline.created_at,
+                    maximum_age_seconds=baseline.maximum_age_seconds,
+                    unresolved_mutations=0,
+                )
+            except (KeyError, ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError("stored reconciliation baseline is invalid") from error
+            baseline_recorded_times = connection.execute(
+                """
+                SELECT recorded_at FROM portfolio_snapshots
+                WHERE snapshot_id IN (?, ?)
+                """,
+                (baseline.expected_snapshot_id, baseline.observed_snapshot_id),
+            ).fetchall()
+            if (
+                row[0] != baseline.baseline_id
+                or row[1] != canonical_json(baseline)
+                or not comparison.clean
+                or comparison.result_fingerprint != baseline.comparison_fingerprint
+                or baseline.expected_fingerprint != expected.snapshot_fingerprint
+                or baseline.observed_fingerprint != observed.snapshot_fingerprint
+                or expected.positions
+                or expected.open_client_order_ids
+                or authorization.account_id != baseline.account_id
+                or authorization.risk_configuration_fingerprint
+                != baseline.risk_configuration_fingerprint
+                or baseline.created_at < authorization.authorized_at
+                or baseline.created_at >= authorization.expires_at
+                or len(baseline_recorded_times) != 2
+                or any(
+                    _parse_utc(recorded[0]) > baseline.created_at
+                    for recorded in baseline_recorded_times
+                )
+                or not _event_matches(
+                    connection,
+                    row[2],
+                    _utc_text(baseline.created_at),
+                    "reconciliation-baseline-created",
+                    "reconciliation-baseline",
+                    row[0],
+                    canonical_json(baseline),
+                )
+            ):
+                raise JournalIntegrityError("reconciliation baseline does not match its evidence")
+            baselines[baseline.baseline_id] = baseline
+
+        evidence_by_id: dict[str, ReconciliationEvidence] = {}
+        rows = connection.execute(
+            "SELECT evidence_id, evidence_json, journal_sequence FROM reconciliation_evidence"
+        ).fetchall()
+        _require_event_count(connection, "reconciliation-recorded", len(rows))
+        for row in rows:
+            try:
+                evidence = _decode_evidence(json.loads(row[1]))
+                baseline = baselines[evidence.baseline_id]
+                expected = snapshots[baseline.expected_snapshot_id]
+                observed = snapshots[evidence.observed_snapshot_id]
+                result = reconcile(
+                    expected,
+                    observed,
+                    compared_at=evidence.result.compared_at,
+                    maximum_age_seconds=evidence.maximum_age_seconds,
+                    unresolved_mutations=evidence.unresolved_mutations,
+                )
+                observed_recorded_at = connection.execute(
+                    "SELECT recorded_at FROM portfolio_snapshots WHERE snapshot_id = ?",
+                    (evidence.observed_snapshot_id,),
+                ).fetchone()
+            except (KeyError, ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError("stored reconciliation evidence is invalid") from error
+            expected_id = fingerprint(
+                {
+                    "baseline_id": evidence.baseline_id,
+                    "observed_snapshot_id": evidence.observed_snapshot_id,
+                    "maximum_age_seconds": evidence.maximum_age_seconds,
+                    "unresolved_mutations": evidence.unresolved_mutations,
+                    "result": result,
+                }
+            )
+            if (
+                row[0] != evidence.evidence_id
+                or evidence.evidence_id != expected_id
+                or evidence.result != result
+                or row[1] != canonical_json(evidence)
+                or result.compared_at < baseline.created_at
+                or observed_recorded_at is None
+                or result.compared_at < _parse_utc(observed_recorded_at[0])
+                or not _event_matches(
+                    connection,
+                    row[2],
+                    _utc_text(result.compared_at),
+                    "reconciliation-recorded",
+                    "reconciliation-evidence",
+                    row[0],
+                    canonical_json(evidence),
+                )
+            ):
+                raise JournalIntegrityError("reconciliation evidence does not match its inputs")
+            evidence_by_id[evidence.evidence_id] = evidence
+        return snapshots, baselines, evidence_by_id
+
+
+def _decode_snapshot(value: Any) -> PortfolioSnapshot:
+    if not isinstance(value, dict):
+        raise ValueError("portfolio snapshot must be an object")
+    try:
+        positions = tuple(PositionSnapshot(**item) for item in value["positions"])
+        return PortfolioSnapshot(
+            **{
+                **value,
+                "source": SnapshotSource(value["source"]),
+                "cash": Decimal(value["cash"]),
+                "equity": Decimal(value["equity"]),
+                "positions": positions,
+                "open_client_order_ids": tuple(value["open_client_order_ids"]),
+                "account_observed_at": _parse_utc(value["account_observed_at"]),
+                "positions_observed_at": _parse_utc(value["positions_observed_at"]),
+                "orders_observed_at": _parse_utc(value["orders_observed_at"]),
+            }
+        )
+    except (KeyError, TypeError, ArithmeticError) as error:
+        raise ValueError("portfolio snapshot fields differ") from error
+
+
+def _decode_baseline(value: Any) -> ReconciliationBaseline:
+    if not isinstance(value, dict):
+        raise ValueError("reconciliation baseline must be an object")
+    try:
+        return ReconciliationBaseline(**{**value, "created_at": _parse_utc(value["created_at"])})
+    except (KeyError, TypeError) as error:
+        raise ValueError("reconciliation baseline fields differ") from error
+
+
+def _decode_evidence(value: Any) -> ReconciliationEvidence:
+    if not isinstance(value, dict) or not isinstance(value.get("result"), dict):
+        raise ValueError("reconciliation evidence must be an object")
+    result_value = value["result"]
+    try:
+        result = ReconciliationResult(
+            **{
+                **result_value,
+                "reasons": tuple(result_value["reasons"]),
+                "compared_at": _parse_utc(result_value["compared_at"]),
+            }
+        )
+        return ReconciliationEvidence(**{**value, "result": result})
+    except (KeyError, TypeError) as error:
+        raise ValueError("reconciliation evidence fields differ") from error
+
+
+def _event_matches(
+    connection: sqlite3.Connection,
+    sequence: int,
+    occurred_at: str,
+    event_type: str,
+    entity_type: str,
+    entity_id: str,
+    payload_json: str,
+) -> bool:
+    row = connection.execute(
+        """
+        SELECT occurred_at, event_type, entity_type, entity_id, payload_json
+        FROM journal WHERE sequence = ?
+        """,
+        (sequence,),
+    ).fetchone()
+    return bool(row == (occurred_at, event_type, entity_type, entity_id, payload_json))
+
+
+def _require_event_count(connection: sqlite3.Connection, event_type: str, count: int) -> None:
+    stored = connection.execute(
+        "SELECT COUNT(*) FROM journal WHERE event_type = ?", (event_type,)
+    ).fetchone()[0]
+    if stored != count:
+        raise JournalIntegrityError(f"{event_type} journal count differs")
+
+
+def _bounded_text(name: str, value: str) -> None:
+    if not value or value != value.strip() or len(value) > 500:
+        raise ValueError(f"{name} must be nonempty, trimmed, and at most 500 characters")
+
+
+def _sha256(name: str, value: str) -> None:
+    if re.fullmatch(r"[0-9a-f]{64}", value) is None:
+        raise ValueError(f"{name} fingerprint must be a lowercase SHA-256 value")
+
+
+def _utc(name: str, value: datetime) -> None:
+    if value.tzinfo is None or value.utcoffset() != UTC.utcoffset(value):
+        raise ValueError(f"{name} must be UTC-aware")
+
+
+def _utc_text(value: datetime) -> str:
+    result = canonicalize(value)
+    assert isinstance(result, str)
+    return result
+
+
+def _parse_utc(value: str) -> datetime:
+    timestamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    _utc("stored timestamp", timestamp)
+    return timestamp
