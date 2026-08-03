@@ -101,14 +101,23 @@ for stable reconciliation evidence rather than accepting a placeholder proof.
 
 The slice 5 foundation now journals strict normalized local-expected and Alpaca-paper portfolio
 snapshots, a reviewed flat baseline, and later clean or dirty comparison results. It fails on source,
-account, cash, equity, position, open-order, freshness, timing, authorization, or unresolved-mutation
+account, cash, equity, buying power, account readiness, position, complete open-order state,
+freshness, timing, authorization, or unresolved-mutation
 differences. Adapter provenance, stable repeat evidence, and emergency-clear authority remain absent.
+
+The paper read adapter now permits only fixed-origin GET requests for account, positions, open orders,
+and clock. It validates one expected account, an explicit symbol allowlist, account readiness and
+buying power, positive whole-share positions, full supported open-order state, and UTC timestamps.
+The caller supplies the reviewed clock freshness limit. The reader blocks
+redirects and treats a full 500-order page as incomplete. Tests inject a mock transport; development
+makes no Alpaca request. Persisted adapter provenance remains the next boundary.
 
 ## Alpaca contract
 
-The initial adapter uses Trading API 2.0.1 paper endpoints for account, positions, clock, calendar,
-orders, order lookup by client ID, and single-order cancellation. Polling is authoritative; streaming
-may later reduce latency but cannot replace reconciliation. Orders are whole-share, long-only,
+The current read adapter uses Trading API 2.0.1 paper endpoints for account, positions, clock, and
+open orders. A later separately reviewed writer may add order lookup by client ID, submission, and
+single-order cancellation. Polling is authoritative; streaming may later reduce latency but cannot
+replace reconciliation. Orders are whole-share, long-only,
 nonextended-hours ETF `day` market or limit orders for one authorized account. Replace, fractional or
 notional orders, shorts, bulk close, options, crypto, and account mutation stay out of scope.
 

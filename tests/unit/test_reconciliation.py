@@ -6,6 +6,7 @@ from typing import Any, cast
 import pytest
 
 from systematic_trading_lab.reconciliation import (
+    OpenOrderSnapshot,
     PortfolioSnapshot,
     PositionSnapshot,
     SnapshotSource,
@@ -22,8 +23,21 @@ def _snapshot(source: SnapshotSource, **changes: object) -> PortfolioSnapshot:
         account_id="paper-account",
         cash=Decimal("70000"),
         equity=Decimal("100000"),
+        buying_power=Decimal("70000"),
+        account_ready=True,
         positions=(PositionSnapshot("SPY", 300),),
-        open_client_order_ids=("client-order-1",),
+        open_orders=(
+            OpenOrderSnapshot(
+                client_order_id="client-order-1",
+                symbol="SPY",
+                side="buy",
+                quantity=2,
+                filled_quantity=0,
+                order_type="market",
+                limit_price=None,
+                status="new",
+            ),
+        ),
         account_observed_at=NOW - timedelta(seconds=5),
         positions_observed_at=NOW - timedelta(seconds=5),
         orders_observed_at=NOW - timedelta(seconds=5),
@@ -52,8 +66,10 @@ def test_reconciliation_collects_every_material_discrepancy() -> None:
         account_id="other-account",
         cash=Decimal("69999"),
         equity=Decimal("99999"),
+        buying_power=Decimal("69998"),
         positions=(PositionSnapshot("SPY", 299),),
-        open_client_order_ids=(),
+        account_ready=False,
+        open_orders=(),
         account_observed_at=NOW - timedelta(minutes=1),
         positions_observed_at=NOW + timedelta(seconds=1),
     )
@@ -73,6 +89,9 @@ def test_reconciliation_collects_every_material_discrepancy() -> None:
         "observed-state-stale-or-future",
         "cash-mismatch",
         "equity-mismatch",
+        "buying-power-mismatch",
+        "account-readiness-mismatch",
+        "account-not-ready",
         "position-mismatch",
         "open-order-mismatch",
         "unresolved-broker-mutation",

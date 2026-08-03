@@ -38,14 +38,75 @@ class PositionSnapshot:
 
 
 @dataclass(frozen=True)
+class OpenOrderSnapshot:
+    client_order_id: str
+    symbol: str
+    side: str
+    quantity: int
+    filled_quantity: int
+    order_type: str
+    limit_price: Decimal | None
+    status: str
+
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.client_order_id, str)
+            or not self.client_order_id
+            or self.client_order_id != self.client_order_id.strip()
+            or len(self.client_order_id) > 128
+        ):
+            raise ValueError("open-order client ID must be nonempty, trimmed, and bounded")
+        if not isinstance(self.symbol, str) or _SYMBOL.fullmatch(self.symbol) is None:
+            raise ValueError("open-order symbol must be an uppercase security identifier")
+        if self.side not in {"buy", "sell"}:
+            raise ValueError("open-order side is unsupported")
+        if self.order_type not in {"market", "limit"}:
+            raise ValueError("open-order type is unsupported")
+        if self.status not in {
+            "accepted",
+            "accepted_for_bidding",
+            "calculated",
+            "done_for_day",
+            "new",
+            "partially_filled",
+            "pending_cancel",
+            "pending_new",
+            "pending_replace",
+            "pending_validation",
+            "stopped",
+            "suspended",
+        }:
+            raise ValueError("open-order status is unsupported")
+        if (
+            isinstance(self.quantity, bool)
+            or isinstance(self.filled_quantity, bool)
+            or self.quantity < 1
+            or self.filled_quantity < 0
+            or self.filled_quantity > self.quantity
+        ):
+            raise ValueError("open-order quantities must be valid whole shares")
+        if self.order_type == "limit":
+            if (
+                self.limit_price is None
+                or not self.limit_price.is_finite()
+                or self.limit_price <= 0
+            ):
+                raise ValueError("limit order requires a positive finite limit price")
+        elif self.limit_price is not None:
+            raise ValueError("market order cannot have a limit price")
+
+
+@dataclass(frozen=True)
 class PortfolioSnapshot:
     snapshot_id: str
     source: SnapshotSource
     account_id: str
     cash: Decimal
     equity: Decimal
+    buying_power: Decimal
+    account_ready: bool
     positions: tuple[PositionSnapshot, ...]
-    open_client_order_ids: tuple[str, ...]
+    open_orders: tuple[OpenOrderSnapshot, ...]
     account_observed_at: datetime
     positions_observed_at: datetime
     orders_observed_at: datetime
@@ -66,22 +127,28 @@ class PortfolioSnapshot:
                 raise ValueError(
                     f"{text_name} must be nonempty, trimmed, and at most 128 characters"
                 )
-        for amount_name, amount_value in (("cash", self.cash), ("equity", self.equity)):
+        for amount_name, amount_value in (
+            ("cash", self.cash),
+            ("equity", self.equity),
+            ("buying power", self.buying_power),
+        ):
             if not amount_value.is_finite() or amount_value < 0:
                 raise ValueError(f"{amount_name} must be finite and nonnegative")
+        if not isinstance(self.account_ready, bool):
+            raise ValueError("account readiness must be boolean")
         if (
             any(not isinstance(position, PositionSnapshot) for position in self.positions)
             or self.positions != tuple(sorted(self.positions, key=lambda item: item.symbol))
             or len({position.symbol for position in self.positions}) != len(self.positions)
         ):
             raise ValueError("positions must be sorted with unique symbols")
-        if any(
-            not isinstance(value, str) or not value or value != value.strip() or len(value) > 128
-            for value in self.open_client_order_ids
-        ) or self.open_client_order_ids != tuple(sorted(set(self.open_client_order_ids))):
-            raise ValueError(
-                "open client order IDs must be sorted, unique, nonempty, and at most 128 characters"
-            )
+        if (
+            any(not isinstance(order, OpenOrderSnapshot) for order in self.open_orders)
+            or self.open_orders
+            != tuple(sorted(self.open_orders, key=lambda item: item.client_order_id))
+            or len({order.client_order_id for order in self.open_orders}) != len(self.open_orders)
+        ):
+            raise ValueError("open orders must be sorted with unique client IDs")
         for time_name, time_value in (
             ("account observation", self.account_observed_at),
             ("position observation", self.positions_observed_at),
@@ -93,6 +160,10 @@ class PortfolioSnapshot:
     @property
     def snapshot_fingerprint(self) -> str:
         return fingerprint(self)
+
+    @property
+    def open_client_order_ids(self) -> tuple[str, ...]:
+        return tuple(order.client_order_id for order in self.open_orders)
 
 
 @dataclass(frozen=True)
@@ -153,9 +224,15 @@ def reconcile(
         reasons.append("cash-mismatch")
     if expected.equity != observed.equity:
         reasons.append("equity-mismatch")
+    if expected.buying_power != observed.buying_power:
+        reasons.append("buying-power-mismatch")
+    if expected.account_ready != observed.account_ready:
+        reasons.append("account-readiness-mismatch")
+    if not observed.account_ready:
+        reasons.append("account-not-ready")
     if expected.positions != observed.positions:
         reasons.append("position-mismatch")
-    if expected.open_client_order_ids != observed.open_client_order_ids:
+    if expected.open_orders != observed.open_orders:
         reasons.append("open-order-mismatch")
     if unresolved_mutations:
         reasons.append("unresolved-broker-mutation")
@@ -684,14 +761,26 @@ def _decode_snapshot(value: Any) -> PortfolioSnapshot:
         raise ValueError("portfolio snapshot must be an object")
     try:
         positions = tuple(PositionSnapshot(**item) for item in value["positions"])
+        open_orders = tuple(
+            OpenOrderSnapshot(
+                **{
+                    **item,
+                    "limit_price": (
+                        Decimal(item["limit_price"]) if item["limit_price"] is not None else None
+                    ),
+                }
+            )
+            for item in value["open_orders"]
+        )
         return PortfolioSnapshot(
             **{
                 **value,
                 "source": SnapshotSource(value["source"]),
                 "cash": Decimal(value["cash"]),
                 "equity": Decimal(value["equity"]),
+                "buying_power": Decimal(value["buying_power"]),
                 "positions": positions,
-                "open_client_order_ids": tuple(value["open_client_order_ids"]),
+                "open_orders": open_orders,
                 "account_observed_at": _parse_utc(value["account_observed_at"]),
                 "positions_observed_at": _parse_utc(value["positions_observed_at"]),
                 "orders_observed_at": _parse_utc(value["orders_observed_at"]),
