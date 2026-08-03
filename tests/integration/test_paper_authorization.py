@@ -3,8 +3,10 @@ import sqlite3
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from email.message import Message
 from pathlib import Path
 from typing import Any, cast
+from urllib.error import HTTPError
 from urllib.parse import urlsplit
 from urllib.request import Request
 
@@ -12,10 +14,14 @@ import pytest
 
 import systematic_trading_lab.alpaca_paper as alpaca_paper
 from systematic_trading_lab.alpaca_paper import AlpacaPaperReader
-from systematic_trading_lab.broker_events import BrokerEventStore, BrokerOrderEvent
+from systematic_trading_lab.broker_events import (
+    BrokerEventStore,
+    BrokerOrderEvent,
+    OrderLookupNotFoundEvidence,
+)
 from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityError
 from systematic_trading_lab.experiments import HoldoutAccessError
-from systematic_trading_lab.fingerprints import fingerprint
+from systematic_trading_lab.fingerprints import canonical_json, canonicalize, fingerprint
 from systematic_trading_lab.orders import OrderLifecycleStore, OrderState, build_order_delta
 from systematic_trading_lab.reconciliation import (
     PortfolioSnapshot,
@@ -600,12 +606,44 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             submitter_id="worker-2",
             claimed_at=NOW + timedelta(seconds=19),
         )
+    broker_events = BrokerEventStore(store.path)
+
+    def missing_order(request: Request) -> bytes:
+        if urlsplit(request.full_url).path == "/v2/account":
+            return json.dumps({"id": limits.account_id}).encode()
+        raise HTTPError(request.full_url, 404, "secret raw error", Message(), None)
+
+    monkeypatch.setattr(alpaca_paper, "_urlopen_bytes", missing_order)
+    reader = AlpacaPaperReader(
+        "test-key",
+        "test-secret",
+        account_id=limits.account_id,
+        allowed_symbols=frozenset(limits.allowed_symbols),
+        clock=lambda: NOW + timedelta(seconds=20),
+    )
+    with pytest.raises(JournalIntegrityError, match="submission-unknown"):
+        reader.record_order_lookup(broker_events, client_order_id=delta.client_order_id)
     unknown = orders.transition(
         delta.client_order_id,
         OrderState.SUBMISSION_UNKNOWN,
         changed_at=NOW + timedelta(seconds=19, milliseconds=500),
     )
-    broker_events = BrokerEventStore(store.path)
+    missing = reader.record_order_lookup(broker_events, client_order_id=delta.client_order_id)
+    assert isinstance(missing, OrderLookupNotFoundEvidence)
+    assert missing == reader.record_order_lookup(
+        broker_events, client_order_id=delta.client_order_id
+    )
+    assert missing.client_order_id == delta.client_order_id
+    assert missing.account_id == limits.account_id
+    assert broker_events.submission_unknown_orders() == (unknown,)
+    assert not broker_events.get_emergency().disabled
+    with sqlite3.connect(store.path) as connection:
+        assert (
+            connection.execute(
+                "SELECT 1 FROM capacity_releases WHERE reservation_id = ?", (reservation_id,)
+            ).fetchone()
+            is None
+        )
     journal_head = orders.verify_journal()
     assert broker_events.submission_unknown_orders() == (unknown,)
     assert orders.verify_journal() == journal_head
@@ -713,6 +751,24 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     assert not reset.ready
     assert reset.reasons == ("latest-samples-not-clean",)
     assert ReconciliationStore(store.path).get_emergency().disabled
+    forged = replace(missing, observed_at=NOW + timedelta(seconds=24))
+    with broker_events._connect() as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        sequence = broker_events._append_event(
+            connection,
+            occurred_at=forged.observed_at,
+            event_type="order-lookup-not-found",
+            entity_type="order-lookup",
+            entity_id=forged.evidence_id,
+            payload=canonicalize(forged),
+        )
+        connection.execute(
+            "INSERT INTO order_lookup_not_found VALUES (?, ?, ?, ?)",
+            (forged.evidence_id, forged.client_order_id, canonical_json(forged), sequence),
+        )
+        connection.commit()
+    with pytest.raises(JournalIntegrityError, match="negative order lookup"):
+        BrokerEventStore(store.path)
     with sqlite3.connect(store.path) as connection:
         connection.execute("UPDATE orders SET state = 'filled'")
     with pytest.raises(JournalIntegrityError, match="latest journal event"):

@@ -30,6 +30,7 @@ _KNOWN_EVENT_TYPES = {
     "order-submitter-claimed",
     "order-transitioned",
     "broker-event-recorded",
+    "order-lookup-not-found",
     "portfolio-snapshot-recorded",
     "paper-snapshot-attested",
     "reconciliation-baseline-created",

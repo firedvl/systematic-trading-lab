@@ -16,6 +16,7 @@ from systematic_trading_lab.alpaca_paper import (
     AlpacaPaperReader,
     _validate_request,
 )
+from systematic_trading_lab.broker_events import BrokerOrderEvent
 from systematic_trading_lab.reconciliation import (
     PositionSnapshot,
     ReconciliationStore,
@@ -224,6 +225,7 @@ def test_only_production_lookup_path_can_record_normalized_evidence(
         clock=lambda: NOW,
     )
     event = reader.record_order_lookup(cast(Any, Sink()), client_order_id="client-1")
+    assert isinstance(event, BrokerOrderEvent)
     assert event.client_order_id == "client-1"
     assert event.cumulative_filled_quantity == 2
 
@@ -355,7 +357,7 @@ def test_clock_rejects_stale_future_or_inconsistent_provider_state(
         _reader(_payloads(**{"/v2/clock": clock})).read_clock(maximum_age_seconds=30)
 
 
-@pytest.mark.parametrize("status", [301, 302, 401, 403, 429, 500, 503])
+@pytest.mark.parametrize("status", [301, 302, 401, 403, 404, 429, 500, 503])
 def test_http_failures_are_sanitized(status: int) -> None:
     def transport(request: Request) -> bytes:
         raise HTTPError(request.full_url, status, "secret raw error", Message(), None)
@@ -372,6 +374,42 @@ def test_http_failures_are_sanitized(status: int) -> None:
         reader.read_portfolio()
     assert str(caught.value) == f"Alpaca paper request failed with HTTP status {status}"
     assert "secret" not in str(caught.value)
+
+
+def test_exact_order_404_is_sanitized() -> None:
+    def transport(request: Request) -> bytes:
+        raise HTTPError(request.full_url, 404, "secret raw error", Message(), None)
+
+    reader = AlpacaPaperReader(
+        "test-key",
+        "test-secret",
+        account_id="paper-account",
+        allowed_symbols=frozenset({"SPY"}),
+        transport=transport,
+    )
+
+    with pytest.raises(AlpacaPaperError) as caught:
+        reader.read_order("client-1")
+    assert str(caught.value) == "Alpaca paper order was not found"
+    assert "secret" not in str(caught.value)
+
+
+def test_negative_lookup_requires_the_expected_account(monkeypatch: pytest.MonkeyPatch) -> None:
+    def transport(request: Request) -> bytes:
+        if urlsplit(request.full_url).path == "/v2/account":
+            return json.dumps({"id": "other-account"}).encode()
+        raise HTTPError(request.full_url, 404, "secret raw error", Message(), None)
+
+    monkeypatch.setattr("systematic_trading_lab.alpaca_paper._urlopen_bytes", transport)
+    reader = AlpacaPaperReader(
+        "test-key",
+        "test-secret",
+        account_id="paper-account",
+        allowed_symbols=frozenset({"SPY"}),
+    )
+
+    with pytest.raises(AlpacaPaperError, match="unexpected account"):
+        reader.record_order_lookup(cast(Any, object()), client_order_id="client-1")
 
 
 def test_low_level_http_failures_are_sanitized() -> None:
