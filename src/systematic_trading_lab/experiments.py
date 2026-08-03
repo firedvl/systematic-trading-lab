@@ -107,7 +107,8 @@ class ExperimentRegistry:
                     created_at TEXT NOT NULL,
                     started_at TEXT,
                     finished_at TEXT,
-                    heartbeat_at TEXT
+                    heartbeat_at TEXT,
+                    execution_provenance TEXT
                 );
                 CREATE TABLE IF NOT EXISTS campaign_plans (
                     campaign_id TEXT PRIMARY KEY REFERENCES campaigns(campaign_id),
@@ -146,6 +147,8 @@ class ExperimentRegistry:
                 connection.execute(
                     "ALTER TABLE experiments ADD COLUMN campaign_plan_fingerprint TEXT"
                 )
+            if "execution_provenance" not in experiment_columns:
+                connection.execute("ALTER TABLE experiments ADD COLUMN execution_provenance TEXT")
             authorization_columns = {
                 column[1]
                 for column in connection.execute("PRAGMA table_info(holdout_run_authorizations)")
@@ -482,7 +485,8 @@ class ExperimentRegistry:
             cursor = connection.execute(
                 """
                 UPDATE experiments SET status = ?, metrics_json = ?, artifact_locations_json = ?,
-                    artifact_hashes_json = ?, finished_at = ?, heartbeat_at = NULL
+                    artifact_hashes_json = ?, finished_at = ?, heartbeat_at = NULL,
+                    execution_provenance = 'legacy-manual'
                 WHERE experiment_id = ? AND status = ?
                   AND campaign_plan_fingerprint IS NULL
                 """,
@@ -499,6 +503,36 @@ class ExperimentRegistry:
             if cursor.rowcount != 1:
                 raise ExperimentError(f"experiment is not running: {experiment_id}")
 
+    def _complete_controlled(
+        self,
+        experiment_id: str,
+        metrics: Mapping[str, object],
+        artifact_locations: list[str],
+        artifact_hashes: list[str],
+    ) -> None:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE experiments SET status = ?, metrics_json = ?, artifact_locations_json = ?,
+                    artifact_hashes_json = ?, finished_at = ?, heartbeat_at = NULL,
+                    execution_provenance = 'controlled-run'
+                WHERE experiment_id = ? AND status = ?
+                  AND campaign_plan_fingerprint IS NULL AND split != ?
+                """,
+                (
+                    ExperimentStatus.COMPLETED.value,
+                    canonical_json(metrics),
+                    canonical_json(artifact_locations),
+                    canonical_json(artifact_hashes),
+                    _now(),
+                    experiment_id,
+                    ExperimentStatus.RUNNING.value,
+                    ExperimentSplit.HOLDOUT.value,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise ExperimentError(f"controlled experiment is not running: {experiment_id}")
+
     def _complete_planned(
         self,
         spec: ExperimentSpec,
@@ -512,7 +546,8 @@ class ExperimentRegistry:
             cursor = connection.execute(
                 """
                 UPDATE experiments SET status = ?, metrics_json = ?, artifact_locations_json = ?,
-                    artifact_hashes_json = ?, finished_at = ?, heartbeat_at = NULL
+                    artifact_hashes_json = ?, finished_at = ?, heartbeat_at = NULL,
+                    execution_provenance = 'controlled-run'
                 WHERE experiment_id = ? AND status = ?
                   AND campaign_plan_fingerprint IS NOT NULL
                 """,

@@ -49,7 +49,14 @@ def test_registry_tracks_lifecycle_budget_and_stale_recovery(tmp_path: Path) -> 
     registry.complete("experiment-1", {"total_return": Decimal("0.1")}, ["report.json"], ["hash"])
     completed = registry.get("experiment-1")
     assert completed["status"] == "completed"
+    assert completed["execution_provenance"] == "legacy-manual"
     assert completed["metrics_json"] == {"total_return": "0.1"}
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            "UPDATE experiments SET execution_provenance = NULL WHERE experiment_id = ?",
+            ("experiment-1",),
+        )
+    assert ExperimentRegistry(path).get("experiment-1")["execution_provenance"] is None
     with pytest.raises(ExperimentError, match="approved passing"):
         registry.record_qualification(
             "experiment-1",

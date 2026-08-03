@@ -402,15 +402,51 @@ def _records(
     for experiment_id in experiment_ids:
         record = registry.get(experiment_id)
         spec = _spec(record)
+        locations = record.get("artifact_locations_json")
+        hashes = record.get("artifact_hashes_json")
         if (
             record["campaign_id"] != campaign_id
             or record["split"] != ExperimentSplit.VALIDATION.value
             or record["status"] != "completed"
+            or record.get("execution_provenance") != "controlled-run"
+            or not isinstance(locations, list)
+            or len(locations) != 1
+            or not isinstance(locations[0], str)
+            or not locations[0]
+            or not isinstance(hashes, list)
+            or len(hashes) != 1
+            or not isinstance(hashes[0], str)
+            or len(hashes[0]) != 64
+            or not set(hashes[0]) <= set("0123456789abcdef")
             or spec["strategy_id"] != strategy_id
         ):
             raise ValueError(f"invalid qualification evidence experiment: {experiment_id}")
+        _validate_report_artifact(record, experiment_id, locations[0], hashes[0])
         records.append(record)
     return tuple(records)
+
+
+def _validate_report_artifact(
+    record: Mapping[str, object], experiment_id: str, location: str, expected_hash: str
+) -> None:
+    try:
+        report = json.loads(Path(location).read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError(f"invalid qualification evidence report: {experiment_id}") from error
+    if not isinstance(report, dict):
+        raise ValueError(f"invalid qualification evidence report: {experiment_id}")
+    unsigned = dict(report)
+    report_hash = unsigned.pop("report_fingerprint", None)
+    results = report.get("results")
+    if (
+        report.get("schema_version") != "backtest-report-v2"
+        or report_hash != expected_hash
+        or fingerprint(unsigned) != report_hash
+        or not isinstance(results, dict)
+        or set(results) != {experiment_id}
+        or results[experiment_id] != record.get("metrics_json")
+    ):
+        raise ValueError(f"invalid qualification evidence report: {experiment_id}")
 
 
 def _candidate(value: object, index: int) -> CandidateEvidenceSpec:

@@ -138,6 +138,7 @@ def run_experiment(
             selected_costs,
             fill_delay_bars,
             False,
+            False,
         )
     except Exception as error:
         registry.fail(spec.experiment_id, f"{type(error).__name__}: {error}")
@@ -186,6 +187,7 @@ def run_cataloged_experiment(
             selected_costs,
             fill_delay_bars,
             pre_registered,
+            True,
         )
     except Exception as error:
         registry.fail(spec.experiment_id, f"{type(error).__name__}: {error}")
@@ -323,6 +325,7 @@ def _complete_research_run(
     cost_model: CostModel,
     fill_delay_bars: int,
     allow_planned_completion: bool,
+    controlled_completion: bool,
 ) -> BacktestResult:
     registry.heartbeat(spec.experiment_id)
     result = strategy_result(
@@ -341,6 +344,8 @@ def _complete_research_run(
     hashes = [str(report["report_fingerprint"])]
     if allow_planned_completion:
         registry._complete_planned(spec, metrics, locations, hashes)
+    elif controlled_completion:
+        registry._complete_controlled(spec.experiment_id, metrics, locations, hashes)
     else:
         registry.complete(spec.experiment_id, metrics, locations, hashes)
     return result

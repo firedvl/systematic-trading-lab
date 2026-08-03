@@ -170,3 +170,12 @@
 - Reasoning: a stored canonical plan makes the current manual workflow enforceable without expanding into M6 automation.
 - Consequences: `training-campaign-plan-v1` is training-only, requires explicit parameters, exact budget use, default conservative costs, and next-bar fills. Planned runs accept only a stored candidate ID. Historical campaigns remain legacy evidence and are not rewritten.
 - Revisit when: a candidate passes training and needs a reviewed validation-plan schema or sensitivity models.
+
+## 2026-08-03 — Qualification accepts only controlled runner evidence
+
+- Decision: mark runner-owned research completions as `controlled-run` and require each qualification source to carry that provenance plus exactly one report location and SHA-256 report fingerprint.
+- Context: manual completion accepted caller-entered metrics and optional artifacts, while qualification trusted any completed validation record with matching relationships.
+- Alternatives: remove manual lifecycle commands, trust sealed-plan membership alone, or re-run every source during qualification.
+- Reasoning: a registry provenance field closes the shared evidence path without deleting operational history or coupling qualification to market-data reads.
+- Consequences: manual and migrated legacy records remain readable but cannot qualify or authorize holdout access. Existing historical rows keep null provenance. Qualification gates and strategy behavior do not change.
+- Revisit when: reports move to remote immutable storage or artifact attestations replace local registry trust.
