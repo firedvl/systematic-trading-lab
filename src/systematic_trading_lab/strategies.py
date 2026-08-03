@@ -171,3 +171,86 @@ class RelativeStrengthPortfolioStrategy:
             )
             for symbol in sorted(self.symbols, key=lambda item: item.value)
         )
+
+
+@dataclass(frozen=True)
+class RiskManagedMomentumPortfolioStrategy:
+    symbols: tuple[Symbol, ...]
+    lookback: int = 126
+    volatility_window: int = 63
+    rebalance_every: int = 5
+    strategy_id: str = "risk-managed-momentum-portfolio"
+    version: str = "1"
+
+    def __post_init__(self) -> None:
+        if not self.symbols or len(set(self.symbols)) != len(self.symbols):
+            raise ValueError("risk-managed momentum requires unique symbols")
+        if self.lookback < 1 or self.volatility_window < 2 or self.rebalance_every < 1:
+            raise ValueError("risk-managed momentum parameters are invalid")
+
+    def on_session(
+        self,
+        bars: Sequence[OHLCVBar],
+        history: Mapping[Symbol, Sequence[OHLCVBar]],
+    ) -> Sequence[TargetPosition]:
+        expected = set(self.symbols)
+        if {bar.symbol for bar in bars} != expected or set(history) != expected:
+            raise ValueError("risk-managed momentum session universe differs")
+        lengths = {len(history[symbol]) for symbol in self.symbols}
+        if len(lengths) != 1:
+            raise ValueError("risk-managed momentum history lengths differ")
+        session_count = next(iter(lengths))
+        warmup = max(self.lookback, self.volatility_window)
+        if session_count <= warmup:
+            return ()
+        if (session_count - warmup - 1) % self.rebalance_every:
+            return ()
+
+        current = {bar.symbol: bar for bar in bars}
+        eligible = tuple(
+            symbol
+            for symbol in self.symbols
+            if current[symbol].close > history[symbol][-self.lookback - 1].close
+        )
+        inverse_volatility: dict[Symbol, Decimal] = {}
+        for symbol in eligible:
+            closes = tuple(bar.close for bar in history[symbol][-self.volatility_window - 1 :])
+            returns = tuple(
+                current_close / previous_close - Decimal("1")
+                for previous_close, current_close in zip(closes, closes[1:], strict=False)
+            )
+            mean = sum(returns, Decimal("0")) / Decimal(len(returns))
+            variance = sum(((value - mean) ** 2 for value in returns), Decimal("0")) / Decimal(
+                len(returns) - 1
+            )
+            if variance <= 0:
+                raise ValueError("risk-managed momentum requires positive volatility")
+            inverse_volatility[symbol] = Decimal("1") / variance.sqrt()
+
+        weights: dict[Symbol, Decimal] = {}
+        remaining = sorted(inverse_volatility, key=lambda symbol: symbol.value)
+        available = Decimal("1")
+        cap = Decimal("0.4")
+        while remaining:
+            inverse_total = sum((inverse_volatility[symbol] for symbol in remaining), Decimal("0"))
+            provisional = {
+                symbol: available * inverse_volatility[symbol] / inverse_total
+                for symbol in remaining
+            }
+            capped = tuple(symbol for symbol in remaining if provisional[symbol] > cap)
+            if not capped:
+                weights.update(provisional)
+                break
+            for symbol in capped:
+                weights[symbol] = cap
+                remaining.remove(symbol)
+                available -= cap
+
+        return tuple(
+            TargetPosition(
+                symbol,
+                weights.get(symbol, Decimal("0")),
+                "positive-momentum-inverse-volatility" if symbol in weights else "cash-filter",
+            )
+            for symbol in sorted(self.symbols, key=lambda item: item.value)
+        )

@@ -17,6 +17,7 @@ from .strategies import (
     FixedWeightStrategy,
     MovingAverageTrendStrategy,
     RelativeStrengthPortfolioStrategy,
+    RiskManagedMomentumPortfolioStrategy,
     TimeSeriesMomentumStrategy,
 )
 
@@ -119,6 +120,14 @@ def strategy_result(
             selection_count=_positive_int_parameter(parameters, "selection_count", 3),
         )
         return engine.run_portfolio(bars, portfolio_strategy)
+    if name in ("risk-managed-momentum", "risk-managed-momentum-portfolio"):
+        risk_strategy = RiskManagedMomentumPortfolioStrategy(
+            symbols,
+            lookback=_positive_int_parameter(parameters, "lookback", 126),
+            volatility_window=_positive_int_parameter(parameters, "volatility_window", 63),
+            rebalance_every=_positive_int_parameter(parameters, "rebalance_every", 5),
+        )
+        return engine.run_portfolio(bars, risk_strategy)
     if name == "buy-and-hold":
         symbol = min((bar.symbol for bar in bars), key=lambda item: item.value)
         bars = tuple(bar for bar in bars if bar.symbol == symbol)

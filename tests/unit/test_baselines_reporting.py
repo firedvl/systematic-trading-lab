@@ -16,6 +16,7 @@ from systematic_trading_lab.strategies import (
     FixedWeightStrategy,
     MovingAverageTrendStrategy,
     RelativeStrengthPortfolioStrategy,
+    RiskManagedMomentumPortfolioStrategy,
     TimeSeriesMomentumStrategy,
 )
 
@@ -174,6 +175,72 @@ def test_relative_strength_reporting_uses_session_portfolio_engine() -> None:
     assert len(result.decisions) == 5
     assert result.metrics.trade_count > 0
 
+    risk_managed = strategy_result(
+        "risk-managed-momentum",
+        source,
+        Decimal("1000"),
+        parameters={"lookback": 2, "volatility_window": 2, "rebalance_every": 1},
+    )
+    assert risk_managed.strategy_id == "risk-managed-momentum-portfolio"
+    assert risk_managed.metrics.trade_count > 0
+
+
+def test_risk_managed_momentum_caps_inverse_volatility_weights() -> None:
+    symbols = tuple(Symbol(value) for value in ("QQQ", "SPY", "TLT"))
+    start = datetime(2025, 1, 6, tzinfo=UTC)
+    closes = {
+        Symbol("QQQ"): (Decimal("100"), Decimal("105"), Decimal("115")),
+        Symbol("SPY"): (Decimal("100"), Decimal("102"), Decimal("104")),
+        Symbol("TLT"): (Decimal("100"), Decimal("99"), Decimal("98")),
+    }
+    history = {
+        symbol: tuple(
+            OHLCVBar(
+                symbol,
+                start + timedelta(days=index),
+                close,
+                close,
+                close,
+                close,
+                100,
+            )
+            for index, close in enumerate(values)
+        )
+        for symbol, values in closes.items()
+    }
+    strategy = RiskManagedMomentumPortfolioStrategy(
+        symbols, lookback=2, volatility_window=2, rebalance_every=1
+    )
+
+    assert (
+        strategy.on_session(
+            tuple(values[1] for values in history.values()),
+            {symbol: values[:2] for symbol, values in history.items()},
+        )
+        == ()
+    )
+    targets = strategy.on_session(tuple(values[-1] for values in history.values()), history)
+    weights = {target.symbol: target.weight for target in targets}
+    assert weights[Symbol("SPY")] == Decimal("0.4")
+    assert weights[Symbol("QQQ")] == Decimal("0.4")
+    assert weights[Symbol("TLT")] == Decimal("0")
+    assert sum(weights.values(), Decimal("0")) == Decimal("0.8")
+
+
+def test_risk_managed_momentum_rejects_zero_volatility() -> None:
+    symbol = Symbol("SPY")
+    start = datetime(2025, 1, 6, tzinfo=UTC)
+    history = tuple(
+        OHLCVBar(symbol, start + timedelta(days=index), close, close, close, close, 100)
+        for index, close in enumerate(map(Decimal, ("100", "110", "121")))
+    )
+    strategy = RiskManagedMomentumPortfolioStrategy(
+        (symbol,), lookback=2, volatility_window=2, rebalance_every=1
+    )
+
+    with pytest.raises(ValueError, match="positive volatility"):
+        strategy.on_session((history[-1],), {symbol: history})
+
 
 @pytest.mark.parametrize(
     ("lookback", "rebalance_every", "selection_count"),
@@ -192,4 +259,20 @@ def test_relative_strength_rejects_invalid_parameters(
             lookback=lookback,
             rebalance_every=rebalance_every,
             selection_count=selection_count,
+        )
+
+
+@pytest.mark.parametrize(
+    ("lookback", "volatility_window", "rebalance_every"),
+    ((0, 2, 1), (2, 1, 1), (2, 2, 0)),
+)
+def test_risk_managed_momentum_rejects_invalid_parameters(
+    lookback: int, volatility_window: int, rebalance_every: int
+) -> None:
+    with pytest.raises(ValueError):
+        RiskManagedMomentumPortfolioStrategy(
+            (Symbol("QQQ"), Symbol("SPY")),
+            lookback=lookback,
+            volatility_window=volatility_window,
+            rebalance_every=rebalance_every,
         )
