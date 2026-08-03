@@ -6,10 +6,12 @@ from pathlib import Path
 
 import pytest
 
+from systematic_trading_lab.execution import ExecutionIntent
 from systematic_trading_lab.experiments import HoldoutAccessError
 from systematic_trading_lab.fingerprints import fingerprint
 from systematic_trading_lab.risk import (
     PaperAuthorization,
+    RiskContext,
     RiskLimits,
     RiskStore,
 )
@@ -103,6 +105,53 @@ def _authorization(report: dict[str, object], limits: RiskLimits) -> PaperAuthor
     )
 
 
+def _intent(report: dict[str, object]) -> ExecutionIntent:
+    candidate = report["candidate_specification"]
+    assert isinstance(candidate, dict)
+    return ExecutionIntent(
+        idempotency_key="candidate-1:SPY:2026-08-03",
+        strategy_id="candidate",
+        strategy_version="1",
+        symbol="SPY",
+        decision_timestamp=NOW - timedelta(minutes=2),
+        target_weight=Decimal("0.25"),
+        target_quantity=None,
+        reason="daily target",
+        source_data_fingerprint=str(candidate["dataset_fingerprint"]),
+        configuration_fingerprint=fingerprint(candidate["parameters"]),
+        reference_price=Decimal("100"),
+        expires_at=NOW + timedelta(minutes=10),
+    )
+
+
+def _context() -> RiskContext:
+    observed = NOW - timedelta(seconds=5)
+    return RiskContext(
+        account_id="paper-account",
+        evaluated_at=NOW,
+        equity=Decimal("100000"),
+        cash=Decimal("70000"),
+        buying_power=Decimal("70000"),
+        current_gross_exposure=Decimal("20000"),
+        current_symbol_notional=Decimal("10000"),
+        pending_buy_notional=Decimal("0"),
+        pending_order_notional=Decimal("0"),
+        open_order_count=0,
+        pending_order_count=0,
+        orders_last_minute=0,
+        daily_pnl=Decimal("0"),
+        strategy_drawdown=Decimal("0"),
+        quote_price=Decimal("100.10"),
+        account_observed_at=observed,
+        positions_observed_at=observed,
+        orders_observed_at=observed,
+        quote_observed_at=observed,
+        clock_observed_at=observed,
+        regular_session_open=True,
+        emergency_disabled=False,
+    )
+
+
 def test_paper_authorization_is_exact_immutable_and_restart_safe(tmp_path: Path) -> None:
     path = tmp_path / "execution.sqlite3"
     limits = _limits()
@@ -137,3 +186,25 @@ def test_paper_authorization_rejects_failed_or_changed_evidence(tmp_path: Path) 
             report,
             limits,
         )
+
+
+def test_durable_risk_decision_uses_persistent_emergency_state(tmp_path: Path) -> None:
+    path = tmp_path / "execution.sqlite3"
+    limits = _limits()
+    report = _evidence()
+    authorization = _authorization(report, limits)
+    intent = _intent(report)
+    store = RiskStore(path)
+    store.record_intent(intent, received_at=NOW - timedelta(minutes=1))
+    store.authorize_paper(authorization, report, limits)
+
+    receipt = store.record_risk_decision(
+        intent.idempotency_key, authorization.authorization_id, limits, _context()
+    )
+    replay = RiskStore(path).record_risk_decision(
+        intent.idempotency_key, authorization.authorization_id, limits, _context()
+    )
+
+    assert replay == receipt
+    assert not receipt.approved
+    assert receipt.reasons == ("emergency-disabled",)
