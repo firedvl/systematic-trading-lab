@@ -6,6 +6,8 @@ Create the experiment record before execution, claim it before work begins, hear
 
 Training and validation may guide development. Holdout evaluation is an explicit logged qualification event; once viewed for a decision, that holdout is retired or reclassified. Do not promote from one attractive backtest, hide search volume, optimize foundation baselines, promise profit, or combine a strategy change with weaker qualification controls.
 
+Qualification proposals must name their evidence campaign, record each gate and rationale separately, and keep approval state machine readable. A proposed-unapproved artifact cannot authorize a holdout run even when all observed metrics pass. Approving or weakening gates requires a separate human-reviewed change; it cannot accompany a strategy or parameter change.
+
 Walk-forward training must end before its validation window begins, and validation windows must be chronological and non-overlapping. Record each fold, cost assumption, and delayed-fill variant as a separate candidate linked to its parent. Comparison reports retain failures and missing metrics and do not calculate a hidden aggregate score. The ordinary runner and comparison APIs reject holdout experiments.
 
 CLI runs use only immutable cataloged datasets that pass integrity validation. Dataset manifests supply the dataset fingerprint and exact universe provenance; callers cannot override them. The command records that provenance, code commit, strategy parameters, cost version, execution version, split, and reason before simulation. It rejects parameters the selected strategy would ignore.
