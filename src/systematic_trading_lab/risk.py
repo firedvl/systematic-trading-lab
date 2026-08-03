@@ -987,9 +987,24 @@ class RiskStore(ExecutionStore):
                 "FROM journal WHERE sequence = ?",
                 (row[3],),
             ).fetchone()
+            broker_events_exist = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'broker_events'"
+            ).fetchone()
+            filled_order = (
+                None
+                if broker_events_exist is None
+                else connection.execute(
+                    "SELECT 1 FROM broker_events b JOIN orders o "
+                    "ON o.order_id = b.client_order_id WHERE o.reservation_id = ? "
+                    "AND CAST(json_extract(b.event_json, '$.cumulative_filled_quantity') "
+                    "AS INTEGER) > 0 LIMIT 1",
+                    (row[0],),
+                ).fetchone()
+            )
             if (
                 reservation is None
                 or _parse_utc(row[2]) < _parse_utc(reservation[0])
+                or (row[1] in {"order-canceled", "order-rejected"} and filled_order is not None)
                 or event
                 != (
                     row[2],

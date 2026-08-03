@@ -101,9 +101,10 @@ account, limits, reviewer, reason, and expiry. Risk decisions now reload those d
 verified emergency state in one transaction before journaling the result. No financial limit is
 committed, and emergency disable prevents approvals. Approved decisions now create immutable
 cash, gross-exposure, order-notional, and order-count reservations in the same transaction as
-the risk decision. Cancellation or rejection releases the reservation with a separate immutable
-journal event. Filled-order capacity remains reserved until later reconciliation proves the new
-position state; this prevents early reuse against a stale portfolio snapshot.
+the risk decision. Cancellation or rejection with zero cumulative fill releases the reservation
+with a separate immutable journal event. Partial- and full-fill capacity remains reserved until
+later reconciliation proves the new position state; this prevents early reuse against a stale
+portfolio snapshot.
 
 The slice 5 foundation now journals strict normalized local-expected and Alpaca-paper portfolio
 snapshots, a reviewed flat baseline, and later clean or dirty comparison results. It fails on source,
@@ -112,8 +113,8 @@ freshness, timing, authorization, or unresolved-mutation differences. Durable ad
 exists. Read-only stable-repeat readiness now requires the latest three distinct clean records and
 the reviewed risk configuration's explicit separation interval. Emergency clear is now a bounded,
 idempotent operator transition that recomputes and journals the proof in one transaction; dirty
-reconciliation atomically restores disable. Reservation creation and cancellation/rejection release
-exist; fill reconciliation and broker writes remain absent.
+reconciliation atomically restores disable. Reservation creation and zero-fill
+cancellation/rejection release exist; fill reconciliation and broker writes remain absent.
 
 The paper read adapter now permits only fixed-origin GET requests for account, positions, open orders,
 and clock. It validates one expected account, an explicit symbol allowlist, account readiness and
@@ -145,6 +146,12 @@ Positive exact lookups now retain cumulative average fill price with cumulative 
 This supports later deterministic incremental position and gross cash calculations. It does not
 invent fees, equity, or buying power, and filled reservations remain held until a separate expected
 state authority and complete reconciliation can prove settlement.
+
+The position-only authority now accepts an explicit flat baseline and records signed cumulative-fill
+increments as immutable sorted position checkpoints in the broker-event transaction. It uses local
+orders for symbol and side, links each checkpoint to its prior fingerprint, and rejects missing prior
+fills, cross-authorization baselines, or negative positions. It does not replace a complete portfolio
+snapshot or release filled capacity.
 
 Official references reviewed 2026-08-03:
 

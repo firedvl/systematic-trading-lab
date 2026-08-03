@@ -286,7 +286,11 @@ class AlpacaPaperReader:
             raise AlpacaPaperError("Alpaca paper order is invalid") from error
 
     def record_order_lookup(
-        self, store: BrokerEventStore, *, client_order_id: str
+        self,
+        store: BrokerEventStore,
+        *,
+        client_order_id: str,
+        baseline_id: str | None = None,
     ) -> BrokerOrderEvent | OrderLookupNotFoundEvidence:
         if not self._allows_persistence:
             raise AlpacaPaperError("injected transport cannot produce durable paper provenance")
@@ -324,7 +328,11 @@ class AlpacaPaperReader:
             provider_timestamp=snapshot.updated_at,
             observed_at=snapshot.observed_at,
         )
-        return store.record(event)
+        return (
+            store.record(event)
+            if baseline_id is None
+            else store.record(event, baseline_id=baseline_id)
+        )
 
     def _order_symbol(self, value: dict[str, Any]) -> str:
         symbol = _text(value, "symbol", "order")

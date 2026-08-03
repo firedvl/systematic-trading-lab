@@ -215,16 +215,16 @@
 
 ## 2026-08-03 — Filled orders retain capacity until reconciliation
 
-- Decision: cancellation or rejection releases reserved capacity atomically with the terminal local order transition; a filled order retains its reservation until reconciliation proves the resulting position.
+- Decision: cancellation or rejection with zero cumulative fill releases reserved capacity atomically with the terminal local order transition. Any positive fill retains its reservation until reconciliation proves the resulting position.
 - Context: releasing a filled order immediately would allow another decision to reuse capacity while portfolio snapshots may still show the pre-fill state.
-- Consequences: cancellation and rejection free capacity without a broker-position change. Fill handling remains conservative until normalized broker events and reconciliation can replace the reservation with verified position exposure.
-- Revisit when: fill events and expected-position advancement share one verified transaction.
+- Consequences: zero-fill cancellation and rejection free capacity without a broker-position change. Partial or full fills retain capacity until normalized broker events and reconciliation can replace the reservation with verified position exposure.
+- Revisit when: later complete reconciliation can bind a verified expected-position generation to settled broker state.
 
 ## 2026-08-03 — Broker evidence applies state or disables execution
 
 - Decision: one normalized broker event and its forward local order transition share a transaction; identity, quantity, sequence, or local-state conflicts restore persistent emergency disable and reject the event.
 - Context: storing valid evidence without applying it leaves local state stale, while applying an invalid or out-of-order event can hide drift or free capacity incorrectly.
-- Consequences: accepted events are exact-idempotent, cancellation and rejection release capacity, fills remain reserved for reconciliation, and raw broker responses never enter the execution database.
+- Consequences: accepted events are exact-idempotent, zero-fill cancellation and rejection release capacity, positive fills remain reserved for reconciliation, and raw broker responses never enter the execution database.
 - Revisit when: polling and streaming event sources both exist and need one reviewed precedence rule.
 
 ## 2026-08-03 — A missing exact lookup is evidence, not retry authority
@@ -240,3 +240,10 @@
 - Context: quantity alone cannot support deterministic incremental expected-position and cash-impact calculations.
 - Consequences: exact lookups retain enough gross fill economics for the next expected-state slice. Fees and account-wide equity or buying power remain unknown, so filled capacity is not released.
 - Revisit when: authoritative fee evidence or a reviewed post-fill accounting model exists.
+
+## 2026-08-03 — Expected positions advance from accepted fills
+
+- Decision: an explicit reconciliation baseline can bind accepted cumulative fill increments to immutable sorted position checkpoints in the same transaction as broker evidence and local order state. Each checkpoint links its prior fingerprint and uses the immutable local order for symbol and side.
+- Context: broker events can prove signed whole-share changes but cannot derive account-wide cash, equity, buying power, or fees.
+- Consequences: expected position lineage is replayable and read-only. Bare broker evidence does not gain lineage later, negative positions fail closed, and any positive fill keeps its capacity reservation. Full portfolio reconciliation and filled-capacity release remain separate.
+- Revisit when: a later complete adapter-attested snapshot can prove the expected position generation and settled open-order state.

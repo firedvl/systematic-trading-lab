@@ -42,7 +42,6 @@ _ORDER_TRANSITIONS = {
     OrderState.PARTIALLY_FILLED: {
         OrderState.PARTIALLY_FILLED,
         OrderState.FILLED,
-        OrderState.CANCELED,
     },
     OrderState.FILLED: set(),
     OrderState.CANCELED: set(),
