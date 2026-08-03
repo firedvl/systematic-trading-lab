@@ -30,6 +30,10 @@ class StorageLayout:
         return self.root / "experiments.sqlite3"
 
     @property
+    def execution(self) -> Path:
+        return self.root / "execution.sqlite3"
+
+    @property
     def reports(self) -> Path:
         return self.root / "reports"
 

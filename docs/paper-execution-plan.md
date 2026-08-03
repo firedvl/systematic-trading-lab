@@ -88,6 +88,10 @@ external or signed checkpoint.
 Each slice gets its own review and cannot weaken earlier controls. Paper mode remains non-operational
 until every M4 gate passes and an explicit reviewed risk configuration exists.
 
+Slice 1 is complete: the broker-free store validates immutable intents, binds configuration and data
+fingerprints, deduplicates exact replay across restarts, rejects changed keys, and verifies its
+append-only hash chain and stored head at startup. It has no broker, risk, or network authority.
+
 ## Alpaca contract
 
 The initial adapter uses Trading API 2.0.1 paper endpoints for account, positions, clock, calendar,
