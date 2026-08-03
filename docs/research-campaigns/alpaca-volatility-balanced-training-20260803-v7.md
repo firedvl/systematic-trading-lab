@@ -1,5 +1,24 @@
 # Alpaca volatility-balanced allocation training v7
 
+## Outcome
+
+The four-record campaign completed under code commit
+`94524806b731f5bf79bfba55bb6cc3d89ce13f2e`. The 63-session base lost 3.41%, trailed
+fixed-weight, had a negative Sharpe ratio, exceeded the drawdown and instrument-concentration
+limits, and failed both parameter-neighbor conditions. The family stops before validation.
+
+| Record | Window | Return | Sharpe | Max drawdown | Top-instrument profit share | Turnover | Fills |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `m3-vb-fixed-weight-training` | — | -0.001359 | 0.069103 | 0.257724 | 0.436930 | 2.675129 | 557 |
+| `m3-vb-window-42-training` | 42 | 0.004374 | 0.077359 | 0.238267 | 0.478282 | 5.781357 | 575 |
+| `m3-vb-window-63-training` | 63 | -0.034052 | -0.050968 | 0.239707 | 0.636804 | 4.275324 | 548 |
+| `m3-vb-window-84-training` | 84 | -0.069507 | -0.180266 | 0.243084 | 0.830707 | 3.377449 | 529 |
+
+The comparison report fingerprint is
+`d6ea86ce78398ddf81ab6a3a9dcf5796135f2927f80f8b59f79d5466c11a8ce9`. No 2023–2026
+bars, validation data, holdout results, or execution systems were accessed. The immutable local
+registry retains every record.
+
 ## Predeclared design
 
 This training-only campaign tests allocation from trailing volatility without a return signal,
