@@ -20,7 +20,7 @@ Durable campaigns and experiments, restart recovery, split controls, walk-forwar
 
 ## M4 — Alpaca paper execution
 
-Paper-only adapter, intents, independent risk, order management, idempotency, broker events, reconciliation, operational journal, and emergency disable. Gate: unknown or stale state blocks writes; duplicate intents are harmless; reconciliation discrepancies stop execution; live endpoints cannot be selected.
+Paper-only adapter, intents, independent risk, order management, idempotency, broker events, reconciliation, operational journal, and emergency disable. The reviewed design requires one transactional execution database, deterministic client order IDs, exact paper-endpoint selection, fresh broker and market snapshots, forward-only state, reconciliation before retry, persistent emergency disable, and append-only hash-chain evidence. No writer exists yet. Gate: unknown or stale state blocks writes; duplicate intents are harmless; reconciliation discrepancies stop execution; live endpoints cannot be selected.
 
 ## M5 — Equivalence and sustained paper operation
 

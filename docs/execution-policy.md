@@ -4,4 +4,13 @@ Backtests use explicit decision, order, and earliest-fill timestamps and a versi
 
 Portfolio backtests require the full symbol set in every session. The strategy sees immutable history only through the current session close. A nonempty decision must target every session symbol exactly once. The simulator rejects the whole target set for mismatched symbols, invalid weights, total weight above one, pending orders, or missing future fills, and records one rejection event per target. Accepted targets enter the same conservative next-bar fill model; position reductions run before buys at a shared open so sale proceeds can fund the allocation without symbol-order bias. This boundary creates no broker authority.
 
-Later paper flow is strategy intent, independent risk, order manager, broker adapter, events, reconciliation, and append-only evidence. Intents require a strategy version, symbol, decision time, target or quantity, reason, source-data fingerprint, expiry, and idempotency key. No order submission is implemented now.
+Paper flow is strategy intent, protected paper authorization, independent risk, order manager, broker adapter, events, reconciliation, and append-only evidence. Intents require a strategy version, symbol, decision time, target or whole-share quantity, reason, source-data fingerprint, reference price, expiry, and idempotency key. Exact duplicate delivery returns the existing receipt; reuse of a key with different content blocks execution. Authorization binds one qualified candidate and exact strategy, code, data, account, evidence, limits, and expiry; research code cannot grant it.
+
+Only the Alpaca paper host may be selected. Each staged order has one deterministic client order ID.
+A timeout or crash after submission requires lookup by that ID before retry. Broker events are
+deduplicated by provider event identity and sanitized payload hash. Broker storage accepts only
+schema-validated normalized fields and excludes raw bodies, headers, URLs, and exception text.
+Conflicting duplicates, unknown statuses, out-of-order transitions, or position drift trigger
+emergency disable. Each submit, cancel, and cancel-all mutation is journaled before the call and has
+an unknown-outcome state resolved by lookup and reconciliation before retry. No order submission is
+implemented yet.
