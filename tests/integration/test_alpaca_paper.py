@@ -1,6 +1,7 @@
 import inspect
 import json
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from email.message import Message
 from http.client import BadStatusLine
 from pathlib import Path
@@ -166,6 +167,7 @@ def test_reader_looks_up_one_exact_client_order_id() -> None:
         "side": "buy",
         "qty": "2",
         "filled_qty": "2",
+        "filled_avg_price": "101.25",
         "type": "market",
         "limit_price": None,
         "time_in_force": "day",
@@ -182,7 +184,24 @@ def test_reader_looks_up_one_exact_client_order_id() -> None:
     assert result.broker_order_id == "broker-order-1"
     assert result.client_order_id == "client-1"
     assert result.status == "filled"
+    assert result.filled_average_price == Decimal("101.25")
     assert parse_qs(urlsplit(requests[0].full_url).query) == {"client_order_id": ["client-1"]}
+    with pytest.raises(AlpacaPaperError, match="order is invalid"):
+        _reader(
+            _payloads(**{"/v2/orders:by_client_order_id": {**order, "filled_avg_price": None}})
+        ).read_order("client-1")
+    with pytest.raises(AlpacaPaperError, match="order is invalid"):
+        _reader(
+            _payloads(
+                **{
+                    "/v2/orders:by_client_order_id": {
+                        **order,
+                        "filled_qty": "0",
+                        "filled_avg_price": "101.25",
+                    }
+                }
+            )
+        ).read_order("client-1")
 
 
 def test_only_production_lookup_path_can_record_normalized_evidence(
@@ -196,6 +215,7 @@ def test_only_production_lookup_path_can_record_normalized_evidence(
         "side": "buy",
         "qty": "2",
         "filled_qty": "2",
+        "filled_avg_price": "101.25",
         "type": "market",
         "limit_price": None,
         "time_in_force": "day",
@@ -228,6 +248,7 @@ def test_only_production_lookup_path_can_record_normalized_evidence(
     assert isinstance(event, BrokerOrderEvent)
     assert event.client_order_id == "client-1"
     assert event.cumulative_filled_quantity == 2
+    assert event.cumulative_average_fill_price == Decimal("101.25")
 
 
 @pytest.mark.parametrize(

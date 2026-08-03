@@ -233,3 +233,10 @@
 - Context: a broker can return a transient or stale negative lookup after an unknown submission outcome.
 - Consequences: the result remains immutable historical evidence. Any future retry assessment must bind it to later full clean reconciliation; no retry or broker writer exists.
 - Revisit when: observed paper behavior supports a stricter negative-confirmation rule.
+
+## 2026-08-03 — Fill evidence keeps cumulative economics
+
+- Decision: normalized broker events with positive cumulative filled quantity must include a positive finite cumulative average fill price. Later events cannot change price at the same quantity or reduce cumulative gross notional.
+- Context: quantity alone cannot support deterministic incremental expected-position and cash-impact calculations.
+- Consequences: exact lookups retain enough gross fill economics for the next expected-state slice. Fees and account-wide equity or buying power remain unknown, so filled capacity is not released.
+- Revisit when: authoritative fee evidence or a reviewed post-fill accounting model exists.

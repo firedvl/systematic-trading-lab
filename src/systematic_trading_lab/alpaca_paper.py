@@ -89,6 +89,7 @@ class PaperOrderSnapshot:
     filled_quantity: int
     order_type: str
     limit_price: Decimal | None
+    filled_average_price: Decimal | None
     status: str
     updated_at: datetime
     observed_at: datetime
@@ -98,6 +99,15 @@ class PaperOrderSnapshot:
             raise ValueError("paper order type or side is unsupported")
         if self.quantity < 1 or not 0 <= self.filled_quantity <= self.quantity:
             raise ValueError("paper order quantity is invalid")
+        if self.filled_quantity == 0:
+            if self.filled_average_price is not None:
+                raise ValueError("unfilled paper order cannot have an average fill price")
+        elif (
+            self.filled_average_price is None
+            or not self.filled_average_price.is_finite()
+            or self.filled_average_price <= 0
+        ):
+            raise ValueError("filled paper order requires a positive average fill price")
         if self.status not in _ORDER_STATUSES:
             raise ValueError("paper order status is unsupported")
         if self.observed_at < self.updated_at:
@@ -267,6 +277,7 @@ class AlpacaPaperReader:
                 filled_quantity=_whole_shares(value, "filled_qty", positive=False),
                 order_type=_text(value, "type", "order"),
                 limit_price=_optional_amount(value, "limit_price"),
+                filled_average_price=_optional_amount(value, "filled_avg_price"),
                 status=_lookup_status(value),
                 updated_at=_timestamp(value, "updated_at"),
                 observed_at=observed_at,
@@ -309,6 +320,7 @@ class AlpacaPaperReader:
             client_order_id=snapshot.client_order_id,
             state=state,
             cumulative_filled_quantity=snapshot.filled_quantity,
+            cumulative_average_fill_price=snapshot.filled_average_price,
             provider_timestamp=snapshot.updated_at,
             observed_at=snapshot.observed_at,
         )
