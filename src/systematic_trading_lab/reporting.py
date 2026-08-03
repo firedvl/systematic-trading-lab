@@ -16,6 +16,7 @@ from .strategies import (
     CashStrategy,
     FixedWeightStrategy,
     MovingAverageTrendStrategy,
+    RelativeStrengthPortfolioStrategy,
     TimeSeriesMomentumStrategy,
 )
 
@@ -109,6 +110,15 @@ def strategy_result(
     parameters = parameters or {}
     symbols = tuple(sorted({bar.symbol for bar in bars}, key=lambda symbol: symbol.value))
     target_weight = Decimal("1") / Decimal(len(symbols)) if symbols else Decimal("1")
+    engine = BacktestEngine(initial_cash, cost_model, fill_delay_bars)
+    if name in ("relative-strength", "relative-strength-portfolio"):
+        portfolio_strategy = RelativeStrengthPortfolioStrategy(
+            symbols,
+            lookback=_positive_int_parameter(parameters, "lookback", 126),
+            rebalance_every=_positive_int_parameter(parameters, "rebalance_every", 21),
+            selection_count=_positive_int_parameter(parameters, "selection_count", 3),
+        )
+        return engine.run_portfolio(bars, portfolio_strategy)
     if name == "buy-and-hold":
         symbol = min((bar.symbol for bar in bars), key=lambda item: item.value)
         bars = tuple(bar for bar in bars if bar.symbol == symbol)
@@ -131,7 +141,7 @@ def strategy_result(
         )
     else:
         raise ValueError(f"unknown backtest strategy: {name}")
-    return BacktestEngine(initial_cash, cost_model, fill_delay_bars).run(bars, strategy)
+    return engine.run(bars, strategy)
 
 
 def _positive_int_parameter(parameters: Mapping[str, object], name: str, default: int) -> int:

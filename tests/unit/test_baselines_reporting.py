@@ -15,6 +15,7 @@ from systematic_trading_lab.reporting import (
 from systematic_trading_lab.strategies import (
     FixedWeightStrategy,
     MovingAverageTrendStrategy,
+    RelativeStrengthPortfolioStrategy,
     TimeSeriesMomentumStrategy,
 )
 
@@ -98,3 +99,97 @@ def test_trend_baselines_split_exposure_across_the_dataset_symbols() -> None:
             if target.weight > 0
         }
         assert active_weights == {Decimal("0.5")}
+
+
+def test_relative_strength_uses_positive_ranked_assets_on_rebalance_sessions() -> None:
+    symbols = tuple(Symbol(value) for value in ("QQQ", "SPY", "TLT"))
+    start = datetime(2025, 1, 6, tzinfo=UTC)
+    closes = {
+        Symbol("QQQ"): (Decimal("100"), Decimal("110"), Decimal("120"), Decimal("121")),
+        Symbol("SPY"): (Decimal("100"), Decimal("105"), Decimal("110"), Decimal("111")),
+        Symbol("TLT"): (Decimal("100"), Decimal("95"), Decimal("90"), Decimal("89")),
+    }
+    history = {
+        symbol: tuple(
+            OHLCVBar(
+                symbol,
+                start + timedelta(days=index),
+                close,
+                close,
+                close,
+                close,
+                100,
+            )
+            for index, close in enumerate(values)
+        )
+        for symbol, values in closes.items()
+    }
+    strategy = RelativeStrengthPortfolioStrategy(
+        symbols, lookback=2, rebalance_every=2, selection_count=2
+    )
+
+    assert (
+        strategy.on_session(
+            tuple(values[1] for values in history.values()),
+            {symbol: values[:2] for symbol, values in history.items()},
+        )
+        == ()
+    )
+    targets = strategy.on_session(
+        tuple(values[2] for values in history.values()),
+        {symbol: values[:3] for symbol, values in history.items()},
+    )
+    assert {target.symbol: target.weight for target in targets} == {
+        Symbol("QQQ"): Decimal("0.5"),
+        Symbol("SPY"): Decimal("0.5"),
+        Symbol("TLT"): Decimal("0"),
+    }
+    assert strategy.on_session(tuple(values[3] for values in history.values()), history) == ()
+
+
+def test_relative_strength_reporting_uses_session_portfolio_engine() -> None:
+    start = datetime(2025, 1, 6, tzinfo=UTC)
+    source = tuple(
+        OHLCVBar(
+            Symbol(symbol),
+            start + timedelta(days=day),
+            Decimal(str(100 + day)),
+            Decimal(str(104 + day)),
+            Decimal(str(99 + day)),
+            Decimal(str(101 + day + (2 if symbol == "QQQ" else 0))),
+            100,
+        )
+        for day in range(5)
+        for symbol in ("QQQ", "SPY")
+    )
+
+    result = strategy_result(
+        "relative-strength",
+        source,
+        Decimal("1000"),
+        parameters={"lookback": 2, "rebalance_every": 1, "selection_count": 1},
+    )
+
+    assert result.strategy_id == "relative-strength-portfolio"
+    assert len(result.decisions) == 5
+    assert result.metrics.trade_count > 0
+
+
+@pytest.mark.parametrize(
+    ("lookback", "rebalance_every", "selection_count"),
+    (
+        (0, 1, 2),
+        (2, 0, 2),
+        (2, 1, 4),
+    ),
+)
+def test_relative_strength_rejects_invalid_parameters(
+    lookback: int, rebalance_every: int, selection_count: int
+) -> None:
+    with pytest.raises(ValueError):
+        RelativeStrengthPortfolioStrategy(
+            (Symbol("QQQ"), Symbol("SPY"), Symbol("TLT")),
+            lookback=lookback,
+            rebalance_every=rebalance_every,
+            selection_count=selection_count,
+        )
