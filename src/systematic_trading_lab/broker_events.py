@@ -7,6 +7,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Never
 
 from .execution import JournalIntegrityError
 from .fingerprints import canonical_json, canonicalize, fingerprint
@@ -34,6 +35,16 @@ _BROKER_TRANSITIONS = {
     OrderState.FILLED: set(),
     OrderState.CANCELED: set(),
     OrderState.REJECTED: set(),
+}
+_LOCAL_BROKER_TRANSITIONS = {
+    OrderState.SUBMITTING: _BROKER_STATES,
+    OrderState.SUBMISSION_UNKNOWN: _BROKER_STATES,
+    OrderState.ACKNOWLEDGED: _BROKER_TRANSITIONS[OrderState.ACKNOWLEDGED],
+    OrderState.PARTIALLY_FILLED: _BROKER_TRANSITIONS[OrderState.PARTIALLY_FILLED],
+    OrderState.FILLED: set(),
+    OrderState.CANCELED: set(),
+    OrderState.REJECTED: set(),
+    OrderState.STAGED: set(),
 }
 
 
@@ -110,15 +121,18 @@ class BrokerEventStore(OrderLifecycleStore):
             existing = events.get(event.event_id)
             if existing is not None:
                 if existing != event:
-                    raise JournalIntegrityError("broker event ID is bound to different content")
+                    self._reject_event(
+                        connection, event, "broker event ID is bound to different content"
+                    )
                 connection.commit()
                 return existing
             order = connection.execute(
-                "SELECT delta_json FROM orders WHERE order_id = ?",
+                "SELECT delta_json, state, reservation_id, changed_at FROM orders "
+                "WHERE order_id = ?",
                 (event.client_order_id,),
             ).fetchone()
             if order is None:
-                raise JournalIntegrityError("broker event order is missing")
+                self._reject_event(connection, event, "broker event order is missing")
             quantity = int(json.loads(order[0])["quantity"])
             prior = sorted(
                 (item for item in events.values() if item.client_order_id == event.client_order_id),
@@ -132,8 +146,15 @@ class BrokerEventStore(OrderLifecycleStore):
                 )
                 or not _can_follow(prior, event)
             ):
-                raise JournalIntegrityError(
-                    "broker event is out of order or exceeds order quantity"
+                self._reject_event(
+                    connection,
+                    event,
+                    "broker event is out of order or exceeds order quantity",
+                )
+            current = OrderState(order[1])
+            if event.state != current and event.state not in _LOCAL_BROKER_TRANSITIONS[current]:
+                self._reject_event(
+                    connection, event, "broker event conflicts with local order state"
                 )
             sequence = self._append_event(
                 connection,
@@ -153,8 +174,80 @@ class BrokerEventStore(OrderLifecycleStore):
                     sequence,
                 ),
             )
+            if event.state != current:
+                transition = {
+                    "order_id": event.client_order_id,
+                    "from_state": current,
+                    "to_state": event.state,
+                    "changed_at": event.observed_at,
+                    "broker_event_id": event.event_id,
+                }
+                order_sequence = self._append_event(
+                    connection,
+                    occurred_at=event.observed_at,
+                    event_type="order-transitioned",
+                    entity_type="order",
+                    entity_id=event.client_order_id,
+                    payload=canonicalize(transition),
+                )
+                connection.execute(
+                    "UPDATE orders SET state = ?, changed_at = ?, journal_sequence = ? "
+                    "WHERE order_id = ?",
+                    (
+                        event.state,
+                        _utc_text(event.observed_at),
+                        order_sequence,
+                        event.client_order_id,
+                    ),
+                )
+                if event.state in {OrderState.CANCELED, OrderState.REJECTED}:
+                    self._release_capacity(
+                        connection,
+                        reservation_id=str(order[2]),
+                        reason=f"order-{event.state}",
+                        released_at=event.observed_at,
+                    )
             connection.commit()
         return event
+
+    def _reject_event(
+        self, connection: sqlite3.Connection, event: BrokerOrderEvent, message: str
+    ) -> Never:
+        emergency = self._verify_emergency(connection)
+        if not emergency.disabled:
+            payload = {
+                "cause_fingerprint": event.event_fingerprint,
+                "disabled": True,
+                "generation": emergency.generation + 1,
+                "reason": message,
+                "operator": "system",
+                "changed_at": _utc_text(event.observed_at),
+            }
+            sequence = self._append_event(
+                connection,
+                occurred_at=event.observed_at,
+                event_type="emergency-disabled",
+                entity_type="emergency-state",
+                entity_id="global",
+                payload=payload,
+            )
+            updated = connection.execute(
+                "UPDATE emergency_state SET disabled = 1, generation = ?, reason = ?, "
+                "operator = ?, changed_at = ?, journal_sequence = ? "
+                "WHERE singleton = 1 AND generation = ? AND disabled = 0",
+                (
+                    payload["generation"],
+                    message,
+                    "system",
+                    payload["changed_at"],
+                    sequence,
+                    emergency.generation,
+                ),
+            )
+            if updated.rowcount != 1:
+                raise JournalIntegrityError("emergency state changed during broker-event rejection")
+            connection.commit()
+        raise JournalIntegrityError(message)
 
     def _verify_broker_events(self, connection: sqlite3.Connection) -> dict[str, BrokerOrderEvent]:
         rows = connection.execute(
