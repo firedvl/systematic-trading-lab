@@ -53,3 +53,12 @@
 - Reasoning: the rule is explicit, deterministic, and keeps core assumptions owned by this repository.
 - Consequences: the final signal can be rejected for lack of a future fill; event, order, trade, and equity ledgers retain the timestamps.
 - Revisit when: intraday data and a reviewed latency/session model support more detailed event scheduling.
+
+## 2026-08-04 — Reports expose benchmarks without a hidden score
+
+- Decision: reports list each baseline and expose excess return versus cash; they do not collapse results into a qualification score.
+- Context: benchmark context is needed before interpreting a backtest, while aggregate scores can hide catastrophic weaknesses.
+- Alternatives: a single composite rank or a report containing only the selected strategy.
+- Reasoning: visible per-baseline metrics preserve the evidence needed for later qualification gates.
+- Consequences: report consumers must compare multiple fields; qualification remains a separate M3 authority.
+- Revisit when: a reviewed qualification policy defines explicit disqualifying gates and report schema requirements.

@@ -14,8 +14,11 @@ from .strategies import TargetPosition
 
 
 class Strategy(Protocol):
-    strategy_id: str
-    version: str
+    @property
+    def strategy_id(self) -> str: ...
+
+    @property
+    def version(self) -> str: ...
 
     def on_bar(self, bar: OHLCVBar, history: Sequence[OHLCVBar]) -> Sequence[TargetPosition]: ...
 

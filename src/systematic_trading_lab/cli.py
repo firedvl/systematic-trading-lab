@@ -12,13 +12,12 @@ from decimal import Decimal
 from pathlib import Path
 
 from . import __version__
-from .backtesting import BacktestEngine
 from .config import ConfigurationError, Settings, load_settings
 from .datasets import DatasetService, DatasetValidationError, fixture_request, fixture_symbols
 from .domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
 from .providers import AlpacaHistoricalProvider, FixtureProvider
+from .reporting import benchmark_suite, build_report, report_json, strategy_result, write_report
 from .storage import StorageLayout
-from .strategies import BuyAndHoldStrategy, CashStrategy
 
 
 def parser() -> argparse.ArgumentParser:
@@ -43,7 +42,12 @@ def parser() -> argparse.ArgumentParser:
     fixture_backtest = backtest_commands.add_parser(
         "fixture", help="backtest deterministic fixture bars"
     )
-    fixture_backtest.add_argument("--strategy", choices=("cash", "buy-and-hold"), default="cash")
+    fixture_backtest.add_argument(
+        "--strategy",
+        choices=("cash", "buy-and-hold", "fixed-weight", "moving-average", "momentum", "all"),
+        default="cash",
+    )
+    fixture_backtest.add_argument("--output", type=Path)
     return root
 
 
@@ -61,22 +65,25 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
     layout = StorageLayout(settings.home)
     service = DatasetService(layout)
     if arguments.command == "backtest":
-        records = FixtureProvider().fetch(fixture_symbols()[:1], Timeframe.DAILY, fixture_request())
+        records = FixtureProvider().fetch(fixture_symbols(), Timeframe.DAILY, fixture_request())
         bars = tuple(OHLCVBar.from_record(record) for record in records)
-        strategy = CashStrategy() if arguments.strategy == "cash" else BuyAndHoldStrategy()
-        result = BacktestEngine(Decimal("100000")).run(bars, strategy)
-        _print(
-            {
-                "strategy": result.strategy_id,
-                "metrics": {
-                    "total_return": str(result.metrics.total_return),
-                    "max_drawdown": str(result.metrics.max_drawdown),
-                    "turnover": str(result.metrics.turnover),
-                    "trade_count": result.metrics.trade_count,
-                },
-                "artifact_fingerprint": result.artifact_fingerprint,
-            }
-        )
+        initial_cash = Decimal("100000")
+        if arguments.strategy == "all":
+            results = benchmark_suite(bars, initial_cash)
+            results["moving-average"] = strategy_result("moving-average", bars, initial_cash)
+            results["momentum"] = strategy_result("momentum", bars, initial_cash)
+        else:
+            results = {arguments.strategy: strategy_result(arguments.strategy, bars, initial_cash)}
+        if arguments.output:
+            write_report(arguments.output, results)
+            _print(
+                {
+                    "report": str(arguments.output),
+                    "report_fingerprint": build_report(results)["report_fingerprint"],
+                }
+            )
+        else:
+            print(report_json(results), end="")
         return 0
     if arguments.command == "doctor":
         checks = {
