@@ -82,3 +82,26 @@ def test_training_campaign_plan_rejects_unsealed_variation(tmp_path: Path, defec
 
     with pytest.raises(ValueError):
         load_training_campaign_plan(write_plan(tmp_path / f"{defect}.json", payload))
+
+
+@pytest.mark.parametrize(
+    ("strategy_id", "family", "parameter"),
+    (
+        ("moving-average-mean-reversion", "mean-reversion", "window"),
+        ("volatility-targeted-exposure", "volatility", "volatility_window"),
+    ),
+)
+def test_training_plan_rejects_invalid_new_baseline_windows(
+    tmp_path: Path, strategy_id: str, family: str, parameter: str
+) -> None:
+    payload = plan_payload()
+    candidates = payload["candidates"]
+    assert isinstance(candidates, list) and isinstance(candidates[1], dict)
+    candidates[1].update(
+        strategy_id=strategy_id,
+        strategy_family=family,
+        parameters={parameter: 1},
+    )
+
+    with pytest.raises(ValueError, match="planned parameters differ"):
+        load_training_campaign_plan(write_plan(tmp_path / "invalid-window.json", payload))

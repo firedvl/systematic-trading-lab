@@ -47,10 +47,12 @@ def _add_execution_arguments(command: argparse.ArgumentParser) -> None:
             "buy-and-hold",
             "fixed-weight",
             "moving-average",
+            "mean-reversion",
             "momentum",
             "relative-strength",
             "risk-managed-momentum",
             "volatility-balanced",
+            "volatility-targeted",
         ),
         required=True,
     )
@@ -90,7 +92,16 @@ def parser() -> argparse.ArgumentParser:
     )
     fixture_backtest.add_argument(
         "--strategy",
-        choices=("cash", "buy-and-hold", "fixed-weight", "moving-average", "momentum", "all"),
+        choices=(
+            "cash",
+            "buy-and-hold",
+            "fixed-weight",
+            "moving-average",
+            "mean-reversion",
+            "momentum",
+            "volatility-targeted",
+            "all",
+        ),
         default="cash",
     )
     fixture_backtest.add_argument("--output", type=Path)
@@ -337,8 +348,6 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         initial_cash = Decimal("100000")
         if arguments.strategy == "all":
             results = benchmark_suite(bars, initial_cash)
-            results["moving-average"] = strategy_result("moving-average", bars, initial_cash)
-            results["momentum"] = strategy_result("momentum", bars, initial_cash)
         else:
             results = {arguments.strategy: strategy_result(arguments.strategy, bars, initial_cash)}
         if arguments.output:
@@ -456,14 +465,27 @@ def _validate_strategy_parameters(name: str, parameters: dict[str, object]) -> N
         "buy-and-hold": set(),
         "fixed-weight": set(),
         "moving-average": {"window"},
+        "mean-reversion": {"window"},
         "momentum": {"lookback"},
         "relative-strength": {"lookback", "rebalance_every", "selection_count"},
         "risk-managed-momentum": {"lookback", "volatility_window", "rebalance_every"},
         "volatility-balanced": {"volatility_window", "rebalance_every"},
+        "volatility-targeted": {"volatility_window"},
     }[name]
     unknown = parameters.keys() - allowed
     if unknown:
         raise ValueError(f"unsupported parameters for {name}: {', '.join(sorted(unknown))}")
+    minimums = {
+        "moving-average": {"window": 2},
+        "mean-reversion": {"window": 2},
+        "risk-managed-momentum": {"volatility_window": 2},
+        "volatility-balanced": {"volatility_window": 2},
+        "volatility-targeted": {"volatility_window": 2},
+    }.get(name, {})
+    for parameter, minimum in minimums.items():
+        value = parameters.get(parameter)
+        if value is not None and (not isinstance(value, int) or value < minimum):
+            raise ValueError(f"{parameter} must be at least {minimum}")
 
 
 def _decimal_argument(value: str) -> Decimal:
@@ -492,6 +514,7 @@ def _strategy_identity(name: str) -> tuple[str, str]:
         "buy-and-hold": ("buy-and-hold", "baseline"),
         "fixed-weight": ("fixed-weight", "allocation"),
         "moving-average": ("moving-average-trend", "trend"),
+        "mean-reversion": ("moving-average-mean-reversion", "mean-reversion"),
         "momentum": ("time-series-momentum", "momentum"),
         "relative-strength": ("relative-strength-portfolio", "portfolio-momentum"),
         "risk-managed-momentum": (
@@ -502,6 +525,7 @@ def _strategy_identity(name: str) -> tuple[str, str]:
             "volatility-balanced-portfolio",
             "portfolio-allocation",
         ),
+        "volatility-targeted": ("volatility-targeted-exposure", "volatility"),
     }[name]
 
 

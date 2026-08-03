@@ -14,11 +14,13 @@ from systematic_trading_lab.reporting import (
 )
 from systematic_trading_lab.strategies import (
     FixedWeightStrategy,
+    MeanReversionStrategy,
     MovingAverageTrendStrategy,
     RelativeStrengthPortfolioStrategy,
     RiskManagedMomentumPortfolioStrategy,
     TimeSeriesMomentumStrategy,
     VolatilityBalancedPortfolioStrategy,
+    VolatilityTargetedExposureStrategy,
 )
 
 
@@ -42,8 +44,72 @@ def test_baselines_emit_targets_only_when_their_data_is_ready() -> None:
     assert fixed.on_bar(bars[2], bars[:3])[0].reason == "periodic-rebalance"
     assert MovingAverageTrendStrategy(window=3).on_bar(bars[1], bars[:2]) == ()
     assert MovingAverageTrendStrategy(window=3).on_bar(bars[2], bars[:3])[0].weight == Decimal("1")
+    assert MeanReversionStrategy(window=3).on_bar(bars[1], bars[:2]) == ()
     assert TimeSeriesMomentumStrategy(lookback=2).on_bar(bars[1], bars[:2]) == ()
     assert TimeSeriesMomentumStrategy(lookback=2).on_bar(bars[2], bars)[0].weight == Decimal("1")
+    assert VolatilityTargetedExposureStrategy(volatility_window=2).on_bar(bars[1], bars[:2]) == ()
+
+
+def test_mean_reversion_and_volatility_targeted_baselines_are_bounded() -> None:
+    symbol = Symbol("SPY")
+    start = datetime(2025, 1, 6, tzinfo=UTC)
+
+    def history(closes: tuple[str, ...]) -> tuple[OHLCVBar, ...]:
+        return tuple(
+            OHLCVBar(
+                symbol,
+                start + timedelta(days=index),
+                Decimal(close),
+                Decimal(close),
+                Decimal(close),
+                Decimal(close),
+                100,
+            )
+            for index, close in enumerate(closes)
+        )
+
+    falling = history(("100", "90"))
+    rising = history(("90", "100"))
+    mean_reversion = MeanReversionStrategy(window=2)
+    assert mean_reversion.on_bar(falling[-1], falling)[0].weight == Decimal("1")
+    assert mean_reversion.on_bar(rising[-1], rising)[0].weight == Decimal("0")
+
+    low_volatility = history(("100", "101", "100.5"))
+    high_volatility = history(("100", "110", "90"))
+    volatility_targeted = VolatilityTargetedExposureStrategy(volatility_window=2)
+    low_weight = volatility_targeted.on_bar(low_volatility[-1], low_volatility)[0].weight
+    high_weight = volatility_targeted.on_bar(high_volatility[-1], high_volatility)[0].weight
+    assert Decimal("0") < high_weight < low_weight <= Decimal("1")
+
+    with pytest.raises(ValueError, match="positive volatility"):
+        constant_returns = history(("100", "110", "121"))
+        volatility_targeted.on_bar(constant_returns[-1], constant_returns)
+
+
+def test_new_baseline_reports_are_deterministic_and_unlevered() -> None:
+    start = datetime(2025, 1, 6, tzinfo=UTC)
+    bars = tuple(
+        OHLCVBar(
+            Symbol(symbol),
+            start + timedelta(days=index),
+            Decimal(str(price)),
+            Decimal(str(price)),
+            Decimal(str(price)),
+            Decimal(str(price)),
+            100,
+        )
+        for symbol, prices in (("QQQ", (100, 103, 101, 104)), ("SPY", (100, 101, 100, 102)))
+        for index, price in enumerate(prices)
+    )
+
+    for name, parameters in (
+        ("mean-reversion", {"window": 2}),
+        ("volatility-targeted", {"volatility_window": 2}),
+    ):
+        first = strategy_result(name, bars, Decimal("1000"), parameters=parameters)
+        second = strategy_result(name, bars, Decimal("1000"), parameters=parameters)
+        assert first.artifact_fingerprint == second.artifact_fingerprint
+        assert first.metrics.max_gross_exposure <= Decimal("1")
 
 
 def test_benchmark_report_is_deterministic_and_immutable(tmp_path: Path) -> None:
@@ -61,7 +127,15 @@ def test_benchmark_report_is_deterministic_and_immutable(tmp_path: Path) -> None
         for index in range(3)
     )
     results = benchmark_suite(bars, Decimal("1000"))
-    assert {"cash", "buy-and-hold:SPY", "fixed-weight"} <= results.keys()
+    assert {
+        "cash",
+        "buy-and-hold:SPY",
+        "fixed-weight",
+        "moving-average",
+        "mean-reversion",
+        "momentum",
+        "volatility-targeted",
+    } == results.keys()
     report = build_report(results)
     comparisons = report["comparisons"]
     assert isinstance(comparisons, dict)

@@ -179,3 +179,12 @@
 - Reasoning: a registry provenance field closes the shared evidence path without deleting operational history or coupling qualification to market-data reads.
 - Consequences: manual and migrated legacy records remain readable but cannot qualify or authorize holdout access. Existing historical rows keep null provenance. Qualification gates and strategy behavior do not change.
 - Revisit when: reports move to remote immutable storage or artifact attestations replace local registry trust.
+
+## 2026-08-03 — Complete the bootstrap baseline set without search
+
+- Decision: define mean reversion as long exposure when the close is below its trailing moving average, and define volatility-targeted exposure as a long-only weight capped at one and scaled inversely to trailing annualized volatility.
+- Context: the bootstrap required both baselines, but the implemented suite omitted them while later portfolio families were evaluated.
+- Alternatives: treat later volatility-balanced allocation as the same baseline, add threshold or band searches, or defer both to automated research.
+- Reasoning: two fixed, inspectable rules complete the requested system checks without parameter optimization or a new backtest boundary.
+- Consequences: both strategies use existing next-bar fills, split exposure across multi-symbol datasets, fail on zero realized volatility, and remain unqualified. No campaign or protected control changes.
+- Revisit when: a reviewed research plan justifies bands, volatility forecasts, cash-rate assumptions, or portfolio-level volatility targeting.

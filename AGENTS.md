@@ -2,7 +2,7 @@
 
 ## Purpose and phase
 
-This repository builds research-grade infrastructure for U.S. ETF data, backtesting, qualification, and paper execution. It is in M0 with a safe slice of M1. Profit is never assumed. Live trading and autonomous promotion are prohibited.
+This repository builds research-grade infrastructure for U.S. ETF data, backtesting, qualification, and paper execution. M0–M3 infrastructure exists; the project is closing baseline coverage before M4. Profit is never assumed. Live trading and autonomous promotion are prohibited.
 
 ## Start here
 

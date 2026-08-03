@@ -132,6 +132,27 @@ class MovingAverageTrendStrategy:
 
 
 @dataclass(frozen=True)
+class MeanReversionStrategy:
+    window: int = 20
+    target_weight: Decimal = Decimal("1")
+    strategy_id: str = "moving-average-mean-reversion"
+    version: str = "1"
+
+    def __post_init__(self) -> None:
+        if self.window < 2:
+            raise ValueError("mean-reversion window must be at least two bars")
+        if not Decimal("0") < self.target_weight <= Decimal("1"):
+            raise ValueError("mean-reversion target weight must be in (0, 1]")
+
+    def on_bar(self, bar: OHLCVBar, history: Sequence[OHLCVBar]) -> Sequence[TargetPosition]:
+        if len(history) < self.window:
+            return ()
+        average = sum((item.close for item in history[-self.window :]), Decimal("0")) / self.window
+        weight = self.target_weight if bar.close < average else Decimal("0")
+        return (TargetPosition(bar.symbol, weight, "close-below-moving-average"),)
+
+
+@dataclass(frozen=True)
 class TimeSeriesMomentumStrategy:
     lookback: int = 20
     target_weight: Decimal = Decimal("1")
@@ -151,6 +172,48 @@ class TimeSeriesMomentumStrategy:
             self.target_weight if bar.close > history[-self.lookback - 1].close else Decimal("0")
         )
         return (TargetPosition(bar.symbol, weight, "close-vs-lookback"),)
+
+
+@dataclass(frozen=True)
+class VolatilityTargetedExposureStrategy:
+    volatility_window: int = 20
+    annualized_target_volatility: Decimal = Decimal("0.10")
+    maximum_weight: Decimal = Decimal("1")
+    strategy_id: str = "volatility-targeted-exposure"
+    version: str = "1"
+
+    def __post_init__(self) -> None:
+        if self.volatility_window < 2:
+            raise ValueError("volatility window must be at least two returns")
+        if not self.annualized_target_volatility.is_finite() or not (
+            Decimal("0") < self.annualized_target_volatility <= Decimal("1")
+        ):
+            raise ValueError("annualized target volatility must be in (0, 1]")
+        if not self.maximum_weight.is_finite() or not Decimal("0") < self.maximum_weight <= Decimal(
+            "1"
+        ):
+            raise ValueError("maximum weight must be in (0, 1]")
+
+    def on_bar(self, bar: OHLCVBar, history: Sequence[OHLCVBar]) -> Sequence[TargetPosition]:
+        if len(history) <= self.volatility_window:
+            return ()
+        closes = tuple(item.close for item in history[-self.volatility_window - 1 :])
+        returns = tuple(
+            current / previous - Decimal("1")
+            for previous, current in zip(closes, closes[1:], strict=False)
+        )
+        mean = sum(returns, Decimal("0")) / Decimal(self.volatility_window)
+        variance = sum(((value - mean) ** 2 for value in returns), Decimal("0")) / Decimal(
+            self.volatility_window - 1
+        )
+        if variance <= 0:
+            raise ValueError("volatility-targeted exposure requires positive volatility")
+        annualized_volatility = variance.sqrt() * Decimal("252").sqrt()
+        weight = min(
+            self.maximum_weight,
+            self.annualized_target_volatility / annualized_volatility,
+        )
+        return (TargetPosition(bar.symbol, weight, "annualized-volatility-target"),)
 
 
 @dataclass(frozen=True)

@@ -15,11 +15,13 @@ from .strategies import (
     BuyAndHoldStrategy,
     CashStrategy,
     FixedWeightStrategy,
+    MeanReversionStrategy,
     MovingAverageTrendStrategy,
     RelativeStrengthPortfolioStrategy,
     RiskManagedMomentumPortfolioStrategy,
     TimeSeriesMomentumStrategy,
     VolatilityBalancedPortfolioStrategy,
+    VolatilityTargetedExposureStrategy,
 )
 
 
@@ -98,6 +100,8 @@ def benchmark_suite(
         results[f"buy-and-hold:{symbol}"] = engine().run(symbol_bars, BuyAndHoldStrategy())
     if symbols:
         results["fixed-weight"] = engine().run(bars, FixedWeightStrategy(symbols))
+        for name in ("moving-average", "mean-reversion", "momentum", "volatility-targeted"):
+            results[name] = strategy_result(name, bars, initial_cash, cost_model)
     return results
 
 
@@ -151,10 +155,20 @@ def strategy_result(
             window=_positive_int_parameter(parameters, "window", 20),
             target_weight=target_weight,
         )
+    elif name in ("mean-reversion", "moving-average-mean-reversion"):
+        strategy = MeanReversionStrategy(
+            window=_positive_int_parameter(parameters, "window", 20),
+            target_weight=target_weight,
+        )
     elif name in ("momentum", "time-series-momentum"):
         strategy = TimeSeriesMomentumStrategy(
             lookback=_positive_int_parameter(parameters, "lookback", 20),
             target_weight=target_weight,
+        )
+    elif name in ("volatility-targeted", "volatility-targeted-exposure"):
+        strategy = VolatilityTargetedExposureStrategy(
+            volatility_window=_positive_int_parameter(parameters, "volatility_window", 20),
+            maximum_weight=target_weight,
         )
     else:
         raise ValueError(f"unknown backtest strategy: {name}")

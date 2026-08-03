@@ -41,7 +41,9 @@ _STRATEGIES: dict[str, tuple[str, frozenset[str]]] = {
     "buy-and-hold": ("baseline", frozenset()),
     "fixed-weight": ("allocation", frozenset()),
     "moving-average-trend": ("trend", frozenset({"window"})),
+    "moving-average-mean-reversion": ("mean-reversion", frozenset({"window"})),
     "time-series-momentum": ("momentum", frozenset({"lookback"})),
+    "volatility-targeted-exposure": ("volatility", frozenset({"volatility_window"})),
     "relative-strength-portfolio": (
         "portfolio-momentum",
         frozenset({"lookback", "rebalance_every", "selection_count"}),
@@ -54,6 +56,13 @@ _STRATEGIES: dict[str, tuple[str, frozenset[str]]] = {
         "portfolio-allocation",
         frozenset({"volatility_window", "rebalance_every"}),
     ),
+}
+_PARAMETER_MINIMUMS = {
+    "moving-average-trend": {"window": 2},
+    "moving-average-mean-reversion": {"window": 2},
+    "risk-managed-momentum-portfolio": {"volatility_window": 2},
+    "volatility-balanced-portfolio": {"volatility_window": 2},
+    "volatility-targeted-exposure": {"volatility_window": 2},
 }
 
 
@@ -118,10 +127,14 @@ def parse_training_campaign_plan(raw: object) -> TrainingCampaignPlan:
             raise ValueError(f"unsupported planned strategy: {strategy_id}")
         family, parameter_names = contract
         parameters = candidate["parameters"]
+        minimums = _PARAMETER_MINIMUMS.get(strategy_id, {})
         if (
             not isinstance(parameters, dict)
             or set(parameters) != parameter_names
-            or any(type(value) is not int or value < 1 for value in parameters.values())
+            or any(
+                type(value) is not int or value < minimums.get(name, 1)
+                for name, value in parameters.items()
+            )
         ):
             raise ValueError(f"planned parameters differ for {strategy_id}")
         if candidate["strategy_family"] != family:

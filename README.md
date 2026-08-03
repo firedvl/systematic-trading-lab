@@ -37,6 +37,10 @@ the candidate count. V1 accepts training splits, explicit strategy parameters, d
 costs, and next-bar fills only. `experiment run-planned` takes only a preregistered candidate ID, so
 callers cannot override its strategy, dates, parameters, provenance, parent, or models.
 
+The baseline suite includes cash, buy-and-hold, fixed-weight allocation, moving-average trend,
+time-series momentum, moving-average mean reversion, and volatility-targeted exposure. These are
+system checks, not optimized or financially qualified strategies.
+
 ## Quality gates
 
 ```console
