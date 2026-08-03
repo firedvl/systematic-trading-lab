@@ -30,3 +30,9 @@ and gross-exposure capacity a later transaction must reserve. A risk decision al
 or broker authority. The execution database initializes emergency disable as active and journals it;
 missing or changed emergency state fails closed. Clearing it remains unavailable until the protected
 authorization, reconciliation, operator, and journal-proof checks exist.
+
+Paper authorization is now a separate immutable journaled record. It accepts only fingerprint-valid
+qualification evidence whose approved gates all pass, and it binds the evidence candidate's strategy,
+parameters, code revision, dataset, and universe to one account and exact risk configuration period.
+Creating this record does not clear emergency disable, reserve capacity, stage an order, or contact a
+broker.

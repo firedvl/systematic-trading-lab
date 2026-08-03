@@ -247,6 +247,7 @@ def _candidate_specification(base: Sequence[Mapping[str, object]]) -> dict[str, 
         "strategy_id": spec["strategy_id"],
         "strategy_version": spec["strategy_version"],
         "strategy_family": spec["strategy_family"],
+        "code_commit": spec["code_commit"],
         "parameters": spec["parameters"],
         "cost_model_version": spec["cost_model_version"],
         "execution_model_version": spec["execution_model_version"],
@@ -276,6 +277,7 @@ def _validate_base_folds(
         raise ValueError(f"candidate {candidate.candidate_id} has overlapping validation periods")
     base_specs = [_spec(record) for record in base]
     identity_fields = (
+        "code_commit",
         "strategy_version",
         "strategy_family",
         "dataset_id",
