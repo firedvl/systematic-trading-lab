@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -16,7 +17,7 @@ from typing import Any
 from .execution import JournalIntegrityError
 from .experiments import HoldoutAccessError
 from .fingerprints import canonical_json, canonicalize, fingerprint
-from .risk import RiskLimits, RiskStore
+from .risk import EmergencyState, RiskLimits, RiskStore
 
 _SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,15}")
 _ALPACA_READER_CAPABILITY = object()
@@ -691,6 +692,7 @@ class ReconciliationStore(RiskStore):
             try:
                 connection.execute("BEGIN IMMEDIATE")
                 snapshots, attestations, baselines, evidence_by_id = self._verify_all(connection)
+                emergency = self._verify_emergency(connection)
                 try:
                     baseline = baselines[baseline_id]
                     expected = snapshots[baseline.expected_snapshot_id]
@@ -734,6 +736,8 @@ class ReconciliationStore(RiskStore):
                 )
                 existing = evidence_by_id.get(evidence_id)
                 if existing is not None:
+                    if not result.clean and not emergency.disabled:
+                        self._disable_for_reconciliation(connection, result, compared_at, emergency)
                     connection.commit()
                     return existing
                 sequence = self._append_event(
@@ -748,6 +752,8 @@ class ReconciliationStore(RiskStore):
                     "INSERT INTO reconciliation_evidence VALUES (?, ?, ?)",
                     (evidence_id, canonical_json(evidence), sequence),
                 )
+                if not result.clean and not emergency.disabled:
+                    self._disable_for_reconciliation(connection, result, compared_at, emergency)
                 connection.commit()
             except sqlite3.IntegrityError as error:
                 connection.rollback()
@@ -757,17 +763,177 @@ class ReconciliationStore(RiskStore):
                 raise
         return evidence
 
+    def clear_emergency(
+        self,
+        *,
+        clear_id: str,
+        baseline_id: str,
+        limits: RiskLimits,
+        operator: str,
+        reason: str,
+        cleared_at: datetime,
+    ) -> EmergencyState:
+        _bounded_text("clear ID", clear_id)
+        _bounded_text("operator", operator)
+        _bounded_text("reason", reason)
+        _utc("emergency-clear time", cleared_at)
+        with self._connect() as connection:
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                self._verify_all(connection)
+                emergency = self._verify_emergency(connection)
+                prior = next(
+                    (
+                        row
+                        for row in connection.execute(
+                            "SELECT payload_json FROM journal "
+                            "WHERE event_type = 'emergency-cleared'"
+                        ).fetchall()
+                        if json.loads(row[0]).get("clear_id") == clear_id
+                    ),
+                    None,
+                )
+                if prior is not None:
+                    stored = json.loads(prior[0])
+                    request = {
+                        "clear_id": clear_id,
+                        "baseline_id": baseline_id,
+                        "operator": operator,
+                        "reason": reason,
+                        "cleared_at": _utc_text(cleared_at),
+                    }
+                    if any(stored.get(key) != value for key, value in request.items()):
+                        raise JournalIntegrityError("clear ID is bound to different content")
+                    connection.commit()
+                    return emergency
+                if not emergency.disabled:
+                    raise HoldoutAccessError("emergency disable is already clear")
+                readiness = self.assess_emergency_clear_readiness(
+                    baseline_id=baseline_id,
+                    limits=limits,
+                    assessed_at=cleared_at,
+                    _connection=connection,
+                )
+                if not readiness.ready:
+                    raise HoldoutAccessError(
+                        "emergency clear requires stable clean reconciliation readiness"
+                    )
+                new_generation = emergency.generation + 1
+                payload = {
+                    "clear_id": clear_id,
+                    "baseline_id": baseline_id,
+                    "authorization_id": readiness.authorization_id,
+                    "risk_configuration_fingerprint": limits.configuration_fingerprint,
+                    "evidence_ids": readiness.evidence_ids,
+                    "observed_snapshot_ids": readiness.observed_snapshot_ids,
+                    "attestation_fingerprints": readiness.attestation_fingerprints,
+                    "proof_fingerprint": readiness.proof_fingerprint,
+                    "cause_fingerprint": readiness.proof_fingerprint,
+                    "disabled": False,
+                    "generation": new_generation,
+                    "reason": reason,
+                    "operator": operator,
+                    "changed_at": _utc_text(cleared_at),
+                    "cleared_at": _utc_text(cleared_at),
+                }
+                sequence = self._append_event(
+                    connection,
+                    occurred_at=cleared_at,
+                    event_type="emergency-cleared",
+                    entity_type="emergency-state",
+                    entity_id="global",
+                    payload=payload,
+                )
+                updated = connection.execute(
+                    """
+                    UPDATE emergency_state
+                    SET disabled = 0, generation = ?, reason = ?, operator = ?,
+                        changed_at = ?, journal_sequence = ?
+                    WHERE singleton = 1 AND generation = ? AND disabled = 1
+                    """,
+                    (
+                        new_generation,
+                        reason,
+                        operator,
+                        payload["changed_at"],
+                        sequence,
+                        emergency.generation,
+                    ),
+                )
+                if updated.rowcount != 1:
+                    raise JournalIntegrityError("emergency state changed during clear")
+                connection.commit()
+            except sqlite3.IntegrityError as error:
+                connection.rollback()
+                raise JournalIntegrityError("emergency clear already exists") from error
+            except Exception:
+                connection.rollback()
+                raise
+        return EmergencyState(
+            disabled=False,
+            generation=new_generation,
+            reason=reason,
+            operator=operator,
+            changed_at=cleared_at,
+            journal_sequence=sequence,
+        )
+
+    def _disable_for_reconciliation(
+        self,
+        connection: sqlite3.Connection,
+        result: ReconciliationResult,
+        changed_at: datetime,
+        emergency: EmergencyState,
+    ) -> None:
+        payload = {
+            "cause_fingerprint": result.result_fingerprint,
+            "disabled": True,
+            "generation": emergency.generation + 1,
+            "reason": "reconciliation mismatch",
+            "operator": "system",
+            "changed_at": _utc_text(changed_at),
+        }
+        sequence = self._append_event(
+            connection,
+            occurred_at=changed_at,
+            event_type="emergency-disabled",
+            entity_type="emergency-state",
+            entity_id="global",
+            payload=payload,
+        )
+        updated = connection.execute(
+            """
+            UPDATE emergency_state
+            SET disabled = 1, generation = ?, reason = ?, operator = ?,
+                changed_at = ?, journal_sequence = ?
+            WHERE singleton = 1 AND generation = ? AND disabled = 0
+            """,
+            (
+                payload["generation"],
+                payload["reason"],
+                payload["operator"],
+                payload["changed_at"],
+                sequence,
+                emergency.generation,
+            ),
+        )
+        if updated.rowcount != 1:
+            raise JournalIntegrityError("emergency state changed during reconciliation disable")
+
     def assess_emergency_clear_readiness(
         self,
         *,
         baseline_id: str,
         limits: RiskLimits,
         assessed_at: datetime,
+        _connection: sqlite3.Connection | None = None,
     ) -> EmergencyClearReadiness:
         _bounded_text("baseline ID", baseline_id)
         _utc("clear-readiness assessment", assessed_at)
-        with self._connect() as connection:
-            connection.execute("BEGIN")
+        manager = self._connect() if _connection is None else nullcontext(_connection)
+        with manager as connection:
+            if _connection is None:
+                connection.execute("BEGIN")
             snapshots, attestations, baselines, evidence_by_id = self._verify_all(connection)
             emergency = self._verify_emergency(connection)
             authorizations = self._verify_authorizations(connection)

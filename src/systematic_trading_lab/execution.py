@@ -20,6 +20,8 @@ _GENESIS_HASH = "0" * 64
 _KNOWN_EVENT_TYPES = {
     "intent-recorded",
     "emergency-initialized",
+    "emergency-cleared",
+    "emergency-disabled",
     "paper-authorized",
     "risk-decided",
     "portfolio-snapshot-recorded",

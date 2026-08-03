@@ -104,8 +104,9 @@ snapshots, a reviewed flat baseline, and later clean or dirty comparison results
 account, cash, equity, buying power, account readiness, position, complete open-order state,
 freshness, timing, authorization, or unresolved-mutation differences. Durable adapter provenance now
 exists. Read-only stable-repeat readiness now requires the latest three distinct clean records and
-the reviewed risk configuration's explicit separation interval. Emergency-clear authority remains
-absent.
+the reviewed risk configuration's explicit separation interval. Emergency clear is now a bounded,
+idempotent operator transition that recomputes and journals the proof in one transaction; dirty
+reconciliation atomically restores disable. Capacity reservations and broker writes remain absent.
 
 The paper read adapter now permits only fixed-origin GET requests for account, positions, open orders,
 and clock. It validates one expected account, an explicit symbol allowlist, account readiness and
