@@ -12,7 +12,7 @@ Provider-neutral acquisition, Alpaca historical adapter, fixtures, immutable raw
 
 ## M2 — Backtester and baselines
 
-Timestamp semantics, portfolio accounting, deterministic orders and fills, conservative versioned costs, ledgers, metrics, benchmarks, and simple baseline strategies. Gate: no lookahead; accounting and order invariants pass; fixed transactions cannot benefit from higher costs; reports reproduce.
+Timestamp semantics, portfolio accounting, deterministic orders and fills, conservative versioned costs, ledgers, metrics, benchmarks, and simple baseline strategies. The current slice covers explicit next-bar fills, cash accounting, bps slippage and commission, decision/order/trade/equity ledgers, cash and buy-and-hold baselines, and deterministic fixture reports. Gate: no lookahead; accounting and order invariants pass; fixed transactions cannot benefit from higher costs; reports reproduce.
 
 ## M3 — Experiments and qualification
 

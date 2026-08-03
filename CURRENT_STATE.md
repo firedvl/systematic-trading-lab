@@ -1,10 +1,10 @@
 # Current state
 
-- Milestone: M1 market-data foundation, offline and read-only provider slice complete.
-- Completed: persistent policies; fail-closed configuration; domain models; canonical fingerprints; atomic content-addressed datasets; raw JSONL snapshots; deterministic Parquet normalized artifacts; rebuildable SQLite catalog; XNYS session validation; deterministic five-symbol fixture provider; paginated read-only Alpaca historical-bars adapter; bar validation and quarantine evidence; doctor, status, fixture import, Alpaca import, describe, validate, and rebuild CLI; tests and CI.
+- Milestone: M2 backtester and baseline slice complete.
+- Completed: all M0/M1 capabilities plus explicit next-bar event timing; long-only cash and position accounting; configurable bps slippage and commission; decision, order, trade, and equity ledgers; total-return, drawdown, turnover, and trade-count metrics; cash and buy-and-hold target strategies; deterministic fixture backtest CLI; tests and CI.
 - Work in progress: none.
-- Known limitations: no provider correction lineage, corporate-action processor, point-in-time universe, backtester, qualification, broker, or execution system.
-- Test status: 9 tests pass; ruff format and lint, strict mypy, and secret scan pass on Python 3.12.13. CLI smoke import produced 25 bars and stable fingerprint `1e4db1750dfc47a24def1b6e95f0ca76fde224fcf24b862fb7bf8fc7dcac746f`; re-import reused it; live mode and offline Alpaca import were rejected.
+- Known limitations: no provider correction lineage, corporate-action processor, point-in-time universe, fixed-weight portfolio, walk-forward backtester, benchmark reports, qualification, broker, or execution system. The current buy-and-hold CLI example uses SPY only; multi-instrument allocation is a later baseline.
+- Test status: 12 tests pass; ruff format and lint, strict mypy, and secret scan pass on Python 3.12.13. Fixture backtest smoke produced deterministic cash and buy-and-hold fingerprints; offline broker/data modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
-- Next task: begin M2 with event/timestamp semantics, portfolio accounting, conservative costs, trade and decision ledgers, and the cash and buy-and-hold baselines.
-- Branch: `codex/m1-market-data`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/3.
+- Next task: finish M2 with fixed-weight periodic rebalance, moving-average and momentum baselines, benchmark comparison, and deterministic report artifacts.
+- Branch: `codex/m2-backtester`; regular pull request: https://github.com/firedvl/systematic-trading-lab/pull/4.
