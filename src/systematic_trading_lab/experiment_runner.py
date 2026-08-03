@@ -9,7 +9,8 @@ from decimal import Decimal
 from pathlib import Path
 
 from .backtesting import BacktestResult, CostModel
-from .domain import OHLCVBar
+from .datasets import DatasetService
+from .domain import OHLCVBar, TimestampRange
 from .experiments import (
     ExperimentError,
     ExperimentRegistry,
@@ -154,6 +155,51 @@ def run_experiment(
     except Exception as error:
         registry.fail(spec.experiment_id, f"{type(error).__name__}: {error}")
         raise
+
+
+def run_holdout_experiment(
+    registry: ExperimentRegistry,
+    datasets: DatasetService,
+    authorization_id: str,
+    spec: ExperimentSpec,
+    initial_cash: Decimal = Decimal("100000"),
+    cost_model: CostModel | None = None,
+    fill_delay_bars: int = 1,
+) -> dict[str, object]:
+    """Run one authorized holdout without exposing its result or report."""
+    if spec.split is not ExperimentSplit.HOLDOUT:
+        raise HoldoutAccessError("controlled holdout runner requires the holdout split")
+    selected_costs = cost_model or CostModel()
+    execution_version = execution_model_version(fill_delay_bars)
+    if spec.cost_model_version != selected_costs.version:
+        raise ExperimentError("experiment cost model does not match the runner")
+    if spec.execution_model_version != execution_version:
+        raise ExperimentError("experiment execution model does not match the runner")
+
+    registry.create_experiment(spec, holdout_authorization_id=authorization_id)
+    try:
+        registry.claim(spec.experiment_id)
+        bars = datasets.load_bars_range(
+            spec.dataset_id,
+            TimestampRange(spec.start_timestamp, spec.end_timestamp),
+            expected_fingerprint=spec.dataset_fingerprint,
+            expected_universe_id=spec.universe_id,
+            expected_universe_fingerprint=spec.universe_fingerprint,
+        )
+        registry.heartbeat(spec.experiment_id)
+        result = strategy_result(
+            spec.strategy_id,
+            bars,
+            initial_cash,
+            selected_costs,
+            spec.parameters,
+            fill_delay_bars,
+        )
+        registry.complete(spec.experiment_id, summarize(result))
+    except Exception as error:
+        registry.fail(spec.experiment_id, f"{type(error).__name__}: {error}")
+        raise
+    return registry.get(spec.experiment_id)
 
 
 def run_sensitivity(
