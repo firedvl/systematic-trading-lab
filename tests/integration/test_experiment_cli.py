@@ -1,4 +1,5 @@
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -6,7 +7,7 @@ import pytest
 from systematic_trading_lab.cli import parser, run
 from systematic_trading_lab.config import Settings
 from systematic_trading_lab.datasets import DatasetService, fixture_request, fixture_symbols
-from systematic_trading_lab.domain import Timeframe, TradingMode
+from systematic_trading_lab.domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
 from systematic_trading_lab.experiments import ExperimentRegistry
 from systematic_trading_lab.providers import FixtureProvider
 from systematic_trading_lab.storage import StorageLayout
@@ -14,7 +15,9 @@ from systematic_trading_lab.universe import load_research_universe
 
 
 def test_cli_runs_cataloged_experiment_and_compares_candidates(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     layout = StorageLayout(tmp_path)
     imported = DatasetService(layout).import_from(
@@ -26,6 +29,33 @@ def test_cli_runs_cataloged_experiment_and_compares_candidates(
     )
     ExperimentRegistry(layout.experiments).create_campaign("campaign", "CLI", 2)
     settings = Settings(TradingMode.OFFLINE, tmp_path)
+    original_range_loader = DatasetService.load_bars_range
+    loaded_ranges: list[TimestampRange] = []
+
+    def reject_full_load(self: DatasetService, dataset_id: str | None = None) -> None:
+        raise AssertionError("cataloged experiment attempted a full dataset load")
+
+    def audit_range_load(
+        self: DatasetService,
+        dataset_id: str,
+        requested: TimestampRange,
+        *,
+        expected_fingerprint: str,
+        expected_universe_id: str,
+        expected_universe_fingerprint: str,
+    ) -> tuple[OHLCVBar, ...]:
+        loaded_ranges.append(requested)
+        return original_range_loader(
+            self,
+            dataset_id,
+            requested,
+            expected_fingerprint=expected_fingerprint,
+            expected_universe_id=expected_universe_id,
+            expected_universe_fingerprint=expected_universe_fingerprint,
+        )
+
+    monkeypatch.setattr(DatasetService, "load_bars", reject_full_load)
+    monkeypatch.setattr(DatasetService, "load_bars_range", audit_range_load)
     command = [
         "experiment",
         "run",
@@ -41,7 +71,7 @@ def test_cli_runs_cataloged_experiment_and_compares_candidates(
         "--split",
         "validation",
         "--start",
-        "2025-01-06",
+        "2025-01-08",
         "--end",
         "2025-01-10",
         "--reason",
@@ -53,6 +83,9 @@ def test_cli_runs_cataloged_experiment_and_compares_candidates(
     ]
     arguments = parser().parse_args(command)
     assert run(arguments, settings) == 0
+    assert loaded_ranges == [
+        TimestampRange(datetime(2025, 1, 8, tzinfo=UTC), datetime(2025, 1, 10, tzinfo=UTC))
+    ]
     record = ExperimentRegistry(layout.experiments).get("candidate")
     assert record["status"] == "completed"
     stored_spec = record["spec_json"]
