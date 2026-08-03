@@ -12,9 +12,11 @@ from decimal import Decimal
 from pathlib import Path
 
 from . import __version__
+from .backtesting import CostModel
 from .config import ConfigurationError, Settings, load_settings
 from .datasets import DatasetService, DatasetValidationError, fixture_request, fixture_symbols
 from .domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
+from .experiment_runner import comparison_report, execution_model_version, run_experiment
 from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, ExperimentSplit
 from .providers import AlpacaHistoricalProvider, FixtureProvider
 from .reporting import benchmark_suite, build_report, report_json, strategy_result, write_report
@@ -80,6 +82,30 @@ def parser() -> argparse.ArgumentParser:
     fail.add_argument("--reason", required=True)
     recover = experiment_commands.add_parser("recover")
     recover.add_argument("--max-age-minutes", type=int, required=True)
+    execute = experiment_commands.add_parser(
+        "run", help="record and run a bounded training or validation experiment"
+    )
+    execute.add_argument("experiment_id")
+    execute.add_argument("--campaign", required=True)
+    execute.add_argument(
+        "--strategy",
+        choices=("cash", "buy-and-hold", "fixed-weight", "moving-average", "momentum"),
+        required=True,
+    )
+    execute.add_argument("--code-commit", required=True)
+    execute.add_argument("--dataset", required=True)
+    execute.add_argument("--split", choices=("training", "validation"), required=True)
+    execute.add_argument("--start", required=True)
+    execute.add_argument("--end", required=True)
+    execute.add_argument("--reason", required=True)
+    execute.add_argument("--parent-candidate")
+    execute.add_argument("--parameter", action="append", default=[], help="repeatable NAME=INTEGER")
+    execute.add_argument("--slippage-bps", type=_decimal_argument, default=Decimal("5"))
+    execute.add_argument("--commission-bps", type=_decimal_argument, default=Decimal("1"))
+    execute.add_argument("--cost-version")
+    execute.add_argument("--fill-delay-bars", type=int, default=1)
+    compare = experiment_commands.add_parser("compare")
+    compare.add_argument("experiment_ids", nargs="+")
     return root
 
 
@@ -145,6 +171,44 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             _print(
                 {"recovered": registry.recover_stale(timedelta(minutes=arguments.max_age_minutes))}
             )
+        elif arguments.experiment_command == "run":
+            manifest = service.describe(arguments.dataset)
+            identity = manifest["identity"]
+            cost_model = _cost_model(arguments)
+            strategy_id, strategy_family = _strategy_identity(arguments.strategy)
+            parameters = _parse_parameters(arguments.parameter)
+            _validate_strategy_parameters(arguments.strategy, parameters)
+            spec = ExperimentSpec(
+                experiment_id=arguments.experiment_id,
+                campaign_id=arguments.campaign,
+                strategy_id=strategy_id,
+                strategy_version="1",
+                strategy_family=strategy_family,
+                code_commit=arguments.code_commit,
+                dataset_id=identity["dataset_id"],
+                dataset_fingerprint=identity["fingerprint"],
+                universe_id="liquid-etfs-v1",
+                parameters=parameters,
+                cost_model_version=cost_model.version,
+                execution_model_version=execution_model_version(arguments.fill_delay_bars),
+                split=ExperimentSplit(arguments.split),
+                start_timestamp=_parse_utc(arguments.start),
+                end_timestamp=_parse_utc(arguments.end),
+                random_seed=0,
+                creation_reason=arguments.reason,
+                parent_candidate=arguments.parent_candidate,
+            )
+            run_experiment(
+                registry,
+                spec,
+                service.load_bars(arguments.dataset),
+                layout.reports,
+                cost_model=cost_model,
+                fill_delay_bars=arguments.fill_delay_bars,
+            )
+            _print(registry.get(arguments.experiment_id))
+        elif arguments.experiment_command == "compare":
+            _print(comparison_report(registry, arguments.experiment_ids))
         else:
             _print(registry.get(arguments.experiment_id))
         return 0
@@ -250,6 +314,63 @@ def _parse_metrics(values: Sequence[str]) -> dict[str, object]:
             raise ValueError("metrics must be unique NAME=VALUE pairs")
         metrics[name] = metric
     return metrics
+
+
+def _parse_parameters(values: Sequence[str]) -> dict[str, object]:
+    parameters: dict[str, object] = {}
+    for value in values:
+        name, separator, raw = value.partition("=")
+        if not separator or not name or not raw or name in parameters:
+            raise ValueError("parameters must be unique NAME=INTEGER pairs")
+        try:
+            parsed = int(raw)
+        except ValueError as error:
+            raise ValueError("parameters must be unique NAME=INTEGER pairs") from error
+        parameters[name] = parsed
+    return parameters
+
+
+def _validate_strategy_parameters(name: str, parameters: dict[str, object]) -> None:
+    allowed = {
+        "cash": set(),
+        "buy-and-hold": set(),
+        "fixed-weight": set(),
+        "moving-average": {"window"},
+        "momentum": {"lookback"},
+    }[name]
+    unknown = parameters.keys() - allowed
+    if unknown:
+        raise ValueError(f"unsupported parameters for {name}: {', '.join(sorted(unknown))}")
+
+
+def _decimal_argument(value: str) -> Decimal:
+    try:
+        parsed = Decimal(value)
+    except ArithmeticError as error:
+        raise argparse.ArgumentTypeError("expected a decimal number") from error
+    if not parsed.is_finite():
+        raise argparse.ArgumentTypeError("expected a finite decimal number")
+    return parsed
+
+
+def _cost_model(arguments: argparse.Namespace) -> CostModel:
+    version = arguments.cost_version
+    if version is None:
+        if (arguments.slippage_bps, arguments.commission_bps) == (Decimal("5"), Decimal("1")):
+            version = "conservative-bps-v1"
+        else:
+            version = f"bps-{arguments.slippage_bps}-{arguments.commission_bps}-v1"
+    return CostModel(version, arguments.slippage_bps, arguments.commission_bps)
+
+
+def _strategy_identity(name: str) -> tuple[str, str]:
+    return {
+        "cash": ("cash", "baseline"),
+        "buy-and-hold": ("buy-and-hold", "baseline"),
+        "fixed-weight": ("fixed-weight", "allocation"),
+        "moving-average": ("moving-average-trend", "trend"),
+        "momentum": ("time-series-momentum", "momentum"),
+    }[name]
 
 
 def _print(value: object) -> None:
