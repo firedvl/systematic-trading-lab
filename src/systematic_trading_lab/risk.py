@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -151,6 +151,26 @@ class RiskDecision:
     order_notional: Decimal
     cash_reservation: Decimal
     gross_exposure_reservation: Decimal
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.approved, bool) or self.approved != (not self.reasons):
+            raise ValueError("risk approval must match its reasons")
+        if any(not isinstance(reason, str) or not reason for reason in self.reasons):
+            raise ValueError("risk decision reasons must be nonempty strings")
+        for fingerprint_name, fingerprint_value in (
+            ("intent", self.intent_fingerprint),
+            ("configuration", self.configuration_fingerprint),
+            ("context", self.context_fingerprint),
+        ):
+            _sha256(fingerprint_name, fingerprint_value)
+        _utc("risk decision time", self.decided_at)
+        for amount_name, amount_value in (
+            ("order notional", self.order_notional),
+            ("cash reservation", self.cash_reservation),
+            ("gross exposure reservation", self.gross_exposure_reservation),
+        ):
+            if not amount_value.is_finite() or amount_value < 0:
+                raise ValueError(f"{amount_name} must be finite and nonnegative")
 
 
 def evaluate_risk(
@@ -298,6 +318,17 @@ class PaperAuthorization:
         return fingerprint(self)
 
 
+@dataclass(frozen=True)
+class RiskDecisionReceipt:
+    decision_id: str
+    intent_id: str
+    authorization_id: str
+    approved: bool
+    reasons: tuple[str, ...]
+    decided_at: datetime
+    journal_sequence: int
+
+
 class RiskStore(ExecutionStore):
     """Extend the execution database with persistent fail-closed emergency state."""
 
@@ -334,6 +365,23 @@ class RiskStore(ExecutionStore):
                 BEFORE DELETE ON paper_authorizations BEGIN
                     SELECT RAISE(ABORT, 'paper authorizations are immutable');
                 END;
+                CREATE TABLE IF NOT EXISTS risk_decisions (
+                    decision_id TEXT PRIMARY KEY,
+                    intent_id TEXT NOT NULL REFERENCES intents(idempotency_key),
+                    authorization_id TEXT NOT NULL
+                        REFERENCES paper_authorizations(authorization_id),
+                    decision_json TEXT NOT NULL,
+                    decided_at TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
+                CREATE TRIGGER IF NOT EXISTS risk_decisions_no_update
+                BEFORE UPDATE ON risk_decisions BEGIN
+                    SELECT RAISE(ABORT, 'risk decisions are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS risk_decisions_no_delete
+                BEFORE DELETE ON risk_decisions BEGIN
+                    SELECT RAISE(ABORT, 'risk decisions are immutable');
+                END;
                 """
             )
             connection.commit()
@@ -368,6 +416,7 @@ class RiskStore(ExecutionStore):
             connection.commit()
             self._verify_emergency(connection)
             self._verify_authorizations(connection)
+            self._verify_decisions(connection)
 
     def authorize_paper(
         self,
@@ -447,6 +496,110 @@ class RiskStore(ExecutionStore):
             return authorizations[authorization_id]
         except KeyError:
             raise KeyError(authorization_id) from None
+
+    def record_risk_decision(
+        self,
+        intent_id: str,
+        authorization_id: str,
+        limits: RiskLimits,
+        context: RiskContext,
+    ) -> RiskDecisionReceipt:
+        with self._connect() as connection:
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                self._verify_connection(connection)
+                emergency = self._verify_emergency(connection)
+                authorizations = self._verify_authorizations(connection)
+                self._verify_decisions(connection)
+                try:
+                    authorization = authorizations[authorization_id]
+                except KeyError:
+                    raise HoldoutAccessError("paper authorization not found") from None
+                intent = self._read_intent(connection, intent_id)
+                if (
+                    authorization.strategy_id != intent.strategy_id
+                    or authorization.strategy_version != intent.strategy_version
+                    or authorization.parameters_fingerprint != intent.configuration_fingerprint
+                    or authorization.dataset_fingerprint != intent.source_data_fingerprint
+                    or authorization.account_id != context.account_id
+                    or authorization.risk_configuration_fingerprint
+                    != limits.configuration_fingerprint
+                    or context.evaluated_at < authorization.authorized_at
+                    or context.evaluated_at >= authorization.expires_at
+                ):
+                    raise HoldoutAccessError(
+                        "intent, context, limits, or time differs from paper authorization"
+                    )
+                bound_context = replace(
+                    context,
+                    emergency_disabled=emergency.disabled,
+                )
+                decision = evaluate_risk(intent, limits, bound_context)
+                if decision.approved:
+                    raise JournalIntegrityError(
+                        "risk approval is disabled until reconciliation and reservations exist"
+                    )
+                decision_id = fingerprint(
+                    {
+                        "intent": intent.intent_fingerprint,
+                        "authorization": authorization.authorization_fingerprint,
+                        "decision": decision,
+                    }
+                )
+                existing = connection.execute(
+                    """
+                    SELECT intent_id, authorization_id, decision_json, decided_at,
+                           journal_sequence
+                    FROM risk_decisions WHERE decision_id = ?
+                    """,
+                    (decision_id,),
+                ).fetchone()
+                if existing is not None:
+                    receipt = _decision_receipt(decision_id, existing)
+                    connection.commit()
+                    return receipt
+                payload = {
+                    "decision_id": decision_id,
+                    "intent_id": intent_id,
+                    "authorization_id": authorization_id,
+                    "decision": canonicalize(decision),
+                }
+                sequence = self._append_event(
+                    connection,
+                    occurred_at=decision.decided_at,
+                    event_type="risk-decided",
+                    entity_type="risk-decision",
+                    entity_id=decision_id,
+                    payload=payload,
+                )
+                decision_json = canonical_json(decision)
+                connection.execute(
+                    "INSERT INTO risk_decisions VALUES (?, ?, ?, ?, ?, ?)",
+                    (
+                        decision_id,
+                        intent_id,
+                        authorization_id,
+                        decision_json,
+                        _utc_text(decision.decided_at),
+                        sequence,
+                    ),
+                )
+                connection.commit()
+            except sqlite3.IntegrityError as error:
+                connection.rollback()
+                raise HoldoutAccessError("risk decision or reservation already exists") from error
+            except Exception:
+                connection.rollback()
+                raise
+        return RiskDecisionReceipt(
+            decision_id,
+            intent_id,
+            authorization_id,
+            decision.approved,
+            decision.reasons,
+            decision.decided_at,
+            sequence,
+        )
 
     def get_emergency(self) -> EmergencyState:
         with self._connect() as connection:
@@ -550,6 +703,83 @@ class RiskStore(ExecutionStore):
             result[authorization.authorization_id] = authorization
         return result
 
+    def _verify_decisions(self, connection: sqlite3.Connection) -> None:
+        rows = connection.execute(
+            """
+            SELECT decision_id, intent_id, authorization_id, decision_json, decided_at,
+                   journal_sequence
+            FROM risk_decisions
+            """
+        ).fetchall()
+        event_count = connection.execute(
+            "SELECT COUNT(*) FROM journal WHERE event_type = 'risk-decided'"
+        ).fetchone()[0]
+        if len(rows) != event_count:
+            raise JournalIntegrityError("risk decision and journal counts differ")
+        for row in rows:
+            try:
+                decision = _decode_decision(json.loads(row[3]))
+            except (ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError("stored risk decision is invalid") from error
+            payload = {
+                "decision_id": row[0],
+                "intent_id": row[1],
+                "authorization_id": row[2],
+                "decision": canonicalize(decision),
+            }
+            event = connection.execute(
+                """
+                SELECT occurred_at, event_type, entity_type, entity_id, payload_json
+                FROM journal WHERE sequence = ?
+                """,
+                (row[5],),
+            ).fetchone()
+            references = connection.execute(
+                """
+                SELECT i.intent_fingerprint, a.authorization_fingerprint,
+                       a.authorization_json
+                FROM intents i, paper_authorizations a
+                WHERE i.idempotency_key = ? AND a.authorization_id = ?
+                """,
+                (row[1], row[2]),
+            ).fetchone()
+            try:
+                authorization = (
+                    None if references is None else _decode_authorization(json.loads(references[2]))
+                )
+            except (ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError("risk decision authorization is invalid") from error
+            expected_id = (
+                None
+                if references is None
+                else fingerprint(
+                    {
+                        "intent": references[0],
+                        "authorization": references[1],
+                        "decision": decision,
+                    }
+                )
+            )
+            if (
+                row[0] != expected_id
+                or authorization is None
+                or decision.intent_fingerprint != references[0]
+                or decision.configuration_fingerprint
+                != authorization.risk_configuration_fingerprint
+                or row[3] != canonical_json(decision)
+                or row[4] != _utc_text(decision.decided_at)
+                or event
+                != (
+                    row[4],
+                    "risk-decided",
+                    "risk-decision",
+                    row[0],
+                    canonical_json(payload),
+                )
+                or decision.approved
+            ):
+                raise JournalIntegrityError("risk decision does not match its journal event")
+
 
 def _text(name: str, value: str) -> None:
     if not value or value != value.strip():
@@ -608,6 +838,52 @@ def _evidence_bindings(report: dict[str, object]) -> dict[str, object]:
         "universe_fingerprint": candidate["universe_fingerprint"],
         "qualification_evidence_fingerprint": report["evidence_fingerprint"],
     }
+
+
+def _decode_decision(value: Any) -> RiskDecision:
+    fields = {
+        "approved",
+        "reasons",
+        "intent_fingerprint",
+        "configuration_fingerprint",
+        "context_fingerprint",
+        "decided_at",
+        "order_notional",
+        "cash_reservation",
+        "gross_exposure_reservation",
+    }
+    if not isinstance(value, dict) or set(value) != fields:
+        raise ValueError("risk decision fields differ")
+    reasons = value["reasons"]
+    if not isinstance(reasons, list) or any(not isinstance(item, str) for item in reasons):
+        raise ValueError("risk decision reasons are invalid")
+    try:
+        return RiskDecision(
+            approved=value["approved"],
+            reasons=tuple(reasons),
+            intent_fingerprint=value["intent_fingerprint"],
+            configuration_fingerprint=value["configuration_fingerprint"],
+            context_fingerprint=value["context_fingerprint"],
+            decided_at=_parse_utc(value["decided_at"]),
+            order_notional=Decimal(value["order_notional"]),
+            cash_reservation=Decimal(value["cash_reservation"]),
+            gross_exposure_reservation=Decimal(value["gross_exposure_reservation"]),
+        )
+    except (KeyError, TypeError, ArithmeticError) as error:
+        raise ValueError("risk decision value is invalid") from error
+
+
+def _decision_receipt(decision_id: str, row: tuple[Any, ...]) -> RiskDecisionReceipt:
+    decision = _decode_decision(json.loads(row[2]))
+    return RiskDecisionReceipt(
+        decision_id=decision_id,
+        intent_id=str(row[0]),
+        authorization_id=str(row[1]),
+        approved=decision.approved,
+        reasons=decision.reasons,
+        decided_at=_parse_utc(str(row[3])),
+        journal_sequence=int(row[4]),
+    )
 
 
 def _sha256(name: str, value: str) -> None:

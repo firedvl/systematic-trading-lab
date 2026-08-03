@@ -17,7 +17,12 @@ from .fingerprints import canonical_json, canonicalize, fingerprint
 
 _SCHEMA_VERSION = "execution-intent-journal-v1"
 _GENESIS_HASH = "0" * 64
-_KNOWN_EVENT_TYPES = {"intent-recorded", "emergency-initialized", "paper-authorized"}
+_KNOWN_EVENT_TYPES = {
+    "intent-recorded",
+    "emergency-initialized",
+    "paper-authorized",
+    "risk-decided",
+}
 _FINGERPRINT = re.compile(r"[0-9a-f]{64}")
 _SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,15}")
 
@@ -245,9 +250,12 @@ class ExecutionStore:
         with self._connect() as connection:
             connection.execute("BEGIN")
             self._verify_connection(connection)
-            row = connection.execute(
-                "SELECT intent_json FROM intents WHERE idempotency_key = ?", (idempotency_key,)
-            ).fetchone()
+            return self._read_intent(connection, idempotency_key)
+
+    def _read_intent(self, connection: sqlite3.Connection, idempotency_key: str) -> ExecutionIntent:
+        row = connection.execute(
+            "SELECT intent_json FROM intents WHERE idempotency_key = ?", (idempotency_key,)
+        ).fetchone()
         if row is None:
             raise KeyError(idempotency_key)
         try:

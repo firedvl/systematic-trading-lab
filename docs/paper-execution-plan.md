@@ -94,10 +94,10 @@ append-only hash chain and stored head at startup. It has no broker, risk, or ne
 
 Slice 2 now has the pure independent risk envelope, persistent default-on emergency state, and
 immutable paper authorization bound to passing qualification evidence, exact code, strategy, data,
-account, limits, reviewer, reason, and expiry. No financial limit is committed, and an in-memory
-passing decision grants no authority. Durable decisions and atomic pending-capacity reservations
-remain. Emergency clear waits for stable reconciliation evidence rather than accepting a placeholder
-proof.
+account, limits, reviewer, reason, and expiry. Risk decisions now reload those durable records and
+verified emergency state in one transaction before journaling the result. No financial limit is
+committed, and emergency disable prevents approvals. Capacity reservations and emergency clear wait
+for stable reconciliation evidence rather than accepting a placeholder proof.
 
 ## Alpaca contract
 

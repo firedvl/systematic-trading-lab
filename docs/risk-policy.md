@@ -36,3 +36,9 @@ qualification evidence whose approved gates all pass, and it binds the evidence 
 parameters, code revision, dataset, and universe to one account and exact risk configuration period.
 Creating this record does not clear emergency disable, reserve capacity, stage an order, or contact a
 broker.
+
+Durable evaluation now reloads the immutable intent and authorization in one immediate transaction
+and replaces the supplied emergency flag with verified persistent state. It journals rejected
+decisions. Approval is explicitly blocked until clean reconciliation can support a journaled emergency
+clear and the same transaction can reserve pending cash, order notional, gross exposure, and order
+count. This prevents a caller or test-only flag from creating unproven capacity authority.
