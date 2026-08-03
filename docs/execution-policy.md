@@ -24,6 +24,9 @@ Storage accepts only schema-validated normalized fields and excludes raw bodies,
 exception text. A valid event advances local order state in the same transaction as its evidence;
 cancellation or rejection also releases capacity. Conflicting identity, order, quantity, sequence,
 or local state restores persistent emergency disable before the event is rejected.
+Only the reader's non-injected production lookup path can convert one normalized lookup result into
+durable broker-event evidence. The event identity binds the complete lookup snapshot, broker update
+time, and local observation time; injected transports remain unable to create provenance.
 Conflicting duplicates, unknown statuses, out-of-order transitions, or position drift trigger
 emergency disable. Each submit, cancel, and cancel-all mutation is journaled before the call and has
 an unknown-outcome state resolved by lookup and reconciliation before retry. No order submission is
