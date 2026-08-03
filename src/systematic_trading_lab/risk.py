@@ -293,7 +293,7 @@ class PaperAuthorization:
     expires_at: datetime
 
     def __post_init__(self) -> None:
-        for name, value in (
+        for name, text_value in (
             ("authorization ID", self.authorization_id),
             ("candidate ID", self.candidate_id),
             ("strategy ID", self.strategy_id),
@@ -305,7 +305,7 @@ class PaperAuthorization:
             ("authorizer", self.authorized_by),
             ("authorization reason", self.authorization_reason),
         ):
-            _text(name, value)
+            _text(name, text_value)
         for name, value in (
             ("parameters", self.parameters_fingerprint),
             ("dataset", self.dataset_fingerprint),
@@ -333,6 +333,47 @@ class RiskDecisionReceipt:
     reasons: tuple[str, ...]
     decided_at: datetime
     journal_sequence: int
+
+
+@dataclass(frozen=True)
+class CapacityReservation:
+    reservation_id: str
+    decision_id: str
+    intent_id: str
+    authorization_id: str
+    account_id: str
+    configuration_fingerprint: str
+    cash: Decimal
+    gross_exposure: Decimal
+    order_notional: Decimal
+    reserved_at: datetime
+    expires_at: datetime
+
+    def __post_init__(self) -> None:
+        for name, text_value in (
+            ("reservation ID", self.reservation_id),
+            ("decision ID", self.decision_id),
+            ("intent ID", self.intent_id),
+            ("authorization ID", self.authorization_id),
+            ("account ID", self.account_id),
+        ):
+            _text(name, text_value)
+        _sha256("configuration", self.configuration_fingerprint)
+        for name, amount in (
+            ("cash reservation", self.cash),
+            ("gross exposure reservation", self.gross_exposure),
+            ("order notional", self.order_notional),
+        ):
+            if not amount.is_finite() or amount < 0:
+                raise ValueError(f"{name} must be finite and nonnegative")
+        _utc("reservation time", self.reserved_at)
+        _utc("reservation expiry", self.expires_at)
+        if self.expires_at <= self.reserved_at:
+            raise ValueError("reservation expiry must follow reservation time")
+
+    @property
+    def reservation_fingerprint(self) -> str:
+        return fingerprint(self)
 
 
 class RiskStore(ExecutionStore):
@@ -388,6 +429,25 @@ class RiskStore(ExecutionStore):
                 BEFORE DELETE ON risk_decisions BEGIN
                     SELECT RAISE(ABORT, 'risk decisions are immutable');
                 END;
+                CREATE TABLE IF NOT EXISTS capacity_reservations (
+                    reservation_id TEXT PRIMARY KEY,
+                    decision_id TEXT NOT NULL UNIQUE REFERENCES risk_decisions(decision_id),
+                    intent_id TEXT NOT NULL REFERENCES intents(idempotency_key),
+                    authorization_id TEXT NOT NULL
+                        REFERENCES paper_authorizations(authorization_id),
+                    reservation_json TEXT NOT NULL,
+                    reserved_at TEXT NOT NULL,
+                    expires_at TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
+                CREATE TRIGGER IF NOT EXISTS capacity_reservations_no_update
+                BEFORE UPDATE ON capacity_reservations BEGIN
+                    SELECT RAISE(ABORT, 'capacity reservations are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS capacity_reservations_no_delete
+                BEFORE DELETE ON capacity_reservations BEGIN
+                    SELECT RAISE(ABORT, 'capacity reservations are immutable');
+                END;
                 """
             )
             connection.commit()
@@ -423,6 +483,7 @@ class RiskStore(ExecutionStore):
             self._verify_emergency(connection)
             self._verify_authorizations(connection)
             self._verify_decisions(connection)
+            self._verify_reservations(connection)
 
     def authorize_paper(
         self,
@@ -517,6 +578,7 @@ class RiskStore(ExecutionStore):
                 emergency = self._verify_emergency(connection)
                 authorizations = self._verify_authorizations(connection)
                 self._verify_decisions(connection)
+                self._verify_reservations(connection)
                 try:
                     authorization = authorizations[authorization_id]
                 except KeyError:
@@ -540,11 +602,19 @@ class RiskStore(ExecutionStore):
                     context,
                     emergency_disabled=emergency.disabled,
                 )
+                reserved = self._active_reservation_totals(
+                    connection,
+                    account_id=context.account_id,
+                    at=context.evaluated_at,
+                    exclude_intent_id=intent_id,
+                )
+                bound_context = replace(
+                    bound_context,
+                    pending_buy_notional=bound_context.pending_buy_notional + reserved[0],
+                    pending_order_notional=bound_context.pending_order_notional + reserved[1],
+                    pending_order_count=bound_context.pending_order_count + reserved[2],
+                )
                 decision = evaluate_risk(intent, limits, bound_context)
-                if decision.approved:
-                    raise JournalIntegrityError(
-                        "risk approval is disabled until reconciliation and reservations exist"
-                    )
                 decision_id = fingerprint(
                     {
                         "intent": intent.intent_fingerprint,
@@ -590,6 +660,43 @@ class RiskStore(ExecutionStore):
                         sequence,
                     ),
                 )
+                if decision.approved:
+                    reservation = CapacityReservation(
+                        reservation_id=fingerprint({"decision_id": decision_id}),
+                        decision_id=decision_id,
+                        intent_id=intent_id,
+                        authorization_id=authorization_id,
+                        account_id=context.account_id,
+                        configuration_fingerprint=limits.configuration_fingerprint,
+                        cash=decision.cash_reservation,
+                        gross_exposure=decision.gross_exposure_reservation,
+                        order_notional=decision.order_notional,
+                        reserved_at=decision.decided_at,
+                        expires_at=min(
+                            intent.expires_at, authorization.expires_at, limits.expires_at
+                        ),
+                    )
+                    reservation_sequence = self._append_event(
+                        connection,
+                        occurred_at=reservation.reserved_at,
+                        event_type="capacity-reserved",
+                        entity_type="capacity-reservation",
+                        entity_id=reservation.reservation_id,
+                        payload=canonicalize(reservation),
+                    )
+                    connection.execute(
+                        "INSERT INTO capacity_reservations VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            reservation.reservation_id,
+                            reservation.decision_id,
+                            reservation.intent_id,
+                            reservation.authorization_id,
+                            canonical_json(reservation),
+                            _utc_text(reservation.reserved_at),
+                            _utc_text(reservation.expires_at),
+                            reservation_sequence,
+                        ),
+                    )
                 connection.commit()
             except sqlite3.IntegrityError as error:
                 connection.rollback()
@@ -728,6 +835,81 @@ class RiskStore(ExecutionStore):
             result[authorization.authorization_id] = authorization
         return result
 
+    def _active_reservation_totals(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        account_id: str,
+        at: datetime,
+        exclude_intent_id: str | None = None,
+    ) -> tuple[Decimal, Decimal, int]:
+        rows = connection.execute(
+            """
+            SELECT reservation_json FROM capacity_reservations
+            WHERE json_extract(reservation_json, '$.account_id') = ?
+              AND expires_at > ?
+              AND (? IS NULL OR intent_id != ?)
+            """,
+            (account_id, _utc_text(at), exclude_intent_id, exclude_intent_id),
+        ).fetchall()
+        reservations = [_decode_reservation(json.loads(row[0])) for row in rows]
+        return (
+            sum((item.cash for item in reservations), Decimal("0")),
+            sum((item.order_notional for item in reservations), Decimal("0")),
+            len(reservations),
+        )
+
+    def _verify_reservations(self, connection: sqlite3.Connection) -> None:
+        rows = connection.execute(
+            """
+            SELECT reservation_id, decision_id, intent_id, authorization_id,
+                   reservation_json, reserved_at, expires_at, journal_sequence
+            FROM capacity_reservations
+            """
+        ).fetchall()
+        event_count = connection.execute(
+            "SELECT COUNT(*) FROM journal WHERE event_type = 'capacity-reserved'"
+        ).fetchone()[0]
+        if len(rows) != event_count:
+            raise JournalIntegrityError("capacity reservation and journal counts differ")
+        for row in rows:
+            try:
+                reservation = _decode_reservation(json.loads(row[4]))
+            except (ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError("stored capacity reservation is invalid") from error
+            payload = canonical_json(reservation)
+            event = connection.execute(
+                """
+                SELECT occurred_at, event_type, entity_type, entity_id, payload_json
+                FROM journal WHERE sequence = ?
+                """,
+                (row[7],),
+            ).fetchone()
+            if (
+                row[0] != reservation.reservation_id
+                or row[1] != reservation.decision_id
+                or row[2] != reservation.intent_id
+                or row[3] != reservation.authorization_id
+                or row[4] != payload
+                or row[5] != _utc_text(reservation.reserved_at)
+                or row[6] != _utc_text(reservation.expires_at)
+                or event
+                != (
+                    row[5],
+                    "capacity-reserved",
+                    "capacity-reservation",
+                    row[0],
+                    payload,
+                )
+            ):
+                raise JournalIntegrityError("capacity reservation does not match its journal event")
+            decision_row = connection.execute(
+                "SELECT decision_json FROM risk_decisions WHERE decision_id = ?",
+                (reservation.decision_id,),
+            ).fetchone()
+            if decision_row is None or not _decode_decision(json.loads(decision_row[0])).approved:
+                raise JournalIntegrityError("capacity reservation lacks approved risk decision")
+
     def _verify_decisions(self, connection: sqlite3.Connection) -> None:
         rows = connection.execute(
             """
@@ -801,7 +983,14 @@ class RiskStore(ExecutionStore):
                     row[0],
                     canonical_json(payload),
                 )
-                or decision.approved
+                or (
+                    decision.approved
+                    and connection.execute(
+                        "SELECT 1 FROM capacity_reservations WHERE decision_id = ?",
+                        (row[0],),
+                    ).fetchone()
+                    is None
+                )
             ):
                 raise JournalIntegrityError("risk decision does not match its journal event")
 
@@ -896,6 +1085,27 @@ def _decode_decision(value: Any) -> RiskDecision:
         )
     except (KeyError, TypeError, ArithmeticError) as error:
         raise ValueError("risk decision value is invalid") from error
+
+
+def _decode_reservation(value: Any) -> CapacityReservation:
+    if not isinstance(value, dict):
+        raise ValueError("capacity reservation must be an object")
+    try:
+        return CapacityReservation(
+            reservation_id=value["reservation_id"],
+            decision_id=value["decision_id"],
+            intent_id=value["intent_id"],
+            authorization_id=value["authorization_id"],
+            account_id=value["account_id"],
+            configuration_fingerprint=value["configuration_fingerprint"],
+            cash=Decimal(value["cash"]),
+            gross_exposure=Decimal(value["gross_exposure"]),
+            order_notional=Decimal(value["order_notional"]),
+            reserved_at=_parse_utc(value["reserved_at"]),
+            expires_at=_parse_utc(value["expires_at"]),
+        )
+    except (KeyError, TypeError, ArithmeticError) as error:
+        raise ValueError("capacity reservation value is invalid") from error
 
 
 def _decision_receipt(decision_id: str, row: tuple[Any, ...]) -> RiskDecisionReceipt:

@@ -532,6 +532,31 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     )
     assert not cleared.disabled
     assert cleared.generation == 2
+    intent = replace(
+        _intent(report),
+        decision_timestamp=NOW + timedelta(seconds=16),
+        expires_at=NOW + timedelta(minutes=20),
+    )
+    store.record_intent(intent, received_at=NOW + timedelta(seconds=17))
+    risk_context = replace(
+        _context(),
+        evaluated_at=NOW + timedelta(seconds=18),
+        account_observed_at=NOW + timedelta(seconds=13),
+        positions_observed_at=NOW + timedelta(seconds=13),
+        orders_observed_at=NOW + timedelta(seconds=13),
+        quote_observed_at=NOW + timedelta(seconds=13),
+        clock_observed_at=NOW + timedelta(seconds=13),
+    )
+    reserved = store.record_risk_decision(
+        intent.idempotency_key, authorization.authorization_id, limits, risk_context
+    )
+    assert reserved.approved
+    assert (
+        RiskStore(store.path).record_risk_decision(
+            intent.idempotency_key, authorization.authorization_id, limits, risk_context
+        )
+        == reserved
+    )
     assert (
         store.clear_emergency(
             clear_id="clear-stable-1",
