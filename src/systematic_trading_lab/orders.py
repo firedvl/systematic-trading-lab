@@ -423,6 +423,25 @@ class OrderLifecycleStore(RiskStore):
             _parse_utc(str(row[5])),
         )
 
+    def _submission_unknown_orders(self, connection: sqlite3.Connection) -> tuple[StagedOrder, ...]:
+        rows = connection.execute(
+            "SELECT order_id, reservation_id, delta_json, changed_at, submitter_id, claimed_at "
+            "FROM orders WHERE state = ? ORDER BY order_id",
+            (OrderState.SUBMISSION_UNKNOWN,),
+        ).fetchall()
+        return tuple(
+            StagedOrder(
+                str(row[0]),
+                str(row[1]),
+                _decode_delta(json.loads(row[2])),
+                OrderState.SUBMISSION_UNKNOWN,
+                _parse_utc(str(row[3])),
+                str(row[4]),
+                _parse_utc(str(row[5])),
+            )
+            for row in rows
+        )
+
 
 def build_order_delta(
     intent: ExecutionIntent,

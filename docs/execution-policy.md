@@ -20,6 +20,8 @@ It exposes no submit, cancel, replace, close-position, or other mutation method.
 A timeout or crash after submission requires lookup by that ID before retry. Broker events now have
 a broker-free evidence store that deduplicates exact provider event identity and normalized content,
 checks forward state and cumulative fill quantity, and binds each event to one known local order.
+The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
+recovery worker can obtain the exact deterministic client IDs without changing execution state.
 Storage accepts only schema-validated normalized fields and excludes raw bodies, headers, URLs, and
 exception text. A valid event advances local order state in the same transaction as its evidence;
 cancellation or rejection also releases capacity. Conflicting identity, order, quantity, sequence,

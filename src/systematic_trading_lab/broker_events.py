@@ -11,7 +11,7 @@ from typing import Never
 
 from .execution import JournalIntegrityError
 from .fingerprints import canonical_json, canonicalize, fingerprint
-from .orders import OrderLifecycleStore, OrderState
+from .orders import OrderLifecycleStore, OrderState, StagedOrder
 
 _BROKER_STATES = {
     OrderState.ACKNOWLEDGED,
@@ -209,6 +209,17 @@ class BrokerEventStore(OrderLifecycleStore):
                     )
             connection.commit()
         return event
+
+    def submission_unknown_orders(self) -> tuple[StagedOrder, ...]:
+        """Return unknown orders after verifying all local and broker evidence."""
+        with self._connect() as connection:
+            connection.execute("BEGIN")
+            self._verify_connection(connection)
+            self._verify_reservations(connection)
+            self._verify_releases(connection)
+            self._verify_orders(connection)
+            self._verify_broker_events(connection)
+            return self._submission_unknown_orders(connection)
 
     def _reject_event(
         self, connection: sqlite3.Connection, event: BrokerOrderEvent, message: str
