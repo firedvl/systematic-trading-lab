@@ -109,6 +109,12 @@ class ExperimentRegistry:
                     finished_at TEXT,
                     heartbeat_at TEXT
                 );
+                CREATE TABLE IF NOT EXISTS campaign_plans (
+                    campaign_id TEXT PRIMARY KEY REFERENCES campaigns(campaign_id),
+                    plan_json TEXT NOT NULL,
+                    plan_fingerprint TEXT NOT NULL UNIQUE,
+                    sealed_at TEXT NOT NULL
+                );
                 CREATE TABLE IF NOT EXISTS holdout_access (
                     event_id TEXT PRIMARY KEY,
                     experiment_id TEXT NOT NULL REFERENCES experiments(experiment_id),
@@ -133,6 +139,13 @@ class ExperimentRegistry:
                 );
                 """
             )
+            experiment_columns = {
+                column[1] for column in connection.execute("PRAGMA table_info(experiments)")
+            }
+            if "campaign_plan_fingerprint" not in experiment_columns:
+                connection.execute(
+                    "ALTER TABLE experiments ADD COLUMN campaign_plan_fingerprint TEXT"
+                )
             authorization_columns = {
                 column[1]
                 for column in connection.execute("PRAGMA table_info(holdout_run_authorizations)")
@@ -167,6 +180,89 @@ class ExperimentRegistry:
             "status": "active",
             "search_budget": search_budget,
         }
+
+    def create_planned_campaign(self, plan: Mapping[str, object]) -> dict[str, object]:
+        from .campaign_specs import parse_training_campaign_plan
+
+        parsed = parse_training_campaign_plan(plan)
+        timestamp = _now()
+        with self._connect() as connection:
+            try:
+                connection.execute(
+                    "INSERT INTO campaigns VALUES (?, ?, ?, ?, ?)",
+                    (
+                        parsed.campaign_id,
+                        parsed.name,
+                        timestamp,
+                        "sealed",
+                        parsed.search_budget,
+                    ),
+                )
+                connection.execute(
+                    "INSERT INTO campaign_plans VALUES (?, ?, ?, ?)",
+                    (
+                        parsed.campaign_id,
+                        canonical_json(parsed.payload),
+                        parsed.plan_fingerprint,
+                        timestamp,
+                    ),
+                )
+                for spec in parsed.candidates:
+                    connection.execute(
+                        """
+                        INSERT INTO experiments
+                        (experiment_id, campaign_id, spec_json, split, status,
+                         qualification_state, created_at, campaign_plan_fingerprint)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            spec.experiment_id,
+                            parsed.campaign_id,
+                            canonical_json(spec),
+                            spec.split.value,
+                            ExperimentStatus.PENDING.value,
+                            QualificationState.NOT_EVALUATED.value,
+                            timestamp,
+                            parsed.plan_fingerprint,
+                        ),
+                    )
+            except sqlite3.IntegrityError as error:
+                raise ExperimentError(
+                    f"sealed campaign already exists: {parsed.campaign_id}"
+                ) from error
+        return {
+            "campaign_id": parsed.campaign_id,
+            "name": parsed.name,
+            "status": "sealed",
+            "search_budget": parsed.search_budget,
+            "plan_fingerprint": parsed.plan_fingerprint,
+            "declared_candidates": len(parsed.candidates),
+        }
+
+    def get_campaign_plan(self, campaign_id: str) -> dict[str, object]:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT plan_json, plan_fingerprint, sealed_at
+                FROM campaign_plans WHERE campaign_id = ?
+                """,
+                (campaign_id,),
+            ).fetchone()
+        if row is None:
+            raise KeyError(f"sealed campaign plan not found: {campaign_id}")
+        return {
+            "plan_json": json.loads(str(row[0])),
+            "plan_fingerprint": row[1],
+            "sealed_at": row[2],
+        }
+
+    def get_planned_spec(self, experiment_id: str) -> ExperimentSpec:
+        record = self.get(experiment_id)
+        if record.get("campaign_plan_fingerprint") is None:
+            raise ExperimentError(f"experiment is not from a sealed plan: {experiment_id}")
+        spec = record["spec_json"]
+        assert isinstance(spec, Mapping)
+        return _experiment_spec(spec)
 
     def _create_holdout_run_authorization(
         self,
@@ -330,6 +426,7 @@ class ExperimentRegistry:
                 UPDATE experiments
                 SET status = ?, started_at = COALESCE(started_at, ?), heartbeat_at = ?
                 WHERE experiment_id = ? AND status = ?
+                  AND campaign_plan_fingerprint IS NULL
                 """,
                 (
                     ExperimentStatus.RUNNING.value,
@@ -341,6 +438,29 @@ class ExperimentRegistry:
             )
             if cursor.rowcount != 1:
                 raise ExperimentError(f"experiment is not pending: {experiment_id}")
+
+    def _claim_planned(self, spec: ExperimentSpec) -> None:
+        if self.get_planned_spec(spec.experiment_id) != spec:
+            raise ExperimentError("stored planned experiment differs")
+        timestamp = _now()
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE experiments
+                SET status = ?, started_at = COALESCE(started_at, ?), heartbeat_at = ?
+                WHERE experiment_id = ? AND status = ?
+                  AND campaign_plan_fingerprint IS NOT NULL
+                """,
+                (
+                    ExperimentStatus.RUNNING.value,
+                    timestamp,
+                    timestamp,
+                    spec.experiment_id,
+                    ExperimentStatus.PENDING.value,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise ExperimentError(f"planned experiment is not pending: {spec.experiment_id}")
 
     def heartbeat(self, experiment_id: str) -> None:
         with self._connect() as connection:
@@ -364,6 +484,7 @@ class ExperimentRegistry:
                 UPDATE experiments SET status = ?, metrics_json = ?, artifact_locations_json = ?,
                     artifact_hashes_json = ?, finished_at = ?, heartbeat_at = NULL
                 WHERE experiment_id = ? AND status = ?
+                  AND campaign_plan_fingerprint IS NULL
                 """,
                 (
                     ExperimentStatus.COMPLETED.value,
@@ -377,6 +498,36 @@ class ExperimentRegistry:
             )
             if cursor.rowcount != 1:
                 raise ExperimentError(f"experiment is not running: {experiment_id}")
+
+    def _complete_planned(
+        self,
+        spec: ExperimentSpec,
+        metrics: Mapping[str, object],
+        artifact_locations: list[str],
+        artifact_hashes: list[str],
+    ) -> None:
+        if self.get_planned_spec(spec.experiment_id) != spec:
+            raise ExperimentError("stored planned experiment differs")
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE experiments SET status = ?, metrics_json = ?, artifact_locations_json = ?,
+                    artifact_hashes_json = ?, finished_at = ?, heartbeat_at = NULL
+                WHERE experiment_id = ? AND status = ?
+                  AND campaign_plan_fingerprint IS NOT NULL
+                """,
+                (
+                    ExperimentStatus.COMPLETED.value,
+                    canonical_json(metrics),
+                    canonical_json(artifact_locations),
+                    canonical_json(artifact_hashes),
+                    _now(),
+                    spec.experiment_id,
+                    ExperimentStatus.RUNNING.value,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise ExperimentError(f"planned experiment is not running: {spec.experiment_id}")
 
     def fail(self, experiment_id: str, reason: str) -> None:
         if not reason:
@@ -673,6 +824,39 @@ def _parse_utc(value: str) -> datetime:
     if parsed.tzinfo is None or parsed.utcoffset() != UTC.utcoffset(parsed):
         raise HoldoutAccessError("candidate timestamp must be UTC")
     return parsed.astimezone(UTC)
+
+
+def _experiment_spec(value: Mapping[str, object]) -> ExperimentSpec:
+    parameters = value["parameters"]
+    random_seed = value["random_seed"]
+    parent = value["parent_candidate"]
+    if not isinstance(parameters, Mapping):
+        raise ExperimentError("stored experiment parameters are invalid")
+    if random_seed is not None and type(random_seed) is not int:
+        raise ExperimentError("stored experiment random seed is invalid")
+    if parent is not None and not isinstance(parent, str):
+        raise ExperimentError("stored experiment parent is invalid")
+    return ExperimentSpec(
+        experiment_id=str(value["experiment_id"]),
+        campaign_id=str(value["campaign_id"]),
+        strategy_id=str(value["strategy_id"]),
+        strategy_version=str(value["strategy_version"]),
+        strategy_family=str(value["strategy_family"]),
+        code_commit=str(value["code_commit"]),
+        dataset_id=str(value["dataset_id"]),
+        dataset_fingerprint=str(value["dataset_fingerprint"]),
+        universe_id=str(value["universe_id"]),
+        universe_fingerprint=str(value["universe_fingerprint"]),
+        parameters=parameters,
+        cost_model_version=str(value["cost_model_version"]),
+        execution_model_version=str(value["execution_model_version"]),
+        split=ExperimentSplit(str(value["split"])),
+        start_timestamp=_parse_utc(str(value["start_timestamp"])),
+        end_timestamp=_parse_utc(str(value["end_timestamp"])),
+        random_seed=random_seed,
+        creation_reason=str(value["creation_reason"]),
+        parent_candidate=parent,
+    )
 
 
 def _now() -> str:
