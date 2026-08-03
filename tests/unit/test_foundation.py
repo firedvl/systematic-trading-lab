@@ -1,9 +1,10 @@
 from datetime import UTC, datetime
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 
-from systematic_trading_lab.config import ConfigurationError, load_settings
+from systematic_trading_lab.config import ConfigurationError, load_dotenv, load_settings
 from systematic_trading_lab.domain import OHLCVBar, Symbol, Timeframe
 from systematic_trading_lab.fingerprints import fingerprint
 from systematic_trading_lab.validation import validate_records
@@ -15,6 +16,35 @@ def test_configuration_defaults_offline_and_rejects_live() -> None:
     assert settings.broker_writes_allowed is False
     with pytest.raises(ConfigurationError, match="live trading is disabled"):
         load_settings({"TRADING_LAB_MODE": "live"})
+
+
+def test_dotenv_loads_supported_values_without_overriding_environment(tmp_path: Path) -> None:
+    path = tmp_path / ".env"
+    path.write_text(
+        "TRADING_LAB_MODE=research\n"
+        "TRADING_LAB_HOME=.trading-lab\n"
+        "APCA_API_KEY_ID=file-key\n"
+        "APCA_API_SECRET_KEY='file-secret'\n",
+        encoding="utf-8",
+    )
+    environment = {"APCA_API_KEY_ID": "process-key"}
+
+    load_dotenv(path, environment)
+
+    assert environment == {
+        "TRADING_LAB_MODE": "research",
+        "TRADING_LAB_HOME": ".trading-lab",
+        "APCA_API_KEY_ID": "process-key",
+        "APCA_API_SECRET_KEY": "file-secret",
+    }
+
+
+def test_dotenv_rejects_unknown_entries(tmp_path: Path) -> None:
+    path = tmp_path / ".env"
+    path.write_text("UNSUPPORTED_SETTING=value\n", encoding="utf-8")
+
+    with pytest.raises(ConfigurationError, match="invalid .env entry"):
+        load_dotenv(path, {})
 
 
 def test_canonical_fingerprint_normalizes_decimal_and_mapping_order() -> None:

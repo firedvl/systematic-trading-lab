@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Mapping
+import re
+from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -14,6 +15,15 @@ class ConfigurationError(ValueError):
     pass
 
 
+_DOTENV_KEYS = {
+    "TRADING_LAB_MODE",
+    "TRADING_LAB_HOME",
+    "APCA_API_KEY_ID",
+    "APCA_API_SECRET_KEY",
+}
+_ENVIRONMENT_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
+
+
 @dataclass(frozen=True)
 class Settings:
     mode: TradingMode
@@ -22,6 +32,33 @@ class Settings:
     @property
     def broker_writes_allowed(self) -> bool:
         return False
+
+
+def load_dotenv(
+    path: Path | None = None, environment: MutableMapping[str, str] | None = None
+) -> None:
+    """Load supported local settings without overriding the process environment."""
+    source = path or Path.cwd() / ".env"
+    target = os.environ if environment is None else environment
+    try:
+        lines = source.read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError:
+        return
+    except OSError as error:
+        raise ConfigurationError(f"cannot read environment file: {source}") from error
+    for line_number, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        name, separator, raw_value = stripped.partition("=")
+        if not separator or not _ENVIRONMENT_NAME.fullmatch(name) or name not in _DOTENV_KEYS:
+            raise ConfigurationError(f"invalid .env entry at line {line_number}")
+        value = raw_value.strip()
+        if value[:1] in {'"', "'"} or value[-1:] in {'"', "'"}:
+            if len(value) < 2 or value[0] != value[-1]:
+                raise ConfigurationError(f"invalid quoted .env value at line {line_number}")
+            value = value[1:-1]
+        target.setdefault(name, value)
 
 
 def load_settings(environment: Mapping[str, str] | None = None) -> Settings:
