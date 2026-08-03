@@ -127,9 +127,10 @@ refuse unattested paper snapshots.
 
 ## Alpaca contract
 
-The current read adapter uses Trading API 2.0.1 paper endpoints for account, positions, clock, and
-open orders. A later separately reviewed writer may add order lookup by client ID, submission, and
-single-order cancellation. Polling is authoritative; streaming may later reduce latency but cannot
+The current read adapter uses Trading API 2.0.1 paper endpoints for account, positions, clock, open
+orders, and exact lookup by deterministic client order ID. The lookup remains fixed-origin, GET-only,
+and schema validated. A later separately reviewed writer may add submission and single-order
+cancellation. Polling is authoritative; streaming may later reduce latency but cannot
 replace reconciliation. Orders are whole-share, long-only,
 nonextended-hours ETF `day` market or limit orders for one authorized account. Replace, fractional or
 notional orders, shorts, bulk close, options, crypto, and account mutation stay out of scope.
@@ -139,3 +140,4 @@ Official references reviewed 2026-08-03:
 - <https://docs.alpaca.markets/us/docs/paper-trading>
 - <https://docs.alpaca.markets/us/docs/trading-api>
 - <https://docs.alpaca.markets/us/reference/getallorders-1>
+- <https://docs.alpaca.markets/reference/getorderbyclientorderid-1>

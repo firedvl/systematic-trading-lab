@@ -10,7 +10,7 @@ from decimal import Decimal, InvalidOperation
 from http.client import HTTPException
 from typing import TYPE_CHECKING, Any, cast
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import parse_qs, urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from .fingerprints import fingerprint
@@ -25,7 +25,9 @@ if TYPE_CHECKING:
     from .reconciliation import ReconciliationStore
 
 PAPER_ORIGIN = "https://paper-api.alpaca.markets"
-_ALLOWED_PATHS = frozenset({"/v2/account", "/v2/positions", "/v2/orders", "/v2/clock"})
+_ALLOWED_PATHS = frozenset(
+    {"/v2/account", "/v2/positions", "/v2/orders", "/v2/orders:by_client_order_id", "/v2/clock"}
+)
 _OPEN_ORDER_STATUSES = frozenset(
     {
         "accepted",
@@ -42,6 +44,7 @@ _OPEN_ORDER_STATUSES = frozenset(
         "suspended",
     }
 )
+_ORDER_STATUSES = _OPEN_ORDER_STATUSES | {"filled", "canceled", "expired", "rejected", "replaced"}
 _Transport = Callable[[Request], bytes]
 _Clock = Callable[[], datetime]
 
@@ -69,6 +72,28 @@ class MarketClockSnapshot:
                 raise ValueError(f"{name} must be UTC-aware")
         if not isinstance(self.is_open, bool):
             raise ValueError("market-open state must be boolean")
+
+
+@dataclass(frozen=True)
+class PaperOrderSnapshot:
+    broker_order_id: str
+    client_order_id: str
+    symbol: str
+    side: str
+    quantity: int
+    filled_quantity: int
+    order_type: str
+    limit_price: Decimal | None
+    status: str
+    updated_at: datetime
+
+    def __post_init__(self) -> None:
+        if self.side not in {"buy", "sell"} or self.order_type not in {"market", "limit"}:
+            raise ValueError("paper order type or side is unsupported")
+        if self.quantity < 1 or not 0 <= self.filled_quantity <= self.quantity:
+            raise ValueError("paper order quantity is invalid")
+        if self.status not in _ORDER_STATUSES:
+            raise ValueError("paper order status is unsupported")
 
 
 class AlpacaPaperReader:
@@ -211,6 +236,41 @@ class AlpacaPaperReader:
             raise AlpacaPaperError("Alpaca paper clock session times are inconsistent")
         return result
 
+    def read_order(self, client_order_id: str) -> PaperOrderSnapshot:
+        if (
+            not client_order_id
+            or client_order_id != client_order_id.strip()
+            or len(client_order_id) > 128
+        ):
+            raise ValueError("client order ID is invalid")
+        value = self._get_object(
+            "/v2/orders:by_client_order_id", {"client_order_id": client_order_id}
+        )
+        if _text(value, "client_order_id", "order") != client_order_id:
+            raise AlpacaPaperError("Alpaca paper lookup returned an unexpected client order ID")
+        try:
+            return PaperOrderSnapshot(
+                broker_order_id=_text(value, "id", "order"),
+                client_order_id=client_order_id,
+                symbol=self._order_symbol(value),
+                side=_text(value, "side", "order"),
+                quantity=_whole_shares(value, "qty", positive=True),
+                filled_quantity=_whole_shares(value, "filled_qty", positive=False),
+                order_type=_text(value, "type", "order"),
+                limit_price=_optional_amount(value, "limit_price"),
+                status=_lookup_status(value),
+                updated_at=_timestamp(value, "updated_at"),
+            )
+        except ValueError as error:
+            raise AlpacaPaperError("Alpaca paper order is invalid") from error
+
+    def _order_symbol(self, value: dict[str, Any]) -> str:
+        symbol = _text(value, "symbol", "order")
+        if symbol not in self._allowed_symbols:
+            raise AlpacaPaperError("Alpaca paper response contains an unexpected symbol")
+        _supported_order_envelope(value)
+        return symbol
+
     def _position(self, value: Any) -> PositionSnapshot:
         if not isinstance(value, dict):
             raise AlpacaPaperError("Alpaca paper position has an invalid shape")
@@ -223,22 +283,18 @@ class AlpacaPaperReader:
         return PositionSnapshot(symbol=symbol, quantity=int(quantity))
 
     def _open_order(self, value: Any) -> OpenOrderSnapshot:
+        return self._order(value, statuses=_OPEN_ORDER_STATUSES)
+
+    def _order(self, value: Any, *, statuses: frozenset[str]) -> OpenOrderSnapshot:
         if not isinstance(value, dict):
             raise AlpacaPaperError("Alpaca paper order has an invalid shape")
         symbol = _text(value, "symbol", "order")
         if symbol not in self._allowed_symbols:
             raise AlpacaPaperError("Alpaca paper response contains an unexpected symbol")
         status = _text(value, "status", "order")
-        if status not in _OPEN_ORDER_STATUSES:
-            raise AlpacaPaperError("Alpaca paper open order has an unexpected status")
-        if (
-            value.get("time_in_force") != "day"
-            or value.get("extended_hours") is not False
-            or value.get("order_class") != "simple"
-            or value.get("notional") is not None
-            or value.get("legs") is not None
-        ):
-            raise AlpacaPaperError("Alpaca paper open order is outside the supported envelope")
+        if status not in statuses:
+            raise AlpacaPaperError("Alpaca paper order has an unexpected status")
+        _supported_order_envelope(value)
         try:
             return OpenOrderSnapshot(
                 client_order_id=_text(value, "client_order_id", "order"),
@@ -253,8 +309,8 @@ class AlpacaPaperReader:
         except ValueError as error:
             raise AlpacaPaperError("Alpaca paper open order is invalid") from error
 
-    def _get_object(self, path: str) -> dict[str, Any]:
-        value = self._get(path)
+    def _get_object(self, path: str, query: dict[str, str] | None = None) -> dict[str, Any]:
+        value = self._get(path, query)
         if not isinstance(value, dict):
             raise AlpacaPaperError("Alpaca paper response has an invalid object shape")
         return value
@@ -345,6 +401,24 @@ def _account_ready(value: dict[str, Any]) -> bool:
     return status == "ACTIVE" and not any(flags)
 
 
+def _lookup_status(value: dict[str, Any]) -> str:
+    status = _text(value, "status", "order")
+    if status not in _ORDER_STATUSES:
+        raise AlpacaPaperError("Alpaca paper order has an unexpected status")
+    return status
+
+
+def _supported_order_envelope(value: dict[str, Any]) -> None:
+    if (
+        value.get("time_in_force") != "day"
+        or value.get("extended_hours") is not False
+        or value.get("order_class") != "simple"
+        or value.get("notional") is not None
+        or value.get("legs") is not None
+    ):
+        raise AlpacaPaperError("Alpaca paper order is outside the supported envelope")
+
+
 def _timestamp(value: dict[str, Any], field: str) -> datetime:
     raw = value.get(field)
     if not isinstance(raw, str):
@@ -360,12 +434,29 @@ def _timestamp(value: dict[str, Any], field: str) -> datetime:
 
 def _validate_request(request: Request) -> None:
     parsed = urlsplit(request.full_url)
+    query = parse_qs(parsed.query, keep_blank_values=True)
+    valid_query = (
+        (parsed.path in {"/v2/account", "/v2/positions", "/v2/clock"} and not query)
+        or (
+            parsed.path == "/v2/orders"
+            and query
+            == {"status": ["open"], "limit": ["500"], "direction": ["asc"], "nested": ["false"]}
+        )
+        or (
+            parsed.path == "/v2/orders:by_client_order_id"
+            and set(query) == {"client_order_id"}
+            and len(query["client_order_id"]) == 1
+            and bool(query["client_order_id"][0])
+            and len(query["client_order_id"][0]) <= 128
+        )
+    )
     if (
         request.get_method() != "GET"
         or parsed.scheme != "https"
         or parsed.netloc != "paper-api.alpaca.markets"
         or parsed.path not in _ALLOWED_PATHS
         or parsed.fragment
+        or not valid_query
     ):
         raise AlpacaPaperError("Alpaca paper request target is not allowed")
 

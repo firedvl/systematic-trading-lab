@@ -145,7 +145,36 @@ def test_reader_normalizes_complete_portfolio_and_clock_with_get_only_requests()
         for name, value in inspect.getmembers(AlpacaPaperReader, inspect.isfunction)
         if not name.startswith("_")
     }
-    assert public_methods == {"read_clock", "read_portfolio", "record_portfolio"}
+    assert public_methods == {"read_clock", "read_order", "read_portfolio", "record_portfolio"}
+
+
+def test_reader_looks_up_one_exact_client_order_id() -> None:
+    requests: list[Request] = []
+    order = {
+        "id": "broker-order-1",
+        "client_order_id": "client-1",
+        "symbol": "SPY",
+        "status": "filled",
+        "side": "buy",
+        "qty": "2",
+        "filled_qty": "2",
+        "type": "market",
+        "limit_price": None,
+        "time_in_force": "day",
+        "extended_hours": False,
+        "order_class": "simple",
+        "notional": None,
+        "legs": None,
+        "updated_at": "2026-08-03T20:00:00Z",
+    }
+    reader = _reader(_payloads(**{"/v2/orders:by_client_order_id": order}), requests)
+
+    result = reader.read_order("client-1")
+
+    assert result.broker_order_id == "broker-order-1"
+    assert result.client_order_id == "client-1"
+    assert result.status == "filled"
+    assert parse_qs(urlsplit(requests[0].full_url).query) == {"client_order_id": ["client-1"]}
 
 
 @pytest.mark.parametrize(
