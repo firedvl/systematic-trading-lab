@@ -59,7 +59,7 @@ def _spec(
     )
 
 
-def _metrics(total_return: str, index: int) -> dict[str, object]:
+def _metrics(total_return: str, index: int, *, trade_count: int | None = None) -> dict[str, object]:
     return {
         "total_return": Decimal(total_return),
         "sharpe_ratio": Decimal(str(index)),
@@ -70,7 +70,7 @@ def _metrics(total_return: str, index: int) -> dict[str, object]:
         "up_regime_sessions": 100 + index,
         "down_regime_sessions": 50 + index,
         "turnover": Decimal(str(10 + index)),
-        "trade_count": 100 + index,
+        "trade_count": trade_count if trade_count is not None else 100 + index,
     }
 
 
@@ -87,11 +87,16 @@ def _seed_registry(path: Path, *, corrupt_cost: bool = False) -> ExperimentRegis
     registry.create_campaign("campaign-evidence", "Evidence", 16)
     base_returns = ("0.1", "0.2", "0.3")
     benchmark_returns = ("0.05", "0.25", "0.1")
+    base_trade_counts = (20, 30, 50)
     for index, year in enumerate((2023, 2024, 2025), start=1):
         _complete(
             registry,
             _spec(f"base-{index}", "candidate-strategy", year),
-            _metrics(base_returns[index - 1], index),
+            _metrics(
+                base_returns[index - 1],
+                index,
+                trade_count=base_trade_counts[index - 1],
+            ),
         )
         _complete(
             registry,
@@ -188,6 +193,7 @@ def test_registry_evidence_aggregates_and_stays_unapproved(
     assert metrics["min_cost2x_return_retention"] == Decimal("0.8")
     assert metrics["min_delay2_return_retention"] == Decimal("0.9")
     assert metrics["min_parameter_neighbor_return_retention"] == Decimal("0.5")
+    assert metrics["total_validation_trade_count"] == 100
     assert metrics["campaign_candidate_count"] == 14
     assert isinstance(qualification, dict)
     assert qualification["state"] == "unapproved"

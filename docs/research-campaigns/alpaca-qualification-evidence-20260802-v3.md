@@ -45,3 +45,12 @@ Financial gates remain unapproved. A reviewer must approve explicit benchmark, d
 ## Registry-backed reproduction
 
 `config/research/qualification-evidence-v3.json` now names every registry record used by the gate evaluation. The evaluator reproduced the documented aggregate values without loading market data. The candidate-bound report is `qualification-d6fa5ef3dace66b58a5d0df429fa4e44bb08d99a411f1b700d6d5ed9c127c15d.json`, with evidence fingerprints `3e729d6b92549809b9880706b246f25a9b115b1294324531104a44f8eee8df65` for moving average and `cacd96fb5f204fa92dfd9d6a0299a799dbf68df9eb13096a25b7d6882da9bf3f` for momentum. Both states remain `unapproved`, with the same four and three failed gates listed above. A real authorization attempt stored no record. The report stays in ignored runtime storage; the committed manifest and registry records reproduce it.
+
+The separate trade-count policy review changed the proposed aggregate from the minimum in
+one fold to the total across all three base-validation folds. Reproduction under that unapproved
+proposal records 2,349 moving-average fills and 2,317 momentum fills. The resulting report is
+`qualification-a36c57fd70cc1e72480306b7019483c88ef7f798afc8c6acf4a2f90445a6f72d.json`,
+with evidence fingerprints `c977a933e19faf581a857b54bddd4356dd9eb7332c8a97d4f1539ecc18d50cfe`
+and `ff84297ddc943bf8137ddee439673314d8537962969e1bd66ce830c36fde73fb`.
+Both candidates retain the same failed gates and remain unapproved. The earlier report remains
+immutable historical evidence.

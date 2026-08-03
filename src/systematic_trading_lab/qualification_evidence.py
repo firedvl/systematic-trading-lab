@@ -233,7 +233,9 @@ def _aggregate_candidate(
             _integer_metric(metrics, "down_regime_sessions") for metrics in base_metrics
         ),
         "max_turnover": max(_metric(metrics, "turnover") for metrics in base_metrics),
-        "min_trade_count": min(_integer_metric(metrics, "trade_count") for metrics in base_metrics),
+        "total_validation_trade_count": sum(
+            _integer_metric(metrics, "trade_count") for metrics in base_metrics
+        ),
         "campaign_candidate_count": campaign_candidate_count,
     }
     return metrics, _candidate_specification(base)

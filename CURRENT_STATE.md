@@ -1,10 +1,10 @@
 # Current state
 
-- Milestone: M3 portfolio-strategy training evidence; no candidate qualified.
-- Completed: all prior capabilities plus a monthly top-three relative-strength portfolio with a positive-momentum cash filter. The bounded `m3-relative-strength-v1` campaign recorded a fixed-weight benchmark and predeclared 84-, 126-, and 168-session variants on the 2020-07-27 through 2022-12-30 training range.
-- Work in progress: relative-strength implementation and training evidence under review; every current qualification gate remains unapproved.
+- Milestone: M3 qualification-policy review; no candidate qualified.
+- Completed: all prior capabilities plus a separate proposal revision that counts at least 100 fills across all predeclared base-validation folds instead of requiring 100 fills in every fold. Per-fold return, Sharpe, drawdown, regime, and concentration gates remain unchanged.
+- Work in progress: qualification gate revision under review; every current qualification gate remains unapproved.
 - Known limitations: the relative-strength family will not proceed to validation. Its best training result was the 168-session neighbor with 0.025127 total return, 0.161472 Sharpe, 0.150061 maximum drawdown, and 45 trades. The 126-session base returned 0.017025 with a 0.691146 top-instrument profit share. Fixed-weight beat both earlier short-horizon trend baselines in every validation year, and the rejected long-horizon momentum family lost money across all training parameters. Alpaca IEX common coverage begins on 2020-07-27; the installed XNYS calendar begins on 2006-08-02. The 2023–2026 data remains untouched by both training-only campaigns, and the 2026 segment remains untouched by all research. There is no qualified candidate, broker, or execution system.
 - Test status: 55 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Relative-strength ranking, positive filtering, monthly rebalancing, complete-session history, atomic portfolio rejection, sell-before-buy reallocation, next-session fills, bounded research reads, holdout controls, evidence integrity, and one-time access checks pass; live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
-- Next task: review the proposed qualification gates separately from strategy code. In particular, decide whether a 100-trade floor in every validation fold is suitable for predeclared monthly portfolio strategies. Do not weaken the proposal to admit this rejected candidate, and do not access 2023–2026 data for candidate development.
-- Branch: `codex/m3-relative-strength-candidate`.
+- Next task: obtain human review of the complete qualification proposal before changing any approval flag. The revised trade-count aggregation does not qualify or reopen the rejected relative-strength candidate.
+- Branch: `codex/m3-qualification-gate-review`.
