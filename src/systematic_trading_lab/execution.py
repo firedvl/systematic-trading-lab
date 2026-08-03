@@ -26,6 +26,7 @@ _KNOWN_EVENT_TYPES = {
     "risk-decided",
     "capacity-reserved",
     "order-staged",
+    "order-submitter-claimed",
     "order-transitioned",
     "portfolio-snapshot-recorded",
     "paper-snapshot-attested",

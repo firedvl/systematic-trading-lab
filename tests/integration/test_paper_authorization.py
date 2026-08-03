@@ -15,6 +15,7 @@ from systematic_trading_lab.alpaca_paper import AlpacaPaperReader
 from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityError
 from systematic_trading_lab.experiments import HoldoutAccessError
 from systematic_trading_lab.fingerprints import fingerprint
+from systematic_trading_lab.orders import OrderLifecycleStore, OrderState, build_order_delta
 from systematic_trading_lab.reconciliation import (
     PortfolioSnapshot,
     PositionSnapshot,
@@ -557,6 +558,53 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         )
         == reserved
     )
+    delta = build_order_delta(
+        intent,
+        target_quantity=10,
+        current_quantity=0,
+        created_at=NOW + timedelta(seconds=18),
+    )
+    assert delta is not None
+    orders = OrderLifecycleStore(store.path)
+    reservation_id = fingerprint({"decision_id": reserved.decision_id})
+    with pytest.raises(JournalIntegrityError, match="reservation is missing"):
+        orders.stage(delta, reservation_id="missing", staged_at=NOW + timedelta(seconds=18))
+    staged = orders.stage(
+        delta, reservation_id=reservation_id, staged_at=NOW + timedelta(seconds=18)
+    )
+    assert staged.state == OrderState.STAGED
+    with pytest.raises(JournalIntegrityError, match="invalid order transition"):
+        orders.transition(
+            delta.client_order_id,
+            OrderState.SUBMITTING,
+            changed_at=NOW + timedelta(seconds=19),
+        )
+    claimed = orders.claim_submitter(
+        delta.client_order_id,
+        submitter_id="worker-1",
+        claimed_at=NOW + timedelta(seconds=19),
+    )
+    assert claimed.state == OrderState.SUBMITTING
+    assert (
+        orders.claim_submitter(
+            delta.client_order_id,
+            submitter_id="worker-1",
+            claimed_at=NOW + timedelta(seconds=19),
+        )
+        == claimed
+    )
+    with pytest.raises(JournalIntegrityError, match="different submitter"):
+        orders.claim_submitter(
+            delta.client_order_id,
+            submitter_id="worker-2",
+            claimed_at=NOW + timedelta(seconds=19),
+        )
+    orders.transition(
+        delta.client_order_id,
+        OrderState.SUBMISSION_UNKNOWN,
+        changed_at=NOW + timedelta(seconds=20),
+    )
+    OrderLifecycleStore(store.path)
     assert (
         store.clear_emergency(
             clear_id="clear-stable-1",
@@ -613,3 +661,7 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     assert not reset.ready
     assert reset.reasons == ("latest-samples-not-clean",)
     assert ReconciliationStore(store.path).get_emergency().disabled
+    with sqlite3.connect(store.path) as connection:
+        connection.execute("UPDATE orders SET state = 'filled'")
+    with pytest.raises(JournalIntegrityError, match="latest journal event"):
+        OrderLifecycleStore(store.path)
