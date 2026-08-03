@@ -1,8 +1,18 @@
 import json
+from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
-from systematic_trading_lab.datasets import DatasetService, fixture_request, fixture_symbols
-from systematic_trading_lab.domain import Timeframe
+import pytest
+
+from systematic_trading_lab.datasets import (
+    DatasetService,
+    DatasetValidationError,
+    fixture_request,
+    fixture_symbols,
+)
+from systematic_trading_lab.domain import AdjustmentPolicy, Symbol, Timeframe, TimestampRange
 from systematic_trading_lab.providers import FixtureProvider
 from systematic_trading_lab.storage import StorageLayout
 
@@ -30,6 +40,13 @@ def test_fixture_import_is_immutable_describable_and_rebuildable(tmp_path: Path)
     rebuilt = DatasetService(layout)
     assert rebuilt.rebuild_catalog() == 1
     assert rebuilt.validate(first.dataset_id)["valid"] is True
+
+    layout.catalog.unlink()
+    recovered = DatasetService(layout).import_from(
+        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+    )
+    assert recovered.created is False
+    assert DatasetService(layout).validate(first.dataset_id)["valid"] is True
 
 
 def test_invalid_provider_data_is_rejected_with_evidence(tmp_path: Path) -> None:
@@ -64,3 +81,74 @@ def test_invalid_provider_data_is_rejected_with_evidence(tmp_path: Path) -> None
     assert len(evidence) == 1
     assert json.loads(evidence[0].read_text(encoding="utf-8"))["validation"]["errors"]
     assert not list(layout.datasets.iterdir())
+
+
+def test_provider_corrections_link_versions_without_cross_provider_collisions(
+    tmp_path: Path,
+) -> None:
+    class CorrectedFixture(FixtureProvider):
+        retrieval_timestamp = datetime(2025, 1, 12, tzinfo=UTC)
+
+        def fetch(
+            self, symbols: Sequence[Symbol], timeframe: Timeframe, requested: TimestampRange
+        ) -> list[dict[str, Any]]:
+            records = list(super().fetch(symbols, timeframe, requested))
+            records[0] = {**records[0], "close": "100.6"}
+            return records
+
+    class RawRepresentationCorrection(FixtureProvider):
+        retrieval_timestamp = datetime(2025, 1, 11, tzinfo=UTC)
+
+        def fetch(
+            self, symbols: Sequence[Symbol], timeframe: Timeframe, requested: TimestampRange
+        ) -> list[dict[str, Any]]:
+            records = list(super().fetch(symbols, timeframe, requested))
+            records[0] = {**records[0], "close": "100.50"}
+            return records
+
+    class OtherProvider(FixtureProvider):
+        name = "other-fixture-v1"
+
+    layout = StorageLayout(tmp_path)
+    service = DatasetService(layout)
+    original = service.import_from(
+        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+    )
+    raw_correction = service.import_from(
+        RawRepresentationCorrection(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+    )
+    corrected = service.import_from(
+        CorrectedFixture(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+    )
+    duplicate = service.import_from(
+        CorrectedFixture(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+    )
+    other = service.import_from(
+        OtherProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+    )
+
+    assert raw_correction.fingerprint == original.fingerprint
+    assert raw_correction.dataset_id != original.dataset_id
+    assert raw_correction.parent_dataset_id == original.dataset_id
+    assert corrected.dataset_id != original.dataset_id
+    assert corrected.parent_dataset_id == raw_correction.dataset_id
+    assert service.describe(corrected.dataset_id)["parent_dataset_id"] == raw_correction.dataset_id
+    assert duplicate.created is False
+    assert duplicate.dataset_id == corrected.dataset_id
+    assert other.dataset_id != original.dataset_id
+    assert other.parent_dataset_id is None
+
+    layout.catalog.unlink()
+    rebuilt = DatasetService(layout)
+    assert rebuilt.rebuild_catalog() == 4
+    assert rebuilt.describe(corrected.dataset_id)["parent_dataset_id"] == raw_correction.dataset_id
+
+
+def test_unadjusted_data_is_rejected_without_a_corporate_action_processor(tmp_path: Path) -> None:
+    class UnadjustedFixture(FixtureProvider):
+        adjustment_policy = AdjustmentPolicy.UNADJUSTED
+
+    with pytest.raises(DatasetValidationError, match="corporate-action processing"):
+        DatasetService(StorageLayout(tmp_path)).import_from(
+            UnadjustedFixture(), fixture_symbols(), Timeframe.DAILY, fixture_request()
+        )

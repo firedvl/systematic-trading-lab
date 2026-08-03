@@ -1,10 +1,10 @@
 # Current state
 
-- Milestone: M3 catalog-backed campaign execution slice complete.
-- Completed: all prior capabilities plus verified loading of immutable cataloged bars; a bounded CLI for training and validation runs with versioned costs, delayed fills, and strategy parameter validation; and CLI candidate comparisons. The registry records every accepted run before simulation, retains failures, enforces campaign budgets, and keeps holdout paths inaccessible to ordinary commands.
+- Milestone: M1 correction-lineage and corporate-action control slice complete.
+- Completed: all prior capabilities plus immutable dataset version IDs that bind provider, request, adjustment policy, processing versions, and normalized-bar fingerprint; parent links for provider corrections; exact-repeat deduplication; cross-provider metadata isolation; provider adjustment declarations; and fail-closed rejection of unadjusted data. Alpaca requests `adjustment=all`; the deterministic fixture declares that it contains no actions.
 - Work in progress: none.
-- Known limitations: no provider correction lineage, corporate-action processor, point-in-time universe, approved financial thresholds, controlled holdout runner, broker, or execution system. Walk-forward and sensitivity APIs exist, but no reviewed financial campaign has been run. Current reports remain fixture evidence, not financial qualification.
-- Test status: 23 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Catalog integrity, bounded CLI runs, experiment lifecycle, failed-candidate evidence, delayed fills, split controls, and protected holdout paths pass; live and broker modes remain rejected.
+- Known limitations: no local processor for unadjusted splits, dividends, symbol changes, or delistings; no point-in-time universe, approved financial thresholds, controlled holdout runner, broker, or execution system. Walk-forward and sensitivity APIs exist, but no reviewed financial campaign has been run. Current reports remain fixture evidence, not financial qualification.
+- Test status: 25 tests pass; ruff format and lint, strict mypy, secret scan, and diff checks pass on Python 3.12.13. Lineage, adjustment-policy, catalog recovery and rebuild, Alpaca, and experiment CLI checks pass; live and broker modes remain rejected.
 - Safety: defaults offline; live execution and broker submission are absent.
-- Next task: add provider correction lineage and corporate-action handling before acquiring a reviewed historical dataset for the first walk-forward and sensitivity campaign. Financial qualification thresholds remain explicitly deferred pending human review.
-- Branch: `codex/m3-campaign`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/8.
+- Next task: acquire and seal a reviewed provider-adjusted historical dataset for the first walk-forward and sensitivity campaign, then document proposed qualification thresholds for human review. Point-in-time universe work remains before research expands beyond the fixed ETF set.
+- Branch: `codex/m1-lineage`; draft pull request: https://github.com/firedvl/systematic-trading-lab/pull/9.

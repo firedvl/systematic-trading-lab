@@ -10,7 +10,15 @@ from typing import Any
 
 from .calendar import expected_sessions
 from .catalog import DatasetCatalog
-from .domain import DatasetIdentity, DatasetManifest, OHLCVBar, Symbol, Timeframe, TimestampRange
+from .domain import (
+    AdjustmentPolicy,
+    DatasetIdentity,
+    DatasetManifest,
+    OHLCVBar,
+    Symbol,
+    Timeframe,
+    TimestampRange,
+)
 from .fingerprints import canonical_json, canonicalize, fingerprint
 from .parquet import from_parquet, to_parquet
 from .providers import MarketDataProvider
@@ -28,6 +36,16 @@ class ImportResult:
     fingerprint: str
     created: bool
     bar_count: int
+    parent_dataset_id: str | None
+
+
+_NORMALIZATION_VERSION = "ohlcv-normalization-v1"
+_SCHEMA_VERSION = "ohlcv-v1"
+_CALENDAR_POLICY = "XNYS-v1"
+_SUPPORTED_ADJUSTMENTS = {
+    AdjustmentPolicy.PROVIDER_ADJUSTED_ALL,
+    AdjustmentPolicy.SYNTHETIC_NO_ACTIONS,
+}
 
 
 class DatasetService:
@@ -42,6 +60,23 @@ class DatasetService:
         timeframe: Timeframe,
         requested: TimestampRange,
     ) -> ImportResult:
+        if not provider.name:
+            raise DatasetValidationError("provider name is required")
+        if (
+            provider.retrieval_timestamp.tzinfo is None
+            or provider.retrieval_timestamp.utcoffset() is None
+        ):
+            raise DatasetValidationError("provider retrieval timestamp must be timezone-aware")
+        try:
+            adjustment_policy = AdjustmentPolicy(provider.adjustment_policy)
+        except (AttributeError, ValueError) as error:
+            raise DatasetValidationError(
+                "provider adjustment policy is missing or unknown"
+            ) from error
+        if adjustment_policy not in _SUPPORTED_ADJUSTMENTS:
+            raise DatasetValidationError(
+                "unadjusted data requires reviewed corporate-action processing"
+            )
         records = provider.fetch(symbols, timeframe, requested)
         validated = validate_records(
             records,
@@ -68,7 +103,35 @@ class DatasetService:
         ordered = tuple(sorted(validated.bars, key=lambda bar: (bar.symbol.value, bar.timestamp)))
         bar_records = tuple(bar.to_record() for bar in ordered)
         data_fingerprint = fingerprint(bar_records)
-        identity = DatasetIdentity(dataset_id=data_fingerprint, fingerprint=data_fingerprint)
+        raw_fingerprint = fingerprint(records)
+        version_key = {
+            "provider": provider.name,
+            "symbols": tuple(sorted(symbol.value for symbol in symbols)),
+            "timeframe": timeframe,
+            "requested_range": requested,
+            "adjustment_policy": adjustment_policy,
+            "normalization_version": _NORMALIZATION_VERSION,
+            "schema_version": _SCHEMA_VERSION,
+            "calendar_policy": _CALENDAR_POLICY,
+            "data_fingerprint": data_fingerprint,
+            "raw_fingerprint": raw_fingerprint,
+        }
+        dataset_id = fingerprint(version_key)
+        existing = self.catalog.get(dataset_id)
+        if existing is not None:
+            if not self.validate(dataset_id)["valid"]:
+                raise DatasetValidationError("existing dataset integrity validation failed")
+            return ImportResult(
+                dataset_id,
+                data_fingerprint,
+                False,
+                len(ordered),
+                existing.get("parent_dataset_id"),
+            )
+        parent_dataset_id = self._lineage_parent(
+            provider.name, symbols, timeframe, requested, adjustment_policy
+        )
+        identity = DatasetIdentity(dataset_id=dataset_id, fingerprint=data_fingerprint)
         actual = TimestampRange(
             min(bar.timestamp for bar in ordered), max(bar.timestamp for bar in ordered)
         )
@@ -80,12 +143,13 @@ class DatasetService:
             requested_range=requested,
             actual_range=actual,
             retrieval_timestamp=provider.retrieval_timestamp.astimezone(UTC),
-            raw_artifact_hashes=(fingerprint(records),),
-            normalization_version="ohlcv-normalization-v1",
-            schema_version="ohlcv-v1",
-            adjustment_policy="provider-adjusted",
-            calendar_policy="XNYS-v1",
+            raw_artifact_hashes=(raw_fingerprint,),
+            normalization_version=_NORMALIZATION_VERSION,
+            schema_version=_SCHEMA_VERSION,
+            adjustment_policy=adjustment_policy.value,
+            calendar_policy=_CALENDAR_POLICY,
             validation=validated.result,
+            parent_dataset_id=parent_dataset_id,
         )
         manifest_data = canonicalize(manifest)
         raw_text = "".join(canonical_json(record) + "\n" for record in records)
@@ -98,8 +162,55 @@ class DatasetService:
             },
         )
         manifest_path = self.layout.dataset(identity.dataset_id) / "manifest.json"
+        if not created:
+            stored = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if stored.get("identity") != manifest_data["identity"]:
+                raise DatasetValidationError("existing dataset identity does not match import")
+            self.catalog.register(stored, manifest_path)
+            return ImportResult(
+                identity.dataset_id,
+                data_fingerprint,
+                False,
+                len(ordered),
+                stored.get("parent_dataset_id"),
+            )
         self.catalog.register(manifest_data, manifest_path)
-        return ImportResult(identity.dataset_id, data_fingerprint, created, len(ordered))
+        return ImportResult(
+            identity.dataset_id, data_fingerprint, created, len(ordered), parent_dataset_id
+        )
+
+    def _lineage_parent(
+        self,
+        provider: str,
+        symbols: Sequence[Symbol],
+        timeframe: Timeframe,
+        requested: TimestampRange,
+        adjustment_policy: AdjustmentPolicy,
+    ) -> str | None:
+        expected = {
+            "provider": provider,
+            "symbols": sorted(symbol.value for symbol in symbols),
+            "timeframe": timeframe.value,
+            "requested_range": canonicalize(requested),
+            "adjustment_policy": adjustment_policy.value,
+            "normalization_version": _NORMALIZATION_VERSION,
+            "schema_version": _SCHEMA_VERSION,
+            "calendar_policy": _CALENDAR_POLICY,
+        }
+        for manifest in self.catalog.list_manifests():
+            candidate = {
+                "provider": manifest.get("provider"),
+                "symbols": sorted(symbol["value"] for symbol in manifest.get("symbols", [])),
+                "timeframe": manifest.get("timeframe"),
+                "requested_range": manifest.get("requested_range"),
+                "adjustment_policy": manifest.get("adjustment_policy"),
+                "normalization_version": manifest.get("normalization_version"),
+                "schema_version": manifest.get("schema_version"),
+                "calendar_policy": manifest.get("calendar_policy"),
+            }
+            if candidate == expected:
+                return str(manifest["identity"]["dataset_id"])
+        return None
 
     def describe(self, dataset_id: str | None = None) -> dict[str, Any]:
         manifest = self.catalog.get(dataset_id)

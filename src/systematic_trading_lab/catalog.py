@@ -65,6 +65,13 @@ class DatasetCatalog:
         assert row is not None
         return int(row[0])
 
+    def list_manifests(self) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT manifest_json FROM datasets ORDER BY created_at DESC, dataset_id DESC"
+            ).fetchall()
+        return [json.loads(row[0]) for row in rows]
+
     def rebuild(self, datasets: Path) -> int:
         count = 0
         for path in sorted(datasets.glob("*/manifest.json")):
