@@ -1,7 +1,17 @@
+import json
 from decimal import Decimal
+from pathlib import Path
+
+import pytest
 
 from systematic_trading_lab.experiments import QualificationState
-from systematic_trading_lab.qualification import Comparison, GateSpec, evaluate
+from systematic_trading_lab.qualification import (
+    Comparison,
+    GateSpec,
+    ProposalStatus,
+    evaluate,
+    load_qualification_proposal,
+)
 
 
 def test_unapproved_thresholds_cannot_qualify() -> None:
@@ -39,3 +49,65 @@ def test_disqualifying_and_missing_metric_gates_reject() -> None:
     assert rejected.state is QualificationState.REJECTED
     assert missing.state is QualificationState.REJECTED
     assert missing.gates[1].reason == "metric-missing-or-invalid"
+
+
+def test_proposed_config_loads_and_cannot_qualify() -> None:
+    proposal = load_qualification_proposal(Path("config/research/qualification-proposal.json"))
+    passing_metrics = {gate.spec.metric: gate.spec.threshold for gate in proposal.gates}
+
+    report = evaluate("all-gates-pass", passing_metrics, proposal.gate_specs)
+
+    assert proposal.status is ProposalStatus.PROPOSED_UNAPPROVED
+    assert len(proposal.gates) == 17
+    assert all(not gate.spec.approved for gate in proposal.gates)
+    assert all(result.passed for result in report.gates)
+    assert report.state is QualificationState.UNAPPROVED
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        ({"unexpected": True}, "fields differ"),
+        ({"status": "approved"}, "approved proposal must contain only approved gates"),
+    ],
+)
+def test_proposal_rejects_invalid_root(
+    tmp_path: Path, change: dict[str, object], message: str
+) -> None:
+    source = Path("config/research/qualification-proposal.json")
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    payload.update(change)
+    target = tmp_path / "proposal.json"
+    target.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match=message):
+        load_qualification_proposal(target)
+
+
+def test_proposal_rejects_inconsistent_gate_and_duplicate_metric(tmp_path: Path) -> None:
+    source = Path("config/research/qualification-proposal.json")
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    payload["gates"][0]["approved"] = True
+    target = tmp_path / "proposal.json"
+    target.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unapproved proposal cannot contain approved gates"):
+        load_qualification_proposal(target)
+
+    payload["gates"][0]["approved"] = False
+    payload["gates"][1]["metric"] = payload["gates"][0]["metric"]
+    target.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="gate names and metrics must be unique"):
+        load_qualification_proposal(target)
+
+
+def test_proposal_rejects_nonfinite_threshold(tmp_path: Path) -> None:
+    source = Path("config/research/qualification-proposal.json")
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    payload["gates"][0]["threshold"] = "NaN"
+    target = tmp_path / "proposal.json"
+    target.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="gate threshold must be finite"):
+        load_qualification_proposal(target)
