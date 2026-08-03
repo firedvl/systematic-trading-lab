@@ -41,7 +41,14 @@ def _add_execution_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--campaign", required=True)
     command.add_argument(
         "--strategy",
-        choices=("cash", "buy-and-hold", "fixed-weight", "moving-average", "momentum"),
+        choices=(
+            "cash",
+            "buy-and-hold",
+            "fixed-weight",
+            "moving-average",
+            "momentum",
+            "relative-strength",
+        ),
         required=True,
     )
     command.add_argument("--code-commit", required=True)
@@ -428,6 +435,7 @@ def _validate_strategy_parameters(name: str, parameters: dict[str, object]) -> N
         "fixed-weight": set(),
         "moving-average": {"window"},
         "momentum": {"lookback"},
+        "relative-strength": {"lookback", "rebalance_every", "selection_count"},
     }[name]
     unknown = parameters.keys() - allowed
     if unknown:
@@ -461,6 +469,7 @@ def _strategy_identity(name: str) -> tuple[str, str]:
         "fixed-weight": ("fixed-weight", "allocation"),
         "moving-average": ("moving-average-trend", "trend"),
         "momentum": ("time-series-momentum", "momentum"),
+        "relative-strength": ("relative-strength-portfolio", "portfolio-momentum"),
     }[name]
 
 

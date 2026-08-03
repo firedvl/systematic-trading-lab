@@ -111,3 +111,63 @@ class TimeSeriesMomentumStrategy:
             self.target_weight if bar.close > history[-self.lookback - 1].close else Decimal("0")
         )
         return (TargetPosition(bar.symbol, weight, "close-vs-lookback"),)
+
+
+@dataclass(frozen=True)
+class RelativeStrengthPortfolioStrategy:
+    symbols: tuple[Symbol, ...]
+    lookback: int = 126
+    rebalance_every: int = 21
+    selection_count: int = 3
+    strategy_id: str = "relative-strength-portfolio"
+    version: str = "1"
+
+    def __post_init__(self) -> None:
+        if not self.symbols or len(set(self.symbols)) != len(self.symbols):
+            raise ValueError("relative-strength strategy requires unique symbols")
+        if self.lookback < 1 or self.rebalance_every < 1:
+            raise ValueError("lookback and rebalance interval must be positive")
+        if not 1 <= self.selection_count <= len(self.symbols):
+            raise ValueError("selection count must fit the strategy universe")
+
+    def on_session(
+        self,
+        bars: Sequence[OHLCVBar],
+        history: Mapping[Symbol, Sequence[OHLCVBar]],
+    ) -> Sequence[TargetPosition]:
+        expected = set(self.symbols)
+        if {bar.symbol for bar in bars} != expected or set(history) != expected:
+            raise ValueError("relative-strength session universe differs")
+        lengths = {len(history[symbol]) for symbol in self.symbols}
+        if len(lengths) != 1:
+            raise ValueError("relative-strength history lengths differ")
+        session_count = next(iter(lengths))
+        if session_count <= self.lookback:
+            return ()
+        if (session_count - self.lookback - 1) % self.rebalance_every:
+            return ()
+
+        current = {bar.symbol: bar for bar in bars}
+        ranked = sorted(
+            (
+                (
+                    current[symbol].close / history[symbol][-self.lookback - 1].close
+                    - Decimal("1"),
+                    symbol,
+                )
+                for symbol in self.symbols
+            ),
+            key=lambda item: (-item[0], item[1].value),
+        )
+        selected = {
+            symbol for score, symbol in ranked[: self.selection_count] if score > Decimal("0")
+        }
+        active_weight = Decimal("1") / Decimal(self.selection_count)
+        return tuple(
+            TargetPosition(
+                symbol,
+                active_weight if symbol in selected else Decimal("0"),
+                "positive-relative-strength" if symbol in selected else "cash-filter",
+            )
+            for symbol in sorted(self.symbols, key=lambda item: item.value)
+        )

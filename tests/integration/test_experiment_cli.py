@@ -139,3 +139,41 @@ def test_cli_runs_cataloged_experiment_and_compares_candidates(
 
     with pytest.raises(ValueError, match="unsupported parameters"):
         run(parser().parse_args(command + ["--parameter", "lookback=2"]), settings)
+
+    ExperimentRegistry(layout.experiments).create_campaign("portfolio-campaign", "Portfolio", 1)
+    portfolio = parser().parse_args(
+        [
+            "experiment",
+            "run",
+            "portfolio-candidate",
+            "--campaign",
+            "portfolio-campaign",
+            "--strategy",
+            "relative-strength",
+            "--code-commit",
+            "abc123",
+            "--dataset",
+            imported.dataset_id,
+            "--split",
+            "training",
+            "--start",
+            "2025-01-06",
+            "--end",
+            "2025-01-10",
+            "--reason",
+            "Portfolio CLI integration",
+            "--parameter",
+            "lookback=2",
+            "--parameter",
+            "rebalance_every=1",
+            "--parameter",
+            "selection_count=3",
+        ]
+    )
+    assert run(portfolio, settings) == 0
+    portfolio_record = ExperimentRegistry(layout.experiments).get("portfolio-candidate")
+    portfolio_spec = portfolio_record["spec_json"]
+    assert portfolio_record["status"] == "completed"
+    assert isinstance(portfolio_spec, dict)
+    assert portfolio_spec["strategy_id"] == "relative-strength-portfolio"
+    assert portfolio_spec["strategy_family"] == "portfolio-momentum"
