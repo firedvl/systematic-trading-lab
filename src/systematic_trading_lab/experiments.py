@@ -11,7 +11,7 @@ from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
 
-from .fingerprints import canonical_json, canonicalize
+from .fingerprints import canonical_json, canonicalize, fingerprint
 
 
 class ExperimentSplit(StrEnum):
@@ -116,6 +116,36 @@ class ExperimentRegistry:
                     reason TEXT NOT NULL,
                     created_at TEXT NOT NULL
                 );
+                CREATE UNIQUE INDEX IF NOT EXISTS one_holdout_access_per_experiment
+                ON holdout_access(experiment_id);
+                CREATE TABLE IF NOT EXISTS holdout_run_authorizations (
+                    authorization_id TEXT PRIMARY KEY,
+                    candidate_id TEXT NOT NULL,
+                    qualification_key TEXT,
+                    evidence_fingerprint TEXT NOT NULL UNIQUE,
+                    evidence_report_json TEXT NOT NULL,
+                    candidate_spec_json TEXT NOT NULL,
+                    reviewer TEXT NOT NULL,
+                    reason TEXT NOT NULL,
+                    authorized_at TEXT NOT NULL,
+                    consumed_by_experiment_id TEXT UNIQUE REFERENCES experiments(experiment_id),
+                    consumed_at TEXT
+                );
+                """
+            )
+            authorization_columns = {
+                column[1]
+                for column in connection.execute("PRAGMA table_info(holdout_run_authorizations)")
+            }
+            if "qualification_key" not in authorization_columns:
+                connection.execute(
+                    "ALTER TABLE holdout_run_authorizations ADD COLUMN qualification_key TEXT"
+                )
+            connection.execute(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS one_authorization_per_qualification
+                ON holdout_run_authorizations(qualification_key)
+                WHERE qualification_key IS NOT NULL
                 """
             )
 
@@ -138,11 +168,116 @@ class ExperimentRegistry:
             "search_budget": search_budget,
         }
 
-    def create_experiment(self, spec: ExperimentSpec, holdout_authorized: bool = False) -> None:
-        if spec.split is ExperimentSplit.HOLDOUT and not holdout_authorized:
-            raise HoldoutAccessError("holdout experiments require an explicit qualification event")
+    def _create_holdout_run_authorization(
+        self,
+        authorization_id: str,
+        evidence_report: Mapping[str, object],
+        reviewer: str,
+        reason: str,
+    ) -> None:
+        if not authorization_id or not reviewer or not reason:
+            raise ValueError("authorization ID, reviewer, and reason are required")
+        report = canonicalize(evidence_report)
+        if not isinstance(report, dict):
+            raise HoldoutAccessError("qualification evidence must be an object")
+        _validate_qualification_evidence_report(report)
+        evidence_fingerprint = report.get("evidence_fingerprint")
+        unsigned_report = dict(report)
+        unsigned_report.pop("evidence_fingerprint", None)
+        if (
+            not isinstance(evidence_fingerprint, str)
+            or fingerprint(unsigned_report) != evidence_fingerprint
+        ):
+            raise HoldoutAccessError("qualification evidence fingerprint does not match")
+        qualification = report["qualification"]
+        assert isinstance(qualification, dict)
+        gates = qualification.get("gates")
+        if (
+            not isinstance(gates, list)
+            or not gates
+            or any(
+                not isinstance(gate, dict) or not gate.get("approved") or not gate.get("passed")
+                for gate in gates
+            )
+        ):
+            raise HoldoutAccessError("holdout run requires approved passing gates")
+        candidate_id = report["candidate_id"]
+        candidate_spec = report["candidate_specification"]
+        assert isinstance(candidate_id, str)
+        assert isinstance(candidate_spec, dict)
+        _validate_candidate_specification(candidate_spec)
+        qualification_key = fingerprint(
+            {
+                "candidate_id": candidate_id,
+                "manifest_fingerprint": report["manifest_fingerprint"],
+                "proposal_fingerprint": report["proposal_fingerprint"],
+                "source_experiment_ids": report["source_experiment_ids"],
+            }
+        )
+        with self._connect() as connection:
+            try:
+                connection.execute(
+                    """
+                    INSERT INTO holdout_run_authorizations
+                    (authorization_id, candidate_id, qualification_key, evidence_fingerprint,
+                     evidence_report_json, candidate_spec_json, reviewer, reason, authorized_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        authorization_id,
+                        candidate_id,
+                        qualification_key,
+                        evidence_fingerprint,
+                        canonical_json(report),
+                        canonical_json(candidate_spec),
+                        reviewer,
+                        reason,
+                        _now(),
+                    ),
+                )
+            except sqlite3.IntegrityError as error:
+                raise HoldoutAccessError(
+                    "holdout authorization or qualification evidence already exists"
+                ) from error
+
+    def get_holdout_run_authorization(self, authorization_id: str) -> dict[str, object]:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM holdout_run_authorizations WHERE authorization_id = ?",
+                (authorization_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(f"holdout authorization not found: {authorization_id}")
+            columns = [
+                column[1]
+                for column in connection.execute("PRAGMA table_info(holdout_run_authorizations)")
+            ]
+        record = dict(zip(columns, row, strict=True))
+        record["evidence_report_json"] = json.loads(str(record["evidence_report_json"]))
+        record["candidate_spec_json"] = json.loads(str(record["candidate_spec_json"]))
+        return record
+
+    def create_experiment(
+        self, spec: ExperimentSpec, holdout_authorization_id: str | None = None
+    ) -> None:
+        if spec.split is not ExperimentSplit.HOLDOUT and holdout_authorization_id is not None:
+            raise HoldoutAccessError("holdout authorization cannot be used for another split")
         created_at = _now()
         with self._connect() as connection:
+            if spec.split is ExperimentSplit.HOLDOUT:
+                authorization = connection.execute(
+                    """
+                    SELECT candidate_id, candidate_spec_json
+                    FROM holdout_run_authorizations
+                    WHERE authorization_id = ? AND consumed_by_experiment_id IS NULL
+                    """,
+                    (holdout_authorization_id,),
+                ).fetchone()
+                if authorization is None:
+                    raise HoldoutAccessError(
+                        "holdout experiment requires an unused stored authorization"
+                    )
+                _validate_holdout_spec(spec, str(authorization[0]), json.loads(authorization[1]))
             campaign = connection.execute(
                 "SELECT search_budget FROM campaigns WHERE campaign_id = ? AND status = 'active'",
                 (spec.campaign_id,),
@@ -175,6 +310,17 @@ class ExperimentRegistry:
                 )
             except sqlite3.IntegrityError as error:
                 raise ExperimentError(f"experiment already exists: {spec.experiment_id}") from error
+            if spec.split is ExperimentSplit.HOLDOUT:
+                consumed = connection.execute(
+                    """
+                    UPDATE holdout_run_authorizations
+                    SET consumed_by_experiment_id = ?, consumed_at = ?
+                    WHERE authorization_id = ? AND consumed_by_experiment_id IS NULL
+                    """,
+                    (spec.experiment_id, created_at, holdout_authorization_id),
+                )
+                if consumed.rowcount != 1:
+                    raise HoldoutAccessError("holdout authorization was already consumed")
 
     def claim(self, experiment_id: str) -> None:
         timestamp = _now()
@@ -301,7 +447,9 @@ class ExperimentRegistry:
                     (event_id, experiment_id, reviewer, reason, _now()),
                 )
             except sqlite3.IntegrityError as error:
-                raise HoldoutAccessError(f"holdout event already exists: {event_id}") from error
+                raise HoldoutAccessError(
+                    f"holdout access already exists for experiment: {experiment_id}"
+                ) from error
 
     def record_qualification(
         self,
@@ -392,6 +540,139 @@ class ExperimentRegistry:
                 yield connection
         finally:
             connection.close()
+
+
+_CANDIDATE_SPEC_FIELDS = {
+    "strategy_id",
+    "strategy_version",
+    "strategy_family",
+    "parameters",
+    "cost_model_version",
+    "execution_model_version",
+    "dataset_id",
+    "dataset_fingerprint",
+    "universe_id",
+    "universe_fingerprint",
+    "validation_start",
+    "validation_end",
+}
+
+_EVIDENCE_REPORT_FIELDS = {
+    "schema_version",
+    "manifest_id",
+    "manifest_fingerprint",
+    "proposal_id",
+    "proposal_fingerprint",
+    "campaign_id",
+    "candidate_id",
+    "strategy_id",
+    "candidate_specification",
+    "source_experiment_ids",
+    "metrics",
+    "qualification",
+    "evidence_fingerprint",
+}
+
+
+def _validate_qualification_evidence_report(report: Mapping[str, object]) -> None:
+    if (
+        set(report) != _EVIDENCE_REPORT_FIELDS
+        or report["schema_version"] != "qualification-evidence-v1"
+    ):
+        raise HoldoutAccessError("qualification evidence fields differ")
+    text_fields = {
+        "manifest_id",
+        "manifest_fingerprint",
+        "proposal_id",
+        "proposal_fingerprint",
+        "campaign_id",
+        "candidate_id",
+        "strategy_id",
+    }
+    if any(not isinstance(report[field], str) or not report[field] for field in text_fields):
+        raise HoldoutAccessError("qualification evidence contains an invalid value")
+    candidate = report["candidate_specification"]
+    if not isinstance(candidate, Mapping) or candidate.get("strategy_id") != report["strategy_id"]:
+        raise HoldoutAccessError("qualification evidence candidate differs")
+    source_ids = report["source_experiment_ids"]
+    if (
+        not isinstance(source_ids, list)
+        or not source_ids
+        or any(not isinstance(item, str) or not item for item in source_ids)
+        or len(source_ids) != len(set(source_ids))
+    ):
+        raise HoldoutAccessError("qualification evidence sources are invalid")
+    if not isinstance(report["metrics"], Mapping):
+        raise HoldoutAccessError("qualification evidence metrics are invalid")
+    qualification = report["qualification"]
+    if not isinstance(qualification, dict) or set(qualification) != {
+        "experiment_id",
+        "state",
+        "gates",
+        "report_fingerprint",
+    }:
+        raise HoldoutAccessError("qualification report fields differ")
+    if (
+        qualification["experiment_id"] != report["candidate_id"]
+        or qualification["state"] != QualificationState.QUALIFIED.value
+    ):
+        raise HoldoutAccessError("holdout run requires qualified evidence")
+    unsigned_qualification = dict(qualification)
+    report_fingerprint = unsigned_qualification.pop("report_fingerprint")
+    if (
+        not isinstance(report_fingerprint, str)
+        or fingerprint(unsigned_qualification) != report_fingerprint
+    ):
+        raise HoldoutAccessError("qualification report fingerprint does not match")
+
+
+def _validate_candidate_specification(candidate: Mapping[str, object]) -> None:
+    if set(candidate) != _CANDIDATE_SPEC_FIELDS:
+        raise HoldoutAccessError("candidate specification fields differ")
+    text_fields = _CANDIDATE_SPEC_FIELDS - {"parameters"}
+    if any(not isinstance(candidate[field], str) or not candidate[field] for field in text_fields):
+        raise HoldoutAccessError("candidate specification contains an invalid value")
+    if not isinstance(candidate["parameters"], Mapping):
+        raise HoldoutAccessError("candidate parameters must be an object")
+    start = _parse_utc(str(candidate["validation_start"]))
+    end = _parse_utc(str(candidate["validation_end"]))
+    if start > end:
+        raise HoldoutAccessError("candidate validation period is invalid")
+
+
+def _validate_holdout_spec(
+    spec: ExperimentSpec, candidate_id: str, candidate: Mapping[str, object]
+) -> None:
+    _validate_candidate_specification(candidate)
+    if spec.parent_candidate != candidate_id:
+        raise HoldoutAccessError("holdout parent does not match the qualified candidate")
+    fields = (
+        "strategy_id",
+        "strategy_version",
+        "strategy_family",
+        "cost_model_version",
+        "execution_model_version",
+        "dataset_id",
+        "dataset_fingerprint",
+        "universe_id",
+        "universe_fingerprint",
+    )
+    if any(getattr(spec, field) != candidate[field] for field in fields) or canonicalize(
+        spec.parameters
+    ) != canonicalize(candidate["parameters"]):
+        raise HoldoutAccessError("holdout specification differs from the qualified candidate")
+    if spec.start_timestamp <= _parse_utc(str(candidate["validation_end"])):
+        raise HoldoutAccessError("holdout must begin after the validation period")
+
+
+def _parse_utc(value: str) -> datetime:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise HoldoutAccessError("candidate timestamp is invalid") from error
+    if parsed.tzinfo is None or parsed.utcoffset() != UTC.utcoffset(parsed):
+        raise HoldoutAccessError("candidate timestamp must be UTC")
+    return parsed.astimezone(UTC)
 
 
 def _now() -> str:

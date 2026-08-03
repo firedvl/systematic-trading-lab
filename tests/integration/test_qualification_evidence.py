@@ -9,11 +9,17 @@ import pytest
 from systematic_trading_lab.cli import parser, run
 from systematic_trading_lab.config import Settings
 from systematic_trading_lab.domain import TradingMode
-from systematic_trading_lab.experiments import ExperimentRegistry, ExperimentSpec, ExperimentSplit
-from systematic_trading_lab.qualification import load_qualification_proposal
+from systematic_trading_lab.experiments import (
+    ExperimentRegistry,
+    ExperimentSpec,
+    ExperimentSplit,
+    HoldoutAccessError,
+)
+from systematic_trading_lab.qualification import ProposalStatus, load_qualification_proposal
 from systematic_trading_lab.qualification_evidence import (
     CandidateEvidenceSpec,
     QualificationEvidenceManifest,
+    authorize_holdout_run,
     build_evidence_reports,
     load_evidence_manifest,
     write_evidence_reports,
@@ -78,7 +84,7 @@ def _complete(
 
 def _seed_registry(path: Path, *, corrupt_cost: bool = False) -> ExperimentRegistry:
     registry = ExperimentRegistry(path)
-    registry.create_campaign("campaign-evidence", "Evidence", 14)
+    registry.create_campaign("campaign-evidence", "Evidence", 16)
     base_returns = ("0.1", "0.2", "0.3")
     benchmark_returns = ("0.05", "0.25", "0.1")
     for index, year in enumerate((2023, 2024, 2025), start=1):
@@ -249,6 +255,113 @@ def test_registry_evidence_aggregates_and_stays_unapproved(
     output = json.loads(capsys.readouterr().out)
     assert output["candidate_ids"] == ["candidate-20"]
     assert Path(output["report"]) == path
+
+    authorize_arguments = parser().parse_args(
+        [
+            "experiment",
+            "authorize-holdout",
+            "authorization-unapproved",
+            "--candidate",
+            "candidate-20",
+            "--evidence-manifest",
+            str(manifest_path),
+            "--proposal",
+            str(proposal_path),
+            "--reviewer",
+            "reviewer",
+            "--reason",
+            "final holdout",
+        ]
+    )
+    with pytest.raises(HoldoutAccessError, match="approved passing"):
+        run(authorize_arguments, Settings(TradingMode.OFFLINE, tmp_path))
+    with pytest.raises(KeyError, match="authorization not found"):
+        registry.get_holdout_run_authorization("authorization-unapproved")
+
+
+def test_approved_evidence_creates_one_exact_holdout_authorization(tmp_path: Path) -> None:
+    registry = _seed_registry(tmp_path / "experiments.sqlite3")
+    proposal = replace(
+        load_qualification_proposal(Path("config/research/qualification-proposal.json")),
+        evidence_campaign_id="campaign-evidence",
+    )
+    approved = replace(
+        proposal,
+        status=ProposalStatus.APPROVED,
+        gates=tuple(
+            replace(gate, spec=replace(gate.spec, approved=True)) for gate in proposal.gates
+        ),
+    )
+
+    authorization = authorize_holdout_run(
+        registry,
+        _manifest(),
+        approved,
+        "candidate-20",
+        "authorization-1",
+        "reviewer",
+        "one final holdout",
+    )
+
+    assert authorization["candidate_id"] == "candidate-20"
+    assert authorization["consumed_by_experiment_id"] is None
+    with pytest.raises(HoldoutAccessError, match="already exists"):
+        authorize_holdout_run(
+            registry,
+            _manifest(),
+            approved,
+            "candidate-20",
+            "authorization-2",
+            "reviewer",
+            "try to authorize twice",
+        )
+    holdout = replace(
+        _spec("holdout", "candidate-strategy", 2026),
+        split=ExperimentSplit.HOLDOUT,
+        parent_candidate="candidate-20",
+    )
+    with pytest.raises(HoldoutAccessError, match="unused stored authorization"):
+        registry.create_experiment(holdout)
+    with pytest.raises(HoldoutAccessError, match="begin after"):
+        registry.create_experiment(
+            replace(
+                holdout,
+                start_timestamp=datetime(2025, 1, 2, tzinfo=UTC),
+                end_timestamp=datetime(2025, 12, 29, tzinfo=UTC),
+            ),
+            holdout_authorization_id="authorization-1",
+        )
+    with pytest.raises(HoldoutAccessError, match="specification differs"):
+        registry.create_experiment(
+            replace(holdout, parameters={"window": 25}),
+            holdout_authorization_id="authorization-1",
+        )
+    assert (
+        registry.get_holdout_run_authorization("authorization-1")["consumed_by_experiment_id"]
+        is None
+    )
+
+    registry.create_experiment(holdout, holdout_authorization_id="authorization-1")
+
+    assert (
+        registry.get_holdout_run_authorization("authorization-1")["consumed_by_experiment_id"]
+        == "holdout"
+    )
+    with pytest.raises(HoldoutAccessError, match="unused stored authorization"):
+        registry.create_experiment(
+            replace(holdout, experiment_id="holdout-again"),
+            holdout_authorization_id="authorization-1",
+        )
+    with pytest.raises(HoldoutAccessError, match="already exists"):
+        authorize_holdout_run(
+            registry,
+            _manifest(),
+            approved,
+            "candidate-20",
+            "authorization-after-consumption",
+            "reviewer",
+            "try to reopen the same qualification",
+        )
 
 
 def test_registry_evidence_rejects_mislabeled_variant(tmp_path: Path) -> None:

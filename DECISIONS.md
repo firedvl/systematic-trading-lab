@@ -107,3 +107,12 @@
 - Reasoning: explicit IDs make the evidence set reviewable, while registry checks bind every value to a completed validation record, its parent, period, strategy, dataset, universe, parameters, cost model, and execution model.
 - Consequences: qualification evaluation writes a content-addressed report and stops on missing or inconsistent records. Adding a candidate or sensitivity role requires a reviewed manifest change.
 - Revisit when: a typed campaign planner records these roles at candidate creation and can generate the same manifest without weakening review.
+
+## 2026-08-03 — Holdout creation consumes stored qualification authority
+
+- Decision: replace caller-supplied holdout approval with a stored, one-time authorization built from approved and passing registry evidence.
+- Context: `create_experiment` accepted a boolean that could bypass the intended qualification boundary.
+- Alternatives: keep the boolean behind a CLI flag or trust a report file supplied by the caller.
+- Reasoning: rebuilding evidence before authorization binds the decision to current registry records. Storing the candidate specification lets one SQLite transaction verify the holdout and consume its authority.
+- Consequences: a holdout must match the qualified strategy, parameters, models, dataset, universe, parent candidate, and post-validation period. One candidate, manifest, proposal, and source experiment set authorizes one holdout even when later bookkeeping changes the report fingerprint. One completed holdout permits one logged metrics read.
+- Revisit when: authorization moves to a remote reviewer service with independent identity and immutable audit storage.

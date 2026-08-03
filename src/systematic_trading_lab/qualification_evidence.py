@@ -11,9 +11,9 @@ from decimal import Decimal
 from pathlib import Path
 from typing import cast
 
-from .experiments import ExperimentRegistry, ExperimentSplit
+from .experiments import ExperimentRegistry, ExperimentSplit, HoldoutAccessError
 from .fingerprints import canonical_json, canonicalize, fingerprint
-from .qualification import QualificationProposal, evaluate
+from .qualification import ProposalStatus, QualificationProposal, evaluate
 
 
 @dataclass(frozen=True)
@@ -73,7 +73,7 @@ def build_evidence_reports(
     campaign_candidate_count = len(registry.list(manifest.campaign_id))
     reports: list[dict[str, object]] = []
     for candidate in manifest.candidates:
-        metrics = _aggregate_candidate(
+        metrics, candidate_specification = _aggregate_candidate(
             registry,
             manifest,
             candidate,
@@ -89,6 +89,7 @@ def build_evidence_reports(
             "campaign_id": manifest.campaign_id,
             "candidate_id": candidate.candidate_id,
             "strategy_id": candidate.strategy_id,
+            "candidate_specification": candidate_specification,
             "source_experiment_ids": sorted(_all_ids(candidate)),
             "metrics": metrics,
             "qualification": canonicalize(qualification),
@@ -96,6 +97,32 @@ def build_evidence_reports(
         payload["evidence_fingerprint"] = fingerprint(payload)
         reports.append(payload)
     return tuple(reports)
+
+
+def authorize_holdout_run(
+    registry: ExperimentRegistry,
+    manifest: QualificationEvidenceManifest,
+    proposal: QualificationProposal,
+    candidate_id: str,
+    authorization_id: str,
+    reviewer: str,
+    reason: str,
+) -> dict[str, object]:
+    """Rebuild evidence and store a one-use authorization only when it qualifies."""
+    reports = build_evidence_reports(registry, manifest, proposal)
+    report = next(
+        (item for item in reports if item["candidate_id"] == candidate_id),
+        None,
+    )
+    if report is None:
+        raise HoldoutAccessError(f"qualification candidate not found: {candidate_id}")
+    qualification = report["qualification"]
+    if not isinstance(qualification, Mapping):
+        raise HoldoutAccessError("qualification evidence is malformed")
+    if proposal.status is not ProposalStatus.APPROVED or qualification.get("state") != "qualified":
+        raise HoldoutAccessError("holdout run requires approved passing qualification evidence")
+    registry._create_holdout_run_authorization(authorization_id, report, reviewer, reason)
+    return registry.get_holdout_run_authorization(authorization_id)
 
 
 def write_evidence_reports(output_directory: Path, reports: Sequence[Mapping[str, object]]) -> Path:
@@ -131,7 +158,7 @@ def _aggregate_candidate(
     manifest: QualificationEvidenceManifest,
     candidate: CandidateEvidenceSpec,
     campaign_candidate_count: int,
-) -> dict[str, Decimal | int]:
+) -> tuple[dict[str, Decimal | int], dict[str, object]]:
     base = _records(
         registry,
         manifest.campaign_id,
@@ -175,7 +202,7 @@ def _aggregate_candidate(
         for record, metrics in zip(base, base_metrics, strict=True)
     )
     returns = [_metric(metrics, "total_return") for metrics in base_metrics]
-    return {
+    metrics: dict[str, Decimal | int] = {
         "validation_fold_count": len(base),
         "positive_validation_fold_rate": Decimal(sum(value > 0 for value in returns))
         / Decimal(len(returns)),
@@ -209,6 +236,25 @@ def _aggregate_candidate(
         "min_trade_count": min(_integer_metric(metrics, "trade_count") for metrics in base_metrics),
         "campaign_candidate_count": campaign_candidate_count,
     }
+    return metrics, _candidate_specification(base)
+
+
+def _candidate_specification(base: Sequence[Mapping[str, object]]) -> dict[str, object]:
+    spec = _spec(base[0])
+    return {
+        "strategy_id": spec["strategy_id"],
+        "strategy_version": spec["strategy_version"],
+        "strategy_family": spec["strategy_family"],
+        "parameters": spec["parameters"],
+        "cost_model_version": spec["cost_model_version"],
+        "execution_model_version": spec["execution_model_version"],
+        "dataset_id": spec["dataset_id"],
+        "dataset_fingerprint": spec["dataset_fingerprint"],
+        "universe_id": spec["universe_id"],
+        "universe_fingerprint": spec["universe_fingerprint"],
+        "validation_start": min(_period(record)[0] for record in base),
+        "validation_end": max(_period(record)[1] for record in base),
+    }
 
 
 def _validate_base_folds(
@@ -228,6 +274,8 @@ def _validate_base_folds(
         raise ValueError(f"candidate {candidate.candidate_id} has overlapping validation periods")
     base_specs = [_spec(record) for record in base]
     identity_fields = (
+        "strategy_version",
+        "strategy_family",
         "dataset_id",
         "dataset_fingerprint",
         "universe_id",
