@@ -15,7 +15,7 @@ from systematic_trading_lab.experiments import (
     ExperimentSplit,
     HoldoutAccessError,
 )
-from systematic_trading_lab.qualification import ProposalStatus, load_qualification_proposal
+from systematic_trading_lab.qualification import load_qualification_proposal
 from systematic_trading_lab.qualification_evidence import (
     CandidateEvidenceSpec,
     QualificationEvidenceManifest,
@@ -175,7 +175,7 @@ def _manifest() -> QualificationEvidenceManifest:
     )
 
 
-def test_registry_evidence_aggregates_and_stays_unapproved(
+def test_registry_evidence_aggregates_and_qualifies_approved_evidence(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     registry = _seed_registry(tmp_path / "experiments.sqlite3")
@@ -196,7 +196,7 @@ def test_registry_evidence_aggregates_and_stays_unapproved(
     assert metrics["total_validation_trade_count"] == 100
     assert metrics["campaign_candidate_count"] == 14
     assert isinstance(qualification, dict)
-    assert qualification["state"] == "unapproved"
+    assert qualification["state"] == "qualified"
     assert all(gate["passed"] for gate in qualification["gates"])
     path = write_evidence_reports(tmp_path / "reports", reports)
     assert path == write_evidence_reports(tmp_path / "reports", reports)
@@ -266,7 +266,7 @@ def test_registry_evidence_aggregates_and_stays_unapproved(
         [
             "experiment",
             "authorize-holdout",
-            "authorization-unapproved",
+            "authorization-approved",
             "--candidate",
             "candidate-20",
             "--evidence-manifest",
@@ -279,10 +279,11 @@ def test_registry_evidence_aggregates_and_stays_unapproved(
             "final holdout",
         ]
     )
-    with pytest.raises(HoldoutAccessError, match="approved passing"):
-        run(authorize_arguments, Settings(TradingMode.OFFLINE, tmp_path))
-    with pytest.raises(KeyError, match="authorization not found"):
-        registry.get_holdout_run_authorization("authorization-unapproved")
+    assert run(authorize_arguments, Settings(TradingMode.OFFLINE, tmp_path)) == 0
+    assert (
+        registry.get_holdout_run_authorization("authorization-approved")["candidate_id"]
+        == "candidate-20"
+    )
 
 
 def test_approved_evidence_creates_one_exact_holdout_authorization(tmp_path: Path) -> None:
@@ -291,18 +292,10 @@ def test_approved_evidence_creates_one_exact_holdout_authorization(tmp_path: Pat
         load_qualification_proposal(Path("config/research/qualification-proposal.json")),
         evidence_campaign_id="campaign-evidence",
     )
-    approved = replace(
-        proposal,
-        status=ProposalStatus.APPROVED,
-        gates=tuple(
-            replace(gate, spec=replace(gate.spec, approved=True)) for gate in proposal.gates
-        ),
-    )
-
     authorization = authorize_holdout_run(
         registry,
         _manifest(),
-        approved,
+        proposal,
         "candidate-20",
         "authorization-1",
         "reviewer",
@@ -315,7 +308,7 @@ def test_approved_evidence_creates_one_exact_holdout_authorization(tmp_path: Pat
         authorize_holdout_run(
             registry,
             _manifest(),
-            approved,
+            proposal,
             "candidate-20",
             "authorization-2",
             "reviewer",
@@ -362,12 +355,43 @@ def test_approved_evidence_creates_one_exact_holdout_authorization(tmp_path: Pat
         authorize_holdout_run(
             registry,
             _manifest(),
-            approved,
+            proposal,
             "candidate-20",
             "authorization-after-consumption",
             "reviewer",
             "try to reopen the same qualification",
         )
+
+
+def test_approved_evidence_cannot_authorize_a_failing_candidate(tmp_path: Path) -> None:
+    registry = _seed_registry(tmp_path / "experiments.sqlite3")
+    proposal = replace(
+        load_qualification_proposal(Path("config/research/qualification-proposal.json")),
+        evidence_campaign_id="campaign-evidence",
+    )
+    failing = replace(
+        proposal,
+        gates=(
+            replace(
+                proposal.gates[0],
+                spec=replace(proposal.gates[0].spec, threshold=Decimal("4")),
+            ),
+            *proposal.gates[1:],
+        ),
+    )
+
+    with pytest.raises(HoldoutAccessError, match="approved passing"):
+        authorize_holdout_run(
+            registry,
+            _manifest(),
+            failing,
+            "candidate-20",
+            "authorization-failing",
+            "reviewer",
+            "must not authorize failed evidence",
+        )
+    with pytest.raises(KeyError, match="authorization not found"):
+        registry.get_holdout_run_authorization("authorization-failing")
 
 
 def test_registry_evidence_rejects_mislabeled_variant(tmp_path: Path) -> None:

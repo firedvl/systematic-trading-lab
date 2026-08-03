@@ -53,4 +53,4 @@ The doubled-cost variants reduced the fold-three moving-average return from 0.10
 
 ## Remaining gates
 
-The current metrics do not cover risk-adjusted return, exposure, profit concentration, market regimes, or parameter neighborhoods. Financial thresholds remain unapproved. Those gaps block qualification and controlled holdout evaluation.
+At campaign time, the metrics did not cover risk-adjusted return, exposure, profit concentration, market regimes, or parameter neighborhoods, and financial thresholds were unapproved. Those historical gaps blocked qualification and controlled holdout evaluation. Later campaigns added the metrics, and the policy was approved without qualifying these candidates.

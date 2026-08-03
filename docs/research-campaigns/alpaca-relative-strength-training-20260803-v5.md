@@ -39,11 +39,12 @@ and 84- and 168-session neighbors.
 Do not run this family on validation or holdout data. The 168-session neighbor led the
 family, but a 0.161472 training Sharpe ratio and 45 trades across the full period do not
 support opening another data split. The 126-session base also exceeded the proposed 0.50
-instrument-profit concentration cap. The proposal remains unapproved and is used here only
-as an adverse design check, not as qualification authority.
+instrument-profit concentration cap. At campaign time the proposal was unapproved and was used
+only as an adverse design check, not as qualification authority. Its later approval does not reopen
+this family or create missing validation evidence.
 
-Review the proposed trade-count gate in a separate policy change before designing another
-low-turnover portfolio candidate. Do not lower a gate to admit these results.
+The trade-count gate was reviewed separately and approved on a campaign-wide basis. Do not alter
+it or any other gate to admit these results.
 
 ## Report fingerprints
 

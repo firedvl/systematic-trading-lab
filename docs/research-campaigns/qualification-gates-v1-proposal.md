@@ -1,19 +1,19 @@
-# Qualification gates v1 proposal
+# Qualification gates v1
 
 ## Status
 
-`qualification-gates-v1` is proposed and unapproved. The machine-readable source is
-`config/research/qualification-proposal.json`. Merging this proposal does not approve a gate,
-qualify a strategy, authorize a holdout run, or enable execution.
+`qualification-gates-v1` is approved. The machine-readable source is
+`config/research/qualification-proposal.json`. Approval does not qualify a strategy, authorize a
+holdout run, or enable execution.
 
-The proposal uses campaign `alpaca-qualification-evidence-20260802-v3`. It sets each threshold
-before a holdout review and does not use 2026 data. The thresholds are policy choices for human
-review, not universal financial claims. They do not form a composite score: each failed gate stays
-visible and disqualifying.
+The policy uses campaign `alpaca-qualification-evidence-20260802-v3`. Each threshold was set and
+reviewed before a holdout review without using 2026 data. The thresholds are project policy
+choices, not universal financial claims. They do not form a composite score: each failed gate
+stays visible and disqualifying.
 
-## Proposed gates
+## Approved gates
 
-| Metric | Proposed gate | Reason |
+| Metric | Approved gate | Reason |
 | --- | ---: | --- |
 | Validation fold count | >= 3 | Cover at least three chronological validation periods. |
 | Positive validation fold rate | >= 1 | Reject a loss in any validation fold. |
@@ -33,7 +33,7 @@ visible and disqualifying.
 | Total base-validation trade count | >= 100 | Require operational fill evidence across the full predeclared validation campaign. |
 | Campaign candidate count | <= 40 | Bound the search and retain all candidates. |
 
-Every gate has `approved: false`. The loader rejects unknown or missing fields, non-finite
+Every gate has `approved: true`. The loader rejects unknown or missing fields, non-finite
 thresholds, duplicate gate names or metrics, unsupported comparisons or scopes, and any mismatch
 between proposal status and gate approval flags.
 
@@ -41,25 +41,24 @@ The trade-count gate sums fills across the three base-validation folds. The earl
 minimum conflated execution count with independent return observations and structurally excluded
 monthly portfolio strategies that cannot produce 100 fills in one year. Per-fold return, Sharpe,
 drawdown, regime, and concentration gates still reject thin or concentrated evidence. The revised
-gate retains the proposed threshold of 100 campaign-wide fills, remains unapproved, and does not
-change any strategy result.
+gate retains the approved threshold of 100 campaign-wide fills and does not change any strategy
+result.
 
 ## Evaluation against validation evidence
 
-| Strategy | State | Failed proposed gates |
+| Strategy | State | Failed approved gates |
 | --- | --- | --- |
-| Moving average | `unapproved` | Fixed-weight benchmark wins; worst validation Sharpe; instrument profit concentration cap; turnover cap |
-| Momentum | `unapproved` | Fixed-weight benchmark wins; instrument profit concentration cap; parameter-neighbor retention |
+| Moving average | `rejected` | Fixed-weight benchmark wins; worst validation Sharpe; instrument profit concentration cap; turnover cap |
+| Momentum | `rejected` | Fixed-weight benchmark wins; instrument profit concentration cap; parameter-neighbor retention |
 
 Fixed-weight beat both strategies in all three validation years. Moving average also had a worst
 Sharpe of 0.102137, maximum top-instrument profit share of 0.596930, and maximum turnover of
 31.823442. Momentum had a maximum top-instrument profit share of 0.501365 and minimum
-parameter-neighbor return retention of 0.147412. These failures stay visible even though the
-proposal's approval state already prevents qualification.
+parameter-neighbor return retention of 0.147412. These failures prevent qualification and stay
+visible in the approved report.
 
-## Human review
+## Approval
 
-A reviewer should assess each threshold and its rationale without changing strategy parameters or
-viewing holdout data. Approval needs a later, separate change that sets the proposal and every gate
-to `approved`, explains any revised threshold, and receives explicit human review. Current evidence
-does not support such a change because neither candidate passes all proposed gates.
+The user approved all 17 thresholds on 2026-08-03 after reviewing their purpose. This approval-only
+change does not alter strategy parameters or inspect holdout data. Neither current candidate passes
+all gates, so both are rejected and no holdout authorization can be stored.
