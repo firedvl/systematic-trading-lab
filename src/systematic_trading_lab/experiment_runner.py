@@ -137,6 +137,7 @@ def run_experiment(
             initial_cash,
             selected_costs,
             fill_delay_bars,
+            False,
         )
     except Exception as error:
         registry.fail(spec.experiment_id, f"{type(error).__name__}: {error}")
@@ -151,13 +152,22 @@ def run_cataloged_experiment(
     initial_cash: Decimal = Decimal("100000"),
     cost_model: CostModel | None = None,
     fill_delay_bars: int = 1,
+    *,
+    pre_registered: bool = False,
 ) -> BacktestResult:
     """Run training or validation from only its cataloged timestamp range."""
     if spec.split is ExperimentSplit.HOLDOUT:
         raise HoldoutAccessError("cataloged research runner cannot execute holdout data")
     selected_costs = cost_model or CostModel()
-    registry.create_experiment(spec)
-    registry.claim(spec.experiment_id)
+    if pre_registered:
+        if registry.get_planned_spec(spec.experiment_id) != spec:
+            raise ExperimentError("stored planned experiment differs")
+    else:
+        registry.create_experiment(spec)
+    if pre_registered:
+        registry._claim_planned(spec)
+    else:
+        registry.claim(spec.experiment_id)
     try:
         _validate_execution_models(spec, selected_costs, fill_delay_bars)
         bars = datasets.load_bars_range(
@@ -175,6 +185,7 @@ def run_cataloged_experiment(
             initial_cash,
             selected_costs,
             fill_delay_bars,
+            pre_registered,
         )
     except Exception as error:
         registry.fail(spec.experiment_id, f"{type(error).__name__}: {error}")
@@ -311,6 +322,7 @@ def _complete_research_run(
     initial_cash: Decimal,
     cost_model: CostModel,
     fill_delay_bars: int,
+    allow_planned_completion: bool,
 ) -> BacktestResult:
     registry.heartbeat(spec.experiment_id)
     result = strategy_result(
@@ -324,10 +336,11 @@ def _complete_research_run(
     report = build_report({spec.experiment_id: result})
     report_path = output_directory / f"{fingerprint(spec)}.json"
     write_report(report_path, {spec.experiment_id: result})
-    registry.complete(
-        spec.experiment_id,
-        summarize(result),
-        [str(report_path)],
-        [str(report["report_fingerprint"])],
-    )
+    metrics = summarize(result)
+    locations = [str(report_path)]
+    hashes = [str(report["report_fingerprint"])]
+    if allow_planned_completion:
+        registry._complete_planned(spec, metrics, locations, hashes)
+    else:
+        registry.complete(spec.experiment_id, metrics, locations, hashes)
     return result

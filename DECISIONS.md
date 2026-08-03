@@ -161,3 +161,12 @@
 - Reasoning: the visible disqualifying gates cover validation stability, benchmark performance, risk, concentration, execution sensitivity, parameter sensitivity, regime coverage, activity, and search volume. Approval locks the rules before another candidate campaign.
 - Consequences: passing evidence can authorize one exact holdout run. Existing moving-average and momentum evidence becomes formally rejected, relative strength remains stopped before validation, and no holdout is authorized. Future gate changes require a separate human-reviewed change and cannot accompany strategy changes.
 - Revisit when: new evidence exposes a gate defect or the research, data, or execution model changes materially.
+
+## 2026-08-03 — Sealed training plans preregister exact candidates
+
+- Decision: load future official training campaigns from strict, fingerprinted plan files and atomically preregister every candidate before execution.
+- Context: numeric campaign budgets preserved search count but did not bind the claimed predeclared IDs, parameters, dates, provenance, parents, or models.
+- Alternatives: continue using Markdown plans and CLI flags, or build full automated candidate generation.
+- Reasoning: a stored canonical plan makes the current manual workflow enforceable without expanding into M6 automation.
+- Consequences: `training-campaign-plan-v1` is training-only, requires explicit parameters, exact budget use, default conservative costs, and next-bar fills. Planned runs accept only a stored candidate ID. Historical campaigns remain legacy evidence and are not rewritten.
+- Revisit when: a candidate passes training and needs a reviewed validation-plan schema or sensitivity models.

@@ -13,6 +13,7 @@ from pathlib import Path
 
 from . import __version__
 from .backtesting import CostModel
+from .campaign_specs import load_training_campaign_plan
 from .config import ConfigurationError, Settings, load_dotenv, load_settings
 from .datasets import DatasetService, DatasetValidationError, fixture_request, fixture_symbols
 from .domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
@@ -99,6 +100,8 @@ def parser() -> argparse.ArgumentParser:
     campaign.add_argument("campaign_id")
     campaign.add_argument("--name", required=True)
     campaign.add_argument("--budget", required=True, type=int)
+    planned_campaign = experiment_commands.add_parser("plan-training")
+    planned_campaign.add_argument("--spec", type=Path, required=True)
     create = experiment_commands.add_parser("create")
     create.add_argument("experiment_id")
     create.add_argument("--campaign", required=True)
@@ -129,6 +132,10 @@ def parser() -> argparse.ArgumentParser:
     _add_execution_arguments(execute)
     execute.add_argument("--split", choices=("training", "validation"), required=True)
     execute.add_argument("--parent-candidate")
+    planned_run = experiment_commands.add_parser(
+        "run-planned", help="run one pre-registered sealed training candidate"
+    )
+    planned_run.add_argument("experiment_id")
     holdout = experiment_commands.add_parser(
         "run-holdout", help="consume one stored authorization and run its exact holdout"
     )
@@ -184,6 +191,9 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             _print(
                 registry.create_campaign(arguments.campaign_id, arguments.name, arguments.budget)
             )
+        elif arguments.experiment_command == "plan-training":
+            plan = load_training_campaign_plan(arguments.spec)
+            _print(registry.create_planned_campaign(plan.payload))
         elif arguments.experiment_command == "create":
             if not service.validate(arguments.dataset_id)["valid"]:
                 raise DatasetValidationError("dataset integrity validation failed")
@@ -225,6 +235,16 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             _print(
                 {"recovered": registry.recover_stale(timedelta(minutes=arguments.max_age_minutes))}
             )
+        elif arguments.experiment_command == "run-planned":
+            spec = registry.get_planned_spec(arguments.experiment_id)
+            run_cataloged_experiment(
+                registry,
+                service,
+                spec,
+                layout.reports,
+                pre_registered=True,
+            )
+            _print(registry.get(arguments.experiment_id))
         elif arguments.experiment_command in {"run", "run-holdout"}:
             manifest = service.describe(arguments.dataset)
             identity = manifest["identity"]

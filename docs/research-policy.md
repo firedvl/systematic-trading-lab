@@ -17,3 +17,10 @@ Walk-forward training must end before its validation window begins, and validati
 Multi-symbol portfolio research must make one decision from a complete session and history ending at that session. Treat its nonempty target set as one atomic full-universe decision: each session symbol must appear once, each weight must be long-only, and total target weight must not exceed one. Execute reductions before buys at the next eligible open. Do not use symbol processing order to obtain same-session information or allow part of an invalid allocation to trade.
 
 CLI runs use only immutable cataloged datasets and read only the declared training or validation range. Dataset manifests supply the dataset fingerprint and exact universe provenance; callers cannot override them. The command records that provenance, code commit, strategy parameters, cost version, execution version, split, and reason before reading bars. It rejects parameters the selected strategy would ignore.
+
+Future official training campaigns must use a strict `training-campaign-plan-v1` artifact. The
+registry stores its canonical content and fingerprint and atomically preregisters the exact candidate
+set before execution. The plan budget equals its candidate count; candidate IDs, code revision,
+dataset and universe provenance, strategies, parameters, dates, parents, costs, and fill model cannot
+change at run time. V1 is training-only and permits the default conservative cost and next-bar models.
+Historical unplanned campaigns remain immutable legacy evidence and are not rewritten into plans.
