@@ -103,8 +103,9 @@ The slice 5 foundation now journals strict normalized local-expected and Alpaca-
 snapshots, a reviewed flat baseline, and later clean or dirty comparison results. It fails on source,
 account, cash, equity, buying power, account readiness, position, complete open-order state,
 freshness, timing, authorization, or unresolved-mutation differences. Durable adapter provenance now
-exists; stable repeat evidence and emergency-clear
-authority remain absent.
+exists. Read-only stable-repeat readiness now requires the latest three distinct clean records and
+the reviewed risk configuration's explicit separation interval. Emergency-clear authority remains
+absent.
 
 The paper read adapter now permits only fixed-origin GET requests for account, positions, open orders,
 and clock. It validates one expected account, an explicit symbol allowlist, account readiness and

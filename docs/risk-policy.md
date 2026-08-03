@@ -14,6 +14,8 @@ any bound context or configuration fingerprint changes.
 
 Executable limits require their own reviewed configuration. No library default is an approved
 financial limit; missing, malformed, inactive, or mismatched limits reject every intent.
+`RiskLimits` also carries a positive reviewed reconciliation-stability interval. Clear readiness has
+no default interval and cannot substitute the snapshot freshness limit.
 
 Paper authorization is a separate immutable, expiring operator record bound to one qualified
 candidate, strategy configuration, code revision, dataset and universe, qualification evidence,
@@ -42,3 +44,9 @@ and replaces the supplied emergency flag with verified persistent state. It jour
 decisions. Approval is explicitly blocked until clean reconciliation can support a journaled emergency
 clear and the same transaction can reserve pending cash, order notional, gross exposure, and order
 count. This prevents a caller or test-only flag from creating unproven capacity authority.
+
+The read-only clear-readiness proof selects the latest three evidence records for one baseline. All
+three must use distinct adapter-attested snapshots, be clean with no unresolved mutation, and have
+strictly increasing comparison and observation times separated by the reviewed stability interval.
+It rechecks current snapshot freshness, active exact authorization and limits, and the current
+emergency generation. A dirty latest sample resets readiness. The proof cannot clear emergency state.

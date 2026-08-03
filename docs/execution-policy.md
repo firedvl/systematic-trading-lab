@@ -32,3 +32,6 @@ The reader binds its version, exact paper origin, completion time, and normalize
 attestation. The execution database stores that snapshot and attestation with separate journal events
 in one transaction. Flat baselines and later reconciliation reject unattested Alpaca-paper snapshots.
 No attestation or reconciliation result can clear emergency disable yet.
+Read-only clear readiness requires the latest three distinct adapter-attested reconciliation records
+to be clean and separated by the stability interval in the reviewed risk configuration. It rechecks
+freshness, authority, configuration, and emergency generation. Dirty evidence resets the streak.
