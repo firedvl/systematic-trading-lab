@@ -16,6 +16,8 @@ Executable limits require their own reviewed configuration. No library default i
 financial limit; missing, malformed, inactive, or mismatched limits reject every intent.
 `RiskLimits` also carries a positive reviewed reconciliation-stability interval. Clear readiness has
 no default interval and cannot substitute the snapshot freshness limit.
+It now also requires a positive strategy-capital allocation. The allocation enters the exact risk
+configuration fingerprint; the repository supplies no production value.
 
 Paper authorization is a separate immutable, expiring operator record bound to one qualified
 candidate, strategy configuration, code revision, dataset and universe, qualification evidence,
@@ -72,6 +74,10 @@ uses that executable side; projected long exposure remains ask-valued.
 Paper snapshot attestation v2 also retains Alpaca `last_equity`. Account daily PnL is derived as
 attested current equity minus prior-close equity, with both snapshot and attestation fingerprints.
 This supplies the daily-loss input only; it does not substitute for per-strategy drawdown evidence.
+An immutable strategy-equity baseline now binds that reviewed allocation to one paper authorization,
+flat reconciliation baseline, account, strategy identity and version, operator, reason, and time.
+Missing provenance fails closed. The baseline supplies no PnL, peak equity, drawdown, risk approval,
+or capacity-release authority; those require later fill, cash-flow, fee, and quote-mark lineage.
 Risk decisions now derive the temporal active reservation set inside their immediate transaction.
 They replace caller pending-capacity totals and bind the exact reservation IDs, fingerprints,
 aggregates, and count. A reservation is active only after creation, before expiry, and before any

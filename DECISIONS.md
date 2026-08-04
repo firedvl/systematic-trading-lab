@@ -296,3 +296,10 @@
 - Context: caller totals can omit a reservation or erase capacity with a timestamp from the wrong point in time. A later release must not change an earlier evaluation.
 - Consequences: risk decisions now bind reservation IDs, reservation fingerprints, aggregate cash, gross exposure, order notional, and count. Filled capacity remains reserved until an effective release event.
 - Revisit when: the complete attested risk context can consume this set alongside strategy drawdown and settlement evidence.
+
+## 2026-08-03 — Strategy drawdown starts from reviewed allocated capital
+
+- Decision: require a positive strategy-capital allocation in each reviewed risk configuration and bind one immutable strategy-equity baseline to the exact paper authorization and flat reconciliation baseline.
+- Context: account equity drawdown can hide one strategy's loss behind another strategy's gain, while the bootstrap defines no strategy-capital allocation value.
+- Consequences: the allocation changes the risk-configuration fingerprint and has no production default. The baseline binds account, strategy identity and version, allocation, operator, reason, and time. It grants no PnL, peak, drawdown, risk approval, or capacity authority.
+- Revisit when: immutable fills, strategy cash flows, fees, and quote marks can advance strategy-equity checkpoints.

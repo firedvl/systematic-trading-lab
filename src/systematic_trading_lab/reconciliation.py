@@ -17,7 +17,7 @@ from typing import Any
 from .execution import JournalIntegrityError
 from .experiments import HoldoutAccessError
 from .fingerprints import canonical_json, canonicalize, fingerprint
-from .risk import EmergencyState, RiskLimits, RiskStore
+from .risk import EmergencyState, PaperAuthorization, RiskLimits, RiskStore
 
 _SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,15}")
 _ALPACA_READER_CAPABILITY = object()
@@ -288,6 +288,49 @@ class ReconciliationBaseline:
 
 
 @dataclass(frozen=True)
+class StrategyEquityBaseline:
+    baseline_id: str
+    authorization_id: str
+    authorization_fingerprint: str
+    reconciliation_baseline_id: str
+    reconciliation_baseline_fingerprint: str
+    account_id: str
+    strategy_id: str
+    strategy_version: str
+    risk_configuration_fingerprint: str
+    allocated_capital: Decimal
+    operator: str
+    reason: str
+    created_at: datetime
+
+    def __post_init__(self) -> None:
+        for name, value in (
+            ("strategy equity baseline ID", self.baseline_id),
+            ("authorization ID", self.authorization_id),
+            ("reconciliation baseline ID", self.reconciliation_baseline_id),
+            ("account ID", self.account_id),
+            ("strategy ID", self.strategy_id),
+            ("strategy version", self.strategy_version),
+            ("operator", self.operator),
+            ("reason", self.reason),
+        ):
+            _bounded_text(name, value)
+        for name, value in (
+            ("paper authorization", self.authorization_fingerprint),
+            ("reconciliation baseline", self.reconciliation_baseline_fingerprint),
+            ("risk configuration", self.risk_configuration_fingerprint),
+        ):
+            _sha256(name, value)
+        if not self.allocated_capital.is_finite() or self.allocated_capital <= 0:
+            raise ValueError("allocated capital must be finite and positive")
+        _utc("strategy equity baseline creation time", self.created_at)
+
+    @property
+    def baseline_fingerprint(self) -> str:
+        return fingerprint(self)
+
+
+@dataclass(frozen=True)
 class ReconciliationEvidence:
     evidence_id: str
     baseline_id: str
@@ -459,6 +502,16 @@ class ReconciliationStore(RiskStore):
                     baseline_json TEXT NOT NULL,
                     journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
                 );
+                CREATE TABLE IF NOT EXISTS strategy_equity_baselines (
+                    baseline_id TEXT PRIMARY KEY,
+                    authorization_id TEXT NOT NULL UNIQUE
+                        REFERENCES paper_authorizations(authorization_id),
+                    reconciliation_baseline_id TEXT NOT NULL UNIQUE
+                        REFERENCES reconciliation_baselines(baseline_id),
+                    baseline_fingerprint TEXT NOT NULL UNIQUE,
+                    baseline_json TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
                 CREATE TABLE IF NOT EXISTS reconciliation_evidence (
                     evidence_id TEXT PRIMARY KEY,
                     evidence_json TEXT NOT NULL,
@@ -486,6 +539,14 @@ class ReconciliationStore(RiskStore):
                 CREATE TRIGGER IF NOT EXISTS reconciliation_baselines_no_delete
                 BEFORE DELETE ON reconciliation_baselines BEGIN
                     SELECT RAISE(ABORT, 'reconciliation baselines are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS strategy_equity_baselines_no_update
+                BEFORE UPDATE ON strategy_equity_baselines BEGIN
+                    SELECT RAISE(ABORT, 'strategy equity baselines are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS strategy_equity_baselines_no_delete
+                BEFORE DELETE ON strategy_equity_baselines BEGIN
+                    SELECT RAISE(ABORT, 'strategy equity baselines are immutable');
                 END;
                 CREATE TRIGGER IF NOT EXISTS reconciliation_evidence_no_update
                 BEFORE UPDATE ON reconciliation_evidence BEGIN
@@ -776,6 +837,119 @@ class ReconciliationStore(RiskStore):
                 connection.rollback()
                 raise
         return baseline
+
+    def create_strategy_equity_baseline(
+        self,
+        *,
+        baseline_id: str,
+        reconciliation_baseline_id: str,
+        limits: RiskLimits,
+        operator: str,
+        reason: str,
+        created_at: datetime,
+    ) -> StrategyEquityBaseline:
+        with self._connect() as connection:
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                _, _, reconciliation_baselines, _ = self._verify_all(connection)
+                authorizations = self._verify_authorizations(connection)
+                equity_baselines = self._verify_strategy_equity_baselines(
+                    connection, reconciliation_baselines, authorizations
+                )
+                try:
+                    reconciliation_baseline = reconciliation_baselines[reconciliation_baseline_id]
+                    authorization = authorizations[reconciliation_baseline.authorization_id]
+                except KeyError as error:
+                    raise HoldoutAccessError(
+                        "strategy equity baseline authority is missing"
+                    ) from error
+                baseline = StrategyEquityBaseline(
+                    baseline_id=baseline_id,
+                    authorization_id=authorization.authorization_id,
+                    authorization_fingerprint=authorization.authorization_fingerprint,
+                    reconciliation_baseline_id=reconciliation_baseline.baseline_id,
+                    reconciliation_baseline_fingerprint=fingerprint(reconciliation_baseline),
+                    account_id=authorization.account_id,
+                    strategy_id=authorization.strategy_id,
+                    strategy_version=authorization.strategy_version,
+                    risk_configuration_fingerprint=limits.configuration_fingerprint,
+                    allocated_capital=limits.strategy_capital_allocation,
+                    operator=operator,
+                    reason=reason,
+                    created_at=created_at,
+                )
+                if (
+                    authorization.account_id != limits.account_id
+                    or authorization.risk_configuration_fingerprint
+                    != limits.configuration_fingerprint
+                    or reconciliation_baseline.account_id != limits.account_id
+                    or reconciliation_baseline.risk_configuration_fingerprint
+                    != limits.configuration_fingerprint
+                    or created_at < reconciliation_baseline.created_at
+                    or created_at < authorization.authorized_at
+                    or created_at >= authorization.expires_at
+                    or created_at < limits.effective_at
+                    or created_at >= limits.expires_at
+                ):
+                    raise HoldoutAccessError(
+                        "strategy equity baseline requires matching active authority"
+                    )
+                existing = equity_baselines.get(baseline_id)
+                if existing is not None:
+                    if existing != baseline:
+                        raise JournalIntegrityError(
+                            "strategy equity baseline ID is bound to different content"
+                        )
+                    connection.commit()
+                    return existing
+                if any(
+                    item.authorization_id == authorization.authorization_id
+                    for item in equity_baselines.values()
+                ):
+                    raise HoldoutAccessError(
+                        "paper authorization already has a strategy equity baseline"
+                    )
+                sequence = self._append_event(
+                    connection,
+                    occurred_at=created_at,
+                    event_type="strategy-equity-baseline-created",
+                    entity_type="strategy-equity-baseline",
+                    entity_id=baseline_id,
+                    payload=canonicalize(baseline),
+                )
+                connection.execute(
+                    "INSERT INTO strategy_equity_baselines VALUES (?, ?, ?, ?, ?, ?)",
+                    (
+                        baseline.baseline_id,
+                        baseline.authorization_id,
+                        baseline.reconciliation_baseline_id,
+                        baseline.baseline_fingerprint,
+                        canonical_json(baseline),
+                        sequence,
+                    ),
+                )
+                connection.commit()
+            except sqlite3.IntegrityError as error:
+                connection.rollback()
+                raise HoldoutAccessError("strategy equity baseline already exists") from error
+            except Exception:
+                connection.rollback()
+                raise
+        return baseline
+
+    def get_strategy_equity_baseline(self, authorization_id: str) -> StrategyEquityBaseline:
+        _bounded_text("authorization ID", authorization_id)
+        with self._connect() as connection:
+            connection.execute("BEGIN")
+            _, _, reconciliation_baselines, _ = self._verify_all(connection)
+            authorizations = self._verify_authorizations(connection)
+            baselines = self._verify_strategy_equity_baselines(
+                connection, reconciliation_baselines, authorizations
+            )
+        for baseline in baselines.values():
+            if baseline.authorization_id == authorization_id:
+                return baseline
+        raise HoldoutAccessError("strategy equity baseline is missing")
 
     def record_reconciliation(
         self,
@@ -1322,7 +1496,69 @@ class ReconciliationStore(RiskStore):
             ):
                 raise JournalIntegrityError("reconciliation evidence does not match its inputs")
             evidence_by_id[evidence.evidence_id] = evidence
+        ReconciliationStore._verify_strategy_equity_baselines(
+            self, connection, baselines, authorizations
+        )
         return snapshots, attestations, baselines, evidence_by_id
+
+    def _verify_strategy_equity_baselines(
+        self,
+        connection: sqlite3.Connection,
+        reconciliation_baselines: dict[str, ReconciliationBaseline],
+        authorizations: dict[str, PaperAuthorization],
+    ) -> dict[str, StrategyEquityBaseline]:
+        baselines: dict[str, StrategyEquityBaseline] = {}
+        rows = connection.execute(
+            """
+            SELECT baseline_id, authorization_id, reconciliation_baseline_id,
+                   baseline_fingerprint, baseline_json, journal_sequence
+            FROM strategy_equity_baselines
+            """
+        ).fetchall()
+        _require_event_count(connection, "strategy-equity-baseline-created", len(rows))
+        for row in rows:
+            try:
+                baseline = _decode_strategy_equity_baseline(json.loads(row[4]))
+                reconciliation_baseline = reconciliation_baselines[
+                    baseline.reconciliation_baseline_id
+                ]
+                authorization = authorizations[baseline.authorization_id]
+            except (KeyError, ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError("stored strategy equity baseline is invalid") from error
+            if (
+                row[0] != baseline.baseline_id
+                or row[1] != baseline.authorization_id
+                or row[2] != baseline.reconciliation_baseline_id
+                or row[3] != baseline.baseline_fingerprint
+                or row[4] != canonical_json(baseline)
+                or reconciliation_baseline.authorization_id != baseline.authorization_id
+                or fingerprint(reconciliation_baseline)
+                != baseline.reconciliation_baseline_fingerprint
+                or reconciliation_baseline.account_id != baseline.account_id
+                or reconciliation_baseline.risk_configuration_fingerprint
+                != baseline.risk_configuration_fingerprint
+                or authorization.account_id != baseline.account_id
+                or authorization.authorization_fingerprint != baseline.authorization_fingerprint
+                or authorization.strategy_id != baseline.strategy_id
+                or authorization.strategy_version != baseline.strategy_version
+                or authorization.risk_configuration_fingerprint
+                != baseline.risk_configuration_fingerprint
+                or baseline.created_at < reconciliation_baseline.created_at
+                or baseline.created_at < authorization.authorized_at
+                or baseline.created_at >= authorization.expires_at
+                or not _event_matches(
+                    connection,
+                    row[5],
+                    _utc_text(baseline.created_at),
+                    "strategy-equity-baseline-created",
+                    "strategy-equity-baseline",
+                    row[0],
+                    canonical_json(baseline),
+                )
+            ):
+                raise JournalIntegrityError("strategy equity baseline does not match its authority")
+            baselines[baseline.baseline_id] = baseline
+        return baselines
 
 
 def _decode_snapshot(value: Any) -> PortfolioSnapshot:
@@ -1386,6 +1622,21 @@ def _decode_baseline(value: Any) -> ReconciliationBaseline:
         return ReconciliationBaseline(**{**value, "created_at": _parse_utc(value["created_at"])})
     except (KeyError, TypeError) as error:
         raise ValueError("reconciliation baseline fields differ") from error
+
+
+def _decode_strategy_equity_baseline(value: Any) -> StrategyEquityBaseline:
+    if not isinstance(value, dict):
+        raise ValueError("strategy equity baseline must be an object")
+    try:
+        return StrategyEquityBaseline(
+            **{
+                **value,
+                "allocated_capital": Decimal(value["allocated_capital"]),
+                "created_at": _parse_utc(value["created_at"]),
+            }
+        )
+    except (KeyError, TypeError, ArithmeticError) as error:
+        raise ValueError("strategy equity baseline fields differ") from error
 
 
 def _decode_evidence(value: Any) -> ReconciliationEvidence:

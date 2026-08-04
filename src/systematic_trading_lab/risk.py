@@ -26,6 +26,7 @@ class RiskLimits:
     max_order_notional: Decimal
     max_position_notional: Decimal
     max_gross_exposure: Decimal
+    strategy_capital_allocation: Decimal
     min_cash: Decimal
     max_open_orders: int
     max_orders_per_minute: int
@@ -57,6 +58,7 @@ class RiskLimits:
             ("maximum order notional", self.max_order_notional),
             ("maximum position notional", self.max_position_notional),
             ("maximum gross exposure", self.max_gross_exposure),
+            ("strategy capital allocation", self.strategy_capital_allocation),
             ("maximum daily loss", self.max_daily_loss),
             ("maximum strategy drawdown", self.max_strategy_drawdown),
             ("maximum price deviation", self.max_price_deviation_bps),
