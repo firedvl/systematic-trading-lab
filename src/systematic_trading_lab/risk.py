@@ -97,6 +97,7 @@ class RiskContext:
     current_symbol_quantity: int
     pending_buy_notional: Decimal
     pending_order_notional: Decimal
+    active_reservation_set_fingerprint: str
     open_order_count: int
     pending_order_count: int
     orders_last_minute: int
@@ -137,6 +138,7 @@ class RiskContext:
                 raise ValueError(f"{decimal_name} must be finite and nonnegative")
         if not self.daily_pnl.is_finite():
             raise ValueError("daily PnL must be finite")
+        _sha256("active reservation set", self.active_reservation_set_fingerprint)
         if self.current_symbol_notional > self.current_gross_exposure:
             raise ValueError("symbol notional cannot exceed gross exposure")
         _positive_decimal("quote bid price", self.quote_bid_price)
@@ -392,6 +394,44 @@ class CapacityReservation:
         return fingerprint(self)
 
 
+@dataclass(frozen=True)
+class ActiveReservationSet:
+    account_id: str
+    evaluated_at: datetime
+    reservation_ids: tuple[str, ...]
+    reservation_fingerprints: tuple[str, ...]
+    cash: Decimal
+    gross_exposure: Decimal
+    order_notional: Decimal
+
+    def __post_init__(self) -> None:
+        _text("reservation-set account ID", self.account_id)
+        _utc("reservation-set evaluation time", self.evaluated_at)
+        if (
+            self.reservation_ids != tuple(sorted(self.reservation_ids))
+            or len(set(self.reservation_ids)) != len(self.reservation_ids)
+            or len(self.reservation_ids) != len(self.reservation_fingerprints)
+        ):
+            raise ValueError("reservation set IDs must be sorted and unique")
+        for reservation_fingerprint in self.reservation_fingerprints:
+            _sha256("reservation", reservation_fingerprint)
+        for name, amount in (
+            ("reservation-set cash", self.cash),
+            ("reservation-set gross exposure", self.gross_exposure),
+            ("reservation-set order notional", self.order_notional),
+        ):
+            if not amount.is_finite() or amount < 0:
+                raise ValueError(f"{name} must be finite and nonnegative")
+
+    @property
+    def reservation_count(self) -> int:
+        return len(self.reservation_ids)
+
+    @property
+    def set_fingerprint(self) -> str:
+        return fingerprint(self)
+
+
 class RiskStore(ExecutionStore):
     """Extend the execution database with persistent fail-closed emergency state."""
 
@@ -631,21 +671,19 @@ class RiskStore(ExecutionStore):
                     raise HoldoutAccessError(
                         "intent, context, limits, or time differs from paper authorization"
                     )
-                bound_context = replace(
-                    context,
-                    emergency_disabled=emergency.disabled,
-                )
-                reserved = self._active_reservation_totals(
+                reservation_set = self._active_reservation_set(
                     connection,
                     account_id=context.account_id,
                     at=context.evaluated_at,
                     exclude_intent_id=intent_id,
                 )
                 bound_context = replace(
-                    bound_context,
-                    pending_buy_notional=bound_context.pending_buy_notional + reserved[0],
-                    pending_order_notional=bound_context.pending_order_notional + reserved[1],
-                    pending_order_count=bound_context.pending_order_count + reserved[2],
+                    context,
+                    emergency_disabled=emergency.disabled,
+                    active_reservation_set_fingerprint=reservation_set.set_fingerprint,
+                    pending_buy_notional=reservation_set.cash,
+                    pending_order_notional=reservation_set.order_notional,
+                    pending_order_count=reservation_set.reservation_count,
                 )
                 decision = evaluate_risk(intent, limits, bound_context)
                 decision_id = fingerprint(
@@ -868,30 +906,43 @@ class RiskStore(ExecutionStore):
             result[authorization.authorization_id] = authorization
         return result
 
-    def _active_reservation_totals(
+    def _active_reservation_set(
         self,
         connection: sqlite3.Connection,
         *,
         account_id: str,
         at: datetime,
         exclude_intent_id: str | None = None,
-    ) -> tuple[Decimal, Decimal, int]:
+    ) -> ActiveReservationSet:
         rows = connection.execute(
             """
             SELECT r.reservation_json FROM capacity_reservations r
             LEFT JOIN capacity_releases x ON x.reservation_id = r.reservation_id
             WHERE json_extract(r.reservation_json, '$.account_id') = ?
               AND r.expires_at > ?
-              AND x.reservation_id IS NULL
+              AND r.reserved_at <= ?
+              AND (x.reservation_id IS NULL OR x.released_at > ?)
               AND (? IS NULL OR r.intent_id != ?)
             """,
-            (account_id, _utc_text(at), exclude_intent_id, exclude_intent_id),
+            (
+                account_id,
+                _utc_text(at),
+                _utc_text(at),
+                _utc_text(at),
+                exclude_intent_id,
+                exclude_intent_id,
+            ),
         ).fetchall()
         reservations = [_decode_reservation(json.loads(row[0])) for row in rows]
-        return (
-            sum((item.cash for item in reservations), Decimal("0")),
-            sum((item.order_notional for item in reservations), Decimal("0")),
-            len(reservations),
+        reservations.sort(key=lambda item: item.reservation_id)
+        return ActiveReservationSet(
+            account_id=account_id,
+            evaluated_at=at,
+            reservation_ids=tuple(item.reservation_id for item in reservations),
+            reservation_fingerprints=tuple(item.reservation_fingerprint for item in reservations),
+            cash=sum((item.cash for item in reservations), Decimal("0")),
+            gross_exposure=sum((item.gross_exposure for item in reservations), Decimal("0")),
+            order_notional=sum((item.order_notional for item in reservations), Decimal("0")),
         )
 
     def _verify_reservations(self, connection: sqlite3.Connection) -> None:

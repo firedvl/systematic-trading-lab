@@ -69,6 +69,7 @@ def _context(**changes: object) -> RiskContext:
         current_symbol_quantity=100,
         pending_buy_notional=Decimal("0"),
         pending_order_notional=Decimal("0"),
+        active_reservation_set_fingerprint=fingerprint({"reservations": []}),
         open_order_count=0,
         pending_order_count=0,
         orders_last_minute=0,
