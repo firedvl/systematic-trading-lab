@@ -91,6 +91,65 @@ class RiskLimits:
         return fingerprint(self)
 
 
+def load_risk_limits(path: Path) -> RiskLimits:
+    """Load one exact reviewed risk configuration and fail closed."""
+    fields = set(RiskLimits.__dataclass_fields__)
+    decimal_fields = {
+        "max_order_notional",
+        "max_position_notional",
+        "max_gross_exposure",
+        "strategy_capital_allocation",
+        "strategy_fill_cost_bps",
+        "min_cash",
+        "max_daily_loss",
+        "max_strategy_drawdown",
+        "max_price_deviation_bps",
+    }
+    integer_fields = {
+        "max_open_orders",
+        "max_orders_per_minute",
+        "max_snapshot_age_seconds",
+        "min_reconciliation_stability_seconds",
+    }
+    text_fields = {"configuration_id", "account_id", "reviewed_by", "review_reason"}
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique_object)
+        if not isinstance(value, dict) or set(value) != fields:
+            actual = set(value) if isinstance(value, dict) else set()
+            raise ValueError(
+                f"risk configuration fields differ; missing={sorted(fields - actual)}, "
+                f"unknown={sorted(actual - fields)}"
+            )
+        if not isinstance(value["allowed_symbols"], list) or any(
+            not isinstance(symbol, str) for symbol in value["allowed_symbols"]
+        ):
+            raise ValueError("allowed symbols must be a list of strings")
+        if any(not isinstance(value[name], str) for name in text_fields):
+            raise ValueError("risk configuration text fields must be strings")
+        for name in decimal_fields:
+            if not isinstance(value[name], str):
+                raise ValueError(f"{name} must be a decimal string")
+            value[name] = Decimal(value[name])
+        for name in integer_fields:
+            if type(value[name]) is not int:
+                raise ValueError(f"{name} must be an integer")
+        for name in ("effective_at", "expires_at"):
+            if not isinstance(value[name], str):
+                raise ValueError(f"{name} must be a UTC timestamp string")
+            value[name] = _parse_utc(value[name])
+        value["allowed_symbols"] = tuple(value["allowed_symbols"])
+        return RiskLimits(**value)
+    except (
+        ArithmeticError,
+        OSError,
+        UnicodeError,
+        json.JSONDecodeError,
+        TypeError,
+        ValueError,
+    ) as error:
+        raise ValueError("invalid risk configuration") from error
+
+
 @dataclass(frozen=True)
 class RiskContext:
     account_id: str
@@ -1248,6 +1307,15 @@ def _parse_utc(value: str) -> datetime:
     timestamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
     _utc("stored timestamp", timestamp)
     return timestamp
+
+
+def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    value: dict[str, object] = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError("duplicate JSON field")
+        value[key] = item
+    return value
 
 
 def _decode_authorization(value: Any) -> PaperAuthorization:
