@@ -124,8 +124,8 @@ durable broker-event evidence. The event identity binds the complete lookup snap
 time, and local observation time; injected transports remain unable to create provenance.
 Conflicting duplicates, unknown statuses, out-of-order transitions, or position drift trigger
 emergency disable. Each submit, cancel, and cancel-all mutation is journaled before the call and has
-an unknown-outcome state resolved by lookup and reconciliation before retry. No order submission is
-implemented yet. The broker-free intent store is implemented: it validates immutable intent content,
+an unknown-outcome state resolved by lookup and reconciliation before retry. No production order
+submission is implemented. The broker-free intent store validates immutable intent content,
 persists each new intent and journal event in one transaction, returns the same receipt for exact
 replay, and fails startup when its sequence, hash chain, stored head, schema, or database is invalid.
 
@@ -151,9 +151,9 @@ authorization, limits, account, code, fixed origin, operation scope, distinct ap
 attempt cap, emergency generation, and time. A separate process opt-in names the activation and
 commit; revocation is append-only. Submission preflights and cancellation attempts can bind both
 records inside their existing immediate transactions. The cap counts the exact activation and opt-in
-pair across both operations. Unbound injected attempts do not count. Assessment remains ineligible
-until runtime code identity is trusted, production transport remains absent, and runtime broker-write
-authority remains hard-coded false.
+pair across both operations. Unbound injected attempts do not count. Assessment without a fresh
+matching installed identity remains ineligible. Even an eligible assessment cannot grant transport
+authority: production transport remains absent and runtime broker-write authority is hard-coded false.
 
 Runtime build verification is read-only. It accepts only a strict commit-bound manifest whose wheel
 name and SHA-256 match the supplied artifact, then requires GitHub attestations for both files from
