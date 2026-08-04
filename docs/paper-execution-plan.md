@@ -232,6 +232,11 @@ The fake cancel-all consumer now executes that plan one order at a time. The att
 rechecks the exact planned event to close the plan-to-call race. Results distinguish accepted,
 unknown, prior-attempt, and stale items. A restart skips durable attempts and continues remaining
 items without repeating calls.
+Positive exact-order lookups now retain immutable fixed-origin reader provenance beside their
+normalized broker event. Cancellation recovery is read-only: it binds one attempt, optional unknown
+outcome, later exact lookup, matching broker identity and account authority, latest terminal event,
+and matching local terminal state. Canceled, rejected, and filled are distinct resolutions. The
+assessment adds no retry, cancellation, submission, capacity, or emergency authority.
 
 Official references reviewed 2026-08-03:
 

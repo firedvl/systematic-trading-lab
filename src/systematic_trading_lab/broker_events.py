@@ -104,6 +104,44 @@ class BrokerOrderEvent:
 
 
 @dataclass(frozen=True)
+class OrderLookupFoundEvidence:
+    event_id: str
+    event_fingerprint: str
+    client_order_id: str
+    account_id: str
+    paper_origin: str
+    lookup_path: str
+    adapter_version: str
+    http_status: int
+    observed_at: datetime
+
+    def __post_init__(self) -> None:
+        for name, value in (
+            ("event ID", self.event_id),
+            ("client order ID", self.client_order_id),
+            ("account ID", self.account_id),
+        ):
+            if not value or value != value.strip() or len(value) > 128:
+                raise ValueError(f"{name} is invalid")
+        _sha256("broker event", self.event_fingerprint)
+        if (
+            self.paper_origin != "https://paper-api.alpaca.markets"
+            or self.lookup_path != "/v2/orders:by_client_order_id"
+            or self.adapter_version != "alpaca-paper-reader-v1"
+            or self.http_status != 200
+        ):
+            raise ValueError("positive lookup provenance is unsupported")
+        if self.observed_at.tzinfo is None or self.observed_at.utcoffset() != UTC.utcoffset(
+            self.observed_at
+        ):
+            raise ValueError("lookup observation time must be UTC-aware")
+
+    @property
+    def evidence_id(self) -> str:
+        return fingerprint(self)
+
+
+@dataclass(frozen=True)
 class ExpectedPositionAdvance:
     baseline_id: str
     broker_event_id: str
@@ -196,6 +234,12 @@ class BrokerEventStore(OrderLifecycleStore):
                     evidence_json TEXT NOT NULL,
                     journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
                 );
+                CREATE TABLE IF NOT EXISTS order_lookup_found (
+                    evidence_id TEXT PRIMARY KEY,
+                    event_id TEXT NOT NULL UNIQUE REFERENCES broker_events(event_id),
+                    evidence_json TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
                 CREATE TABLE IF NOT EXISTS expected_position_advances (
                     broker_event_id TEXT PRIMARY KEY REFERENCES broker_events(event_id),
                     baseline_id TEXT NOT NULL REFERENCES reconciliation_baselines(baseline_id),
@@ -218,6 +262,14 @@ class BrokerEventStore(OrderLifecycleStore):
                 CREATE TRIGGER IF NOT EXISTS order_lookup_not_found_no_delete
                 BEFORE DELETE ON order_lookup_not_found BEGIN
                     SELECT RAISE(ABORT, 'negative order lookups are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS order_lookup_found_no_update
+                BEFORE UPDATE ON order_lookup_found BEGIN
+                    SELECT RAISE(ABORT, 'positive order lookups are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS order_lookup_found_no_delete
+                BEFORE DELETE ON order_lookup_found BEGIN
+                    SELECT RAISE(ABORT, 'positive order lookups are immutable');
                 END;
                 CREATE TRIGGER IF NOT EXISTS expected_position_advances_no_update
                 BEFORE UPDATE ON expected_position_advances BEGIN
@@ -411,6 +463,61 @@ class BrokerEventStore(OrderLifecycleStore):
                     )
             connection.commit()
         return event
+
+    def _record_lookup_found(
+        self,
+        event: BrokerOrderEvent,
+        *,
+        account_id: str,
+        _capability: object,
+        baseline_id: str | None = None,
+    ) -> BrokerOrderEvent:
+        if _capability is not _ALPACA_READER_CAPABILITY:
+            raise PermissionError("only the production Alpaca reader can attest an order lookup")
+        recorded = self.record(event, baseline_id=baseline_id)
+        evidence = OrderLookupFoundEvidence(
+            event_id=recorded.event_id,
+            event_fingerprint=recorded.event_fingerprint,
+            client_order_id=recorded.client_order_id,
+            account_id=account_id,
+            paper_origin="https://paper-api.alpaca.markets",
+            lookup_path="/v2/orders:by_client_order_id",
+            adapter_version="alpaca-paper-reader-v1",
+            http_status=200,
+            observed_at=recorded.observed_at,
+        )
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            self._verify_connection(connection)
+            self._verify_reservations(connection)
+            self._verify_releases(connection)
+            self._verify_orders(connection)
+            events = self._verify_broker_events(connection)
+            self._verify_lookup_not_found(connection)
+            self._verify_expected_position_advances(connection, events)
+            existing = self._verify_lookup_found(connection, events).get(evidence.evidence_id)
+            if existing is not None:
+                connection.commit()
+                return recorded
+            sequence = self._append_event(
+                connection,
+                occurred_at=evidence.observed_at,
+                event_type="order-lookup-found",
+                entity_type="order-lookup",
+                entity_id=evidence.evidence_id,
+                payload=canonicalize(evidence),
+            )
+            connection.execute(
+                "INSERT INTO order_lookup_found VALUES (?, ?, ?, ?)",
+                (
+                    evidence.evidence_id,
+                    evidence.event_id,
+                    canonical_json(evidence),
+                    sequence,
+                ),
+            )
+            connection.commit()
+        return recorded
 
     def expected_positions(self, baseline_id: str) -> tuple[PositionSnapshot, ...]:
         with self._connect() as connection:
@@ -649,6 +756,22 @@ class BrokerEventStore(OrderLifecycleStore):
             self._verify_lookup_not_found(connection)
             return self._submission_unknown_orders(connection)
 
+    def lookup_found(self, event_id: str) -> OrderLookupFoundEvidence:
+        with self._connect() as connection:
+            connection.execute("BEGIN")
+            events = self._verify_broker_events(connection)
+            evidence = next(
+                (
+                    item
+                    for item in self._verify_lookup_found(connection, events).values()
+                    if item.event_id == event_id
+                ),
+                None,
+            )
+        if evidence is None:
+            raise KeyError(event_id)
+        return evidence
+
     def _reject_event(
         self, connection: sqlite3.Connection, event: BrokerOrderEvent, message: str
     ) -> Never:
@@ -744,6 +867,61 @@ class BrokerEventStore(OrderLifecycleStore):
             ordered = sorted(events, key=lambda item: (item.provider_timestamp, item.event_id))
             if any(not _can_follow(ordered[:index], event) for index, event in enumerate(ordered)):
                 raise JournalIntegrityError("stored broker event sequence is invalid")
+        self._verify_lookup_found(connection, result)
+        return result
+
+    def _verify_lookup_found(
+        self,
+        connection: sqlite3.Connection,
+        events: dict[str, BrokerOrderEvent],
+    ) -> dict[str, OrderLookupFoundEvidence]:
+        rows = connection.execute(
+            "SELECT evidence_id, event_id, evidence_json, journal_sequence FROM order_lookup_found"
+        ).fetchall()
+        count = connection.execute(
+            "SELECT COUNT(*) FROM journal WHERE event_type = 'order-lookup-found'"
+        ).fetchone()[0]
+        if len(rows) != count:
+            raise JournalIntegrityError("positive order lookup and journal counts differ")
+        authorizations = self._verify_authorizations(connection)
+        result: dict[str, OrderLookupFoundEvidence] = {}
+        for row in rows:
+            try:
+                evidence = _decode_lookup_found(json.loads(row[2]))
+                event = events[evidence.event_id]
+                order = connection.execute(
+                    "SELECT r.authorization_id FROM orders o "
+                    "JOIN capacity_reservations r ON r.reservation_id = o.reservation_id "
+                    "WHERE o.order_id = ?",
+                    (evidence.client_order_id,),
+                ).fetchone()
+            except (KeyError, ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError("stored positive order lookup is invalid") from error
+            authorization = None if order is None else authorizations.get(str(order[0]))
+            journal = connection.execute(
+                "SELECT occurred_at, event_type, entity_type, entity_id, payload_json "
+                "FROM journal WHERE sequence = ?",
+                (row[3],),
+            ).fetchone()
+            if (
+                row[:2] != (evidence.evidence_id, evidence.event_id)
+                or row[2] != canonical_json(evidence)
+                or event.event_fingerprint != evidence.event_fingerprint
+                or event.client_order_id != evidence.client_order_id
+                or event.observed_at != evidence.observed_at
+                or authorization is None
+                or authorization.account_id != evidence.account_id
+                or journal
+                != (
+                    _utc_text(evidence.observed_at),
+                    "order-lookup-found",
+                    "order-lookup",
+                    evidence.evidence_id,
+                    canonical_json(evidence),
+                )
+            ):
+                raise JournalIntegrityError("positive order lookup does not match its evidence")
+            result[evidence.evidence_id] = evidence
         return result
 
     def _verify_expected_position_advances(
@@ -978,6 +1156,35 @@ def _decode_lookup_not_found(value: object) -> OrderLookupNotFoundEvidence:
         raise ValueError("negative order lookup is invalid") from error
 
 
+def _decode_lookup_found(value: object) -> OrderLookupFoundEvidence:
+    if not isinstance(value, dict) or set(value) != {
+        "event_id",
+        "event_fingerprint",
+        "client_order_id",
+        "account_id",
+        "paper_origin",
+        "lookup_path",
+        "adapter_version",
+        "http_status",
+        "observed_at",
+    }:
+        raise ValueError("positive order lookup has an unsupported schema")
+    try:
+        return OrderLookupFoundEvidence(
+            event_id=str(value["event_id"]),
+            event_fingerprint=str(value["event_fingerprint"]),
+            client_order_id=str(value["client_order_id"]),
+            account_id=str(value["account_id"]),
+            paper_origin=str(value["paper_origin"]),
+            lookup_path=str(value["lookup_path"]),
+            adapter_version=str(value["adapter_version"]),
+            http_status=int(value["http_status"]),
+            observed_at=_parse_utc(str(value["observed_at"])),
+        )
+    except (TypeError, ValueError) as error:
+        raise ValueError("positive order lookup is invalid") from error
+
+
 def _parse_utc(value: str) -> datetime:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed.tzinfo is None or parsed.utcoffset() != UTC.utcoffset(parsed):
@@ -987,3 +1194,8 @@ def _parse_utc(value: str) -> datetime:
 
 def _utc_text(value: datetime) -> str:
     return value.isoformat().replace("+00:00", "Z")
+
+
+def _sha256(name: str, value: str) -> None:
+    if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
+        raise ValueError(f"{name} fingerprint is invalid")

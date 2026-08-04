@@ -37,6 +37,7 @@ _KNOWN_EVENT_TYPES = {
     "expected-position-advanced",
     "position-settlement-proved",
     "risk-input-attested",
+    "order-lookup-found",
     "order-lookup-not-found",
     "portfolio-snapshot-recorded",
     "paper-snapshot-attested",

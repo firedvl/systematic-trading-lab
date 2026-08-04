@@ -110,6 +110,11 @@ The read-only recovery proof requires that 404 plus a later complete adapter-att
 reconciliation for the same active account, authorization, and reviewed limits. It also requires
 the reservation and emergency-clear state to remain valid, the order to remain unknown, and no
 other submitting or unknown order. The proof is review evidence only and grants no retry authority.
+Successful production exact lookups now store separate immutable provenance for the normalized
+broker event. A read-only cancellation assessment requires that lookup after the cancellation
+attempt and any unknown-outcome record, then accepts only the latest matching terminal event and
+local state. It reports canceled, rejected, or filled resolution; it never permits retry or another
+broker call. Zero-fill release and positive-fill retention remain broker-event transaction rules.
 Storage accepts only schema-validated normalized fields and excludes raw bodies, headers, URLs, and
 exception text. A valid event advances local order state in the same transaction as its evidence;
 zero-fill cancellation or rejection also releases capacity. Conflicting identity, order, quantity,

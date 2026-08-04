@@ -380,3 +380,10 @@
 - Context: the order state can change after planning, and a process can stop after any subset of external calls.
 - Consequences: accepted, unknown, prior-attempt, and stale results remain distinct. Restart skips durable attempts, stale items make no call, and one failure does not erase other progress.
 - Revisit when: measured cancellation latency requires bounded parallel workers with the same per-order invariants.
+
+## 2026-08-03 — Cancellation resolution requires positive lookup provenance
+
+- Decision: store immutable fixed-origin production exact-lookup provenance beside each successful normalized broker event and assess cancellation resolution read-only.
+- Context: a bare broker event cannot prove that an exact lookup occurred after a cancellation attempt or its unknown outcome.
+- Consequences: only the latest matching post-attempt lookup and local terminal state can report canceled, rejected, or filled resolution. The assessment grants no retry, broker-write, capacity, or emergency authority. A crash between event and provenance writes remains fail-closed and a later safe GET can complete the evidence.
+- Revisit when: a reviewed recovery workflow needs a separately authorized mutation after complete reconciliation.

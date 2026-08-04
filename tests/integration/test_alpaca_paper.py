@@ -244,7 +244,7 @@ def test_only_production_lookup_path_can_record_normalized_evidence(
         return json.dumps(payload).encode()
 
     class Sink:
-        def record(self, event: object) -> object:
+        def _record_lookup_found(self, event: object, **_kwargs: object) -> object:
             return event
 
     monkeypatch.setattr("systematic_trading_lab.alpaca_paper._urlopen_bytes", transport)

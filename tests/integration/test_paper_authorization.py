@@ -48,7 +48,7 @@ from systematic_trading_lab.reconciliation import (
     ReconciliationStore,
     SnapshotSource,
 )
-from systematic_trading_lab.recovery import SubmissionRecoveryStore
+from systematic_trading_lab.recovery import CancellationRecoveryStore, SubmissionRecoveryStore
 from systematic_trading_lab.risk import (
     PaperAuthorization,
     RiskContext,
@@ -585,6 +585,8 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     missing_path = tmp_path / "missing-execution.sqlite3"
     with pytest.raises(JournalIntegrityError, match="database is missing"):
         SubmissionRecoveryStore(missing_path)
+    with pytest.raises(JournalIntegrityError, match="database is missing"):
+        CancellationRecoveryStore(missing_path)
     assert not missing_path.exists()
     store = ReconciliationStore(tmp_path / "execution.sqlite3")
     limits = _limits()
@@ -1837,6 +1839,7 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         )
     unknown_cancellation_store = PaperCancellationStore(cancel_unknown_path)
     assert len(unknown_cancellation_store.unresolved()) == 1
+    unknown_cancel_id = unknown_cancellation_store.unresolved()[0].cancel_id
     with pytest.raises(FakePaperCancellationError, match="already attempted"):
         unknown_canceler.cancel(
             submission_delta.client_order_id,
@@ -1846,6 +1849,159 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             requested_at=cancel_requested_at,
         )
     assert cancel_unknown_calls == ["https://paper-api.alpaca.markets/v2/orders/fake-broker-order"]
+    cancel_filled_path = tmp_path / "cancel-recovery-filled.sqlite3"
+    cancel_rejected_path = tmp_path / "cancel-recovery-rejected.sqlite3"
+    cancel_nonterminal_path = tmp_path / "cancel-recovery-nonterminal.sqlite3"
+    cancel_backdated_path = tmp_path / "cancel-recovery-backdated.sqlite3"
+    shutil.copy2(cancel_unknown_path, cancel_filled_path)
+    shutil.copy2(cancel_unknown_path, cancel_rejected_path)
+    shutil.copy2(cancel_unknown_path, cancel_nonterminal_path)
+    shutil.copy2(cancel_unknown_path, cancel_backdated_path)
+
+    def record_cancel_lookup(
+        path: Path,
+        *,
+        status: str,
+        filled_quantity: int,
+        filled_average_price: str | None,
+        provider_time: datetime | None = None,
+        observed_time: datetime | None = None,
+    ) -> BrokerOrderEvent:
+        provider_time = provider_time or settlement_at + timedelta(seconds=2, milliseconds=600)
+        observed_time = observed_time or settlement_at + timedelta(seconds=2, milliseconds=700)
+        payload = {
+            "id": "fake-broker-order",
+            "client_order_id": submission_delta.client_order_id,
+            "symbol": "SPY",
+            "status": status,
+            "side": "buy",
+            "qty": "1",
+            "filled_qty": str(filled_quantity),
+            "filled_avg_price": filled_average_price,
+            "type": "market",
+            "limit_price": None,
+            "time_in_force": "day",
+            "extended_hours": False,
+            "order_class": "simple",
+            "notional": None,
+            "legs": None,
+            "updated_at": provider_time.isoformat(),
+        }
+
+        def lookup_transport(_request: Request) -> bytes:
+            return json.dumps(payload).encode()
+
+        with monkeypatch.context() as patch:
+            patch.setattr(alpaca_paper, "_urlopen_bytes", lookup_transport)
+            result = AlpacaPaperReader(
+                "test-key",
+                "test-secret",
+                account_id=authorization.account_id,
+                allowed_symbols=frozenset({"SPY"}),
+                clock=lambda: observed_time,
+            ).record_order_lookup(
+                BrokerEventStore(path), client_order_id=submission_delta.client_order_id
+            )
+        assert isinstance(result, BrokerOrderEvent)
+        return result
+
+    canceled_lookup = record_cancel_lookup(
+        cancel_unknown_path,
+        status="canceled",
+        filled_quantity=0,
+        filled_average_price=None,
+    )
+    canceled_evidence = BrokerEventStore(cancel_unknown_path).lookup_found(canceled_lookup.event_id)
+    cancel_recovery = CancellationRecoveryStore(cancel_unknown_path)
+    cancel_recovery_head = unknown_cancellation_store.verify_journal()
+    canceled_assessment = cancel_recovery.assess(
+        cancel_id=unknown_cancel_id,
+        lookup_evidence_id=canceled_evidence.evidence_id,
+        assessed_at=settlement_at + timedelta(seconds=2, milliseconds=800),
+    )
+    assert canceled_assessment.resolved
+    assert canceled_assessment.status == "resolved-canceled"
+    assert canceled_assessment.assessment_fingerprint
+    assert unknown_cancellation_store.verify_journal() == cancel_recovery_head
+    assert not any(
+        hasattr(cancel_recovery, name) for name in ("cancel", "request", "record", "transition")
+    )
+    tampered_lookup_path = tmp_path / "cancel-recovery-tampered.sqlite3"
+    shutil.copy2(cancel_unknown_path, tampered_lookup_path)
+    with sqlite3.connect(tampered_lookup_path) as connection:
+        connection.execute("DROP TRIGGER order_lookup_found_no_update")
+        connection.execute("UPDATE order_lookup_found SET evidence_json = '{}'")
+    with pytest.raises(JournalIntegrityError, match="positive order lookup"):
+        BrokerEventStore(tampered_lookup_path)
+
+    filled_lookup = record_cancel_lookup(
+        cancel_filled_path,
+        status="filled",
+        filled_quantity=1,
+        filled_average_price="100.25",
+    )
+    filled_evidence = BrokerEventStore(cancel_filled_path).lookup_found(filled_lookup.event_id)
+    filled_assessment = CancellationRecoveryStore(cancel_filled_path).assess(
+        cancel_id=unknown_cancel_id,
+        lookup_evidence_id=filled_evidence.evidence_id,
+        assessed_at=settlement_at + timedelta(seconds=2, milliseconds=800),
+    )
+    assert filled_assessment.resolved
+    assert filled_assessment.status == "resolved-filled"
+
+    rejected_lookup = record_cancel_lookup(
+        cancel_rejected_path,
+        status="rejected",
+        filled_quantity=0,
+        filled_average_price=None,
+    )
+    rejected_evidence = BrokerEventStore(cancel_rejected_path).lookup_found(
+        rejected_lookup.event_id
+    )
+    rejected_assessment = CancellationRecoveryStore(cancel_rejected_path).assess(
+        cancel_id=unknown_cancel_id,
+        lookup_evidence_id=rejected_evidence.evidence_id,
+        assessed_at=settlement_at + timedelta(seconds=2, milliseconds=800),
+    )
+    assert rejected_assessment.resolved
+    assert rejected_assessment.status == "resolved-rejected"
+
+    nonterminal_lookup = record_cancel_lookup(
+        cancel_nonterminal_path,
+        status="partially_filled",
+        filled_quantity=0,
+        filled_average_price=None,
+    )
+    nonterminal_evidence = BrokerEventStore(cancel_nonterminal_path).lookup_found(
+        nonterminal_lookup.event_id
+    )
+    nonterminal_assessment = CancellationRecoveryStore(cancel_nonterminal_path).assess(
+        cancel_id=unknown_cancel_id,
+        lookup_evidence_id=nonterminal_evidence.evidence_id,
+        assessed_at=settlement_at + timedelta(seconds=2, milliseconds=800),
+    )
+    assert not nonterminal_assessment.resolved
+    assert nonterminal_assessment.status == "unresolved"
+    assert "lookup-nonterminal" in nonterminal_assessment.reasons
+
+    backdated_lookup = record_cancel_lookup(
+        cancel_backdated_path,
+        status="canceled",
+        filled_quantity=0,
+        filled_average_price=None,
+        provider_time=settlement_at + timedelta(seconds=2, milliseconds=450),
+        observed_time=settlement_at + timedelta(seconds=2, milliseconds=450),
+    )
+    backdated_evidence = BrokerEventStore(cancel_backdated_path).lookup_found(
+        backdated_lookup.event_id
+    )
+    backdated_assessment = CancellationRecoveryStore(cancel_backdated_path).assess(
+        cancel_id=unknown_cancel_id,
+        lookup_evidence_id=backdated_evidence.evidence_id,
+        assessed_at=settlement_at + timedelta(seconds=2, milliseconds=800),
+    )
+    assert not backdated_assessment.resolved
+    assert "lookup-not-after-unknown-outcome" in backdated_assessment.reasons
     unknown_calls: list[str] = []
 
     def fake_post_timeout(_request: Request) -> bytes:
