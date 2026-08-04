@@ -66,6 +66,7 @@ def _context(**changes: object) -> RiskContext:
         buying_power=Decimal("70000"),
         current_gross_exposure=Decimal("20000"),
         current_symbol_notional=Decimal("10000"),
+        current_symbol_quantity=100,
         pending_buy_notional=Decimal("0"),
         pending_order_notional=Decimal("0"),
         open_order_count=0,
@@ -73,7 +74,8 @@ def _context(**changes: object) -> RiskContext:
         orders_last_minute=0,
         daily_pnl=Decimal("0"),
         strategy_drawdown=Decimal("0"),
-        quote_price=Decimal("100.10"),
+        quote_bid_price=Decimal("99.99"),
+        quote_ask_price=Decimal("100"),
         account_observed_at=observed,
         positions_observed_at=observed,
         orders_observed_at=observed,
@@ -103,7 +105,10 @@ def test_risk_collects_fail_closed_reasons() -> None:
         regular_session_open=False,
         daily_pnl=Decimal("-2000"),
         strategy_drawdown=Decimal("0.10"),
-        quote_price=Decimal("102"),
+        quote_bid_price=Decimal("102"),
+        quote_ask_price=Decimal("102"),
+        current_symbol_notional=Decimal("10200"),
+        current_gross_exposure=Decimal("20200"),
         pending_buy_notional=Decimal("60000"),
         pending_order_count=3,
         orders_last_minute=4,
@@ -127,6 +132,23 @@ def test_risk_collects_fail_closed_reasons() -> None:
     }
 
 
+def test_risk_uses_ask_for_buys_and_bid_for_sells() -> None:
+    context = _context(quote_bid_price=Decimal("98"), quote_ask_price=Decimal("100"))
+    buy = evaluate_risk(_intent(target_weight=None, target_quantity=150), _limits(), context)
+    sell = evaluate_risk(_intent(target_weight=None, target_quantity=50), _limits(), context)
+    weight_buy = evaluate_risk(_intent(target_weight=Decimal("0.15")), _limits(), context)
+    weight_sell = evaluate_risk(_intent(target_weight=Decimal("0.05")), _limits(), context)
+
+    assert buy.approved
+    assert buy.order_notional == Decimal("5000")
+    assert not sell.approved
+    assert "price-deviation-limit" in sell.reasons
+    assert sell.order_notional == Decimal("4900")
+    assert weight_buy.approved
+    assert not weight_sell.approved
+    assert "price-deviation-limit" in weight_sell.reasons
+
+
 def test_limits_reject_implicit_or_invalid_values() -> None:
     with pytest.raises(ValueError, match="sorted unique"):
         _limits(allowed_symbols=("SPY", "QQQ"))
@@ -136,6 +158,10 @@ def test_limits_reject_implicit_or_invalid_values() -> None:
         _limits(expires_at=NOW - timedelta(days=2))
     with pytest.raises(ValueError, match="stability interval"):
         _limits(min_reconciliation_stability_seconds=0)
+    with pytest.raises(ValueError, match="cannot exceed"):
+        _context(quote_bid_price=Decimal("101"), quote_ask_price=Decimal("100"))
+    with pytest.raises(ValueError, match="must use the ask"):
+        _context(current_symbol_quantity=99)
 
 
 def test_emergency_disable_is_default_persistent_and_journal_bound(tmp_path: Path) -> None:

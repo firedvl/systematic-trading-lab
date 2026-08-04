@@ -66,3 +66,6 @@ provenance.
 Long-only exposure valuation uses each attested IEX ask for held-symbol notionals and gross
 exposure. The ask basis is conservative; it is not a side-aware execution quote or a claim about
 liquidation value or realized PnL.
+Risk evaluation now carries both quote sides and current whole-share quantity. It checks acquisition
+price deviation at the ask and reduction price deviation at the bid. Quantity-target order notional
+uses that executable side; projected long exposure remains ask-valued.
