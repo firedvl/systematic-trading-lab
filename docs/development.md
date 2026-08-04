@@ -7,6 +7,8 @@ Commands and definition of done are in `README.md` and `AGENTS.md`. Tests use de
 Ordinary CI also builds one wheel and its deterministic runtime-build manifest. The manual
 `Build provenance` workflow runs only from `main`; it requests GitHub attestations for the wheel and
 manifest, then uploads both in one retained artifact. This build path does not prove that a later
-runtime installed or loaded that wheel. User-owned private repositories cannot persist GitHub
-artifact attestations. On that failure the workflow retains the unsigned files for diagnosis and
-still reports failure; never treat that artifact as verified provenance.
+runtime installed or loaded that wheel. The runtime verifier separately requires a non-editable
+archive install, the verified wheel hash in `direct_url.json`, exact wheel-owned files through both
+`RECORD` copies, and loaded modules rooted in that distribution. User-owned private repositories
+cannot persist GitHub artifact attestations. On that failure the workflow retains the unsigned files
+for diagnosis and still reports failure; never treat that artifact as verified provenance.

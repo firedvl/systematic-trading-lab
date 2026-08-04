@@ -158,5 +158,8 @@ authority remains hard-coded false.
 Runtime build verification is read-only. It accepts only a strict commit-bound manifest whose wheel
 name and SHA-256 match the supplied artifact, then requires GitHub attestations for both files from
 the fixed repository, fixed signer workflow, and GitHub-hosted runner boundary. It returns an
-immutable identity fingerprint. It does not yet prove that the running installed package came from
-that wheel and cannot remove the activation blocker or grant broker authority.
+immutable build identity. Installed runtime verification then rejects editable installs, requires the
+archive hash to name that wheel, checks every wheel-owned installed file against both `RECORD`
+copies, rejects unexpected package files, and binds all loaded package modules to that distribution.
+The result remains read-only, is not yet bound into activation assessment, and cannot grant broker
+authority.
