@@ -441,12 +441,13 @@ class AlpacaRiskInputReader:
         *,
         portfolio_snapshot_id: str,
         authorization_id: str,
-        recorded_at: datetime,
+        recorded_at: datetime | None = None,
     ) -> RiskInputEvidence:
         if not self._allows_persistence:
             raise AlpacaRiskInputError("injected transport cannot produce durable provenance")
-        _utc("risk-input record time", recorded_at)
-        if recorded_at < self._limits.effective_at or recorded_at >= self._limits.expires_at:
+        requested_at = self._now() if recorded_at is None else recorded_at
+        _utc("risk-input request time", requested_at)
+        if requested_at < self._limits.effective_at or requested_at >= self._limits.expires_at:
             raise AlpacaRiskInputError("risk configuration is not active")
         with store._connect() as connection:
             connection.execute("BEGIN")
@@ -465,8 +466,8 @@ class AlpacaRiskInputReader:
             or authorization.account_id != self._limits.account_id
             or authorization.risk_configuration_fingerprint
             != self._limits.configuration_fingerprint
-            or recorded_at < authorization.authorized_at
-            or recorded_at >= authorization.expires_at
+            or requested_at < authorization.authorized_at
+            or requested_at >= authorization.expires_at
         ):
             raise AlpacaRiskInputError("risk-input authority differs from active limits")
         quotes = self._read_quotes(self._limits.max_snapshot_age_seconds)
@@ -489,6 +490,9 @@ class AlpacaRiskInputReader:
             adapter_version=_ADAPTER_VERSION,
             completed_at=max(market_clock.observed_at, *(item.observed_at for item in quotes)),
         )
+        recorded_at = self._now() if recorded_at is None else recorded_at
+        if recorded_at < self._limits.effective_at or recorded_at >= self._limits.expires_at:
+            raise AlpacaRiskInputError("risk configuration expired during collection")
         return store._record(evidence, recorded_at=recorded_at, capability=_CAPABILITY)
 
     def _read_quotes(self, maximum_age_seconds: int) -> tuple[LatestQuoteEvidence, ...]:
