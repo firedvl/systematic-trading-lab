@@ -14,6 +14,7 @@ from urllib.request import Request
 import pytest
 
 import systematic_trading_lab.alpaca_paper as alpaca_paper
+import systematic_trading_lab.paper_operator as paper_operator
 import systematic_trading_lab.reconciliation as reconciliation
 import systematic_trading_lab.risk_inputs as risk_inputs
 from systematic_trading_lab.alpaca_paper import AlpacaPaperReader
@@ -23,7 +24,7 @@ from systematic_trading_lab.broker_events import (
     OrderLookupNotFoundEvidence,
 )
 from systematic_trading_lab.cancel_all import CancelAllStore, FakeCancelAllCanceler
-from systematic_trading_lab.config import PaperWriteRequest
+from systematic_trading_lab.config import PaperWriteRequest, Settings
 from systematic_trading_lab.domain import TradingMode
 from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityError
 from systematic_trading_lab.experiments import HoldoutAccessError
@@ -40,6 +41,7 @@ from systematic_trading_lab.paper_cancellation import (
     InjectedAlpacaPaperDelete,
     PaperCancellationStore,
 )
+from systematic_trading_lab.paper_operator import AlpacaPaperOperator
 from systematic_trading_lab.paper_submission import (
     FakePaperSubmissionError,
     FakePaperSubmitter,
@@ -1640,9 +1642,11 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     fake_success_path = tmp_path / "fake-paper-submission-success.sqlite3"
     fake_unknown_path = tmp_path / "fake-paper-submission-unknown.sqlite3"
     activation_bound_path = tmp_path / "activation-bound-attempts.sqlite3"
+    production_operator_path = tmp_path / "production-paper-operator.sqlite3"
     shutil.copy2(store.path, fake_success_path)
     shutil.copy2(store.path, fake_unknown_path)
     shutil.copy2(store.path, activation_bound_path)
+    shutil.copy2(store.path, production_operator_path)
     preflight_store = PaperSubmissionPreflightStore(store.path)
     preflight_head = preflight_store.verify_journal()
     with pytest.raises(PermissionError, match="paper mode"):
@@ -1881,6 +1885,60 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         transport=fake_post,
         clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=200),
     )
+
+    production_cancel_calls: list[str] = []
+
+    def production_transport(request: Request) -> bytes:
+        if request.get_method() == "POST":
+            return fake_post(request)
+        production_cancel_calls.append(request.full_url)
+        return b""
+
+    operator_now = [settlement_at + timedelta(seconds=2, milliseconds=500)]
+    with monkeypatch.context() as patch:
+        patch.setattr(Settings, "broker_writes_allowed", property(lambda _settings: True))
+        patch.setattr(paper_operator, "_urlopen_paper_mutation", production_transport)
+        operator = AlpacaPaperOperator(
+            production_operator_path,
+            "test-key",
+            "test-secret",
+            settings=Settings(TradingMode.PAPER, tmp_path, bound_request),
+            limits=limits,
+            runtime_identity=bound_runtime_identity,
+            clock=lambda: operator_now[0],
+        )
+        with pytest.raises(PermissionError, match="attempt time is stale"):
+            operator.submit(
+                submission_delta.client_order_id,
+                submitter_id="production-worker",
+                authorization_id=authorization.authorization_id,
+                claimed_at=settlement_at,
+            )
+        production_event = operator.submit(
+            submission_delta.client_order_id,
+            submitter_id="production-worker",
+            authorization_id=authorization.authorization_id,
+            claimed_at=settlement_at + timedelta(seconds=2),
+        )
+        operator_now[0] = settlement_at + timedelta(seconds=2, milliseconds=700)
+        production_cancel = operator.cancel(
+            submission_delta.client_order_id,
+            authorization_id=authorization.authorization_id,
+            requester="test-operator",
+            reason="production coordinator test",
+            requested_at=settlement_at + timedelta(seconds=2, milliseconds=600),
+        )
+    assert production_event.state is OrderState.ACKNOWLEDGED
+    assert production_cancel.activation_id == bound_activation.activation_id
+    assert (
+        production_cancel.runtime_identity_fingerprint
+        == bound_runtime_identity.identity_fingerprint
+    )
+    assert production_cancel_calls == [
+        "https://paper-api.alpaca.markets/v2/orders/fake-broker-order"
+    ]
+    assert fake_calls == [submission_delta.client_order_id]
+    fake_calls.clear()
 
     fake_submitter = FakePaperSubmitter(
         fake_success_path,

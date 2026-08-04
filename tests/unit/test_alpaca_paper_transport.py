@@ -1,13 +1,20 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from email.message import Message
+from pathlib import Path
 from urllib.request import Request
 
 import pytest
 
 from systematic_trading_lab.alpaca_paper import AlpacaPaperError
 from systematic_trading_lab.alpaca_paper_transport import _urlopen_paper_mutation
+from systematic_trading_lab.config import PaperWriteRequest, Settings
+from systematic_trading_lab.domain import TradingMode
 from systematic_trading_lab.fingerprints import canonical_json
+from systematic_trading_lab.paper_operator import AlpacaPaperOperator
+from systematic_trading_lab.risk import load_risk_limits
+from systematic_trading_lab.runtime_build import InstalledRuntimeIdentity
 
 
 class _Response:
@@ -128,3 +135,29 @@ def test_paper_mutation_transport_rejects_redirect_status_and_large_response() -
             _urlopen_paper_mutation(request, opener=_Opener(response))
     with pytest.raises(AlpacaPaperError, match="^Alpaca paper mutation failed$"):
         _urlopen_paper_mutation(request, opener=_FailingOpener())
+
+
+def test_production_paper_operator_is_unreachable_while_authority_is_disabled(
+    tmp_path: Path,
+) -> None:
+    request = PaperWriteRequest("a" * 64, "b" * 40)
+    settings = Settings(TradingMode.PAPER, tmp_path, request)
+    runtime_identity = InstalledRuntimeIdentity(
+        build_identity_fingerprint="c" * 64,
+        source_commit=request.code_commit,
+        wheel_sha256="d" * 64,
+        distribution_record_sha256="e" * 64,
+        source_files_fingerprint="f" * 64,
+        verified_at=datetime(2026, 8, 4, tzinfo=UTC),
+    )
+
+    with pytest.raises(PermissionError, match="broker writes are disabled"):
+        AlpacaPaperOperator(
+            tmp_path / "execution.sqlite3",
+            "test-key",
+            "test-secret",
+            settings=settings,
+            limits=load_risk_limits(Path("config/risk/alpaca-paper-v1.json")),
+            runtime_identity=runtime_identity,
+        )
+    assert not (tmp_path / "execution.sqlite3").exists()

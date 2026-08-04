@@ -153,8 +153,8 @@ commit; revocation is append-only. Submission preflights and cancellation attemp
 records inside their existing immediate transactions. The cap counts the exact activation and opt-in
 pair across both operations. Unbound injected attempts do not count. Assessment without a fresh
 matching installed identity remains ineligible. Even an eligible assessment cannot grant transport
-authority: no production coordinator calls the fixed-origin mutation transport and runtime
-broker-write authority is hard-coded false.
+authority: the production coordinator rejects construction while runtime broker-write authority is
+hard-coded false.
 
 The authorization's code commit identifies the qualified candidate research code. The activation's
 code commit identifies the installed execution build. The authorization fingerprint retains the
