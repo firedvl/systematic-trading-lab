@@ -154,3 +154,9 @@ records inside their existing immediate transactions. The cap counts the exact a
 pair across both operations. Unbound injected attempts do not count. Assessment remains ineligible
 until runtime code identity is trusted, production transport remains absent, and runtime broker-write
 authority remains hard-coded false.
+
+Runtime build verification is read-only. It accepts only a strict commit-bound manifest whose wheel
+name and SHA-256 match the supplied artifact, then requires GitHub attestations for both files from
+the fixed repository, fixed signer workflow, and GitHub-hosted runner boundary. It returns an
+immutable identity fingerprint. It does not yet prove that the running installed package came from
+that wheel and cannot remove the activation blocker or grant broker authority.

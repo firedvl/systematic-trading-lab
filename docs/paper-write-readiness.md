@@ -13,8 +13,9 @@ All blockers must be removed in separate reviewed changes:
 3. Runtime configuration can parse an exact activation-and-code opt-in. Submission and cancellation
    can bind it to dormant one-shot evidence and enforce its shared attempt cap. A main-only workflow
    can build a commit-bound wheel and manifest, but the current user-owned private repository cannot
-   persist GitHub attestations and no runtime verifier proves that the installed package came from
-   that wheel. Runtime write authority still always returns false.
+   persist GitHub attestations. A fail-closed verifier now checks both artifacts against the fixed
+   GitHub authority, but it does not prove that the installed package came from that wheel. Runtime
+   write authority still always returns false.
 4. Submission and cancellation adapters require injected test transports; no production mutation
    transport exists.
 5. No paper-execution CLI or supervisor exists.
