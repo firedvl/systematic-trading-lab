@@ -338,3 +338,10 @@
 - Context: staging binds an intent and reservation but does not prove that an arbitrary whole-share delta matches a weight target or a later portfolio state.
 - Consequences: preflight binds paper mode, fixed origin, authorization, limits, intent, delta, submitter, and current risk proof. Weight-target submission remains blocked. No broker transport exists.
 - Revisit when: policy defines deterministic weight-to-share rounding and its reservation treatment.
+
+## 2026-08-03 — Submission preflight is the one-shot attempt marker
+
+- Decision: let only the process that creates a paper submission preflight invoke the fake transport. Treat every existing preflight as a prior attempt that requires lookup and reconciliation before any retry.
+- Context: an idempotent submitter claim cannot distinguish a harmless read replay from a duplicate external call after a crash.
+- Consequences: valid normalized fake evidence advances through the broker-event authority. Transport or evidence failure enters `submission-unknown`. Restart and concurrent replay cannot invoke the injected transport twice. No HTTP transport exists.
+- Revisit when: the production paper adapter can bind its exact POST attempt and sanitized outcome to the same authority.

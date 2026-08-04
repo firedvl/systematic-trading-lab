@@ -205,6 +205,11 @@ transaction as the single-submitter claim. It requires paper mode, the fixed pap
 current-share delta, all rechecked gates to pass, and the existing reservation to cover current
 economics. The proof is immutable and replay-safe. Weight targets remain blocked because no reviewed
 share-rounding rule exists. No transport or Alpaca write call exists.
+A fake-only coordinator now covers the next state boundary without HTTP. A newly created preflight
+permits one injected call. Valid normalized evidence uses the existing broker-event transaction;
+timeout or invalid evidence moves the order to `submission-unknown`. An existing preflight blocks
+every repeat call and requires the separate lookup and reconciliation workflow. Production paper and
+live calls remain absent.
 
 Official references reviewed 2026-08-03:
 

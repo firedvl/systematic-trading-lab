@@ -75,6 +75,10 @@ transaction it rederives the attested context without the order's own reservatio
 risk gate, requires the staged delta to match current shares and the existing reservation to cover
 current economics, then binds the proof into the atomic submitter claim. Paper mode and the fixed
 paper origin are mandatory. Weight targets remain blocked until policy defines share rounding.
+The fake-only coordinator consumes a newly created preflight once. It accepts normalized broker
+evidence from an injected callable and records it through the existing broker-event authority. Any
+call or evidence failure moves the order to `submission-unknown`. Existing preflight evidence blocks
+another call, including after a process restart, until separate reconciliation resolves the outcome.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

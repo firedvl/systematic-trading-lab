@@ -115,3 +115,7 @@ the order's own reservation twice. The staged delta must match current shares, a
 cash, and gross-exposure amounts cannot exceed the existing reservation. The immutable proof binds
 the authorization, limits, intent, delta, submitter, paper origin, and rechecked context. No broker
 transport exists.
+Only the process that creates the preflight may invoke the fake submission callable. Existing proof
+means an attempt may already have reached the broker boundary, so replay requires lookup and full
+reconciliation. A failed call or invalid normalized result enters `submission-unknown`; it never
+releases capacity or retries.
