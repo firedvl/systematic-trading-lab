@@ -1,8 +1,8 @@
 # Paper broker-write readiness
 
 Status: **not ready**. This checklist does not authorize a broker call. `Settings.broker_writes_allowed`
-remains hard-coded to `False`, no production coordinator can invoke the mutation transport, and live
-trading remains prohibited.
+remains hard-coded to `False`, so the production coordinator rejects construction before database or
+network access. Live trading remains prohibited.
 
 ## Approved scope
 
@@ -30,8 +30,8 @@ All blockers must be removed in separate reviewed changes:
    always returns false. The activation now
    binds the installed execution commit independently from the candidate research commit retained by
    the authorization.
-4. The fixed-origin production mutation transport exists with no production caller. Submission and
-   cancellation coordinators still accept only injected test transports.
+4. The fixed-origin production mutation transport and activation-bound submission/cancellation
+   coordinator exist, but hard-coded runtime authority makes the coordinator unreachable.
 5. No paper-execution CLI or supervisor exists.
 6. The transport threat model below is defined, but production use still needs independent code
    review and explicit user approval after implementation and failure tests pass.
@@ -52,8 +52,9 @@ It adds one transport function, not another order schema or broker client.
    `day`, `extended_hours=false`, and the deterministic client order ID. DELETE has no body. POST
    accepts only HTTP 200 JSON; DELETE accepts only HTTP 204 with an empty body.
 4. Credentials enter only from `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY` at process startup. They
-   exist only in request headers and never enter objects, SQLite, journal events, output, or error
-   text. Environment proxy routing is disabled for mutation calls.
+   remain only in adapter process memory and request headers; they never enter domain records,
+   SQLite, journal events, output, or error text. Environment proxy routing is disabled for mutation
+   calls.
 5. The standard TLS verifier and system trust store remain enabled. Redirects are rejected. Each
    call has a 10-second socket timeout, reads at most 1 MiB, and never retries automatically.
 6. Any timeout, connection failure, redirect, unexpected final URL, HTTP status, body size, content
@@ -123,4 +124,5 @@ active interval. A separate process opt-in names its activation and commit. Subm
 cancellation can recheck and bind both records inside each one-shot transaction. Assessment counts
 only the exact bound pair across both operations. A fresh attested installed identity must match and
 is persisted with each new bound attempt. Even an eligible assessment cannot call a transport because
-runtime write authority remains false and no production coordinator calls the mutation transport.
+runtime write authority remains false, so the production coordinator cannot reach the mutation
+transport.
