@@ -29,6 +29,8 @@ _KNOWN_EVENT_TYPES = {
     "settled-capacity-released",
     "order-staged",
     "order-submitter-claimed",
+    "order-cancel-requested",
+    "order-cancel-unknown",
     "order-transitioned",
     "broker-event-recorded",
     "expected-position-advanced",

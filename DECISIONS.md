@@ -352,3 +352,10 @@
 - Context: request and response semantics need end-to-end coverage before repository policy permits any broker write.
 - Consequences: tests exercise the supported whole-share day-market envelope, fixed origin, normalized acknowledgement, sanitized timeout, and one-shot outcome handling without contacting Alpaca. Production paper and all live calls remain impossible.
 - Revisit when: cancellation recovery, cancel-all evidence, operations runbooks, an active reviewed risk configuration, and explicit broker-write enablement exist.
+
+## 2026-08-03 — Cancellation mutation state stays separate from fill state
+
+- Decision: store one immutable cancellation attempt per nonterminal order and separate unknown-outcome evidence without adding cancel states to the order lifecycle.
+- Context: a cancel request can race with partial or full fills. Replacing broker order state with `canceling` would hide authoritative fill progress.
+- Consequences: the attempt binds the latest broker event, authorization, operator, reason, paper origin, and time. Unknown outcome never retries or releases capacity. Later broker events remain authoritative and terminal state resolves the attempt.
+- Revisit when: the injected cancellation adapter and lookup recovery can prove a richer mutation lifecycle without obscuring fills.

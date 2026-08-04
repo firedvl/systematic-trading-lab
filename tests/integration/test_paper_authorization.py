@@ -27,6 +27,7 @@ from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityEr
 from systematic_trading_lab.experiments import HoldoutAccessError
 from systematic_trading_lab.fingerprints import canonical_json, canonicalize, fingerprint
 from systematic_trading_lab.orders import OrderLifecycleStore, OrderState, build_order_delta
+from systematic_trading_lab.paper_cancellation import PaperCancellationStore
 from systematic_trading_lab.paper_submission import (
     FakePaperSubmissionError,
     FakePaperSubmitter,
@@ -1584,6 +1585,63 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             claimed_at=settlement_at + timedelta(seconds=2),
         )
     assert fake_calls == [submission_delta.client_order_id]
+    cancellation_store = PaperCancellationStore(fake_success_path)
+    cancel_requested_at = settlement_at + timedelta(seconds=2, milliseconds=400)
+    cancel_attempt = cancellation_store.request(
+        submission_delta.client_order_id,
+        authorization_id=authorization.authorization_id,
+        requester="test-operator",
+        reason="test cancellation",
+        mode=TradingMode.PAPER,
+        paper_origin="https://paper-api.alpaca.markets",
+        requested_at=cancel_requested_at,
+    )
+    cancel_head = cancellation_store.verify_journal()
+    assert (
+        cancellation_store.request(
+            submission_delta.client_order_id,
+            authorization_id=authorization.authorization_id,
+            requester="test-operator",
+            reason="test cancellation",
+            mode=TradingMode.PAPER,
+            paper_origin="https://paper-api.alpaca.markets",
+            requested_at=cancel_requested_at,
+        )
+        == cancel_attempt
+    )
+    assert cancellation_store.verify_journal() == cancel_head
+    with pytest.raises(JournalIntegrityError, match="different cancellation attempt"):
+        cancellation_store.request(
+            submission_delta.client_order_id,
+            authorization_id=authorization.authorization_id,
+            requester="other-operator",
+            reason="test cancellation",
+            mode=TradingMode.PAPER,
+            paper_origin="https://paper-api.alpaca.markets",
+            requested_at=cancel_requested_at,
+        )
+    cancel_unknown_at = settlement_at + timedelta(seconds=2, milliseconds=500)
+    cancel_unknown = cancellation_store.mark_unknown(
+        cancel_attempt.cancel_id, observed_at=cancel_unknown_at
+    )
+    assert (
+        cancellation_store.mark_unknown(cancel_attempt.cancel_id, observed_at=cancel_unknown_at)
+        == cancel_unknown
+    )
+    assert cancellation_store.unresolved() == (cancel_attempt,)
+    cancellation_store.record(
+        BrokerOrderEvent(
+            event_id="fake-cancel-resolved",
+            broker_order_id="fake-broker-order",
+            client_order_id=submission_delta.client_order_id,
+            state=OrderState.CANCELED,
+            cumulative_filled_quantity=0,
+            cumulative_average_fill_price=None,
+            provider_timestamp=settlement_at + timedelta(seconds=2, milliseconds=600),
+            observed_at=settlement_at + timedelta(seconds=2, milliseconds=700),
+        )
+    )
+    assert cancellation_store.unresolved() == ()
     unknown_calls: list[str] = []
 
     def fake_post_timeout(_request: Request) -> bytes:

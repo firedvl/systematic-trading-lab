@@ -215,6 +215,11 @@ request, validates the response's identity, quantity, envelope, fill economics, 
 time, and emits one sanitized broker event. The adapter requires a caller-supplied transport and has
 no production network fallback. Its end-to-end tests cover acknowledgement and unknown timeout
 without contacting Alpaca.
+Single-order cancellation intent is now durable before any DELETE adapter exists. One immutable
+attempt binds the current acknowledged or partially filled broker event and remains separate from
+order fill state. A failed future call can record sanitized unknown-outcome evidence, and every
+repeat remains blocked. Only a later terminal broker event resolves the attempt; zero-fill capacity
+release still occurs through the existing broker-event transaction.
 
 Official references reviewed 2026-08-03:
 
