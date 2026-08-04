@@ -1,8 +1,8 @@
 # Paper broker-write readiness
 
 Status: **not ready**. This checklist does not authorize a broker call. `Settings.broker_writes_allowed`
-remains hard-coded to `False`, no production mutation transport exists, and live trading remains
-prohibited.
+remains hard-coded to `False`, no production coordinator can invoke the mutation transport, and live
+trading remains prohibited.
 
 ## Approved scope
 
@@ -30,8 +30,8 @@ All blockers must be removed in separate reviewed changes:
    always returns false. The activation now
    binds the installed execution commit independently from the candidate research commit retained by
    the authorization.
-4. Submission and cancellation adapters require injected test transports; no production mutation
-   transport exists.
+4. The fixed-origin production mutation transport exists with no production caller. Submission and
+   cancellation coordinators still accept only injected test transports.
 5. No paper-execution CLI or supervisor exists.
 6. The transport threat model below is defined, but production use still needs independent code
    review and explicit user approval after implementation and failure tests pass.
@@ -123,4 +123,4 @@ active interval. A separate process opt-in names its activation and commit. Subm
 cancellation can recheck and bind both records inside each one-shot transaction. Assessment counts
 only the exact bound pair across both operations. A fresh attested installed identity must match and
 is persisted with each new bound attempt. Even an eligible assessment cannot call a transport because
-runtime write authority remains false and no production mutation transport exists.
+runtime write authority remains false and no production coordinator calls the mutation transport.
