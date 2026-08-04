@@ -27,7 +27,11 @@ from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityEr
 from systematic_trading_lab.experiments import HoldoutAccessError
 from systematic_trading_lab.fingerprints import canonical_json, canonicalize, fingerprint
 from systematic_trading_lab.orders import OrderLifecycleStore, OrderState, build_order_delta
-from systematic_trading_lab.paper_submission import PaperSubmissionPreflightStore
+from systematic_trading_lab.paper_submission import (
+    FakePaperSubmissionError,
+    FakePaperSubmitter,
+    PaperSubmissionPreflightStore,
+)
 from systematic_trading_lab.position_settlement import PositionSettlementStore
 from systematic_trading_lab.reconciliation import (
     PortfolioSnapshot,
@@ -1460,6 +1464,10 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         reservation_id=attested_reservation_id,
         staged_at=settlement_at + timedelta(seconds=2),
     )
+    fake_success_path = tmp_path / "fake-paper-submission-success.sqlite3"
+    fake_unknown_path = tmp_path / "fake-paper-submission-unknown.sqlite3"
+    shutil.copy2(store.path, fake_success_path)
+    shutil.copy2(store.path, fake_unknown_path)
     preflight_store = PaperSubmissionPreflightStore(store.path)
     preflight_head = preflight_store.verify_journal()
     with pytest.raises(PermissionError, match="paper mode"):
@@ -1508,6 +1516,78 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             paper_origin="https://paper-api.alpaca.markets",
             claimed_at=settlement_at + timedelta(seconds=2),
         )
+    fake_calls: list[str] = []
+
+    def fake_acknowledgement(fake_delta: object, fake_preflight: object) -> BrokerOrderEvent:
+        assert fake_delta == submission_delta
+        assert fake_preflight
+        fake_calls.append(submission_delta.client_order_id)
+        return BrokerOrderEvent(
+            event_id="fake-submit-acknowledged",
+            broker_order_id="fake-broker-order",
+            client_order_id=submission_delta.client_order_id,
+            state=OrderState.ACKNOWLEDGED,
+            cumulative_filled_quantity=0,
+            cumulative_average_fill_price=None,
+            provider_timestamp=settlement_at + timedelta(seconds=2, milliseconds=100),
+            observed_at=settlement_at + timedelta(seconds=2, milliseconds=200),
+        )
+
+    fake_submitter = FakePaperSubmitter(
+        fake_success_path,
+        fake_acknowledgement,
+        clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=300),
+    )
+    assert (
+        fake_submitter.submit(
+            submission_delta.client_order_id,
+            submitter_id="fake-worker",
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            claimed_at=settlement_at + timedelta(seconds=2),
+        ).state
+        is OrderState.ACKNOWLEDGED
+    )
+    with pytest.raises(FakePaperSubmissionError, match="already attempted"):
+        fake_submitter.submit(
+            submission_delta.client_order_id,
+            submitter_id="fake-worker",
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            claimed_at=settlement_at + timedelta(seconds=2),
+        )
+    assert fake_calls == [submission_delta.client_order_id]
+    unknown_calls: list[str] = []
+
+    def fake_timeout(_delta: object, _preflight: object) -> BrokerOrderEvent:
+        unknown_calls.append(submission_delta.client_order_id)
+        raise TimeoutError("sanitized fake timeout")
+
+    unknown_submitter = FakePaperSubmitter(
+        fake_unknown_path,
+        fake_timeout,
+        clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=300),
+    )
+    with pytest.raises(FakePaperSubmissionError, match="outcome is unknown"):
+        unknown_submitter.submit(
+            submission_delta.client_order_id,
+            submitter_id="fake-worker",
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            claimed_at=settlement_at + timedelta(seconds=2),
+        )
+    assert tuple(
+        item.order_id for item in BrokerEventStore(fake_unknown_path).submission_unknown_orders()
+    ) == (submission_delta.client_order_id,)
+    with pytest.raises(FakePaperSubmissionError, match="already attempted"):
+        unknown_submitter.submit(
+            submission_delta.client_order_id,
+            submitter_id="fake-worker",
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            claimed_at=settlement_at + timedelta(seconds=2),
+        )
+    assert unknown_calls == [submission_delta.client_order_id]
     tampered_path = tmp_path / "tampered-strategy-equity.sqlite3"
     shutil.copy2(store.path, tampered_path)
     with sqlite3.connect(tampered_path) as connection:

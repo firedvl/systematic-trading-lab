@@ -4,16 +4,18 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 
 from .alpaca_paper import PAPER_ORIGIN
+from .broker_events import BrokerEventStore, BrokerOrderEvent
 from .domain import TradingMode
 from .execution import JournalIntegrityError
 from .fingerprints import canonical_json, canonicalize, fingerprint
-from .orders import OrderState, _decode_delta, build_order_delta
+from .orders import OrderDelta, OrderState, _decode_delta, build_order_delta
 from .risk import RiskLimits, evaluate_risk
 from .risk_context import AttestedRiskContextStore
 
@@ -98,6 +100,28 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
         paper_origin: str,
         claimed_at: datetime,
     ) -> PaperSubmissionPreflight:
+        result, _ = self._claim_once(
+            order_id,
+            submitter_id=submitter_id,
+            authorization_id=authorization_id,
+            limits=limits,
+            mode=mode,
+            paper_origin=paper_origin,
+            claimed_at=claimed_at,
+        )
+        return result
+
+    def _claim_once(
+        self,
+        order_id: str,
+        *,
+        submitter_id: str,
+        authorization_id: str,
+        limits: RiskLimits,
+        mode: TradingMode,
+        paper_origin: str,
+        claimed_at: datetime,
+    ) -> tuple[PaperSubmissionPreflight, bool]:
         if mode is not TradingMode.PAPER or paper_origin != PAPER_ORIGIN:
             raise PermissionError("paper submission requires paper mode and the fixed paper origin")
         _utc(claimed_at)
@@ -123,7 +147,7 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
                             "order is bound to a different paper submission preflight"
                         )
                     connection.commit()
-                    return existing
+                    return existing, False
                 row = connection.execute(
                     "SELECT o.reservation_id, o.delta_json, o.state, r.decision_id, "
                     "r.intent_id, r.authorization_id, r.reservation_json, d.decision_json "
@@ -208,7 +232,7 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
             except Exception:
                 connection.rollback()
                 raise
-        return result
+        return result, True
 
     def _verify_preflights(
         self, connection: sqlite3.Connection
@@ -269,6 +293,74 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
                 )
             result[proof.order_id] = proof
         return result
+
+
+class FakePaperSubmissionError(RuntimeError):
+    pass
+
+
+class FakePaperSubmitter:
+    """Exercise one submission outcome without exposing an HTTP transport."""
+
+    def __init__(
+        self,
+        path: Path,
+        transport: Callable[[OrderDelta, PaperSubmissionPreflight], BrokerOrderEvent],
+        *,
+        clock: Callable[[], datetime],
+    ) -> None:
+        self._path = path
+        self._transport = transport
+        self._clock = clock
+
+    def submit(
+        self,
+        order_id: str,
+        *,
+        submitter_id: str,
+        authorization_id: str,
+        limits: RiskLimits,
+        claimed_at: datetime,
+        baseline_id: str | None = None,
+    ) -> BrokerOrderEvent:
+        store = PaperSubmissionPreflightStore(self._path)
+        preflight, created = store._claim_once(
+            order_id,
+            submitter_id=submitter_id,
+            authorization_id=authorization_id,
+            limits=limits,
+            mode=TradingMode.PAPER,
+            paper_origin=PAPER_ORIGIN,
+            claimed_at=claimed_at,
+        )
+        if not created:
+            raise FakePaperSubmissionError(
+                "paper submission was already attempted; reconcile before any retry"
+            )
+        with store._connect() as connection:
+            row = connection.execute(
+                "SELECT delta_json FROM orders WHERE order_id = ?", (order_id,)
+            ).fetchone()
+        if row is None:
+            raise JournalIntegrityError("paper submission order disappeared after preflight")
+        delta = _decode_delta(json.loads(row[0]))
+        event: BrokerOrderEvent | None = None
+        try:
+            event = self._transport(delta, preflight)
+            if event.client_order_id != order_id or event.observed_at < claimed_at:
+                raise ValueError("fake paper submission returned mismatched evidence")
+            return BrokerEventStore(self._path).record(event, baseline_id=baseline_id)
+        except Exception as error:
+            failed_at = max(
+                self._now(), claimed_at, claimed_at if event is None else event.observed_at
+            )
+            store.transition(order_id, OrderState.SUBMISSION_UNKNOWN, changed_at=failed_at)
+            raise FakePaperSubmissionError("fake paper submission outcome is unknown") from error
+
+    def _now(self) -> datetime:
+        value = self._clock()
+        _utc(value)
+        return value
 
 
 def _decode_preflight(value: object) -> PaperSubmissionPreflight:
