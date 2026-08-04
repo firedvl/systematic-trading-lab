@@ -429,3 +429,10 @@
 - Context: an attested wheel does not prove that the running process loaded it. Installed metadata alone is mutable and editable or mixed-package imports can bypass the reviewed artifact.
 - Consequences: missing, malformed, parent-escaping, mismatched, extra, mixed-origin, editable, or tampered evidence blocks installed identity creation. Installer-generated script and `__pycache__` rows remain outside the trusted file set. The check is read-only and does not protect against local mutation after it returns, verify dependencies, or grant paper-write authority.
 - Revisit when: activation assessment can bind a fresh installed identity to its exact reviewed commit.
+
+## 2026-08-04 — Runtime identity is bound inside paper-attempt transactions
+
+- Decision: activation assessment accepts one installed runtime identity verified no more than five seconds earlier, requires its full source commit to match the activation and process opt-in, and binds its fingerprint into each new request-bound submission preflight or cancellation attempt under the existing immediate transaction.
+- Context: verifying an installation without carrying that proof into the atomic attempt record leaves the code identity detached from the authority it checked.
+- Consequences: a missing, stale, mismatched, future-dated, or invalid identity blocks new activation-bound attempts. Activation and process opt-in commits must be full lowercase Git SHA-1s. Legacy records without the field remain readable. The fingerprint is immutable evidence of the identity checked near creation, not a defense against later local file mutation or hostile local code. Runtime broker-write authority stays false and no production transport exists.
+- Revisit when: a reviewed production paper transport can consume only complete bound evidence without creating implicit authority.

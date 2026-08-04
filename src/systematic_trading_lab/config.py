@@ -37,12 +37,10 @@ class PaperWriteRequest:
             character not in "0123456789abcdef" for character in self.activation_id
         ):
             raise ConfigurationError("paper activation ID must be a SHA-256 fingerprint")
-        if (
-            not self.code_commit
-            or self.code_commit != self.code_commit.strip()
-            or len(self.code_commit) > 128
+        if len(self.code_commit) != 40 or any(
+            character not in "0123456789abcdef" for character in self.code_commit
         ):
-            raise ConfigurationError("paper code commit is invalid")
+            raise ConfigurationError("paper code commit must be a full lowercase Git SHA-1")
 
     @property
     def request_fingerprint(self) -> str:

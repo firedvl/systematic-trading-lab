@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from .alpaca_paper import PAPER_ORIGIN
@@ -13,6 +13,9 @@ from .config import PaperWriteRequest
 from .execution import JournalIntegrityError
 from .fingerprints import canonical_json, canonicalize, fingerprint
 from .risk import RiskLimits, RiskStore
+from .runtime_build import InstalledRuntimeIdentity
+
+MAX_RUNTIME_IDENTITY_AGE = timedelta(seconds=5)
 
 
 @dataclass(frozen=True)
@@ -45,6 +48,7 @@ class PaperWriteActivation:
                 raise ValueError(f"{name} is invalid")
         _sha256("authorization", self.authorization_fingerprint)
         _sha256("risk configuration", self.risk_configuration_fingerprint)
+        _git_sha(self.code_commit)
         if self.paper_origin != PAPER_ORIGIN:
             raise ValueError("paper activation origin is invalid")
         if (
@@ -100,6 +104,7 @@ class PaperWriteAssessment:
     attempts_used: int
     max_attempts: int
     assessed_at: datetime
+    runtime_identity_fingerprint: str | None = None
 
     def __post_init__(self) -> None:
         if self.eligible != (not self.reasons):
@@ -109,6 +114,8 @@ class PaperWriteAssessment:
             raise ValueError("paper write operation is invalid")
         if self.attempts_used < 0 or self.max_attempts < 1:
             raise ValueError("paper write attempt counts are invalid")
+        if self.runtime_identity_fingerprint is not None:
+            _sha256("runtime identity", self.runtime_identity_fingerprint)
         _utc(self.assessed_at)
 
     @property
@@ -246,6 +253,7 @@ class PaperWriteActivationStore(RiskStore):
         *,
         operation: str,
         assessed_at: datetime,
+        runtime_identity: InstalledRuntimeIdentity | None = None,
     ) -> PaperWriteAssessment:
         if operation not in {"cancel", "submit"}:
             raise ValueError("paper write operation is invalid")
@@ -260,6 +268,7 @@ class PaperWriteActivationStore(RiskStore):
                 limits,
                 operation=operation,
                 assessed_at=assessed_at,
+                runtime_identity=runtime_identity,
             )
 
     def _verify_activation_state(
@@ -277,6 +286,7 @@ def _assess_paper_write(
     operation: str,
     assessed_at: datetime,
     authorization_id: str | None = None,
+    runtime_identity: InstalledRuntimeIdentity | None = None,
 ) -> PaperWriteAssessment:
     if operation not in {"cancel", "submit"}:
         raise ValueError("paper write operation is invalid")
@@ -290,7 +300,21 @@ def _assess_paper_write(
     except KeyError:
         raise KeyError("paper write authority is missing") from None
     attempts_used = _bound_attempt_count(connection, request)
-    reasons = ["runtime-code-identity-unverified"]
+    runtime_identity_fingerprint = None
+    reasons: list[str] = []
+    if runtime_identity is None:
+        reasons.append("runtime-code-identity-unverified")
+    else:
+        runtime_identity_fingerprint = runtime_identity.identity_fingerprint
+        if (
+            runtime_identity.source_commit != activation.code_commit
+            or runtime_identity.source_commit != request.code_commit
+        ):
+            reasons.append("runtime-code-identity-mismatch")
+        if runtime_identity.verified_at > assessed_at:
+            reasons.append("runtime-code-identity-from-future")
+        elif assessed_at - runtime_identity.verified_at > MAX_RUNTIME_IDENTITY_AGE:
+            reasons.append("runtime-code-identity-stale")
     if request.code_commit != activation.code_commit:
         reasons.append("code-commit-mismatch")
     if authorization_id is not None and authorization_id != activation.authorization_id:
@@ -325,6 +349,7 @@ def _assess_paper_write(
         attempts_used=attempts_used,
         max_attempts=activation.max_attempts,
         assessed_at=assessed_at,
+        runtime_identity_fingerprint=runtime_identity_fingerprint,
     )
 
 
@@ -389,7 +414,10 @@ def _verify_paper_write_binding(
     authorization_id: str,
     operation: str,
     attempted_at: datetime,
+    runtime_identity_fingerprint: str | None = None,
 ) -> None:
+    if runtime_identity_fingerprint is not None:
+        _sha256("runtime identity", runtime_identity_fingerprint)
     activations, revocations = _verify_activation_state(store, connection)
     try:
         activation = activations[activation_id]
@@ -523,3 +551,8 @@ def _utc_text(value: datetime) -> str:
 def _sha256(name: str, value: str) -> None:
     if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
         raise ValueError(f"{name} fingerprint is invalid")
+
+
+def _git_sha(value: str) -> None:
+    if len(value) != 40 or any(character not in "0123456789abcdef" for character in value):
+        raise ValueError("paper activation code commit must be a full lowercase Git SHA-1")

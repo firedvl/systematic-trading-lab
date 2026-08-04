@@ -34,6 +34,7 @@ from .orders import OrderDelta, OrderState, _decode_delta, build_order_delta
 from .paper_activation import _assess_paper_write, _verify_paper_write_binding
 from .risk import RiskLimits, evaluate_risk
 from .risk_context import AttestedRiskContextStore
+from .runtime_build import InstalledRuntimeIdentity
 
 
 @dataclass(frozen=True)
@@ -52,6 +53,7 @@ class PaperSubmissionPreflight:
     claimed_at: datetime
     activation_id: str | None = None
     paper_write_request_fingerprint: str | None = None
+    runtime_identity_fingerprint: str | None = None
 
     def __post_init__(self) -> None:
         for name, value in (
@@ -79,6 +81,10 @@ class PaperSubmissionPreflight:
             assert self.paper_write_request_fingerprint is not None
             _sha256("activation", self.activation_id)
             _sha256("paper write request", self.paper_write_request_fingerprint)
+        if self.runtime_identity_fingerprint is not None:
+            if self.activation_id is None:
+                raise ValueError("paper submission runtime identity lacks activation")
+            _sha256("runtime identity", self.runtime_identity_fingerprint)
         _utc(self.claimed_at)
 
     @property
@@ -124,6 +130,7 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
         paper_origin: str,
         claimed_at: datetime,
         paper_write_request: PaperWriteRequest | None = None,
+        runtime_identity: InstalledRuntimeIdentity | None = None,
     ) -> PaperSubmissionPreflight:
         result, _ = self._claim_once(
             order_id,
@@ -134,6 +141,7 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
             paper_origin=paper_origin,
             claimed_at=claimed_at,
             paper_write_request=paper_write_request,
+            runtime_identity=runtime_identity,
         )
         return result
 
@@ -148,9 +156,12 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
         paper_origin: str,
         claimed_at: datetime,
         paper_write_request: PaperWriteRequest | None = None,
+        runtime_identity: InstalledRuntimeIdentity | None = None,
     ) -> tuple[PaperSubmissionPreflight, bool]:
         if mode is not TradingMode.PAPER or paper_origin != PAPER_ORIGIN:
             raise PermissionError("paper submission requires paper mode and the fixed paper origin")
+        if (paper_write_request is None) != (runtime_identity is None):
+            raise ValueError("paper submission activation requires runtime identity")
         _utc(claimed_at)
         with self._connect() as connection:
             try:
@@ -180,6 +191,12 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
                             None
                             if paper_write_request is None
                             else paper_write_request.request_fingerprint
+                        )
+                        or existing.runtime_identity_fingerprint
+                        != (
+                            None
+                            if runtime_identity is None
+                            else runtime_identity.identity_fingerprint
                         )
                     ):
                         raise JournalIntegrityError(
@@ -212,8 +229,9 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
                         operation="submit",
                         assessed_at=claimed_at,
                         authorization_id=authorization_id,
+                        runtime_identity=runtime_identity,
                     )
-                    if assessment.reasons != ("runtime-code-identity-unverified",):
+                    if not assessment.eligible:
                         raise PermissionError(
                             "paper submission lacks exact dormant activation authority"
                         )
@@ -272,6 +290,9 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
                         if paper_write_request is None
                         else paper_write_request.request_fingerprint
                     ),
+                    runtime_identity_fingerprint=(
+                        None if runtime_identity is None else runtime_identity.identity_fingerprint
+                    ),
                 )
                 claimed = self._claim_submitter(
                     connection,
@@ -325,6 +346,7 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
                     authorization_id=proof.authorization_id,
                     operation="submit",
                     attempted_at=proof.claimed_at,
+                    runtime_identity_fingerprint=proof.runtime_identity_fingerprint,
                 )
             order = connection.execute(
                 "SELECT o.reservation_id, o.delta_json, o.submitter_id, o.claimed_at, "
@@ -565,6 +587,7 @@ def _decode_preflight(value: object) -> PaperSubmissionPreflight:
                 **value,
                 "activation_id": value.get("activation_id"),
                 "paper_write_request_fingerprint": value.get("paper_write_request_fingerprint"),
+                "runtime_identity_fingerprint": value.get("runtime_identity_fingerprint"),
                 "claimed_at": datetime.fromisoformat(
                     str(value["claimed_at"]).replace("Z", "+00:00")
                 ),
@@ -581,6 +604,8 @@ def _preflight_value(preflight: PaperSubmissionPreflight) -> dict[str, object]:
     if preflight.activation_id is None:
         value.pop("activation_id")
         value.pop("paper_write_request_fingerprint")
+    if preflight.runtime_identity_fingerprint is None:
+        value.pop("runtime_identity_fingerprint")
     return value
 
 
