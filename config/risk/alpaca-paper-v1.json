@@ -1,0 +1,22 @@
+{
+  "configuration_id": "alpaca-paper-strategic-allocation-v1",
+  "account_id": "fb1b7f4e-e570-462d-a8db-fc10596a5124",
+  "allowed_symbols": ["GLD", "IWM", "QQQ", "SPY"],
+  "max_order_notional": "4000",
+  "max_position_notional": "4000",
+  "max_gross_exposure": "10000",
+  "strategy_capital_allocation": "10000",
+  "strategy_fill_cost_bps": "10",
+  "min_cash": "90000",
+  "max_open_orders": 1,
+  "max_orders_per_minute": 1,
+  "max_daily_loss": "100",
+  "max_strategy_drawdown": "0.10",
+  "max_price_deviation_bps": "25",
+  "max_snapshot_age_seconds": 15,
+  "min_reconciliation_stability_seconds": 60,
+  "reviewed_by": "firedvl",
+  "review_reason": "Approved initial strategic-allocation paper limits",
+  "effective_at": "2026-08-03T00:00:00Z",
+  "expires_at": "2027-08-03T00:00:00Z"
+}

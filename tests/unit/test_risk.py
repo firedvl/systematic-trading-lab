@@ -9,7 +9,13 @@ import pytest
 
 from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityError
 from systematic_trading_lab.fingerprints import fingerprint
-from systematic_trading_lab.risk import RiskContext, RiskLimits, RiskStore, evaluate_risk
+from systematic_trading_lab.risk import (
+    RiskContext,
+    RiskLimits,
+    RiskStore,
+    evaluate_risk,
+    load_risk_limits,
+)
 
 NOW = datetime(2026, 8, 3, 20, tzinfo=UTC)
 
@@ -181,6 +187,28 @@ def test_limits_reject_implicit_or_invalid_values() -> None:
         _context(quote_bid_price=Decimal("101"), quote_ask_price=Decimal("100"))
     with pytest.raises(ValueError, match="must use the ask"):
         _context(current_symbol_quantity=99)
+
+
+def test_reviewed_paper_risk_configuration_loads_and_fails_closed(tmp_path: Path) -> None:
+    path = Path("config/risk/alpaca-paper-v1.json")
+    limits = load_risk_limits(path)
+
+    assert limits.account_id == "fb1b7f4e-e570-462d-a8db-fc10596a5124"
+    assert limits.allowed_symbols == ("GLD", "IWM", "QQQ", "SPY")
+    assert limits.strategy_capital_allocation == Decimal("10000")
+    assert limits.max_order_notional == Decimal("4000")
+    assert limits.min_cash == Decimal("90000")
+
+    malformed = tmp_path / "risk.json"
+    malformed.write_text(
+        path.read_text().replace('"max_open_orders": 1', '"max_open_orders": true')
+    )
+    with pytest.raises(ValueError, match="invalid risk configuration"):
+        load_risk_limits(malformed)
+
+    malformed.write_text(path.read_text().replace('"max_open_orders": 1,', '"unknown": 1,'))
+    with pytest.raises(ValueError, match="invalid risk configuration"):
+        load_risk_limits(malformed)
 
 
 def test_emergency_disable_is_default_persistent_and_journal_bound(tmp_path: Path) -> None:

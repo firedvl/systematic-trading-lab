@@ -1,6 +1,8 @@
 # Risk configuration
 
-No executable risk-limit file exists. The typed `RiskLimits` boundary has no defaults; tests provide
-clearly named fixture values only. Do not add a configuration until a separate review approves every
-financial value, account, symbol, reviewer, effective time, and expiry. A parsed object is not active
-paper authorization.
+`alpaca-paper-v1.json` records the reviewed limits for the named Alpaca paper account. Decimal values
+are strings so parsing stays exact. The loader rejects missing, unknown, duplicate, or malformed
+fields.
+
+The configuration validity period does not grant broker authority. Each paper run still needs its
+own approved authorization and activation. The first activation may last no more than 24 hours.
