@@ -78,6 +78,7 @@ uv run ruff check .
 uv run mypy src tests
 uv run pytest
 uv run python scripts/check_secrets.py
+bash -n scripts/*.sh
 ```
 
 Read [AGENTS.md](AGENTS.md), [CURRENT_STATE.md](CURRENT_STATE.md), and [docs/architecture.md](docs/architecture.md) before changing the system.

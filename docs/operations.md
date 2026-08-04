@@ -61,3 +61,36 @@ external 10-minute timer. It pins the exact attested runtime and campaign ID, ru
 directory so the ignored `.env` loads, starts missed work when the computer becomes available, wakes
 from sleep, and expires at the campaign end. It cannot run while the computer is powered off; any
 resulting gap remains evidence. The one-shot command and database remain authoritative, not the task.
+
+### Linux VPS with GNU screen
+
+Stop or disable every other observation runner before moving `execution.sqlite3`; SQLite has one
+writer and must not be synchronized between machines. On a Linux VPS with `screen` and `flock`, run:
+
+```console
+chmod +x scripts/paper_observation_screen.sh scripts/cleanup_vps.sh
+./scripts/paper_observation_screen.sh start CAMPAIGN_ID /opt/systematic-trading-lab/.trading-lab/runtime-builds/FULL_COMMIT/verified-venv/bin/trading-lab 600
+./scripts/paper_observation_screen.sh status
+screen -r systematic-trading-lab-observation
+```
+
+Detach with `Ctrl-A`, then `D`. Stop the loop with
+`./scripts/paper_observation_screen.sh stop`. The loop runs one read-only sample every 600 seconds,
+uses the repository working directory so `.env` loads, rejects a second local loop, stops when the
+campaign reports completion, and exits on configuration or journal-integrity errors. It continues
+after recorded drift or read failure so recovery remains visible. A `screen` session survives SSH
+disconnects but not a VPS reboot; relaunch it after a reboot.
+
+Cleanup is dry-run-first:
+
+```console
+./scripts/cleanup_vps.sh
+./scripts/cleanup_vps.sh --execute
+./scripts/cleanup_vps.sh --execute --delete-repository
+```
+
+The first executing form stops the named screen session and deletes only ignored credentials,
+runtime state, virtual environments, build output, and Python caches inside the validated project.
+The last form deletes the validated repository too. Neither form erases broker or GitHub records,
+backups, SSH logs, system journals, or shell history. Revoke Alpaca keys separately when retiring the
+deployment.
