@@ -159,6 +159,11 @@ open orders, no nonterminal local orders, fresh post-fill observations, the same
 baseline controls, and clear emergency state. The evidence binds but does not derive the observed
 cash, equity, or buying power. It does not alter full reconciliation or release capacity.
 
+A read-only settlement-capacity assessment now enumerates the exact positive-fill reservations and
+the proof's observed account values, then reports missing risk-context provenance. It also detects a
+changed lineage, emergency generation, order state, stale snapshot, inactive reservation, or
+unrelated active reservation. It never releases or replaces capacity.
+
 Official references reviewed 2026-08-03:
 
 - <https://docs.alpaca.markets/us/docs/paper-trading>

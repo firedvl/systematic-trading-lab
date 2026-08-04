@@ -6,6 +6,7 @@ import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import cast
 
@@ -77,6 +78,41 @@ class PositionSettlementEvidence:
     @property
     def proof_fingerprint(self) -> str:
         return fingerprint(self)
+
+
+@dataclass(frozen=True)
+class SettlementCapacityAssessment:
+    ready: bool
+    reasons: tuple[str, ...]
+    proof_id: str
+    reservation_ids: tuple[str, ...]
+    observed_snapshot_id: str
+    observed_cash: Decimal
+    observed_equity: Decimal
+    observed_buying_power: Decimal
+    emergency_generation: int
+    assessed_at: datetime
+
+    def __post_init__(self) -> None:
+        if self.ready != (not self.reasons):
+            raise ValueError("capacity readiness must match its reasons")
+        if any(not reason for reason in self.reasons):
+            raise ValueError("capacity readiness reasons must be nonempty")
+        if self.reservation_ids != tuple(sorted(set(self.reservation_ids))):
+            raise ValueError("capacity readiness reservations must be sorted and unique")
+        for name, amount in (
+            ("cash", self.observed_cash),
+            ("equity", self.observed_equity),
+            ("buying power", self.observed_buying_power),
+        ):
+            if not amount.is_finite() or amount < 0:
+                raise ValueError(f"observed {name} must be finite and nonnegative")
+        if self.emergency_generation < 1:
+            raise ValueError("emergency generation must be positive")
+        if self.assessed_at.tzinfo is None or self.assessed_at.utcoffset() != UTC.utcoffset(
+            self.assessed_at
+        ):
+            raise ValueError("capacity assessment time must be UTC-aware")
 
 
 class PositionSettlementStore(BrokerEventStore):
@@ -222,6 +258,108 @@ class PositionSettlementStore(BrokerEventStore):
             )
             connection.commit()
         return evidence
+
+    def assess_capacity(
+        self, proof_id: str, *, assessed_at: datetime
+    ) -> SettlementCapacityAssessment:
+        if assessed_at.tzinfo is None or assessed_at.utcoffset() != UTC.utcoffset(assessed_at):
+            raise ValueError("capacity assessment time must be UTC-aware")
+        with self._connect() as connection:
+            connection.execute("BEGIN")
+            self._verify_connection(connection)
+            self._verify_reservations(connection)
+            self._verify_releases(connection)
+            self._verify_orders(connection)
+            events = self._verify_broker_events(connection)
+            advances = self._verify_expected_position_advances(connection, events)
+            settlements = self._verify_settlements(connection)
+            snapshots, _, baselines, _ = ReconciliationStore._verify_reconciliation(
+                cast(ReconciliationStore, self), connection
+            )
+            emergency = self._verify_emergency(connection)
+            try:
+                evidence = settlements[proof_id]
+                baseline = baselines[evidence.baseline_id]
+                snapshot = snapshots[evidence.observed_snapshot_id]
+                proof_row = connection.execute(
+                    "SELECT journal_sequence FROM position_settlement_evidence WHERE proof_id = ?",
+                    (proof_id,),
+                ).fetchone()
+                proof_sequence = int(proof_row[0])
+            except (KeyError, TypeError) as error:
+                raise KeyError(proof_id) from error
+            lineage = [
+                item for item in advances.values() if item.baseline_id == baseline.baseline_id
+            ]
+            reasons = ["context-provenance-missing"]
+            if not lineage or lineage[-1].advance_fingerprint != evidence.advance_fingerprint:
+                reasons.append("lineage-changed")
+            if emergency.disabled or emergency.generation != evidence.emergency_generation:
+                reasons.append("emergency-state-changed")
+            if any(
+                timestamp > assessed_at
+                or (assessed_at - timestamp).total_seconds() > baseline.maximum_age_seconds
+                for timestamp in (
+                    snapshot.account_observed_at,
+                    snapshot.positions_observed_at,
+                    snapshot.orders_observed_at,
+                )
+            ):
+                reasons.append("settlement-snapshot-stale-or-future")
+            later_order = connection.execute(
+                "SELECT 1 FROM journal j JOIN orders o ON o.order_id = j.entity_id "
+                "JOIN capacity_reservations r ON r.reservation_id = o.reservation_id "
+                "WHERE j.entity_type = 'order' AND j.sequence > ? "
+                "AND json_extract(r.reservation_json, '$.account_id') = ? LIMIT 1",
+                (proof_sequence, evidence.account_id),
+            ).fetchone()
+            if later_order is not None:
+                reasons.append("order-state-changed")
+            terminal_order_ids = {item[0] for item in evidence.terminal_orders}
+            rows = connection.execute(
+                "SELECT r.reservation_id, r.expires_at, o.order_id, x.reservation_id, "
+                "COALESCE(MAX(CAST(json_extract(b.event_json, "
+                "'$.cumulative_filled_quantity') AS INTEGER)), 0) "
+                "FROM capacity_reservations r "
+                "LEFT JOIN orders o ON o.reservation_id = r.reservation_id "
+                "LEFT JOIN broker_events b ON b.client_order_id = o.order_id "
+                "LEFT JOIN capacity_releases x ON x.reservation_id = r.reservation_id "
+                "WHERE json_extract(r.reservation_json, '$.account_id') = ? "
+                "GROUP BY r.reservation_id, r.expires_at, o.order_id, x.reservation_id",
+                (evidence.account_id,),
+            ).fetchall()
+            reservation_ids = tuple(
+                sorted(
+                    str(row[0]) for row in rows if row[2] in terminal_order_ids and int(row[4]) > 0
+                )
+            )
+            if not reservation_ids:
+                reasons.append("no-positive-fill-reservation")
+            if any(
+                row[0] in reservation_ids
+                and (_parse_utc(str(row[1])) <= assessed_at or row[3] is not None)
+                for row in rows
+            ):
+                reasons.append("reservation-inactive")
+            if any(
+                row[3] is None
+                and _parse_utc(str(row[1])) > assessed_at
+                and row[0] not in reservation_ids
+                for row in rows
+            ):
+                reasons.append("unrelated-active-reservation")
+        return SettlementCapacityAssessment(
+            ready=not reasons,
+            reasons=tuple(reasons),
+            proof_id=proof_id,
+            reservation_ids=reservation_ids,
+            observed_snapshot_id=snapshot.snapshot_id,
+            observed_cash=snapshot.cash,
+            observed_equity=snapshot.equity,
+            observed_buying_power=snapshot.buying_power,
+            emergency_generation=emergency.generation,
+            assessed_at=assessed_at,
+        )
 
     def _verify_settlements(
         self, connection: sqlite3.Connection

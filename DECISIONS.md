@@ -254,3 +254,10 @@
 - Context: a fill lineage can predict shares but cannot derive fees, marks, cash, equity, or buying-power treatment.
 - Consequences: the proof records the observed snapshot and its adapter attestation but compares only position and order settlement. It does not create a local portfolio snapshot, change full reconciliation, or release capacity.
 - Revisit when: a reviewed rule can replace pending reservations with fresh adapter-observed risk context without double counting or early reuse.
+
+## 2026-08-03 — Settlement alone cannot release risk capacity
+
+- Decision: settlement-capacity assessment is read-only and always blocks mutation while risk decisions accept caller-supplied context without durable adapter provenance.
+- Context: releasing a positive-fill reservation against stale or fabricated cash, buying power, exposure, quote, or clock values could reuse capacity twice.
+- Consequences: the assessment identifies exact positive-fill reservations and binds observed account values, but reports `context-provenance-missing` and changes no journal or release row. Filled capacity remains held.
+- Revisit when: a production-attested snapshot-derived risk context also binds durable quote, clock, session, exposure, PnL, drawdown, limits, emergency generation, and settlement evidence.
