@@ -183,6 +183,9 @@ attestations remain verifiable but cannot supply the daily-loss input.
 The risk-decision transaction derives the active reservation set using creation, expiry, and release
 times. It binds the exact set and replaces caller pending totals; capacity mutation remains blocked
 until strategy drawdown and the full attested context exist.
+Reviewed limits now require a positive strategy-capital allocation and bind it into their fingerprint.
+One immutable strategy-equity baseline can bind that allocation to the exact paper authorization and
+flat reconciliation baseline. It grants no drawdown value, risk approval, or capacity authority.
 
 Official references reviewed 2026-08-03:
 

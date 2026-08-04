@@ -40,6 +40,7 @@ def _limits(**changes: object) -> RiskLimits:
         max_order_notional=Decimal("30000"),
         max_position_notional=Decimal("40000"),
         max_gross_exposure=Decimal("90000"),
+        strategy_capital_allocation=Decimal("50000"),
         min_cash=Decimal("10000"),
         max_open_orders=3,
         max_orders_per_minute=4,
@@ -96,6 +97,16 @@ def test_risk_approves_only_when_every_gate_passes() -> None:
     assert decision.order_notional == Decimal("15000")
     assert decision.cash_reservation == Decimal("15000")
     assert decision.configuration_fingerprint == _limits().configuration_fingerprint
+
+
+def test_strategy_capital_allocation_is_positive_and_fingerprinted() -> None:
+    with pytest.raises(ValueError, match="strategy capital allocation"):
+        _limits(strategy_capital_allocation=Decimal("0"))
+
+    assert (
+        _limits().configuration_fingerprint
+        != _limits(strategy_capital_allocation=Decimal("50001")).configuration_fingerprint
+    )
 
 
 def test_risk_collects_fail_closed_reasons() -> None:

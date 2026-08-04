@@ -58,6 +58,7 @@ def _limits() -> RiskLimits:
         max_order_notional=Decimal("30000"),
         max_position_notional=Decimal("40000"),
         max_gross_exposure=Decimal("90000"),
+        strategy_capital_allocation=Decimal("50000"),
         min_cash=Decimal("10000"),
         max_open_orders=3,
         max_orders_per_minute=4,
@@ -409,6 +410,82 @@ def test_reconciliation_store_persists_flat_baseline_and_results(
     assert not dirty.result.clean
     assert dirty.result.reasons == ("cash-mismatch", "unresolved-broker-mutation")
     ReconciliationStore(path)
+
+
+def test_strategy_equity_baseline_binds_allocation_and_authority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "execution.sqlite3"
+    RiskStore(path)
+    store = ReconciliationStore(path)
+    limits = _limits()
+    report = _evidence()
+    authorization = _authorization(report, limits)
+    store.authorize_paper(authorization, report, limits)
+    expected = _flat_snapshot(SnapshotSource.LOCAL_EXPECTED, "equity-expected")
+    observed = _record_adapter_snapshot(
+        store,
+        _flat_snapshot(SnapshotSource.ALPACA_PAPER, "equity-observed"),
+        monkeypatch,
+    )
+    store.record_snapshot(expected, recorded_at=NOW)
+    reconciliation_baseline = store.create_flat_baseline(
+        baseline_id="equity-reconciliation-baseline",
+        authorization_id=authorization.authorization_id,
+        expected_snapshot_id=expected.snapshot_id,
+        observed_snapshot_id=observed.snapshot_id,
+        limits=limits,
+        operator="test-operator",
+        reason="strategy equity test",
+        created_at=NOW,
+    )
+
+    with pytest.raises(HoldoutAccessError, match="strategy equity baseline is missing"):
+        ReconciliationStore(path).get_strategy_equity_baseline(authorization.authorization_id)
+
+    baseline = store.create_strategy_equity_baseline(
+        baseline_id="strategy-equity-baseline-1",
+        reconciliation_baseline_id=reconciliation_baseline.baseline_id,
+        limits=limits,
+        operator="test-operator",
+        reason="test-only capital allocation",
+        created_at=NOW,
+    )
+
+    assert baseline.allocated_capital == Decimal("50000")
+    assert baseline.authorization_id == authorization.authorization_id
+    assert baseline.authorization_fingerprint == authorization.authorization_fingerprint
+    assert baseline.reconciliation_baseline_fingerprint == fingerprint(reconciliation_baseline)
+    assert baseline.strategy_id == authorization.strategy_id
+    assert baseline.strategy_version == authorization.strategy_version
+    assert baseline.risk_configuration_fingerprint == limits.configuration_fingerprint
+    assert store.get_strategy_equity_baseline(authorization.authorization_id) == baseline
+    assert (
+        store.create_strategy_equity_baseline(
+            baseline_id=baseline.baseline_id,
+            reconciliation_baseline_id=reconciliation_baseline.baseline_id,
+            limits=limits,
+            operator="test-operator",
+            reason="test-only capital allocation",
+            created_at=NOW,
+        )
+        == baseline
+    )
+    with pytest.raises(HoldoutAccessError, match="matching active authority"):
+        store.create_strategy_equity_baseline(
+            baseline_id="changed-allocation",
+            reconciliation_baseline_id=reconciliation_baseline.baseline_id,
+            limits=replace(limits, strategy_capital_allocation=Decimal("50001")),
+            operator="test-operator",
+            reason="must reject changed allocation",
+            created_at=NOW,
+        )
+
+    with sqlite3.connect(path) as connection:
+        connection.execute("DROP TRIGGER strategy_equity_baselines_no_update")
+        connection.execute("UPDATE strategy_equity_baselines SET baseline_json = '{}'")
+    with pytest.raises(JournalIntegrityError, match="strategy equity baseline"):
+        ReconciliationStore(path)
 
 
 def test_reconciliation_store_rejects_nonflat_or_changed_baseline(
