@@ -47,6 +47,8 @@ _KNOWN_EVENT_TYPES = {
     "strategy-equity-baseline-created",
     "strategy-equity-checkpoint-recorded",
     "reconciliation-recorded",
+    "paper-observation-campaign-started",
+    "paper-observation-recorded",
 }
 _FINGERPRINT = re.compile(r"[0-9a-f]{64}")
 _SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,15}")

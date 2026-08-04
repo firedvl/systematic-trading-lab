@@ -24,6 +24,9 @@ uv run trading-lab experiment evaluate-qualification --evidence-manifest config/
 uv run trading-lab experiment review-holdout --help
 uv run trading-lab paper initialize-storage
 uv run trading-lab paper assess-startup --authorization AUTHORIZATION_ID --risk-config config/risk/alpaca-paper-v1.json
+uv run trading-lab paper start-observation paper-week-1 --maximum-gap-seconds 900 --duration-hours 168
+uv run trading-lab paper record-observation paper-week-1
+uv run trading-lab paper assess-observation paper-week-1
 ```
 
 Runtime state defaults to `.trading-lab/` and is not committed. Set `TRADING_LAB_HOME` to use another directory. `TRADING_LAB_MODE` defaults to `offline`; accepted modes are `offline`, `research`, `replay`, `shadow`, `paper`, and the deliberately non-operational `live-disabled`.
@@ -54,6 +57,13 @@ enabling broker writes. It is safe to repeat and rejects a symbolic-link databas
 `paper assess-startup` is read-only. It checks the journal, authorization, limits, activation,
 installed runtime identity, unresolved mutations, emergency state, and attested risk context. Missing
 evidence appears as a blocker. The command cannot enable or call the paper operator.
+
+The paper observation commands are broker-read-only and require paper mode plus Alpaca credentials,
+but no activation. A campaign binds its first production-attested snapshot, expected positions,
+maximum sample gap, and end time. Later samples record healthy state, position or open-order drift,
+or a sanitized read failure. Assessment reports current staleness, failure and drift counts, and the
+largest completed sample gap. Observation evidence cannot submit, cancel, settle, or clear an
+emergency.
 
 ## Quality gates
 

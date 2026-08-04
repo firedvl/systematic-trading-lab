@@ -25,3 +25,14 @@ nonterminal or stale lookup remains unresolved. No result authorizes another bro
 Before any future paper mutation work, use [paper-write-readiness.md](paper-write-readiness.md). Its
 current status is not ready and every listed blocker remains mandatory. Process opt-in opens only
 the outer runtime gate and cannot override transaction-bound authority.
+
+## Sustained paper observation
+
+Start a bounded read-only campaign with `trading-lab paper start-observation CAMPAIGN_ID`. Set its
+maximum gap to the planned sampling interval plus measured scheduler tolerance and set an explicit
+duration. Run `record-observation` on that schedule and `assess-observation` after interruptions.
+The command exits nonzero for current drift, read failure, or staleness. Failure records contain no
+broker response text. A later healthy sample restores current health but does not erase historical
+failure or drift counts. Campaign completion remains stale unless a final sample falls within the
+configured gap of the end time. These records grant no activation, risk, settlement, emergency, or
+broker authority.
