@@ -25,7 +25,7 @@ from .experiment_runner import (
 )
 from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, ExperimentSplit
 from .providers import AlpacaHistoricalProvider, FixtureProvider
-from .qualification import load_qualification_proposal
+from .qualification import load_qualification_proposal, review_holdout
 from .qualification_evidence import (
     authorize_holdout_run,
     build_evidence_reports,
@@ -172,6 +172,15 @@ def parser() -> argparse.ArgumentParser:
     authorize.add_argument("--proposal", type=Path, required=True)
     authorize.add_argument("--reviewer", required=True)
     authorize.add_argument("--reason", required=True)
+    review = experiment_commands.add_parser(
+        "review-holdout",
+        help="log one approved review and evaluate protected holdout metrics",
+    )
+    review.add_argument("experiment_id")
+    review.add_argument("--event-id", required=True)
+    review.add_argument("--proposal", type=Path, required=True)
+    review.add_argument("--reviewer", required=True)
+    review.add_argument("--reason", required=True)
     return root
 
 
@@ -339,6 +348,17 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                     "authorized_at": authorization["authorized_at"],
                     "consumed_by_experiment_id": authorization["consumed_by_experiment_id"],
                 }
+            )
+        elif arguments.experiment_command == "review-holdout":
+            _print(
+                review_holdout(
+                    registry,
+                    arguments.experiment_id,
+                    arguments.event_id,
+                    arguments.reviewer,
+                    arguments.reason,
+                    load_qualification_proposal(arguments.proposal),
+                )
             )
         else:
             _print(registry.get(arguments.experiment_id))

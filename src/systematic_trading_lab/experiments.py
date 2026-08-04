@@ -121,7 +121,8 @@ class ExperimentRegistry:
                     experiment_id TEXT NOT NULL REFERENCES experiments(experiment_id),
                     reviewer TEXT NOT NULL,
                     reason TEXT NOT NULL,
-                    created_at TEXT NOT NULL
+                    created_at TEXT NOT NULL,
+                    proposal_fingerprint TEXT
                 );
                 CREATE UNIQUE INDEX IF NOT EXISTS one_holdout_access_per_experiment
                 ON holdout_access(experiment_id);
@@ -149,6 +150,13 @@ class ExperimentRegistry:
                 )
             if "execution_provenance" not in experiment_columns:
                 connection.execute("ALTER TABLE experiments ADD COLUMN execution_provenance TEXT")
+            access_columns = {
+                column[1] for column in connection.execute("PRAGMA table_info(holdout_access)")
+            }
+            if "proposal_fingerprint" not in access_columns:
+                connection.execute(
+                    "ALTER TABLE holdout_access ADD COLUMN proposal_fingerprint TEXT"
+                )
             authorization_columns = {
                 column[1]
                 for column in connection.execute("PRAGMA table_info(holdout_run_authorizations)")
@@ -594,7 +602,12 @@ class ExperimentRegistry:
         return recovered
 
     def authorize_holdout(
-        self, experiment_id: str, event_id: str, reviewer: str, reason: str
+        self,
+        experiment_id: str,
+        event_id: str,
+        reviewer: str,
+        reason: str,
+        proposal_fingerprint: str | None = None,
     ) -> None:
         if not event_id or not reviewer or not reason:
             raise ValueError("holdout event ID, reviewer, and reason are required")
@@ -608,13 +621,40 @@ class ExperimentRegistry:
                 raise HoldoutAccessError("only completed holdouts can be evaluated")
             try:
                 connection.execute(
-                    "INSERT INTO holdout_access VALUES (?, ?, ?, ?, ?)",
-                    (event_id, experiment_id, reviewer, reason, _now()),
+                    "INSERT INTO holdout_access "
+                    "(event_id, experiment_id, reviewer, reason, created_at, proposal_fingerprint) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    (event_id, experiment_id, reviewer, reason, _now(), proposal_fingerprint),
                 )
             except sqlite3.IntegrityError as error:
                 raise HoldoutAccessError(
                     f"holdout access already exists for experiment: {experiment_id}"
                 ) from error
+
+    def get_holdout_access(self, event_id: str) -> dict[str, str | None]:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT event_id, experiment_id, reviewer, reason, created_at, "
+                "proposal_fingerprint "
+                "FROM holdout_access WHERE event_id = ?",
+                (event_id,),
+            ).fetchone()
+        if row is None:
+            raise KeyError(f"holdout access event not found: {event_id}")
+        return dict(
+            zip(
+                (
+                    "event_id",
+                    "experiment_id",
+                    "reviewer",
+                    "reason",
+                    "created_at",
+                    "proposal_fingerprint",
+                ),
+                (str(row[0]), str(row[1]), str(row[2]), str(row[3]), str(row[4]), row[5]),
+                strict=True,
+            )
+        )
 
     def record_qualification(
         self,
