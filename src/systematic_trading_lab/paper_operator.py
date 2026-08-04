@@ -7,7 +7,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from .alpaca_paper import PAPER_ORIGIN
+from .alpaca_paper import PAPER_ORIGIN, AlpacaPaperError
 from .alpaca_paper_transport import _urlopen_paper_mutation
 from .broker_events import BrokerEventStore, BrokerOrderEvent
 from .config import PaperWriteRequest, Settings
@@ -113,11 +113,13 @@ class AlpacaPaperOperator:
             if event.client_order_id != order_id or event.observed_at < claimed_at:
                 raise ValueError("paper submission returned mismatched evidence")
             return BrokerEventStore(self._path).record(event, baseline_id=baseline_id)
-        except Exception:
+        except Exception as error:
             failed_at = max(
                 self._now(), claimed_at, claimed_at if event is None else event.observed_at
             )
             store.transition(order_id, OrderState.SUBMISSION_UNKNOWN, changed_at=failed_at)
+            if isinstance(error, AlpacaPaperError):
+                raise PaperOperatorError(f"paper submission outcome is unknown: {error}") from None
             raise PaperOperatorError("paper submission outcome is unknown") from None
 
     def cancel(
