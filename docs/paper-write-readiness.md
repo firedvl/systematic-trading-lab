@@ -26,11 +26,10 @@ All blockers must be removed in separate reviewed changes:
    builds a commit-bound wheel and manifest. Public-repository run `30885939678` persisted GitHub
    attestations for commit `f5f12fe8de8e98a98d4af49b234a59455c94ca87`, and fail-closed verification
    accepted those artifacts and a clean non-editable installation. Activation assessment and new
-   request-bound attempts consume and
-   persist that identity, but runtime write authority still always returns false.
-   The activation currently requires its execution commit to equal the candidate research commit.
-   This prevents a current installed execution build from qualifying and must be split without
-   weakening either binding.
+   request-bound attempts consume and persist that identity, but runtime write authority still
+   always returns false. The activation now
+   binds the installed execution commit independently from the candidate research commit retained by
+   the authorization.
 4. Submission and cancellation adapters require injected test transports; no production mutation
    transport exists.
 5. No paper-execution CLI or supervisor exists.
@@ -66,10 +65,9 @@ It adds one transport function, not another order schema or broker client.
    identity, and passed its attempt cap. Tests keep using injected transports and cannot gain
    production provenance.
 
-The execution activation commit must name the installed execution build. The paper authorization
-continues to bind the candidate's research commit through its immutable qualification evidence.
-Those are two different facts. Removing their equality check must retain both fingerprints and add
-tests that reject a changed candidate authorization or execution build.
+The execution activation commit names the installed execution build. The paper authorization binds
+the candidate's research commit through its immutable qualification evidence. Tests reject a changed
+candidate authorization, process commit, or installed execution build.
 
 ## Evidence required before implementation
 
