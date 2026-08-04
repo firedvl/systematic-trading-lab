@@ -28,6 +28,7 @@ from .risk import RiskLimits, _decode_authorization
 DATA_ORIGIN = "https://data.alpaca.markets"
 PAPER_ORIGIN = "https://paper-api.alpaca.markets"
 _ADAPTER_VERSION = "alpaca-risk-input-reader-v1"
+_PRICING_BASIS = "iex-ask-long-exposure-v1"
 _CAPABILITY = object()
 _Transport = Callable[[Request], bytes]
 _Clock = Callable[[], datetime]
@@ -173,6 +174,86 @@ class RiskInputEvidence:
     @property
     def evidence_id(self) -> str:
         return fingerprint(self)
+
+
+@dataclass(frozen=True)
+class LongExposureValuation:
+    risk_input_evidence_id: str
+    portfolio_snapshot_id: str
+    symbol: str
+    current_quantity: int
+    exposure_price: Decimal
+    current_symbol_notional: Decimal
+    current_gross_exposure: Decimal
+    pricing_basis: str
+
+    def __post_init__(self) -> None:
+        if len(self.risk_input_evidence_id) != 64 or any(
+            character not in "0123456789abcdef" for character in self.risk_input_evidence_id
+        ):
+            raise ValueError("valuation fingerprint is invalid")
+        if (
+            not self.portfolio_snapshot_id
+            or self.portfolio_snapshot_id != self.portfolio_snapshot_id.strip()
+            or not self.symbol
+            or self.symbol != self.symbol.upper()
+        ):
+            raise ValueError("valuation authority is invalid")
+        if isinstance(self.current_quantity, bool) or self.current_quantity < 0:
+            raise ValueError("valuation quantity cannot be negative")
+        for amount in (
+            self.exposure_price,
+            self.current_symbol_notional,
+            self.current_gross_exposure,
+        ):
+            if not amount.is_finite() or amount < 0:
+                raise ValueError("valuation amount is invalid")
+        if (
+            self.exposure_price <= 0
+            or self.current_symbol_notional != self.exposure_price * self.current_quantity
+            or self.current_symbol_notional > self.current_gross_exposure
+        ):
+            raise ValueError("valuation totals are inconsistent")
+        if self.pricing_basis != _PRICING_BASIS:
+            raise ValueError("valuation pricing basis is unsupported")
+
+    @property
+    def valuation_fingerprint(self) -> str:
+        return fingerprint(self)
+
+
+def derive_long_exposure(
+    evidence: RiskInputEvidence, snapshot: PortfolioSnapshot, *, symbol: str
+) -> LongExposureValuation:
+    """Value long-only exposure at IEX asks for conservative risk admission."""
+    if (
+        snapshot.snapshot_id != evidence.portfolio_snapshot_id
+        or snapshot.snapshot_fingerprint != evidence.portfolio_snapshot_fingerprint
+        or snapshot.account_id != evidence.account_id
+    ):
+        raise ValueError("valuation snapshot differs from risk-input evidence")
+    quotes = {quote.symbol: quote.ask_price for quote in evidence.quotes}
+    positions = {position.symbol: position.quantity for position in snapshot.positions}
+    if symbol not in quotes or not set(positions).issubset(quotes):
+        raise ValueError("valuation requires a quote for every position and target symbol")
+    exposure_price = quotes[symbol]
+    quantity = positions.get(symbol, 0)
+    return LongExposureValuation(
+        risk_input_evidence_id=evidence.evidence_id,
+        portfolio_snapshot_id=snapshot.snapshot_id,
+        symbol=symbol,
+        current_quantity=quantity,
+        exposure_price=exposure_price,
+        current_symbol_notional=exposure_price * quantity,
+        current_gross_exposure=sum(
+            (
+                quotes[position_symbol] * position_quantity
+                for position_symbol, position_quantity in positions.items()
+            ),
+            Decimal(0),
+        ),
+        pricing_basis=_PRICING_BASIS,
+    )
 
 
 class RiskInputEvidenceStore(ReconciliationStore):

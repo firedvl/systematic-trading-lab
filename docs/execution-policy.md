@@ -41,6 +41,10 @@ paper authorization to a complete sorted IEX latest-quote set and current NYSE m
 evidence. The fixed-origin GET-only reads use the authorized risk configuration's symbols and
 freshness limit. The store journals normalized evidence without raw responses or credentials. This
 input bundle does not derive strategy PnL, drawdown, a risk context, approval, or capacity authority.
+Long-only risk valuation uses the attested IEX ask for every held symbol and requires the target
+symbol in the quote set. This produces deterministic conservative symbol notional and gross
+exposure without trusting caller prices. It does not supply a side-aware execution quote, replace
+broker account values, or supply strategy performance metrics.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

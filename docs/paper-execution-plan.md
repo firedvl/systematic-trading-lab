@@ -170,6 +170,10 @@ binds one fresh adapter-attested portfolio snapshot, active paper authorization,
 configuration. The configuration supplies the exact symbols and freshness limit. Injected
 transports can never persist provenance. Strategy PnL, drawdown, pricing policy, reservation
 generation, risk admission, and capacity mutation remain separate.
+The first derived input uses each complete-set IEX ask to value long positions and requires the
+target symbol in the quote set. This avoids understating long exposure. The valuation remains
+read-only, supplies no side-aware execution quote, and rejects a changed snapshot or any position
+without a quote.
 
 Official references reviewed 2026-08-03:
 
