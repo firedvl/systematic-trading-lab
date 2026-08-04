@@ -17,8 +17,8 @@ window is allowed; extension or renewal needs a new record.
 
 ## Current blockers
 
-1. Merge this outer-gate change, build and verify a new main-only attested wheel, install it without
-   edits, and replace the activation bound to the prior commit.
+1. Before each session, build and verify the current main-only attested wheel, install it without
+   edits, and use an activation bound to that exact commit.
 2. During a regular market session, record fresh production account, reconciliation, quote, and clock
    evidence; settle the flat baseline; record its zero-equity checkpoint; and derive the attested
    risk context.
