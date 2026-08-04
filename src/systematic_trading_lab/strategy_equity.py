@@ -25,6 +25,8 @@ from .risk_inputs import RiskInputEvidence, RiskInputEvidenceStore
 
 _BPS = Decimal(10_000)
 _MARKING_BASIS = "iex-bid-liquidation-v1"
+_FILL_CHECKPOINT_MODE = "fill-replay-v1"
+_FLAT_BASELINE_CHECKPOINT_MODE = "flat-baseline-v1"
 
 
 @dataclass(frozen=True)
@@ -56,6 +58,7 @@ class StrategyEquityCheckpoint:
     strategy_drawdown: Decimal
     marking_basis: str
     marked_at: datetime
+    checkpoint_mode: str = _FILL_CHECKPOINT_MODE
 
     def __post_init__(self) -> None:
         for name, value in (
@@ -74,14 +77,13 @@ class StrategyEquityCheckpoint:
             ("risk configuration", self.risk_configuration_fingerprint),
             ("settlement proof", self.settlement_proof_fingerprint),
             ("risk input", self.risk_input_evidence_id),
-            ("advance", self.advance_fingerprint),
         ):
             _sha256(name, value)
         if self.prior_checkpoint_fingerprint is not None:
             _sha256("prior checkpoint", self.prior_checkpoint_fingerprint)
-        if not self.fill_event_ids or self.fill_event_ids != tuple(
-            sorted(set(self.fill_event_ids))
-        ):
+        if self.checkpoint_mode not in {_FILL_CHECKPOINT_MODE, _FLAT_BASELINE_CHECKPOINT_MODE}:
+            raise ValueError("strategy equity checkpoint mode is unsupported")
+        if self.fill_event_ids != tuple(sorted(set(self.fill_event_ids))):
             raise ValueError("fill event IDs must be sorted and unique")
         for event_id in self.fill_event_ids:
             if not event_id or event_id != event_id.strip() or len(event_id) > 128:
@@ -117,6 +119,25 @@ class StrategyEquityCheckpoint:
             != (self.peak_equity - self.strategy_equity) / self.peak_equity
         ):
             raise ValueError("strategy equity and drawdown are inconsistent")
+        if self.checkpoint_mode == _FILL_CHECKPOINT_MODE:
+            if not self.fill_event_ids or not self.advance_fingerprint:
+                raise ValueError("fill checkpoint lineage is invalid")
+            _sha256("advance", self.advance_fingerprint)
+        elif (
+            self.fill_event_ids
+            or self.advance_fingerprint
+            or self.prior_checkpoint_fingerprint is not None
+            or self.gross_buy_notional != 0
+            or self.gross_sell_notional != 0
+            or self.fill_cost_reserve != 0
+            or self.positions
+            or self.position_market_value != 0
+            or self.strategy_cash != self.allocated_capital
+            or self.strategy_equity != self.allocated_capital
+            or self.peak_equity != self.allocated_capital
+            or self.strategy_drawdown != 0
+        ):
+            raise ValueError("flat baseline checkpoint is not zero state")
         if (
             self.positions != tuple(sorted(self.positions, key=lambda item: item.symbol))
             or self.marking_basis != _MARKING_BASIS
@@ -272,6 +293,24 @@ class StrategyEquityStore(PositionSettlementStore):
             raise JournalIntegrityError("strategy equity checkpoint is missing")
         return matching[-1]
 
+    def record_flat_baseline_checkpoint(
+        self,
+        *,
+        strategy_equity_baseline_id: str,
+        settlement_proof_id: str,
+        risk_input_evidence_id: str,
+        limits: RiskLimits,
+        marked_at: datetime,
+    ) -> StrategyEquityCheckpoint:
+        """Record the initial zero-state checkpoint from a flat settlement proof."""
+        return self.record_checkpoint(
+            strategy_equity_baseline_id=strategy_equity_baseline_id,
+            settlement_proof_id=settlement_proof_id,
+            risk_input_evidence_id=risk_input_evidence_id,
+            limits=limits,
+            marked_at=marked_at,
+        )
+
     def _authorities(
         self, connection: sqlite3.Connection
     ) -> tuple[
@@ -403,6 +442,16 @@ class StrategyEquityStore(PositionSettlementStore):
             or (prior is not None and marked_at <= prior.marked_at)
         ):
             raise ValueError("strategy equity authorities do not align")
+        if settlement.settlement_mode == "flat-baseline-v1":
+            return self._derive_flat_baseline_checkpoint(
+                connection,
+                baseline=baseline,
+                settlement=settlement,
+                risk_input=risk_input,
+                fill_cost_bps=fill_cost_bps,
+                prior=prior,
+                marked_at=marked_at,
+            )
         advance_row = connection.execute(
             "SELECT advance_json, journal_sequence FROM expected_position_advances "
             "WHERE advance_fingerprint = ? AND baseline_id = ?",
@@ -503,6 +552,74 @@ class StrategyEquityStore(PositionSettlementStore):
             strategy_drawdown=(peak - equity) / peak,
             marking_basis=_MARKING_BASIS,
             marked_at=marked_at,
+            checkpoint_mode=_FILL_CHECKPOINT_MODE,
+        )
+
+    def _derive_flat_baseline_checkpoint(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        baseline: StrategyEquityBaseline,
+        settlement: PositionSettlementEvidence,
+        risk_input: RiskInputEvidence,
+        fill_cost_bps: Decimal,
+        prior: StrategyEquityCheckpoint | None,
+        marked_at: datetime,
+    ) -> StrategyEquityCheckpoint:
+        if (
+            prior is not None
+            or settlement.advance_fingerprint
+            or settlement.terminal_orders
+            or settlement.reconciliation_evidence_id is None
+            or risk_input.portfolio_snapshot_id != settlement.observed_snapshot_id
+        ):
+            raise ValueError("flat baseline checkpoint lineage is invalid")
+        artifacts = connection.execute(
+            "SELECT 1 FROM capacity_reservations WHERE authorization_id = ? LIMIT 1",
+            (baseline.authorization_id,),
+        ).fetchone()
+        if artifacts is not None:
+            raise ValueError("flat baseline checkpoint cannot contain execution artifacts")
+        checkpoint_id = fingerprint(
+            {
+                "strategy_equity_baseline": baseline.baseline_fingerprint,
+                "prior_checkpoint": None,
+                "settlement": settlement.proof_fingerprint,
+                "risk_input": risk_input.evidence_id,
+                "fill_cost_bps": fill_cost_bps,
+                "marked_at": marked_at,
+                "mode": _FLAT_BASELINE_CHECKPOINT_MODE,
+            }
+        )
+        return StrategyEquityCheckpoint(
+            checkpoint_id=checkpoint_id,
+            strategy_equity_baseline_id=baseline.baseline_id,
+            strategy_equity_baseline_fingerprint=baseline.baseline_fingerprint,
+            prior_checkpoint_fingerprint=None,
+            authorization_id=baseline.authorization_id,
+            account_id=baseline.account_id,
+            strategy_id=baseline.strategy_id,
+            strategy_version=baseline.strategy_version,
+            risk_configuration_fingerprint=baseline.risk_configuration_fingerprint,
+            settlement_proof_id=settlement.proof_id,
+            settlement_proof_fingerprint=settlement.proof_fingerprint,
+            risk_input_evidence_id=risk_input.evidence_id,
+            advance_fingerprint="",
+            fill_event_ids=(),
+            fill_cost_bps=fill_cost_bps,
+            allocated_capital=baseline.allocated_capital,
+            gross_buy_notional=Decimal(0),
+            gross_sell_notional=Decimal(0),
+            fill_cost_reserve=Decimal(0),
+            strategy_cash=baseline.allocated_capital,
+            positions=(),
+            position_market_value=Decimal(0),
+            strategy_equity=baseline.allocated_capital,
+            peak_equity=baseline.allocated_capital,
+            strategy_drawdown=Decimal(0),
+            marking_basis=_MARKING_BASIS,
+            marked_at=marked_at,
+            checkpoint_mode=_FLAT_BASELINE_CHECKPOINT_MODE,
         )
 
 

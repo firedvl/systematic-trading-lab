@@ -1322,6 +1322,18 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     assert risk_input.authorization_id == authorization.authorization_id
     assert risk_input.maximum_age_seconds == limits.max_snapshot_age_seconds
     assert RiskInputEvidenceStore(store.path).verify_journal()
+    production_times = iter(settlement_at + timedelta(seconds=offset) for offset in (3, 4, 5, 6))
+    production_risk_input = AlpacaRiskInputReader(
+        "test-key",
+        "test-secret",
+        limits=limits,
+        clock=lambda: next(production_times),
+    ).record(
+        risk_input_store,
+        portfolio_snapshot_id=settled_snapshot.snapshot_id,
+        authorization_id=authorization.authorization_id,
+    )
+    assert production_risk_input.completed_at == settlement_at + timedelta(seconds=5)
     injected_risk_reader = AlpacaRiskInputReader(
         "test-key",
         "test-secret",

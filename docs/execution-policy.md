@@ -139,6 +139,10 @@ paper authorization and reviewed freshness limits and must not predate its recor
 The reader binds its version, exact paper origin, completion time, and normalized snapshot in an
 attestation. The execution database stores that snapshot and attestation with separate journal events
 in one transaction. Flat baselines and later reconciliation reject unattested Alpaca-paper snapshots.
+After emergency clear, one explicit flat-baseline settlement may bind a fresh clean reconciliation
+with no unresolved mutation, positions, open orders, reservations, broker events, or expected-position
+advances. Its zero-equity checkpoint starts at the reviewed capital allocation with no fills or costs.
+It creates no execution lineage or broker authority; later checkpoints still require positive fills.
 No attestation or reconciliation result can clear emergency disable by itself. A bounded operator
 clear request is separately journaled and idempotent, binds the recomputed proof, and changes
 emergency state in the same immediate transaction. Dirty reconciliation atomically re-disables it.

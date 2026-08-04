@@ -19,9 +19,16 @@ from .reconciliation import (
     _decode_attestation,
     _decode_baseline,
     _decode_snapshot,
+    _PaperSnapshotAttestationV2,
 )
+from .reconciliation import (
+    _decode_evidence as _decode_reconciliation,
+)
+from .risk import RiskLimits
 
 _TERMINAL_STATES = {OrderState.FILLED, OrderState.CANCELED, OrderState.REJECTED}
+_FILL_SETTLEMENT_MODE = "fill-settlement-v1"
+_FLAT_BASELINE_SETTLEMENT_MODE = "flat-baseline-v1"
 
 
 @dataclass(frozen=True)
@@ -38,6 +45,8 @@ class PositionSettlementEvidence:
     terminal_orders: tuple[tuple[str, str, int], ...]
     emergency_generation: int
     settled_at: datetime
+    settlement_mode: str = _FILL_SETTLEMENT_MODE
+    reconciliation_evidence_id: str | None = None
 
     def __post_init__(self) -> None:
         for name, value in (
@@ -51,12 +60,35 @@ class PositionSettlementEvidence:
                 raise ValueError(f"{name} is invalid")
         for name, value in (
             ("risk configuration", self.risk_configuration_fingerprint),
-            ("advance", self.advance_fingerprint),
             ("observed snapshot", self.observed_snapshot_fingerprint),
             ("paper attestation", self.attestation_fingerprint),
         ):
             if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
                 raise ValueError(f"{name} fingerprint is invalid")
+        if self.settlement_mode not in {
+            _FILL_SETTLEMENT_MODE,
+            _FLAT_BASELINE_SETTLEMENT_MODE,
+        }:
+            raise ValueError("settlement mode is unsupported")
+        if self.settlement_mode == _FILL_SETTLEMENT_MODE:
+            if (
+                len(self.advance_fingerprint) != 64
+                or any(
+                    character not in "0123456789abcdef" for character in self.advance_fingerprint
+                )
+                or self.reconciliation_evidence_id is not None
+            ):
+                raise ValueError("fill settlement lineage is invalid")
+        elif (
+            self.advance_fingerprint
+            or self.terminal_orders
+            or self.reconciliation_evidence_id is None
+            or len(self.reconciliation_evidence_id) != 64
+            or any(
+                character not in "0123456789abcdef" for character in self.reconciliation_evidence_id
+            )
+        ):
+            raise ValueError("flat baseline settlement lineage is invalid")
         if self.emergency_generation < 1:
             raise ValueError("emergency generation must be positive")
         if (
@@ -259,6 +291,143 @@ class PositionSettlementStore(BrokerEventStore):
             connection.commit()
         return evidence
 
+    def record_flat_baseline_settlement(
+        self,
+        *,
+        proof_id: str,
+        baseline_id: str,
+        observed_snapshot_id: str,
+        reconciliation_evidence_id: str,
+        limits: RiskLimits,
+        settled_at: datetime,
+    ) -> PositionSettlementEvidence:
+        """Checkpoint a clean, post-clear flat state without inventing execution lineage."""
+        if settled_at.tzinfo is None or settled_at.utcoffset() != UTC.utcoffset(settled_at):
+            raise ValueError("settlement time must be UTC-aware")
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            self._verify_connection(connection)
+            self._verify_reservations(connection)
+            self._verify_releases(connection)
+            self._verify_orders(connection)
+            events = self._verify_broker_events(connection)
+            self._verify_expected_position_advances(connection, events)
+            settlements = self._verify_settlements(connection)
+            snapshots, attestations, baselines, reconciliations = (
+                ReconciliationStore._verify_reconciliation(
+                    cast(ReconciliationStore, self), connection
+                )
+            )
+            authorizations = self._verify_authorizations(connection)
+            emergency = self._verify_emergency(connection)
+            try:
+                baseline = baselines[baseline_id]
+                observed = snapshots[observed_snapshot_id]
+                attestation = attestations[observed_snapshot_id]
+                reconciliation = reconciliations[reconciliation_evidence_id]
+                authorization = authorizations[baseline.authorization_id]
+            except KeyError as error:
+                raise JournalIntegrityError(
+                    "flat baseline settlement authority is missing"
+                ) from error
+            snapshot_row = connection.execute(
+                "SELECT recorded_at FROM portfolio_snapshots WHERE snapshot_id = ?",
+                (observed_snapshot_id,),
+            ).fetchone()
+            reconciliation_row = connection.execute(
+                "SELECT journal_sequence FROM reconciliation_evidence WHERE evidence_id = ?",
+                (reconciliation_evidence_id,),
+            ).fetchone()
+            execution_artifact = connection.execute(
+                "SELECT 1 FROM capacity_reservations WHERE authorization_id = ? LIMIT 1",
+                (authorization.authorization_id,),
+            ).fetchone()
+            advance = connection.execute(
+                "SELECT 1 FROM expected_position_advances WHERE baseline_id = ? LIMIT 1",
+                (baseline_id,),
+            ).fetchone()
+            if (
+                emergency.disabled
+                or not isinstance(attestation, _PaperSnapshotAttestationV2)
+                or reconciliation.baseline_id != baseline_id
+                or reconciliation.observed_snapshot_id != observed_snapshot_id
+                or not reconciliation.result.clean
+                or reconciliation.unresolved_mutations != 0
+                or authorization.account_id != limits.account_id
+                or authorization.risk_configuration_fingerprint != limits.configuration_fingerprint
+                or baseline.account_id != limits.account_id
+                or baseline.risk_configuration_fingerprint != limits.configuration_fingerprint
+                or observed.account_id != limits.account_id
+                or observed.positions
+                or observed.open_orders
+                or not observed.account_ready
+                or snapshot_row is None
+                or reconciliation_row is None
+                or execution_artifact is not None
+                or advance is not None
+                or settled_at < authorization.authorized_at
+                or settled_at >= authorization.expires_at
+                or settled_at < limits.effective_at
+                or settled_at >= limits.expires_at
+                or any(
+                    timestamp <= emergency.changed_at
+                    or timestamp > settled_at
+                    or (settled_at - timestamp).total_seconds() > baseline.maximum_age_seconds
+                    for timestamp in (
+                        observed.account_observed_at,
+                        observed.positions_observed_at,
+                        observed.orders_observed_at,
+                    )
+                )
+                or _parse_utc(str(snapshot_row[0])) <= emergency.changed_at
+                or _parse_utc(str(snapshot_row[0])) > settled_at
+                or int(reconciliation_row[0]) <= emergency.journal_sequence
+            ):
+                raise JournalIntegrityError("flat baseline settlement is not complete and current")
+            evidence = PositionSettlementEvidence(
+                proof_id=proof_id,
+                baseline_id=baseline_id,
+                authorization_id=baseline.authorization_id,
+                account_id=baseline.account_id,
+                risk_configuration_fingerprint=baseline.risk_configuration_fingerprint,
+                advance_fingerprint="",
+                observed_snapshot_id=observed_snapshot_id,
+                observed_snapshot_fingerprint=observed.snapshot_fingerprint,
+                attestation_fingerprint=attestation.attestation_fingerprint,
+                terminal_orders=(),
+                emergency_generation=emergency.generation,
+                settled_at=settled_at,
+                settlement_mode=_FLAT_BASELINE_SETTLEMENT_MODE,
+                reconciliation_evidence_id=reconciliation_evidence_id,
+            )
+            existing = settlements.get(proof_id)
+            if existing is not None:
+                if existing != evidence:
+                    raise JournalIntegrityError("settlement proof ID is bound to different content")
+                connection.commit()
+                return existing
+            sequence = self._append_event(
+                connection,
+                occurred_at=settled_at,
+                event_type="position-settlement-proved",
+                entity_type="position-settlement",
+                entity_id=proof_id,
+                payload=canonicalize(evidence),
+            )
+            connection.execute(
+                "INSERT INTO position_settlement_evidence VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    proof_id,
+                    baseline_id,
+                    "",
+                    observed_snapshot_id,
+                    canonical_json(evidence),
+                    sequence,
+                ),
+            )
+            connection.commit()
+        return evidence
+
     def assess_capacity(
         self, proof_id: str, *, assessed_at: datetime
     ) -> SettlementCapacityAssessment:
@@ -377,11 +546,15 @@ class PositionSettlementStore(BrokerEventStore):
         for row in rows:
             try:
                 evidence = _decode_evidence(json.loads(row[4]))
-                advance_row = connection.execute(
-                    "SELECT advance_json, journal_sequence FROM expected_position_advances "
-                    "WHERE advance_fingerprint = ? AND baseline_id = ?",
-                    (evidence.advance_fingerprint, evidence.baseline_id),
-                ).fetchone()
+                advance_row = (
+                    connection.execute(
+                        "SELECT advance_json, journal_sequence FROM expected_position_advances "
+                        "WHERE advance_fingerprint = ? AND baseline_id = ?",
+                        (evidence.advance_fingerprint, evidence.baseline_id),
+                    ).fetchone()
+                    if evidence.settlement_mode == _FILL_SETTLEMENT_MODE
+                    else None
+                )
                 snapshot_row = connection.execute(
                     "SELECT snapshot_json FROM portfolio_snapshots WHERE snapshot_id = ?",
                     (evidence.observed_snapshot_id,),
@@ -395,14 +568,11 @@ class PositionSettlementStore(BrokerEventStore):
                     "SELECT baseline_json FROM reconciliation_baselines WHERE baseline_id = ?",
                     (evidence.baseline_id,),
                 ).fetchone()
-                if (
-                    advance_row is None
-                    or snapshot_row is None
-                    or attestation_row is None
-                    or baseline_row is None
-                ):
+                if snapshot_row is None or attestation_row is None or baseline_row is None:
                     raise ValueError("settlement reference is missing")
-                advance = _decode_advance(json.loads(advance_row[0]))
+                advance = (
+                    _decode_advance(json.loads(advance_row[0])) if advance_row is not None else None
+                )
                 snapshot = _decode_snapshot(json.loads(snapshot_row[0]))
                 attestation = _decode_attestation(json.loads(attestation_row[0]))
                 baseline = _decode_baseline(json.loads(baseline_row[0]))
@@ -417,10 +587,14 @@ class PositionSettlementStore(BrokerEventStore):
             later_advance = connection.execute(
                 "SELECT 1 FROM expected_position_advances WHERE baseline_id = ? "
                 "AND journal_sequence > ? AND journal_sequence < ? LIMIT 1",
-                (evidence.baseline_id, advance_row[1], row[5]),
+                (
+                    evidence.baseline_id,
+                    -1 if advance_row is None else advance_row[1],
+                    row[5],
+                ),
             ).fetchone()
             emergency_event = connection.execute(
-                "SELECT occurred_at, payload_json FROM journal WHERE event_type IN "
+                "SELECT occurred_at, payload_json, sequence FROM journal WHERE event_type IN "
                 "('emergency-initialized', 'emergency-cleared', 'emergency-disabled') "
                 "AND sequence < ? ORDER BY sequence DESC LIMIT 1",
                 (row[5],),
@@ -436,7 +610,7 @@ class PositionSettlementStore(BrokerEventStore):
                 snapshot.positions_observed_at,
                 snapshot.orders_observed_at,
             )
-            if (
+            common_invalid = (
                 row[:4]
                 != (
                     evidence.proof_id,
@@ -445,17 +619,14 @@ class PositionSettlementStore(BrokerEventStore):
                     evidence.observed_snapshot_id,
                 )
                 or row[4] != payload
-                or later_advance is not None
                 or evidence.authorization_id != baseline.authorization_id
                 or evidence.account_id != baseline.account_id
                 or evidence.risk_configuration_fingerprint
                 != baseline.risk_configuration_fingerprint
                 or snapshot.account_id != evidence.account_id
                 or snapshot.snapshot_fingerprint != evidence.observed_snapshot_fingerprint
-                or snapshot.positions != advance.positions
                 or snapshot.open_orders
                 or not snapshot.account_ready
-                or any(timestamp < advance.advanced_at for timestamp in observation_times)
                 or any(
                     timestamp > evidence.settled_at
                     or (evidence.settled_at - timestamp).total_seconds()
@@ -468,7 +639,6 @@ class PositionSettlementStore(BrokerEventStore):
                 or emergency_payload.get("disabled") is not False
                 or emergency_payload.get("generation") != evidence.emergency_generation
                 or emergency_event is None
-                or _parse_utc(str(emergency_event[0])) > advance.advanced_at
                 or journal
                 != (
                     _utc_text(evidence.settled_at),
@@ -477,7 +647,50 @@ class PositionSettlementStore(BrokerEventStore):
                     evidence.proof_id,
                     payload,
                 )
-            ):
+            )
+            if evidence.settlement_mode == _FILL_SETTLEMENT_MODE:
+                mode_invalid = (
+                    advance_row is None
+                    or advance is None
+                    or later_advance is not None
+                    or snapshot.positions != advance.positions
+                    or any(timestamp < advance.advanced_at for timestamp in observation_times)
+                    or _parse_utc(str(emergency_event[0])) > advance.advanced_at
+                )
+            else:
+                reconciliation_row = connection.execute(
+                    "SELECT evidence_json, journal_sequence FROM reconciliation_evidence "
+                    "WHERE evidence_id = ?",
+                    (evidence.reconciliation_evidence_id,),
+                ).fetchone()
+                execution_artifact = connection.execute(
+                    "SELECT 1 FROM capacity_reservations WHERE authorization_id = ? LIMIT 1",
+                    (evidence.authorization_id,),
+                ).fetchone()
+                mode_invalid = (
+                    not isinstance(attestation, _PaperSnapshotAttestationV2)
+                    or bool(snapshot.positions)
+                    or advance_row is not None
+                    or later_advance is not None
+                    or reconciliation_row is None
+                    or execution_artifact is not None
+                    or _parse_utc(str(emergency_event[0])) >= min(observation_times)
+                )
+                if reconciliation_row is not None:
+                    try:
+                        reconciliation = _decode_reconciliation(json.loads(reconciliation_row[0]))
+                    except (json.JSONDecodeError, ValueError) as error:
+                        raise JournalIntegrityError(
+                            "stored position settlement is invalid"
+                        ) from error
+                    mode_invalid = mode_invalid or (
+                        reconciliation.baseline_id != evidence.baseline_id
+                        or reconciliation.observed_snapshot_id != evidence.observed_snapshot_id
+                        or not reconciliation.result.clean
+                        or reconciliation.unresolved_mutations != 0
+                        or int(reconciliation_row[1]) <= int(emergency_event[2])
+                    )
+            if common_invalid or mode_invalid:
                 raise JournalIntegrityError("position settlement does not match its evidence")
             result[evidence.proof_id] = evidence
         return result

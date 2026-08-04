@@ -81,10 +81,11 @@ attested current equity minus prior-close equity, with both snapshot and attesta
 This supplies the daily-loss input only; it does not substitute for per-strategy drawdown evidence.
 An immutable strategy-equity baseline now binds that reviewed allocation to one paper authorization,
 flat reconciliation baseline, account, strategy identity and version, operator, reason, and time.
-Missing provenance fails closed. The baseline supplies no PnL, peak equity, drawdown, risk approval,
-or capacity-release authority; those require later fill, cash-flow, fee, and quote-mark lineage.
-Immutable strategy-equity checkpoints now replay accepted cumulative-fill increments from that flat
-baseline, apply the reviewed cost reserve to buys and sells, and mark settled long positions at
+Missing provenance fails closed. One post-clear, production-attested, clean flat reconciliation may
+create the initial zero-equity checkpoint. It contains no fill, position, cost, or execution lineage;
+cash, equity, and peak equity equal the reviewed capital allocation and drawdown is zero. Later
+immutable strategy-equity checkpoints replay accepted cumulative-fill increments from that flat
+checkpoint, apply the reviewed cost reserve to buys and sells, and mark settled long positions at
 production-attested IEX bids. Each checkpoint binds the latest position-settlement proof, quote
 evidence, fill-event set, prior checkpoint, equity peak, and derived drawdown. A later fill requires
 new settlement before another checkpoint. The lineage remains read-only and grants no risk approval
