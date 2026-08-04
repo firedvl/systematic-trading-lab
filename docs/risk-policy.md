@@ -18,6 +18,9 @@ financial limit; missing, malformed, inactive, or mismatched limits reject every
 no default interval and cannot substitute the snapshot freshness limit.
 It now also requires a positive strategy-capital allocation. The allocation enters the exact risk
 configuration fingerprint; the repository supplies no production value.
+It also requires an explicit nonnegative strategy fill-cost reserve in basis points. Zero is never
+implicit. The reviewed value enters the same fingerprint and is a conservative accounting policy,
+not broker fee evidence.
 
 Paper authorization is a separate immutable, expiring operator record bound to one qualified
 candidate, strategy configuration, code revision, dataset and universe, qualification evidence,
@@ -78,6 +81,12 @@ An immutable strategy-equity baseline now binds that reviewed allocation to one 
 flat reconciliation baseline, account, strategy identity and version, operator, reason, and time.
 Missing provenance fails closed. The baseline supplies no PnL, peak equity, drawdown, risk approval,
 or capacity-release authority; those require later fill, cash-flow, fee, and quote-mark lineage.
+Immutable strategy-equity checkpoints now replay accepted cumulative-fill increments from that flat
+baseline, apply the reviewed cost reserve to buys and sells, and mark settled long positions at
+production-attested IEX bids. Each checkpoint binds the latest position-settlement proof, quote
+evidence, fill-event set, prior checkpoint, equity peak, and derived drawdown. A later fill requires
+new settlement before another checkpoint. The lineage remains read-only and grants no risk approval
+or capacity release.
 Risk decisions now derive the temporal active reservation set inside their immediate transaction.
 They replace caller pending-capacity totals and bind the exact reservation IDs, fingerprints,
 aggregates, and count. A reservation is active only after creation, before expiry, and before any

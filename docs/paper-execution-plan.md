@@ -186,6 +186,10 @@ until strategy drawdown and the full attested context exist.
 Reviewed limits now require a positive strategy-capital allocation and bind it into their fingerprint.
 One immutable strategy-equity baseline can bind that allocation to the exact paper authorization and
 flat reconciliation baseline. It grants no drawdown value, risk approval, or capacity authority.
+A later immutable checkpoint can replay every accepted fill increment for that baseline, subtract
+the reviewed fill-cost reserve, require the latest settlement proof, mark long positions at attested
+IEX bids, and derive peak-linked strategy drawdown. A checkpoint remains read-only and does not make
+the full `RiskContext` authoritative.
 
 Official references reviewed 2026-08-03:
 

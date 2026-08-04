@@ -41,6 +41,7 @@ def _limits(**changes: object) -> RiskLimits:
         max_position_notional=Decimal("40000"),
         max_gross_exposure=Decimal("90000"),
         strategy_capital_allocation=Decimal("50000"),
+        strategy_fill_cost_bps=Decimal("10"),
         min_cash=Decimal("10000"),
         max_open_orders=3,
         max_orders_per_minute=4,
@@ -106,6 +107,12 @@ def test_strategy_capital_allocation_is_positive_and_fingerprinted() -> None:
     assert (
         _limits().configuration_fingerprint
         != _limits(strategy_capital_allocation=Decimal("50001")).configuration_fingerprint
+    )
+    with pytest.raises(ValueError, match="strategy fill cost"):
+        _limits(strategy_fill_cost_bps=Decimal("-0.01"))
+    assert (
+        _limits().configuration_fingerprint
+        != _limits(strategy_fill_cost_bps=Decimal("11")).configuration_fingerprint
     )
 
 

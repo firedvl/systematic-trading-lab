@@ -303,3 +303,10 @@
 - Context: account equity drawdown can hide one strategy's loss behind another strategy's gain, while the bootstrap defines no strategy-capital allocation value.
 - Consequences: the allocation changes the risk-configuration fingerprint and has no production default. The baseline binds account, strategy identity and version, allocation, operator, reason, and time. It grants no PnL, peak, drawdown, risk approval, or capacity authority.
 - Revisit when: immutable fills, strategy cash flows, fees, and quote marks can advance strategy-equity checkpoints.
+
+## 2026-08-03 — Strategy equity uses fill replay, cost reserve, and bid marks
+
+- Decision: derive immutable strategy-equity checkpoints by replaying cumulative accepted-fill notional, subtracting an explicit reviewed basis-point cost reserve on buys and sells, and marking settled long positions at production-attested IEX bids.
+- Context: account equity cannot isolate one strategy, cumulative average fill price is not an incremental cash ledger, and the current broker evidence has no authoritative fee field.
+- Consequences: `RiskLimits` requires a nonnegative strategy fill-cost value with no production default. Each checkpoint requires the latest settlement proof, complete fresh bid evidence, and prior peak lineage. The reserve is policy, not broker fee evidence. Derived drawdown grants no risk approval or capacity authority.
+- Revisit when: authoritative broker fee evidence can replace or reconcile the reserve, or the execution envelope permits shorts.

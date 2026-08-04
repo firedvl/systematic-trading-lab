@@ -51,6 +51,11 @@ exposure.
 Production paper snapshot attestation v2 retains the account's prior-close equity. A read-only
 derivation binds current equity, prior-close equity, daily PnL, the snapshot fingerprint, and the
 attestation fingerprint. It grants no risk or execution authority.
+Strategy equity starts from the reviewed authorization-bound capital baseline. Immutable checkpoints
+replay accepted fill notional, subtract the explicit reviewed fill-cost reserve on both sides, and
+mark the latest settled long positions at attested IEX bids. The reserve is not a claim about actual
+broker fees. Checkpoints bind peak lineage and derive strategy drawdown but grant no risk approval or
+capacity authority.
 Risk decisions also derive and fingerprint the exact temporal active reservation set in the same
 transaction. Caller-supplied pending totals are replaced, and later releases cannot alter an earlier
 evaluation.

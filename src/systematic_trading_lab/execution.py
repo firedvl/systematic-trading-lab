@@ -38,6 +38,7 @@ _KNOWN_EVENT_TYPES = {
     "paper-snapshot-attested",
     "reconciliation-baseline-created",
     "strategy-equity-baseline-created",
+    "strategy-equity-checkpoint-recorded",
     "reconciliation-recorded",
 }
 _FINGERPRINT = re.compile(r"[0-9a-f]{64}")
