@@ -15,10 +15,13 @@ from urllib.request import Request
 
 from .alpaca_paper import PAPER_ORIGIN, AlpacaPaperError
 from .broker_events import BrokerEventStore, BrokerOrderEvent
+from .config import PaperWriteRequest
 from .domain import TradingMode
 from .execution import JournalIntegrityError
 from .fingerprints import canonical_json, canonicalize, fingerprint
 from .orders import OrderState
+from .paper_activation import _assess_paper_write, _verify_paper_write_binding
+from .risk import RiskLimits
 
 
 @dataclass(frozen=True)
@@ -33,6 +36,8 @@ class OrderCancellationAttempt:
     reason: str
     paper_origin: str
     requested_at: datetime
+    activation_id: str | None = None
+    paper_write_request_fingerprint: str | None = None
 
     def __post_init__(self) -> None:
         for name, value, limit in (
@@ -51,11 +56,17 @@ class OrderCancellationAttempt:
             raise ValueError("cancellation requires a nonterminal broker order")
         if self.paper_origin != PAPER_ORIGIN:
             raise ValueError("cancellation paper origin is invalid")
+        if (self.activation_id is None) != (self.paper_write_request_fingerprint is None):
+            raise ValueError("cancellation activation binding is incomplete")
+        if self.activation_id is not None:
+            assert self.paper_write_request_fingerprint is not None
+            _sha256("activation", self.activation_id)
+            _sha256("paper write request", self.paper_write_request_fingerprint)
         _utc(self.requested_at)
 
     @property
     def attempt_fingerprint(self) -> str:
-        return fingerprint(self)
+        return fingerprint(_attempt_value(self))
 
 
 @dataclass(frozen=True)
@@ -133,6 +144,8 @@ class PaperCancellationStore(BrokerEventStore):
         mode: TradingMode,
         paper_origin: str,
         requested_at: datetime,
+        paper_write_request: PaperWriteRequest | None = None,
+        limits: RiskLimits | None = None,
     ) -> OrderCancellationAttempt:
         result, _ = self._request_once(
             order_id,
@@ -143,6 +156,8 @@ class PaperCancellationStore(BrokerEventStore):
             paper_origin=paper_origin,
             requested_at=requested_at,
             expected_broker_event_fingerprint=None,
+            paper_write_request=paper_write_request,
+            limits=limits,
         )
         return result
 
@@ -157,9 +172,13 @@ class PaperCancellationStore(BrokerEventStore):
         paper_origin: str,
         requested_at: datetime,
         expected_broker_event_fingerprint: str | None,
+        paper_write_request: PaperWriteRequest | None = None,
+        limits: RiskLimits | None = None,
     ) -> tuple[OrderCancellationAttempt, bool]:
         if mode is not TradingMode.PAPER or paper_origin != PAPER_ORIGIN:
             raise PermissionError("cancellation requires paper mode and the fixed paper origin")
+        if (paper_write_request is None) != (limits is None):
+            raise ValueError("cancellation activation binding requires reviewed limits")
         _utc(requested_at)
         with self._connect() as connection:
             try:
@@ -179,6 +198,18 @@ class PaperCancellationStore(BrokerEventStore):
                         or existing.reason != reason
                         or existing.paper_origin != paper_origin
                         or existing.requested_at != requested_at
+                        or existing.activation_id
+                        != (
+                            None
+                            if paper_write_request is None
+                            else paper_write_request.activation_id
+                        )
+                        or existing.paper_write_request_fingerprint
+                        != (
+                            None
+                            if paper_write_request is None
+                            else paper_write_request.request_fingerprint
+                        )
                     ):
                         raise JournalIntegrityError(
                             "order is bound to a different cancellation attempt"
@@ -209,6 +240,20 @@ class PaperCancellationStore(BrokerEventStore):
                     raise PaperCancellationIneligibleError(
                         "order is not eligible for a cancellation attempt"
                     )
+                if paper_write_request is not None and limits is not None:
+                    assessment = _assess_paper_write(
+                        self,
+                        connection,
+                        paper_write_request,
+                        limits,
+                        operation="cancel",
+                        assessed_at=requested_at,
+                        authorization_id=authorization_id,
+                    )
+                    if assessment.reasons != ("runtime-code-identity-unverified",):
+                        raise PermissionError(
+                            "paper cancellation lacks exact dormant activation authority"
+                        )
                 cancel_id = fingerprint(
                     {
                         "order_id": order_id,
@@ -216,6 +261,16 @@ class PaperCancellationStore(BrokerEventStore):
                         "requester": requester,
                         "reason": reason,
                         "requested_at": requested_at,
+                        **(
+                            {}
+                            if paper_write_request is None
+                            else {
+                                "activation_id": paper_write_request.activation_id,
+                                "paper_write_request_fingerprint": (
+                                    paper_write_request.request_fingerprint
+                                ),
+                            }
+                        ),
                     }
                 )
                 result = OrderCancellationAttempt(
@@ -229,6 +284,14 @@ class PaperCancellationStore(BrokerEventStore):
                     reason=reason,
                     paper_origin=paper_origin,
                     requested_at=requested_at,
+                    activation_id=(
+                        None if paper_write_request is None else paper_write_request.activation_id
+                    ),
+                    paper_write_request_fingerprint=(
+                        None
+                        if paper_write_request is None
+                        else paper_write_request.request_fingerprint
+                    ),
                 )
                 sequence = self._append_event(
                     connection,
@@ -236,7 +299,7 @@ class PaperCancellationStore(BrokerEventStore):
                     event_type="order-cancel-requested",
                     entity_type="order-cancellation-attempt",
                     entity_id=cancel_id,
-                    payload=canonicalize(result),
+                    payload=_attempt_value(result),
                 )
                 connection.execute(
                     "INSERT INTO order_cancellation_attempts VALUES (?, ?, ?, ?, ?)",
@@ -244,7 +307,7 @@ class PaperCancellationStore(BrokerEventStore):
                         cancel_id,
                         order_id,
                         result.attempt_fingerprint,
-                        canonical_json(result),
+                        canonical_json(_attempt_value(result)),
                         sequence,
                     ),
                 )
@@ -357,6 +420,17 @@ class PaperCancellationStore(BrokerEventStore):
                 event = events[attempt.broker_event_id]
             except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
                 raise JournalIntegrityError("stored cancellation attempt is invalid") from error
+            if attempt.activation_id is not None:
+                assert attempt.paper_write_request_fingerprint is not None
+                _verify_paper_write_binding(
+                    self,
+                    connection,
+                    activation_id=attempt.activation_id,
+                    request_fingerprint=attempt.paper_write_request_fingerprint,
+                    authorization_id=attempt.authorization_id,
+                    operation="cancel",
+                    attempted_at=attempt.requested_at,
+                )
             order = connection.execute(
                 "SELECT r.authorization_id FROM orders o JOIN capacity_reservations r "
                 "ON r.reservation_id = o.reservation_id WHERE o.order_id = ?",
@@ -369,7 +443,7 @@ class PaperCancellationStore(BrokerEventStore):
             ).fetchone()
             if (
                 row[:3] != (attempt.cancel_id, attempt.order_id, attempt.attempt_fingerprint)
-                or row[3] != canonical_json(attempt)
+                or row[3] != canonical_json(_attempt_value(attempt))
                 or order != (attempt.authorization_id,)
                 or event.client_order_id != attempt.order_id
                 or event.event_fingerprint != attempt.broker_event_fingerprint
@@ -380,7 +454,7 @@ class PaperCancellationStore(BrokerEventStore):
                     "order-cancel-requested",
                     "order-cancellation-attempt",
                     attempt.cancel_id,
-                    canonical_json(attempt),
+                    canonical_json(_attempt_value(attempt)),
                 )
             ):
                 raise JournalIntegrityError("cancellation attempt differs from its order evidence")
@@ -532,6 +606,8 @@ class FakePaperCanceler:
             paper_origin=PAPER_ORIGIN,
             requested_at=requested_at,
             expected_broker_event_fingerprint=expected_broker_event_fingerprint,
+            paper_write_request=None,
+            limits=None,
         )
         if not created:
             raise FakePaperCancellationAlreadyAttempted(
@@ -568,12 +644,24 @@ def _decode_attempt(value: object) -> OrderCancellationAttempt:
         return OrderCancellationAttempt(
             **{
                 **value,
+                "activation_id": value.get("activation_id"),
+                "paper_write_request_fingerprint": value.get("paper_write_request_fingerprint"),
                 "order_state": OrderState(value["order_state"]),
                 "requested_at": _parse_utc(str(value["requested_at"])),
             }
         )
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError("cancellation attempt is invalid") from error
+
+
+def _attempt_value(attempt: OrderCancellationAttempt) -> dict[str, object]:
+    value = canonicalize(attempt)
+    if not isinstance(value, dict):
+        raise TypeError("cancellation attempt must be an object")
+    if attempt.activation_id is None:
+        value.pop("activation_id")
+        value.pop("paper_write_request_fingerprint")
+    return value
 
 
 def _decode_unknown(value: object) -> CancellationUnknownEvidence:

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .domain import TradingMode
+from .fingerprints import fingerprint
 
 
 class ConfigurationError(ValueError):
@@ -42,6 +43,10 @@ class PaperWriteRequest:
             or len(self.code_commit) > 128
         ):
             raise ConfigurationError("paper code commit is invalid")
+
+    @property
+    def request_fingerprint(self) -> str:
+        return fingerprint(self)
 
 
 @dataclass(frozen=True)

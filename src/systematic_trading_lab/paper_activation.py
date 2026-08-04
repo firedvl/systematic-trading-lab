@@ -208,7 +208,15 @@ class PaperWriteActivationStore(RiskStore):
             self._verify_connection(connection)
             activations, revocations = self._verify_activation_state(connection)
             activation = activations.get(revocation.activation_id)
-            if activation is None or revocation.revoked_at < activation.starts_at:
+            if (
+                activation is None
+                or revocation.revoked_at < activation.starts_at
+                or any(
+                    activation_id == revocation.activation_id
+                    and attempted_at >= revocation.revoked_at
+                    for activation_id, _, attempted_at in _bound_attempts(connection)
+                )
+            ):
                 raise JournalIntegrityError("paper write revocation lacks its activation")
             existing = revocations.get(revocation.activation_id)
             if existing is not None:
@@ -245,125 +253,237 @@ class PaperWriteActivationStore(RiskStore):
         with self._connect() as connection:
             connection.execute("BEGIN")
             self._verify_connection(connection)
-            emergency = self._verify_emergency(connection)
-            authorizations = self._verify_authorizations(connection)
-            activations, revocations = self._verify_activation_state(connection)
-            try:
-                activation = activations[request.activation_id]
-                authorization = authorizations[activation.authorization_id]
-            except KeyError:
-                raise KeyError("paper write authority is missing") from None
-        reasons = ["runtime-code-identity-unverified", "attempt-binding-absent"]
-        if request.code_commit != activation.code_commit:
-            reasons.append("code-commit-mismatch")
-        if operation not in activation.operations:
-            reasons.append("operation-not-authorized")
-        if activation.activation_id in revocations:
-            reasons.append("activation-revoked")
-        if not activation.starts_at <= assessed_at < activation.expires_at:
-            reasons.append("activation-inactive")
-        if (
-            authorization.authorization_fingerprint != activation.authorization_fingerprint
-            or authorization.risk_configuration_fingerprint
-            != activation.risk_configuration_fingerprint
-            or limits.configuration_fingerprint != activation.risk_configuration_fingerprint
-            or authorization.account_id != activation.account_id
-            or limits.account_id != activation.account_id
-            or not authorization.authorized_at <= assessed_at < authorization.expires_at
-            or not limits.effective_at <= assessed_at < limits.expires_at
-        ):
-            reasons.append("authority-or-limits-mismatch")
-        if emergency.disabled or emergency.generation != activation.emergency_generation:
-            reasons.append("emergency-state-mismatch")
-        unique = tuple(dict.fromkeys(reasons))
-        return PaperWriteAssessment(
-            eligible=not unique,
-            reasons=unique,
-            activation_id=activation.activation_id,
-            operation=operation,
-            attempts_used=0,
-            max_attempts=activation.max_attempts,
-            assessed_at=assessed_at,
-        )
+            return _assess_paper_write(
+                self,
+                connection,
+                request,
+                limits,
+                operation=operation,
+                assessed_at=assessed_at,
+            )
 
     def _verify_activation_state(
         self, connection: sqlite3.Connection
     ) -> tuple[dict[str, PaperWriteActivation], dict[str, PaperWriteRevocation]]:
-        authorizations = self._verify_authorizations(connection)
-        activation_rows = connection.execute(
-            "SELECT activation_id, activation_json, journal_sequence FROM paper_write_activations"
-        ).fetchall()
-        if (
-            len(activation_rows)
-            != connection.execute(
-                "SELECT COUNT(*) FROM journal WHERE event_type = 'paper-write-activated'"
-            ).fetchone()[0]
-        ):
-            raise JournalIntegrityError("paper write activation and journal counts differ")
-        activations: dict[str, PaperWriteActivation] = {}
-        for row in activation_rows:
-            try:
-                activation_value = _decode_activation(json.loads(row[1]))
-                authorization = authorizations[activation_value.authorization_id]
-            except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
-                raise JournalIntegrityError("stored paper write activation is invalid") from error
-            journal = connection.execute(
-                "SELECT occurred_at, event_type, entity_type, entity_id, payload_json "
-                "FROM journal WHERE sequence = ?",
-                (row[2],),
-            ).fetchone()
-            if (
-                row[:2] != (activation_value.activation_id, canonical_json(activation_value))
-                or authorization.authorization_fingerprint
-                != activation_value.authorization_fingerprint
-                or journal
-                != (
-                    _utc_text(activation_value.starts_at),
-                    "paper-write-activated",
-                    "paper-write-activation",
-                    activation_value.activation_id,
-                    canonical_json(activation_value),
+        return _verify_activation_state(self, connection)
+
+
+def _assess_paper_write(
+    store: RiskStore,
+    connection: sqlite3.Connection,
+    request: PaperWriteRequest,
+    limits: RiskLimits,
+    *,
+    operation: str,
+    assessed_at: datetime,
+    authorization_id: str | None = None,
+) -> PaperWriteAssessment:
+    if operation not in {"cancel", "submit"}:
+        raise ValueError("paper write operation is invalid")
+    _utc(assessed_at)
+    emergency = store._verify_emergency(connection)
+    authorizations = store._verify_authorizations(connection)
+    activations, revocations = _verify_activation_state(store, connection)
+    try:
+        activation = activations[request.activation_id]
+        authorization = authorizations[activation.authorization_id]
+    except KeyError:
+        raise KeyError("paper write authority is missing") from None
+    attempts_used = _bound_attempt_count(connection, request)
+    reasons = ["runtime-code-identity-unverified"]
+    if request.code_commit != activation.code_commit:
+        reasons.append("code-commit-mismatch")
+    if authorization_id is not None and authorization_id != activation.authorization_id:
+        reasons.append("authorization-mismatch")
+    if operation not in activation.operations:
+        reasons.append("operation-not-authorized")
+    revocation = revocations.get(activation.activation_id)
+    if revocation is not None and revocation.revoked_at <= assessed_at:
+        reasons.append("activation-revoked")
+    if not activation.starts_at <= assessed_at < activation.expires_at:
+        reasons.append("activation-inactive")
+    if (
+        authorization.authorization_fingerprint != activation.authorization_fingerprint
+        or authorization.risk_configuration_fingerprint != activation.risk_configuration_fingerprint
+        or limits.configuration_fingerprint != activation.risk_configuration_fingerprint
+        or authorization.account_id != activation.account_id
+        or limits.account_id != activation.account_id
+        or not authorization.authorized_at <= assessed_at < authorization.expires_at
+        or not limits.effective_at <= assessed_at < limits.expires_at
+    ):
+        reasons.append("authority-or-limits-mismatch")
+    if emergency.disabled or emergency.generation != activation.emergency_generation:
+        reasons.append("emergency-state-mismatch")
+    if attempts_used >= activation.max_attempts:
+        reasons.append("attempt-limit-reached")
+    unique = tuple(dict.fromkeys(reasons))
+    return PaperWriteAssessment(
+        eligible=not unique,
+        reasons=unique,
+        activation_id=activation.activation_id,
+        operation=operation,
+        attempts_used=attempts_used,
+        max_attempts=activation.max_attempts,
+        assessed_at=assessed_at,
+    )
+
+
+def _bound_attempt_count(connection: sqlite3.Connection, request: PaperWriteRequest) -> int:
+    request_fingerprint = fingerprint(request)
+    return sum(
+        activation_id == request.activation_id and bound_request == request_fingerprint
+        for activation_id, bound_request, _ in _bound_attempts(connection)
+    )
+
+
+def _bound_attempts(
+    connection: sqlite3.Connection,
+) -> tuple[tuple[str, str, datetime], ...]:
+    rows = connection.execute(
+        "SELECT event_type, payload_json FROM journal WHERE event_type IN "
+        "('order-submitter-claimed', 'order-cancel-requested')"
+    ).fetchall()
+    result: list[tuple[str, str, datetime]] = []
+    for event_type, payload_json in rows:
+        try:
+            payload = json.loads(payload_json)
+            attempt = (
+                payload.get("submission_preflight")
+                if event_type == "order-submitter-claimed"
+                else payload
+            )
+        except (AttributeError, json.JSONDecodeError) as error:
+            raise JournalIntegrityError("paper write attempt evidence is invalid") from error
+        if attempt is None:
+            continue
+        if not isinstance(attempt, dict):
+            raise JournalIntegrityError("paper write attempt evidence is invalid")
+        activation_id = attempt.get("activation_id")
+        bound_request = attempt.get("paper_write_request_fingerprint")
+        if activation_id is None and bound_request is None:
+            continue
+        if not isinstance(activation_id, str) or not isinstance(bound_request, str):
+            raise JournalIntegrityError("paper write attempt binding is invalid")
+        try:
+            _sha256("activation", activation_id)
+            _sha256("paper write request", bound_request)
+            attempted_at = _parse_utc(
+                str(
+                    attempt[
+                        "claimed_at" if event_type == "order-submitter-claimed" else "requested_at"
+                    ]
                 )
-            ):
-                raise JournalIntegrityError("paper write activation differs from its authority")
-            activations[activation_value.activation_id] = activation_value
-        revocation_rows = connection.execute(
-            "SELECT activation_id, revocation_json, journal_sequence FROM paper_write_revocations"
-        ).fetchall()
+            )
+        except (KeyError, TypeError, ValueError) as error:
+            raise JournalIntegrityError("paper write attempt binding is invalid") from error
+        result.append((activation_id, bound_request, attempted_at))
+    return tuple(result)
+
+
+def _verify_paper_write_binding(
+    store: RiskStore,
+    connection: sqlite3.Connection,
+    *,
+    activation_id: str,
+    request_fingerprint: str,
+    authorization_id: str,
+    operation: str,
+    attempted_at: datetime,
+) -> None:
+    activations, revocations = _verify_activation_state(store, connection)
+    try:
+        activation = activations[activation_id]
+    except KeyError:
+        raise JournalIntegrityError("paper write attempt activation is missing") from None
+    revocation = revocations.get(activation_id)
+    expected_request = PaperWriteRequest(activation_id, activation.code_commit)
+    if (
+        request_fingerprint != expected_request.request_fingerprint
+        or authorization_id != activation.authorization_id
+        or operation not in activation.operations
+        or not activation.starts_at <= attempted_at < activation.expires_at
+        or (revocation is not None and revocation.revoked_at <= attempted_at)
+    ):
+        raise JournalIntegrityError("paper write attempt activation binding is invalid")
+
+
+def _verify_activation_state(
+    store: RiskStore, connection: sqlite3.Connection
+) -> tuple[dict[str, PaperWriteActivation], dict[str, PaperWriteRevocation]]:
+    authorizations = store._verify_authorizations(connection)
+    activation_rows = connection.execute(
+        "SELECT activation_id, activation_json, journal_sequence FROM paper_write_activations"
+    ).fetchall()
+    if (
+        len(activation_rows)
+        != connection.execute(
+            "SELECT COUNT(*) FROM journal WHERE event_type = 'paper-write-activated'"
+        ).fetchone()[0]
+    ):
+        raise JournalIntegrityError("paper write activation and journal counts differ")
+    activations: dict[str, PaperWriteActivation] = {}
+    for row in activation_rows:
+        try:
+            activation_value = _decode_activation(json.loads(row[1]))
+            authorization = authorizations[activation_value.authorization_id]
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+            raise JournalIntegrityError("stored paper write activation is invalid") from error
+        journal = connection.execute(
+            "SELECT occurred_at, event_type, entity_type, entity_id, payload_json "
+            "FROM journal WHERE sequence = ?",
+            (row[2],),
+        ).fetchone()
         if (
-            len(revocation_rows)
-            != connection.execute(
-                "SELECT COUNT(*) FROM journal WHERE event_type = 'paper-write-revoked'"
-            ).fetchone()[0]
+            row[:2] != (activation_value.activation_id, canonical_json(activation_value))
+            or authorization.authorization_fingerprint != activation_value.authorization_fingerprint
+            or journal
+            != (
+                _utc_text(activation_value.starts_at),
+                "paper-write-activated",
+                "paper-write-activation",
+                activation_value.activation_id,
+                canonical_json(activation_value),
+            )
         ):
-            raise JournalIntegrityError("paper write revocation and journal counts differ")
-        revocations: dict[str, PaperWriteRevocation] = {}
-        for row in revocation_rows:
-            try:
-                revocation_value = _decode_revocation(json.loads(row[1]))
-                activation = activations[revocation_value.activation_id]
-            except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
-                raise JournalIntegrityError("stored paper write revocation is invalid") from error
-            journal = connection.execute(
-                "SELECT occurred_at, event_type, entity_type, entity_id, payload_json "
-                "FROM journal WHERE sequence = ?",
-                (row[2],),
-            ).fetchone()
-            if (
-                row[:2] != (revocation_value.activation_id, canonical_json(revocation_value))
-                or revocation_value.revoked_at < activation.starts_at
-                or journal
-                != (
-                    _utc_text(revocation_value.revoked_at),
-                    "paper-write-revoked",
-                    "paper-write-revocation",
-                    revocation_value.activation_id,
-                    canonical_json(revocation_value),
-                )
-            ):
-                raise JournalIntegrityError("paper write revocation differs from its activation")
-            revocations[revocation_value.activation_id] = revocation_value
-        return activations, revocations
+            raise JournalIntegrityError("paper write activation differs from its authority")
+        activations[activation_value.activation_id] = activation_value
+    revocation_rows = connection.execute(
+        "SELECT activation_id, revocation_json, journal_sequence FROM paper_write_revocations"
+    ).fetchall()
+    if (
+        len(revocation_rows)
+        != connection.execute(
+            "SELECT COUNT(*) FROM journal WHERE event_type = 'paper-write-revoked'"
+        ).fetchone()[0]
+    ):
+        raise JournalIntegrityError("paper write revocation and journal counts differ")
+    revocations: dict[str, PaperWriteRevocation] = {}
+    for row in revocation_rows:
+        try:
+            revocation_value = _decode_revocation(json.loads(row[1]))
+            activation = activations[revocation_value.activation_id]
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+            raise JournalIntegrityError("stored paper write revocation is invalid") from error
+        journal = connection.execute(
+            "SELECT occurred_at, event_type, entity_type, entity_id, payload_json "
+            "FROM journal WHERE sequence = ?",
+            (row[2],),
+        ).fetchone()
+        if (
+            row[:2] != (revocation_value.activation_id, canonical_json(revocation_value))
+            or revocation_value.revoked_at < activation.starts_at
+            or journal
+            != (
+                _utc_text(revocation_value.revoked_at),
+                "paper-write-revoked",
+                "paper-write-revocation",
+                revocation_value.activation_id,
+                canonical_json(revocation_value),
+            )
+        ):
+            raise JournalIntegrityError("paper write revocation differs from its activation")
+        revocations[revocation_value.activation_id] = revocation_value
+    return activations, revocations
 
 
 def _decode_activation(value: object) -> PaperWriteActivation:

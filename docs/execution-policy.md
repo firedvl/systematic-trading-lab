@@ -149,6 +149,8 @@ freshness, authority, configuration, and emergency generation. Dirty evidence re
 Future paper-write authority has a dormant evidence boundary. One immutable activation binds exact
 authorization, limits, account, code, fixed origin, operation scope, distinct approver and operator,
 attempt cap, emergency generation, and time. A separate process opt-in names the activation and
-commit; revocation is append-only. Assessment is read-only, production transport remains absent,
-and remains ineligible until trusted runtime code identity and activation-bound attempts exist.
-Runtime broker-write authority remains hard-coded false.
+commit; revocation is append-only. Submission preflights and cancellation attempts can bind both
+records inside their existing immediate transactions. The cap counts the exact activation and opt-in
+pair across both operations. Unbound injected attempts do not count. Assessment remains ineligible
+until runtime code identity is trusted, production transport remains absent, and runtime broker-write
+authority remains hard-coded false.
