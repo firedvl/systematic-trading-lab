@@ -13,6 +13,7 @@ from .broker_events import BrokerEventStore
 from .execution import JournalIntegrityError
 from .fingerprints import fingerprint
 from .orders import OrderState
+from .paper_cancellation import PaperCancellationStore, _latest_event
 from .reconciliation import ReconciliationStore
 from .risk import RiskLimits
 
@@ -46,7 +47,59 @@ class SubmissionRecoveryProof:
         return fingerprint(self)
 
 
+@dataclass(frozen=True)
+class CancellationRecoveryAssessment:
+    resolved: bool
+    status: str
+    reasons: tuple[str, ...]
+    cancel_id: str
+    lookup_evidence_id: str
+    order_id: str
+    authorization_id: str
+    broker_event_id: str
+    assessed_at: datetime
+
+    def __post_init__(self) -> None:
+        if self.status not in {
+            "unresolved",
+            "resolved-canceled",
+            "resolved-rejected",
+            "resolved-filled",
+        }:
+            raise ValueError("cancellation recovery status is invalid")
+        if self.resolved != (not self.reasons and self.status != "unresolved"):
+            raise ValueError("cancellation recovery state does not match its reasons")
+        if any(not reason for reason in self.reasons):
+            raise ValueError("cancellation recovery reasons must be nonempty")
+        if self.assessed_at.tzinfo is None or self.assessed_at.utcoffset() != UTC.utcoffset(
+            self.assessed_at
+        ):
+            raise ValueError("cancellation recovery assessment time must be UTC-aware")
+
+    @property
+    def assessment_fingerprint(self) -> str:
+        return fingerprint(self)
+
+
 class _RecoveryVerifier(BrokerEventStore, ReconciliationStore):
+    def __init__(self, path: Path) -> None:
+        self.path = path
+
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
+        connection = sqlite3.connect(
+            f"{self.path.resolve().as_uri()}?mode=ro", uri=True, timeout=30
+        )
+        connection.execute("PRAGMA foreign_keys = ON")
+        connection.execute("PRAGMA query_only = ON")
+        connection.execute("PRAGMA busy_timeout = 30000")
+        try:
+            yield connection
+        finally:
+            connection.close()
+
+
+class _CancellationRecoveryVerifier(PaperCancellationStore):
     def __init__(self, path: Path) -> None:
         self.path = path
 
@@ -194,5 +247,132 @@ class SubmissionRecoveryStore:
             account_id=authorization.account_id,
             observed_snapshot_id=observed.snapshot_id,
             emergency_generation=emergency.generation,
+            assessed_at=assessed_at,
+        )
+
+
+class CancellationRecoveryStore:
+    """Assess terminal cancellation resolution without granting mutation authority."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        if not path.is_file():
+            raise JournalIntegrityError("execution database is missing")
+
+    def assess(
+        self,
+        *,
+        cancel_id: str,
+        lookup_evidence_id: str,
+        assessed_at: datetime,
+    ) -> CancellationRecoveryAssessment:
+        for name, value in (
+            ("cancel ID", cancel_id),
+            ("lookup evidence ID", lookup_evidence_id),
+        ):
+            if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
+                raise ValueError(f"{name} is invalid")
+        if assessed_at.tzinfo is None or assessed_at.utcoffset() != UTC.utcoffset(assessed_at):
+            raise ValueError("cancellation recovery assessment time must be UTC-aware")
+
+        verifier = _CancellationRecoveryVerifier(self.path)
+        with verifier._connect() as connection:
+            connection.execute("BEGIN")
+            verifier._verify_connection(connection)
+            verifier._verify_reservations(connection)
+            verifier._verify_releases(connection)
+            verifier._verify_orders(connection)
+            events = verifier._verify_broker_events(connection)
+            lookups = verifier._verify_lookup_found(connection, events)
+            attempts = verifier._verify_attempts(connection, events)
+            unknown = verifier._verify_unknown(connection, events, attempts)
+            authorizations = verifier._verify_authorizations(connection)
+            try:
+                attempt = attempts[cancel_id]
+                lookup = lookups[lookup_evidence_id]
+                event = events[lookup.event_id]
+                attempt_event = events[attempt.broker_event_id]
+            except KeyError:
+                raise KeyError("cancellation recovery evidence is missing") from None
+            order = connection.execute(
+                "SELECT o.state, r.authorization_id FROM orders o "
+                "JOIN capacity_reservations r ON r.reservation_id = o.reservation_id "
+                "WHERE o.order_id = ?",
+                (attempt.order_id,),
+            ).fetchone()
+            attempt_sequence = connection.execute(
+                "SELECT journal_sequence FROM order_cancellation_attempts WHERE cancel_id = ?",
+                (cancel_id,),
+            ).fetchone()[0]
+            lookup_sequence = connection.execute(
+                "SELECT journal_sequence FROM order_lookup_found WHERE evidence_id = ?",
+                (lookup_evidence_id,),
+            ).fetchone()[0]
+            event_sequence = connection.execute(
+                "SELECT journal_sequence FROM broker_events WHERE event_id = ?",
+                (event.event_id,),
+            ).fetchone()[0]
+            unknown_sequence = connection.execute(
+                "SELECT journal_sequence FROM cancellation_unknown_evidence WHERE cancel_id = ?",
+                (cancel_id,),
+            ).fetchone()
+            authorization = authorizations.get(attempt.authorization_id)
+            latest = _latest_event(events, attempt.order_id)
+
+        reasons: list[str] = []
+        if lookup.client_order_id != attempt.order_id:
+            reasons.append("lookup-order-mismatch")
+        if (
+            authorization is None
+            or lookup.account_id != authorization.account_id
+            or order is None
+            or order[1] != attempt.authorization_id
+        ):
+            reasons.append("authority-or-account-mismatch")
+        if event.broker_order_id != attempt_event.broker_order_id:
+            reasons.append("broker-order-mismatch")
+        if (
+            lookup_sequence <= attempt_sequence
+            or event_sequence <= attempt_sequence
+            or event.observed_at < attempt.requested_at
+            or assessed_at < lookup.observed_at
+        ):
+            reasons.append("lookup-not-after-attempt")
+        if cancel_id in unknown and (
+            unknown_sequence is None
+            or event_sequence <= int(unknown_sequence[0])
+            or lookup_sequence <= int(unknown_sequence[0])
+            or event.observed_at < unknown[cancel_id].observed_at
+        ):
+            reasons.append("lookup-not-after-unknown-outcome")
+        terminal = event.state in {
+            OrderState.CANCELED,
+            OrderState.REJECTED,
+            OrderState.FILLED,
+        }
+        if not terminal:
+            reasons.append("lookup-nonterminal")
+        if latest != event or order is None or OrderState(order[0]) is not event.state:
+            reasons.append("lookup-not-current")
+
+        unique_reasons = tuple(dict.fromkeys(reasons))
+        status = (
+            "unresolved"
+            if unique_reasons
+            else {
+                OrderState.CANCELED: "resolved-canceled",
+                OrderState.REJECTED: "resolved-rejected",
+                OrderState.FILLED: "resolved-filled",
+            }[event.state]
+        )
+        return CancellationRecoveryAssessment(
+            resolved=not unique_reasons,
+            status=status,
+            reasons=unique_reasons,
+            cancel_id=cancel_id,
+            lookup_evidence_id=lookup_evidence_id,
+            order_id=attempt.order_id,
+            authorization_id=attempt.authorization_id,
+            broker_event_id=event.event_id,
             assessed_at=assessed_at,
         )

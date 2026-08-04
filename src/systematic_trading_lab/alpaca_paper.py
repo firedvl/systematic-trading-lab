@@ -336,10 +336,11 @@ class AlpacaPaperReader:
             provider_timestamp=snapshot.updated_at,
             observed_at=snapshot.observed_at,
         )
-        return (
-            store.record(event)
-            if baseline_id is None
-            else store.record(event, baseline_id=baseline_id)
+        return store._record_lookup_found(
+            event,
+            account_id=self._account_id,
+            baseline_id=baseline_id,
+            _capability=_ALPACA_READER_CAPABILITY,
         )
 
     def _order_symbol(self, value: dict[str, Any]) -> str:

@@ -7,3 +7,8 @@
 5. Preserve the dataset directory and manifest together when moving evidence.
 
 Recovery: artifact directories are authoritative. After moving a disposable `catalog.sqlite3` aside, run `trading-lab data rebuild-catalog`. Never edit an artifact in place. The execution store can list journal-verified `submission-unknown` orders without changing state. The production reader can retain a sanitized immutable 404 from an exact lookup, but that result is historical evidence only. A read-only proof can bind it to later complete clean reconciliation and the unchanged protected controls for operator review. It does not authorize retry. There is no broker process, retry, cancel action, or live recovery procedure in this phase.
+
+Cancellation recovery also remains read-only. Run a production exact-client-order lookup after the
+attempt and any unknown outcome, then assess its immutable lookup provenance. Only a latest matching
+terminal event can report `resolved-canceled`, `resolved-rejected`, or `resolved-filled`. A
+nonterminal or stale lookup remains unresolved. No result authorizes another broker call.
