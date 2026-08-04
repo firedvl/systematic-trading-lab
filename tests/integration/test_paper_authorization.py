@@ -47,6 +47,7 @@ from systematic_trading_lab.risk_inputs import (
     AlpacaRiskInputReader,
     RiskInputEvidenceStore,
 )
+from systematic_trading_lab.settled_capacity import SettledCapacityStore
 from systematic_trading_lab.strategy_equity import StrategyEquityStore
 
 NOW = datetime(2026, 8, 3, 20, tzinfo=UTC)
@@ -1272,6 +1273,106 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             limits=limits,
             evaluated_at=settlement_at + timedelta(seconds=2),
         )
+    release_store = SettledCapacityStore(store.path)
+    pre_release_head = release_store.verify_journal()
+    with pytest.raises(JournalIntegrityError, match="stale or mismatched"):
+        release_store.release(
+            authorization_id=authorization.authorization_id,
+            settlement_proof_id=settlement.proof_id,
+            symbol="SPY",
+            limits=limits,
+            released_at=settlement_at + timedelta(seconds=33),
+        )
+    assert release_store.verify_journal() == pre_release_head
+    blocked_release_path = tmp_path / "blocked-settled-release.sqlite3"
+    shutil.copy2(store.path, blocked_release_path)
+    blocking_store = AttestedRiskContextStore(blocked_release_path)
+    blocking_intent = replace(
+        _intent(report),
+        idempotency_key="candidate-1:SPY:2026-08-03:block-release",
+        decision_timestamp=settlement_at + timedelta(seconds=1),
+        target_weight=None,
+        target_quantity=4,
+        expires_at=settlement_at + timedelta(minutes=10),
+    )
+    blocking_store.record_intent(blocking_intent, received_at=settlement_at + timedelta(seconds=1))
+    assert blocking_store.record_attested_risk_decision(
+        intent_id=blocking_intent.idempotency_key,
+        authorization_id=authorization.authorization_id,
+        limits=limits,
+        evaluated_at=settlement_at + timedelta(seconds=2),
+    ).approved
+    blocked_release_store = SettledCapacityStore(blocked_release_path)
+    blocked_head = blocked_release_store.verify_journal()
+    with pytest.raises(JournalIntegrityError, match="complete, current, and exclusive"):
+        blocked_release_store.release(
+            authorization_id=authorization.authorization_id,
+            settlement_proof_id=settlement.proof_id,
+            symbol="SPY",
+            limits=limits,
+            released_at=settlement_at + timedelta(seconds=2),
+        )
+    assert blocked_release_store.verify_journal() == blocked_head
+    settled_release = release_store.release(
+        authorization_id=authorization.authorization_id,
+        settlement_proof_id=settlement.proof_id,
+        symbol="SPY",
+        limits=limits,
+        released_at=settlement_at + timedelta(seconds=2),
+    )
+    release_head = release_store.verify_journal()
+    assert settled_release.reservation_ids == (reservation_id,)
+    assert settled_release.attested_context_proof_fingerprint == (
+        attested_context.proof_fingerprint
+    )
+    assert (
+        release_store.release(
+            authorization_id=authorization.authorization_id,
+            settlement_proof_id=settlement.proof_id,
+            symbol="SPY",
+            limits=limits,
+            released_at=settlement_at + timedelta(seconds=2),
+        )
+        == settled_release
+    )
+    assert release_store.verify_journal() == release_head
+    with pytest.raises(JournalIntegrityError, match="different capacity release"):
+        release_store.release(
+            authorization_id=authorization.authorization_id,
+            settlement_proof_id=settlement.proof_id,
+            symbol="QQQ",
+            limits=limits,
+            released_at=settlement_at + timedelta(seconds=2),
+        )
+    with pytest.raises(JournalIntegrityError, match="different capacity release"):
+        release_store.release(
+            authorization_id=authorization.authorization_id,
+            settlement_proof_id=settlement.proof_id,
+            symbol="SPY",
+            limits=replace(limits, review_reason="changed replay"),
+            released_at=settlement_at + timedelta(seconds=2),
+        )
+    with pytest.raises(JournalIntegrityError, match="different capacity release"):
+        release_store.release(
+            authorization_id=authorization.authorization_id,
+            settlement_proof_id=settlement.proof_id,
+            symbol="SPY",
+            limits=limits,
+            released_at=settlement_at + timedelta(seconds=3),
+        )
+    released_context = (
+        AttestedRiskContextStore(store.path)
+        .derive(
+            authorization_id=authorization.authorization_id,
+            symbol="SPY",
+            limits=limits,
+            evaluated_at=settlement_at + timedelta(seconds=2),
+        )
+        .context
+    )
+    assert released_context.pending_buy_notional == Decimal("0")
+    assert released_context.pending_order_notional == Decimal("0")
+    assert released_context.pending_order_count == 0
     attested_intent = replace(
         _intent(report),
         idempotency_key="candidate-1:SPY:2026-08-03:attested",
@@ -1357,7 +1458,7 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
                 "SELECT 1 FROM capacity_releases WHERE reservation_id = ?",
                 (reservation_id,),
             ).fetchone()
-            is None
+            is not None
         )
     OrderLifecycleStore(store.path)
     assert (

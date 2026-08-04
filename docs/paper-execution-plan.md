@@ -159,10 +159,12 @@ open orders, no nonterminal local orders, fresh post-fill observations, the same
 baseline controls, and clear emergency state. The evidence binds but does not derive the observed
 cash, equity, or buying power. It does not alter full reconciliation or release capacity.
 
-A read-only settlement-capacity assessment now enumerates the exact positive-fill reservations and
-the proof's observed account values, then reports missing risk-context provenance. It also detects a
-changed lineage, emergency generation, order state, stale snapshot, inactive reservation, or
-unrelated active reservation. It never releases or replaces capacity.
+A read-only settlement-capacity assessment enumerates the exact positive-fill reservations and the
+proof's observed account values. The protected release path now rederives the complete attested
+context under an immediate transaction and requires the same settlement proof, emergency generation,
+and exclusive active reservation set. It rejects later order changes, stale evidence, unrelated
+reservations, and changed replay. The individual releases and one immutable summary proof share the
+transaction.
 
 The current risk-input prerequisite journals production-attested IEX bid/ask quotes for every
 reviewed symbol and the NYSE `/v3/clock` phase, provider time, next open, and next close. The bundle
@@ -195,8 +197,9 @@ transaction and returns a fingerprinted provenance proof. It does not persist ap
 capacity. The risk-decision transaction must rederive the same authorities before it can replace the
 legacy caller context path.
 The public risk-decision path now performs that rederivation under its immediate write transaction
-and binds the proof into the decision. The caller-context path is private test scaffolding. This does
-not release settled capacity or add a broker writer.
+and binds the proof into the decision. The caller-context path is private test scaffolding. The
+settled-capacity path reuses the same derivation to release only capacity already represented by the
+current attested portfolio. Neither path adds a broker writer.
 
 Official references reviewed 2026-08-03:
 

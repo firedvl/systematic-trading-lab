@@ -59,9 +59,11 @@ state by itself. A separate operator clear request is bounded, idempotent, and j
 recomputes the proof in the same immediate transaction that changes emergency state. A dirty
 reconciliation journals and restores disable atomically.
 
-Position settlement does not authorize capacity reuse. Until risk context is derived from durable
-production-attested account, position, order, quote, and clock evidence, settlement-capacity
-assessment remains read-only and reports `context-provenance-missing`.
+Position settlement alone does not authorize capacity reuse. The protected release path rederives
+the complete attested risk context under an immediate transaction and requires its current
+settlement proof and emergency generation to match. It releases only the exact exclusive active
+positive-fill reservation set, rejects later order mutations or unrelated active reservations, and
+journals the individual releases and immutable summary proof atomically.
 
 Immutable risk-input evidence now supplies a complete IEX bid/ask quote set and NYSE market-clock
 state bound to a fresh production-attested portfolio snapshot, active paper authorization, and risk
@@ -104,3 +106,6 @@ journals the decision and any capacity reservation, then binds the context-prove
 into the decision. Direct caller financial context is private test scaffolding. Exact replay excludes
 the intent's own reservation and returns the original receipt; a changed second decision for the same
 intent fails closed.
+Settled-capacity replay binds the authorization, settlement proof, symbol, reviewed-limit
+fingerprint, attested-context proof, exact active reservation set, and release time. Exact replay is
+idempotent; any changed request fails closed.
