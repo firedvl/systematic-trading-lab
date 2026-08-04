@@ -1,0 +1,37 @@
+name: Build provenance
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  attest-wheel:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+      - run: uv build --wheel
+      - run: >-
+          python scripts/write_runtime_build_manifest.py
+          --wheel dist/*.whl
+          --source-commit "$GITHUB_SHA"
+          --output dist/runtime-build-manifest.json
+      - uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4
+        with:
+          subject-path: |
+            dist/*.whl
+            dist/runtime-build-manifest.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: systematic-trading-lab-${{ github.sha }}
+          path: |
+            dist/*.whl
+            dist/runtime-build-manifest.json
+          retention-days: 30
