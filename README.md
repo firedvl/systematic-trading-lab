@@ -27,6 +27,7 @@ uv run trading-lab paper assess-startup --authorization AUTHORIZATION_ID --risk-
 uv run trading-lab paper start-observation paper-week-1 --maximum-gap-seconds 900 --duration-hours 168
 uv run trading-lab paper record-observation paper-week-1
 uv run trading-lab paper assess-observation paper-week-1
+uv run trading-lab paper record-equivalence paper-week-1 initial-entry --replay-plan REPLAY.json --shadow-plan SHADOW.json --paper-intent INTENT_KEY
 ```
 
 Runtime state defaults to `.trading-lab/` and is not committed. Set `TRADING_LAB_HOME` to use another directory. `TRADING_LAB_MODE` defaults to `offline`; accepted modes are `offline`, `research`, `replay`, `shadow`, `paper`, and the deliberately non-operational `live-disabled`.
@@ -64,6 +65,10 @@ maximum sample gap, and end time. Later samples record healthy state, position o
 or a sanitized read failure. Assessment reports current staleness, failure and drift counts, and the
 largest completed sample gap. Observation evidence cannot submit, cancel, settle, or clear an
 emergency.
+
+`paper record-equivalence` compares strict replay and shadow action-plan files with immutable stored
+paper quantity intents. It retains exact matches and mismatches under the observation campaign. The
+command cannot submit, cancel, settle, or approve an action.
 
 ## Quality gates
 

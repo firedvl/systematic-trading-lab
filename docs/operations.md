@@ -36,3 +36,22 @@ broker response text. A later healthy sample restores current health but does no
 failure or drift counts. Campaign completion remains stale unless a final sample falls within the
 configured gap of the end time. These records grant no activation, risk, settlement, emergency, or
 broker authority.
+
+Record action-plan equivalence with `paper record-equivalence`. Supply one replay plan, one shadow
+plan, and every paper intent key for the decision. Replay and shadow files use this strict shape:
+
+```json
+{
+  "schema_version": "paper-action-plan-v1",
+  "strategy_id": "strategic-allocation-portfolio",
+  "strategy_version": "1",
+  "source_data_fingerprint": "64 lowercase hexadecimal characters",
+  "configuration_fingerprint": "64 lowercase hexadecimal characters",
+  "targets": [{"symbol": "SPY", "quantity": 4}],
+  "evidence_fingerprints": ["64 lowercase hexadecimal characters"]
+}
+```
+
+The store derives the paper plan from the named immutable quantity intents. It compares strategy,
+source data, configuration, and sorted targets. A mismatch remains evidence and exits nonzero. The
+comparison reads no broker state and grants no execution authority.

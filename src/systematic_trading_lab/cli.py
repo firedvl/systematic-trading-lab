@@ -25,6 +25,7 @@ from .experiment_runner import (
     run_holdout_experiment,
 )
 from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, ExperimentSplit
+from .paper_equivalence import PaperEquivalenceStore, load_action_plan
 from .paper_observation import (
     PaperObservation,
     PaperObservationStatus,
@@ -123,6 +124,14 @@ def parser() -> argparse.ArgumentParser:
         "assess-observation", help="assess paper observation continuity and drift"
     )
     observation_status.add_argument("campaign_id")
+    equivalence = paper.add_parser(
+        "record-equivalence", help="record one replay, shadow, and paper action comparison"
+    )
+    equivalence.add_argument("campaign_id")
+    equivalence.add_argument("comparison_id")
+    equivalence.add_argument("--replay-plan", type=Path, required=True)
+    equivalence.add_argument("--shadow-plan", type=Path, required=True)
+    equivalence.add_argument("--paper-intent", action="append", required=True)
     data = commands.add_parser("data", help="manage local market data").add_subparsers(
         dest="data_command", required=True
     )
@@ -309,6 +318,29 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             )
             _print(_paper_observation_result(None, status))
             return 0 if status.healthy_now else 1
+        if arguments.paper_command == "record-equivalence":
+            record = PaperEquivalenceStore(layout.execution).record(
+                comparison_id=arguments.comparison_id,
+                campaign_id=arguments.campaign_id,
+                replay=load_action_plan(arguments.replay_plan, mode="replay"),
+                shadow=load_action_plan(arguments.shadow_plan, mode="shadow"),
+                paper_intent_keys=tuple(arguments.paper_intent),
+                recorded_at=datetime.now(UTC),
+            )
+            _print(
+                {
+                    "comparison_id": record.comparison_id,
+                    "campaign_id": record.campaign_id,
+                    "equivalent": record.equivalent,
+                    "reasons": record.reasons,
+                    "replay_plan_fingerprint": record.replay.plan_fingerprint,
+                    "shadow_plan_fingerprint": record.shadow.plan_fingerprint,
+                    "paper_plan_fingerprint": record.paper.plan_fingerprint,
+                    "record_fingerprint": record.record_fingerprint,
+                    "broker_writes_allowed": False,
+                }
+            )
+            return 0 if record.equivalent else 1
         if (arguments.wheel is None) != (arguments.manifest is None):
             raise ValueError("paper startup assessment requires both wheel and manifest")
         assessed_at = datetime.now(UTC)
