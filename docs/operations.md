@@ -55,3 +55,9 @@ plan, and every paper intent key for the decision. Replay and shadow files use t
 The store derives the paper plan from the named immutable quantity intents. It compares strategy,
 source data, configuration, and sorted targets. A mismatch remains evidence and exits nonzero. The
 comparison reads no broker state and grants no execution authority.
+
+The first sustained campaign uses the Windows task `SystematicTradingLab-PaperObservation` as an
+external 10-minute timer. It pins the exact attested runtime and campaign ID, runs from the repository
+directory so the ignored `.env` loads, starts missed work when the computer becomes available, wakes
+from sleep, and expires at the campaign end. It cannot run while the computer is powered off; any
+resulting gap remains evidence. The one-shot command and database remain authoritative, not the task.

@@ -513,3 +513,10 @@
 - Context: M5 needs replay, shadow, and paper comparison evidence without giving a comparison tool strategy, risk, or broker authority.
 - Consequences: strict external plans bind their source, configuration, targets, and evidence fingerprints. The paper side is rederived from immutable intents. Strategy, source, configuration, or target differences remain append-only failed evidence. The comparison does not claim fill equivalence or approve execution.
 - Revisit when: a scheduler-independent replay or shadow runner can emit the strict plan directly instead of handing the recorder a file.
+
+## 2026-08-04 — The first observation timer stays outside the program
+
+- Decision: use the operating system's task scheduler to call the one-shot observation command every 10 minutes from one exact attested runtime.
+- Context: the first campaign needs timing and cold-process restart evidence, but no in-program daemon, broker authority, or remote state service.
+- Consequences: the task can wake the computer from sleep and start missed work when available. It cannot run while the computer is off, and any late sample remains visible in the immutable gap evidence. The task expires with the campaign.
+- Revisit when: a reviewed always-on host and durable remote state can replace the local task.
