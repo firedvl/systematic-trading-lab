@@ -169,6 +169,7 @@ def _context() -> RiskContext:
         current_symbol_quantity=100,
         pending_buy_notional=Decimal("0"),
         pending_order_notional=Decimal("0"),
+        active_reservation_set_fingerprint=fingerprint({"reservations": []}),
         open_order_count=0,
         pending_order_count=0,
         orders_last_minute=0,
@@ -586,6 +587,8 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     risk_context = replace(
         _context(),
         evaluated_at=NOW + timedelta(seconds=18),
+        pending_buy_notional=Decimal("60000"),
+        pending_order_notional=Decimal("60000"),
         account_observed_at=NOW + timedelta(seconds=13),
         positions_observed_at=NOW + timedelta(seconds=13),
         orders_observed_at=NOW + timedelta(seconds=13),
@@ -596,6 +599,64 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         intent.idempotency_key, authorization.authorization_id, limits, risk_context
     )
     assert reserved.approved
+    with sqlite3.connect(store.path) as connection:
+        decision_json = connection.execute(
+            "SELECT decision_json FROM risk_decisions WHERE decision_id = ?",
+            (reserved.decision_id,),
+        ).fetchone()
+    assert decision_json is not None
+    assert json.loads(decision_json[0])["context_fingerprint"] != risk_context.context_fingerprint
+    temporal_path = tmp_path / "temporal-reservations.sqlite3"
+    shutil.copy2(store.path, temporal_path)
+    temporal = RiskStore(temporal_path)
+    temporal_reservation_id = fingerprint({"decision_id": reserved.decision_id})
+    with temporal._connect() as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        temporal._verify_connection(connection)
+        temporal._verify_emergency(connection)
+        temporal._verify_authorizations(connection)
+        temporal._verify_decisions(connection)
+        temporal._verify_reservations(connection)
+        temporal._verify_releases(connection)
+        assert (
+            temporal._active_reservation_set(
+                connection,
+                account_id=limits.account_id,
+                at=NOW + timedelta(seconds=17),
+            ).reservation_count
+            == 0
+        )
+        assert (
+            temporal._active_reservation_set(
+                connection,
+                account_id=limits.account_id,
+                at=NOW + timedelta(seconds=18),
+            ).reservation_count
+            == 1
+        )
+        temporal._release_capacity(
+            connection,
+            reservation_id=temporal_reservation_id,
+            reason="temporal-test",
+            released_at=NOW + timedelta(seconds=20),
+        )
+        assert (
+            temporal._active_reservation_set(
+                connection,
+                account_id=limits.account_id,
+                at=NOW + timedelta(seconds=19),
+            ).reservation_count
+            == 1
+        )
+        assert (
+            temporal._active_reservation_set(
+                connection,
+                account_id=limits.account_id,
+                at=NOW + timedelta(seconds=20),
+            ).reservation_count
+            == 0
+        )
+        connection.commit()
     assert (
         RiskStore(store.path).record_risk_decision(
             intent.idempotency_key, authorization.authorization_id, limits, risk_context

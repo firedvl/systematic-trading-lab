@@ -51,6 +51,9 @@ exposure.
 Production paper snapshot attestation v2 retains the account's prior-close equity. A read-only
 derivation binds current equity, prior-close equity, daily PnL, the snapshot fingerprint, and the
 attestation fingerprint. It grants no risk or execution authority.
+Risk decisions also derive and fingerprint the exact temporal active reservation set in the same
+transaction. Caller-supplied pending totals are replaced, and later releases cannot alter an earlier
+evaluation.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

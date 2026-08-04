@@ -72,3 +72,7 @@ uses that executable side; projected long exposure remains ask-valued.
 Paper snapshot attestation v2 also retains Alpaca `last_equity`. Account daily PnL is derived as
 attested current equity minus prior-close equity, with both snapshot and attestation fingerprints.
 This supplies the daily-loss input only; it does not substitute for per-strategy drawdown evidence.
+Risk decisions now derive the temporal active reservation set inside their immediate transaction.
+They replace caller pending-capacity totals and bind the exact reservation IDs, fingerprints,
+aggregates, and count. A reservation is active only after creation, before expiry, and before any
+effective release timestamp.

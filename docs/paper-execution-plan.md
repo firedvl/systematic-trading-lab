@@ -180,6 +180,9 @@ and preserve its evidence linkage.
 Paper reader v2 retains Alpaca account `last_equity` inside immutable snapshot attestation. The
 store derives account daily PnL from that value and the snapshot's current equity. Legacy v1
 attestations remain verifiable but cannot supply the daily-loss input.
+The risk-decision transaction derives the active reservation set using creation, expiry, and release
+times. It binds the exact set and replaces caller pending totals; capacity mutation remains blocked
+until strategy drawdown and the full attested context exist.
 
 Official references reviewed 2026-08-03:
 
