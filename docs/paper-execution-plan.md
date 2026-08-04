@@ -164,9 +164,18 @@ the proof's observed account values, then reports missing risk-context provenanc
 changed lineage, emergency generation, order state, stale snapshot, inactive reservation, or
 unrelated active reservation. It never releases or replaces capacity.
 
+The current risk-input prerequisite journals production-attested IEX bid/ask quotes for every
+reviewed symbol and the NYSE `/v3/clock` phase, provider time, next open, and next close. The bundle
+binds one fresh adapter-attested portfolio snapshot, active paper authorization, account, and risk
+configuration. The configuration supplies the exact symbols and freshness limit. Injected
+transports can never persist provenance. Strategy PnL, drawdown, pricing policy, reservation
+generation, risk admission, and capacity mutation remain separate.
+
 Official references reviewed 2026-08-03:
 
 - <https://docs.alpaca.markets/us/docs/paper-trading>
 - <https://docs.alpaca.markets/us/docs/trading-api>
 - <https://docs.alpaca.markets/us/reference/getallorders-1>
 - <https://docs.alpaca.markets/reference/getorderbyclientorderid-1>
+- <https://docs.alpaca.markets/us/reference/stocklatestquotes-1.md>
+- <https://docs.alpaca.markets/us/reference/clock-1.md>

@@ -36,6 +36,11 @@ A read-only capacity assessment maps that proof to the exact positive-fill reser
 cash, equity, and buying power. It still blocks release because risk admission has no durable
 adapter-bound quote, clock, exposure, PnL, drawdown, or context provenance. Assessment writes no
 journal or release record.
+The production-only risk-input reader now binds one fresh attested portfolio snapshot and active
+paper authorization to a complete sorted IEX latest-quote set and current NYSE market-clock
+evidence. The fixed-origin GET-only reads use the authorized risk configuration's symbols and
+freshness limit. The store journals normalized evidence without raw responses or credentials. This
+input bundle does not derive strategy PnL, drawdown, a risk context, approval, or capacity authority.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only
