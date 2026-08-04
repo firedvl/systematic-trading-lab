@@ -62,8 +62,6 @@ class LatestQuoteEvidence:
             raise ValueError("quote sizes must be positive")
         _utc("quote provider timestamp", self.provider_timestamp)
         _utc("quote observation", self.observed_at)
-        if self.provider_timestamp > self.observed_at:
-            raise ValueError("quote cannot be observed before its provider timestamp")
 
 
 @dataclass(frozen=True)
@@ -88,8 +86,6 @@ class MarketClockEvidence:
             ("clock observation", self.observed_at),
         ):
             _utc(name, value)
-        if self.provider_timestamp > self.observed_at:
-            raise ValueError("clock cannot be observed before its provider timestamp")
         if (
             self.next_market_open <= self.provider_timestamp
             or self.next_market_close <= self.provider_timestamp
@@ -162,11 +158,11 @@ class RiskInputEvidence:
             raise ValueError("risk-input completion must match its final observation")
         if (
             any(
-                (quote.observed_at - quote.provider_timestamp).total_seconds()
+                abs((quote.observed_at - quote.provider_timestamp).total_seconds())
                 > self.maximum_age_seconds
                 for quote in self.quotes
             )
-            or (self.clock.observed_at - self.clock.provider_timestamp).total_seconds()
+            or abs((self.clock.observed_at - self.clock.provider_timestamp).total_seconds())
             > self.maximum_age_seconds
         ):
             raise ValueError("risk-input market evidence is stale")
@@ -514,7 +510,7 @@ class AlpacaRiskInputReader:
             )
         )
         if any(
-            (observed_at - item.provider_timestamp).total_seconds() > maximum_age_seconds
+            abs((observed_at - item.provider_timestamp).total_seconds()) > maximum_age_seconds
             for item in quotes
         ):
             raise AlpacaRiskInputError("latest quote is stale")
@@ -544,7 +540,7 @@ class AlpacaRiskInputReader:
             next_market_close=_timestamp(value.get("next_market_close")),
             observed_at=observed_at,
         )
-        if (observed_at - result.provider_timestamp).total_seconds() > maximum_age_seconds:
+        if abs((observed_at - result.provider_timestamp).total_seconds()) > maximum_age_seconds:
             raise AlpacaRiskInputError("market clock is stale")
         return result
 

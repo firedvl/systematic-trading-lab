@@ -70,6 +70,8 @@ state bound to a fresh production-attested portfolio snapshot, active paper auth
 configuration. This is necessary but not sufficient: no derived context is authoritative until
 strategy PnL, drawdown, pricing basis, and the exact active-reservation set also have durable
 provenance.
+The configured snapshot-age limit also bounds provider timestamps on either side of the local
+observation time. This tolerates small clock skew without accepting arbitrarily future evidence.
 Long-only exposure valuation uses each attested IEX ask for held-symbol notionals and gross
 exposure. The ask basis is conservative; it is not a side-aware execution quote or a claim about
 liquidation value or realized PnL.

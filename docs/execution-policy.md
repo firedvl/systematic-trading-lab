@@ -39,8 +39,9 @@ reservation set to match, and journals their releases atomically. Later order ch
 evidence, changed replay, or unrelated active reservations fail closed.
 The production-only risk-input reader now binds one fresh attested portfolio snapshot and active
 paper authorization to a complete sorted IEX latest-quote set and current NYSE market-clock
-evidence. The fixed-origin GET-only reads use the authorized risk configuration's symbols and
-freshness limit. The store journals normalized evidence without raw responses or credentials. This
+evidence. The fixed-origin GET-only reads use the authorized risk configuration's symbols and apply
+its freshness limit symmetrically to bounded provider-clock skew. The store journals normalized
+evidence without raw responses or credentials. This
 input bundle does not derive strategy PnL, drawdown, a risk context, approval, or capacity authority.
 Long-only risk valuation uses the attested IEX ask for every held symbol and requires the target
 symbol in the quote set. This produces deterministic conservative symbol notional and gross
