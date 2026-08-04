@@ -422,3 +422,10 @@
 - Context: a manifest attestation authenticates its wheel digest, but verifying the named wheel too avoids relying on one indirect subject. Caller strings, command output, and artifact names alone are not authority.
 - Consequences: missing files, unknown fields, wrong authority, digest mismatch, tamper, timeout, missing GitHub CLI, or either failed attestation blocks identity creation without exposing subprocess output. The proof remains read-only and does not yet bind installed files or remove the activation blocker.
 - Revisit when: non-editable installation provenance and complete installed-file hashes can bind the running package to the verified wheel.
+
+## 2026-08-04 — Installed runtime identity requires exact wheel files
+
+- Decision: accept only a non-editable archive install whose `direct_url.json` SHA-256 names the verified wheel, whose wheel-owned installed files match both `RECORD` copies, whose package tree has no unexpected importable files, and whose loaded package and modules resolve inside that exact distribution.
+- Context: an attested wheel does not prove that the running process loaded it. Installed metadata alone is mutable and editable or mixed-package imports can bypass the reviewed artifact.
+- Consequences: missing, malformed, parent-escaping, mismatched, extra, mixed-origin, editable, or tampered evidence blocks installed identity creation. Installer-generated script and `__pycache__` rows remain outside the trusted file set. The check is read-only and does not protect against local mutation after it returns, verify dependencies, or grant paper-write authority.
+- Revisit when: activation assessment can bind a fresh installed identity to its exact reviewed commit.
