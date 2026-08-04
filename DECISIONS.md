@@ -415,3 +415,10 @@
 - Context: an environment commit string, editable install, clean Git checkout, wheel metadata, or installed `RECORD` hashes cannot prove which reviewed workflow built an artifact.
 - Consequences: ordinary CI validates wheel and manifest creation. The manual provenance workflow has only read, OIDC, and attestation permissions. GitHub run `30877972755` confirmed that user-owned private repositories cannot persist attestations. The workflow retains the unsigned files for diagnosis but stays failed. The activation blocker remains until an available attestation service and separate installed-artifact verifier exist.
 - Revisit when: the runtime verifier and first retained attested artifact exist.
+
+## 2026-08-04 — Build verification requires both attested artifacts
+
+- Decision: verify both the exact wheel and its strict manifest through GitHub CLI against the fixed repository, fixed signer workflow, and GitHub-hosted runner policy before constructing an immutable runtime build identity.
+- Context: a manifest attestation authenticates its wheel digest, but verifying the named wheel too avoids relying on one indirect subject. Caller strings, command output, and artifact names alone are not authority.
+- Consequences: missing files, unknown fields, wrong authority, digest mismatch, tamper, timeout, missing GitHub CLI, or either failed attestation blocks identity creation without exposing subprocess output. The proof remains read-only and does not yet bind installed files or remove the activation blocker.
+- Revisit when: non-editable installation provenance and complete installed-file hashes can bind the running package to the verified wheel.
