@@ -98,3 +98,9 @@ session, observation times, and emergency state. Its proof binds the exact autho
 snapshot, adapter attestation, risk input, settlement, strategy-equity checkpoint, daily-PnL
 evidence, reservation set, and emergency generation. It writes nothing and grants no risk decision
 or capacity authority.
+The public risk-decision path now accepts only an intent, authorization, reviewed limits, and
+evaluation time. It rederives that attested context under the same immediate transaction that
+journals the decision and any capacity reservation, then binds the context-provenance fingerprint
+into the decision. Direct caller financial context is private test scaffolding. Exact replay excludes
+the intent's own reservation and returns the original receipt; a changed second decision for the same
+intent fails closed.

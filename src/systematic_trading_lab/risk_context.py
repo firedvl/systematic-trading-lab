@@ -8,14 +8,14 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import cast
 
-from .execution import JournalIntegrityError
+from .execution import ExecutionIntent, JournalIntegrityError
 from .fingerprints import fingerprint
 from .reconciliation import (
     AccountDailyPnlEvidence,
     ReconciliationStore,
     _PaperSnapshotAttestationV2,
 )
-from .risk import RiskContext, RiskLimits
+from .risk import RiskContext, RiskDecisionReceipt, RiskLimits
 from .risk_inputs import derive_long_exposure
 from .strategy_equity import StrategyEquityCheckpoint, StrategyEquityStore
 
@@ -86,7 +86,39 @@ class AttestedRiskContextStore(StrategyEquityStore):
                 symbol=symbol,
                 limits=limits,
                 evaluated_at=evaluated_at,
+                exclude_intent_id=None,
             )
+
+    def record_attested_risk_decision(
+        self,
+        *,
+        intent_id: str,
+        authorization_id: str,
+        limits: RiskLimits,
+        evaluated_at: datetime,
+    ) -> RiskDecisionReceipt:
+        _utc(evaluated_at)
+
+        def context_factory(
+            connection: sqlite3.Connection, intent: ExecutionIntent
+        ) -> tuple[RiskContext, str]:
+            proof = self._derive(
+                connection,
+                authorization_id=authorization_id,
+                symbol=intent.symbol,
+                limits=limits,
+                evaluated_at=evaluated_at,
+                exclude_intent_id=intent_id,
+            )
+            return proof.context, proof.proof_fingerprint
+
+        return self._record_risk_decision_transaction(
+            intent_id,
+            authorization_id,
+            limits,
+            context_factory,
+            replay_decided_at=evaluated_at,
+        )
 
     def _derive(
         self,
@@ -96,6 +128,7 @@ class AttestedRiskContextStore(StrategyEquityStore):
         symbol: str,
         limits: RiskLimits,
         evaluated_at: datetime,
+        exclude_intent_id: str | None,
     ) -> AttestedRiskContext:
         self._verify_connection(connection)
         self._verify_reservations(connection)
@@ -120,7 +153,10 @@ class AttestedRiskContextStore(StrategyEquityStore):
         if not isinstance(attestation, _PaperSnapshotAttestationV2):
             raise JournalIntegrityError("attested risk context requires prior-close equity")
         reservation_set = self._active_reservation_set(
-            connection, account_id=limits.account_id, at=evaluated_at
+            connection,
+            account_id=limits.account_id,
+            at=evaluated_at,
+            exclude_intent_id=exclude_intent_id,
         )
         daily_pnl = AccountDailyPnlEvidence(
             snapshot_id=snapshot.snapshot_id,
@@ -171,11 +207,14 @@ class AttestedRiskContextStore(StrategyEquityStore):
         orders_last_minute = connection.execute(
             "SELECT COUNT(*) FROM capacity_reservations "
             "WHERE json_extract(reservation_json, '$.account_id') = ? "
-            "AND reserved_at > ? AND reserved_at <= ?",
+            "AND reserved_at > ? AND reserved_at <= ? "
+            "AND (? IS NULL OR intent_id != ?)",
             (
                 limits.account_id,
                 _utc_text(evaluated_at - timedelta(minutes=1)),
                 _utc_text(evaluated_at),
+                exclude_intent_id,
+                exclude_intent_id,
             ),
         ).fetchone()[0]
         context = RiskContext(

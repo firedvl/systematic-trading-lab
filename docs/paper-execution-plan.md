@@ -194,6 +194,9 @@ The read-only context builder now derives every `RiskContext` field from verifie
 transaction and returns a fingerprinted provenance proof. It does not persist approval or mutate
 capacity. The risk-decision transaction must rederive the same authorities before it can replace the
 legacy caller context path.
+The public risk-decision path now performs that rederivation under its immediate write transaction
+and binds the proof into the decision. The caller-context path is private test scaffolding. This does
+not release settled capacity or add a broker writer.
 
 Official references reviewed 2026-08-03:
 
