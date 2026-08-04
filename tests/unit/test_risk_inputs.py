@@ -23,7 +23,7 @@ from systematic_trading_lab.risk_inputs import (
 NOW = datetime(2026, 8, 4, tzinfo=UTC)
 
 
-def test_quote_evidence_rejects_crossed_or_future_quotes() -> None:
+def test_risk_input_freshness_allows_only_bounded_provider_clock_skew() -> None:
     quote = LatestQuoteEvidence(
         symbol="SPY",
         bid_price=Decimal("100"),
@@ -35,8 +35,39 @@ def test_quote_evidence_rejects_crossed_or_future_quotes() -> None:
     )
     with pytest.raises(ValueError, match="prices"):
         replace(quote, ask_price=Decimal("99"))
-    with pytest.raises(ValueError, match="before"):
-        replace(quote, provider_timestamp=NOW + timedelta(seconds=1))
+    clock = MarketClockEvidence(
+        "NYSE",
+        "core",
+        True,
+        NOW + timedelta(seconds=3),
+        NOW + timedelta(days=1),
+        NOW + timedelta(hours=1),
+        NOW,
+    )
+    evidence = RiskInputEvidence(
+        portfolio_snapshot_id="snapshot-1",
+        portfolio_snapshot_fingerprint=fingerprint({"snapshot": 1}),
+        portfolio_attestation_fingerprint=fingerprint({"attestation": 1}),
+        authorization_id="authorization-1",
+        account_id="paper-account",
+        risk_configuration_fingerprint=fingerprint({"limits": 1}),
+        maximum_age_seconds=15,
+        quotes=(replace(quote, provider_timestamp=NOW + timedelta(seconds=3)),),
+        clock=clock,
+        data_origin=DATA_ORIGIN,
+        paper_origin=PAPER_ORIGIN,
+        quote_path="/v2/stocks/quotes/latest",
+        clock_path="/v3/clock",
+        feed="iex",
+        adapter_version="alpaca-risk-input-reader-v1",
+        completed_at=NOW,
+    )
+    assert evidence.quotes[0].provider_timestamp > evidence.quotes[0].observed_at
+    with pytest.raises(ValueError, match="stale"):
+        replace(
+            evidence,
+            quotes=(replace(quote, provider_timestamp=NOW + timedelta(seconds=16)),),
+        )
 
 
 def test_clock_evidence_requires_consistent_nyse_core_session() -> None:

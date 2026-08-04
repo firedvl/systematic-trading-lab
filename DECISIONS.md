@@ -464,3 +464,10 @@
 - Context: the one-time review observed 0.091569 total return, 0.990546 Sharpe ratio, 0.107254 maximum drawdown, 0.993060 average gross exposure, 0.196134 top-five-session profit share, 0.398111 top-instrument profit share, and 1.166143 turnover.
 - Consequences: every gate passed and the stored review fingerprint is `5264274cdab7ad11cde9a87895acc09be81ddae1057fa227694b72ec731e6dfc`. This result permits later paper-authorization review but grants no risk, transport, activation, broker-write, or live authority.
 - Revisit when: new evidence invalidates the candidate or a reviewed paper authorization expires.
+
+## 2026-08-04 — Risk-input freshness bounds provider-clock skew symmetrically
+
+- Decision: apply the reviewed snapshot-age limit to the absolute difference between provider and local observation timestamps.
+- Context: production IEX quotes were about 3.12 seconds ahead of the local clock and failed before evidence persistence despite remaining within the 15-second freshness window.
+- Consequences: quote and NYSE clock timestamps may lead or trail local observation only within the configured limit. Larger past or future differences fail closed. No broker-write authority changes.
+- Revisit when: measured clock behavior needs a separate, stricter skew limit.
