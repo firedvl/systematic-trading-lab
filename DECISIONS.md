@@ -413,5 +413,5 @@
 
 - Decision: build one wheel on `main`, bind its SHA-256 and package metadata to the exact 40-character source commit in a deterministic manifest, and request GitHub attestations for both artifacts from one fixed workflow.
 - Context: an environment commit string, editable install, clean Git checkout, wheel metadata, or installed `RECORD` hashes cannot prove which reviewed workflow built an artifact.
-- Consequences: ordinary CI validates wheel and manifest creation. The manual provenance workflow has only read, OIDC, and attestation permissions and retains both files together. The activation blocker remains until a separate verifier authenticates the attestations and binds installed non-editable package files to that wheel. Private-repository attestation availability is an external account capability.
+- Consequences: ordinary CI validates wheel and manifest creation. The manual provenance workflow has only read, OIDC, and attestation permissions. GitHub run `30877972755` confirmed that user-owned private repositories cannot persist attestations. The workflow retains the unsigned files for diagnosis but stays failed. The activation blocker remains until an available attestation service and separate installed-artifact verifier exist.
 - Revisit when: the runtime verifier and first retained attested artifact exist.
