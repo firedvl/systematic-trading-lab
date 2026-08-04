@@ -408,3 +408,10 @@
 - Context: global event counts cannot prove which activation authorized an attempt, and separate per-operation counts could exceed one activation-wide cap.
 - Consequences: the count and insert share one immediate transaction. Existing unbound injected attempts remain compatible and do not count. Runtime code identity remains unverified, bound records expose no transport, and broker-write authority stays false.
 - Revisit when: a reviewed runtime build-identity proof can replace the remaining explicit assessment blocker.
+
+## 2026-08-03 — Runtime identity starts with an attested wheel
+
+- Decision: build one wheel on `main`, bind its SHA-256 and package metadata to the exact 40-character source commit in a deterministic manifest, and request GitHub attestations for both artifacts from one fixed workflow.
+- Context: an environment commit string, editable install, clean Git checkout, wheel metadata, or installed `RECORD` hashes cannot prove which reviewed workflow built an artifact.
+- Consequences: ordinary CI validates wheel and manifest creation. The manual provenance workflow has only read, OIDC, and attestation permissions and retains both files together. The activation blocker remains until a separate verifier authenticates the attestations and binds installed non-editable package files to that wheel. Private-repository attestation availability is an external account capability.
+- Revisit when: the runtime verifier and first retained attested artifact exist.

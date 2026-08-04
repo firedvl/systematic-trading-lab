@@ -11,8 +11,9 @@ All blockers must be removed in separate reviewed changes:
 1. No candidate has passed qualification, so no current paper authorization exists.
 2. `config/risk/` has no active reviewed risk-limit file or production financial values.
 3. Runtime configuration can parse an exact activation-and-code opt-in. Submission and cancellation
-   can bind it to dormant one-shot evidence and enforce its shared attempt cap, but the supplied
-   commit is not trusted runtime identity. Runtime write authority still always returns false.
+   can bind it to dormant one-shot evidence and enforce its shared attempt cap. A main-only workflow
+   can build and attest a commit-bound wheel and manifest, but no runtime verifier proves that the
+   installed package came from that wheel. Runtime write authority still always returns false.
 4. Submission and cancellation adapters require injected test transports; no production mutation
    transport exists.
 5. No paper-execution CLI or supervisor exists.
