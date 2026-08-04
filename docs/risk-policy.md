@@ -57,3 +57,9 @@ reconciliation journals and restores disable atomically.
 Position settlement does not authorize capacity reuse. Until risk context is derived from durable
 production-attested account, position, order, quote, and clock evidence, settlement-capacity
 assessment remains read-only and reports `context-provenance-missing`.
+
+Immutable risk-input evidence now supplies a complete IEX bid/ask quote set and NYSE market-clock
+state bound to a fresh production-attested portfolio snapshot, active paper authorization, and risk
+configuration. This is necessary but not sufficient: no derived context is authoritative until
+strategy PnL, drawdown, pricing basis, and the exact active-reservation set also have durable
+provenance.

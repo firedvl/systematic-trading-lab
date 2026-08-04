@@ -14,6 +14,7 @@ from urllib.request import Request
 import pytest
 
 import systematic_trading_lab.alpaca_paper as alpaca_paper
+import systematic_trading_lab.risk_inputs as risk_inputs
 from systematic_trading_lab.alpaca_paper import AlpacaPaperReader
 from systematic_trading_lab.broker_events import (
     BrokerEventStore,
@@ -38,6 +39,11 @@ from systematic_trading_lab.risk import (
     RiskContext,
     RiskLimits,
     RiskStore,
+)
+from systematic_trading_lab.risk_inputs import (
+    AlpacaRiskInputError,
+    AlpacaRiskInputReader,
+    RiskInputEvidenceStore,
 )
 
 NOW = datetime(2026, 8, 3, 20, tzinfo=UTC)
@@ -916,6 +922,76 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         monkeypatch,
         recorded_at=settlement_at,
     )
+    risk_observations = iter(
+        (settlement_at + timedelta(seconds=1), settlement_at + timedelta(seconds=2))
+    )
+
+    def risk_transport(request: Request) -> bytes:
+        path = urlsplit(request.full_url).path
+        if path == "/v2/stocks/quotes/latest":
+            return json.dumps(
+                {
+                    "quotes": {
+                        "SPY": {
+                            "bp": 100,
+                            "ap": 100.1,
+                            "bs": 10,
+                            "as": 12,
+                            "t": settlement_at.isoformat(),
+                        }
+                    }
+                }
+            ).encode()
+        if path == "/v3/clock":
+            return json.dumps(
+                {
+                    "clocks": [
+                        {
+                            "market": {"acronym": "NYSE"},
+                            "timestamp": settlement_at.isoformat(),
+                            "is_market_day": True,
+                            "next_market_open": (settlement_at + timedelta(days=1)).isoformat(),
+                            "next_market_close": (settlement_at + timedelta(hours=1)).isoformat(),
+                            "phase": "core",
+                        }
+                    ]
+                }
+            ).encode()
+        raise AssertionError(path)
+
+    monkeypatch.setattr(risk_inputs, "_urlopen_bytes", risk_transport)
+    risk_input_store = RiskInputEvidenceStore(store.path)
+    risk_reader = AlpacaRiskInputReader(
+        "test-key",
+        "test-secret",
+        limits=limits,
+        clock=lambda: next(risk_observations),
+    )
+    risk_input = risk_reader.record(
+        risk_input_store,
+        portfolio_snapshot_id=settled_snapshot.snapshot_id,
+        authorization_id=authorization.authorization_id,
+        recorded_at=settlement_at + timedelta(seconds=2),
+    )
+    assert risk_input.quotes[0].symbol == "SPY"
+    assert risk_input.quotes[0].ask_price == Decimal("100.1")
+    assert risk_input.clock.regular_session_open
+    assert risk_input.authorization_id == authorization.authorization_id
+    assert risk_input.maximum_age_seconds == limits.max_snapshot_age_seconds
+    assert RiskInputEvidenceStore(store.path).verify_journal()
+    injected_risk_reader = AlpacaRiskInputReader(
+        "test-key",
+        "test-secret",
+        limits=limits,
+        transport=risk_transport,
+    )
+    with pytest.raises(AlpacaRiskInputError, match="cannot produce durable"):
+        injected_risk_reader.record(
+            risk_input_store,
+            portfolio_snapshot_id=settled_snapshot.snapshot_id,
+            authorization_id=authorization.authorization_id,
+            recorded_at=settlement_at + timedelta(seconds=2),
+        )
     settlement_store = PositionSettlementStore(store.path)
     settlement = settlement_store.record_settlement(
         proof_id="position-settlement-1",
