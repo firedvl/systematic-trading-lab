@@ -1,0 +1,77 @@
+{
+  "id": "holdout-review-gates-v1",
+  "status": "approved",
+  "evidence_campaign_id": "m3-strategic-allocation-holdout-v1",
+  "gates": [
+    {
+      "name": "nonnegative holdout return",
+      "metric": "total_return",
+      "comparison": ">=",
+      "threshold": "0",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Reject a candidate that loses money in the protected holdout."
+    },
+    {
+      "name": "holdout Sharpe floor",
+      "metric": "sharpe_ratio",
+      "comparison": ">=",
+      "threshold": "0.5",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Apply the approved validation Sharpe floor to the protected holdout."
+    },
+    {
+      "name": "holdout drawdown cap",
+      "metric": "max_drawdown",
+      "comparison": "<=",
+      "threshold": "0.20",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Apply the approved validation drawdown cap to the protected holdout."
+    },
+    {
+      "name": "holdout gross exposure cap",
+      "metric": "average_gross_exposure",
+      "comparison": "<=",
+      "threshold": "1",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Keep average holdout exposure within fully invested unlevered capital."
+    },
+    {
+      "name": "holdout session profit concentration cap",
+      "metric": "top_5_session_profit_share",
+      "comparison": "<=",
+      "threshold": "0.25",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Apply the approved session concentration cap to the protected holdout."
+    },
+    {
+      "name": "holdout instrument profit concentration cap",
+      "metric": "top_instrument_profit_share",
+      "comparison": "<=",
+      "threshold": "0.50",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Apply the approved instrument concentration cap to the protected holdout."
+    },
+    {
+      "name": "holdout turnover cap",
+      "metric": "turnover",
+      "comparison": "<=",
+      "threshold": "30",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Apply the approved turnover cap to the protected holdout."
+    }
+  ]
+}

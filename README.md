@@ -21,6 +21,7 @@ uv run trading-lab experiment run --help
 uv run trading-lab experiment run-holdout --help
 uv run trading-lab experiment compare candidate-1 candidate-2
 uv run trading-lab experiment evaluate-qualification --evidence-manifest config/research/qualification-evidence-v3.json --proposal config/research/qualification-proposal.json
+uv run trading-lab experiment review-holdout --help
 ```
 
 Runtime state defaults to `.trading-lab/` and is not committed. Set `TRADING_LAB_HOME` to use another directory. `TRADING_LAB_MODE` defaults to `offline`; accepted modes are `offline`, `research`, `replay`, `shadow`, `paper`, and the deliberately non-operational `live-disabled`.

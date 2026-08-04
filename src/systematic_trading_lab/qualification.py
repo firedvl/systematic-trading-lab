@@ -10,8 +10,14 @@ from enum import StrEnum
 from pathlib import Path
 from typing import cast
 
-from .experiments import QualificationState
-from .fingerprints import fingerprint
+from .experiments import (
+    ExperimentRegistry,
+    ExperimentSplit,
+    ExperimentStatus,
+    HoldoutAccessError,
+    QualificationState,
+)
+from .fingerprints import canonicalize, fingerprint
 
 
 class Comparison(StrEnum):
@@ -235,3 +241,64 @@ def evaluate(
         state = QualificationState.REJECTED
     content = {"experiment_id": experiment_id, "state": state, "gates": tuple(results)}
     return QualificationReport(experiment_id, state, tuple(results), fingerprint(content))
+
+
+def review_holdout(
+    registry: ExperimentRegistry,
+    experiment_id: str,
+    event_id: str,
+    reviewer: str,
+    reason: str,
+    proposal: QualificationProposal,
+) -> dict[str, object]:
+    if proposal.status is not ProposalStatus.APPROVED:
+        raise HoldoutAccessError("holdout review requires an approved gate proposal")
+    protected = registry.get(experiment_id)
+    spec = protected.get("spec_json")
+    if (
+        protected.get("split") != ExperimentSplit.HOLDOUT.value
+        or protected.get("status") != ExperimentStatus.COMPLETED.value
+        or not isinstance(spec, Mapping)
+        or spec.get("campaign_id") != proposal.evidence_campaign_id
+    ):
+        raise HoldoutAccessError("holdout review differs from its approved proposal")
+    proposal_fingerprint = fingerprint(proposal)
+    try:
+        registry.authorize_holdout(experiment_id, event_id, reviewer, reason, proposal_fingerprint)
+    except HoldoutAccessError as error:
+        try:
+            access = registry.get_holdout_access(event_id)
+        except KeyError:
+            raise error from None
+        expected = {
+            "event_id": event_id,
+            "experiment_id": experiment_id,
+            "reviewer": reviewer,
+            "reason": reason,
+            "proposal_fingerprint": proposal_fingerprint,
+        }
+        if any(access[field] != value for field, value in expected.items()):
+            raise error from None
+    revealed = registry.get(experiment_id, event_id)
+    metrics = revealed.get("metrics_json")
+    if not isinstance(metrics, Mapping):
+        raise HoldoutAccessError("holdout metrics are unavailable")
+    report = evaluate(experiment_id, metrics, proposal.gate_specs)
+    payload = canonicalize(report)
+    assert isinstance(payload, dict)
+    payload.update(
+        {
+            "schema_version": "holdout-review-v1",
+            "proposal_id": proposal.proposal_id,
+            "proposal_fingerprint": proposal_fingerprint,
+            "holdout_event_id": event_id,
+        }
+    )
+    payload["review_fingerprint"] = fingerprint(payload)
+    existing = revealed.get("qualification_report_json")
+    if existing is not None:
+        if existing != payload:
+            raise HoldoutAccessError("holdout review already differs")
+        return payload
+    registry.record_qualification(experiment_id, report.state, payload, event_id)
+    return payload

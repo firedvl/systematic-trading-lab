@@ -443,3 +443,10 @@
 - Context: the fixed ETF universe needed a low-turnover candidate whose allocation and search volume were fixed before controlled training and validation.
 - Consequences: the base beat fixed-weight in all three validation folds and passed all 17 unchanged approved gates. One exact 2026 holdout completed with its metrics protected. This evidence grants no paper or broker-write authority.
 - Revisit when: a separately approved one-time holdout review has recorded its result or new evidence invalidates the candidate.
+
+## 2026-08-04 — Holdout review binds approved gates before access
+
+- Decision: permit one holdout read only through an approved proposal bound to the exact holdout campaign, then persist the event ID, proposal fingerprint, gate observations, result, and review fingerprint.
+- Context: the completed strategic-allocation holdout must not be exposed before its evaluation rules are approved, and a crash after access logging must not force an untracked second read.
+- Consequences: unapproved or mismatched proposals fail before access. Exact replay can complete the same review; another event or changed reviewer or reason fails closed. The seven approved gates reuse the validation thresholds for return, Sharpe, drawdown, exposure, concentration, and turnover.
+- Revisit when: the one-time review is complete or another holdout schema needs different approved metrics.

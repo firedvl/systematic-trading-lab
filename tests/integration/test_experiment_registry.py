@@ -15,6 +15,15 @@ from systematic_trading_lab.experiments import (
     QualificationState,
 )
 from systematic_trading_lab.fingerprints import fingerprint
+from systematic_trading_lab.qualification import (
+    Comparison,
+    GateScope,
+    GateSpec,
+    ProposalStatus,
+    ProposedGate,
+    QualificationProposal,
+    review_holdout,
+)
 
 
 def spec(experiment_id: str, split: ExperimentSplit = ExperimentSplit.TRAINING) -> ExperimentSpec:
@@ -145,17 +154,51 @@ def test_holdout_metrics_require_a_logged_event(tmp_path: Path) -> None:
     protected = registry.get("holdout-1")
     assert protected["metrics_json"] is None
     assert protected["holdout_metrics_protected"] is True
-    registry.authorize_holdout("holdout-1", "event-1", "reviewer", "final qualification")
-    with pytest.raises(HoldoutAccessError, match="access already exists"):
-        registry.authorize_holdout("holdout-1", "event-2", "reviewer", "read again")
-    revealed = registry.get("holdout-1", "event-1")
-    assert revealed["metrics_json"] == {"total_return": "0.2"}
-    with pytest.raises(HoldoutAccessError):
-        registry.record_qualification("holdout-1", QualificationState.REJECTED, {}, "wrong-event")
-    registry.record_qualification(
-        "holdout-1",
-        QualificationState.REJECTED,
-        {"state": "rejected", "gates": [{"name": "drawdown", "approved": True, "passed": False}]},
-        "event-1",
+    unapproved = QualificationProposal(
+        "proposal-1",
+        ProposalStatus.PROPOSED_UNAPPROVED,
+        "campaign-1",
+        (
+            ProposedGate(
+                GateSpec(
+                    "positive return",
+                    "total_return",
+                    Comparison.GREATER_THAN_OR_EQUAL,
+                    Decimal("0"),
+                ),
+                GateScope.CAMPAIGN,
+                "require a nonnegative result",
+            ),
+        ),
     )
-    assert registry.get("holdout-1", "event-1")["qualification_state"] == "rejected"
+    with pytest.raises(HoldoutAccessError, match="approved gate proposal"):
+        review_holdout(
+            registry, "holdout-1", "event-1", "reviewer", "final qualification", unapproved
+        )
+    with pytest.raises(KeyError):
+        registry.get_holdout_access("event-1")
+    approved = QualificationProposal(
+        "proposal-1",
+        ProposalStatus.APPROVED,
+        "campaign-1",
+        (
+            ProposedGate(
+                replace(unapproved.gates[0].spec, approved=True),
+                GateScope.CAMPAIGN,
+                "require a nonnegative result",
+            ),
+        ),
+    )
+    review = review_holdout(
+        registry, "holdout-1", "event-1", "reviewer", "final qualification", approved
+    )
+    assert review["state"] == "qualified"
+    assert (
+        review_holdout(
+            registry, "holdout-1", "event-1", "reviewer", "final qualification", approved
+        )
+        == review
+    )
+    assert registry.get("holdout-1", "event-1")["qualification_state"] == "qualified"
+    with pytest.raises(HoldoutAccessError, match="access already exists"):
+        review_holdout(registry, "holdout-1", "event-2", "reviewer", "read again", approved)
