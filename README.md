@@ -28,7 +28,7 @@ uv run trading-lab paper assess-startup --authorization AUTHORIZATION_ID --risk-
 
 Runtime state defaults to `.trading-lab/` and is not committed. Set `TRADING_LAB_HOME` to use another directory. `TRADING_LAB_MODE` defaults to `offline`; accepted modes are `offline`, `research`, `replay`, `shadow`, `paper`, and the deliberately non-operational `live-disabled`.
 
-The CLI loads supported settings from an ignored repository-local `.env` file. Copy `.env.example`, set `TRADING_LAB_MODE=research`, and fill in the two Alpaca values. Existing process environment variables take precedence. The loader rejects unknown names and never enables live trading.
+The CLI loads supported settings from an ignored repository-local `.env` file. Copy `.env.example`, set `TRADING_LAB_MODE=research`, and fill in the two Alpaca values. Existing process environment variables take precedence. The loader rejects unknown names and never enables live trading. Paper broker writes pass the outer runtime gate only when paper mode names both an exact activation fingerprint and full execution commit; transaction-bound authority checks still decide every attempt.
 
 The Alpaca command is read-only, requires research mode and the `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY` environment variables, requests fully provider-adjusted bars, and writes only immutable local data artifacts. Imports enforce issuer-sourced point-in-time membership before provider access. Corrections create parent-linked dataset versions; unadjusted inputs are rejected. It never submits orders.
 

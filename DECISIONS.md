@@ -437,6 +437,13 @@
 - Consequences: a missing, stale, mismatched, future-dated, or invalid identity blocks new activation-bound attempts. Activation and process opt-in commits must be full lowercase Git SHA-1s. Legacy records without the field remain readable. The fingerprint is immutable evidence of the identity checked near creation, not a defense against later local file mutation or hostile local code. Runtime broker-write authority stays false and no production transport exists.
 - Revisit when: a reviewed production paper transport can consume only complete bound evidence without creating implicit authority.
 
+## 2026-08-04 — Exact process opt-in opens only the outer paper-write gate
+
+- Decision: let `broker_writes_allowed` become true only in exact paper mode with both an activation fingerprint and full execution commit in the process request.
+- Context: the production coordinator must become reachable without treating mode, credentials, or process configuration as transaction authority.
+- Consequences: construction remains blocked without exact opt-in. Submission and cancellation still recheck durable activation, installed identity, risk context, emergency state, operation scope, and shared attempt capacity inside each one-shot transaction before transport.
+- Revisit when: another paper operation needs a separately reviewed transaction-bound authority path.
+
 ## 2026-08-04 — Strategic allocation advances to protected holdout
 
 - Decision: predeclare a 35% SPY, 25% QQQ, 25% IWM, 15% GLD, and 0% TLT allocation with a 21-session rebalance interval and 10- and 42-session neighbors.

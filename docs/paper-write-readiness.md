@@ -1,8 +1,9 @@
 # Paper broker-write readiness
 
-Status: **not ready**. This checklist does not authorize a broker call. `Settings.broker_writes_allowed`
-remains hard-coded to `False`, so the production coordinator rejects construction before database or
-network access. Live trading remains prohibited.
+Status: **not ready**. This checklist does not authorize a broker call. Exact paper mode plus an
+activation-and-commit process opt-in opens only the outer runtime gate. The production coordinator
+still requires current transaction-bound authority before any network access. Live trading remains
+prohibited.
 
 ## Approved scope
 
@@ -16,29 +17,15 @@ window is allowed; extension or renewal needs a new record.
 
 ## Current blockers
 
-All blockers must be removed in separate reviewed changes:
-
-1. The approved candidate passed validation and holdout gates, but no current paper authorization
-   exists.
-2. The reviewed paper risk configuration exists. Loading it does not grant broker authority.
-3. Runtime configuration can parse an exact activation-and-code opt-in. Submission and cancellation
-   can bind it to dormant one-shot evidence and enforce its shared attempt cap. A main-only workflow
-   builds a commit-bound wheel and manifest. Public-repository run `30888436276` persisted GitHub
-   attestations for commit `8846a16529995fbebeb3e5f1cd088034f4d06418`, and fail-closed verification
-   accepted those artifacts and a clean non-editable installation. Activation assessment and new
-   request-bound attempts consume and persist that identity, but runtime write authority still
-   always returns false. The activation now
-   binds the installed execution commit independently from the candidate research commit retained by
-   the authorization.
-4. The fixed-origin production mutation transport and activation-bound submission/cancellation
-   coordinator exist, but hard-coded runtime authority makes the coordinator unreachable.
-5. An explicit CLI initializes empty execution storage without adding authority, and a read-only
-   startup assessment CLI exists. A guarded flat-baseline settlement and zero-equity checkpoint can
-   bootstrap the first risk context without a broker event. No CLI activates writes, submits,
-   cancels, or runs a supervisor.
-6. The transport threat model below is defined, but production use still needs independent code
-   review and explicit user approval after implementation and failure tests pass.
-7. M5 sustained paper operation, recovery drills, and equivalence evidence have not begun.
+1. Merge this outer-gate change, build and verify a new main-only attested wheel, install it without
+   edits, and replace the activation bound to the prior commit.
+2. During a regular market session, record fresh production account, reconciliation, quote, and clock
+   evidence; settle the flat baseline; record its zero-equity checkpoint; and derive the attested
+   risk context.
+3. Re-run startup assessment from that installed wheel. Any blocker, stale input, mismatch,
+   unresolved mutation, or emergency transition stops the run.
+4. Obtain explicit user approval immediately before the first paper broker mutation.
+5. M5 sustained paper operation, recovery drills, and equivalence evidence have not begun.
 
 ## Fixed-origin transport design
 
@@ -73,22 +60,22 @@ The execution activation commit names the installed execution build. The paper a
 the candidate's research commit through its immutable qualification evidence. Tests reject a changed
 candidate authorization, process commit, or installed execution build.
 
-## Evidence required before implementation
+## Evidence required before a paper mutation
 
-Before adding a production paper mutation transport, one reviewed change set must define:
+Before any production paper mutation, the reviewed system must provide:
 
 1. An unexpired authorization for the exact approved candidate, account, and risk fingerprint above.
 2. The committed risk configuration must load unchanged through the strict production loader.
 3. Process opt-in may enable `broker_writes_allowed` only in exact paper mode with both activation ID
    and execution commit present. Database activation, runtime identity, preflight, and emergency
    state remain separate required controls.
-4. Implementation must match the fixed-origin transport design above.
+4. The fixed-origin transport implementation must match the design above.
 5. Startup checks for journal integrity, active authorization and limits, current attested account,
    quote and clock evidence, clean reconciliation, clear emergency state, and no unresolved mutation.
 6. Shutdown, restart, exact-lookup recovery, cancel-all, credential rotation, database backup, and
    evidence-retention procedures.
 7. Independent code review, injected failure tests, and explicit user approval for the first paper
-   activation. Live trading needs a later separate policy and approval process.
+   broker mutation. Live trading needs a later separate policy and approval process.
 
 ## First paper session gate
 
@@ -117,15 +104,14 @@ reconciliation drift, unexpected order state, authorization or limit expiry, jou
 emergency-disable transition. Do not retry an unknown submission or cancellation. Use exact lookup,
 terminal broker evidence, and complete reconciliation; preserve every failed attempt as evidence.
 
-The current repository cannot execute this procedure because the blockers remain. Recovery today is
-read-only. Do not interpret this document, a paper authorization record, an assessment proof, or
-paper mode alone as broker-write authority.
+The current repository cannot execute this procedure while any blocker remains. Do not interpret
+this document, a paper authorization record, an assessment proof, paper mode, or process opt-in alone
+as broker-write authority.
 
 The dormant activation binds the exact authorization, limits, account, code commit, fixed paper
 origin, submit/cancel scope, distinct approver and operator, attempt cap, emergency generation, and
 active interval. A separate process opt-in names its activation and commit. Submission and
-cancellation can recheck and bind both records inside each one-shot transaction. Assessment counts
-only the exact bound pair across both operations. A fresh attested installed identity must match and
-is persisted with each new bound attempt. Even an eligible assessment cannot call a transport because
-runtime write authority remains false, so the production coordinator cannot reach the mutation
-transport.
+cancellation recheck and bind both records inside each one-shot transaction. Assessment counts only
+the exact bound pair across both operations. A fresh attested installed identity must match and is
+persisted with each new bound attempt. Process opt-in makes the coordinator reachable but never
+bypasses those transaction-bound checks.

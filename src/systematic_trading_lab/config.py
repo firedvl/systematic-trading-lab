@@ -55,7 +55,7 @@ class Settings:
 
     @property
     def broker_writes_allowed(self) -> bool:
-        return False
+        return self.mode is TradingMode.PAPER and self.paper_write_request is not None
 
 
 def load_dotenv(

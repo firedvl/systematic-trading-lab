@@ -23,5 +23,5 @@ terminal event can report `resolved-canceled`, `resolved-rejected`, or `resolved
 nonterminal or stale lookup remains unresolved. No result authorizes another broker call.
 
 Before any future paper mutation work, use [paper-write-readiness.md](paper-write-readiness.md). Its
-current status is not ready and every listed blocker remains mandatory. The checklist cannot override
-the hard-coded runtime write prohibition.
+current status is not ready and every listed blocker remains mandatory. Process opt-in opens only
+the outer runtime gate and cannot override transaction-bound authority.

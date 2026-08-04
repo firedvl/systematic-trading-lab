@@ -242,8 +242,9 @@ assessment adds no retry, cancellation, submission, capacity, or emergency autho
 Dormant submission preflights and cancellation attempts can now bind one exact paper-write
 activation and process opt-in under their existing immediate transactions. Assessment counts the
 exact pair across both attempt types and blocks records past the activation cap. Legacy injected
-attempts remain compatible and unbound. Trusted runtime build identity, production mutation
-transport, and runtime write authority remain absent.
+attempts remain compatible and unbound. Trusted runtime build identity and fixed-origin production
+mutation transport now exist. Exact process opt-in opens only the outer runtime gate; transaction-
+bound authority remains required for every attempt.
 
 Official references reviewed 2026-08-03:
 

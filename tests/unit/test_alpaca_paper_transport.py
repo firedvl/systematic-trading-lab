@@ -137,11 +137,10 @@ def test_paper_mutation_transport_rejects_redirect_status_and_large_response() -
         _urlopen_paper_mutation(request, opener=_FailingOpener())
 
 
-def test_production_paper_operator_is_unreachable_while_authority_is_disabled(
+def test_production_paper_operator_requires_exact_process_opt_in(
     tmp_path: Path,
 ) -> None:
     request = PaperWriteRequest("a" * 64, "b" * 40)
-    settings = Settings(TradingMode.PAPER, tmp_path, request)
     runtime_identity = InstalledRuntimeIdentity(
         build_identity_fingerprint="c" * 64,
         source_commit=request.code_commit,
@@ -156,8 +155,19 @@ def test_production_paper_operator_is_unreachable_while_authority_is_disabled(
             tmp_path / "execution.sqlite3",
             "test-key",
             "test-secret",
-            settings=settings,
+            settings=Settings(TradingMode.PAPER, tmp_path),
             limits=load_risk_limits(Path("config/risk/alpaca-paper-v1.json")),
             runtime_identity=runtime_identity,
         )
+    assert not (tmp_path / "execution.sqlite3").exists()
+
+    operator = AlpacaPaperOperator(
+        tmp_path / "execution.sqlite3",
+        "test-key",
+        "test-secret",
+        settings=Settings(TradingMode.PAPER, tmp_path, request),
+        limits=load_risk_limits(Path("config/risk/alpaca-paper-v1.json")),
+        runtime_identity=runtime_identity,
+    )
+    assert operator is not None
     assert not (tmp_path / "execution.sqlite3").exists()
