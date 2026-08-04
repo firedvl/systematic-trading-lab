@@ -387,3 +387,10 @@
 - Context: a bare broker event cannot prove that an exact lookup occurred after a cancellation attempt or its unknown outcome.
 - Consequences: only the latest matching post-attempt lookup and local terminal state can report canceled, rejected, or filled resolution. The assessment grants no retry, broker-write, capacity, or emergency authority. A crash between event and provenance writes remains fail-closed and a later safe GET can complete the evidence.
 - Revisit when: a reviewed recovery workflow needs a separately authorized mutation after complete reconciliation.
+
+## 2026-08-03 — A readiness runbook cannot enable broker writes
+
+- Decision: record every paper-write prerequisite, first-session check, abort condition, and recovery rule while keeping runtime write authority hard-coded off.
+- Context: no candidate qualifies, no production risk values or mutation transport exist, and a checklist must not become an implicit enablement control.
+- Consequences: the runbook makes missing authority explicit but changes no configuration, endpoint, credential, risk, order, or broker behavior. Each blocker requires a separate reviewed change; paper and live writes remain prohibited.
+- Revisit when: a qualified candidate and reviewed production risk values exist and the explicit multi-control paper enablement boundary is ready for design review.

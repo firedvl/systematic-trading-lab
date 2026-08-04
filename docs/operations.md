@@ -12,3 +12,7 @@ Cancellation recovery also remains read-only. Run a production exact-client-orde
 attempt and any unknown outcome, then assess its immutable lookup provenance. Only a latest matching
 terminal event can report `resolved-canceled`, `resolved-rejected`, or `resolved-filled`. A
 nonterminal or stale lookup remains unresolved. No result authorizes another broker call.
+
+Before any future paper mutation work, use [paper-write-readiness.md](paper-write-readiness.md). Its
+current status is not ready and every listed blocker remains mandatory. The checklist cannot override
+the hard-coded runtime write prohibition.
