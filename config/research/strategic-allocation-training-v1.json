@@ -1,0 +1,65 @@
+{
+  "schema_version": "training-campaign-plan-v1",
+  "campaign_id": "m3-strategic-allocation-v1",
+  "name": "M3 strategic allocation training",
+  "search_budget": 4,
+  "code_commit": "04adfec564eff62dd1b33ba6e2b153329cdbbc9b",
+  "dataset_id": "508c606884112c92402707c30b56fc9d8c07cfc1c01c64f8538a6494888eeeca",
+  "dataset_fingerprint": "4fe62ab615ae713e23926da940256b9a728db39c2bc60c028df6d1136be49494",
+  "universe_id": "liquid-etfs-v1",
+  "universe_fingerprint": "cb0827988973c61362f2014c3f20fde53081217a32fa70f04a5a9e1a48b01985",
+  "candidates": [
+    {
+      "experiment_id": "m3-sa-fixed-weight-training",
+      "role": "benchmark",
+      "strategy_id": "fixed-weight",
+      "strategy_version": "1",
+      "strategy_family": "allocation",
+      "parameters": {},
+      "start_timestamp": "2020-07-27T00:00:00Z",
+      "end_timestamp": "2022-12-30T00:00:00Z",
+      "random_seed": 0,
+      "creation_reason": "Predeclared fixed-weight training benchmark",
+      "parent_candidate": null
+    },
+    {
+      "experiment_id": "m3-sa-rebalance-21-training",
+      "role": "base",
+      "strategy_id": "strategic-allocation-portfolio",
+      "strategy_version": "1",
+      "strategy_family": "portfolio-allocation",
+      "parameters": {"rebalance_every": 21},
+      "start_timestamp": "2020-07-27T00:00:00Z",
+      "end_timestamp": "2022-12-30T00:00:00Z",
+      "random_seed": 0,
+      "creation_reason": "Predeclared monthly strategic allocation base",
+      "parent_candidate": "m3-sa-fixed-weight-training"
+    },
+    {
+      "experiment_id": "m3-sa-rebalance-10-training",
+      "role": "parameter-neighbor",
+      "strategy_id": "strategic-allocation-portfolio",
+      "strategy_version": "1",
+      "strategy_family": "portfolio-allocation",
+      "parameters": {"rebalance_every": 10},
+      "start_timestamp": "2020-07-27T00:00:00Z",
+      "end_timestamp": "2022-12-30T00:00:00Z",
+      "random_seed": 0,
+      "creation_reason": "Predeclared shorter rebalance neighbor",
+      "parent_candidate": "m3-sa-rebalance-21-training"
+    },
+    {
+      "experiment_id": "m3-sa-rebalance-42-training",
+      "role": "parameter-neighbor",
+      "strategy_id": "strategic-allocation-portfolio",
+      "strategy_version": "1",
+      "strategy_family": "portfolio-allocation",
+      "parameters": {"rebalance_every": 42},
+      "start_timestamp": "2020-07-27T00:00:00Z",
+      "end_timestamp": "2022-12-30T00:00:00Z",
+      "random_seed": 0,
+      "creation_reason": "Predeclared longer rebalance neighbor",
+      "parent_candidate": "m3-sa-rebalance-21-training"
+    }
+  ]
+}

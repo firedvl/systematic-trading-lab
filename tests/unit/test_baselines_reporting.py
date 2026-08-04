@@ -18,6 +18,7 @@ from systematic_trading_lab.strategies import (
     MovingAverageTrendStrategy,
     RelativeStrengthPortfolioStrategy,
     RiskManagedMomentumPortfolioStrategy,
+    StrategicAllocationPortfolioStrategy,
     TimeSeriesMomentumStrategy,
     VolatilityBalancedPortfolioStrategy,
     VolatilityTargetedExposureStrategy,
@@ -414,3 +415,42 @@ def test_volatility_balanced_rejects_invalid_parameters(
 def test_volatility_balanced_rejects_underdiversified_universe() -> None:
     with pytest.raises(ValueError, match="at least four unique symbols"):
         VolatilityBalancedPortfolioStrategy(tuple(Symbol(value) for value in ("QQQ", "SPY", "TLT")))
+
+
+def test_strategic_allocation_uses_fixed_diversified_weights() -> None:
+    symbols = tuple(Symbol(value) for value in ("GLD", "IWM", "QQQ", "SPY", "TLT"))
+    start = datetime(2025, 1, 6, tzinfo=UTC)
+    history = {
+        symbol: (
+            OHLCVBar(
+                symbol,
+                start,
+                Decimal("100"),
+                Decimal("100"),
+                Decimal("100"),
+                Decimal("100"),
+                100,
+            ),
+        )
+        for symbol in symbols
+    }
+    strategy = StrategicAllocationPortfolioStrategy(symbols, rebalance_every=21)
+
+    targets = strategy.on_session(tuple(values[0] for values in history.values()), history)
+
+    assert {target.symbol.value: target.weight for target in targets} == {
+        "GLD": Decimal("0.15"),
+        "IWM": Decimal("0.25"),
+        "QQQ": Decimal("0.25"),
+        "SPY": Decimal("0.35"),
+        "TLT": Decimal("0"),
+    }
+    result = strategy_result(
+        "strategic-allocation",
+        tuple(values[0] for values in history.values()),
+        Decimal("1000"),
+        parameters={"rebalance_every": 21},
+    )
+    assert result.strategy_id == "strategic-allocation-portfolio"
+    with pytest.raises(ValueError, match="fixed ETF universe"):
+        StrategicAllocationPortfolioStrategy(symbols[:-1])

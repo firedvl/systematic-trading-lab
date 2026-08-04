@@ -1,0 +1,44 @@
+{
+  "id": "qualification-evidence-strategic-allocation-v1",
+  "campaign_id": "m3-strategic-allocation-validation-v1",
+  "benchmark_strategy_id": "fixed-weight",
+  "candidates": [
+    {
+      "id": "strategic-allocation-21",
+      "strategy_id": "strategic-allocation-portfolio",
+      "base_parameters": {"rebalance_every": 21},
+      "base_cost_model_version": "conservative-bps-v1",
+      "base_execution_model_version": "next-bar-v1",
+      "cost_sensitivity_model_version": "conservative-bps-2x-v1",
+      "delay_sensitivity_model_version": "delayed-2-bars-v1",
+      "parameter_neighbor_values": [
+        {"rebalance_every": 10},
+        {"rebalance_every": 42}
+      ],
+      "base_validation_ids": [
+        "m3-sa-wf01-validation",
+        "m3-sa-wf02-validation",
+        "m3-sa-wf03-validation"
+      ],
+      "benchmark_validation_ids": [
+        "m3-sa-fixed-wf01-validation",
+        "m3-sa-fixed-wf02-validation",
+        "m3-sa-fixed-wf03-validation"
+      ],
+      "cost_sensitivity_ids": [
+        "m3-sa-wf03-validation-cost2x"
+      ],
+      "delay_sensitivity_ids": [
+        "m3-sa-wf03-validation-delay2"
+      ],
+      "parameter_neighbor_ids": [
+        "m3-sa-wf01-validation-rebalance10",
+        "m3-sa-wf01-validation-rebalance42",
+        "m3-sa-wf02-validation-rebalance10",
+        "m3-sa-wf02-validation-rebalance42",
+        "m3-sa-wf03-validation-rebalance10",
+        "m3-sa-wf03-validation-rebalance42"
+      ]
+    }
+  ]
+}
