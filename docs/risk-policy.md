@@ -128,3 +128,6 @@ authoritative terminal event or reconciliation proves the result; no retry path 
 The injected cancellation adapter has no production fallback and permits only the fixed paper
 single-order DELETE target. Empty acceptance grants no capacity release. Timeout or invalid response
 records unknown outcome, and the immutable attempt blocks another call.
+Cancel-all is plan evidence only. It binds the complete current nonterminal local order set but adds
+no bulk mutation authority. Each order keeps its own capacity, attempt, unknown outcome, and terminal
+resolution.

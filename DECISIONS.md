@@ -366,3 +366,10 @@
 - Context: Alpaca can accept a cancel request while a fill or cancellation remains in flight, and a timeout cannot reveal whether the request arrived.
 - Consequences: timeout or invalid response records unknown outcome. Existing attempts block repeat calls. Only later broker evidence can resolve the order and release eligible capacity. No production transport exists.
 - Revisit when: production paper mutation authority and cancellation lookup recovery are reviewed together.
+
+## 2026-08-03 — Cancel-all is a plan, not a bulk broker call
+
+- Decision: store one immutable cancel-all snapshot of the exact sorted local nonterminal order set and its latest broker-event fingerprints. Do not use Alpaca's bulk cancellation endpoint.
+- Context: one bulk response can hide partial acceptance, timeout, fills, and per-order unknown outcomes.
+- Consequences: the plan grants no mutation authority. Each item must use the existing single-order attempt and resolution controls, preserving evidence and capacity per order.
+- Revisit when: measured scale proves sequential single-order cancellation cannot meet an explicit emergency deadline.

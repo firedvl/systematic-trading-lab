@@ -224,6 +224,10 @@ The injected-only cancellation adapter and fake coordinator now cover the exact 
 boundary. Only the creator of an immutable attempt may call the adapter. An empty response means the
 request was accepted, not that the order is canceled. Timeout becomes unknown evidence, and later
 broker lookup or terminal event must resolve either case before any retry.
+Cancel-all planning now records the exact sorted acknowledged and partially filled local order set
+with each latest broker event. It does not call a bulk endpoint or create an implicit shared outcome.
+Execution must create separate one-shot attempts so partial progress, timeout, fills, and terminal
+resolution remain visible per order.
 
 Official references reviewed 2026-08-03:
 

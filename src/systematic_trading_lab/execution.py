@@ -31,6 +31,7 @@ _KNOWN_EVENT_TYPES = {
     "order-submitter-claimed",
     "order-cancel-requested",
     "order-cancel-unknown",
+    "cancel-all-planned",
     "order-transitioned",
     "broker-event-recorded",
     "expected-position-advanced",

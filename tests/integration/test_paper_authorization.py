@@ -22,6 +22,7 @@ from systematic_trading_lab.broker_events import (
     BrokerOrderEvent,
     OrderLookupNotFoundEvidence,
 )
+from systematic_trading_lab.cancel_all import CancelAllStore
 from systematic_trading_lab.domain import TradingMode
 from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityError
 from systematic_trading_lab.experiments import HoldoutAccessError
@@ -1590,6 +1591,46 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             claimed_at=settlement_at + timedelta(seconds=2),
         )
     assert fake_calls == [submission_delta.client_order_id]
+    cancel_all_path = tmp_path / "cancel-all-plan.sqlite3"
+    shutil.copy2(fake_success_path, cancel_all_path)
+    cancel_all_store = CancelAllStore(cancel_all_path)
+    cancel_all_at = settlement_at + timedelta(seconds=2, milliseconds=350)
+    cancel_all_plan = cancel_all_store.plan(
+        "cancel-all-test-1",
+        authorization_id=authorization.authorization_id,
+        requester="test-operator",
+        reason="test cancel all",
+        mode=TradingMode.PAPER,
+        paper_origin="https://paper-api.alpaca.markets",
+        planned_at=cancel_all_at,
+    )
+    cancel_all_head = cancel_all_store.verify_journal()
+    assert tuple(item.order_id for item in cancel_all_plan.orders) == (
+        submission_delta.client_order_id,
+    )
+    assert (
+        cancel_all_store.plan(
+            "cancel-all-test-1",
+            authorization_id=authorization.authorization_id,
+            requester="test-operator",
+            reason="test cancel all",
+            mode=TradingMode.PAPER,
+            paper_origin="https://paper-api.alpaca.markets",
+            planned_at=cancel_all_at,
+        )
+        == cancel_all_plan
+    )
+    assert cancel_all_store.verify_journal() == cancel_all_head
+    with pytest.raises(JournalIntegrityError, match="different content"):
+        cancel_all_store.plan(
+            "cancel-all-test-1",
+            authorization_id=authorization.authorization_id,
+            requester="test-operator",
+            reason="changed",
+            mode=TradingMode.PAPER,
+            paper_origin="https://paper-api.alpaca.markets",
+            planned_at=cancel_all_at,
+        )
     cancel_success_path = tmp_path / "fake-paper-cancel-success.sqlite3"
     cancel_unknown_path = tmp_path / "fake-paper-cancel-unknown.sqlite3"
     shutil.copy2(fake_success_path, cancel_success_path)

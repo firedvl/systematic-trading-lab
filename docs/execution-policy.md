@@ -92,6 +92,10 @@ The cancellation coordinator lets only the process that creates the attempt invo
 adapter. The adapter permits only the fixed paper `DELETE /v2/orders/{broker_order_id}` target and an
 empty acceptance response. Acceptance does not claim cancellation succeeded. Timeout or invalid
 response records unknown outcome; existing attempts block every repeat call.
+Cancel-all is an immutable plan over the exact sorted local nonterminal order set and each order's
+latest broker-event fingerprint. It never calls Alpaca's bulk endpoint. Planning creates no cancel
+authority; every order must still use the single-order attempt, unknown-outcome, lookup, and terminal
+event controls.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only
