@@ -478,3 +478,10 @@
 - Context: the initial checkpoint's observations expire after 15 seconds, so a one-shot checkpoint cannot support later startup assessment even when the account remains flat.
 - Consequences: pre-trade readiness can refresh without inventing fills or resetting strategy state. Any fill-mode checkpoint or execution artifact permanently closes the flat refresh path.
 - Revisit when: a reviewed session supervisor owns periodic pre-trade evidence refresh.
+
+## 2026-08-04 — Long-only weights floor to whole shares at the ask
+
+- Decision: convert each approved target weight to `floor(allocated capital * target weight / attested ask)` before creating a quantity intent.
+- Context: paper submission accepts only exact whole-share quantities, while the qualified strategic-allocation candidate emits weights.
+- Consequences: fractional cash remains uninvested, target notional cannot exceed its weight budget at the planning quote, and submission continues to reject raw weight intents. Risk preflight revalues the quantity at a fresh executable-side quote.
+- Revisit when: odd lots, fractional shares, tax lots, or cash-allocation optimization receive separate policy.

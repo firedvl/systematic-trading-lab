@@ -6,6 +6,7 @@ import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import ROUND_FLOOR, Decimal
 from enum import StrEnum
 from pathlib import Path
 
@@ -453,6 +454,24 @@ class OrderLifecycleStore(RiskStore):
             )
             for row in rows
         )
+
+
+def whole_share_target(
+    *, target_weight: Decimal, allocated_capital: Decimal, ask_price: Decimal
+) -> int:
+    """Convert one long-only weight to a conservative whole-share target."""
+    if (
+        not target_weight.is_finite()
+        or not Decimal(0) <= target_weight <= Decimal(1)
+        or not allocated_capital.is_finite()
+        or allocated_capital <= 0
+        or not ask_price.is_finite()
+        or ask_price <= 0
+    ):
+        raise ValueError("whole-share target inputs are invalid")
+    return int(
+        (allocated_capital * target_weight / ask_price).to_integral_value(rounding=ROUND_FLOOR)
+    )
 
 
 def build_order_delta(

@@ -75,7 +75,9 @@ A separate submission preflight accepts only quantity-target intents. Under one 
 transaction it rederives the attested context without the order's own reservation, reevaluates every
 risk gate, requires the staged delta to match current shares and the existing reservation to cover
 current economics, then binds the proof into the atomic submitter claim. Paper mode and the fixed
-paper origin are mandatory. Weight targets remain blocked until policy defines share rounding.
+paper origin are mandatory. Submission still rejects weight intents. The planner converts approved
+long-only weights to whole-share quantity intents by flooring allocated capital times target weight
+at the current attested ask; fractional cash remains uninvested.
 The fake-only coordinator consumes a newly created preflight once. It accepts normalized broker
 evidence from an injected callable and records it through the existing broker-event authority. Any
 call or evidence failure moves the order to `submission-unknown`. Existing preflight evidence blocks
