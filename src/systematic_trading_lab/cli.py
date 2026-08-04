@@ -24,6 +24,7 @@ from .experiment_runner import (
     run_holdout_experiment,
 )
 from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, ExperimentSplit
+from .paper_startup import assess_paper_startup
 from .providers import AlpacaHistoricalProvider, FixtureProvider
 from .qualification import load_qualification_proposal, review_holdout
 from .qualification_evidence import (
@@ -33,6 +34,12 @@ from .qualification_evidence import (
     write_evidence_reports,
 )
 from .reporting import benchmark_suite, build_report, report_json, strategy_result, write_report
+from .risk import load_risk_limits
+from .runtime_build import (
+    RuntimeBuildVerificationError,
+    verify_attested_build,
+    verify_installed_runtime,
+)
 from .storage import StorageLayout
 from .universe import load_research_universe
 
@@ -75,6 +82,16 @@ def parser() -> argparse.ArgumentParser:
     commands = root.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor", help="check runtime safety and local storage")
     commands.add_parser("status", help="show runtime mode and dataset count")
+    paper = commands.add_parser("paper", help="assess guarded paper execution").add_subparsers(
+        dest="paper_command", required=True
+    )
+    startup = paper.add_parser("assess-startup", help="read-only paper startup assessment")
+    startup.add_argument("--authorization", required=True)
+    startup.add_argument(
+        "--risk-config", type=Path, default=Path("config/risk/alpaca-paper-v1.json")
+    )
+    startup.add_argument("--wheel", type=Path)
+    startup.add_argument("--manifest", type=Path)
     data = commands.add_parser("data", help="manage local market data").add_subparsers(
         dest="data_command", required=True
     )
@@ -196,6 +213,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         ExperimentError,
         KeyError,
         OSError,
+        RuntimeBuildVerificationError,
         ValueError,
     ) as error:
         print(f"error: {error}", file=sys.stderr)
@@ -204,6 +222,41 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def run(arguments: argparse.Namespace, settings: Settings) -> int:
     layout = StorageLayout(settings.home)
+    if arguments.command == "paper":
+        if (arguments.wheel is None) != (arguments.manifest is None):
+            raise ValueError("paper startup assessment requires both wheel and manifest")
+        assessed_at = datetime.now(UTC)
+        runtime_identity = None
+        if arguments.wheel is not None:
+            build = verify_attested_build(
+                arguments.wheel, arguments.manifest, verified_at=assessed_at
+            )
+            runtime_identity = verify_installed_runtime(
+                build, arguments.wheel, verified_at=datetime.now(UTC)
+            )
+        assessment = assess_paper_startup(
+            layout.execution,
+            settings,
+            load_risk_limits(arguments.risk_config),
+            authorization_id=arguments.authorization,
+            assessed_at=datetime.now(UTC),
+            runtime_identity=runtime_identity,
+        )
+        _print(
+            {
+                "ready": assessment.ready,
+                "reasons": assessment.reasons,
+                "authorization_id": assessment.authorization_id,
+                "risk_configuration_fingerprint": assessment.risk_configuration_fingerprint,
+                "activation_id": assessment.activation_id,
+                "runtime_identity_fingerprint": assessment.runtime_identity_fingerprint,
+                "emergency_disabled": assessment.emergency_disabled,
+                "submission_unknown_count": assessment.submission_unknown_count,
+                "unresolved_cancellation_count": assessment.unresolved_cancellation_count,
+                "assessed_at": assessment.assessed_at.isoformat().replace("+00:00", "Z"),
+            }
+        )
+        return 0 if assessment.ready else 1
     service = DatasetService(layout)
     universe = load_research_universe()
     if arguments.command == "experiment":

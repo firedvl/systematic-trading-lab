@@ -22,6 +22,7 @@ uv run trading-lab experiment run-holdout --help
 uv run trading-lab experiment compare candidate-1 candidate-2
 uv run trading-lab experiment evaluate-qualification --evidence-manifest config/research/qualification-evidence-v3.json --proposal config/research/qualification-proposal.json
 uv run trading-lab experiment review-holdout --help
+uv run trading-lab paper assess-startup --authorization AUTHORIZATION_ID --risk-config config/risk/alpaca-paper-v1.json
 ```
 
 Runtime state defaults to `.trading-lab/` and is not committed. Set `TRADING_LAB_HOME` to use another directory. `TRADING_LAB_MODE` defaults to `offline`; accepted modes are `offline`, `research`, `replay`, `shadow`, `paper`, and the deliberately non-operational `live-disabled`.
@@ -45,6 +46,10 @@ system checks, not optimized or financially qualified strategies.
 The strategic-allocation candidate holds 35% SPY, 25% QQQ, 25% IWM, 15% GLD, and 0% TLT with a
 predeclared 21-session rebalance interval. Its controlled validation evidence passed the approved
 gates; that result does not promise future returns or enable broker writes.
+
+`paper assess-startup` is read-only. It checks the journal, authorization, limits, activation,
+installed runtime identity, unresolved mutations, emergency state, and attested risk context. Missing
+evidence appears as a blocker. The command cannot enable or call the paper operator.
 
 ## Quality gates
 

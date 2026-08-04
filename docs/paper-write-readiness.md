@@ -32,7 +32,8 @@ All blockers must be removed in separate reviewed changes:
    the authorization.
 4. The fixed-origin production mutation transport and activation-bound submission/cancellation
    coordinator exist, but hard-coded runtime authority makes the coordinator unreachable.
-5. No paper-execution CLI or supervisor exists.
+5. A read-only startup assessment CLI exists. No CLI initializes execution state, activates writes,
+   submits, cancels, or runs a supervisor.
 6. The transport threat model below is defined, but production use still needs independent code
    review and explicit user approval after implementation and failure tests pass.
 7. M5 sustained paper operation, recovery drills, and equivalence evidence have not begun.
