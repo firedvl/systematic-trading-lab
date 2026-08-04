@@ -14,9 +14,9 @@ All blockers must be removed in separate reviewed changes:
    can bind it to dormant one-shot evidence and enforce its shared attempt cap. A main-only workflow
    can build a commit-bound wheel and manifest, but the current user-owned private repository cannot
    persist GitHub attestations. Fail-closed verification checks both artifacts against the fixed
-   GitHub authority and binds a non-editable installed distribution to that wheel, but activation
-   assessment does not yet consume the installed identity. Runtime write authority still always
-   returns false.
+   GitHub authority and binds a non-editable installed distribution to that wheel. Activation
+   assessment and new request-bound attempts consume and persist that identity, but runtime write
+   authority still always returns false.
 4. Submission and cancellation adapters require injected test transports; no production mutation
    transport exists.
 5. No paper-execution CLI or supervisor exists.

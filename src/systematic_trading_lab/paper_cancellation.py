@@ -22,6 +22,7 @@ from .fingerprints import canonical_json, canonicalize, fingerprint
 from .orders import OrderState
 from .paper_activation import _assess_paper_write, _verify_paper_write_binding
 from .risk import RiskLimits
+from .runtime_build import InstalledRuntimeIdentity
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,7 @@ class OrderCancellationAttempt:
     requested_at: datetime
     activation_id: str | None = None
     paper_write_request_fingerprint: str | None = None
+    runtime_identity_fingerprint: str | None = None
 
     def __post_init__(self) -> None:
         for name, value, limit in (
@@ -62,6 +64,10 @@ class OrderCancellationAttempt:
             assert self.paper_write_request_fingerprint is not None
             _sha256("activation", self.activation_id)
             _sha256("paper write request", self.paper_write_request_fingerprint)
+        if self.runtime_identity_fingerprint is not None:
+            if self.activation_id is None:
+                raise ValueError("cancellation runtime identity lacks activation")
+            _sha256("runtime identity", self.runtime_identity_fingerprint)
         _utc(self.requested_at)
 
     @property
@@ -146,6 +152,7 @@ class PaperCancellationStore(BrokerEventStore):
         requested_at: datetime,
         paper_write_request: PaperWriteRequest | None = None,
         limits: RiskLimits | None = None,
+        runtime_identity: InstalledRuntimeIdentity | None = None,
     ) -> OrderCancellationAttempt:
         result, _ = self._request_once(
             order_id,
@@ -158,6 +165,7 @@ class PaperCancellationStore(BrokerEventStore):
             expected_broker_event_fingerprint=None,
             paper_write_request=paper_write_request,
             limits=limits,
+            runtime_identity=runtime_identity,
         )
         return result
 
@@ -174,11 +182,15 @@ class PaperCancellationStore(BrokerEventStore):
         expected_broker_event_fingerprint: str | None,
         paper_write_request: PaperWriteRequest | None = None,
         limits: RiskLimits | None = None,
+        runtime_identity: InstalledRuntimeIdentity | None = None,
     ) -> tuple[OrderCancellationAttempt, bool]:
         if mode is not TradingMode.PAPER or paper_origin != PAPER_ORIGIN:
             raise PermissionError("cancellation requires paper mode and the fixed paper origin")
-        if (paper_write_request is None) != (limits is None):
-            raise ValueError("cancellation activation binding requires reviewed limits")
+        if len({paper_write_request is None, limits is None, runtime_identity is None}) != 1:
+            raise ValueError("cancellation activation binding requires limits and runtime identity")
+        runtime_identity_fingerprint = (
+            None if runtime_identity is None else runtime_identity.identity_fingerprint
+        )
         _utc(requested_at)
         with self._connect() as connection:
             try:
@@ -210,6 +222,7 @@ class PaperCancellationStore(BrokerEventStore):
                             if paper_write_request is None
                             else paper_write_request.request_fingerprint
                         )
+                        or existing.runtime_identity_fingerprint != runtime_identity_fingerprint
                     ):
                         raise JournalIntegrityError(
                             "order is bound to a different cancellation attempt"
@@ -249,8 +262,9 @@ class PaperCancellationStore(BrokerEventStore):
                         operation="cancel",
                         assessed_at=requested_at,
                         authorization_id=authorization_id,
+                        runtime_identity=runtime_identity,
                     )
-                    if assessment.reasons != ("runtime-code-identity-unverified",):
+                    if not assessment.eligible:
                         raise PermissionError(
                             "paper cancellation lacks exact dormant activation authority"
                         )
@@ -269,6 +283,7 @@ class PaperCancellationStore(BrokerEventStore):
                                 "paper_write_request_fingerprint": (
                                     paper_write_request.request_fingerprint
                                 ),
+                                "runtime_identity_fingerprint": runtime_identity_fingerprint,
                             }
                         ),
                     }
@@ -292,6 +307,7 @@ class PaperCancellationStore(BrokerEventStore):
                         if paper_write_request is None
                         else paper_write_request.request_fingerprint
                     ),
+                    runtime_identity_fingerprint=(runtime_identity_fingerprint),
                 )
                 sequence = self._append_event(
                     connection,
@@ -430,6 +446,7 @@ class PaperCancellationStore(BrokerEventStore):
                     authorization_id=attempt.authorization_id,
                     operation="cancel",
                     attempted_at=attempt.requested_at,
+                    runtime_identity_fingerprint=attempt.runtime_identity_fingerprint,
                 )
             order = connection.execute(
                 "SELECT r.authorization_id FROM orders o JOIN capacity_reservations r "
@@ -646,6 +663,7 @@ def _decode_attempt(value: object) -> OrderCancellationAttempt:
                 **value,
                 "activation_id": value.get("activation_id"),
                 "paper_write_request_fingerprint": value.get("paper_write_request_fingerprint"),
+                "runtime_identity_fingerprint": value.get("runtime_identity_fingerprint"),
                 "order_state": OrderState(value["order_state"]),
                 "requested_at": _parse_utc(str(value["requested_at"])),
             }
@@ -661,6 +679,8 @@ def _attempt_value(attempt: OrderCancellationAttempt) -> dict[str, object]:
     if attempt.activation_id is None:
         value.pop("activation_id")
         value.pop("paper_write_request_fingerprint")
+    if attempt.runtime_identity_fingerprint is None:
+        value.pop("runtime_identity_fingerprint")
     return value
 
 

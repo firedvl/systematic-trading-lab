@@ -67,6 +67,7 @@ from systematic_trading_lab.risk_inputs import (
     AlpacaRiskInputReader,
     RiskInputEvidenceStore,
 )
+from systematic_trading_lab.runtime_build import InstalledRuntimeIdentity
 from systematic_trading_lab.settled_capacity import SettledCapacityStore
 from systematic_trading_lab.strategy_equity import StrategyEquityStore
 
@@ -103,7 +104,7 @@ def _evidence(*, passed: bool = True) -> dict[str, object]:
         "strategy_id": "candidate",
         "strategy_version": "1",
         "strategy_family": "trend",
-        "code_commit": "reviewed-commit",
+        "code_commit": "a" * 40,
         "parameters": {"window": 20},
         "cost_model_version": "cost-v1",
         "execution_model_version": "next-bar-v1",
@@ -147,7 +148,7 @@ def _authorization(report: dict[str, object], limits: RiskLimits) -> PaperAuthor
         strategy_id="candidate",
         strategy_version="1",
         parameters_fingerprint=fingerprint(candidate["parameters"]),
-        code_commit="reviewed-commit",
+        code_commit="a" * 40,
         dataset_id="dataset-1",
         dataset_fingerprint=str(candidate["dataset_fingerprint"]),
         universe_id="universe-1",
@@ -159,6 +160,17 @@ def _authorization(report: dict[str, object], limits: RiskLimits) -> PaperAuthor
         authorization_reason="test authorization",
         authorized_at=NOW,
         expires_at=NOW + timedelta(days=7),
+    )
+
+
+def _runtime_identity(source_commit: str, verified_at: datetime) -> InstalledRuntimeIdentity:
+    return InstalledRuntimeIdentity(
+        build_identity_fingerprint="b" * 64,
+        source_commit=source_commit,
+        wheel_sha256="c" * 64,
+        distribution_record_sha256="d" * 64,
+        source_files_fingerprint="e" * 64,
+        verified_at=verified_at,
     )
 
 
@@ -716,10 +728,55 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     assert not activation_assessment.eligible
     assert activation_assessment.reasons == ("runtime-code-identity-unverified",)
     assert activation_assessment.attempts_used == 0
+    assessed_at = NOW + timedelta(seconds=18)
+    runtime_identity = _runtime_identity(activation.code_commit, assessed_at)
+    verified_assessment = activation_store.assess(
+        request,
+        limits,
+        operation="submit",
+        assessed_at=assessed_at,
+        runtime_identity=runtime_identity,
+    )
+    assert verified_assessment.eligible
+    assert verified_assessment.runtime_identity_fingerprint == runtime_identity.identity_fingerprint
+    assert (
+        "runtime-code-identity-mismatch"
+        in activation_store.assess(
+            request,
+            limits,
+            operation="submit",
+            assessed_at=assessed_at,
+            runtime_identity=_runtime_identity("f" * 40, assessed_at),
+        ).reasons
+    )
+    assert (
+        "runtime-code-identity-from-future"
+        in activation_store.assess(
+            request,
+            limits,
+            operation="submit",
+            assessed_at=assessed_at,
+            runtime_identity=_runtime_identity(
+                activation.code_commit, assessed_at + timedelta(microseconds=1)
+            ),
+        ).reasons
+    )
+    assert (
+        "runtime-code-identity-stale"
+        in activation_store.assess(
+            request,
+            limits,
+            operation="submit",
+            assessed_at=assessed_at,
+            runtime_identity=_runtime_identity(
+                activation.code_commit, assessed_at - timedelta(seconds=6)
+            ),
+        ).reasons
+    )
     assert (
         "code-commit-mismatch"
         in activation_store.assess(
-            PaperWriteRequest(activation.activation_id, "other-commit"),
+            PaperWriteRequest(activation.activation_id, "f" * 40),
             limits,
             operation="submit",
             assessed_at=NOW + timedelta(seconds=18),
@@ -736,6 +793,8 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     )
     with pytest.raises(ValueError, match="approver and operator"):
         replace(activation, operator=activation.approved_by)
+    with pytest.raises(ValueError, match="full lowercase Git SHA-1"):
+        replace(activation, code_commit="not-a-commit")
     scheduled_revocation_path = tmp_path / "scheduled-paper-revocation.sqlite3"
     shutil.copy2(store.path, scheduled_revocation_path)
     scheduled_revocation_store = PaperWriteActivationStore(scheduled_revocation_path)
@@ -1572,6 +1631,9 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     )
     assert activation_store.activate(bound_activation, limits) == bound_activation
     bound_request = PaperWriteRequest(bound_activation.activation_id, bound_activation.code_commit)
+    bound_runtime_identity = _runtime_identity(
+        bound_activation.code_commit, settlement_at + timedelta(seconds=2)
+    )
     fake_success_path = tmp_path / "fake-paper-submission-success.sqlite3"
     fake_unknown_path = tmp_path / "fake-paper-submission-unknown.sqlite3"
     activation_bound_path = tmp_path / "activation-bound-attempts.sqlite3"
@@ -1630,6 +1692,17 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         )
     bound_preflight_store = PaperSubmissionPreflightStore(activation_bound_path)
     bound_head = bound_preflight_store.verify_journal()
+    with pytest.raises(ValueError, match="requires runtime identity"):
+        bound_preflight_store.claim(
+            submission_delta.client_order_id,
+            submitter_id="activation-worker",
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            mode=TradingMode.PAPER,
+            paper_origin="https://paper-api.alpaca.markets",
+            claimed_at=settlement_at + timedelta(seconds=2),
+            paper_write_request=bound_request,
+        )
     with pytest.raises(PermissionError, match="dormant activation authority"):
         bound_preflight_store.claim(
             submission_delta.client_order_id,
@@ -1639,9 +1712,8 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             mode=TradingMode.PAPER,
             paper_origin="https://paper-api.alpaca.markets",
             claimed_at=settlement_at + timedelta(seconds=2),
-            paper_write_request=PaperWriteRequest(
-                bound_activation.activation_id, "different-commit"
-            ),
+            paper_write_request=PaperWriteRequest(bound_activation.activation_id, "f" * 40),
+            runtime_identity=bound_runtime_identity,
         )
     assert bound_preflight_store.verify_journal() == bound_head
     bound_preflight = bound_preflight_store.claim(
@@ -1653,9 +1725,13 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         paper_origin="https://paper-api.alpaca.markets",
         claimed_at=settlement_at + timedelta(seconds=2),
         paper_write_request=bound_request,
+        runtime_identity=bound_runtime_identity,
     )
     assert bound_preflight.activation_id == bound_activation.activation_id
     assert bound_preflight.paper_write_request_fingerprint == bound_request.request_fingerprint
+    assert (
+        bound_preflight.runtime_identity_fingerprint == bound_runtime_identity.identity_fingerprint
+    )
     assert (
         bound_preflight_store.claim(
             submission_delta.client_order_id,
@@ -1666,9 +1742,24 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             paper_origin="https://paper-api.alpaca.markets",
             claimed_at=settlement_at + timedelta(seconds=2),
             paper_write_request=bound_request,
+            runtime_identity=bound_runtime_identity,
         )
         == bound_preflight
     )
+    bound_claimed_head = bound_preflight_store.verify_journal()
+    with pytest.raises(JournalIntegrityError, match="different paper submission preflight"):
+        bound_preflight_store.claim(
+            submission_delta.client_order_id,
+            submitter_id="activation-worker",
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            mode=TradingMode.PAPER,
+            paper_origin="https://paper-api.alpaca.markets",
+            claimed_at=settlement_at + timedelta(seconds=2),
+            paper_write_request=bound_request,
+            runtime_identity=replace(bound_runtime_identity, wheel_sha256="f" * 64),
+        )
+    assert bound_preflight_store.verify_journal() == bound_claimed_head
     bound_acknowledged_at = settlement_at + timedelta(seconds=2, milliseconds=100)
     bound_event = BrokerEventStore(activation_bound_path).record(
         BrokerOrderEvent(
@@ -1692,10 +1783,12 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         requested_at=settlement_at + timedelta(seconds=2, milliseconds=200),
         paper_write_request=bound_request,
         limits=limits,
+        runtime_identity=bound_runtime_identity,
     )
     assert bound_cancel.broker_event_id == bound_event.event_id
     assert bound_cancel.activation_id == bound_activation.activation_id
     assert bound_cancel.paper_write_request_fingerprint == bound_request.request_fingerprint
+    assert bound_cancel.runtime_identity_fingerprint == bound_runtime_identity.identity_fingerprint
     capped_assessment = PaperWriteActivationStore(activation_bound_path).assess(
         bound_request,
         limits,
