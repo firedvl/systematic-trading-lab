@@ -1908,7 +1908,6 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
 
     operator_now = [settlement_at + timedelta(seconds=2, milliseconds=500)]
     with monkeypatch.context() as patch:
-        patch.setattr(Settings, "broker_writes_allowed", property(lambda _settings: True))
         patch.setattr(paper_operator, "_urlopen_paper_mutation", production_transport)
         operator = AlpacaPaperOperator(
             production_operator_path,

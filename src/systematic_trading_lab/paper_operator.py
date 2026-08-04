@@ -1,4 +1,4 @@
-"""Disabled production coordinator for one-shot Alpaca paper mutations."""
+"""Fail-closed coordinator for one-shot Alpaca paper mutations."""
 
 from __future__ import annotations
 

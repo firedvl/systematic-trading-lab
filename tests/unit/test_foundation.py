@@ -26,7 +26,10 @@ def test_configuration_defaults_offline_and_rejects_live() -> None:
     requested = load_settings(request_values)
     assert requested.paper_write_request is not None
     assert requested.paper_write_request.request_fingerprint
-    assert requested.broker_writes_allowed is False
+    assert requested.broker_writes_allowed is True
+    assert not load_settings({"TRADING_LAB_MODE": "paper"}).broker_writes_allowed
+    for mode in ("offline", "research", "replay", "shadow", "live-disabled"):
+        assert not load_settings({"TRADING_LAB_MODE": mode}).broker_writes_allowed
     with pytest.raises(ConfigurationError, match="full lowercase Git SHA-1"):
         load_settings({**request_values, "TRADING_LAB_PAPER_CODE_COMMIT": "not-a-commit"})
     with pytest.raises(ConfigurationError, match="activation ID and code commit"):

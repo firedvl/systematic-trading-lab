@@ -453,7 +453,8 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
     if arguments.command == "doctor":
         checks = {
             "python_3_12_or_newer": sys.version_info >= (3, 12),
-            "mode_is_explicitly_safe": not settings.broker_writes_allowed,
+            "broker_writes_require_exact_paper_opt_in": not settings.broker_writes_allowed
+            or (settings.mode is TradingMode.PAPER and settings.paper_write_request is not None),
             "runtime_path_is_not_repository_root": settings.home != Path.cwd().resolve(),
             "research_credentials_present_or_not_required": settings.mode
             is not TradingMode.RESEARCH

@@ -125,7 +125,7 @@ time, and local observation time; injected transports remain unable to create pr
 Conflicting duplicates, unknown statuses, out-of-order transitions, or position drift trigger
 emergency disable. Each submit, cancel, and cancel-all mutation is journaled before the call and has
 an unknown-outcome state resolved by lookup and reconciliation before retry. The production mutation
-coordinator remains unreachable because runtime broker-write authority is hard-coded false. The broker-free intent store validates immutable intent content,
+coordinator remains unreachable without exact paper process opt-in. The broker-free intent store validates immutable intent content,
 persists each new intent and journal event in one transaction, returns the same receipt for exact
 replay, and fails startup when its sequence, hash chain, stored head, schema, or database is invalid.
 
@@ -157,8 +157,8 @@ commit; revocation is append-only. Submission preflights and cancellation attemp
 records inside their existing immediate transactions. The cap counts the exact activation and opt-in
 pair across both operations. Unbound injected attempts do not count. Assessment without a fresh
 matching installed identity remains ineligible. Even an eligible assessment cannot grant transport
-authority: the production coordinator rejects construction while runtime broker-write authority is
-hard-coded false.
+authority: the production coordinator requires exact paper mode plus activation-and-commit process
+opt-in before construction, then rechecks durable authority inside each attempt transaction.
 
 The authorization's code commit identifies the qualified candidate research code. The activation's
 code commit identifies the installed execution build. The authorization fingerprint retains the
@@ -178,5 +178,5 @@ copies, rejects unexpected package files, and binds all loaded package modules t
 Activation assessment requires that identity's full source commit to match both activation and
 process opt-in and accepts only proof from the prior five seconds. New request-bound submission and cancellation
 attempts persist the identity fingerprint inside their existing immediate transactions. The proof
-cannot grant broker authority: runtime write authority remains false, so the production mutation
-transport remains unreachable.
+cannot grant broker authority: process opt-in only opens the outer runtime gate, while each mutation
+still requires current transaction-bound activation, identity, limits, emergency, and attempt proof.
