@@ -22,7 +22,7 @@ from systematic_trading_lab.broker_events import (
     BrokerOrderEvent,
     OrderLookupNotFoundEvidence,
 )
-from systematic_trading_lab.cancel_all import CancelAllStore
+from systematic_trading_lab.cancel_all import CancelAllStore, FakeCancelAllCanceler
 from systematic_trading_lab.domain import TradingMode
 from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityError
 from systematic_trading_lab.experiments import HoldoutAccessError
@@ -1631,6 +1631,113 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             paper_origin="https://paper-api.alpaca.markets",
             planned_at=cancel_all_at,
         )
+    cancel_all_unknown_path = tmp_path / "cancel-all-unknown.sqlite3"
+    cancel_all_stale_path = tmp_path / "cancel-all-stale.sqlite3"
+    cancel_all_integrity_path = tmp_path / "cancel-all-integrity.sqlite3"
+    cancel_all_race_path = tmp_path / "cancel-all-race.sqlite3"
+    shutil.copy2(cancel_all_path, cancel_all_unknown_path)
+    shutil.copy2(cancel_all_path, cancel_all_stale_path)
+    shutil.copy2(cancel_all_path, cancel_all_integrity_path)
+    shutil.copy2(cancel_all_path, cancel_all_race_path)
+    cancel_all_calls: list[str] = []
+
+    def fake_cancel_all_delete(request: Request) -> bytes:
+        cancel_all_calls.append(request.full_url)
+        return b""
+
+    cancel_all_consumer = FakeCancelAllCanceler(
+        cancel_all_path,
+        InjectedAlpacaPaperDelete("test-key", "test-secret", transport=fake_cancel_all_delete),
+        clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=500),
+    )
+    cancel_all_outcomes = cancel_all_consumer.consume(cancel_all_plan.plan_id)
+    assert tuple(item.status for item in cancel_all_outcomes) == ("accepted",)
+    assert tuple(item.status for item in cancel_all_consumer.consume(cancel_all_plan.plan_id)) == (
+        "prior-attempt",
+    )
+    assert cancel_all_calls == ["https://paper-api.alpaca.markets/v2/orders/fake-broker-order"]
+    cancel_all_unknown_calls: list[str] = []
+
+    def fake_cancel_all_timeout(request: Request) -> bytes:
+        cancel_all_unknown_calls.append(request.full_url)
+        raise TimeoutError("secret cancel-all timeout")
+
+    cancel_all_unknown_consumer = FakeCancelAllCanceler(
+        cancel_all_unknown_path,
+        InjectedAlpacaPaperDelete("test-key", "test-secret", transport=fake_cancel_all_timeout),
+        clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=500),
+    )
+    assert tuple(
+        item.status for item in cancel_all_unknown_consumer.consume(cancel_all_plan.plan_id)
+    ) == ("unknown",)
+    assert tuple(
+        item.status for item in cancel_all_unknown_consumer.consume(cancel_all_plan.plan_id)
+    ) == ("prior-attempt",)
+    assert len(cancel_all_unknown_calls) == 1
+    BrokerEventStore(cancel_all_stale_path).record(
+        BrokerOrderEvent(
+            event_id="cancel-all-stale-terminal",
+            broker_order_id="fake-broker-order",
+            client_order_id=submission_delta.client_order_id,
+            state=OrderState.CANCELED,
+            cumulative_filled_quantity=0,
+            cumulative_average_fill_price=None,
+            provider_timestamp=settlement_at + timedelta(seconds=2, milliseconds=400),
+            observed_at=settlement_at + timedelta(seconds=2, milliseconds=450),
+        )
+    )
+    stale_cancel_calls: list[str] = []
+    cancel_all_stale_consumer = FakeCancelAllCanceler(
+        cancel_all_stale_path,
+        lambda _attempt, _event: stale_cancel_calls.append("called"),
+        clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=500),
+    )
+    assert tuple(
+        item.status for item in cancel_all_stale_consumer.consume(cancel_all_plan.plan_id)
+    ) == ("stale",)
+    assert not stale_cancel_calls
+
+    def fail_cancel_integrity(*_args: object, **_kwargs: object) -> None:
+        raise JournalIntegrityError("simulated cancellation integrity failure")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(FakePaperCanceler, "cancel", fail_cancel_integrity)
+        with pytest.raises(JournalIntegrityError, match="simulated cancellation integrity failure"):
+            FakeCancelAllCanceler(
+                cancel_all_integrity_path,
+                lambda _attempt, _event: None,
+                clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=500),
+            ).consume(cancel_all_plan.plan_id)
+
+    original_cancel = FakePaperCanceler.cancel
+
+    def advance_before_cancel(canceler: FakePaperCanceler, order_id: str, **kwargs: Any) -> object:
+        BrokerEventStore(cancel_all_race_path).record(
+            BrokerOrderEvent(
+                event_id="cancel-all-race-terminal",
+                broker_order_id="fake-broker-order",
+                client_order_id=order_id,
+                state=OrderState.CANCELED,
+                cumulative_filled_quantity=0,
+                cumulative_average_fill_price=None,
+                provider_timestamp=settlement_at + timedelta(seconds=2, milliseconds=400),
+                observed_at=settlement_at + timedelta(seconds=2, milliseconds=450),
+            )
+        )
+        return original_cancel(canceler, order_id, **kwargs)
+
+    race_cancel_calls: list[str] = []
+    with monkeypatch.context() as patch:
+        patch.setattr(FakePaperCanceler, "cancel", advance_before_cancel)
+        assert tuple(
+            item.status
+            for item in FakeCancelAllCanceler(
+                cancel_all_race_path,
+                lambda _attempt, _event: race_cancel_calls.append("called"),
+                clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=500),
+            ).consume(cancel_all_plan.plan_id)
+        ) == ("stale",)
+    assert not race_cancel_calls
     cancel_success_path = tmp_path / "fake-paper-cancel-success.sqlite3"
     cancel_unknown_path = tmp_path / "fake-paper-cancel-unknown.sqlite3"
     shutil.copy2(fake_success_path, cancel_success_path)

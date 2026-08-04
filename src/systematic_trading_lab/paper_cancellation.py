@@ -142,6 +142,7 @@ class PaperCancellationStore(BrokerEventStore):
             mode=mode,
             paper_origin=paper_origin,
             requested_at=requested_at,
+            expected_broker_event_fingerprint=None,
         )
         return result
 
@@ -155,6 +156,7 @@ class PaperCancellationStore(BrokerEventStore):
         mode: TradingMode,
         paper_origin: str,
         requested_at: datetime,
+        expected_broker_event_fingerprint: str | None,
     ) -> tuple[OrderCancellationAttempt, bool]:
         if mode is not TradingMode.PAPER or paper_origin != PAPER_ORIGIN:
             raise PermissionError("cancellation requires paper mode and the fixed paper origin")
@@ -198,9 +200,15 @@ class PaperCancellationStore(BrokerEventStore):
                     or latest is None
                     or latest.state is not state
                     or order[2] != authorization_id
+                    or (
+                        expected_broker_event_fingerprint is not None
+                        and latest.event_fingerprint != expected_broker_event_fingerprint
+                    )
                     or requested_at < _parse_utc(str(order[1]))
                 ):
-                    raise JournalIntegrityError("order is not eligible for a cancellation attempt")
+                    raise PaperCancellationIneligibleError(
+                        "order is not eligible for a cancellation attempt"
+                    )
                 cancel_id = fingerprint(
                     {
                         "order_id": order_id,
@@ -437,6 +445,14 @@ class FakePaperCancellationError(RuntimeError):
     pass
 
 
+class PaperCancellationIneligibleError(JournalIntegrityError):
+    pass
+
+
+class FakePaperCancellationAlreadyAttempted(FakePaperCancellationError):
+    pass
+
+
 class InjectedAlpacaPaperDelete:
     """Issue one fixed-origin paper cancel through a required test transport."""
 
@@ -504,6 +520,7 @@ class FakePaperCanceler:
         requester: str,
         reason: str,
         requested_at: datetime,
+        expected_broker_event_fingerprint: str | None = None,
     ) -> OrderCancellationAttempt:
         store = PaperCancellationStore(self._path)
         attempt, created = store._request_once(
@@ -514,9 +531,10 @@ class FakePaperCanceler:
             mode=TradingMode.PAPER,
             paper_origin=PAPER_ORIGIN,
             requested_at=requested_at,
+            expected_broker_event_fingerprint=expected_broker_event_fingerprint,
         )
         if not created:
-            raise FakePaperCancellationError(
+            raise FakePaperCancellationAlreadyAttempted(
                 "paper cancellation was already attempted; reconcile before any retry"
             )
         with store._connect() as connection:

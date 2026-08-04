@@ -373,3 +373,10 @@
 - Context: one bulk response can hide partial acceptance, timeout, fills, and per-order unknown outcomes.
 - Consequences: the plan grants no mutation authority. Each item must use the existing single-order attempt and resolution controls, preserving evidence and capacity per order.
 - Revisit when: measured scale proves sequential single-order cancellation cannot meet an explicit emergency deadline.
+
+## 2026-08-03 — Cancel-all progress is per order and restart-safe
+
+- Decision: consume a cancel-all plan sequentially through separate one-shot attempt transactions that recheck each planned broker-event fingerprint.
+- Context: the order state can change after planning, and a process can stop after any subset of external calls.
+- Consequences: accepted, unknown, prior-attempt, and stale results remain distinct. Restart skips durable attempts, stale items make no call, and one failure does not erase other progress.
+- Revisit when: measured cancellation latency requires bounded parallel workers with the same per-order invariants.

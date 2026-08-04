@@ -131,3 +131,6 @@ records unknown outcome, and the immutable attempt blocks another call.
 Cancel-all is plan evidence only. It binds the complete current nonterminal local order set but adds
 no bulk mutation authority. Each order keeps its own capacity, attempt, unknown outcome, and terminal
 resolution.
+Cancel-all consumption never shares authority across orders. Each item rechecks its planned event
+inside its attempt transaction. Prior attempts are skipped, stale bindings are not called, and one
+unknown outcome does not erase or retry other progress.

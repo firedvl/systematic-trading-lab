@@ -96,6 +96,10 @@ Cancel-all is an immutable plan over the exact sorted local nonterminal order se
 latest broker-event fingerprint. It never calls Alpaca's bulk endpoint. Planning creates no cancel
 authority; every order must still use the single-order attempt, unknown-outcome, lookup, and terminal
 event controls.
+Cancel-all consumption rechecks each planned broker-event fingerprint inside the same transaction
+that creates its one-shot attempt. It continues after per-order unknown outcomes, reports stale
+bindings without calling, and treats existing attempts as durable prior progress. Restart cannot
+repeat any prior call.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

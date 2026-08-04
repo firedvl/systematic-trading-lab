@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -14,7 +15,15 @@ from .domain import TradingMode
 from .execution import JournalIntegrityError
 from .fingerprints import canonical_json, canonicalize, fingerprint
 from .orders import OrderState
-from .paper_cancellation import PaperCancellationStore, _latest_event
+from .paper_cancellation import (
+    FakePaperCanceler,
+    FakePaperCancellationAlreadyAttempted,
+    FakePaperCancellationError,
+    OrderCancellationAttempt,
+    PaperCancellationIneligibleError,
+    PaperCancellationStore,
+    _latest_event,
+)
 
 
 @dataclass(frozen=True)
@@ -66,6 +75,23 @@ class CancelAllPlan:
     @property
     def plan_fingerprint(self) -> str:
         return fingerprint(self)
+
+
+@dataclass(frozen=True)
+class CancelAllOutcome:
+    order_id: str
+    status: str
+    cancel_id: str | None
+
+    def __post_init__(self) -> None:
+        if not self.order_id or len(self.order_id) > 128:
+            raise ValueError("cancel-all outcome order ID is invalid")
+        if self.status not in {"accepted", "unknown", "prior-attempt", "stale"}:
+            raise ValueError("cancel-all outcome status is invalid")
+        if (self.cancel_id is None) != (self.status == "stale"):
+            raise ValueError("cancel-all outcome cancel ID is invalid")
+        if self.cancel_id is not None:
+            _sha256("cancel", self.cancel_id)
 
 
 class CancelAllStore(PaperCancellationStore):
@@ -192,54 +218,146 @@ class CancelAllStore(PaperCancellationStore):
     def _verify_plans(
         self, connection: sqlite3.Connection, events: dict[str, BrokerOrderEvent]
     ) -> dict[str, CancelAllPlan]:
-        rows = connection.execute(
-            "SELECT plan_id, plan_fingerprint, plan_json, journal_sequence FROM cancel_all_plans"
-        ).fetchall()
-        count = connection.execute(
-            "SELECT COUNT(*) FROM journal WHERE event_type = 'cancel-all-planned'"
-        ).fetchone()[0]
-        if len(rows) != count:
-            raise JournalIntegrityError("cancel-all plan and journal counts differ")
-        result: dict[str, CancelAllPlan] = {}
-        for row in rows:
-            try:
-                plan = _decode_plan(json.loads(row[2]))
-                bound_events = [events[item.broker_event_id] for item in plan.orders]
-            except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
-                raise JournalIntegrityError("stored cancel-all plan is invalid") from error
-            journal = connection.execute(
-                "SELECT occurred_at, event_type, entity_type, entity_id, payload_json "
-                "FROM journal WHERE sequence = ?",
-                (row[3],),
-            ).fetchone()
-            authorization = connection.execute(
-                "SELECT 1 FROM paper_authorizations WHERE authorization_id = ?",
-                (plan.authorization_id,),
-            ).fetchone()
+        return _verify_plans(connection, events)
+
+
+class FakeCancelAllCanceler:
+    """Consume one plan through separate restart-safe fake cancellation attempts."""
+
+    def __init__(
+        self,
+        path: Path,
+        transport: Callable[[OrderCancellationAttempt, BrokerOrderEvent], None],
+        *,
+        clock: Callable[[], datetime],
+    ) -> None:
+        self._path = path
+        self._transport = transport
+        self._clock = clock
+
+    def consume(self, plan_id: str) -> tuple[CancelAllOutcome, ...]:
+        plan_store = CancelAllStore(self._path)
+        with plan_store._connect() as connection:
+            connection.execute("BEGIN")
+            events = plan_store._verify_broker_events(connection)
+            plans = plan_store._verify_plans(connection, events)
+        try:
+            plan = plans[plan_id]
+        except KeyError:
+            raise KeyError(plan_id) from None
+        outcomes: list[CancelAllOutcome] = []
+        for item in plan.orders:
+            cancellation_store = PaperCancellationStore(self._path)
+            with cancellation_store._connect() as connection:
+                events = cancellation_store._verify_broker_events(connection)
+                attempts = cancellation_store._verify_attempts(connection, events)
+                order = connection.execute(
+                    "SELECT state FROM orders WHERE order_id = ?", (item.order_id,)
+                ).fetchone()
+                latest = _latest_event(events, item.order_id)
+            existing = next(
+                (attempt for attempt in attempts.values() if attempt.order_id == item.order_id),
+                None,
+            )
+            if existing is not None:
+                outcomes.append(
+                    CancelAllOutcome(item.order_id, "prior-attempt", existing.cancel_id)
+                )
+                continue
             if (
-                row[0] != plan.plan_id
-                or row[1] != plan.plan_fingerprint
-                or row[2] != canonical_json(plan)
-                or authorization is None
-                or any(
-                    event.client_order_id != item.order_id
-                    or event.event_fingerprint != item.broker_event_fingerprint
-                    or event.state is not item.order_state
-                    or plan.planned_at < event.observed_at
-                    for item, event in zip(plan.orders, bound_events, strict=True)
-                )
-                or journal
-                != (
-                    _utc_text(plan.planned_at),
-                    "cancel-all-planned",
-                    "cancel-all-plan",
-                    plan.plan_id,
-                    canonical_json(plan),
-                )
+                order is None
+                or OrderState(order[0])
+                not in {OrderState.ACKNOWLEDGED, OrderState.PARTIALLY_FILLED}
+                or latest is None
+                or latest.event_id != item.broker_event_id
+                or latest.event_fingerprint != item.broker_event_fingerprint
             ):
-                raise JournalIntegrityError("cancel-all plan differs from its order evidence")
-            result[plan.plan_id] = plan
-        return result
+                outcomes.append(CancelAllOutcome(item.order_id, "stale", None))
+                continue
+            try:
+                attempt = FakePaperCanceler(self._path, self._transport, clock=self._clock).cancel(
+                    item.order_id,
+                    authorization_id=plan.authorization_id,
+                    requester=plan.requester,
+                    reason=f"cancel-all:{plan.plan_id}:{plan.reason}",
+                    requested_at=plan.planned_at,
+                    expected_broker_event_fingerprint=item.broker_event_fingerprint,
+                )
+            except PaperCancellationIneligibleError:
+                outcomes.append(CancelAllOutcome(item.order_id, "stale", None))
+            except FakePaperCancellationAlreadyAttempted:
+                with cancellation_store._connect() as connection:
+                    events = cancellation_store._verify_broker_events(connection)
+                    attempts = cancellation_store._verify_attempts(connection, events)
+                attempt = next(
+                    value for value in attempts.values() if value.order_id == item.order_id
+                )
+                outcomes.append(CancelAllOutcome(item.order_id, "prior-attempt", attempt.cancel_id))
+            except FakePaperCancellationError:
+                with cancellation_store._connect() as connection:
+                    events = cancellation_store._verify_broker_events(connection)
+                    attempts = cancellation_store._verify_attempts(connection, events)
+                attempt = next(
+                    value for value in attempts.values() if value.order_id == item.order_id
+                )
+                outcomes.append(CancelAllOutcome(item.order_id, "unknown", attempt.cancel_id))
+            else:
+                outcomes.append(CancelAllOutcome(item.order_id, "accepted", attempt.cancel_id))
+        return tuple(outcomes)
+
+
+def _verify_plans(
+    connection: sqlite3.Connection,
+    events: dict[str, BrokerOrderEvent],
+) -> dict[str, CancelAllPlan]:
+    rows = connection.execute(
+        "SELECT plan_id, plan_fingerprint, plan_json, journal_sequence FROM cancel_all_plans"
+    ).fetchall()
+    count = connection.execute(
+        "SELECT COUNT(*) FROM journal WHERE event_type = 'cancel-all-planned'"
+    ).fetchone()[0]
+    if len(rows) != count:
+        raise JournalIntegrityError("cancel-all plan and journal counts differ")
+    result: dict[str, CancelAllPlan] = {}
+    for row in rows:
+        try:
+            plan = _decode_plan(json.loads(row[2]))
+            bound_events = [events[item.broker_event_id] for item in plan.orders]
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+            raise JournalIntegrityError("stored cancel-all plan is invalid") from error
+        journal = connection.execute(
+            "SELECT occurred_at, event_type, entity_type, entity_id, payload_json "
+            "FROM journal WHERE sequence = ?",
+            (row[3],),
+        ).fetchone()
+        authorization = connection.execute(
+            "SELECT 1 FROM paper_authorizations WHERE authorization_id = ?",
+            (plan.authorization_id,),
+        ).fetchone()
+        if (
+            row[0] != plan.plan_id
+            or row[1] != plan.plan_fingerprint
+            or row[2] != canonical_json(plan)
+            or authorization is None
+            or any(
+                event.client_order_id != item.order_id
+                or event.event_fingerprint != item.broker_event_fingerprint
+                or event.state is not item.order_state
+                or plan.planned_at < event.observed_at
+                for item, event in zip(plan.orders, bound_events, strict=True)
+            )
+            or journal
+            != (
+                _utc_text(plan.planned_at),
+                "cancel-all-planned",
+                "cancel-all-plan",
+                plan.plan_id,
+                canonical_json(plan),
+            )
+        ):
+            raise JournalIntegrityError("cancel-all plan differs from its order evidence")
+        result[plan.plan_id] = plan
+    return result
 
 
 def _decode_plan(value: object) -> CancelAllPlan:
