@@ -23,15 +23,22 @@ jobs:
           --wheel dist/*.whl
           --source-commit "$GITHUB_SHA"
           --output dist/runtime-build-manifest.json
-      - uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4
+      - id: attest
+        continue-on-error: true
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4
         with:
           subject-path: |
             dist/*.whl
             dist/runtime-build-manifest.json
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: systematic-trading-lab-${{ github.sha }}
           path: |
             dist/*.whl
             dist/runtime-build-manifest.json
           retention-days: 30
+      - if: steps.attest.outcome != 'success'
+        run: |
+          echo "Artifact attestation failed; the unsigned build was retained for diagnosis."
+          exit 1
