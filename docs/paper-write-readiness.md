@@ -12,11 +12,10 @@ All blockers must be removed in separate reviewed changes:
 2. `config/risk/` has no active reviewed risk-limit file or production financial values.
 3. Runtime configuration can parse an exact activation-and-code opt-in. Submission and cancellation
    can bind it to dormant one-shot evidence and enforce its shared attempt cap. A main-only workflow
-   can build a commit-bound wheel and manifest, but the current user-owned private repository cannot
-   persist GitHub attestations. Fail-closed verification checks both artifacts against the fixed
-   GitHub authority and binds a non-editable installed distribution to that wheel. Activation
-   assessment and new request-bound attempts consume and persist that identity, but runtime write
-   authority still always returns false.
+   builds a commit-bound wheel and manifest. Public-repository run `30882447856` persisted GitHub
+   attestations for both artifacts, and fail-closed verification accepted those artifacts and a clean
+   non-editable installation. Activation assessment and new request-bound attempts consume and
+   persist that identity, but runtime write authority still always returns false.
 4. Submission and cancellation adapters require injected test transports; no production mutation
    transport exists.
 5. No paper-execution CLI or supervisor exists.
