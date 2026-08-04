@@ -86,7 +86,8 @@ external or signed checkpoint.
    cumulative-fill checks, and atomic local-state application. Conflicts restore emergency disable.
 4. Paper-only Alpaca REST adapter behind a mockable protocol and an exact host/path allowlist.
 5. Broker-event ingestion, reconciliation, restart recovery, and cancel-all evidence.
-6. Fake-adapter end-to-end tests and paper operations runbooks.
+6. Fake-adapter end-to-end tests and paper operations runbooks. The readiness runbook now records the
+   remaining blockers; it does not authorize implementation or use of a production transport.
 
 Each slice gets its own review and cannot weaken earlier controls. Paper mode remains non-operational
 until every M4 gate passes and an explicit reviewed risk configuration exists.
