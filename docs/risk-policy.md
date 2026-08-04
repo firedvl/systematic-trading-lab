@@ -91,3 +91,10 @@ Risk decisions now derive the temporal active reservation set inside their immed
 They replace caller pending-capacity totals and bind the exact reservation IDs, fingerprints,
 aggregates, and count. A reservation is active only after creation, before expiry, and before any
 effective release timestamp.
+A read-only attested-context builder now verifies all authorities in one database transaction. It
+derives account equity, cash, buying power, ask-valued exposure, target bid and ask, current quantity,
+open and recent order counts, active reservations, account daily PnL, strategy drawdown, market
+session, observation times, and emergency state. Its proof binds the exact authorization, limits,
+snapshot, adapter attestation, risk input, settlement, strategy-equity checkpoint, daily-PnL
+evidence, reservation set, and emergency generation. It writes nothing and grants no risk decision
+or capacity authority.
