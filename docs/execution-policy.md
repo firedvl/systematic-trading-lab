@@ -132,6 +132,16 @@ coordinator remains unreachable without exact paper process opt-in. The broker-f
 persists each new intent and journal event in one transaction, returns the same receipt for exact
 replay, and fails startup when its sequence, hash chain, stored head, schema, or database is invalid.
 
+One narrow recovery path covers an emergency caused by the former rejection of an unchanged terminal
+lookup. It requires the exact historical emergency reason, two production exact-lookups with unchanged
+terminal identity and cumulative fill economics, a later exact lookup after the emergency, terminal
+local orders, expected-position lineage, exact cash derived from cumulative fills, and the latest three
+distinct production-attested portfolio snapshots. Those snapshots must match expected positions and
+cash, contain no open orders, remain account-ready, meet the reviewed stability interval, and leave the
+latest observation fresh. The atomic clear binds every order, terminal event, snapshot, attestation,
+limit, authorization, and proof fingerprint. It grants no broker call. A settlement recorded after a
+reviewed clear is allowed; an active emergency still blocks settlement.
+
 The broker-free reconciliation boundary accepts only normalized complete local-expected or
 Alpaca-paper snapshots. It compares exact account, cash, equity, buying power, account readiness,
 whole-share positions, full supported open-order descriptors, separate account/position/order

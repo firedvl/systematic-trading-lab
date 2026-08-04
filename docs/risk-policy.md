@@ -59,6 +59,12 @@ state by itself. A separate operator clear request is bounded, idempotent, and j
 recomputes the proof in the same immediate transaction that changes emergency state. A dirty
 reconciliation journals and restores disable atomically.
 
+The terminal-replay recovery clear is separate from ordinary flat reconciliation. It exists only for
+the fixed false positive where a repeated filled, canceled, or rejected exact lookup kept identical
+terminal facts. Recovery requires a later production lookup plus three stable post-emergency account
+snapshots with exact fill-derived cash, expected positions, no open orders, and fresh attestation. It
+cannot clear another emergency reason or authorize a mutation.
+
 Position settlement alone does not authorize capacity reuse. The protected release path rederives
 the complete attested risk context under an immediate transaction and requires its current
 settlement proof and emergency generation to match. It releases only the exact exclusive active

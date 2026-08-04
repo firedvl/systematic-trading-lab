@@ -485,3 +485,10 @@
 - Context: paper submission accepts only exact whole-share quantities, while the qualified strategic-allocation candidate emits weights.
 - Consequences: fractional cash remains uninvested, target notional cannot exceed its weight budget at the planning quote, and submission continues to reject raw weight intents. Risk preflight revalues the quantity at a fresh executable-side quote.
 - Revisit when: odd lots, fractional shares, tax lots, or cash-allocation optimization receive separate policy.
+
+## 2026-08-04 — Terminal replay recovery requires stable fill-derived state
+
+- Decision: clear the former unchanged-terminal replay false positive only after two identical production exact-lookups, a later post-emergency lookup, and three stable production portfolio snapshots match fill-derived cash and expected positions.
+- Context: the first 4-share SPY paper fill resolved exactly, but a second identical filled lookup was rejected before terminal self-replay support existed and set emergency generation 3.
+- Consequences: another emergency reason, changed terminal economics, missing lookup provenance, open orders, position drift, cash drift, stale evidence, or an unstable sample blocks recovery. The clear binds its complete proof and grants no broker mutation. A later reviewed clear may precede settlement of an older confirmed fill; an active emergency still blocks settlement.
+- Revisit when: sustained paper supervision owns a general incident-classified recovery workflow.
