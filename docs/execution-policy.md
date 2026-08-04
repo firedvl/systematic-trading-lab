@@ -32,6 +32,10 @@ immutable position-settlement evidence. The snapshot must match exact expected p
 no open orders, follow every local order transition, remain fresh, and find no nonterminal local
 order. Emergency state must be clear. Cash, equity, and buying power remain broker observations;
 the proof neither compares them to invented local values nor releases filled capacity.
+A read-only capacity assessment maps that proof to the exact positive-fill reservations and observed
+cash, equity, and buying power. It still blocks release because risk admission has no durable
+adapter-bound quote, clock, exposure, PnL, drawdown, or context provenance. Assessment writes no
+journal or release record.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

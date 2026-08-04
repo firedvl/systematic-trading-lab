@@ -926,6 +926,23 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     settlement_head = settlement_store.verify_journal()
     assert settlement.advance_fingerprint
     assert settlement.observed_snapshot_fingerprint == settled_snapshot.snapshot_fingerprint
+    assessment_head = settlement_store.verify_journal()
+    assessment = settlement_store.assess_capacity(settlement.proof_id, assessed_at=settlement_at)
+    assert not assessment.ready
+    assert assessment.reasons == ("context-provenance-missing",)
+    assert assessment.reservation_ids == (reservation_id,)
+    assert assessment.observed_cash == Decimal("69000")
+    assert assessment.observed_equity == Decimal("71000")
+    assert assessment.observed_buying_power == Decimal("68000")
+    assert settlement_store.verify_journal() == assessment_head
+    stale_assessment = settlement_store.assess_capacity(
+        settlement.proof_id, assessed_at=settlement_at + timedelta(seconds=31)
+    )
+    assert stale_assessment.reasons == (
+        "context-provenance-missing",
+        "settlement-snapshot-stale-or-future",
+    )
+    assert settlement_store.verify_journal() == assessment_head
     assert (
         settlement_store.record_settlement(
             proof_id="position-settlement-1",

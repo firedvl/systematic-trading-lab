@@ -53,3 +53,7 @@ emergency generation. A dirty latest sample resets readiness. The proof cannot c
 state by itself. A separate operator clear request is bounded, idempotent, and journaled; it
 recomputes the proof in the same immediate transaction that changes emergency state. A dirty
 reconciliation journals and restores disable atomically.
+
+Position settlement does not authorize capacity reuse. Until risk context is derived from durable
+production-attested account, position, order, quote, and clock evidence, settlement-capacity
+assessment remains read-only and reports `context-provenance-missing`.
