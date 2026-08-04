@@ -520,3 +520,10 @@
 - Context: the first campaign needs timing and cold-process restart evidence, but no in-program daemon, broker authority, or remote state service.
 - Consequences: the task can wake the computer from sleep and start missed work when available. It cannot run while the computer is off, and any late sample remains visible in the immutable gap evidence. The task expires with the campaign.
 - Revisit when: a reviewed always-on host and durable remote state can replace the local task.
+
+## 2026-08-04 — A VPS screen loop remains one external writer
+
+- Decision: permit one GNU Screen session to call the one-shot observation command at a bounded interval, guarded by a local file lock, while keeping restart after a VPS reboot manual.
+- Context: an always-on VPS removes dependence on a personal computer without adding an in-program daemon or systemd unit.
+- Consequences: SSH disconnects do not stop sampling, but a VPS reboot does. Migration must stop the old writer before copying SQLite. Cleanup defaults to a preview and deletes only validated project-local data unless the operator also requests repository deletion. External broker, GitHub, backup, audit, and shell records remain outside its scope.
+- Revisit when: automatic reboot recovery or remote state requires a reviewed service manager and monitoring design.

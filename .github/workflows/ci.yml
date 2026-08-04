@@ -21,6 +21,7 @@ jobs:
       - run: uv run mypy src tests
       - run: uv run pytest
       - run: uv run python scripts/check_secrets.py
+      - run: bash -n scripts/*.sh
       - run: uv build --wheel
       - run: >-
           uv run python scripts/write_runtime_build_manifest.py
