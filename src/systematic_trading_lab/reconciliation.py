@@ -358,22 +358,84 @@ class _PaperSnapshotAttestation:
     completed_at: datetime
 
     def __post_init__(self) -> None:
-        if self.snapshot.source is not SnapshotSource.ALPACA_PAPER:
-            raise ValueError("only Alpaca-paper snapshots can be adapter-attested")
         if self.adapter_version != "alpaca-paper-reader-v1":
             raise ValueError("paper snapshot adapter version is unsupported")
-        if self.paper_origin != "https://paper-api.alpaca.markets":
-            raise ValueError("paper snapshot origin is unsupported")
-        _utc("paper snapshot completion time", self.completed_at)
-        if self.completed_at != max(
-            self.snapshot.account_observed_at,
-            self.snapshot.positions_observed_at,
-            self.snapshot.orders_observed_at,
-        ):
-            raise ValueError("paper snapshot completion must match its final observation")
+        _validate_paper_attestation(self.snapshot, self.paper_origin, self.completed_at)
 
     @property
     def attestation_fingerprint(self) -> str:
+        return fingerprint(self)
+
+
+@dataclass(frozen=True)
+class _PaperSnapshotAttestationV2:
+    snapshot: PortfolioSnapshot
+    adapter_version: str
+    paper_origin: str
+    completed_at: datetime
+    previous_close_equity: Decimal
+
+    def __post_init__(self) -> None:
+        if self.adapter_version != "alpaca-paper-reader-v2":
+            raise ValueError("paper snapshot adapter version is unsupported")
+        _validate_paper_attestation(self.snapshot, self.paper_origin, self.completed_at)
+        if not self.previous_close_equity.is_finite() or self.previous_close_equity <= 0:
+            raise ValueError("paper snapshot requires positive prior-close equity")
+
+    @property
+    def attestation_fingerprint(self) -> str:
+        return fingerprint(self)
+
+
+_PaperAttestation = _PaperSnapshotAttestation | _PaperSnapshotAttestationV2
+
+
+def _validate_paper_attestation(
+    snapshot: PortfolioSnapshot, paper_origin: str, completed_at: datetime
+) -> None:
+    if snapshot.source is not SnapshotSource.ALPACA_PAPER:
+        raise ValueError("only Alpaca-paper snapshots can be adapter-attested")
+    if paper_origin != "https://paper-api.alpaca.markets":
+        raise ValueError("paper snapshot origin is unsupported")
+    _utc("paper snapshot completion time", completed_at)
+    if completed_at != max(
+        snapshot.account_observed_at,
+        snapshot.positions_observed_at,
+        snapshot.orders_observed_at,
+    ):
+        raise ValueError("paper snapshot completion must match its final observation")
+
+
+@dataclass(frozen=True)
+class AccountDailyPnlEvidence:
+    snapshot_id: str
+    snapshot_fingerprint: str
+    attestation_fingerprint: str
+    account_id: str
+    equity: Decimal
+    previous_close_equity: Decimal
+    daily_pnl: Decimal
+    observed_at: datetime
+
+    def __post_init__(self) -> None:
+        _bounded_text("snapshot ID", self.snapshot_id)
+        _bounded_text("account ID", self.account_id)
+        _sha256("snapshot", self.snapshot_fingerprint)
+        _sha256("paper attestation", self.attestation_fingerprint)
+        for name, value in (
+            ("equity", self.equity),
+            ("previous close equity", self.previous_close_equity),
+        ):
+            if not value.is_finite() or value <= 0:
+                raise ValueError(f"{name} must be finite and positive")
+        if not self.daily_pnl.is_finite() or self.daily_pnl != (
+            self.equity - self.previous_close_equity
+        ):
+            raise ValueError("daily PnL must match equity change")
+        _utc("account observation", self.observed_at)
+
+    @property
+    def evidence_fingerprint(self) -> str:
         return fingerprint(self)
 
 
@@ -464,6 +526,29 @@ class ReconciliationStore(RiskStore):
                 raise
         return snapshot
 
+    def account_daily_pnl(self, snapshot_id: str) -> AccountDailyPnlEvidence:
+        _bounded_text("snapshot ID", snapshot_id)
+        with self._connect() as connection:
+            connection.execute("BEGIN")
+            snapshots, attestations, _, _ = self._verify_all(connection)
+        try:
+            snapshot = snapshots[snapshot_id]
+            attestation = attestations[snapshot_id]
+        except KeyError:
+            raise KeyError(snapshot_id) from None
+        if not isinstance(attestation, _PaperSnapshotAttestationV2):
+            raise ValueError("paper snapshot lacks prior-close equity evidence")
+        return AccountDailyPnlEvidence(
+            snapshot_id=snapshot.snapshot_id,
+            snapshot_fingerprint=snapshot.snapshot_fingerprint,
+            attestation_fingerprint=attestation.attestation_fingerprint,
+            account_id=snapshot.account_id,
+            equity=snapshot.equity,
+            previous_close_equity=attestation.previous_close_equity,
+            daily_pnl=snapshot.equity - attestation.previous_close_equity,
+            observed_at=snapshot.account_observed_at,
+        )
+
     def _record_adapter_snapshot(
         self,
         snapshot: PortfolioSnapshot,
@@ -472,15 +557,27 @@ class ReconciliationStore(RiskStore):
         paper_origin: str,
         recorded_at: datetime,
         _capability: object,
+        previous_close_equity: Decimal | None = None,
     ) -> PortfolioSnapshot:
         if _capability is not _ALPACA_READER_CAPABILITY:
             raise PermissionError("only the production Alpaca reader can attest a snapshot")
-        attestation = _PaperSnapshotAttestation(
-            snapshot=snapshot,
-            adapter_version=adapter_version,
-            paper_origin=paper_origin,
-            completed_at=snapshot.orders_observed_at,
-        )
+        if adapter_version == "alpaca-paper-reader-v1" and previous_close_equity is None:
+            attestation: _PaperAttestation = _PaperSnapshotAttestation(
+                snapshot=snapshot,
+                adapter_version=adapter_version,
+                paper_origin=paper_origin,
+                completed_at=snapshot.orders_observed_at,
+            )
+        elif adapter_version == "alpaca-paper-reader-v2" and previous_close_equity is not None:
+            attestation = _PaperSnapshotAttestationV2(
+                snapshot=snapshot,
+                adapter_version=adapter_version,
+                paper_origin=paper_origin,
+                completed_at=snapshot.orders_observed_at,
+                previous_close_equity=previous_close_equity,
+            )
+        else:
+            raise ValueError("paper snapshot adapter evidence is incomplete")
         _validate_snapshot_record(snapshot, recorded_at)
         if recorded_at < attestation.completed_at:
             raise ValueError("attestation record time cannot predate completion")
@@ -1022,7 +1119,7 @@ class ReconciliationStore(RiskStore):
         self, connection: sqlite3.Connection
     ) -> tuple[
         dict[str, PortfolioSnapshot],
-        dict[str, _PaperSnapshotAttestation],
+        dict[str, _PaperAttestation],
         dict[str, ReconciliationBaseline],
         dict[str, ReconciliationEvidence],
     ]:
@@ -1036,7 +1133,7 @@ class ReconciliationStore(RiskStore):
         self, connection: sqlite3.Connection
     ) -> tuple[
         dict[str, PortfolioSnapshot],
-        dict[str, _PaperSnapshotAttestation],
+        dict[str, _PaperAttestation],
         dict[str, ReconciliationBaseline],
         dict[str, ReconciliationEvidence],
     ]:
@@ -1073,7 +1170,7 @@ class ReconciliationStore(RiskStore):
             snapshots[snapshot.snapshot_id] = snapshot
             snapshot_recorded_at[snapshot.snapshot_id] = recorded_at
 
-        attestations: dict[str, _PaperSnapshotAttestation] = {}
+        attestations: dict[str, _PaperAttestation] = {}
         rows = connection.execute(
             """
             SELECT snapshot_id, attestation_fingerprint, attestation_json, recorded_at,
@@ -1262,17 +1359,23 @@ def _decode_snapshot(value: Any) -> PortfolioSnapshot:
         raise ValueError("portfolio snapshot fields differ") from error
 
 
-def _decode_attestation(value: Any) -> _PaperSnapshotAttestation:
+def _decode_attestation(value: Any) -> _PaperAttestation:
     if not isinstance(value, dict):
         raise ValueError("paper snapshot attestation must be an object")
     try:
-        return _PaperSnapshotAttestation(
-            snapshot=_decode_snapshot(value["snapshot"]),
-            adapter_version=value["adapter_version"],
-            paper_origin=value["paper_origin"],
-            completed_at=_parse_utc(value["completed_at"]),
+        common = {
+            "snapshot": _decode_snapshot(value["snapshot"]),
+            "adapter_version": value["adapter_version"],
+            "paper_origin": value["paper_origin"],
+            "completed_at": _parse_utc(value["completed_at"]),
+        }
+        if value["adapter_version"] == "alpaca-paper-reader-v1":
+            return _PaperSnapshotAttestation(**common)
+        return _PaperSnapshotAttestationV2(
+            **common,
+            previous_close_equity=Decimal(value["previous_close_equity"]),
         )
-    except (KeyError, TypeError) as error:
+    except (KeyError, TypeError, ArithmeticError) as error:
         raise ValueError("paper snapshot attestation fields differ") from error
 
 

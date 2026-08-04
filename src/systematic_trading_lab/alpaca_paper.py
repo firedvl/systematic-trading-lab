@@ -144,6 +144,9 @@ class AlpacaPaperReader:
         self._clock = clock or (lambda: datetime.now(UTC))
 
     def read_portfolio(self) -> PortfolioSnapshot:
+        return self._read_portfolio()[0]
+
+    def _read_portfolio(self) -> tuple[PortfolioSnapshot, Decimal]:
         account = self._get_object("/v2/account")
         account_observed_at = self._now()
         observed_account = _text(account, "id", "account")
@@ -151,6 +154,7 @@ class AlpacaPaperReader:
             raise AlpacaPaperError("Alpaca paper response is for an unexpected account")
         cash = _amount(account, "cash")
         equity = _amount(account, "equity")
+        previous_close_equity = _amount(account, "last_equity")
         buying_power = _amount(account, "buying_power")
         account_ready = _account_ready(account)
 
@@ -194,19 +198,22 @@ class AlpacaPaperReader:
                 }
             )
         }"
-        return PortfolioSnapshot(
-            snapshot_id=snapshot_id,
-            source=SnapshotSource.ALPACA_PAPER,
-            account_id=observed_account,
-            cash=cash,
-            equity=equity,
-            buying_power=buying_power,
-            account_ready=account_ready,
-            positions=positions,
-            open_orders=open_orders,
-            account_observed_at=account_observed_at,
-            positions_observed_at=positions_observed_at,
-            orders_observed_at=orders_observed_at,
+        return (
+            PortfolioSnapshot(
+                snapshot_id=snapshot_id,
+                source=SnapshotSource.ALPACA_PAPER,
+                account_id=observed_account,
+                cash=cash,
+                equity=equity,
+                buying_power=buying_power,
+                account_ready=account_ready,
+                positions=positions,
+                open_orders=open_orders,
+                account_observed_at=account_observed_at,
+                positions_observed_at=positions_observed_at,
+                orders_observed_at=orders_observed_at,
+            ),
+            previous_close_equity,
         )
 
     def record_portfolio(
@@ -216,13 +223,14 @@ class AlpacaPaperReader:
             raise AlpacaPaperError("injected transport cannot produce durable paper provenance")
         from .reconciliation import _ALPACA_READER_CAPABILITY
 
-        snapshot = self.read_portfolio()
+        snapshot, previous_close_equity = self._read_portfolio()
         return store._record_adapter_snapshot(
             snapshot,
-            adapter_version="alpaca-paper-reader-v1",
+            adapter_version="alpaca-paper-reader-v2",
             paper_origin=PAPER_ORIGIN,
             recorded_at=recorded_at,
             _capability=_ALPACA_READER_CAPABILITY,
+            previous_close_equity=previous_close_equity,
         )
 
     def read_clock(self, *, maximum_age_seconds: int) -> MarketClockSnapshot:

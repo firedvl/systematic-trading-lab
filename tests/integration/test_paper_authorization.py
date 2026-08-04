@@ -14,6 +14,7 @@ from urllib.request import Request
 import pytest
 
 import systematic_trading_lab.alpaca_paper as alpaca_paper
+import systematic_trading_lab.reconciliation as reconciliation
 import systematic_trading_lab.risk_inputs as risk_inputs
 from systematic_trading_lab.alpaca_paper import AlpacaPaperReader
 from systematic_trading_lab.broker_events import (
@@ -211,6 +212,7 @@ def _record_adapter_snapshot(
     monkeypatch: pytest.MonkeyPatch,
     *,
     recorded_at: datetime = NOW,
+    previous_close_equity: Decimal | None = None,
 ) -> PortfolioSnapshot:
     responses: dict[str, object] = {
         "/v2/account": {
@@ -218,6 +220,7 @@ def _record_adapter_snapshot(
             "status": "ACTIVE" if snapshot.account_ready else "ACCOUNT_UPDATED",
             "cash": str(snapshot.cash),
             "equity": str(snapshot.equity),
+            "last_equity": str(previous_close_equity or snapshot.equity),
             "buying_power": str(snapshot.buying_power),
             "account_blocked": not snapshot.account_ready,
             "trading_blocked": False,
@@ -452,7 +455,26 @@ def test_paper_snapshot_attestation_is_immutable_and_journal_bound(
     path = tmp_path / "execution.sqlite3"
     snapshot = _flat_snapshot(SnapshotSource.ALPACA_PAPER, "observed-attested")
     store = ReconciliationStore(path)
-    snapshot = _record_adapter_snapshot(store, snapshot, monkeypatch)
+    snapshot = _record_adapter_snapshot(
+        store, snapshot, monkeypatch, previous_close_equity=Decimal("71000")
+    )
+    daily_pnl = ReconciliationStore(path).account_daily_pnl(snapshot.snapshot_id)
+    assert daily_pnl.equity == Decimal("70000")
+    assert daily_pnl.previous_close_equity == Decimal("71000")
+    assert daily_pnl.daily_pnl == Decimal("-1000")
+
+    legacy = ReconciliationStore(tmp_path / "legacy-execution.sqlite3")
+    legacy_snapshot = _flat_snapshot(SnapshotSource.ALPACA_PAPER, "legacy-observed")
+    legacy._record_adapter_snapshot(
+        legacy_snapshot,
+        adapter_version="alpaca-paper-reader-v1",
+        paper_origin="https://paper-api.alpaca.markets",
+        recorded_at=NOW,
+        _capability=reconciliation._ALPACA_READER_CAPABILITY,
+    )
+    ReconciliationStore(legacy.path)
+    with pytest.raises(ValueError, match="lacks prior-close"):
+        legacy.account_daily_pnl(legacy_snapshot.snapshot_id)
 
     with sqlite3.connect(path) as connection:
         connection.execute("DROP TRIGGER paper_snapshot_attestations_no_update")

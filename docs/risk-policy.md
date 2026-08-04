@@ -69,3 +69,6 @@ liquidation value or realized PnL.
 Risk evaluation now carries both quote sides and current whole-share quantity. It checks acquisition
 price deviation at the ask and reduction price deviation at the bid. Quantity-target order notional
 uses that executable side; projected long exposure remains ask-valued.
+Paper snapshot attestation v2 also retains Alpaca `last_equity`. Account daily PnL is derived as
+attested current equity minus prior-close equity, with both snapshot and attestation fingerprints.
+This supplies the daily-loss input only; it does not substitute for per-strategy drawdown evidence.

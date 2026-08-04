@@ -177,6 +177,9 @@ without a quote.
 Risk evaluation requires both quote sides and current whole-share quantity. Buy-side gates use the
 ask; sell-side gates use the bid. The later context builder must source them from the attested bundle
 and preserve its evidence linkage.
+Paper reader v2 retains Alpaca account `last_equity` inside immutable snapshot attestation. The
+store derives account daily PnL from that value and the snapshot's current equity. Legacy v1
+attestations remain verifiable but cannot supply the daily-loss input.
 
 Official references reviewed 2026-08-03:
 
