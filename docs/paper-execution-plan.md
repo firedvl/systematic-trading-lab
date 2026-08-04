@@ -200,6 +200,11 @@ The public risk-decision path now performs that rederivation under its immediate
 and binds the proof into the decision. The caller-context path is private test scaffolding. The
 settled-capacity path reuses the same derivation to release only capacity already represented by the
 current attested portfolio. Neither path adds a broker writer.
+A quantity-target submission preflight now reuses that derivation under the same immediate
+transaction as the single-submitter claim. It requires paper mode, the fixed paper origin, an exact
+current-share delta, all rechecked gates to pass, and the existing reservation to cover current
+economics. The proof is immutable and replay-safe. Weight targets remain blocked because no reviewed
+share-rounding rule exists. No transport or Alpaca write call exists.
 
 Official references reviewed 2026-08-03:
 

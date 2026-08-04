@@ -331,3 +331,10 @@
 - Context: retaining settled reservations double counts exposure already present in the attested portfolio, while releasing them from settlement evidence alone can reuse capacity against stale or incomplete risk inputs.
 - Consequences: later order mutations, stale evidence, unrelated active reservations, and changed replay fail closed. Individual capacity releases and one immutable summary proof share the transaction. The release grants no broker-write authority.
 - Revisit when: multiple concurrent settled batches must share one account without requiring an exclusive active reservation set.
+
+## 2026-08-03 — Paper submission preflight accepts quantity targets only
+
+- Decision: before a quantity-target order enters `submitting`, rederive the complete attested context and reevaluate every risk gate under the same immediate transaction as the single-submitter claim. Require the staged delta to match current shares and current economics to fit within the existing reservation.
+- Context: staging binds an intent and reservation but does not prove that an arbitrary whole-share delta matches a weight target or a later portfolio state.
+- Consequences: preflight binds paper mode, fixed origin, authorization, limits, intent, delta, submitter, and current risk proof. Weight-target submission remains blocked. No broker transport exists.
+- Revisit when: policy defines deterministic weight-to-share rounding and its reservation treatment.
