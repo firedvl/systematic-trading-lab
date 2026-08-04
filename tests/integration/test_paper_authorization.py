@@ -27,7 +27,12 @@ from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityEr
 from systematic_trading_lab.experiments import HoldoutAccessError
 from systematic_trading_lab.fingerprints import canonical_json, canonicalize, fingerprint
 from systematic_trading_lab.orders import OrderLifecycleStore, OrderState, build_order_delta
-from systematic_trading_lab.paper_cancellation import PaperCancellationStore
+from systematic_trading_lab.paper_cancellation import (
+    FakePaperCanceler,
+    FakePaperCancellationError,
+    InjectedAlpacaPaperDelete,
+    PaperCancellationStore,
+)
 from systematic_trading_lab.paper_submission import (
     FakePaperSubmissionError,
     FakePaperSubmitter,
@@ -1585,17 +1590,43 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             claimed_at=settlement_at + timedelta(seconds=2),
         )
     assert fake_calls == [submission_delta.client_order_id]
-    cancellation_store = PaperCancellationStore(fake_success_path)
+    cancel_success_path = tmp_path / "fake-paper-cancel-success.sqlite3"
+    cancel_unknown_path = tmp_path / "fake-paper-cancel-unknown.sqlite3"
+    shutil.copy2(fake_success_path, cancel_success_path)
+    shutil.copy2(fake_success_path, cancel_unknown_path)
     cancel_requested_at = settlement_at + timedelta(seconds=2, milliseconds=400)
-    cancel_attempt = cancellation_store.request(
+    cancel_calls: list[str] = []
+
+    def fake_delete(request: Request) -> bytes:
+        assert request.get_method() == "DELETE"
+        assert request.full_url == ("https://paper-api.alpaca.markets/v2/orders/fake-broker-order")
+        assert request.data is None
+        cancel_calls.append(request.full_url)
+        return b""
+
+    cancel_adapter = InjectedAlpacaPaperDelete("test-key", "test-secret", transport=fake_delete)
+    canceler = FakePaperCanceler(
+        cancel_success_path,
+        cancel_adapter,
+        clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=500),
+    )
+    cancel_attempt = canceler.cancel(
         submission_delta.client_order_id,
         authorization_id=authorization.authorization_id,
         requester="test-operator",
         reason="test cancellation",
-        mode=TradingMode.PAPER,
-        paper_origin="https://paper-api.alpaca.markets",
         requested_at=cancel_requested_at,
     )
+    with pytest.raises(FakePaperCancellationError, match="already attempted"):
+        canceler.cancel(
+            submission_delta.client_order_id,
+            authorization_id=authorization.authorization_id,
+            requester="test-operator",
+            reason="test cancellation",
+            requested_at=cancel_requested_at,
+        )
+    assert cancel_calls == ["https://paper-api.alpaca.markets/v2/orders/fake-broker-order"]
+    cancellation_store = PaperCancellationStore(cancel_success_path)
     cancel_head = cancellation_store.verify_journal()
     assert (
         cancellation_store.request(
@@ -1620,14 +1651,6 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             paper_origin="https://paper-api.alpaca.markets",
             requested_at=cancel_requested_at,
         )
-    cancel_unknown_at = settlement_at + timedelta(seconds=2, milliseconds=500)
-    cancel_unknown = cancellation_store.mark_unknown(
-        cancel_attempt.cancel_id, observed_at=cancel_unknown_at
-    )
-    assert (
-        cancellation_store.mark_unknown(cancel_attempt.cancel_id, observed_at=cancel_unknown_at)
-        == cancel_unknown
-    )
     assert cancellation_store.unresolved() == (cancel_attempt,)
     cancellation_store.record(
         BrokerOrderEvent(
@@ -1642,6 +1665,39 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         )
     )
     assert cancellation_store.unresolved() == ()
+    cancel_unknown_calls: list[str] = []
+
+    def fake_delete_timeout(request: Request) -> bytes:
+        cancel_unknown_calls.append(request.full_url)
+        raise TimeoutError("secret cancel timeout")
+
+    unknown_cancel_adapter = InjectedAlpacaPaperDelete(
+        "test-key", "test-secret", transport=fake_delete_timeout
+    )
+    unknown_canceler = FakePaperCanceler(
+        cancel_unknown_path,
+        unknown_cancel_adapter,
+        clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=500),
+    )
+    with pytest.raises(FakePaperCancellationError, match="outcome is unknown"):
+        unknown_canceler.cancel(
+            submission_delta.client_order_id,
+            authorization_id=authorization.authorization_id,
+            requester="test-operator",
+            reason="test cancellation",
+            requested_at=cancel_requested_at,
+        )
+    unknown_cancellation_store = PaperCancellationStore(cancel_unknown_path)
+    assert len(unknown_cancellation_store.unresolved()) == 1
+    with pytest.raises(FakePaperCancellationError, match="already attempted"):
+        unknown_canceler.cancel(
+            submission_delta.client_order_id,
+            authorization_id=authorization.authorization_id,
+            requester="test-operator",
+            reason="test cancellation",
+            requested_at=cancel_requested_at,
+        )
+    assert cancel_unknown_calls == ["https://paper-api.alpaca.markets/v2/orders/fake-broker-order"]
     unknown_calls: list[str] = []
 
     def fake_post_timeout(_request: Request) -> bytes:

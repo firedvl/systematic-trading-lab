@@ -4,11 +4,16 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from http.client import HTTPException
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote, urlsplit
+from urllib.request import Request
 
-from .alpaca_paper import PAPER_ORIGIN
+from .alpaca_paper import PAPER_ORIGIN, AlpacaPaperError
 from .broker_events import BrokerEventStore, BrokerOrderEvent
 from .domain import TradingMode
 from .execution import JournalIntegrityError
@@ -129,6 +134,28 @@ class PaperCancellationStore(BrokerEventStore):
         paper_origin: str,
         requested_at: datetime,
     ) -> OrderCancellationAttempt:
+        result, _ = self._request_once(
+            order_id,
+            authorization_id=authorization_id,
+            requester=requester,
+            reason=reason,
+            mode=mode,
+            paper_origin=paper_origin,
+            requested_at=requested_at,
+        )
+        return result
+
+    def _request_once(
+        self,
+        order_id: str,
+        *,
+        authorization_id: str,
+        requester: str,
+        reason: str,
+        mode: TradingMode,
+        paper_origin: str,
+        requested_at: datetime,
+    ) -> tuple[OrderCancellationAttempt, bool]:
         if mode is not TradingMode.PAPER or paper_origin != PAPER_ORIGIN:
             raise PermissionError("cancellation requires paper mode and the fixed paper origin")
         _utc(requested_at)
@@ -155,7 +182,7 @@ class PaperCancellationStore(BrokerEventStore):
                             "order is bound to a different cancellation attempt"
                         )
                     connection.commit()
-                    return existing
+                    return existing, False
                 order = connection.execute(
                     "SELECT o.state, o.changed_at, r.authorization_id FROM orders o "
                     "JOIN capacity_reservations r ON r.reservation_id = o.reservation_id "
@@ -217,7 +244,7 @@ class PaperCancellationStore(BrokerEventStore):
             except Exception:
                 connection.rollback()
                 raise
-        return result
+        return result, True
 
     def mark_unknown(self, cancel_id: str, *, observed_at: datetime) -> CancellationUnknownEvidence:
         _utc(observed_at)
@@ -406,6 +433,107 @@ class PaperCancellationStore(BrokerEventStore):
         return result
 
 
+class FakePaperCancellationError(RuntimeError):
+    pass
+
+
+class InjectedAlpacaPaperDelete:
+    """Issue one fixed-origin paper cancel through a required test transport."""
+
+    def __init__(
+        self,
+        api_key: str,
+        secret_key: str,
+        *,
+        transport: Callable[[Request], bytes],
+    ) -> None:
+        if not api_key or not secret_key:
+            raise ValueError("Alpaca API credentials are required")
+        self._api_key = api_key
+        self._secret_key = secret_key
+        self._transport = transport
+
+    def __call__(self, attempt: OrderCancellationAttempt, event: BrokerOrderEvent) -> None:
+        if (
+            event.event_id != attempt.broker_event_id
+            or event.event_fingerprint != attempt.broker_event_fingerprint
+            or event.client_order_id != attempt.order_id
+        ):
+            raise AlpacaPaperError("paper cancellation differs from its broker evidence")
+        request = Request(
+            f"{PAPER_ORIGIN}/v2/orders/{quote(event.broker_order_id, safe='')}",
+            headers={
+                "APCA-API-KEY-ID": self._api_key,
+                "APCA-API-SECRET-KEY": self._secret_key,
+                "Accept": "application/json",
+            },
+            method="DELETE",
+        )
+        _validate_delete(request, event.broker_order_id)
+        try:
+            response = self._transport(request)
+        except HTTPError as error:
+            raise AlpacaPaperError(
+                f"Alpaca paper cancellation failed with HTTP status {error.code}"
+            ) from None
+        except (HTTPException, URLError, TimeoutError, OSError):
+            raise AlpacaPaperError("Alpaca paper cancellation failed") from None
+        if response:
+            raise AlpacaPaperError("Alpaca paper cancellation response is invalid")
+
+
+class FakePaperCanceler:
+    """Exercise one cancellation call without exposing an HTTP transport."""
+
+    def __init__(
+        self,
+        path: Path,
+        transport: Callable[[OrderCancellationAttempt, BrokerOrderEvent], None],
+        *,
+        clock: Callable[[], datetime],
+    ) -> None:
+        self._path = path
+        self._transport = transport
+        self._clock = clock
+
+    def cancel(
+        self,
+        order_id: str,
+        *,
+        authorization_id: str,
+        requester: str,
+        reason: str,
+        requested_at: datetime,
+    ) -> OrderCancellationAttempt:
+        store = PaperCancellationStore(self._path)
+        attempt, created = store._request_once(
+            order_id,
+            authorization_id=authorization_id,
+            requester=requester,
+            reason=reason,
+            mode=TradingMode.PAPER,
+            paper_origin=PAPER_ORIGIN,
+            requested_at=requested_at,
+        )
+        if not created:
+            raise FakePaperCancellationError(
+                "paper cancellation was already attempted; reconcile before any retry"
+            )
+        with store._connect() as connection:
+            event = store._verify_broker_events(connection)[attempt.broker_event_id]
+        try:
+            self._transport(attempt, event)
+        except Exception as error:
+            store.mark_unknown(attempt.cancel_id, observed_at=max(self._now(), requested_at))
+            raise FakePaperCancellationError("paper cancellation outcome is unknown") from error
+        return attempt
+
+    def _now(self) -> datetime:
+        value = self._clock()
+        _utc(value)
+        return value
+
+
 def _latest_event(events: dict[str, BrokerOrderEvent], order_id: str) -> BrokerOrderEvent | None:
     matching = [item for item in events.values() if item.client_order_id == order_id]
     return (
@@ -459,3 +587,17 @@ def _utc_text(value: datetime) -> str:
 def _sha256(name: str, value: str) -> None:
     if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
         raise ValueError(f"{name} fingerprint is invalid")
+
+
+def _validate_delete(request: Request, broker_order_id: str) -> None:
+    parsed = urlsplit(request.full_url)
+    if (
+        request.get_method() != "DELETE"
+        or parsed.scheme != "https"
+        or parsed.netloc != "paper-api.alpaca.markets"
+        or parsed.path != f"/v2/orders/{quote(broker_order_id, safe='')}"
+        or parsed.query
+        or parsed.fragment
+        or request.data is not None
+    ):
+        raise AlpacaPaperError("Alpaca paper cancellation target is not allowed")

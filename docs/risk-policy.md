@@ -125,3 +125,6 @@ and returns normalized broker evidence. It has no production network fallback or
 Cancellation intent is a one-shot record separate from broker order state. It binds the latest
 nonterminal event and never releases capacity. Unknown outcome remains unresolved until a later
 authoritative terminal event or reconciliation proves the result; no retry path exists.
+The injected cancellation adapter has no production fallback and permits only the fixed paper
+single-order DELETE target. Empty acceptance grants no capacity release. Timeout or invalid response
+records unknown outcome, and the immutable attempt blocks another call.

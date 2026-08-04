@@ -359,3 +359,10 @@
 - Context: a cancel request can race with partial or full fills. Replacing broker order state with `canceling` would hide authoritative fill progress.
 - Consequences: the attempt binds the latest broker event, authorization, operator, reason, paper origin, and time. Unknown outcome never retries or releases capacity. Later broker events remain authoritative and terminal state resolves the attempt.
 - Revisit when: the injected cancellation adapter and lookup recovery can prove a richer mutation lifecycle without obscuring fills.
+
+## 2026-08-03 — Cancel acceptance is not cancellation proof
+
+- Decision: let only the creator of an immutable cancellation attempt call the injected fixed-origin single-order DELETE adapter. Treat an empty response as request acceptance, not terminal order evidence.
+- Context: Alpaca can accept a cancel request while a fill or cancellation remains in flight, and a timeout cannot reveal whether the request arrived.
+- Consequences: timeout or invalid response records unknown outcome. Existing attempts block repeat calls. Only later broker evidence can resolve the order and release eligible capacity. No production transport exists.
+- Revisit when: production paper mutation authority and cancellation lookup recovery are reviewed together.

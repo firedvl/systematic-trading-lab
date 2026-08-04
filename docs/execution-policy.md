@@ -88,6 +88,10 @@ The request binds the latest nonterminal broker event, authorization, operator, 
 origin, and time. Unknown outcome is separate sanitized evidence and never permits retry or capacity
 release. A later terminal broker event resolves the pending attempt through the existing order and
 capacity rules.
+The cancellation coordinator lets only the process that creates the attempt invoke the injected
+adapter. The adapter permits only the fixed paper `DELETE /v2/orders/{broker_order_id}` target and an
+empty acceptance response. Acceptance does not claim cancellation succeeded. Timeout or invalid
+response records unknown outcome; existing attempts block every repeat call.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

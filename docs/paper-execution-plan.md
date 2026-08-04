@@ -220,6 +220,10 @@ attempt binds the current acknowledged or partially filled broker event and rema
 order fill state. A failed future call can record sanitized unknown-outcome evidence, and every
 repeat remains blocked. Only a later terminal broker event resolves the attempt; zero-fill capacity
 release still occurs through the existing broker-event transaction.
+The injected-only cancellation adapter and fake coordinator now cover the exact single-order DELETE
+boundary. Only the creator of an immutable attempt may call the adapter. An empty response means the
+request was accepted, not that the order is canceled. Timeout becomes unknown evidence, and later
+broker lookup or terminal event must resolve either case before any retry.
 
 Official references reviewed 2026-08-03:
 
