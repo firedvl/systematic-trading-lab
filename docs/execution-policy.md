@@ -155,6 +155,11 @@ pair across both operations. Unbound injected attempts do not count. Assessment 
 matching installed identity remains ineligible. Even an eligible assessment cannot grant transport
 authority: production transport remains absent and runtime broker-write authority is hard-coded false.
 
+The authorization's code commit identifies the qualified candidate research code. The activation's
+code commit identifies the installed execution build. The authorization fingerprint retains the
+first binding; process opt-in and fresh installed-runtime identity retain the second. They need not
+name the same commit, and either mismatch blocks the attempt.
+
 Runtime build verification is read-only. It accepts only a strict commit-bound manifest whose wheel
 name and SHA-256 match the supplied artifact, then requires GitHub attestations for both files from
 the fixed repository, fixed signer workflow, and GitHub-hosted runner boundary. It returns an

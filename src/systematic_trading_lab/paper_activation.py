@@ -181,7 +181,6 @@ class PaperWriteActivationStore(RiskStore):
                 or activation.risk_configuration_fingerprint != limits.configuration_fingerprint
                 or authorization.account_id != activation.account_id
                 or limits.account_id != activation.account_id
-                or authorization.code_commit != activation.code_commit
                 or emergency.disabled
                 or emergency.generation != activation.emergency_generation
                 or activation.starts_at < authorization.authorized_at

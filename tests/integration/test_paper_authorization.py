@@ -706,7 +706,7 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         authorization_fingerprint=authorization.authorization_fingerprint,
         risk_configuration_fingerprint=limits.configuration_fingerprint,
         account_id=limits.account_id,
-        code_commit=authorization.code_commit,
+        code_commit="b" * 40,
         paper_origin="https://paper-api.alpaca.markets",
         operations=("cancel", "submit"),
         approved_by="test-approver",
@@ -717,7 +717,10 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         starts_at=NOW + timedelta(seconds=18),
         expires_at=NOW + timedelta(minutes=5),
     )
+    assert activation.code_commit != authorization.code_commit
     assert activation_store.activate(activation, limits) == activation
+    with pytest.raises(JournalIntegrityError, match="exact current authority"):
+        activation_store.activate(replace(activation, authorization_fingerprint="f" * 64), limits)
     request = PaperWriteRequest(activation.activation_id, activation.code_commit)
     activation_assessment = activation_store.assess(
         request,
