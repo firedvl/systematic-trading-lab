@@ -8,9 +8,23 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
+from http.client import HTTPException
 from pathlib import Path
+from typing import cast
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
+from urllib.request import Request
 
-from .alpaca_paper import PAPER_ORIGIN
+from .alpaca_paper import (
+    PAPER_ORIGIN,
+    AlpacaPaperError,
+    _lookup_status,
+    _optional_amount,
+    _supported_order_envelope,
+    _text,
+    _timestamp,
+    _whole_shares,
+)
 from .broker_events import BrokerEventStore, BrokerOrderEvent
 from .domain import TradingMode
 from .execution import JournalIntegrityError
@@ -299,6 +313,122 @@ class FakePaperSubmissionError(RuntimeError):
     pass
 
 
+class InjectedAlpacaPaperPost:
+    """Normalize one fixed-origin paper order POST through a required test transport."""
+
+    def __init__(
+        self,
+        api_key: str,
+        secret_key: str,
+        *,
+        transport: Callable[[Request], bytes],
+        clock: Callable[[], datetime],
+    ) -> None:
+        if not api_key or not secret_key:
+            raise ValueError("Alpaca API credentials are required")
+        self._api_key = api_key
+        self._secret_key = secret_key
+        self._transport = transport
+        self._clock = clock
+
+    def __call__(self, delta: OrderDelta, preflight: PaperSubmissionPreflight) -> BrokerOrderEvent:
+        if (
+            delta.client_order_id != preflight.order_id
+            or fingerprint(delta) != preflight.order_delta_fingerprint
+            or preflight.paper_origin != PAPER_ORIGIN
+        ):
+            raise AlpacaPaperError("paper order differs from its submission preflight")
+        body = {
+            "client_order_id": delta.client_order_id,
+            "extended_hours": False,
+            "order_class": "simple",
+            "qty": str(delta.quantity),
+            "side": delta.side.value,
+            "symbol": delta.symbol,
+            "time_in_force": "day",
+            "type": "market",
+        }
+        request = Request(
+            f"{PAPER_ORIGIN}/v2/orders",
+            data=canonical_json(body).encode(),
+            headers={
+                "APCA-API-KEY-ID": self._api_key,
+                "APCA-API-SECRET-KEY": self._secret_key,
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        _validate_post(request, body)
+        try:
+            value = json.loads(self._transport(request))
+        except HTTPError as error:
+            raise AlpacaPaperError(
+                f"Alpaca paper submission failed with HTTP status {error.code}"
+            ) from None
+        except (
+            HTTPException,
+            URLError,
+            TimeoutError,
+            OSError,
+            UnicodeError,
+            json.JSONDecodeError,
+            ValueError,
+        ):
+            raise AlpacaPaperError("Alpaca paper submission failed") from None
+        if not isinstance(value, dict):
+            raise AlpacaPaperError("Alpaca paper submission response has an invalid shape")
+        status = _lookup_status(value)
+        _supported_order_envelope(value)
+        filled_quantity = _whole_shares(value, "filled_qty", positive=False)
+        filled_average_price = _optional_amount(value, "filled_avg_price")
+        if (
+            _text(value, "client_order_id", "order") != delta.client_order_id
+            or _text(value, "symbol", "order") != delta.symbol
+            or _text(value, "side", "order") != delta.side.value
+            or _text(value, "type", "order") != delta.order_type
+            or _whole_shares(value, "qty", positive=True) != delta.quantity
+            or (filled_quantity == 0) != (filled_average_price is None)
+        ):
+            raise AlpacaPaperError("Alpaca paper submission response differs from the order")
+        provider_timestamp = _timestamp(value, "updated_at")
+        observed_at = self._now()
+        broker_order_id = _text(value, "id", "order")
+        event_identity = {
+            "broker_order_id": broker_order_id,
+            "client_order_id": delta.client_order_id,
+            "status": status,
+            "filled_quantity": filled_quantity,
+            "filled_average_price": filled_average_price,
+            "provider_timestamp": provider_timestamp,
+            "observed_at": observed_at,
+        }
+        try:
+            return BrokerOrderEvent(
+                event_id=f"alpaca-submit-{fingerprint(event_identity)}",
+                broker_order_id=broker_order_id,
+                client_order_id=delta.client_order_id,
+                state={
+                    "partially_filled": OrderState.PARTIALLY_FILLED,
+                    "filled": OrderState.FILLED,
+                    "canceled": OrderState.CANCELED,
+                    "expired": OrderState.CANCELED,
+                    "rejected": OrderState.REJECTED,
+                }.get(status, OrderState.ACKNOWLEDGED),
+                cumulative_filled_quantity=filled_quantity,
+                cumulative_average_fill_price=filled_average_price,
+                provider_timestamp=provider_timestamp,
+                observed_at=observed_at,
+            )
+        except ValueError as error:
+            raise AlpacaPaperError("Alpaca paper submission response is invalid") from error
+
+    def _now(self) -> datetime:
+        value = self._clock()
+        _utc(value)
+        return value
+
+
 class FakePaperSubmitter:
     """Exercise one submission outcome without exposing an HTTP transport."""
 
@@ -391,3 +521,21 @@ def _utc_text(value: datetime) -> str:
 def _sha256(name: str, value: str) -> None:
     if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
         raise ValueError(f"{name} fingerprint is invalid")
+
+
+def _validate_post(request: Request, expected_body: dict[str, object]) -> None:
+    parsed = urlsplit(request.full_url)
+    try:
+        body = json.loads(cast(bytes, request.data) or b"")
+    except (UnicodeError, json.JSONDecodeError):
+        body = None
+    if (
+        request.get_method() != "POST"
+        or parsed.scheme != "https"
+        or parsed.netloc != "paper-api.alpaca.markets"
+        or parsed.path != "/v2/orders"
+        or parsed.query
+        or parsed.fragment
+        or body != expected_body
+    ):
+        raise AlpacaPaperError("Alpaca paper submission target is not allowed")

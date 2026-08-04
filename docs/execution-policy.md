@@ -79,6 +79,10 @@ The fake-only coordinator consumes a newly created preflight once. It accepts no
 evidence from an injected callable and records it through the existing broker-event authority. Any
 call or evidence failure moves the order to `submission-unknown`. Existing preflight evidence blocks
 another call, including after a process restart, until separate reconciliation resolves the outcome.
+The injected submission adapter has no default network function. It constructs only the fixed paper
+`POST /v2/orders` target and the supported simple whole-share day-market body. It requires the
+response to echo the exact client ID, symbol, side, quantity, type, and order envelope before it
+creates normalized broker evidence. HTTP and parsing failures expose no response body or credentials.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

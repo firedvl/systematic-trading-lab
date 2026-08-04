@@ -30,6 +30,7 @@ from systematic_trading_lab.orders import OrderLifecycleStore, OrderState, build
 from systematic_trading_lab.paper_submission import (
     FakePaperSubmissionError,
     FakePaperSubmitter,
+    InjectedAlpacaPaperPost,
     PaperSubmissionPreflightStore,
 )
 from systematic_trading_lab.position_settlement import PositionSettlementStore
@@ -1518,24 +1519,50 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         )
     fake_calls: list[str] = []
 
-    def fake_acknowledgement(fake_delta: object, fake_preflight: object) -> BrokerOrderEvent:
-        assert fake_delta == submission_delta
-        assert fake_preflight
+    def fake_post(request: Request) -> bytes:
+        assert request.get_method() == "POST"
+        assert request.full_url == "https://paper-api.alpaca.markets/v2/orders"
+        assert json.loads(cast(bytes, request.data) or b"") == {
+            "client_order_id": submission_delta.client_order_id,
+            "extended_hours": False,
+            "order_class": "simple",
+            "qty": "1",
+            "side": "buy",
+            "symbol": "SPY",
+            "time_in_force": "day",
+            "type": "market",
+        }
         fake_calls.append(submission_delta.client_order_id)
-        return BrokerOrderEvent(
-            event_id="fake-submit-acknowledged",
-            broker_order_id="fake-broker-order",
-            client_order_id=submission_delta.client_order_id,
-            state=OrderState.ACKNOWLEDGED,
-            cumulative_filled_quantity=0,
-            cumulative_average_fill_price=None,
-            provider_timestamp=settlement_at + timedelta(seconds=2, milliseconds=100),
-            observed_at=settlement_at + timedelta(seconds=2, milliseconds=200),
-        )
+        return json.dumps(
+            {
+                "id": "fake-broker-order",
+                "client_order_id": submission_delta.client_order_id,
+                "symbol": "SPY",
+                "side": "buy",
+                "qty": "1",
+                "filled_qty": "0",
+                "filled_avg_price": None,
+                "type": "market",
+                "time_in_force": "day",
+                "extended_hours": False,
+                "order_class": "simple",
+                "notional": None,
+                "legs": None,
+                "status": "accepted",
+                "updated_at": (settlement_at + timedelta(seconds=2, milliseconds=100)).isoformat(),
+            }
+        ).encode()
+
+    fake_post_adapter = InjectedAlpacaPaperPost(
+        "test-key",
+        "test-secret",
+        transport=fake_post,
+        clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=200),
+    )
 
     fake_submitter = FakePaperSubmitter(
         fake_success_path,
-        fake_acknowledgement,
+        fake_post_adapter,
         clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=300),
     )
     assert (
@@ -1559,13 +1586,20 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     assert fake_calls == [submission_delta.client_order_id]
     unknown_calls: list[str] = []
 
-    def fake_timeout(_delta: object, _preflight: object) -> BrokerOrderEvent:
+    def fake_post_timeout(_request: Request) -> bytes:
         unknown_calls.append(submission_delta.client_order_id)
-        raise TimeoutError("sanitized fake timeout")
+        raise TimeoutError("secret fake timeout")
+
+    unknown_post_adapter = InjectedAlpacaPaperPost(
+        "test-key",
+        "test-secret",
+        transport=fake_post_timeout,
+        clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=200),
+    )
 
     unknown_submitter = FakePaperSubmitter(
         fake_unknown_path,
-        fake_timeout,
+        unknown_post_adapter,
         clock=lambda: settlement_at + timedelta(seconds=2, milliseconds=300),
     )
     with pytest.raises(FakePaperSubmissionError, match="outcome is unknown"):
