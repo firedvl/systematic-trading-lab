@@ -506,3 +506,10 @@
 - Context: M5 needs measured continuity and disconnect evidence before a scheduler or recovery supervisor can make operational decisions.
 - Consequences: the campaign fixes expected positions, account, maximum sample gap, and end time. Assessment reports current staleness, historical failure and drift counts, and the largest completed gap. Recovery samples never erase prior failures. No observation can submit, cancel, settle, clear emergency state, or approve risk.
 - Revisit when: measured sampling behavior defines scheduler tolerances and the replay/shadow equivalence record needs shared campaign identity.
+
+## 2026-08-04 — Equivalence compares immutable action plans
+
+- Decision: bind one replay plan, one shadow plan, and paper actions derived from stored quantity intents under the active observation campaign, then retain exact mismatch reasons.
+- Context: M5 needs replay, shadow, and paper comparison evidence without giving a comparison tool strategy, risk, or broker authority.
+- Consequences: strict external plans bind their source, configuration, targets, and evidence fingerprints. The paper side is rederived from immutable intents. Strategy, source, configuration, or target differences remain append-only failed evidence. The comparison does not claim fill equivalence or approve execution.
+- Revisit when: a scheduler-independent replay or shadow runner can emit the strict plan directly instead of handing the recorder a file.

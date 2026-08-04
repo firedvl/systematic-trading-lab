@@ -27,7 +27,7 @@ schema initialization. Neither adds broker authority.
 
 ## M5 — Equivalence and sustained paper operation
 
-Replay/shadow/paper comparison, supervisor recovery, disconnect and stale-data handling, and sustained paper campaign. The current slice adds immutable broker-read-only campaigns bound to production-attested baseline positions, explicit healthy, drift, read-failure, and stale states, maximum-gap measurement, and CLI sampling without broker-write authority. Gate: discrepancies are explained; recovery drills pass; operating limits hold for the approved observation period.
+Replay/shadow/paper comparison, supervisor recovery, disconnect and stale-data handling, and sustained paper campaign. The current slices add immutable broker-read-only campaigns bound to production-attested baseline positions, explicit healthy, drift, read-failure, and stale states, maximum-gap measurement, CLI sampling, and immutable action-plan comparisons across replay, shadow, and stored paper intents. Neither path has broker-write authority. Gate: discrepancies are explained; recovery drills pass; operating limits hold for the approved observation period.
 
 ## M6 — Bounded automated research
 

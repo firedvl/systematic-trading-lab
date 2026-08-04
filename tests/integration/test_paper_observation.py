@@ -8,7 +8,12 @@ from pathlib import Path
 import pytest
 
 from systematic_trading_lab.alpaca_paper import AlpacaPaperReader
-from systematic_trading_lab.execution import JournalIntegrityError
+from systematic_trading_lab.execution import ExecutionIntent, ExecutionStore, JournalIntegrityError
+from systematic_trading_lab.paper_equivalence import (
+    ActionPlan,
+    ActionTarget,
+    PaperEquivalenceStore,
+)
 from systematic_trading_lab.paper_observation import (
     PaperObservationStore,
     record_production_observation,
@@ -114,3 +119,98 @@ def test_paper_observation_records_continuity_failures_and_drift(tmp_path: Path)
         )
     with pytest.raises(JournalIntegrityError, match="stored paper observation"):
         PaperObservationStore(path)
+
+
+def test_paper_equivalence_binds_intents_and_retains_mismatch(tmp_path: Path) -> None:
+    path = tmp_path / "execution.sqlite3"
+    baseline = _attest(path, _snapshot("equivalence-baseline", NOW))
+    PaperObservationStore(path).start(
+        campaign_id="paper-week-1",
+        baseline_snapshot_id=baseline.snapshot_id,
+        maximum_gap_seconds=60,
+        duration=timedelta(hours=1),
+    )
+    intent = ExecutionIntent(
+        idempotency_key="paper-spy",
+        strategy_id="strategic-allocation-portfolio",
+        strategy_version="1",
+        symbol="SPY",
+        decision_timestamp=NOW,
+        target_weight=None,
+        target_quantity=4,
+        reason="paper equivalence test",
+        source_data_fingerprint="a" * 64,
+        configuration_fingerprint="b" * 64,
+        reference_price=Decimal("700"),
+        expires_at=NOW + timedelta(minutes=5),
+    )
+    ExecutionStore(path).record_intent(intent, received_at=NOW)
+    targets = (ActionTarget("SPY", 4),)
+    replay = ActionPlan(
+        "replay",
+        intent.strategy_id,
+        intent.strategy_version,
+        intent.source_data_fingerprint,
+        intent.configuration_fingerprint,
+        targets,
+        ("c" * 64,),
+    )
+    shadow = ActionPlan(
+        "shadow",
+        intent.strategy_id,
+        intent.strategy_version,
+        intent.source_data_fingerprint,
+        intent.configuration_fingerprint,
+        targets,
+        ("d" * 64,),
+    )
+    store = PaperEquivalenceStore(path)
+    record = store.record(
+        comparison_id="initial-entry",
+        campaign_id="paper-week-1",
+        replay=replay,
+        shadow=shadow,
+        paper_intent_keys=(intent.idempotency_key,),
+        recorded_at=NOW + timedelta(seconds=1),
+    )
+    assert record.equivalent
+    assert store.get("initial-entry") == record
+    assert (
+        store.record(
+            comparison_id="initial-entry",
+            campaign_id="paper-week-1",
+            replay=replay,
+            shadow=shadow,
+            paper_intent_keys=(intent.idempotency_key,),
+            recorded_at=NOW + timedelta(seconds=2),
+        )
+        == record
+    )
+
+    mismatch = store.record(
+        comparison_id="changed-shadow",
+        campaign_id="paper-week-1",
+        replay=replay,
+        shadow=ActionPlan(
+            "shadow",
+            intent.strategy_id,
+            intent.strategy_version,
+            intent.source_data_fingerprint,
+            intent.configuration_fingerprint,
+            (ActionTarget("SPY", 5),),
+            ("e" * 64,),
+        ),
+        paper_intent_keys=(intent.idempotency_key,),
+        recorded_at=NOW + timedelta(seconds=2),
+    )
+    assert not mismatch.equivalent
+    assert mismatch.reasons == ("target-mismatch",)
+
+    with sqlite3.connect(path) as connection:
+        connection.execute("DROP TRIGGER paper_equivalence_records_no_update")
+        connection.execute(
+            "UPDATE paper_equivalence_records SET record_json = '{}' "
+            "WHERE comparison_id = 'initial-entry'"
+        )
+    with pytest.raises(JournalIntegrityError, match="stored paper equivalence"):
+        PaperEquivalenceStore(path)
