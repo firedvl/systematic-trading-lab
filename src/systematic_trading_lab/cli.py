@@ -343,9 +343,8 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             }
         )
         return 0 if assessment.ready else 1
-    service = DatasetService(layout)
-    universe = load_research_universe()
     if arguments.command == "experiment":
+        service = DatasetService(layout)
         registry = ExperimentRegistry(layout.experiments)
         if arguments.experiment_command == "create-campaign":
             _print(
@@ -535,6 +534,7 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         _print({"mode": settings.mode.value, "home": str(settings.home), "checks": checks})
         return 0 if all(checks.values()) else 1
     if arguments.command == "status":
+        service = DatasetService(layout)
         _print(
             {
                 "mode": settings.mode.value,
@@ -544,9 +544,14 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             }
         )
         return 0
+    service = DatasetService(layout)
     if arguments.data_command == "import-fixture":
         imported = service.import_from(
-            FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), universe
+            FixtureProvider(),
+            fixture_symbols(),
+            Timeframe.DAILY,
+            fixture_request(),
+            load_research_universe(),
         )
         _print(imported.__dict__)
         return 0
@@ -561,7 +566,7 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             fixture_symbols(),
             Timeframe.DAILY,
             TimestampRange(_parse_utc(arguments.start), _parse_utc(arguments.end)),
-            universe,
+            load_research_universe(),
         )
         _print(imported.__dict__)
         return 0
