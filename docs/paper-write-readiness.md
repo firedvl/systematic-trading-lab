@@ -76,5 +76,6 @@ The dormant activation binds the exact authorization, limits, account, code comm
 origin, submit/cancel scope, distinct approver and operator, attempt cap, emergency generation, and
 active interval. A separate process opt-in names its activation and commit. Submission and
 cancellation can recheck and bind both records inside each one-shot transaction. Assessment counts
-only the exact bound pair across both operations. The supplied commit string is not trusted runtime
-code identity, so assessment remains ineligible and no bound path can call a transport.
+only the exact bound pair across both operations. A fresh attested installed identity must match and
+is persisted with each new bound attempt. Even an eligible assessment cannot call a transport because
+runtime write authority remains false and no production mutation transport exists.
