@@ -228,6 +228,10 @@ Cancel-all planning now records the exact sorted acknowledged and partially fill
 with each latest broker event. It does not call a bulk endpoint or create an implicit shared outcome.
 Execution must create separate one-shot attempts so partial progress, timeout, fills, and terminal
 resolution remain visible per order.
+The fake cancel-all consumer now executes that plan one order at a time. The attempt transaction
+rechecks the exact planned event to close the plan-to-call race. Results distinguish accepted,
+unknown, prior-attempt, and stale items. A restart skips durable attempts and continues remaining
+items without repeating calls.
 
 Official references reviewed 2026-08-03:
 
