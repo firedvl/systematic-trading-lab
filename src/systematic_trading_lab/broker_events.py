@@ -40,9 +40,9 @@ _BROKER_TRANSITIONS = {
         OrderState.FILLED,
         OrderState.CANCELED,
     },
-    OrderState.FILLED: set(),
-    OrderState.CANCELED: set(),
-    OrderState.REJECTED: set(),
+    OrderState.FILLED: {OrderState.FILLED},
+    OrderState.CANCELED: {OrderState.CANCELED},
+    OrderState.REJECTED: {OrderState.REJECTED},
 }
 _LOCAL_BROKER_TRANSITIONS = {
     OrderState.SUBMITTING: _BROKER_STATES,
