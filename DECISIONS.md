@@ -492,3 +492,10 @@
 - Context: the first 4-share SPY paper fill resolved exactly, but a second identical filled lookup was rejected before terminal self-replay support existed and set emergency generation 3.
 - Consequences: another emergency reason, changed terminal economics, missing lookup provenance, open orders, position drift, cash drift, stale evidence, or an unstable sample blocks recovery. The clear binds its complete proof and grants no broker mutation. A later reviewed clear may precede settlement of an older confirmed fill; an active emergency still blocks settlement.
 - Revisit when: sustained paper supervision owns a general incident-classified recovery workflow.
+
+## 2026-08-04 — Expired filled reservations still receive settlement evidence
+
+- Decision: permit settled-capacity release after a positive-fill reservation expires when the fresh attested portfolio contains the fill, the settlement and emergency generation match, the reservation remains unreleased, and no unrelated active reservation exists.
+- Context: the first SPY fill required reviewed terminal-replay recovery longer than the reservation lifetime. Expiry removed pending capacity but left no immutable record that the filled reservation had settled into broker holdings.
+- Consequences: expiry cannot block accounting completion or restore pending capacity. The release remains append-only, idempotent, and broker-free. Any missing fill, stale context, later order change, prior release, or unrelated active reservation fails closed.
+- Revisit when: sustained supervision can settle fills within the reservation lifetime or concurrent settlement needs a broader account-wide proof.

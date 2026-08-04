@@ -503,12 +503,8 @@ class PositionSettlementStore(BrokerEventStore):
             )
             if not reservation_ids:
                 reasons.append("no-positive-fill-reservation")
-            if any(
-                row[0] in reservation_ids
-                and (_parse_utc(str(row[1])) <= assessed_at or row[3] is not None)
-                for row in rows
-            ):
-                reasons.append("reservation-inactive")
+            if any(row[0] in reservation_ids and row[3] is not None for row in rows):
+                reasons.append("reservation-already-released")
             if any(
                 row[3] is None
                 and _parse_utc(str(row[1])) > assessed_at
@@ -648,13 +644,23 @@ class PositionSettlementStore(BrokerEventStore):
                 )
             )
             if evidence.settlement_mode == _FILL_SETTLEMENT_MODE:
+                recovery_clear = _matches_terminal_replay_clear(
+                    emergency_payload,
+                    evidence=evidence,
+                    observed_cash=snapshot.cash,
+                    observed_after=_parse_utc(str(emergency_event[0])),
+                    observation_times=observation_times,
+                )
                 mode_invalid = (
                     advance_row is None
                     or advance is None
                     or later_advance is not None
                     or snapshot.positions != advance.positions
                     or any(timestamp < advance.advanced_at for timestamp in observation_times)
-                    or _parse_utc(str(emergency_event[0])) > advance.advanced_at
+                    or (
+                        _parse_utc(str(emergency_event[0])) > advance.advanced_at
+                        and not recovery_clear
+                    )
                 )
             else:
                 reconciliation_row = connection.execute(
@@ -700,6 +706,31 @@ def _decode_advance(value: object) -> ExpectedPositionAdvance:
     from .broker_events import _decode_expected_position_advance
 
     return _decode_expected_position_advance(value)
+
+
+def _matches_terminal_replay_clear(
+    payload: object,
+    *,
+    evidence: PositionSettlementEvidence,
+    observed_cash: Decimal,
+    observed_after: datetime,
+    observation_times: tuple[datetime, datetime, datetime],
+) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    try:
+        return (
+            payload.get("baseline_id") == evidence.baseline_id
+            and payload.get("authorization_id") == evidence.authorization_id
+            and payload.get("risk_configuration_fingerprint")
+            == evidence.risk_configuration_fingerprint
+            and payload.get("order_ids") == [item[0] for item in evidence.terminal_orders]
+            and Decimal(str(payload.get("expected_cash"))) == observed_cash
+            and payload.get("proof_fingerprint") == payload.get("cause_fingerprint")
+            and observed_after <= min(observation_times)
+        )
+    except ArithmeticError:
+        return False
 
 
 def _decode_evidence(value: object) -> PositionSettlementEvidence:

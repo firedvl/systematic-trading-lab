@@ -200,7 +200,9 @@ legacy caller context path.
 The public risk-decision path now performs that rederivation under its immediate write transaction
 and binds the proof into the decision. The caller-context path is private test scaffolding. The
 settled-capacity path reuses the same derivation to release only capacity already represented by the
-current attested portfolio. Neither path adds a broker writer.
+current attested portfolio. It accepts an expired filled reservation because expiry already removes
+pending capacity, but it still requires an unreleased settled fill and no unrelated active
+reservation. Neither path adds a broker writer.
 A quantity-target submission preflight now reuses that derivation under the same immediate
 transaction as the single-submitter claim. It requires paper mode, the fixed paper origin, an exact
 current-share delta, all rechecked gates to pass, and the existing reservation to cover current

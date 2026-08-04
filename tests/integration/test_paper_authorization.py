@@ -611,6 +611,7 @@ def test_terminal_replay_recovery_requires_stable_exact_post_fill_state(
         settled_at=settlement_at,
     )
     assert settlement.observed_snapshot_id == settled_snapshot.snapshot_id
+    PositionSettlementStore(store.path)
 
 
 def test_reconciliation_store_persists_flat_baseline_and_results(
@@ -1078,7 +1079,7 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     intent = replace(
         _intent(report),
         decision_timestamp=NOW + timedelta(seconds=16),
-        expires_at=NOW + timedelta(minutes=20),
+        expires_at=NOW + timedelta(seconds=25),
     )
     store.record_intent(intent, received_at=NOW + timedelta(seconds=17))
     risk_context = replace(
@@ -1665,9 +1666,9 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     assert context.current_gross_exposure == Decimal("300.3")
     assert context.current_symbol_notional == Decimal("300.3")
     assert context.current_symbol_quantity == 3
-    assert context.pending_buy_notional == Decimal("15000")
-    assert context.pending_order_notional == Decimal("15000")
-    assert context.pending_order_count == 1
+    assert context.pending_buy_notional == Decimal("0")
+    assert context.pending_order_notional == Decimal("0")
+    assert context.pending_order_count == 0
     assert context.orders_last_minute == 1
     assert context.daily_pnl == Decimal("0")
     assert context.strategy_drawdown == checkpoint.strategy_drawdown

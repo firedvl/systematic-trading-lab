@@ -157,6 +157,15 @@ class SettledCapacityStore(AttestedRiskContextStore):
                 active = self._active_reservation_set(
                     connection, account_id=limits.account_id, at=released_at
                 )
+                settled_active_ids = tuple(
+                    sorted(
+                        str(row[0])
+                        for row in rows
+                        if row[0] in reservation_ids
+                        and row[4] is None
+                        and datetime.fromisoformat(str(row[2]).replace("Z", "+00:00")) > released_at
+                    )
+                )
                 later_order = connection.execute(
                     "SELECT 1 FROM journal j JOIN orders o ON o.order_id = j.entity_id "
                     "JOIN capacity_reservations r ON r.reservation_id = o.reservation_id "
@@ -166,17 +175,9 @@ class SettledCapacityStore(AttestedRiskContextStore):
                 ).fetchone()
                 if (
                     not reservation_ids
-                    or active.reservation_ids != reservation_ids
+                    or active.reservation_ids != settled_active_ids
                     or later_order is not None
-                    or any(
-                        row[0] in reservation_ids
-                        and (
-                            row[4] is not None
-                            or datetime.fromisoformat(str(row[2]).replace("Z", "+00:00"))
-                            <= released_at
-                        )
-                        for row in rows
-                    )
+                    or any(row[0] in reservation_ids and row[4] is not None for row in rows)
                 ):
                     raise JournalIntegrityError(
                         "settled capacity is not complete, current, and exclusive"

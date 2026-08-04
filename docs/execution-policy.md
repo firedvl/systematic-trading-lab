@@ -70,7 +70,9 @@ reservation, session, or emergency values. The exact provenance fingerprint ente
 risk decision. One intent can receive only one exact decision; changed replay fails closed.
 The same transaction-bound context permits one narrow post-settlement mutation: replacing the
 exclusive positive-fill reservation set after its exposure appears in the current attested
-portfolio. It grants no broker-write authority.
+portfolio. A filled reservation may expire before this proof completes; expiry removes pending
+capacity but does not block the immutable release record. Any unrelated active reservation still
+blocks release. It grants no broker-write authority.
 A separate submission preflight accepts only quantity-target intents. Under one immediate
 transaction it rederives the attested context without the order's own reservation, reevaluates every
 risk gate, requires the staged delta to match current shares and the existing reservation to cover

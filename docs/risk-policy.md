@@ -119,7 +119,9 @@ the intent's own reservation and returns the original receipt; a changed second 
 intent fails closed.
 Settled-capacity replay binds the authorization, settlement proof, symbol, reviewed-limit
 fingerprint, attested-context proof, exact active reservation set, and release time. Exact replay is
-idempotent; any changed request fails closed.
+idempotent; any changed request fails closed. A positive-fill reservation may expire before this
+proof completes. The release then requires that no unrelated reservation remains active and records
+the expired reservation as settled rather than treating it as pending capacity.
 Immediately before a quantity-target order can enter `submitting`, preflight rederives the complete
 attested context under the submitter-claim transaction and reevaluates every gate without counting
 the order's own reservation twice. The staged delta must match current shares, and current order,
