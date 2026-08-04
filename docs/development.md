@@ -10,7 +10,7 @@ manifest, then uploads both in one retained artifact. This build path does not p
 runtime installed or loaded that wheel. The runtime verifier separately requires a non-editable
 archive install, the verified wheel hash in `direct_url.json`, exact wheel-owned files through both
 `RECORD` copies, and loaded modules rooted in that distribution. The repository is public, so GitHub
-can persist its artifact attestations. Main run `30888436276` produced the latest verified wheel and
-manifest for commit `8846a16529995fbebeb3e5f1cd088034f4d06418`. If attestation fails, the workflow
+can persist its artifact attestations. Main run `30933665065` produced the latest verified wheel and
+manifest for commit `7f4a0a65fd449bf77c71261cd53bedc4727276e6`. If attestation fails, the workflow
 retains the unsigned files for diagnosis and still reports failure; never treat that artifact as
 verified provenance.

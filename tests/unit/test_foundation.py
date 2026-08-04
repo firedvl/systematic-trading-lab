@@ -38,6 +38,20 @@ def test_configuration_defaults_offline_and_rejects_live() -> None:
         load_settings({**request_values, "TRADING_LAB_MODE": "research"})
 
 
+def test_doctor_does_not_load_unused_research_universe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "systematic_trading_lab.cli.load_research_universe",
+        lambda: pytest.fail("universe must not load"),
+    )
+
+    assert (
+        run(parser().parse_args(["doctor"]), load_settings({"TRADING_LAB_HOME": str(tmp_path)}))
+        == 0
+    )
+
+
 def test_dotenv_loads_supported_values_without_overriding_environment(tmp_path: Path) -> None:
     path = tmp_path / ".env"
     path.write_text(
