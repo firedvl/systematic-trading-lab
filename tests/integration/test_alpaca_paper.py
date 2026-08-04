@@ -34,6 +34,7 @@ def _payloads(**changes: object) -> dict[str, object]:
             "status": "ACTIVE",
             "cash": "1000.00",
             "equity": "1250.00",
+            "last_equity": "1300.00",
             "buying_power": "2000.00",
             "account_blocked": False,
             "trading_blocked": False,
@@ -155,6 +156,16 @@ def test_reader_normalizes_complete_portfolio_and_clock_with_get_only_requests()
         "record_order_lookup",
         "record_portfolio",
     }
+
+
+def test_reader_rejects_invalid_prior_close_equity() -> None:
+    payloads = _payloads()
+    account = payloads["/v2/account"]
+    assert isinstance(account, dict)
+    account["last_equity"] = "NaN"
+
+    with pytest.raises(AlpacaPaperError, match="last_equity"):
+        _reader(payloads).read_portfolio()
 
 
 def test_reader_looks_up_one_exact_client_order_id() -> None:

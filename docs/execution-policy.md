@@ -48,6 +48,9 @@ broker account values, or supply strategy performance metrics.
 The risk model separately selects the ask for position increases and the bid for reductions. This
 prevents a favorable ask from hiding an adverse sell price. It retains ask-valued projected long
 exposure.
+Production paper snapshot attestation v2 retains the account's prior-close equity. A read-only
+derivation binds current equity, prior-close equity, daily PnL, the snapshot fingerprint, and the
+attestation fingerprint. It grants no risk or execution authority.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

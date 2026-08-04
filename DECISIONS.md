@@ -282,3 +282,10 @@
 - Context: one quote field could let a sell pass its price-deviation gate on a favorable ask even when the executable bid was materially worse.
 - Consequences: crossed quotes fail construction. Quantity-target order notional uses the selected side, while projected long exposure uses the conservative ask.
 - Revisit when: a later execution envelope adds short sales, limit-price placement, or fractional shares.
+
+## 2026-08-03 — Daily loss uses attested account equity change
+
+- Decision: Alpaca paper snapshot attestation v2 retains the positive `last_equity` account field. Daily PnL is the current attested equity minus that prior-close equity.
+- Context: `RiskContext.daily_pnl` must not come from a caller, and account daily loss is distinct from per-strategy drawdown.
+- Consequences: the value is derived read-only from immutable adapter evidence and binds the snapshot and attestation fingerprints. Version-1 attestations remain valid but cannot produce daily PnL evidence.
+- Revisit when: the broker changes the account contract or reviewed policy requires a different daily-loss session boundary.
