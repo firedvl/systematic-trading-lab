@@ -23,6 +23,8 @@ _KNOWN_EVENT_TYPES = {
     "emergency-cleared",
     "emergency-disabled",
     "paper-authorized",
+    "paper-write-activated",
+    "paper-write-revoked",
     "risk-decided",
     "capacity-reserved",
     "capacity-released",

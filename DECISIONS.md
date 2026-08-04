@@ -394,3 +394,10 @@
 - Context: no candidate qualifies, no production risk values or mutation transport exist, and a checklist must not become an implicit enablement control.
 - Consequences: the runbook makes missing authority explicit but changes no configuration, endpoint, credential, risk, order, or broker behavior. Each blocker requires a separate reviewed change; paper and live writes remain prohibited.
 - Revisit when: a qualified candidate and reviewed production risk values exist and the explicit multi-control paper enablement boundary is ready for design review.
+
+## 2026-08-03 — Paper-write activation and process opt-in are separate controls
+
+- Decision: store one immutable, expiring activation bound to exact reviewed authority and require a separate process opt-in naming its fingerprint and code commit. Revocation is append-only.
+- Context: paper mode, credentials, authorization, or an environment flag alone must never create broker-write authority.
+- Consequences: activation binds account, authorization, limits, code, fixed origin, operation scope, distinct approver and operator, attempt cap, emergency generation, and time. Assessment remains read-only, runtime write authority stays false, and no production transport exists.
+- Revisit when: submission and cancellation can recheck both controls inside their one-shot attempt transactions.

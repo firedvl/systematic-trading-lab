@@ -16,6 +16,18 @@ def test_configuration_defaults_offline_and_rejects_live() -> None:
     assert settings.broker_writes_allowed is False
     with pytest.raises(ConfigurationError, match="live trading is disabled"):
         load_settings({"TRADING_LAB_MODE": "live"})
+    request_values = {
+        "TRADING_LAB_MODE": "paper",
+        "TRADING_LAB_PAPER_ACTIVATION_ID": "a" * 64,
+        "TRADING_LAB_PAPER_CODE_COMMIT": "reviewed-commit",
+    }
+    requested = load_settings(request_values)
+    assert requested.paper_write_request is not None
+    assert requested.broker_writes_allowed is False
+    with pytest.raises(ConfigurationError, match="activation ID and code commit"):
+        load_settings({"TRADING_LAB_MODE": "paper", "TRADING_LAB_PAPER_ACTIVATION_ID": "a" * 64})
+    with pytest.raises(ConfigurationError, match="requires paper mode"):
+        load_settings({**request_values, "TRADING_LAB_MODE": "research"})
 
 
 def test_dotenv_loads_supported_values_without_overriding_environment(tmp_path: Path) -> None:

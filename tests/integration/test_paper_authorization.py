@@ -23,11 +23,17 @@ from systematic_trading_lab.broker_events import (
     OrderLookupNotFoundEvidence,
 )
 from systematic_trading_lab.cancel_all import CancelAllStore, FakeCancelAllCanceler
+from systematic_trading_lab.config import PaperWriteRequest
 from systematic_trading_lab.domain import TradingMode
 from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityError
 from systematic_trading_lab.experiments import HoldoutAccessError
 from systematic_trading_lab.fingerprints import canonical_json, canonicalize, fingerprint
 from systematic_trading_lab.orders import OrderLifecycleStore, OrderState, build_order_delta
+from systematic_trading_lab.paper_activation import (
+    PaperWriteActivation,
+    PaperWriteActivationStore,
+    PaperWriteRevocation,
+)
 from systematic_trading_lab.paper_cancellation import (
     FakePaperCanceler,
     FakePaperCancellationError,
@@ -682,6 +688,79 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     )
     assert not cleared.disabled
     assert cleared.generation == 2
+    activation_store = PaperWriteActivationStore(store.path)
+    activation = PaperWriteActivation(
+        authorization_id=authorization.authorization_id,
+        authorization_fingerprint=authorization.authorization_fingerprint,
+        risk_configuration_fingerprint=limits.configuration_fingerprint,
+        account_id=limits.account_id,
+        code_commit=authorization.code_commit,
+        paper_origin="https://paper-api.alpaca.markets",
+        operations=("cancel", "submit"),
+        approved_by="test-approver",
+        operator="test-operator",
+        reason="test-only dormant activation",
+        max_attempts=2,
+        emergency_generation=cleared.generation,
+        starts_at=NOW + timedelta(seconds=18),
+        expires_at=NOW + timedelta(minutes=5),
+    )
+    assert activation_store.activate(activation, limits) == activation
+    request = PaperWriteRequest(activation.activation_id, activation.code_commit)
+    activation_assessment = activation_store.assess(
+        request,
+        limits,
+        operation="submit",
+        assessed_at=NOW + timedelta(seconds=18),
+    )
+    assert not activation_assessment.eligible
+    assert set(activation_assessment.reasons) == {
+        "runtime-code-identity-unverified",
+        "attempt-binding-absent",
+    }
+    assert (
+        "code-commit-mismatch"
+        in activation_store.assess(
+            PaperWriteRequest(activation.activation_id, "other-commit"),
+            limits,
+            operation="submit",
+            assessed_at=NOW + timedelta(seconds=18),
+        ).reasons
+    )
+    assert (
+        "authority-or-limits-mismatch"
+        in activation_store.assess(
+            request,
+            replace(limits, review_reason="changed activation limits"),
+            operation="submit",
+            assessed_at=NOW + timedelta(seconds=18),
+        ).reasons
+    )
+    with pytest.raises(ValueError, match="approver and operator"):
+        replace(activation, operator=activation.approved_by)
+    tampered_activation_path = tmp_path / "tampered-paper-activation.sqlite3"
+    shutil.copy2(store.path, tampered_activation_path)
+    with sqlite3.connect(tampered_activation_path) as connection:
+        connection.execute("DROP TRIGGER paper_write_activations_no_update")
+        connection.execute("UPDATE paper_write_activations SET activation_json = '{}'")
+    with pytest.raises(JournalIntegrityError, match="stored paper write activation"):
+        PaperWriteActivationStore(tampered_activation_path)
+    revocation = PaperWriteRevocation(
+        activation_id=activation.activation_id,
+        operator="test-operator",
+        reason="test-only revocation",
+        revoked_at=NOW + timedelta(seconds=18, milliseconds=1),
+    )
+    assert activation_store.revoke(revocation) == revocation
+    assert (
+        "activation-revoked"
+        in activation_store.assess(
+            request,
+            limits,
+            operation="submit",
+            assessed_at=NOW + timedelta(seconds=18, milliseconds=1),
+        ).reasons
+    )
     intent = replace(
         _intent(report),
         decision_timestamp=NOW + timedelta(seconds=16),

@@ -20,14 +20,35 @@ _DOTENV_KEYS = {
     "TRADING_LAB_HOME",
     "APCA_API_KEY_ID",
     "APCA_API_SECRET_KEY",
+    "TRADING_LAB_PAPER_ACTIVATION_ID",
+    "TRADING_LAB_PAPER_CODE_COMMIT",
 }
 _ENVIRONMENT_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
+
+
+@dataclass(frozen=True)
+class PaperWriteRequest:
+    activation_id: str
+    code_commit: str
+
+    def __post_init__(self) -> None:
+        if len(self.activation_id) != 64 or any(
+            character not in "0123456789abcdef" for character in self.activation_id
+        ):
+            raise ConfigurationError("paper activation ID must be a SHA-256 fingerprint")
+        if (
+            not self.code_commit
+            or self.code_commit != self.code_commit.strip()
+            or len(self.code_commit) > 128
+        ):
+            raise ConfigurationError("paper code commit is invalid")
 
 
 @dataclass(frozen=True)
 class Settings:
     mode: TradingMode
     home: Path
+    paper_write_request: PaperWriteRequest | None = None
 
     @property
     def broker_writes_allowed(self) -> bool:
@@ -73,4 +94,15 @@ def load_settings(environment: Mapping[str, str] | None = None) -> Settings:
     raw_home = values.get("TRADING_LAB_HOME", ".trading-lab").strip()
     if not raw_home:
         raise ConfigurationError("TRADING_LAB_HOME must not be empty")
-    return Settings(mode=mode, home=Path(raw_home).expanduser().resolve())
+    activation_id = values.get("TRADING_LAB_PAPER_ACTIVATION_ID", "").strip()
+    code_commit = values.get("TRADING_LAB_PAPER_CODE_COMMIT", "").strip()
+    if bool(activation_id) != bool(code_commit):
+        raise ConfigurationError("paper write opt-in requires activation ID and code commit")
+    if activation_id and mode is not TradingMode.PAPER:
+        raise ConfigurationError("paper write opt-in requires paper mode")
+    request = None if not activation_id else PaperWriteRequest(activation_id, code_commit)
+    return Settings(
+        mode=mode,
+        home=Path(raw_home).expanduser().resolve(),
+        paper_write_request=request,
+    )

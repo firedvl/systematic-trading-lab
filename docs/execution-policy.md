@@ -145,3 +145,10 @@ emergency state in the same immediate transaction. Dirty reconciliation atomical
 Read-only clear readiness requires the latest three distinct adapter-attested reconciliation records
 to be clean and separated by the stability interval in the reviewed risk configuration. It rechecks
 freshness, authority, configuration, and emergency generation. Dirty evidence resets the streak.
+
+Future paper-write authority has a dormant evidence boundary. One immutable activation binds exact
+authorization, limits, account, code, fixed origin, operation scope, distinct approver and operator,
+attempt cap, emergency generation, and time. A separate process opt-in names the activation and
+commit; revocation is append-only. Assessment is read-only, production transport remains absent,
+and remains ineligible until trusted runtime code identity and activation-bound attempts exist.
+Runtime broker-write authority remains hard-coded false.
