@@ -46,6 +46,7 @@ from systematic_trading_lab.risk_inputs import (
     AlpacaRiskInputReader,
     RiskInputEvidenceStore,
 )
+from systematic_trading_lab.strategy_equity import StrategyEquityStore
 
 NOW = datetime(2026, 8, 3, 20, tzinfo=UTC)
 
@@ -59,6 +60,7 @@ def _limits() -> RiskLimits:
         max_position_notional=Decimal("40000"),
         max_gross_exposure=Decimal("90000"),
         strategy_capital_allocation=Decimal("50000"),
+        strategy_fill_cost_bps=Decimal("10"),
         min_cash=Decimal("10000"),
         max_open_orders=3,
         max_orders_per_minute=4,
@@ -379,7 +381,6 @@ def test_reconciliation_store_persists_flat_baseline_and_results(
         reason="flat test baseline",
         created_at=NOW,
     )
-
     clean = store.record_reconciliation(
         baseline_id=baseline.baseline_id,
         observed_snapshot_id=observed.snapshot_id,
@@ -595,6 +596,14 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         limits=limits,
         operator="test-operator",
         reason="stable readiness test",
+        created_at=NOW,
+    )
+    strategy_equity_baseline = store.create_strategy_equity_baseline(
+        baseline_id="stable-strategy-equity-baseline",
+        reconciliation_baseline_id=baseline.baseline_id,
+        limits=limits,
+        operator="test-operator",
+        reason="test-only strategy allocation",
         created_at=NOW,
     )
     samples: list[ReconciliationEvidence] = [
@@ -1191,6 +1200,41 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         == settlement
     )
     assert PositionSettlementStore(store.path).verify_journal() == settlement_head
+    equity_store = StrategyEquityStore(store.path)
+    checkpoint = equity_store.record_checkpoint(
+        strategy_equity_baseline_id=strategy_equity_baseline.baseline_id,
+        settlement_proof_id=settlement.proof_id,
+        risk_input_evidence_id=risk_input.evidence_id,
+        limits=limits,
+        marked_at=settlement_at + timedelta(seconds=2),
+    )
+    assert checkpoint.fill_event_ids == (partial.event_id,)
+    assert checkpoint.gross_buy_notional == Decimal("300.75")
+    assert checkpoint.gross_sell_notional == Decimal("0")
+    assert checkpoint.fill_cost_reserve == Decimal("0.30075")
+    assert checkpoint.strategy_cash == Decimal("49698.94925")
+    assert checkpoint.position_market_value == Decimal("300")
+    assert checkpoint.strategy_equity == Decimal("49998.94925")
+    assert checkpoint.peak_equity == Decimal("50000")
+    assert checkpoint.strategy_drawdown == Decimal("0.000021015")
+    assert equity_store.latest_checkpoint(authorization.authorization_id) == checkpoint
+    assert (
+        equity_store.record_checkpoint(
+            strategy_equity_baseline_id=strategy_equity_baseline.baseline_id,
+            settlement_proof_id=settlement.proof_id,
+            risk_input_evidence_id=risk_input.evidence_id,
+            limits=limits,
+            marked_at=settlement_at + timedelta(seconds=2),
+        )
+        == checkpoint
+    )
+    tampered_path = tmp_path / "tampered-strategy-equity.sqlite3"
+    shutil.copy2(store.path, tampered_path)
+    with sqlite3.connect(tampered_path) as connection:
+        connection.execute("DROP TRIGGER strategy_equity_checkpoints_no_update")
+        connection.execute("UPDATE strategy_equity_checkpoints SET checkpoint_json = '{}'")
+    with pytest.raises(JournalIntegrityError, match="strategy equity checkpoint"):
+        StrategyEquityStore(tampered_path)
     unattested_snapshot = replace(settled_snapshot, snapshot_id="unattested-settlement")
     store.record_snapshot(unattested_snapshot, recorded_at=settlement_at)
     with pytest.raises(JournalIntegrityError, match="authority is missing"):

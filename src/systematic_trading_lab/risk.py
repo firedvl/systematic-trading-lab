@@ -27,6 +27,7 @@ class RiskLimits:
     max_position_notional: Decimal
     max_gross_exposure: Decimal
     strategy_capital_allocation: Decimal
+    strategy_fill_cost_bps: Decimal
     min_cash: Decimal
     max_open_orders: int
     max_orders_per_minute: int
@@ -64,6 +65,8 @@ class RiskLimits:
             ("maximum price deviation", self.max_price_deviation_bps),
         ):
             _positive_decimal(decimal_name, decimal_value)
+        if not self.strategy_fill_cost_bps.is_finite() or self.strategy_fill_cost_bps < 0:
+            raise ValueError("strategy fill cost must be finite and nonnegative")
         if not self.min_cash.is_finite() or self.min_cash < 0:
             raise ValueError("minimum cash must be finite and nonnegative")
         if self.max_strategy_drawdown > 1:
