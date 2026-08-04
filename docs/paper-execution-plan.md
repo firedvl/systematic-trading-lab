@@ -239,6 +239,12 @@ outcome, later exact lookup, matching broker identity and account authority, lat
 and matching local terminal state. Canceled, rejected, and filled are distinct resolutions. The
 assessment adds no retry, cancellation, submission, capacity, or emergency authority.
 
+Dormant submission preflights and cancellation attempts can now bind one exact paper-write
+activation and process opt-in under their existing immediate transactions. Assessment counts the
+exact pair across both attempt types and blocks records past the activation cap. Legacy injected
+attempts remain compatible and unbound. Trusted runtime build identity, production mutation
+transport, and runtime write authority remain absent.
+
 Official references reviewed 2026-08-03:
 
 - <https://docs.alpaca.markets/us/docs/paper-trading>

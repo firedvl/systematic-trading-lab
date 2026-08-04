@@ -26,10 +26,12 @@ from .alpaca_paper import (
     _whole_shares,
 )
 from .broker_events import BrokerEventStore, BrokerOrderEvent
+from .config import PaperWriteRequest
 from .domain import TradingMode
 from .execution import JournalIntegrityError
 from .fingerprints import canonical_json, canonicalize, fingerprint
 from .orders import OrderDelta, OrderState, _decode_delta, build_order_delta
+from .paper_activation import _assess_paper_write, _verify_paper_write_binding
 from .risk import RiskLimits, evaluate_risk
 from .risk_context import AttestedRiskContextStore
 
@@ -48,6 +50,8 @@ class PaperSubmissionPreflight:
     submitter_id: str
     paper_origin: str
     claimed_at: datetime
+    activation_id: str | None = None
+    paper_write_request_fingerprint: str | None = None
 
     def __post_init__(self) -> None:
         for name, value in (
@@ -69,11 +73,17 @@ class PaperSubmissionPreflight:
             _sha256(name, value)
         if self.paper_origin != PAPER_ORIGIN:
             raise ValueError("paper submission origin is invalid")
+        if (self.activation_id is None) != (self.paper_write_request_fingerprint is None):
+            raise ValueError("paper submission activation binding is incomplete")
+        if self.activation_id is not None:
+            assert self.paper_write_request_fingerprint is not None
+            _sha256("activation", self.activation_id)
+            _sha256("paper write request", self.paper_write_request_fingerprint)
         _utc(self.claimed_at)
 
     @property
     def proof_fingerprint(self) -> str:
-        return fingerprint(self)
+        return fingerprint(_preflight_value(self))
 
 
 class PaperSubmissionPreflightStore(AttestedRiskContextStore):
@@ -113,6 +123,7 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
         mode: TradingMode,
         paper_origin: str,
         claimed_at: datetime,
+        paper_write_request: PaperWriteRequest | None = None,
     ) -> PaperSubmissionPreflight:
         result, _ = self._claim_once(
             order_id,
@@ -122,6 +133,7 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
             mode=mode,
             paper_origin=paper_origin,
             claimed_at=claimed_at,
+            paper_write_request=paper_write_request,
         )
         return result
 
@@ -135,6 +147,7 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
         mode: TradingMode,
         paper_origin: str,
         claimed_at: datetime,
+        paper_write_request: PaperWriteRequest | None = None,
     ) -> tuple[PaperSubmissionPreflight, bool]:
         if mode is not TradingMode.PAPER or paper_origin != PAPER_ORIGIN:
             raise PermissionError("paper submission requires paper mode and the fixed paper origin")
@@ -156,6 +169,18 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
                         or existing.risk_limits_fingerprint != limits.configuration_fingerprint
                         or existing.paper_origin != paper_origin
                         or existing.claimed_at != claimed_at
+                        or existing.activation_id
+                        != (
+                            None
+                            if paper_write_request is None
+                            else paper_write_request.activation_id
+                        )
+                        or existing.paper_write_request_fingerprint
+                        != (
+                            None
+                            if paper_write_request is None
+                            else paper_write_request.request_fingerprint
+                        )
                     ):
                         raise JournalIntegrityError(
                             "order is bound to a different paper submission preflight"
@@ -178,6 +203,20 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
                     raise JournalIntegrityError("paper submission requires a staged order")
                 if row[5] != authorization_id:
                     raise JournalIntegrityError("paper submission authorization is mismatched")
+                if paper_write_request is not None:
+                    assessment = _assess_paper_write(
+                        self,
+                        connection,
+                        paper_write_request,
+                        limits,
+                        operation="submit",
+                        assessed_at=claimed_at,
+                        authorization_id=authorization_id,
+                    )
+                    if assessment.reasons != ("runtime-code-identity-unverified",):
+                        raise PermissionError(
+                            "paper submission lacks exact dormant activation authority"
+                        )
                 if intent.target_quantity is None:
                     raise JournalIntegrityError(
                         "weight-target order submission requires a reviewed share-rounding rule"
@@ -225,13 +264,21 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
                     submitter_id=submitter_id,
                     paper_origin=paper_origin,
                     claimed_at=claimed_at,
+                    activation_id=(
+                        None if paper_write_request is None else paper_write_request.activation_id
+                    ),
+                    paper_write_request_fingerprint=(
+                        None
+                        if paper_write_request is None
+                        else paper_write_request.request_fingerprint
+                    ),
                 )
                 claimed = self._claim_submitter(
                     connection,
                     order_id,
                     submitter_id,
                     claimed_at,
-                    evidence=result,
+                    evidence=_preflight_value(result),
                 )
                 if claimed.state is not OrderState.SUBMITTING:
                     raise JournalIntegrityError("paper submission claim did not enter submitting")
@@ -240,7 +287,12 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
                 ).fetchone()[0]
                 connection.execute(
                     "INSERT INTO paper_submission_preflights VALUES (?, ?, ?, ?)",
-                    (order_id, result.proof_fingerprint, canonical_json(result), sequence),
+                    (
+                        order_id,
+                        result.proof_fingerprint,
+                        canonical_json(_preflight_value(result)),
+                        sequence,
+                    ),
                 )
                 connection.commit()
             except Exception:
@@ -263,6 +315,17 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
                 raise JournalIntegrityError(
                     "stored paper submission preflight is invalid"
                 ) from error
+            if proof.activation_id is not None:
+                assert proof.paper_write_request_fingerprint is not None
+                _verify_paper_write_binding(
+                    self,
+                    connection,
+                    activation_id=proof.activation_id,
+                    request_fingerprint=proof.paper_write_request_fingerprint,
+                    authorization_id=proof.authorization_id,
+                    operation="submit",
+                    attempted_at=proof.claimed_at,
+                )
             order = connection.execute(
                 "SELECT o.reservation_id, o.delta_json, o.submitter_id, o.claimed_at, "
                 "r.decision_id, r.authorization_id, "
@@ -284,7 +347,7 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
             if (
                 row[0] != proof.order_id
                 or row[1] != proof.proof_fingerprint
-                or row[2] != canonical_json(proof)
+                or row[2] != canonical_json(_preflight_value(proof))
                 or order is None
                 or order[0] != proof.reservation_id
                 or fingerprint(_decode_delta(json.loads(order[1]))) != proof.order_delta_fingerprint
@@ -300,7 +363,7 @@ class PaperSubmissionPreflightStore(AttestedRiskContextStore):
                 or journal is None
                 or journal[:3] != ("order-submitter-claimed", "order", proof.order_id)
                 or not isinstance(payload, dict)
-                or payload.get("submission_preflight") != canonicalize(proof)
+                or payload.get("submission_preflight") != _preflight_value(proof)
             ):
                 raise JournalIntegrityError(
                     "paper submission preflight differs from its order claim"
@@ -500,6 +563,8 @@ def _decode_preflight(value: object) -> PaperSubmissionPreflight:
         return PaperSubmissionPreflight(
             **{
                 **value,
+                "activation_id": value.get("activation_id"),
+                "paper_write_request_fingerprint": value.get("paper_write_request_fingerprint"),
                 "claimed_at": datetime.fromisoformat(
                     str(value["claimed_at"]).replace("Z", "+00:00")
                 ),
@@ -507,6 +572,16 @@ def _decode_preflight(value: object) -> PaperSubmissionPreflight:
         )
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError("paper submission preflight is invalid") from error
+
+
+def _preflight_value(preflight: PaperSubmissionPreflight) -> dict[str, object]:
+    value = canonicalize(preflight)
+    if not isinstance(value, dict):
+        raise TypeError("paper submission preflight must be an object")
+    if preflight.activation_id is None:
+        value.pop("activation_id")
+        value.pop("paper_write_request_fingerprint")
+    return value
 
 
 def _utc(value: datetime) -> None:

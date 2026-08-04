@@ -714,10 +714,8 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         assessed_at=NOW + timedelta(seconds=18),
     )
     assert not activation_assessment.eligible
-    assert set(activation_assessment.reasons) == {
-        "runtime-code-identity-unverified",
-        "attempt-binding-absent",
-    }
+    assert activation_assessment.reasons == ("runtime-code-identity-unverified",)
+    assert activation_assessment.attempts_used == 0
     assert (
         "code-commit-mismatch"
         in activation_store.assess(
@@ -738,6 +736,35 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     )
     with pytest.raises(ValueError, match="approver and operator"):
         replace(activation, operator=activation.approved_by)
+    scheduled_revocation_path = tmp_path / "scheduled-paper-revocation.sqlite3"
+    shutil.copy2(store.path, scheduled_revocation_path)
+    scheduled_revocation_store = PaperWriteActivationStore(scheduled_revocation_path)
+    scheduled_revocation_store.revoke(
+        PaperWriteRevocation(
+            activation_id=activation.activation_id,
+            operator="test-operator",
+            reason="scheduled test-only revocation",
+            revoked_at=NOW + timedelta(seconds=19),
+        )
+    )
+    assert (
+        "activation-revoked"
+        not in scheduled_revocation_store.assess(
+            request,
+            limits,
+            operation="submit",
+            assessed_at=NOW + timedelta(seconds=18),
+        ).reasons
+    )
+    assert (
+        "activation-revoked"
+        in scheduled_revocation_store.assess(
+            request,
+            limits,
+            operation="submit",
+            assessed_at=NOW + timedelta(seconds=19),
+        ).reasons
+    )
     tampered_activation_path = tmp_path / "tampered-paper-activation.sqlite3"
     shutil.copy2(store.path, tampered_activation_path)
     with sqlite3.connect(tampered_activation_path) as connection:
@@ -745,22 +772,6 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         connection.execute("UPDATE paper_write_activations SET activation_json = '{}'")
     with pytest.raises(JournalIntegrityError, match="stored paper write activation"):
         PaperWriteActivationStore(tampered_activation_path)
-    revocation = PaperWriteRevocation(
-        activation_id=activation.activation_id,
-        operator="test-operator",
-        reason="test-only revocation",
-        revoked_at=NOW + timedelta(seconds=18, milliseconds=1),
-    )
-    assert activation_store.revoke(revocation) == revocation
-    assert (
-        "activation-revoked"
-        in activation_store.assess(
-            request,
-            limits,
-            operation="submit",
-            assessed_at=NOW + timedelta(seconds=18, milliseconds=1),
-        ).reasons
-    )
     intent = replace(
         _intent(report),
         decision_timestamp=NOW + timedelta(seconds=16),
@@ -1553,10 +1564,20 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         reservation_id=attested_reservation_id,
         staged_at=settlement_at + timedelta(seconds=2),
     )
+    bound_activation = replace(
+        activation,
+        reason="test-only activation-bound attempts",
+        emergency_generation=store.get_emergency().generation,
+        starts_at=settlement_at + timedelta(seconds=2),
+    )
+    assert activation_store.activate(bound_activation, limits) == bound_activation
+    bound_request = PaperWriteRequest(bound_activation.activation_id, bound_activation.code_commit)
     fake_success_path = tmp_path / "fake-paper-submission-success.sqlite3"
     fake_unknown_path = tmp_path / "fake-paper-submission-unknown.sqlite3"
+    activation_bound_path = tmp_path / "activation-bound-attempts.sqlite3"
     shutil.copy2(store.path, fake_success_path)
     shutil.copy2(store.path, fake_unknown_path)
+    shutil.copy2(store.path, activation_bound_path)
     preflight_store = PaperSubmissionPreflightStore(store.path)
     preflight_head = preflight_store.verify_journal()
     with pytest.raises(PermissionError, match="paper mode"):
@@ -1582,6 +1603,8 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
     claimed_head = preflight_store.verify_journal()
     assert submission_preflight.order_delta_fingerprint == fingerprint(submission_delta)
     assert submission_preflight.attested_context_proof_fingerprint
+    assert submission_preflight.activation_id is None
+    assert submission_preflight.paper_write_request_fingerprint is None
     assert (
         preflight_store.claim(
             submission_delta.client_order_id,
@@ -1605,6 +1628,121 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             paper_origin="https://paper-api.alpaca.markets",
             claimed_at=settlement_at + timedelta(seconds=2),
         )
+    bound_preflight_store = PaperSubmissionPreflightStore(activation_bound_path)
+    bound_head = bound_preflight_store.verify_journal()
+    with pytest.raises(PermissionError, match="dormant activation authority"):
+        bound_preflight_store.claim(
+            submission_delta.client_order_id,
+            submitter_id="activation-worker",
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            mode=TradingMode.PAPER,
+            paper_origin="https://paper-api.alpaca.markets",
+            claimed_at=settlement_at + timedelta(seconds=2),
+            paper_write_request=PaperWriteRequest(
+                bound_activation.activation_id, "different-commit"
+            ),
+        )
+    assert bound_preflight_store.verify_journal() == bound_head
+    bound_preflight = bound_preflight_store.claim(
+        submission_delta.client_order_id,
+        submitter_id="activation-worker",
+        authorization_id=authorization.authorization_id,
+        limits=limits,
+        mode=TradingMode.PAPER,
+        paper_origin="https://paper-api.alpaca.markets",
+        claimed_at=settlement_at + timedelta(seconds=2),
+        paper_write_request=bound_request,
+    )
+    assert bound_preflight.activation_id == bound_activation.activation_id
+    assert bound_preflight.paper_write_request_fingerprint == bound_request.request_fingerprint
+    assert (
+        bound_preflight_store.claim(
+            submission_delta.client_order_id,
+            submitter_id="activation-worker",
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            mode=TradingMode.PAPER,
+            paper_origin="https://paper-api.alpaca.markets",
+            claimed_at=settlement_at + timedelta(seconds=2),
+            paper_write_request=bound_request,
+        )
+        == bound_preflight
+    )
+    bound_acknowledged_at = settlement_at + timedelta(seconds=2, milliseconds=100)
+    bound_event = BrokerEventStore(activation_bound_path).record(
+        BrokerOrderEvent(
+            event_id="activation-bound-acknowledged",
+            broker_order_id="activation-bound-broker-order",
+            client_order_id=submission_delta.client_order_id,
+            state=OrderState.ACKNOWLEDGED,
+            cumulative_filled_quantity=0,
+            cumulative_average_fill_price=None,
+            provider_timestamp=bound_acknowledged_at,
+            observed_at=bound_acknowledged_at,
+        )
+    )
+    bound_cancel = PaperCancellationStore(activation_bound_path).request(
+        submission_delta.client_order_id,
+        authorization_id=authorization.authorization_id,
+        requester="test-operator",
+        reason="activation-bound cancellation",
+        mode=TradingMode.PAPER,
+        paper_origin="https://paper-api.alpaca.markets",
+        requested_at=settlement_at + timedelta(seconds=2, milliseconds=200),
+        paper_write_request=bound_request,
+        limits=limits,
+    )
+    assert bound_cancel.broker_event_id == bound_event.event_id
+    assert bound_cancel.activation_id == bound_activation.activation_id
+    assert bound_cancel.paper_write_request_fingerprint == bound_request.request_fingerprint
+    capped_assessment = PaperWriteActivationStore(activation_bound_path).assess(
+        bound_request,
+        limits,
+        operation="submit",
+        assessed_at=settlement_at + timedelta(seconds=2, milliseconds=300),
+    )
+    assert capped_assessment.attempts_used == 2
+    assert "attempt-limit-reached" in capped_assessment.reasons
+    bound_activation_store = PaperWriteActivationStore(activation_bound_path)
+    bound_journal_head = bound_activation_store.verify_journal()
+    with pytest.raises(JournalIntegrityError, match="lacks its activation"):
+        bound_activation_store.revoke(
+            PaperWriteRevocation(
+                activation_id=bound_activation.activation_id,
+                operator="test-operator",
+                reason="invalid backdated revocation",
+                revoked_at=bound_preflight.claimed_at,
+            )
+        )
+    assert bound_activation_store.verify_journal() == bound_journal_head
+    tampered_binding_path = tmp_path / "tampered-activation-binding.sqlite3"
+    shutil.copy2(activation_bound_path, tampered_binding_path)
+    with sqlite3.connect(tampered_binding_path) as connection:
+        connection.execute("DROP TRIGGER paper_submission_preflights_no_update")
+        connection.execute(
+            "UPDATE paper_submission_preflights SET proof_json = "
+            "json_set(proof_json, '$.activation_id', ?)",
+            ("b" * 64,),
+        )
+    with pytest.raises(JournalIntegrityError, match="paper write attempt activation"):
+        PaperSubmissionPreflightStore(tampered_binding_path)
+    revocation = PaperWriteRevocation(
+        activation_id=activation.activation_id,
+        operator="test-operator",
+        reason="test-only revocation",
+        revoked_at=settlement_at + timedelta(seconds=2, milliseconds=400),
+    )
+    assert activation_store.revoke(revocation) == revocation
+    assert (
+        "activation-revoked"
+        in activation_store.assess(
+            request,
+            limits,
+            operation="submit",
+            assessed_at=settlement_at + timedelta(seconds=2, milliseconds=400),
+        ).reasons
+    )
     fake_calls: list[str] = []
 
     def fake_post(request: Request) -> bytes:
@@ -1737,6 +1875,17 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         "prior-attempt",
     )
     assert cancel_all_calls == ["https://paper-api.alpaca.markets/v2/orders/fake-broker-order"]
+    assert (
+        PaperWriteActivationStore(cancel_all_path)
+        .assess(
+            bound_request,
+            limits,
+            operation="cancel",
+            assessed_at=settlement_at + timedelta(seconds=2, milliseconds=500),
+        )
+        .attempts_used
+        == 0
+    )
     cancel_all_unknown_calls: list[str] = []
 
     def fake_cancel_all_timeout(request: Request) -> bytes:
@@ -1846,6 +1995,8 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         reason="test cancellation",
         requested_at=cancel_requested_at,
     )
+    assert cancel_attempt.activation_id is None
+    assert cancel_attempt.paper_write_request_fingerprint is None
     with pytest.raises(FakePaperCancellationError, match="already attempted"):
         canceler.cancel(
             submission_delta.client_order_id,

@@ -10,9 +10,9 @@ All blockers must be removed in separate reviewed changes:
 
 1. No candidate has passed qualification, so no current paper authorization exists.
 2. `config/risk/` has no active reviewed risk-limit file or production financial values.
-3. Runtime configuration can parse an exact activation-and-code opt-in, and the journal can store an
-   independently approved activation and revocation, but neither is connected to an order mutation
-   boundary. Runtime write authority still always returns false.
+3. Runtime configuration can parse an exact activation-and-code opt-in. Submission and cancellation
+   can bind it to dormant one-shot evidence and enforce its shared attempt cap, but the supplied
+   commit is not trusted runtime identity. Runtime write authority still always returns false.
 4. Submission and cancellation adapters require injected test transports; no production mutation
    transport exists.
 5. No paper-execution CLI or supervisor exists.
@@ -70,7 +70,7 @@ paper mode alone as broker-write authority.
 
 The dormant activation binds the exact authorization, limits, account, code commit, fixed paper
 origin, submit/cancel scope, distinct approver and operator, attempt cap, emergency generation, and
-active interval. A separate process opt-in names its activation and commit. These records remain
-evidence only until a later change rechecks them inside each one-shot order-attempt transaction.
-The supplied commit string is not trusted runtime code identity, and attempts are not yet activation
-bound, so assessment explicitly remains ineligible.
+active interval. A separate process opt-in names its activation and commit. Submission and
+cancellation can recheck and bind both records inside each one-shot transaction. Assessment counts
+only the exact bound pair across both operations. The supplied commit string is not trusted runtime
+code identity, so assessment remains ineligible and no bound path can call a transport.

@@ -401,3 +401,10 @@
 - Context: paper mode, credentials, authorization, or an environment flag alone must never create broker-write authority.
 - Consequences: activation binds account, authorization, limits, code, fixed origin, operation scope, distinct approver and operator, attempt cap, emergency generation, and time. Assessment remains read-only, runtime write authority stays false, and no production transport exists.
 - Revisit when: submission and cancellation can recheck both controls inside their one-shot attempt transactions.
+
+## 2026-08-03 — Activation caps count exact bound attempts
+
+- Decision: bind the activation ID and process opt-in fingerprint inside existing submission and cancellation attempt transactions, then count the exact pair across both journal event types.
+- Context: global event counts cannot prove which activation authorized an attempt, and separate per-operation counts could exceed one activation-wide cap.
+- Consequences: the count and insert share one immediate transaction. Existing unbound injected attempts remain compatible and do not count. Runtime code identity remains unverified, bound records expose no transport, and broker-write authority stays false.
+- Revisit when: a reviewed runtime build-identity proof can replace the remaining explicit assessment blocker.
