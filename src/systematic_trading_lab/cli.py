@@ -24,7 +24,7 @@ from .experiment_runner import (
     run_holdout_experiment,
 )
 from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, ExperimentSplit
-from .paper_startup import assess_paper_startup
+from .paper_startup import assess_paper_startup, initialize_paper_storage
 from .providers import AlpacaHistoricalProvider, FixtureProvider
 from .qualification import load_qualification_proposal, review_holdout
 from .qualification_evidence import (
@@ -92,6 +92,9 @@ def parser() -> argparse.ArgumentParser:
     )
     startup.add_argument("--wheel", type=Path)
     startup.add_argument("--manifest", type=Path)
+    paper.add_parser(
+        "initialize-storage", help="create empty paper schema without adding authority"
+    )
     data = commands.add_parser("data", help="manage local market data").add_subparsers(
         dest="data_command", required=True
     )
@@ -223,6 +226,18 @@ def main(argv: Sequence[str] | None = None) -> int:
 def run(arguments: argparse.Namespace, settings: Settings) -> int:
     layout = StorageLayout(settings.home)
     if arguments.command == "paper":
+        if arguments.paper_command == "initialize-storage":
+            result = initialize_paper_storage(layout.execution)
+            _print(
+                {
+                    "database_path": result.database_path,
+                    "table_count": result.table_count,
+                    "journal_event_count": result.journal_event_count,
+                    "authority_evidence_unchanged": result.authority_evidence_unchanged,
+                    "broker_writes_allowed": settings.broker_writes_allowed,
+                }
+            )
+            return 0
         if (arguments.wheel is None) != (arguments.manifest is None):
             raise ValueError("paper startup assessment requires both wheel and manifest")
         assessed_at = datetime.now(UTC)

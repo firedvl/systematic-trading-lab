@@ -10,14 +10,18 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from .broker_events import BrokerEventStore
+from .cancel_all import CancelAllStore
 from .config import Settings
 from .domain import TradingMode
 from .execution import JournalIntegrityError
 from .paper_activation import PaperWriteActivationStore
 from .paper_cancellation import PaperCancellationStore
+from .paper_submission import PaperSubmissionPreflightStore
 from .risk import RiskLimits, RiskStore
 from .risk_context import AttestedRiskContextStore
+from .risk_inputs import RiskInputEvidenceStore
 from .runtime_build import InstalledRuntimeIdentity
+from .settled_capacity import SettledCapacityStore
 
 
 @dataclass(frozen=True)
@@ -32,6 +36,42 @@ class PaperStartupAssessment:
     submission_unknown_count: int | None
     unresolved_cancellation_count: int | None
     assessed_at: datetime
+
+
+@dataclass(frozen=True)
+class PaperStorageInitialization:
+    database_path: str
+    table_count: int
+    journal_event_count: int
+    authority_evidence_unchanged: bool
+
+
+def initialize_paper_storage(path: Path) -> PaperStorageInitialization:
+    """Create empty M4 schema without enabling or adding broker authority."""
+    if path.is_symlink():
+        raise ValueError("paper execution database cannot be a symbolic link")
+    before = _journal_count(path) if path.exists() else None
+    RiskInputEvidenceStore(path)
+    PaperSubmissionPreflightStore(path)
+    PaperCancellationStore(path)
+    PaperWriteActivationStore(path)
+    CancelAllStore(path)
+    SettledCapacityStore(path)
+    journal = RiskStore(path).verify_journal()
+    if before is not None and journal.event_count != before:
+        raise JournalIntegrityError("paper storage initialization changed authority evidence")
+    with sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True, timeout=5) as connection:
+        table_count = int(
+            connection.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'"
+            ).fetchone()[0]
+        )
+    return PaperStorageInitialization(
+        database_path=str(path.resolve()),
+        table_count=table_count,
+        journal_event_count=journal.event_count,
+        authority_evidence_unchanged=before is None or journal.event_count == before,
+    )
 
 
 def assess_paper_startup(
@@ -213,3 +253,16 @@ def _assessment(
 def _utc(value: datetime) -> None:
     if value.tzinfo is None or value.utcoffset() != UTC.utcoffset(value):
         raise ValueError("paper startup assessment time must be UTC-aware")
+
+
+def _journal_count(path: Path) -> int:
+    try:
+        with sqlite3.connect(
+            f"{path.resolve().as_uri()}?mode=ro", uri=True, timeout=5
+        ) as connection:
+            row = connection.execute("SELECT COUNT(*) FROM journal").fetchone()
+    except sqlite3.DatabaseError as error:
+        raise JournalIntegrityError("execution database is unreadable") from error
+    if row is None:
+        raise JournalIntegrityError("execution journal is missing")
+    return int(row[0])

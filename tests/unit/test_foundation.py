@@ -8,6 +8,7 @@ from systematic_trading_lab.cli import parser, run
 from systematic_trading_lab.config import ConfigurationError, load_dotenv, load_settings
 from systematic_trading_lab.domain import OHLCVBar, Symbol, Timeframe
 from systematic_trading_lab.fingerprints import fingerprint
+from systematic_trading_lab.paper_startup import initialize_paper_storage
 from systematic_trading_lab.validation import validate_records
 
 
@@ -86,6 +87,17 @@ def test_paper_startup_cli_is_read_only_and_fails_closed(
     assert '"ready": false' in output
     assert "execution-database-missing-or-unsafe" in output
     assert not (tmp_path / "execution.sqlite3").exists()
+
+
+def test_paper_storage_initialization_is_idempotent_and_non_authorizing(tmp_path: Path) -> None:
+    path = tmp_path / "execution.sqlite3"
+    first = initialize_paper_storage(path)
+    second = initialize_paper_storage(path)
+
+    assert first.table_count == second.table_count
+    assert first.journal_event_count == second.journal_event_count == 1
+    assert first.authority_evidence_unchanged
+    assert second.authority_evidence_unchanged
 
 
 def test_canonical_fingerprint_normalizes_decimal_and_mapping_order() -> None:
