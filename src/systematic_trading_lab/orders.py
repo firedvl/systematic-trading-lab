@@ -286,72 +286,85 @@ class OrderLifecycleStore(RiskStore):
             self._verify_connection(connection)
             self._verify_releases(connection)
             self._verify_orders(connection)
-            row = connection.execute(
-                "SELECT reservation_id, delta_json, state, changed_at, submitter_id, claimed_at "
-                "FROM orders WHERE order_id = ?",
-                (order_id,),
-            ).fetchone()
-            if row is None:
-                raise KeyError(order_id)
-            delta = _decode_delta(json.loads(row[1]))
-            if row[4] is not None:
-                if row[4] != submitter_id or row[5] != _utc_text(claimed_at):
-                    raise JournalIntegrityError("order already has a different submitter claim")
-                connection.commit()
-                return StagedOrder(
-                    order_id,
-                    str(row[0]),
-                    delta,
-                    OrderState(row[2]),
-                    _parse_utc(str(row[3])),
-                    submitter_id,
-                    claimed_at,
-                )
-            if OrderState(row[2]) is not OrderState.STAGED or claimed_at < _parse_utc(str(row[3])):
-                raise JournalIntegrityError("order cannot be claimed from its current state")
-            reservation = connection.execute(
-                "SELECT r.expires_at, x.reservation_id FROM capacity_reservations r "
-                "LEFT JOIN capacity_releases x ON x.reservation_id = r.reservation_id "
-                "WHERE r.reservation_id = ?",
-                (row[0],),
-            ).fetchone()
-            if (
-                reservation is None
-                or reservation[1] is not None
-                or claimed_at >= _parse_utc(str(reservation[0]))
-            ):
-                raise JournalIntegrityError("order capacity reservation is not active")
-            payload = {
-                "order_id": order_id,
-                "from_state": OrderState.STAGED,
-                "to_state": OrderState.SUBMITTING,
-                "submitter_id": submitter_id,
-                "claimed_at": claimed_at,
-            }
-            sequence = self._append_event(
-                connection,
-                occurred_at=claimed_at,
-                event_type="order-submitter-claimed",
-                entity_type="order",
-                entity_id=order_id,
-                payload=canonicalize(payload),
-            )
-            updated = connection.execute(
-                "UPDATE orders SET state = ?, changed_at = ?, submitter_id = ?, claimed_at = ?, "
-                "journal_sequence = ? WHERE order_id = ? AND state = ? AND submitter_id IS NULL",
-                (
-                    OrderState.SUBMITTING,
-                    _utc_text(claimed_at),
-                    submitter_id,
-                    _utc_text(claimed_at),
-                    sequence,
-                    order_id,
-                    OrderState.STAGED,
-                ),
-            )
-            if updated.rowcount != 1:
-                raise JournalIntegrityError("order submitter claim lost its atomic race")
+            result = self._claim_submitter(connection, order_id, submitter_id, claimed_at)
             connection.commit()
+        return result
+
+    def _claim_submitter(
+        self,
+        connection: sqlite3.Connection,
+        order_id: str,
+        submitter_id: str,
+        claimed_at: datetime,
+        *,
+        evidence: object | None = None,
+    ) -> StagedOrder:
+        row = connection.execute(
+            "SELECT reservation_id, delta_json, state, changed_at, submitter_id, claimed_at "
+            "FROM orders WHERE order_id = ?",
+            (order_id,),
+        ).fetchone()
+        if row is None:
+            raise KeyError(order_id)
+        delta = _decode_delta(json.loads(row[1]))
+        if row[4] is not None:
+            if row[4] != submitter_id or row[5] != _utc_text(claimed_at):
+                raise JournalIntegrityError("order already has a different submitter claim")
+            return StagedOrder(
+                order_id,
+                str(row[0]),
+                delta,
+                OrderState(row[2]),
+                _parse_utc(str(row[3])),
+                submitter_id,
+                claimed_at,
+            )
+        if OrderState(row[2]) is not OrderState.STAGED or claimed_at < _parse_utc(str(row[3])):
+            raise JournalIntegrityError("order cannot be claimed from its current state")
+        reservation = connection.execute(
+            "SELECT r.expires_at, x.reservation_id FROM capacity_reservations r "
+            "LEFT JOIN capacity_releases x ON x.reservation_id = r.reservation_id "
+            "WHERE r.reservation_id = ?",
+            (row[0],),
+        ).fetchone()
+        if (
+            reservation is None
+            or reservation[1] is not None
+            or claimed_at >= _parse_utc(str(reservation[0]))
+        ):
+            raise JournalIntegrityError("order capacity reservation is not active")
+        payload = {
+            "order_id": order_id,
+            "from_state": OrderState.STAGED,
+            "to_state": OrderState.SUBMITTING,
+            "submitter_id": submitter_id,
+            "claimed_at": claimed_at,
+        }
+        if evidence is not None:
+            payload["submission_preflight"] = canonicalize(evidence)
+        sequence = self._append_event(
+            connection,
+            occurred_at=claimed_at,
+            event_type="order-submitter-claimed",
+            entity_type="order",
+            entity_id=order_id,
+            payload=canonicalize(payload),
+        )
+        updated = connection.execute(
+            "UPDATE orders SET state = ?, changed_at = ?, submitter_id = ?, claimed_at = ?, "
+            "journal_sequence = ? WHERE order_id = ? AND state = ? AND submitter_id IS NULL",
+            (
+                OrderState.SUBMITTING,
+                _utc_text(claimed_at),
+                submitter_id,
+                _utc_text(claimed_at),
+                sequence,
+                order_id,
+                OrderState.STAGED,
+            ),
+        )
+        if updated.rowcount != 1:
+            raise JournalIntegrityError("order submitter claim lost its atomic race")
         return StagedOrder(
             order_id,
             str(row[0]),

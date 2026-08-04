@@ -70,6 +70,11 @@ risk decision. One intent can receive only one exact decision; changed replay fa
 The same transaction-bound context permits one narrow post-settlement mutation: replacing the
 exclusive positive-fill reservation set after its exposure appears in the current attested
 portfolio. It grants no broker-write authority.
+A separate submission preflight accepts only quantity-target intents. Under one immediate
+transaction it rederives the attested context without the order's own reservation, reevaluates every
+risk gate, requires the staged delta to match current shares and the existing reservation to cover
+current economics, then binds the proof into the atomic submitter claim. Paper mode and the fixed
+paper origin are mandatory. Weight targets remain blocked until policy defines share rounding.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

@@ -22,10 +22,12 @@ from systematic_trading_lab.broker_events import (
     BrokerOrderEvent,
     OrderLookupNotFoundEvidence,
 )
+from systematic_trading_lab.domain import TradingMode
 from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityError
 from systematic_trading_lab.experiments import HoldoutAccessError
 from systematic_trading_lab.fingerprints import canonical_json, canonicalize, fingerprint
 from systematic_trading_lab.orders import OrderLifecycleStore, OrderState, build_order_delta
+from systematic_trading_lab.paper_submission import PaperSubmissionPreflightStore
 from systematic_trading_lab.position_settlement import PositionSettlementStore
 from systematic_trading_lab.reconciliation import (
     PortfolioSnapshot,
@@ -1416,6 +1418,96 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             (attested_receipt.decision_id,),
         ).fetchone()[0]
     assert json.loads(attested_decision_json)["context_provenance_fingerprint"]
+    attested_reservation_id = fingerprint({"decision_id": attested_receipt.decision_id})
+    mismatched_submission_path = tmp_path / "mismatched-paper-submission.sqlite3"
+    shutil.copy2(store.path, mismatched_submission_path)
+    mismatched_delta = build_order_delta(
+        attested_intent,
+        target_quantity=5,
+        current_quantity=3,
+        created_at=settlement_at + timedelta(seconds=2),
+    )
+    assert mismatched_delta is not None
+    mismatched_orders = OrderLifecycleStore(mismatched_submission_path)
+    mismatched_orders.stage(
+        mismatched_delta,
+        reservation_id=attested_reservation_id,
+        staged_at=settlement_at + timedelta(seconds=2),
+    )
+    mismatched_preflight = PaperSubmissionPreflightStore(mismatched_submission_path)
+    mismatched_head = mismatched_preflight.verify_journal()
+    with pytest.raises(JournalIntegrityError, match="current risk authority"):
+        mismatched_preflight.claim(
+            mismatched_delta.client_order_id,
+            submitter_id="worker-2",
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            mode=TradingMode.PAPER,
+            paper_origin="https://paper-api.alpaca.markets",
+            claimed_at=settlement_at + timedelta(seconds=2),
+        )
+    assert mismatched_preflight.verify_journal() == mismatched_head
+    submission_delta = build_order_delta(
+        attested_intent,
+        target_quantity=4,
+        current_quantity=3,
+        created_at=settlement_at + timedelta(seconds=2),
+    )
+    assert submission_delta is not None
+    submission_orders = OrderLifecycleStore(store.path)
+    submission_orders.stage(
+        submission_delta,
+        reservation_id=attested_reservation_id,
+        staged_at=settlement_at + timedelta(seconds=2),
+    )
+    preflight_store = PaperSubmissionPreflightStore(store.path)
+    preflight_head = preflight_store.verify_journal()
+    with pytest.raises(PermissionError, match="paper mode"):
+        preflight_store.claim(
+            submission_delta.client_order_id,
+            submitter_id="worker-2",
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            mode=TradingMode.RESEARCH,
+            paper_origin="https://paper-api.alpaca.markets",
+            claimed_at=settlement_at + timedelta(seconds=2),
+        )
+    assert preflight_store.verify_journal() == preflight_head
+    submission_preflight = preflight_store.claim(
+        submission_delta.client_order_id,
+        submitter_id="worker-2",
+        authorization_id=authorization.authorization_id,
+        limits=limits,
+        mode=TradingMode.PAPER,
+        paper_origin="https://paper-api.alpaca.markets",
+        claimed_at=settlement_at + timedelta(seconds=2),
+    )
+    claimed_head = preflight_store.verify_journal()
+    assert submission_preflight.order_delta_fingerprint == fingerprint(submission_delta)
+    assert submission_preflight.attested_context_proof_fingerprint
+    assert (
+        preflight_store.claim(
+            submission_delta.client_order_id,
+            submitter_id="worker-2",
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            mode=TradingMode.PAPER,
+            paper_origin="https://paper-api.alpaca.markets",
+            claimed_at=settlement_at + timedelta(seconds=2),
+        )
+        == submission_preflight
+    )
+    assert preflight_store.verify_journal() == claimed_head
+    with pytest.raises(JournalIntegrityError, match="different paper submission preflight"):
+        preflight_store.claim(
+            submission_delta.client_order_id,
+            submitter_id="worker-3",
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            mode=TradingMode.PAPER,
+            paper_origin="https://paper-api.alpaca.markets",
+            claimed_at=settlement_at + timedelta(seconds=2),
+        )
     tampered_path = tmp_path / "tampered-strategy-equity.sqlite3"
     shutil.copy2(store.path, tampered_path)
     with sqlite3.connect(tampered_path) as connection:
