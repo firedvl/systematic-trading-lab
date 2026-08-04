@@ -1,5 +1,6 @@
 import inspect
 import json
+import sqlite3
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from email.message import Message
@@ -12,6 +13,7 @@ from urllib.request import Request
 
 import pytest
 
+import systematic_trading_lab.alpaca_paper as alpaca_paper
 from systematic_trading_lab.alpaca_paper import (
     AlpacaPaperError,
     AlpacaPaperReader,
@@ -348,6 +350,35 @@ def test_injected_transport_cannot_create_durable_provenance(tmp_path: Path) -> 
         reader.record_portfolio(
             ReconciliationStore(tmp_path / "execution.sqlite3"), recorded_at=NOW
         )
+
+
+def test_production_reader_records_after_its_final_observation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payloads = _payloads()
+    observations = iter(NOW + timedelta(seconds=offset) for offset in range(4))
+
+    def transport(request: Request) -> bytes:
+        return json.dumps(payloads[urlsplit(request.full_url).path]).encode()
+
+    monkeypatch.setattr(alpaca_paper, "_urlopen_bytes", transport)
+    reader = AlpacaPaperReader(
+        "test-key",
+        "test-secret",
+        account_id="paper-account",
+        allowed_symbols=frozenset({"SPY", "QQQ"}),
+        clock=lambda: next(observations),
+    )
+    path = tmp_path / "execution.sqlite3"
+
+    snapshot = reader.record_portfolio(ReconciliationStore(path))
+
+    with sqlite3.connect(path) as connection:
+        recorded_at = connection.execute(
+            "SELECT recorded_at FROM portfolio_snapshots WHERE snapshot_id = ?",
+            (snapshot.snapshot_id,),
+        ).fetchone()
+    assert recorded_at == ("2026-08-03T20:00:03Z",)
 
 
 @pytest.mark.parametrize(
