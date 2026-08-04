@@ -45,6 +45,9 @@ Long-only risk valuation uses the attested IEX ask for every held symbol and req
 symbol in the quote set. This produces deterministic conservative symbol notional and gross
 exposure without trusting caller prices. It does not supply a side-aware execution quote, replace
 broker account values, or supply strategy performance metrics.
+The risk model separately selects the ask for position increases and the bid for reductions. This
+prevents a favorable ask from hiding an adverse sell price. It retains ask-valued projected long
+exposure.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

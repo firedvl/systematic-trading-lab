@@ -174,6 +174,9 @@ The first derived input uses each complete-set IEX ask to value long positions a
 target symbol in the quote set. This avoids understating long exposure. The valuation remains
 read-only, supplies no side-aware execution quote, and rejects a changed snapshot or any position
 without a quote.
+Risk evaluation requires both quote sides and current whole-share quantity. Buy-side gates use the
+ask; sell-side gates use the bid. The later context builder must source them from the attested bundle
+and preserve its evidence linkage.
 
 Official references reviewed 2026-08-03:
 

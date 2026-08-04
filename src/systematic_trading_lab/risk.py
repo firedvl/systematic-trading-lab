@@ -94,6 +94,7 @@ class RiskContext:
     buying_power: Decimal
     current_gross_exposure: Decimal
     current_symbol_notional: Decimal
+    current_symbol_quantity: int
     pending_buy_notional: Decimal
     pending_order_notional: Decimal
     open_order_count: int
@@ -101,7 +102,8 @@ class RiskContext:
     orders_last_minute: int
     daily_pnl: Decimal
     strategy_drawdown: Decimal
-    quote_price: Decimal
+    quote_bid_price: Decimal
+    quote_ask_price: Decimal
     account_observed_at: datetime
     positions_observed_at: datetime
     orders_observed_at: datetime
@@ -137,7 +139,14 @@ class RiskContext:
             raise ValueError("daily PnL must be finite")
         if self.current_symbol_notional > self.current_gross_exposure:
             raise ValueError("symbol notional cannot exceed gross exposure")
-        _positive_decimal("quote price", self.quote_price)
+        _positive_decimal("quote bid price", self.quote_bid_price)
+        _positive_decimal("quote ask price", self.quote_ask_price)
+        if self.quote_bid_price > self.quote_ask_price:
+            raise ValueError("quote bid price cannot exceed ask price")
+        if isinstance(self.current_symbol_quantity, bool) or self.current_symbol_quantity < 0:
+            raise ValueError("current symbol quantity must be nonnegative")
+        if self.current_symbol_notional != self.quote_ask_price * self.current_symbol_quantity:
+            raise ValueError("current symbol notional must use the ask price")
         if min(self.open_order_count, self.pending_order_count, self.orders_last_minute) < 0:
             raise ValueError("order counts must be nonnegative")
 
@@ -213,18 +222,25 @@ def evaluate_risk(
         reasons.append("daily-loss-limit")
     if context.strategy_drawdown >= limits.max_strategy_drawdown:
         reasons.append("strategy-drawdown-limit")
+    if intent.target_weight is not None:
+        target_notional = context.equity * intent.target_weight
+        increasing = target_notional >= context.current_symbol_notional
+        order_notional = abs(target_notional - context.current_symbol_notional)
+    else:
+        target_quantity = intent.target_quantity or 0
+        quantity_delta = target_quantity - context.current_symbol_quantity
+        increasing = quantity_delta >= 0
+        target_notional = context.quote_ask_price * target_quantity
+        order_notional = abs(quantity_delta) * (
+            context.quote_ask_price if increasing else context.quote_bid_price
+        )
+    execution_quote = context.quote_ask_price if increasing else context.quote_bid_price
     deviation_bps = (
-        abs(context.quote_price - intent.reference_price) / intent.reference_price * Decimal(10_000)
+        abs(execution_quote - intent.reference_price) / intent.reference_price * Decimal(10_000)
     )
     if deviation_bps > limits.max_price_deviation_bps:
         reasons.append("price-deviation-limit")
 
-    target_notional = (
-        context.equity * intent.target_weight
-        if intent.target_weight is not None
-        else context.quote_price * Decimal(intent.target_quantity or 0)
-    )
-    order_notional = abs(target_notional - context.current_symbol_notional)
     increase = max(Decimal(0), target_notional - context.current_symbol_notional)
     projected_position = target_notional + context.pending_order_notional
     projected_gross = (

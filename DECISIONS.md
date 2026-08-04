@@ -275,3 +275,10 @@
 - Context: the conservative basis avoids understating long exposure without trusting caller prices.
 - Consequences: the deterministic valuation can overstate liquidation value. It does not supply a side-aware execution quote or replace broker equity, cash, buying power, or strategy performance evidence.
 - Revisit when: the execution envelope permits shorts or an approved risk model requires separate liquidation and acquisition prices.
+
+## 2026-08-03 — Execution-price risk checks are side-aware
+
+- Decision: `RiskContext` carries the current whole-share quantity and both bid and ask. Risk evaluation uses the ask for increases and the bid for reductions; long target exposure remains ask-valued.
+- Context: one quote field could let a sell pass its price-deviation gate on a favorable ask even when the executable bid was materially worse.
+- Consequences: crossed quotes fail construction. Quantity-target order notional uses the selected side, while projected long exposure uses the conservative ask.
+- Revisit when: a later execution envelope adds short sales, limit-price placement, or fractional shares.
