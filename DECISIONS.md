@@ -345,3 +345,10 @@
 - Context: an idempotent submitter claim cannot distinguish a harmless read replay from a duplicate external call after a crash.
 - Consequences: valid normalized fake evidence advances through the broker-event authority. Transport or evidence failure enters `submission-unknown`. Restart and concurrent replay cannot invoke the injected transport twice. No HTTP transport exists.
 - Revisit when: the production paper adapter can bind its exact POST attempt and sanitized outcome to the same authority.
+
+## 2026-08-03 — Paper order POST remains injected-only
+
+- Decision: construct and validate the exact Alpaca paper `POST /v2/orders` contract behind a mandatory injected transport with no production fallback.
+- Context: request and response semantics need end-to-end coverage before repository policy permits any broker write.
+- Consequences: tests exercise the supported whole-share day-market envelope, fixed origin, normalized acknowledgement, sanitized timeout, and one-shot outcome handling without contacting Alpaca. Production paper and all live calls remain impossible.
+- Revisit when: cancellation recovery, cancel-all evidence, operations runbooks, an active reviewed risk configuration, and explicit broker-write enablement exist.

@@ -119,3 +119,6 @@ Only the process that creates the preflight may invoke the fake submission calla
 means an attempt may already have reached the broker boundary, so replay requires lookup and full
 reconciliation. A failed call or invalid normalized result enters `submission-unknown`; it never
 releases capacity or retries.
+The Alpaca paper order adapter is test-only because its transport is mandatory and injected. It
+permits only the fixed paper `POST /v2/orders` request, validates the complete supported order echo,
+and returns normalized broker evidence. It has no production network fallback or live origin.

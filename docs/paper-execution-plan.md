@@ -210,6 +210,11 @@ permits one injected call. Valid normalized evidence uses the existing broker-ev
 timeout or invalid evidence moves the order to `submission-unknown`. An existing preflight blocks
 every repeat call and requires the separate lookup and reconciliation workflow. Production paper and
 live calls remain absent.
+The injected-only Alpaca submission adapter now builds the exact fixed-origin `POST /v2/orders`
+request, validates the response's identity, quantity, envelope, fill economics, status, and provider
+time, and emits one sanitized broker event. The adapter requires a caller-supplied transport and has
+no production network fallback. Its end-to-end tests cover acknowledgement and unknown timeout
+without contacting Alpaca.
 
 Official references reviewed 2026-08-03:
 
