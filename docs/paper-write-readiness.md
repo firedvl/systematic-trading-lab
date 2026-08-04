@@ -4,41 +4,89 @@ Status: **not ready**. This checklist does not authorize a broker call. `Setting
 remains hard-coded to `False`, no production mutation transport exists, and live trading remains
 prohibited.
 
+## Approved scope
+
+The first paper run may use only candidate `strategic-allocation-21`, strategy
+`strategic-allocation-portfolio` version `1`, and risk configuration
+`alpaca-paper-strategic-allocation-v1` with fingerprint
+`20b4f89e13f1b379c0055d9c37b2296de2b95a798dba67602f6d28b68a6d3703`. The account,
+symbols, and financial values come only from `config/risk/alpaca-paper-v1.json`. The paper
+authorization and activation must each expire no later than 24 hours after creation. A shorter
+window is allowed; extension or renewal needs a new record.
+
 ## Current blockers
 
 All blockers must be removed in separate reviewed changes:
 
-1. No candidate has passed qualification, so no current paper authorization exists.
-2. `config/risk/` has no active reviewed risk-limit file or production financial values.
+1. The approved candidate passed validation and holdout gates, but no current paper authorization
+   exists.
+2. The reviewed paper risk configuration exists. Loading it does not grant broker authority.
 3. Runtime configuration can parse an exact activation-and-code opt-in. Submission and cancellation
    can bind it to dormant one-shot evidence and enforce its shared attempt cap. A main-only workflow
-   builds a commit-bound wheel and manifest. Public-repository run `30882447856` persisted GitHub
-   attestations for both artifacts, and fail-closed verification accepted those artifacts and a clean
-   non-editable installation. Activation assessment and new request-bound attempts consume and
+   builds a commit-bound wheel and manifest. Public-repository run `30885939678` persisted GitHub
+   attestations for commit `f5f12fe8de8e98a98d4af49b234a59455c94ca87`, and fail-closed verification
+   accepted those artifacts and a clean non-editable installation. Activation assessment and new
+   request-bound attempts consume and
    persist that identity, but runtime write authority still always returns false.
+   The activation currently requires its execution commit to equal the candidate research commit.
+   This prevents a current installed execution build from qualifying and must be split without
+   weakening either binding.
 4. Submission and cancellation adapters require injected test transports; no production mutation
    transport exists.
 5. No paper-execution CLI or supervisor exists.
-6. The threat model has not been reapproved for paper writes.
+6. The transport threat model below is defined, but production use still needs independent code
+   review and explicit user approval after implementation and failure tests pass.
 7. M5 sustained paper operation, recovery drills, and equivalence evidence have not begun.
+
+## Fixed-origin transport design
+
+The first production writer must reuse the existing request construction and response normalization.
+It adds one transport function, not another order schema or broker client.
+
+1. The origin is the constant `https://paper-api.alpaca.markets`. Configuration, command-line
+   arguments, responses, redirects, or environment variables cannot replace it.
+2. The allowlist contains only `POST /v2/orders` and
+   `DELETE /v2/orders/{percent-encoded broker_order_id}`. Query strings, fragments, user information,
+   custom ports, bulk cancellation, replace, close-position, and every other method or path fail
+   before network access.
+3. The POST body remains canonical JSON for one simple, whole-share, long-only ETF market order with
+   `day`, `extended_hours=false`, and the deterministic client order ID. DELETE has no body. POST
+   accepts only HTTP 200 JSON; DELETE accepts only HTTP 204 with an empty body.
+4. Credentials enter only from `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY` at process startup. They
+   exist only in request headers and never enter objects, SQLite, journal events, output, or error
+   text. Environment proxy routing is disabled for mutation calls.
+5. The standard TLS verifier and system trust store remain enabled. Redirects are rejected. Each
+   call has a 10-second socket timeout, reads at most 1 MiB, and never retries automatically.
+6. Any timeout, connection failure, redirect, unexpected final URL, HTTP status, body size, content
+   type, JSON shape, or response mismatch returns one sanitized error. Only the numeric HTTP status
+   may be retained. The coordinator records the already-journaled attempt as unknown and requires
+   exact lookup plus reconciliation; it never infers that the broker rejected the call.
+7. The transport is reachable only after a transaction-bound submission preflight or cancellation
+   attempt has consumed the exact activation and process opt-in, stored a fresh installed-runtime
+   identity, and passed its attempt cap. Tests keep using injected transports and cannot gain
+   production provenance.
+
+The execution activation commit must name the installed execution build. The paper authorization
+continues to bind the candidate's research commit through its immutable qualification evidence.
+Those are two different facts. Removing their equality check must retain both fingerprints and add
+tests that reject a changed candidate authorization or execution build.
 
 ## Evidence required before implementation
 
 Before adding a production paper mutation transport, one reviewed change set must define:
 
-1. The exact qualified candidate and unexpired paper authorization.
-2. Every `RiskLimits` value, account, symbol, reviewer, reason, effective time, and expiry. Do not use
-   test values as production defaults.
-3. An explicit multi-control enablement design that cannot select a live origin and defaults off on
-   missing, malformed, stale, or conflicting state.
-4. The fixed paper endpoint allowlist, credential boundary, redirect policy, timeout policy, and
-   sanitized error contract.
+1. An unexpired authorization for the exact approved candidate, account, and risk fingerprint above.
+2. The committed risk configuration must load unchanged through the strict production loader.
+3. Process opt-in may enable `broker_writes_allowed` only in exact paper mode with both activation ID
+   and execution commit present. Database activation, runtime identity, preflight, and emergency
+   state remain separate required controls.
+4. Implementation must match the fixed-origin transport design above.
 5. Startup checks for journal integrity, active authorization and limits, current attested account,
    quote and clock evidence, clean reconciliation, clear emergency state, and no unresolved mutation.
 6. Shutdown, restart, exact-lookup recovery, cancel-all, credential rotation, database backup, and
    evidence-retention procedures.
-7. Independent code review, updated threat model, injected failure tests, and explicit user approval
-   for paper writes. Live trading needs a later separate policy and approval process.
+7. Independent code review, injected failure tests, and explicit user approval for the first paper
+   activation. Live trading needs a later separate policy and approval process.
 
 ## First paper session gate
 
