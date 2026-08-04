@@ -450,6 +450,7 @@ class StrategyEquityStore(PositionSettlementStore):
                 fill_cost_bps=fill_cost_bps,
                 prior=prior,
                 marked_at=marked_at,
+                before_sequence=before_sequence,
             )
         advance_row = connection.execute(
             "SELECT advance_json, journal_sequence FROM expected_position_advances "
@@ -564,6 +565,7 @@ class StrategyEquityStore(PositionSettlementStore):
         fill_cost_bps: Decimal,
         prior: StrategyEquityCheckpoint | None,
         marked_at: datetime,
+        before_sequence: int | None,
     ) -> StrategyEquityCheckpoint:
         if (
             (prior is not None and prior.checkpoint_mode != _FLAT_BASELINE_CHECKPOINT_MODE)
@@ -574,8 +576,9 @@ class StrategyEquityStore(PositionSettlementStore):
         ):
             raise ValueError("flat baseline checkpoint lineage is invalid")
         artifacts = connection.execute(
-            "SELECT 1 FROM capacity_reservations WHERE authorization_id = ? LIMIT 1",
-            (baseline.authorization_id,),
+            "SELECT 1 FROM capacity_reservations WHERE authorization_id = ? "
+            "AND (? IS NULL OR journal_sequence < ?) LIMIT 1",
+            (baseline.authorization_id, before_sequence, before_sequence),
         ).fetchone()
         if artifacts is not None:
             raise ValueError("flat baseline checkpoint cannot contain execution artifacts")

@@ -664,8 +664,9 @@ class PositionSettlementStore(BrokerEventStore):
                     (evidence.reconciliation_evidence_id,),
                 ).fetchone()
                 execution_artifact = connection.execute(
-                    "SELECT 1 FROM capacity_reservations WHERE authorization_id = ? LIMIT 1",
-                    (evidence.authorization_id,),
+                    "SELECT 1 FROM capacity_reservations WHERE authorization_id = ? "
+                    "AND journal_sequence < ? LIMIT 1",
+                    (evidence.authorization_id, row[5]),
                 ).fetchone()
                 mode_invalid = (
                     not isinstance(attestation, _PaperSnapshotAttestationV2)
