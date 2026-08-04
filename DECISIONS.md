@@ -471,3 +471,10 @@
 - Context: production IEX quotes were about 3.12 seconds ahead of the local clock and failed before evidence persistence despite remaining within the 15-second freshness window.
 - Consequences: quote and NYSE clock timestamps may lead or trail local observation only within the configured limit. Larger past or future differences fail closed. No broker-write authority changes.
 - Revisit when: measured clock behavior needs a separate, stricter skew limit.
+
+## 2026-08-04 — Flat checkpoints may refresh only before execution
+
+- Decision: allow a new zero-state checkpoint to chain from the prior zero-state checkpoint while fresh flat settlement and risk-input evidence exist and no capacity reservation has ever been created for the authorization.
+- Context: the initial checkpoint's observations expire after 15 seconds, so a one-shot checkpoint cannot support later startup assessment even when the account remains flat.
+- Consequences: pre-trade readiness can refresh without inventing fills or resetting strategy state. Any fill-mode checkpoint or execution artifact permanently closes the flat refresh path.
+- Revisit when: a reviewed session supervisor owns periodic pre-trade evidence refresh.

@@ -85,7 +85,9 @@ An immutable strategy-equity baseline now binds that reviewed allocation to one 
 flat reconciliation baseline, account, strategy identity and version, operator, reason, and time.
 Missing provenance fails closed. One post-clear, production-attested, clean flat reconciliation may
 create the initial zero-equity checkpoint. It contains no fill, position, cost, or execution lineage;
-cash, equity, and peak equity equal the reviewed capital allocation and drawdown is zero. Later
+cash, equity, and peak equity equal the reviewed capital allocation and drawdown is zero. Flat
+checkpoints may chain fresh settlement and quote evidence only while no execution artifact exists.
+This refreshes expiring observations without fabricating fills or resetting strategy state. Later
 immutable strategy-equity checkpoints replay accepted cumulative-fill increments from that flat
 checkpoint, apply the reviewed cost reserve to buys and sells, and mark settled long positions at
 production-attested IEX bids. Each checkpoint binds the latest position-settlement proof, quote
