@@ -450,3 +450,10 @@
 - Context: the completed strategic-allocation holdout must not be exposed before its evaluation rules are approved, and a crash after access logging must not force an untracked second read.
 - Consequences: unapproved or mismatched proposals fail before access. Exact replay can complete the same review; another event or changed reviewer or reason fails closed. The seven approved gates reuse the validation thresholds for return, Sharpe, drawdown, exposure, concentration, and turnover.
 - Revisit when: the one-time review is complete or another holdout schema needs different approved metrics.
+
+## 2026-08-04 — Strategic allocation passes protected holdout review
+
+- Decision: record the strategic-allocation holdout as qualified after event `m3-sa-holdout-review-v1` applied all seven approved gates.
+- Context: the one-time review observed 0.091569 total return, 0.990546 Sharpe ratio, 0.107254 maximum drawdown, 0.993060 average gross exposure, 0.196134 top-five-session profit share, 0.398111 top-instrument profit share, and 1.166143 turnover.
+- Consequences: every gate passed and the stored review fingerprint is `5264274cdab7ad11cde9a87895acc09be81ddae1057fa227694b72ec731e6dfc`. This result permits later paper-authorization review but grants no risk, transport, activation, broker-write, or live authority.
+- Revisit when: new evidence invalidates the candidate or a reviewed paper authorization expires.
