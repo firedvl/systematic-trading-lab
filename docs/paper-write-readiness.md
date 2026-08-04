@@ -10,7 +10,9 @@ All blockers must be removed in separate reviewed changes:
 
 1. No candidate has passed qualification, so no current paper authorization exists.
 2. `config/risk/` has no active reviewed risk-limit file or production financial values.
-3. Runtime configuration has no broker-write enablement control and always rejects write authority.
+3. Runtime configuration can parse an exact activation-and-code opt-in, and the journal can store an
+   independently approved activation and revocation, but neither is connected to an order mutation
+   boundary. Runtime write authority still always returns false.
 4. Submission and cancellation adapters require injected test transports; no production mutation
    transport exists.
 5. No paper-execution CLI or supervisor exists.
@@ -65,3 +67,10 @@ terminal broker evidence, and complete reconciliation; preserve every failed att
 The current repository cannot execute this procedure because the blockers remain. Recovery today is
 read-only. Do not interpret this document, a paper authorization record, an assessment proof, or
 paper mode alone as broker-write authority.
+
+The dormant activation binds the exact authorization, limits, account, code commit, fixed paper
+origin, submit/cancel scope, distinct approver and operator, attempt cap, emergency generation, and
+active interval. A separate process opt-in names its activation and commit. These records remain
+evidence only until a later change rechecks them inside each one-shot order-attempt transaction.
+The supplied commit string is not trusted runtime code identity, and attempts are not yet activation
+bound, so assessment explicitly remains ineligible.
