@@ -161,6 +161,10 @@ code commit identifies the installed execution build. The authorization fingerpr
 first binding; process opt-in and fresh installed-runtime identity retain the second. They need not
 name the same commit, and either mismatch blocks the attempt.
 
+The paper startup assessment opens the execution database in SQLite read-only and query-only mode.
+It verifies current authority and evidence, reports every blocker, and cannot initialize schema,
+clear emergency state, create activation, or reach the mutation coordinator.
+
 Runtime build verification is read-only. It accepts only a strict commit-bound manifest whose wheel
 name and SHA-256 match the supplied artifact, then requires GitHub attestations for both files from
 the fixed repository, fixed signer workflow, and GitHub-hosted runner boundary. It returns an

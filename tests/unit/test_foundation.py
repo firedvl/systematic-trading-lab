@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from systematic_trading_lab.cli import parser, run
 from systematic_trading_lab.config import ConfigurationError, load_dotenv, load_settings
 from systematic_trading_lab.domain import OHLCVBar, Symbol, Timeframe
 from systematic_trading_lab.fingerprints import fingerprint
@@ -60,6 +61,31 @@ def test_dotenv_rejects_unknown_entries(tmp_path: Path) -> None:
 
     with pytest.raises(ConfigurationError, match="invalid .env entry"):
         load_dotenv(path, {})
+
+
+def test_paper_startup_cli_is_read_only_and_fails_closed(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    settings = load_settings({"TRADING_LAB_HOME": str(tmp_path)})
+    result = run(
+        parser().parse_args(
+            [
+                "paper",
+                "assess-startup",
+                "--authorization",
+                "missing",
+                "--risk-config",
+                "config/risk/alpaca-paper-v1.json",
+            ]
+        ),
+        settings,
+    )
+    output = capsys.readouterr().out
+
+    assert result == 1
+    assert '"ready": false' in output
+    assert "execution-database-missing-or-unsafe" in output
+    assert not (tmp_path / "execution.sqlite3").exists()
 
 
 def test_canonical_fingerprint_normalizes_decimal_and_mapping_order() -> None:
