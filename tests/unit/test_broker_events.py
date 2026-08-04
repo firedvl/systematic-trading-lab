@@ -45,6 +45,29 @@ def test_cumulative_fill_price_matches_quantity_and_forward_notional() -> None:
         [partial],
         replace(partial, event_id="event-4", cumulative_average_fill_price=Decimal("101")),
     )
+    filled = replace(
+        partial,
+        event_id="event-5",
+        state=OrderState.FILLED,
+        provider_timestamp=NOW + timedelta(seconds=2),
+        observed_at=NOW + timedelta(seconds=2),
+    )
+    assert _can_follow(
+        [filled],
+        replace(
+            filled,
+            event_id="event-6",
+            observed_at=NOW + timedelta(seconds=3),
+        ),
+    )
+    assert not _can_follow(
+        [filled],
+        replace(
+            filled,
+            event_id="event-7",
+            cumulative_average_fill_price=Decimal("101"),
+        ),
+    )
     with pytest.raises(ValueError, match="unfilled"):
         replace(acknowledged, cumulative_average_fill_price=Decimal("100"))
     with pytest.raises(ValueError, match="requires"):
