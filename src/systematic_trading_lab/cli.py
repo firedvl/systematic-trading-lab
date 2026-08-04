@@ -12,6 +12,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from . import __version__
+from .alpaca_paper import AlpacaPaperReader
 from .backtesting import CostModel
 from .campaign_specs import load_training_campaign_plan
 from .config import ConfigurationError, Settings, load_dotenv, load_settings
@@ -24,6 +25,12 @@ from .experiment_runner import (
     run_holdout_experiment,
 )
 from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, ExperimentSplit
+from .paper_observation import (
+    PaperObservation,
+    PaperObservationStatus,
+    PaperObservationStore,
+    record_production_observation,
+)
 from .paper_startup import assess_paper_startup, initialize_paper_storage
 from .providers import AlpacaHistoricalProvider, FixtureProvider
 from .qualification import load_qualification_proposal, review_holdout
@@ -33,6 +40,7 @@ from .qualification_evidence import (
     load_evidence_manifest,
     write_evidence_reports,
 )
+from .reconciliation import ReconciliationStore
 from .reporting import benchmark_suite, build_report, report_json, strategy_result, write_report
 from .risk import load_risk_limits
 from .runtime_build import (
@@ -95,6 +103,26 @@ def parser() -> argparse.ArgumentParser:
     paper.add_parser(
         "initialize-storage", help="create empty paper schema without adding authority"
     )
+    observation_start = paper.add_parser(
+        "start-observation", help="start a broker-read-only paper observation campaign"
+    )
+    observation_start.add_argument("campaign_id")
+    observation_start.add_argument(
+        "--risk-config", type=Path, default=Path("config/risk/alpaca-paper-v1.json")
+    )
+    observation_start.add_argument("--maximum-gap-seconds", type=int, default=900)
+    observation_start.add_argument("--duration-hours", type=int, default=168)
+    observation_record = paper.add_parser(
+        "record-observation", help="record one broker-read-only paper observation"
+    )
+    observation_record.add_argument("campaign_id")
+    observation_record.add_argument(
+        "--risk-config", type=Path, default=Path("config/risk/alpaca-paper-v1.json")
+    )
+    observation_status = paper.add_parser(
+        "assess-observation", help="assess paper observation continuity and drift"
+    )
+    observation_status.add_argument("campaign_id")
     data = commands.add_parser("data", help="manage local market data").add_subparsers(
         dest="data_command", required=True
     )
@@ -234,10 +262,53 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                     "table_count": result.table_count,
                     "journal_event_count": result.journal_event_count,
                     "authority_evidence_unchanged": result.authority_evidence_unchanged,
-                    "broker_writes_allowed": settings.broker_writes_allowed,
+                    "broker_writes_allowed": False,
                 }
             )
             return 0
+        if arguments.paper_command == "start-observation":
+            limits = load_risk_limits(arguments.risk_config)
+            reader = _paper_observation_reader(settings, limits.account_id, limits.allowed_symbols)
+            snapshot = reader.record_portfolio(ReconciliationStore(layout.execution))
+            store = PaperObservationStore(layout.execution)
+            campaign = store.start(
+                campaign_id=arguments.campaign_id,
+                baseline_snapshot_id=snapshot.snapshot_id,
+                maximum_gap_seconds=arguments.maximum_gap_seconds,
+                duration=timedelta(hours=arguments.duration_hours),
+            )
+            _print(
+                {
+                    "campaign_id": campaign.campaign_id,
+                    "baseline_snapshot_id": campaign.baseline_snapshot_id,
+                    "expected_positions": [
+                        {"symbol": item.symbol, "quantity": item.quantity}
+                        for item in campaign.expected_positions
+                    ],
+                    "maximum_gap_seconds": campaign.maximum_gap_seconds,
+                    "starts_at": campaign.starts_at.isoformat().replace("+00:00", "Z"),
+                    "ends_at": campaign.ends_at.isoformat().replace("+00:00", "Z"),
+                    "broker_writes_allowed": False,
+                }
+            )
+            return 0
+        if arguments.paper_command == "record-observation":
+            limits = load_risk_limits(arguments.risk_config)
+            store = PaperObservationStore(layout.execution)
+            observation = record_production_observation(
+                store,
+                _paper_observation_reader(settings, limits.account_id, limits.allowed_symbols),
+                campaign_id=arguments.campaign_id,
+            )
+            status = store.assess(arguments.campaign_id, assessed_at=datetime.now(UTC))
+            _print(_paper_observation_result(observation, status))
+            return 0 if status.healthy_now else 1
+        if arguments.paper_command == "assess-observation":
+            status = PaperObservationStore(layout.execution).assess(
+                arguments.campaign_id, assessed_at=datetime.now(UTC)
+            )
+            _print(_paper_observation_result(None, status))
+            return 0 if status.healthy_now else 1
         if (arguments.wheel is None) != (arguments.manifest is None):
             raise ValueError("paper startup assessment requires both wheel and manifest")
         assessed_at = datetime.now(UTC)
@@ -626,6 +697,39 @@ def _strategy_identity(name: str) -> tuple[str, str]:
 
 def _print(value: object) -> None:
     print(json.dumps(value, indent=2, sort_keys=True))
+
+
+def _paper_observation_reader(
+    settings: Settings, account_id: str, allowed_symbols: tuple[str, ...]
+) -> AlpacaPaperReader:
+    if settings.mode is not TradingMode.PAPER:
+        raise ConfigurationError("paper observation requires paper mode")
+    return AlpacaPaperReader(
+        os.environ.get("APCA_API_KEY_ID", ""),
+        os.environ.get("APCA_API_SECRET_KEY", ""),
+        account_id=account_id,
+        allowed_symbols=frozenset(allowed_symbols),
+    )
+
+
+def _paper_observation_result(
+    observation: PaperObservation | None, status: PaperObservationStatus
+) -> dict[str, object]:
+    return {
+        "campaign_id": status.campaign_id,
+        "observation_id": (observation.observation_id if observation is not None else None),
+        "observation_status": (observation.status if observation is not None else None),
+        "healthy_now": status.healthy_now,
+        "campaign_complete": status.campaign_complete,
+        "reasons": status.reasons,
+        "success_count": status.success_count,
+        "drift_count": status.drift_count,
+        "failure_count": status.failure_count,
+        "maximum_observed_gap_seconds": status.maximum_observed_gap_seconds,
+        "latest_observed_at": status.latest_observed_at.isoformat().replace("+00:00", "Z"),
+        "assessed_at": status.assessed_at.isoformat().replace("+00:00", "Z"),
+        "broker_writes_allowed": False,
+    }
 
 
 if __name__ == "__main__":

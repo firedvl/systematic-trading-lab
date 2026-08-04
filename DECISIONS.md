@@ -499,3 +499,10 @@
 - Context: the first SPY fill required reviewed terminal-replay recovery longer than the reservation lifetime. Expiry removed pending capacity but left no immutable record that the filled reservation had settled into broker holdings.
 - Consequences: expiry cannot block accounting completion or restore pending capacity. The release remains append-only, idempotent, and broker-free. Any missing fill, stale context, later order change, prior release, or unrelated active reservation fails closed.
 - Revisit when: sustained supervision can settle fills within the reservation lifetime or concurrent settlement needs a broader account-wide proof.
+
+## 2026-08-04 — Sustained observation starts read-only
+
+- Decision: define a bounded paper observation campaign from one production-attested portfolio snapshot and record immutable healthy, drift, or sanitized read-failure samples without activation or broker mutation authority.
+- Context: M5 needs measured continuity and disconnect evidence before a scheduler or recovery supervisor can make operational decisions.
+- Consequences: the campaign fixes expected positions, account, maximum sample gap, and end time. Assessment reports current staleness, historical failure and drift counts, and the largest completed gap. Recovery samples never erase prior failures. No observation can submit, cancel, settle, clear emergency state, or approve risk.
+- Revisit when: measured sampling behavior defines scheduler tolerances and the replay/shadow equivalence record needs shared campaign identity.
