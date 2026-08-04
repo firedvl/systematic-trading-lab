@@ -33,9 +33,10 @@ no open orders, follow every local order transition, remain fresh, and find no n
 order. Emergency state must be clear. Cash, equity, and buying power remain broker observations;
 the proof neither compares them to invented local values nor releases filled capacity.
 A read-only capacity assessment maps that proof to the exact positive-fill reservations and observed
-cash, equity, and buying power. It still blocks release because risk admission has no durable
-adapter-bound quote, clock, exposure, PnL, drawdown, or context provenance. Assessment writes no
-journal or release record.
+cash, equity, and buying power. A separate protected mutation now rederives the complete attested
+context under an immediate transaction, requires the settlement proof and exclusive active
+reservation set to match, and journals their releases atomically. Later order changes, stale
+evidence, changed replay, or unrelated active reservations fail closed.
 The production-only risk-input reader now binds one fresh attested portfolio snapshot and active
 paper authorization to a complete sorted IEX latest-quote set and current NYSE market-clock
 evidence. The fixed-origin GET-only reads use the authorized risk configuration's symbols and
@@ -66,6 +67,9 @@ capacity. A later risk-decision path must rederive it in its own immediate trans
 That transaction-bound path now exists. It accepts no caller account, quote, PnL, drawdown, order,
 reservation, session, or emergency values. The exact provenance fingerprint enters the immutable
 risk decision. One intent can receive only one exact decision; changed replay fails closed.
+The same transaction-bound context permits one narrow post-settlement mutation: replacing the
+exclusive positive-fill reservation set after its exposure appears in the current attested
+portfolio. It grants no broker-write authority.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

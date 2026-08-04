@@ -324,3 +324,10 @@
 - Context: a read-only proof can become stale before a later write, while caller financial inputs cannot establish provenance.
 - Consequences: callers provide only intent, authorization, reviewed limits, and evaluation time. Decisions bind the context-provenance fingerprint. Exact replay excludes its own reservation and returns the original receipt; a changed second decision for one intent fails closed. Direct context injection remains private test scaffolding.
 - Revisit when: settled filled reservations can be replaced atomically by the same current attested context without double counting.
+
+## 2026-08-03 — Settled positions replace exclusive pending capacity atomically
+
+- Decision: release positive-fill reservations only when the same immediate transaction derives a complete attested context that matches the current settlement proof, emergency generation, and exact exclusive active reservation set.
+- Context: retaining settled reservations double counts exposure already present in the attested portfolio, while releasing them from settlement evidence alone can reuse capacity against stale or incomplete risk inputs.
+- Consequences: later order mutations, stale evidence, unrelated active reservations, and changed replay fail closed. Individual capacity releases and one immutable summary proof share the transaction. The release grants no broker-write authority.
+- Revisit when: multiple concurrent settled batches must share one account without requiring an exclusive active reservation set.
