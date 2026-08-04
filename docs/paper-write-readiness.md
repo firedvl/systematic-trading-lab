@@ -23,8 +23,8 @@ All blockers must be removed in separate reviewed changes:
 2. The reviewed paper risk configuration exists. Loading it does not grant broker authority.
 3. Runtime configuration can parse an exact activation-and-code opt-in. Submission and cancellation
    can bind it to dormant one-shot evidence and enforce its shared attempt cap. A main-only workflow
-   builds a commit-bound wheel and manifest. Public-repository run `30885939678` persisted GitHub
-   attestations for commit `f5f12fe8de8e98a98d4af49b234a59455c94ca87`, and fail-closed verification
+   builds a commit-bound wheel and manifest. Public-repository run `30888436276` persisted GitHub
+   attestations for commit `8846a16529995fbebeb3e5f1cd088034f4d06418`, and fail-closed verification
    accepted those artifacts and a clean non-editable installation. Activation assessment and new
    request-bound attempts consume and persist that identity, but runtime write authority still
    always returns false. The activation now
@@ -32,8 +32,8 @@ All blockers must be removed in separate reviewed changes:
    the authorization.
 4. The fixed-origin production mutation transport and activation-bound submission/cancellation
    coordinator exist, but hard-coded runtime authority makes the coordinator unreachable.
-5. A read-only startup assessment CLI exists. No CLI initializes execution state, activates writes,
-   submits, cancels, or runs a supervisor.
+5. An explicit CLI initializes empty execution storage without adding authority, and a read-only
+   startup assessment CLI exists. No CLI activates writes, submits, cancels, or runs a supervisor.
 6. The transport threat model below is defined, but production use still needs independent code
    review and explicit user approval after implementation and failure tests pass.
 7. M5 sustained paper operation, recovery drills, and equivalence evidence have not begun.

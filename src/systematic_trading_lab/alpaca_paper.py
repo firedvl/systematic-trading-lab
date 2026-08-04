@@ -217,13 +217,14 @@ class AlpacaPaperReader:
         )
 
     def record_portfolio(
-        self, store: ReconciliationStore, *, recorded_at: datetime
+        self, store: ReconciliationStore, *, recorded_at: datetime | None = None
     ) -> PortfolioSnapshot:
         if not self._allows_persistence:
             raise AlpacaPaperError("injected transport cannot produce durable paper provenance")
         from .reconciliation import _ALPACA_READER_CAPABILITY
 
         snapshot, previous_close_equity = self._read_portfolio()
+        recorded_at = self._now() if recorded_at is None else recorded_at
         return store._record_adapter_snapshot(
             snapshot,
             adapter_version="alpaca-paper-reader-v2",

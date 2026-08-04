@@ -124,8 +124,8 @@ durable broker-event evidence. The event identity binds the complete lookup snap
 time, and local observation time; injected transports remain unable to create provenance.
 Conflicting duplicates, unknown statuses, out-of-order transitions, or position drift trigger
 emergency disable. Each submit, cancel, and cancel-all mutation is journaled before the call and has
-an unknown-outcome state resolved by lookup and reconciliation before retry. No production order
-submission is implemented. The broker-free intent store validates immutable intent content,
+an unknown-outcome state resolved by lookup and reconciliation before retry. The production mutation
+coordinator remains unreachable because runtime broker-write authority is hard-coded false. The broker-free intent store validates immutable intent content,
 persists each new intent and journal event in one transaction, returns the same receipt for exact
 replay, and fails startup when its sequence, hash chain, stored head, schema, or database is invalid.
 
@@ -174,5 +174,5 @@ copies, rejects unexpected package files, and binds all loaded package modules t
 Activation assessment requires that identity's full source commit to match both activation and
 process opt-in and accepts only proof from the prior five seconds. New request-bound submission and cancellation
 attempts persist the identity fingerprint inside their existing immediate transactions. The proof
-cannot grant broker authority: runtime write authority remains false and no production mutation
-transport exists.
+cannot grant broker authority: runtime write authority remains false, so the production mutation
+transport remains unreachable.
