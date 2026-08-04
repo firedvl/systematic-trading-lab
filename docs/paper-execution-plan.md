@@ -190,6 +190,10 @@ A later immutable checkpoint can replay every accepted fill increment for that b
 the reviewed fill-cost reserve, require the latest settlement proof, mark long positions at attested
 IEX bids, and derive peak-linked strategy drawdown. A checkpoint remains read-only and does not make
 the full `RiskContext` authoritative.
+The read-only context builder now derives every `RiskContext` field from verified evidence in one
+transaction and returns a fingerprinted provenance proof. It does not persist approval or mutate
+capacity. The risk-decision transaction must rederive the same authorities before it can replace the
+legacy caller context path.
 
 Official references reviewed 2026-08-03:
 

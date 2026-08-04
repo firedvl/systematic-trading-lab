@@ -59,6 +59,10 @@ capacity authority.
 Risk decisions also derive and fingerprint the exact temporal active reservation set in the same
 transaction. Caller-supplied pending totals are replaced, and later releases cannot alter an earlier
 evaluation.
+The complete read-only context builder now composes the attested portfolio, quote, clock, daily-PnL,
+strategy-equity checkpoint, settlement, reservation, authorization, limits, and emergency evidence
+inside one read transaction. The resulting proof changes no state and cannot approve or release
+capacity. A later risk-decision path must rederive it in its own immediate transaction.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

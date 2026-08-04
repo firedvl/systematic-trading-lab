@@ -41,6 +41,7 @@ from systematic_trading_lab.risk import (
     RiskLimits,
     RiskStore,
 )
+from systematic_trading_lab.risk_context import AttestedRiskContextStore
 from systematic_trading_lab.risk_inputs import (
     AlpacaRiskInputError,
     AlpacaRiskInputReader,
@@ -1228,6 +1229,49 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         )
         == checkpoint
     )
+    context_head = equity_store.verify_journal()
+    attested_context = AttestedRiskContextStore(store.path).derive(
+        authorization_id=authorization.authorization_id,
+        symbol="SPY",
+        limits=limits,
+        evaluated_at=settlement_at + timedelta(seconds=2),
+    )
+    context = attested_context.context
+    assert context.equity == Decimal("71000")
+    assert context.cash == Decimal("69000")
+    assert context.buying_power == Decimal("68000")
+    assert context.current_gross_exposure == Decimal("300.3")
+    assert context.current_symbol_notional == Decimal("300.3")
+    assert context.current_symbol_quantity == 3
+    assert context.pending_buy_notional == Decimal("15000")
+    assert context.pending_order_notional == Decimal("15000")
+    assert context.pending_order_count == 1
+    assert context.orders_last_minute == 1
+    assert context.daily_pnl == Decimal("0")
+    assert context.strategy_drawdown == checkpoint.strategy_drawdown
+    assert context.quote_bid_price == Decimal("100")
+    assert context.quote_ask_price == Decimal("100.1")
+    assert context.regular_session_open
+    assert not context.emergency_disabled
+    assert attested_context.strategy_equity_checkpoint_fingerprint == (
+        checkpoint.checkpoint_fingerprint
+    )
+    assert attested_context.proof_fingerprint
+    assert equity_store.verify_journal() == context_head
+    with pytest.raises(JournalIntegrityError, match="stale or mismatched"):
+        AttestedRiskContextStore(store.path).derive(
+            authorization_id=authorization.authorization_id,
+            symbol="SPY",
+            limits=limits,
+            evaluated_at=settlement_at + timedelta(seconds=33),
+        )
+    with pytest.raises(JournalIntegrityError, match="valuation is incomplete"):
+        AttestedRiskContextStore(store.path).derive(
+            authorization_id=authorization.authorization_id,
+            symbol="QQQ",
+            limits=limits,
+            evaluated_at=settlement_at + timedelta(seconds=2),
+        )
     tampered_path = tmp_path / "tampered-strategy-equity.sqlite3"
     shutil.copy2(store.path, tampered_path)
     with sqlite3.connect(tampered_path) as connection:

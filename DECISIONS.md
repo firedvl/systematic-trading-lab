@@ -310,3 +310,10 @@
 - Context: account equity cannot isolate one strategy, cumulative average fill price is not an incremental cash ledger, and the current broker evidence has no authoritative fee field.
 - Consequences: `RiskLimits` requires a nonnegative strategy fill-cost value with no production default. Each checkpoint requires the latest settlement proof, complete fresh bid evidence, and prior peak lineage. The reserve is policy, not broker fee evidence. Derived drawdown grants no risk approval or capacity authority.
 - Revisit when: authoritative broker fee evidence can replace or reconcile the reserve, or the execution envelope permits shorts.
+
+## 2026-08-03 — Complete risk context is derived in one read transaction
+
+- Decision: derive every `RiskContext` field from verified journaled evidence inside one SQLite read transaction and return a fingerprinted provenance proof.
+- Context: independently valid account, quote, clock, daily-PnL, strategy-drawdown, settlement, reservation, authorization, limits, and emergency values can still describe different moments or authorities.
+- Consequences: callers supply only authorization, symbol, reviewed limits, and evaluation time. The builder writes nothing and grants no risk approval or capacity authority. One-minute order activity comes from journaled reservations, including completed attempts, while active reservation capacity uses exact temporal membership.
+- Revisit when: the risk-decision transaction replaces its legacy caller-supplied context with this derivation under an immediate write lock.
