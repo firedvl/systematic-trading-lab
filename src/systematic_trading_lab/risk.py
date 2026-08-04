@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -173,6 +174,7 @@ class RiskDecision:
     order_notional: Decimal
     cash_reservation: Decimal
     gross_exposure_reservation: Decimal
+    context_provenance_fingerprint: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.approved, bool) or self.approved != (not self.reasons):
@@ -185,6 +187,8 @@ class RiskDecision:
             ("context", self.context_fingerprint),
         ):
             _sha256(fingerprint_name, fingerprint_value)
+        if self.context_provenance_fingerprint is not None:
+            _sha256("context provenance", self.context_provenance_fingerprint)
         _utc("risk decision time", self.decided_at)
         for amount_name, amount_value in (
             ("order notional", self.order_notional),
@@ -641,12 +645,30 @@ class RiskStore(ExecutionStore):
         except KeyError:
             raise KeyError(authorization_id) from None
 
-    def record_risk_decision(
+    def _record_risk_decision_with_context(
         self,
         intent_id: str,
         authorization_id: str,
         limits: RiskLimits,
         context: RiskContext,
+    ) -> RiskDecisionReceipt:
+        """Retain direct context injection only for broker-free unit scaffolding."""
+        return self._record_risk_decision_transaction(
+            intent_id,
+            authorization_id,
+            limits,
+            lambda _connection, _intent: (context, None),
+        )
+
+    def _record_risk_decision_transaction(
+        self,
+        intent_id: str,
+        authorization_id: str,
+        limits: RiskLimits,
+        context_factory: Callable[
+            [sqlite3.Connection, ExecutionIntent], tuple[RiskContext, str | None]
+        ],
+        replay_decided_at: datetime | None = None,
     ) -> RiskDecisionReceipt:
         with self._connect() as connection:
             try:
@@ -662,6 +684,19 @@ class RiskStore(ExecutionStore):
                 except KeyError:
                     raise HoldoutAccessError("paper authorization not found") from None
                 intent = self._read_intent(connection, intent_id)
+                prior = connection.execute(
+                    "SELECT decision_id, intent_id, authorization_id, decision_json, "
+                    "decided_at, journal_sequence FROM risk_decisions "
+                    "WHERE intent_id = ? AND authorization_id = ? LIMIT 1",
+                    (intent_id, authorization_id),
+                ).fetchone()
+                if prior is not None and replay_decided_at is not None:
+                    receipt = _decision_receipt(str(prior[0]), prior[1:])
+                    if receipt.decided_at != replay_decided_at:
+                        raise HoldoutAccessError("intent already has a different risk decision")
+                    connection.commit()
+                    return receipt
+                context, context_provenance_fingerprint = context_factory(connection, intent)
                 if (
                     authorization.strategy_id != intent.strategy_id
                     or authorization.strategy_version != intent.strategy_version
@@ -691,6 +726,11 @@ class RiskStore(ExecutionStore):
                     pending_order_count=reservation_set.reservation_count,
                 )
                 decision = evaluate_risk(intent, limits, bound_context)
+                if context_provenance_fingerprint is not None:
+                    decision = replace(
+                        decision,
+                        context_provenance_fingerprint=context_provenance_fingerprint,
+                    )
                 decision_id = fingerprint(
                     {
                         "intent": intent.intent_fingerprint,
@@ -710,6 +750,13 @@ class RiskStore(ExecutionStore):
                     receipt = _decision_receipt(decision_id, existing)
                     connection.commit()
                     return receipt
+                prior_decision = connection.execute(
+                    "SELECT decision_id FROM risk_decisions "
+                    "WHERE intent_id = ? AND authorization_id = ? LIMIT 1",
+                    (intent_id, authorization_id),
+                ).fetchone()
+                if prior_decision is not None:
+                    raise HoldoutAccessError("intent already has a different risk decision")
                 payload = {
                     "decision_id": decision_id,
                     "intent_id": intent_id,
@@ -1103,14 +1150,17 @@ class RiskStore(ExecutionStore):
             raise JournalIntegrityError("risk decision and journal counts differ")
         for row in rows:
             try:
-                decision = _decode_decision(json.loads(row[3]))
+                raw_decision = json.loads(row[3])
+                decision = _decode_decision(raw_decision)
             except (ValueError, json.JSONDecodeError) as error:
                 raise JournalIntegrityError("stored risk decision is invalid") from error
+            legacy = "context_provenance_fingerprint" not in raw_decision
+            decision_payload = raw_decision if legacy else canonicalize(decision)
             payload = {
                 "decision_id": row[0],
                 "intent_id": row[1],
                 "authorization_id": row[2],
-                "decision": canonicalize(decision),
+                "decision": decision_payload,
             }
             event = connection.execute(
                 """
@@ -1141,7 +1191,7 @@ class RiskStore(ExecutionStore):
                     {
                         "intent": references[0],
                         "authorization": references[1],
-                        "decision": decision,
+                        "decision": decision_payload,
                     }
                 )
             )
@@ -1151,7 +1201,7 @@ class RiskStore(ExecutionStore):
                 or decision.intent_fingerprint != references[0]
                 or decision.configuration_fingerprint
                 != authorization.risk_configuration_fingerprint
-                or row[3] != canonical_json(decision)
+                or row[3] != canonical_json(decision_payload)
                 or row[4] != _utc_text(decision.decided_at)
                 or event
                 != (
@@ -1244,7 +1294,10 @@ def _decode_decision(value: Any) -> RiskDecision:
         "cash_reservation",
         "gross_exposure_reservation",
     }
-    if not isinstance(value, dict) or set(value) != fields:
+    if not isinstance(value, dict) or frozenset(value) not in {
+        frozenset(fields),
+        frozenset((*fields, "context_provenance_fingerprint")),
+    }:
         raise ValueError("risk decision fields differ")
     reasons = value["reasons"]
     if not isinstance(reasons, list) or any(not isinstance(item, str) for item in reasons):
@@ -1260,6 +1313,7 @@ def _decode_decision(value: Any) -> RiskDecision:
             order_notional=Decimal(value["order_notional"]),
             cash_reservation=Decimal(value["cash_reservation"]),
             gross_exposure_reservation=Decimal(value["gross_exposure_reservation"]),
+            context_provenance_fingerprint=value.get("context_provenance_fingerprint"),
         )
     except (KeyError, TypeError, ArithmeticError) as error:
         raise ValueError("risk decision value is invalid") from error

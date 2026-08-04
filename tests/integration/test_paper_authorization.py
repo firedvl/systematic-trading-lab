@@ -327,10 +327,10 @@ def test_durable_risk_decision_uses_persistent_emergency_state(tmp_path: Path) -
     store.record_intent(intent, received_at=NOW - timedelta(minutes=1))
     store.authorize_paper(authorization, report, limits)
 
-    receipt = store.record_risk_decision(
+    receipt = store._record_risk_decision_with_context(
         intent.idempotency_key, authorization.authorization_id, limits, _context()
     )
-    replay = RiskStore(path).record_risk_decision(
+    replay = RiskStore(path)._record_risk_decision_with_context(
         intent.idempotency_key, authorization.authorization_id, limits, _context()
     )
 
@@ -682,7 +682,7 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         quote_observed_at=NOW + timedelta(seconds=13),
         clock_observed_at=NOW + timedelta(seconds=13),
     )
-    reserved = store.record_risk_decision(
+    reserved = store._record_risk_decision_with_context(
         intent.idempotency_key, authorization.authorization_id, limits, risk_context
     )
     assert reserved.approved
@@ -745,7 +745,7 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
         )
         connection.commit()
     assert (
-        RiskStore(store.path).record_risk_decision(
+        RiskStore(store.path)._record_risk_decision_with_context(
             intent.idempotency_key, authorization.authorization_id, limits, risk_context
         )
         == reserved
@@ -1272,6 +1272,49 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
             limits=limits,
             evaluated_at=settlement_at + timedelta(seconds=2),
         )
+    attested_intent = replace(
+        _intent(report),
+        idempotency_key="candidate-1:SPY:2026-08-03:attested",
+        decision_timestamp=settlement_at + timedelta(seconds=1),
+        target_weight=None,
+        target_quantity=4,
+        expires_at=settlement_at + timedelta(minutes=10),
+    )
+    store.record_intent(attested_intent, received_at=settlement_at + timedelta(seconds=1))
+    decision_store = AttestedRiskContextStore(store.path)
+    assert not hasattr(decision_store, "record_risk_decision")
+    attested_receipt = decision_store.record_attested_risk_decision(
+        intent_id=attested_intent.idempotency_key,
+        authorization_id=authorization.authorization_id,
+        limits=limits,
+        evaluated_at=settlement_at + timedelta(seconds=2),
+    )
+    decision_head = decision_store.verify_journal()
+    assert attested_receipt.approved
+    assert (
+        decision_store.record_attested_risk_decision(
+            intent_id=attested_intent.idempotency_key,
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            evaluated_at=settlement_at + timedelta(seconds=2),
+        )
+        == attested_receipt
+    )
+    assert decision_store.verify_journal() == decision_head
+    with pytest.raises(HoldoutAccessError, match="already has a different"):
+        decision_store.record_attested_risk_decision(
+            intent_id=attested_intent.idempotency_key,
+            authorization_id=authorization.authorization_id,
+            limits=limits,
+            evaluated_at=settlement_at + timedelta(seconds=3),
+        )
+    assert decision_store.verify_journal() == decision_head
+    with sqlite3.connect(store.path) as connection:
+        attested_decision_json = connection.execute(
+            "SELECT decision_json FROM risk_decisions WHERE decision_id = ?",
+            (attested_receipt.decision_id,),
+        ).fetchone()[0]
+    assert json.loads(attested_decision_json)["context_provenance_fingerprint"]
     tampered_path = tmp_path / "tampered-strategy-equity.sqlite3"
     shutil.copy2(store.path, tampered_path)
     with sqlite3.connect(tampered_path) as connection:

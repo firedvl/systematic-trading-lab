@@ -63,6 +63,9 @@ The complete read-only context builder now composes the attested portfolio, quot
 strategy-equity checkpoint, settlement, reservation, authorization, limits, and emergency evidence
 inside one read transaction. The resulting proof changes no state and cannot approve or release
 capacity. A later risk-decision path must rederive it in its own immediate transaction.
+That transaction-bound path now exists. It accepts no caller account, quote, PnL, drawdown, order,
+reservation, session, or emergency values. The exact provenance fingerprint enters the immutable
+risk decision. One intent can receive only one exact decision; changed replay fails closed.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only

@@ -317,3 +317,10 @@
 - Context: independently valid account, quote, clock, daily-PnL, strategy-drawdown, settlement, reservation, authorization, limits, and emergency values can still describe different moments or authorities.
 - Consequences: callers supply only authorization, symbol, reviewed limits, and evaluation time. The builder writes nothing and grants no risk approval or capacity authority. One-minute order activity comes from journaled reservations, including completed attempts, while active reservation capacity uses exact temporal membership.
 - Revisit when: the risk-decision transaction replaces its legacy caller-supplied context with this derivation under an immediate write lock.
+
+## 2026-08-03 — Risk decisions derive attested context under their write lock
+
+- Decision: expose only a risk-decision entry point that derives the complete attested context inside the same immediate transaction as decision and reservation persistence.
+- Context: a read-only proof can become stale before a later write, while caller financial inputs cannot establish provenance.
+- Consequences: callers provide only intent, authorization, reviewed limits, and evaluation time. Decisions bind the context-provenance fingerprint. Exact replay excludes its own reservation and returns the original receipt; a changed second decision for one intent fails closed. Direct context injection remains private test scaffolding.
+- Revisit when: settled filled reservations can be replaced atomically by the same current attested context without double counting.
