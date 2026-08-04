@@ -1,5 +1,6 @@
 """Flat-baseline settlement bootstrap leaves execution lineage empty."""
 
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -325,17 +326,38 @@ def test_flat_checkpoint_can_supply_the_first_attested_risk_context(tmp_path: Pa
         limits=limits,
         marked_at=now,
     )
+    refresh_time = now + timedelta(seconds=1)
+    refreshed_risk_input = replace(
+        risk_input,
+        quotes=(replace(quote, provider_timestamp=refresh_time, observed_at=refresh_time),),
+        clock=replace(clock, provider_timestamp=refresh_time, observed_at=refresh_time),
+        completed_at=refresh_time,
+    )
+    RiskInputEvidenceStore(store.path)._record(
+        refreshed_risk_input,
+        recorded_at=refresh_time,
+        capability=_CAPABILITY,
+    )
+    refreshed = StrategyEquityStore(store.path).record_flat_baseline_checkpoint(
+        strategy_equity_baseline_id=strategy_baseline.baseline_id,
+        settlement_proof_id=settlement.proof_id,
+        risk_input_evidence_id=refreshed_risk_input.evidence_id,
+        limits=limits,
+        marked_at=refresh_time,
+    )
     context = AttestedRiskContextStore(store.path).derive(
         authorization_id=baseline.authorization_id,
         symbol="SPY",
         limits=limits,
-        evaluated_at=now,
+        evaluated_at=refresh_time,
     )
 
     assert checkpoint.checkpoint_mode == "flat-baseline-v1"
     assert checkpoint.fill_event_ids == ()
     assert checkpoint.strategy_equity == limits.strategy_capital_allocation
-    assert context.strategy_equity_checkpoint_fingerprint == checkpoint.checkpoint_fingerprint
+    assert refreshed.prior_checkpoint_fingerprint == checkpoint.checkpoint_fingerprint
+    assert refreshed.checkpoint_mode == "flat-baseline-v1"
+    assert context.strategy_equity_checkpoint_fingerprint == refreshed.checkpoint_fingerprint
     assert context.context.current_gross_exposure == 0
     assert not context.context.emergency_disabled
 

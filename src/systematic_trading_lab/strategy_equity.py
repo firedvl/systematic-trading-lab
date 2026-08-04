@@ -126,7 +126,6 @@ class StrategyEquityCheckpoint:
         elif (
             self.fill_event_ids
             or self.advance_fingerprint
-            or self.prior_checkpoint_fingerprint is not None
             or self.gross_buy_notional != 0
             or self.gross_sell_notional != 0
             or self.fill_cost_reserve != 0
@@ -567,7 +566,7 @@ class StrategyEquityStore(PositionSettlementStore):
         marked_at: datetime,
     ) -> StrategyEquityCheckpoint:
         if (
-            prior is not None
+            (prior is not None and prior.checkpoint_mode != _FLAT_BASELINE_CHECKPOINT_MODE)
             or settlement.advance_fingerprint
             or settlement.terminal_orders
             or settlement.reconciliation_evidence_id is None
@@ -583,7 +582,7 @@ class StrategyEquityStore(PositionSettlementStore):
         checkpoint_id = fingerprint(
             {
                 "strategy_equity_baseline": baseline.baseline_fingerprint,
-                "prior_checkpoint": None,
+                "prior_checkpoint": (None if prior is None else prior.checkpoint_fingerprint),
                 "settlement": settlement.proof_fingerprint,
                 "risk_input": risk_input.evidence_id,
                 "fill_cost_bps": fill_cost_bps,
@@ -595,7 +594,7 @@ class StrategyEquityStore(PositionSettlementStore):
             checkpoint_id=checkpoint_id,
             strategy_equity_baseline_id=baseline.baseline_id,
             strategy_equity_baseline_fingerprint=baseline.baseline_fingerprint,
-            prior_checkpoint_fingerprint=None,
+            prior_checkpoint_fingerprint=(None if prior is None else prior.checkpoint_fingerprint),
             authorization_id=baseline.authorization_id,
             account_id=baseline.account_id,
             strategy_id=baseline.strategy_id,
