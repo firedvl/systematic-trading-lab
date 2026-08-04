@@ -174,6 +174,8 @@ pair across both operations. Unbound injected attempts do not count. Assessment 
 matching installed identity remains ineligible. Even an eligible assessment cannot grant transport
 authority: the production coordinator requires exact paper mode plus activation-and-commit process
 opt-in before construction, then rechecks durable authority inside each attempt transaction.
+If a sanitized Alpaca submission check fails, the coordinator preserves that safe reason in its
+unknown-outcome error while still blocking retry and requiring exact lookup.
 
 The authorization's code commit identifies the qualified candidate research code. The activation's
 code commit identifies the installed execution build. The authorization fingerprint retains the

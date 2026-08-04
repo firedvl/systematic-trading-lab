@@ -42,7 +42,7 @@ from systematic_trading_lab.paper_cancellation import (
     InjectedAlpacaPaperDelete,
     PaperCancellationStore,
 )
-from systematic_trading_lab.paper_operator import AlpacaPaperOperator
+from systematic_trading_lab.paper_operator import AlpacaPaperOperator, PaperOperatorError
 from systematic_trading_lab.paper_submission import (
     FakePaperSubmissionError,
     FakePaperSubmitter,
@@ -2148,6 +2148,26 @@ def test_emergency_clear_readiness_requires_latest_three_stable_clean_samples(
 
     operator_now = [settlement_at + timedelta(seconds=2, milliseconds=500)]
     with monkeypatch.context() as patch:
+        patch.setattr(paper_operator, "_urlopen_paper_mutation", production_transport)
+        diagnostic_path = tmp_path / "production-operator-diagnostic.sqlite3"
+        shutil.copy2(production_operator_path, diagnostic_path)
+        patch.setattr(paper_operator, "_urlopen_paper_mutation", lambda _request: b"{}")
+        diagnostic_operator = AlpacaPaperOperator(
+            diagnostic_path,
+            "test-key",
+            "test-secret",
+            settings=Settings(TradingMode.PAPER, tmp_path, bound_request),
+            limits=limits,
+            runtime_identity=bound_runtime_identity,
+            clock=lambda: operator_now[0],
+        )
+        with pytest.raises(PaperOperatorError, match="invalid status field"):
+            diagnostic_operator.submit(
+                submission_delta.client_order_id,
+                submitter_id="production-worker",
+                authorization_id=authorization.authorization_id,
+                claimed_at=settlement_at + timedelta(seconds=2),
+            )
         patch.setattr(paper_operator, "_urlopen_paper_mutation", production_transport)
         operator = AlpacaPaperOperator(
             production_operator_path,
