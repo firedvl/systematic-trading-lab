@@ -14,6 +14,7 @@ from urllib.request import Request
 import pytest
 
 import systematic_trading_lab.alpaca_paper as alpaca_paper
+import systematic_trading_lab.broker_events as broker_events
 import systematic_trading_lab.paper_operator as paper_operator
 import systematic_trading_lab.reconciliation as reconciliation
 import systematic_trading_lab.risk_inputs as risk_inputs
@@ -72,6 +73,7 @@ from systematic_trading_lab.risk_inputs import (
 from systematic_trading_lab.runtime_build import InstalledRuntimeIdentity
 from systematic_trading_lab.settled_capacity import SettledCapacityStore
 from systematic_trading_lab.strategy_equity import StrategyEquityStore
+from systematic_trading_lab.terminal_recovery import TerminalReplayRecoveryStore
 
 NOW = datetime(2026, 8, 3, 20, tzinfo=UTC)
 
@@ -372,6 +374,243 @@ def test_durable_risk_decision_uses_persistent_emergency_state(tmp_path: Path) -
     assert replay == receipt
     assert not receipt.approved
     assert receipt.reasons == ("emergency-disabled",)
+
+
+def test_terminal_replay_recovery_requires_stable_exact_post_fill_state(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    limits = _limits()
+    report = _evidence()
+    authorization = _authorization(report, limits)
+    store = ReconciliationStore(tmp_path / "terminal-recovery.sqlite3")
+    store.authorize_paper(authorization, report, limits)
+    start = store.get_emergency().changed_at
+    expected = _flat_snapshot(
+        SnapshotSource.LOCAL_EXPECTED,
+        "terminal-recovery-expected",
+        account_observed_at=start,
+        positions_observed_at=start,
+        orders_observed_at=start,
+    )
+    observed = _record_adapter_snapshot(
+        store,
+        replace(
+            expected, snapshot_id="terminal-recovery-observed", source=SnapshotSource.ALPACA_PAPER
+        ),
+        monkeypatch,
+        recorded_at=start,
+    )
+    store.record_snapshot(expected, recorded_at=start)
+    baseline = store.create_flat_baseline(
+        baseline_id="terminal-recovery-baseline",
+        authorization_id=authorization.authorization_id,
+        expected_snapshot_id=expected.snapshot_id,
+        observed_snapshot_id=observed.snapshot_id,
+        limits=limits,
+        operator="test-operator",
+        reason="terminal recovery fixture",
+        created_at=start,
+    )
+    for seconds in (0, 5, 10):
+        observed_at = start + timedelta(seconds=seconds)
+        sample = _record_adapter_snapshot(
+            store,
+            replace(
+                observed,
+                snapshot_id=f"terminal-flat-{seconds}",
+                account_observed_at=observed_at,
+                positions_observed_at=observed_at,
+                orders_observed_at=observed_at,
+            ),
+            monkeypatch,
+            recorded_at=observed_at,
+        )
+        store.record_reconciliation(
+            baseline_id=baseline.baseline_id,
+            observed_snapshot_id=sample.snapshot_id,
+            compared_at=observed_at,
+            unresolved_mutations=0,
+        )
+    store.clear_emergency(
+        clear_id="terminal-fixture-clear",
+        baseline_id=baseline.baseline_id,
+        limits=limits,
+        operator="test-operator",
+        reason="terminal fixture ready",
+        cleared_at=start + timedelta(seconds=10),
+    )
+
+    decision_at = start + timedelta(seconds=11)
+    intent = replace(
+        _intent(report),
+        idempotency_key="terminal-recovery:SPY",
+        decision_timestamp=decision_at,
+        target_weight=None,
+        target_quantity=4,
+        expires_at=decision_at + timedelta(minutes=10),
+    )
+    store.record_intent(intent, received_at=decision_at)
+    context = replace(
+        _context(),
+        evaluated_at=decision_at,
+        cash=Decimal("70000"),
+        equity=Decimal("70000"),
+        buying_power=Decimal("70000"),
+        current_gross_exposure=Decimal(0),
+        current_symbol_notional=Decimal(0),
+        current_symbol_quantity=0,
+        account_observed_at=decision_at,
+        positions_observed_at=decision_at,
+        orders_observed_at=decision_at,
+        quote_observed_at=decision_at,
+        clock_observed_at=decision_at,
+    )
+    receipt = store._record_risk_decision_with_context(
+        intent.idempotency_key, authorization.authorization_id, limits, context
+    )
+    assert receipt.approved
+    reservation_id = fingerprint({"decision_id": receipt.decision_id})
+    delta = build_order_delta(intent, target_quantity=4, current_quantity=0, created_at=decision_at)
+    assert delta is not None
+    orders = OrderLifecycleStore(store.path)
+    orders.stage(delta, reservation_id=reservation_id, staged_at=decision_at)
+    orders.claim_submitter(
+        delta.client_order_id,
+        submitter_id="terminal-worker",
+        claimed_at=decision_at,
+    )
+    filled_at = start + timedelta(seconds=12)
+    filled = BrokerOrderEvent(
+        event_id="terminal-fill-1",
+        broker_order_id="terminal-broker-order",
+        client_order_id=delta.client_order_id,
+        state=OrderState.FILLED,
+        cumulative_filled_quantity=4,
+        cumulative_average_fill_price=Decimal("100"),
+        provider_timestamp=filled_at,
+        observed_at=filled_at,
+    )
+    event_store = BrokerEventStore(store.path)
+    event_store._record_lookup_found(
+        filled,
+        account_id=limits.account_id,
+        baseline_id=baseline.baseline_id,
+        _capability=broker_events._ALPACA_READER_CAPABILITY,
+    )
+    replay = replace(
+        filled,
+        event_id="terminal-fill-2",
+        observed_at=start + timedelta(seconds=14),
+    )
+    event_store._record_lookup_found(
+        replay,
+        account_id=limits.account_id,
+        baseline_id=baseline.baseline_id,
+        _capability=broker_events._ALPACA_READER_CAPABILITY,
+    )
+    with pytest.raises(JournalIntegrityError, match="out of order"):
+        event_store.record(
+            replace(
+                replay,
+                event_id="terminal-conflict",
+                cumulative_average_fill_price=Decimal("101"),
+                observed_at=start + timedelta(seconds=15),
+            )
+        )
+    assert store.get_emergency().generation == 3
+    event_store._record_lookup_found(
+        replace(
+            replay,
+            event_id="terminal-fill-3",
+            observed_at=start + timedelta(seconds=16),
+        ),
+        account_id=limits.account_id,
+        baseline_id=baseline.baseline_id,
+        _capability=broker_events._ALPACA_READER_CAPABILITY,
+    )
+
+    recovery = TerminalReplayRecoveryStore(store.path)
+    for seconds in (20, 25, 30):
+        observed_at = start + timedelta(seconds=seconds)
+        _record_adapter_snapshot(
+            store,
+            _flat_snapshot(
+                SnapshotSource.ALPACA_PAPER,
+                f"terminal-positioned-{seconds}",
+                cash=Decimal("69600"),
+                equity=Decimal("70001") + seconds,
+                buying_power=Decimal("69000") - seconds,
+                positions=(PositionSnapshot("SPY", 4),),
+                account_observed_at=observed_at,
+                positions_observed_at=observed_at,
+                orders_observed_at=observed_at,
+            ),
+            monkeypatch,
+            recorded_at=observed_at,
+        )
+        if seconds == 25:
+            assert (
+                "insufficient-stable-snapshots"
+                in recovery.assess(
+                    baseline_id=baseline.baseline_id,
+                    limits=limits,
+                    assessed_at=observed_at,
+                ).reasons
+            )
+    recovered_at = start + timedelta(seconds=30)
+    proof = recovery.assess(
+        baseline_id=baseline.baseline_id,
+        limits=limits,
+        assessed_at=recovered_at,
+    )
+    assert proof.ready
+    assert proof.expected_cash == Decimal("69600")
+    cleared = recovery.clear(
+        clear_id="terminal-replay-clear",
+        baseline_id=baseline.baseline_id,
+        limits=limits,
+        operator="test-operator",
+        reason="unchanged terminal replay proved",
+        cleared_at=recovered_at,
+    )
+    assert not cleared.disabled
+    assert cleared.generation == 4
+    assert (
+        recovery.clear(
+            clear_id="terminal-replay-clear",
+            baseline_id=baseline.baseline_id,
+            limits=limits,
+            operator="test-operator",
+            reason="unchanged terminal replay proved",
+            cleared_at=recovered_at,
+        )
+        == cleared
+    )
+
+    settlement_at = start + timedelta(seconds=31)
+    settled_snapshot = _record_adapter_snapshot(
+        store,
+        _flat_snapshot(
+            SnapshotSource.ALPACA_PAPER,
+            "terminal-settled",
+            cash=Decimal("69600"),
+            equity=Decimal("70002"),
+            buying_power=Decimal("68900"),
+            positions=(PositionSnapshot("SPY", 4),),
+            account_observed_at=settlement_at,
+            positions_observed_at=settlement_at,
+            orders_observed_at=settlement_at,
+        ),
+        monkeypatch,
+        recorded_at=settlement_at,
+    )
+    settlement = PositionSettlementStore(store.path).record_settlement(
+        proof_id="terminal-recovery-settlement",
+        baseline_id=baseline.baseline_id,
+        observed_snapshot_id=settled_snapshot.snapshot_id,
+        settled_at=settlement_at,
+    )
+    assert settlement.observed_snapshot_id == settled_snapshot.snapshot_id
 
 
 def test_reconciliation_store_persists_flat_baseline_and_results(

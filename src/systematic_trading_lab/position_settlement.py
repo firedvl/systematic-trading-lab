@@ -230,7 +230,6 @@ class PositionSettlementStore(BrokerEventStore):
             ).fetchall()
             if (
                 emergency.disabled
-                or emergency.changed_at > advance.advanced_at
                 or observed.account_id != baseline.account_id
                 or observed.positions != advance.positions
                 or observed.open_orders
