@@ -436,3 +436,10 @@
 - Context: verifying an installation without carrying that proof into the atomic attempt record leaves the code identity detached from the authority it checked.
 - Consequences: a missing, stale, mismatched, future-dated, or invalid identity blocks new activation-bound attempts. Activation and process opt-in commits must be full lowercase Git SHA-1s. Legacy records without the field remain readable. The fingerprint is immutable evidence of the identity checked near creation, not a defense against later local file mutation or hostile local code. Runtime broker-write authority stays false and no production transport exists.
 - Revisit when: a reviewed production paper transport can consume only complete bound evidence without creating implicit authority.
+
+## 2026-08-04 — Strategic allocation advances to protected holdout
+
+- Decision: predeclare a 35% SPY, 25% QQQ, 25% IWM, 15% GLD, and 0% TLT allocation with a 21-session rebalance interval and 10- and 42-session neighbors.
+- Context: the fixed ETF universe needed a low-turnover candidate whose allocation and search volume were fixed before controlled training and validation.
+- Consequences: the base beat fixed-weight in all three validation folds and passed all 17 unchanged approved gates. One exact 2026 holdout completed with its metrics protected. This evidence grants no paper or broker-write authority.
+- Revisit when: a separately approved one-time holdout review has recorded its result or new evidence invalidates the candidate.

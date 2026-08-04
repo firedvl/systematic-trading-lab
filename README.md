@@ -41,6 +41,10 @@ The baseline suite includes cash, buy-and-hold, fixed-weight allocation, moving-
 time-series momentum, moving-average mean reversion, and volatility-targeted exposure. These are
 system checks, not optimized or financially qualified strategies.
 
+The strategic-allocation candidate holds 35% SPY, 25% QQQ, 25% IWM, 15% GLD, and 0% TLT with a
+predeclared 21-session rebalance interval. Its controlled validation evidence passed the approved
+gates; that result does not promise future returns or enable broker writes.
+
 ## Quality gates
 
 ```console
