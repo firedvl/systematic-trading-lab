@@ -268,3 +268,10 @@
 - Context: caller-supplied quote and clock values cannot support safe reservation reuse or later paper admission.
 - Consequences: fixed-origin GET-only evidence keeps bid, ask, sizes, provider times, observations, session phase, adapter version, and portfolio authority. It grants no risk approval and changes no capacity.
 - Revisit when: durable strategy PnL, drawdown, quote-pricing policy, and reservation-set evidence can derive the full `RiskContext` without caller financial inputs.
+
+## 2026-08-03 — Long-only risk exposure uses the IEX ask
+
+- Decision: derive current symbol notional and gross long exposure from the complete attested IEX quote set using each symbol's ask price.
+- Context: the conservative basis avoids understating long exposure without trusting caller prices.
+- Consequences: the deterministic valuation can overstate liquidation value. It does not supply a side-aware execution quote or replace broker equity, cash, buying power, or strategy performance evidence.
+- Revisit when: the execution envelope permits shorts or an approved risk model requires separate liquidation and acquisition prices.

@@ -5,7 +5,11 @@ from decimal import Decimal
 import pytest
 
 from systematic_trading_lab.fingerprints import fingerprint
-from systematic_trading_lab.reconciliation import PortfolioSnapshot, SnapshotSource
+from systematic_trading_lab.reconciliation import (
+    PortfolioSnapshot,
+    PositionSnapshot,
+    SnapshotSource,
+)
 from systematic_trading_lab.risk_inputs import (
     DATA_ORIGIN,
     PAPER_ORIGIN,
@@ -13,6 +17,7 @@ from systematic_trading_lab.risk_inputs import (
     MarketClockEvidence,
     RiskInputEvidence,
     _validate_snapshot_boundary,
+    derive_long_exposure,
 )
 
 NOW = datetime(2026, 8, 4, tzinfo=UTC)
@@ -108,4 +113,24 @@ def test_risk_inputs_reject_stale_or_future_portfolio_snapshots() -> None:
     with pytest.raises(ValueError, match="stale or future"):
         _validate_snapshot_boundary(
             replace(snapshot, orders_observed_at=NOW + timedelta(seconds=1)), evidence
+        )
+
+    positioned = replace(snapshot, positions=(PositionSnapshot("SPY", 3),))
+    bound_evidence = replace(
+        evidence, portfolio_snapshot_fingerprint=positioned.snapshot_fingerprint
+    )
+    valuation = derive_long_exposure(bound_evidence, positioned, symbol="SPY")
+    assert valuation.current_quantity == 3
+    assert valuation.exposure_price == Decimal("100.10")
+    assert valuation.current_symbol_notional == Decimal("300.30")
+    assert valuation.current_gross_exposure == Decimal("300.30")
+    unquoted = replace(snapshot, positions=(PositionSnapshot("QQQ", 1),))
+    with pytest.raises(ValueError, match="quote for every"):
+        derive_long_exposure(
+            replace(
+                bound_evidence,
+                portfolio_snapshot_fingerprint=unquoted.snapshot_fingerprint,
+            ),
+            unquoted,
+            symbol="SPY",
         )
