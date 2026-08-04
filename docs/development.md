@@ -9,6 +9,8 @@ Ordinary CI also builds one wheel and its deterministic runtime-build manifest. 
 manifest, then uploads both in one retained artifact. This build path does not prove that a later
 runtime installed or loaded that wheel. The runtime verifier separately requires a non-editable
 archive install, the verified wheel hash in `direct_url.json`, exact wheel-owned files through both
-`RECORD` copies, and loaded modules rooted in that distribution. User-owned private repositories
-cannot persist GitHub artifact attestations. On that failure the workflow retains the unsigned files
-for diagnosis and still reports failure; never treat that artifact as verified provenance.
+`RECORD` copies, and loaded modules rooted in that distribution. The repository is public, so GitHub
+can persist its artifact attestations. Main run `30882447856` produced the first verified wheel and
+manifest for commit `fdb8944c288ef208bb03d5249550cfd9693f7625`. If attestation fails, the workflow
+retains the unsigned files for diagnosis and still reports failure; never treat that artifact as
+verified provenance.
