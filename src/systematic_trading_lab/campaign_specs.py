@@ -56,6 +56,10 @@ _STRATEGIES: dict[str, tuple[str, frozenset[str]]] = {
         "portfolio-allocation",
         frozenset({"volatility_window", "rebalance_every"}),
     ),
+    "strategic-allocation-portfolio": (
+        "portfolio-allocation",
+        frozenset({"rebalance_every"}),
+    ),
 }
 _PARAMETER_MINIMUMS = {
     "moving-average-trend": {"window": 2},

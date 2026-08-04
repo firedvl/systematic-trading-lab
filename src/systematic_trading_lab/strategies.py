@@ -377,3 +377,43 @@ class VolatilityBalancedPortfolioStrategy:
             TargetPosition(symbol, weights[symbol], "capped-inverse-volatility")
             for symbol in sorted(self.symbols, key=lambda item: item.value)
         )
+
+
+@dataclass(frozen=True)
+class StrategicAllocationPortfolioStrategy:
+    symbols: tuple[Symbol, ...]
+    rebalance_every: int = 21
+    strategy_id: str = "strategic-allocation-portfolio"
+    version: str = "1"
+
+    def __post_init__(self) -> None:
+        if {symbol.value for symbol in self.symbols} != {"GLD", "IWM", "QQQ", "SPY", "TLT"}:
+            raise ValueError("strategic allocation requires the fixed ETF universe")
+        if self.rebalance_every < 1:
+            raise ValueError("rebalance interval must be positive")
+
+    def on_session(
+        self,
+        bars: Sequence[OHLCVBar],
+        history: Mapping[Symbol, Sequence[OHLCVBar]],
+    ) -> Sequence[TargetPosition]:
+        expected = set(self.symbols)
+        if {bar.symbol for bar in bars} != expected or set(history) != expected:
+            raise ValueError("strategic allocation session universe differs")
+        lengths = {len(history[symbol]) for symbol in self.symbols}
+        if len(lengths) != 1:
+            raise ValueError("strategic allocation history lengths differ")
+        session_count = next(iter(lengths))
+        if session_count != 1 and (session_count - 1) % self.rebalance_every:
+            return ()
+        weights = {
+            "SPY": Decimal("0.35"),
+            "QQQ": Decimal("0.25"),
+            "IWM": Decimal("0.25"),
+            "GLD": Decimal("0.15"),
+            "TLT": Decimal("0"),
+        }
+        return tuple(
+            TargetPosition(symbol, weights[symbol.value], "strategic-allocation")
+            for symbol in sorted(self.symbols, key=lambda item: item.value)
+        )

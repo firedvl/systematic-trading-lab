@@ -19,6 +19,7 @@ from .strategies import (
     MovingAverageTrendStrategy,
     RelativeStrengthPortfolioStrategy,
     RiskManagedMomentumPortfolioStrategy,
+    StrategicAllocationPortfolioStrategy,
     TimeSeriesMomentumStrategy,
     VolatilityBalancedPortfolioStrategy,
     VolatilityTargetedExposureStrategy,
@@ -140,6 +141,12 @@ def strategy_result(
             rebalance_every=_positive_int_parameter(parameters, "rebalance_every", 5),
         )
         return engine.run_portfolio(bars, volatility_strategy)
+    if name in ("strategic-allocation", "strategic-allocation-portfolio"):
+        allocation_strategy = StrategicAllocationPortfolioStrategy(
+            symbols,
+            rebalance_every=_positive_int_parameter(parameters, "rebalance_every", 21),
+        )
+        return engine.run_portfolio(bars, allocation_strategy)
     if name == "buy-and-hold":
         symbol = min((bar.symbol for bar in bars), key=lambda item: item.value)
         bars = tuple(bar for bar in bars if bar.symbol == symbol)

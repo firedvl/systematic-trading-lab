@@ -105,3 +105,18 @@ def test_training_plan_rejects_invalid_new_baseline_windows(
 
     with pytest.raises(ValueError, match="planned parameters differ"):
         load_training_campaign_plan(write_plan(tmp_path / "invalid-window.json", payload))
+
+
+def test_training_plan_accepts_strategic_allocation(tmp_path: Path) -> None:
+    payload = plan_payload()
+    candidates = payload["candidates"]
+    assert isinstance(candidates, list) and isinstance(candidates[1], dict)
+    candidates[1].update(
+        strategy_id="strategic-allocation-portfolio",
+        strategy_family="portfolio-allocation",
+        parameters={"rebalance_every": 21},
+    )
+
+    plan = load_training_campaign_plan(write_plan(tmp_path / "allocation.json", payload))
+
+    assert plan.candidates[1].parameters == {"rebalance_every": 21}
