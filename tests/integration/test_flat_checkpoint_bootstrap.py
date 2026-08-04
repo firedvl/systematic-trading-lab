@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 import systematic_trading_lab.reconciliation as reconciliation
-from systematic_trading_lab.execution import JournalIntegrityError
+from systematic_trading_lab.execution import ExecutionIntent, JournalIntegrityError
 from systematic_trading_lab.fingerprints import fingerprint
 from systematic_trading_lab.position_settlement import (
     PositionSettlementStore,
@@ -360,6 +360,43 @@ def test_flat_checkpoint_can_supply_the_first_attested_risk_context(tmp_path: Pa
     assert context.strategy_equity_checkpoint_fingerprint == refreshed.checkpoint_fingerprint
     assert context.context.current_gross_exposure == 0
     assert not context.context.emergency_disabled
+
+    intent = ExecutionIntent(
+        idempotency_key="flat-bootstrap:SPY",
+        strategy_id="strategy",
+        strategy_version="1",
+        symbol="SPY",
+        decision_timestamp=refresh_time,
+        target_weight=None,
+        target_quantity=1,
+        reason="verify post-reservation settlement history",
+        source_data_fingerprint="2" * 64,
+        configuration_fingerprint=fingerprint({"window": 20}),
+        reference_price=Decimal("100.1"),
+        expires_at=refresh_time + timedelta(minutes=10),
+    )
+    store.record_intent(intent, received_at=refresh_time)
+    assert (
+        AttestedRiskContextStore(store.path)
+        .record_attested_risk_decision(
+            intent_id=intent.idempotency_key,
+            authorization_id=baseline.authorization_id,
+            limits=limits,
+            evaluated_at=refresh_time,
+        )
+        .approved
+    )
+    assert (
+        AttestedRiskContextStore(store.path)
+        .derive(
+            authorization_id=baseline.authorization_id,
+            symbol="SPY",
+            limits=limits,
+            evaluated_at=refresh_time,
+        )
+        .context.pending_order_count
+        == 1
+    )
 
 
 def test_legacy_fill_settlement_decodes_without_the_new_fields() -> None:
