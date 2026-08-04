@@ -122,3 +122,6 @@ releases capacity or retries.
 The Alpaca paper order adapter is test-only because its transport is mandatory and injected. It
 permits only the fixed paper `POST /v2/orders` request, validates the complete supported order echo,
 and returns normalized broker evidence. It has no production network fallback or live origin.
+Cancellation intent is a one-shot record separate from broker order state. It binds the latest
+nonterminal event and never releases capacity. Unknown outcome remains unresolved until a later
+authoritative terminal event or reconciliation proves the result; no retry path exists.

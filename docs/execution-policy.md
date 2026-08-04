@@ -83,6 +83,11 @@ The injected submission adapter has no default network function. It constructs o
 `POST /v2/orders` target and the supported simple whole-share day-market body. It requires the
 response to echo the exact client ID, symbol, side, quantity, type, and order envelope before it
 creates normalized broker evidence. HTTP and parsing failures expose no response body or credentials.
+Cancellation uses a separate immutable mutation record so broker fill state remains authoritative.
+The request binds the latest nonterminal broker event, authorization, operator, reason, fixed paper
+origin, and time. Unknown outcome is separate sanitized evidence and never permits retry or capacity
+release. A later terminal broker event resolves the pending attempt through the existing order and
+capacity rules.
 The local order store exposes a read-only, journal-verified list of `submission-unknown` orders so a
 recovery worker can obtain the exact deterministic client IDs without changing execution state.
 The production exact-lookup path can store a sanitized immutable 404 result for one such order only
