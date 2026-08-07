@@ -24,3 +24,5 @@ set before execution. The plan budget equals its candidate count; candidate IDs,
 dataset and universe provenance, strategies, parameters, dates, parents, costs, and fill model cannot
 change at run time. V1 is training-only and permits the default conservative cost and next-bar models.
 Historical unplanned campaigns remain immutable legacy evidence and are not rewritten into plans.
+
+Intraday bar replay is branch-only diagnostic research. `training-campaign-plan-v1`, report schema v2 qualification evidence, approved gates, holdout authorization, and paper execution remain daily-only. Do not enter an intraday candidate into those paths until a separate reviewed version binds its timeframe, session-return policy, execution model, benchmark policy, and qualification gates.

@@ -1,6 +1,6 @@
 # Systematic Trading Lab
 
-Research infrastructure for reproducible U.S. ETF data, backtests, qualification, and paper execution. The current scope is daily bars for SPY, QQQ, IWM, TLT, and GLD. Live trading is disabled.
+Research infrastructure for reproducible U.S. ETF data, backtests, qualification, and paper execution. Approved research and paper execution remain daily-only for SPY, QQQ, IWM, TLT, and GLD. The isolated intraday branch adds offline `1m` and `5m` data and replay foundations for SPY and QQQ. Live trading is disabled.
 
 ## Setup
 
@@ -10,8 +10,10 @@ Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 uv sync --dev
 uv run trading-lab doctor
 uv run trading-lab data import-fixture
+uv run trading-lab data import-intraday-fixture --timeframe 5m
 uv run trading-lab data describe
 TRADING_LAB_MODE=research trading-lab data import-alpaca --start 2025-01-01 --end 2025-01-31
+TRADING_LAB_MODE=research trading-lab data import-alpaca --timeframe 5m --start 2025-01-06T14:30:00Z --end 2025-01-06T20:55:00Z
 uv run trading-lab backtest fixture --strategy buy-and-hold
 uv run trading-lab backtest fixture --strategy all --output .trading-lab/reports/baselines.json
 uv run trading-lab experiment create-campaign baseline-v1 --name "Baseline campaign" --budget 20

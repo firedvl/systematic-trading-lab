@@ -33,6 +33,12 @@ Replay/shadow/paper comparison, supervisor recovery, disconnect and stale-data h
 
 Machine-readable specifications, approved strategy families, bounded candidate generation, search accounting, isolated runs, and evidence-producing pull requests. Gate: all candidates remain recorded; agents cannot alter protected controls or promote strategies.
 
+## Proposed isolated intraday extension
+
+- M5A — Intraday data and replay foundation: immutable `1m` and `5m` SPY/QQQ bars, XNYS regular-session and early-close validation, explicit bar-open timestamps, missing-interval evidence, read-only historical acquisition, deterministic fixtures, and conservative next-bar replay. This branch implements that code slice; merge and milestone completion remain pending review and isolation checks.
+- M5B — Intraday research and qualification: versioned intraday experiment plans, session-return and benchmark policy, baseline strategies without optimization, robustness evidence, and separately approved gates. Not started.
+- M5C — Intraday paper execution: reviewed market-data freshness, risk, order, reconciliation, operational, threat-model, and authority controls after extended qualification. Not started; no intraday broker-write authority exists.
+
 ## M7 — Controlled continuous improvement
 
 Scheduled sealing and reevaluation, champion/challenger lifecycle, shadow-to-paper advancement, drift detection, rollback, and reviewed promotion reports. Gate: every transition is explicit, reversible, evidenced, and human-approved.

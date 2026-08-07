@@ -1,4 +1,4 @@
-"""Small event-driven daily-bar backtester with explicit fill timing."""
+"""Small event-driven bar backtester with explicit fill timing."""
 
 from __future__ import annotations
 
@@ -9,8 +9,9 @@ from decimal import Decimal
 from itertools import groupby
 from types import MappingProxyType
 from typing import Protocol
+from zoneinfo import ZoneInfo
 
-from .domain import OHLCVBar, Symbol
+from .domain import OHLCVBar, Symbol, Timeframe
 from .fingerprints import fingerprint
 from .strategies import TargetPosition
 
@@ -157,14 +158,18 @@ class BacktestEngine:
         initial_cash: Decimal,
         cost_model: CostModel | None = None,
         fill_delay_bars: int = 1,
+        timeframe: Timeframe = Timeframe.DAILY,
     ) -> None:
         if initial_cash <= 0:
             raise ValueError("initial cash must be positive")
         if fill_delay_bars < 1:
             raise ValueError("fill delay must be at least one bar")
+        if timeframe is not Timeframe.DAILY and not timeframe.is_supported_intraday:
+            raise ValueError("backtests support only 1d, 1m, and 5m bars")
         self.initial_cash = initial_cash
         self.cost_model = cost_model or CostModel()
         self.fill_delay_bars = fill_delay_bars
+        self.timeframe = timeframe
 
     def run(self, bars: Sequence[OHLCVBar], strategy: Strategy) -> BacktestResult:
         ordered = tuple(sorted(bars, key=lambda bar: (bar.timestamp, bar.symbol.value)))
@@ -194,35 +199,68 @@ class BacktestEngine:
             symbol_history = history.setdefault(bar.symbol, [])
             symbol_history.append(bar)
             targets = tuple(strategy.on_bar(bar, tuple(symbol_history)))
+            decision_timestamp = _bar_observable_timestamp(bar, self.timeframe)
             decisions.append(
-                Decision(bar.timestamp, bar.symbol, strategy.strategy_id, strategy.version, targets)
+                Decision(
+                    decision_timestamp,
+                    bar.symbol,
+                    strategy.strategy_id,
+                    strategy.version,
+                    targets,
+                )
             )
             for target in targets:
                 if target.symbol != bar.symbol:
                     orders.append(
-                        OrderEvent(target.symbol, bar.timestamp, "rejected", "cross-symbol-target")
+                        OrderEvent(
+                            target.symbol,
+                            decision_timestamp,
+                            "rejected",
+                            "cross-symbol-target",
+                        )
                     )
                     continue
                 if not Decimal("0") <= target.weight <= Decimal("1"):
                     orders.append(
-                        OrderEvent(target.symbol, bar.timestamp, "rejected", "weight-out-of-range")
+                        OrderEvent(
+                            target.symbol,
+                            decision_timestamp,
+                            "rejected",
+                            "weight-out-of-range",
+                        )
                     )
                     continue
                 if target.symbol in pending:
                     orders.append(
-                        OrderEvent(target.symbol, bar.timestamp, "rejected", "pending-order-exists")
+                        OrderEvent(
+                            target.symbol,
+                            decision_timestamp,
+                            "rejected",
+                            "pending-order-exists",
+                        )
                     )
                     continue
                 following = next_bar.get((bar.symbol, bar.timestamp))
                 if following is None:
                     orders.append(
-                        OrderEvent(target.symbol, bar.timestamp, "rejected", "no-future-fill")
+                        OrderEvent(
+                            target.symbol,
+                            decision_timestamp,
+                            "rejected",
+                            "no-future-fill",
+                        )
                     )
                     continue
+                if following.timestamp < decision_timestamp:
+                    raise BacktestError("next-bar fill precedes completed-bar observability")
                 pending[bar.symbol] = Order(
-                    bar.symbol, bar.timestamp, bar.timestamp, following.timestamp, target
+                    bar.symbol,
+                    decision_timestamp,
+                    decision_timestamp,
+                    following.timestamp,
+                    target,
                 )
-            curve.append(self._equity_point(bar.timestamp, cash, positions, marks))
+            curve.append(self._equity_point(decision_timestamp, cash, positions, marks))
 
         for order in pending.values():
             orders.append(
@@ -295,24 +333,31 @@ class BacktestEngine:
                     key=lambda target: target.symbol.value,
                 )
             )
+            decision_timestamp = _bar_observable_timestamp(session[0], self.timeframe)
             decisions.append(
-                SessionDecision(timestamp, strategy.strategy_id, strategy.version, targets)
+                SessionDecision(decision_timestamp, strategy.strategy_id, strategy.version, targets)
             )
             rejection = self._portfolio_rejection(
                 targets, timestamp, session_symbols, pending, next_bar
             )
             if rejection is not None:
                 orders.extend(
-                    OrderEvent(target.symbol, timestamp, "rejected", rejection)
+                    OrderEvent(target.symbol, decision_timestamp, "rejected", rejection)
                     for target in targets
                 )
             else:
                 for target in targets:
                     following = next_bar[(target.symbol, timestamp)]
+                    if following.timestamp < decision_timestamp:
+                        raise BacktestError("next-bar fill precedes completed-bar observability")
                     pending[target.symbol] = Order(
-                        target.symbol, timestamp, timestamp, following.timestamp, target
+                        target.symbol,
+                        decision_timestamp,
+                        decision_timestamp,
+                        following.timestamp,
+                        target,
                     )
-            curve.append(self._equity_point(timestamp, cash, positions, marks))
+            curve.append(self._equity_point(decision_timestamp, cash, positions, marks))
 
         for order in pending.values():
             orders.append(
@@ -498,7 +543,7 @@ class BacktestEngine:
         positions: Mapping[Symbol, Decimal],
         marks: Mapping[Symbol, Decimal],
     ) -> BacktestMetrics:
-        sessions = _session_points(curve)
+        sessions = _session_points(curve, self.timeframe)
         final = sessions[-1].equity
         peak = self.initial_cash
         drawdown = Decimal("0")
@@ -537,7 +582,7 @@ class BacktestEngine:
         )
         instrument_share = _top_instrument_profit_share(trades, positions, marks)
         up_return, down_return, up_sessions, down_sessions = _regime_metrics(
-            bars, sessions, self.initial_cash
+            bars, sessions, self.initial_cash, self.timeframe
         )
         return BacktestMetrics(
             total_return=final / self.initial_cash - Decimal("1"),
@@ -558,11 +603,16 @@ class BacktestEngine:
         )
 
 
-def _session_points(curve: Sequence[EquityPoint]) -> tuple[EquityPoint, ...]:
-    by_timestamp: dict[datetime, EquityPoint] = {}
+def _session_points(curve: Sequence[EquityPoint], timeframe: Timeframe) -> tuple[EquityPoint, ...]:
+    if not timeframe.is_supported_intraday:
+        by_timestamp: dict[datetime, EquityPoint] = {}
+        for point in curve:
+            by_timestamp[point.timestamp] = point
+        return tuple(by_timestamp.values())
+    by_session: dict[object, EquityPoint] = {}
     for point in curve:
-        by_timestamp[point.timestamp] = point
-    return tuple(by_timestamp.values())
+        by_session[point.timestamp.astimezone(ZoneInfo("America/New_York")).date()] = point
+    return tuple(by_session.values())
 
 
 def _session_returns(sessions: Sequence[EquityPoint], initial_cash: Decimal) -> tuple[Decimal, ...]:
@@ -611,9 +661,16 @@ def _regime_metrics(
     bars: Sequence[OHLCVBar],
     sessions: Sequence[EquityPoint],
     initial_cash: Decimal,
+    timeframe: Timeframe,
 ) -> tuple[Decimal | None, Decimal | None, int, int]:
     spy = Symbol("SPY")
     benchmark = tuple(bar for bar in bars if bar.symbol == spy)
+    if timeframe.is_supported_intraday:
+        by_session: dict[object, OHLCVBar] = {}
+        exchange_timezone = ZoneInfo("America/New_York")
+        for bar in benchmark:
+            by_session[bar.timestamp.astimezone(exchange_timezone).date()] = bar
+        benchmark = tuple(by_session.values())
     if len(benchmark) < 2:
         return None, None, 0, 0
     strategy_returns = {
@@ -623,12 +680,16 @@ def _regime_metrics(
     up: list[Decimal] = []
     down: list[Decimal] = []
     for previous, current in zip(benchmark, benchmark[1:], strict=False):
-        strategy_return = strategy_returns.get(current.timestamp)
+        strategy_return = strategy_returns.get(_bar_observable_timestamp(current, timeframe))
         if strategy_return is None:
             continue
         benchmark_return = current.close / previous.close - Decimal("1")
         (up if benchmark_return >= 0 else down).append(strategy_return)
     return _compound(up), _compound(down), len(up), len(down)
+
+
+def _bar_observable_timestamp(bar: OHLCVBar, timeframe: Timeframe) -> datetime:
+    return bar.timestamp + timeframe.duration if timeframe.is_supported_intraday else bar.timestamp
 
 
 def _compound(returns: Sequence[Decimal]) -> Decimal | None:

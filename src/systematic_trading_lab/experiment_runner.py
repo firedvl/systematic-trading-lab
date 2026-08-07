@@ -10,7 +10,7 @@ from pathlib import Path
 
 from .backtesting import BacktestResult, CostModel
 from .datasets import DatasetService
-from .domain import OHLCVBar, TimestampRange
+from .domain import OHLCVBar, Timeframe, TimestampRange
 from .experiments import (
     ExperimentError,
     ExperimentRegistry,
@@ -171,6 +171,7 @@ def run_cataloged_experiment(
         registry.claim(spec.experiment_id)
     try:
         _validate_execution_models(spec, selected_costs, fill_delay_bars)
+        _require_daily_dataset(datasets, spec.dataset_id)
         bars = datasets.load_bars_range(
             spec.dataset_id,
             TimestampRange(spec.start_timestamp, spec.end_timestamp),
@@ -212,6 +213,7 @@ def run_holdout_experiment(
     registry.create_experiment(spec, holdout_authorization_id=authorization_id)
     try:
         registry.claim(spec.experiment_id)
+        _require_daily_dataset(datasets, spec.dataset_id)
         bars = datasets.load_bars_range(
             spec.dataset_id,
             TimestampRange(spec.start_timestamp, spec.end_timestamp),
@@ -305,6 +307,11 @@ def execution_model_version(fill_delay_bars: int) -> str:
     if fill_delay_bars < 1:
         raise ValueError("fill delay must be at least one bar")
     return "next-bar-v1" if fill_delay_bars == 1 else f"delayed-{fill_delay_bars}-bars-v1"
+
+
+def _require_daily_dataset(datasets: DatasetService, dataset_id: str) -> None:
+    if datasets.describe(dataset_id).get("timeframe") != Timeframe.DAILY.value:
+        raise ExperimentError("existing experiment runners accept daily datasets only")
 
 
 def _validate_execution_models(

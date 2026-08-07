@@ -23,6 +23,7 @@ def validate_records(
     timeframe: Timeframe,
     expected_sessions: Sequence[date] | None = None,
     expected_symbols: Sequence[str] | None = None,
+    expected_bar_timestamps: Sequence[datetime] | None = None,
 ) -> ValidatedBars:
     parsed: list[OHLCVBar] = []
     quarantined: list[dict[str, Any]] = []
@@ -31,10 +32,25 @@ def validate_records(
     missing: list[str] = []
     seen: set[tuple[str, object]] = set()
     last_seen: dict[str, datetime] = {}
+    allowed_intraday = (
+        set(expected_bar_timestamps or ()) if timeframe.is_supported_intraday else None
+    )
+    allowed_symbols = set(expected_symbols) if expected_symbols is not None else None
 
     for index, record in enumerate(records):
         try:
             bar = OHLCVBar.from_record(record)
+            if allowed_symbols is not None and bar.symbol.value not in allowed_symbols:
+                errors.append(f"record {index}: unexpected symbol {bar.symbol}")
+                quarantined.append(record)
+                continue
+            if allowed_intraday is not None and bar.timestamp not in allowed_intraday:
+                errors.append(
+                    f"record {index}: {bar.symbol}@{bar.timestamp.isoformat()} is outside "
+                    "requested XNYS regular-session intervals"
+                )
+                quarantined.append(record)
+                continue
             key = (bar.symbol.value, bar.timestamp)
             if key in seen:
                 duplicates.append(f"{bar.symbol}@{bar.timestamp.isoformat()}")
@@ -78,6 +94,19 @@ def validate_records(
                 f"{symbol}@{session.isoformat()}"
                 for session in expected_sessions or ()
                 if session not in present
+            )
+    elif timeframe.is_supported_intraday:
+        if expected_bar_timestamps is None:
+            errors.append("intraday validation requires expected XNYS bar intervals")
+        for symbol in symbols:
+            bars = by_symbol.get(symbol, [])
+            present = {bar.timestamp for bar in bars}
+            if not bars:
+                errors.append(f"no records for expected symbol {symbol}")
+            missing.extend(
+                f"{symbol}@{timestamp.isoformat()}"
+                for timestamp in expected_bar_timestamps or ()
+                if timestamp not in present
             )
 
     result = ValidationResult(

@@ -7,7 +7,13 @@ from typing import cast
 import pytest
 
 from systematic_trading_lab.backtesting import CostModel
-from systematic_trading_lab.datasets import DatasetService, fixture_request, fixture_symbols
+from systematic_trading_lab.datasets import (
+    DatasetService,
+    fixture_request,
+    fixture_symbols,
+    intraday_fixture_request,
+    intraday_fixture_symbols,
+)
 from systematic_trading_lab.domain import OHLCVBar, Symbol, Timeframe, TimestampRange
 from systematic_trading_lab.experiment_runner import (
     SensitivityVariant,
@@ -21,15 +27,16 @@ from systematic_trading_lab.experiment_runner import (
     walk_forward_specs,
 )
 from systematic_trading_lab.experiments import (
+    ExperimentError,
     ExperimentRegistry,
     ExperimentSpec,
     ExperimentSplit,
     HoldoutAccessError,
 )
 from systematic_trading_lab.fingerprints import fingerprint
-from systematic_trading_lab.providers import FixtureProvider
+from systematic_trading_lab.providers import FixtureProvider, IntradayFixtureProvider
 from systematic_trading_lab.storage import StorageLayout
-from systematic_trading_lab.universe import load_research_universe
+from systematic_trading_lab.universe import load_intraday_universe, load_research_universe
 
 
 def bars() -> tuple[OHLCVBar, ...]:
@@ -222,6 +229,47 @@ def test_runner_records_completion_failure_and_blocks_holdout(tmp_path: Path) ->
             replace(spec(source, "cataloged-holdout"), split=ExperimentSplit.HOLDOUT),
             tmp_path / "reports",
         )
+
+
+def test_cataloged_experiment_runner_rejects_intraday_dataset(tmp_path: Path) -> None:
+    timeframe = Timeframe.FIVE_MINUTES
+    requested = intraday_fixture_request(timeframe)
+    universe = load_intraday_universe(timeframe)
+    datasets = DatasetService(StorageLayout(tmp_path / "data"))
+    imported = datasets.import_from(
+        IntradayFixtureProvider(),
+        intraday_fixture_symbols(),
+        timeframe,
+        requested,
+        universe,
+    )
+    registry = ExperimentRegistry(tmp_path / "experiments.sqlite3")
+    registry.create_campaign("intraday-campaign", "Must remain daily-only", 1)
+    intraday_spec = ExperimentSpec(
+        experiment_id="intraday-candidate",
+        campaign_id="intraday-campaign",
+        strategy_id="buy-and-hold",
+        strategy_version="1",
+        strategy_family="baseline",
+        code_commit="abc123",
+        dataset_id=imported.dataset_id,
+        dataset_fingerprint=imported.fingerprint,
+        universe_id=universe.universe_id,
+        universe_fingerprint=universe.universe_fingerprint,
+        parameters={},
+        cost_model_version="conservative-bps-v1",
+        execution_model_version="next-bar-v1",
+        split=ExperimentSplit.VALIDATION,
+        start_timestamp=requested.start,
+        end_timestamp=requested.end,
+        random_seed=0,
+        creation_reason="prove daily runner isolation",
+    )
+
+    with pytest.raises(ExperimentError, match="daily datasets only"):
+        run_cataloged_experiment(registry, datasets, intraday_spec, tmp_path / "reports")
+
+    assert registry.get(intraday_spec.experiment_id)["status"] == "failed"
 
 
 def test_holdout_runner_consumes_authorization_before_exact_range_read(

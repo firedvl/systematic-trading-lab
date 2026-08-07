@@ -16,7 +16,14 @@ from .alpaca_paper import AlpacaPaperReader
 from .backtesting import CostModel
 from .campaign_specs import load_training_campaign_plan
 from .config import ConfigurationError, Settings, load_dotenv, load_settings
-from .datasets import DatasetService, DatasetValidationError, fixture_request, fixture_symbols
+from .datasets import (
+    DatasetService,
+    DatasetValidationError,
+    fixture_request,
+    fixture_symbols,
+    intraday_fixture_request,
+    intraday_fixture_symbols,
+)
 from .domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
 from .experiment_runner import (
     comparison_report,
@@ -33,7 +40,7 @@ from .paper_observation import (
     record_production_observation,
 )
 from .paper_startup import assess_paper_startup, initialize_paper_storage
-from .providers import AlpacaHistoricalProvider, FixtureProvider
+from .providers import AlpacaHistoricalProvider, FixtureProvider, IntradayFixtureProvider
 from .qualification import load_qualification_proposal, review_holdout
 from .qualification_evidence import (
     authorize_holdout_run,
@@ -50,7 +57,7 @@ from .runtime_build import (
     verify_installed_runtime,
 )
 from .storage import StorageLayout
-from .universe import load_research_universe
+from .universe import load_intraday_universe, load_research_universe
 
 
 def _add_execution_arguments(command: argparse.ArgumentParser) -> None:
@@ -136,9 +143,14 @@ def parser() -> argparse.ArgumentParser:
         dest="data_command", required=True
     )
     data.add_parser("import-fixture", help="import deterministic offline bars")
+    intraday_fixture = data.add_parser(
+        "import-intraday-fixture", help="import deterministic offline intraday bars"
+    )
+    intraday_fixture.add_argument("--timeframe", choices=("1m", "5m"), default="5m")
     alpaca = data.add_parser("import-alpaca", help="import read-only Alpaca historical bars")
     alpaca.add_argument("--start", required=True, help="UTC date or RFC-3339 start")
     alpaca.add_argument("--end", required=True, help="UTC date or RFC-3339 end")
+    alpaca.add_argument("--timeframe", choices=("1d", "1m", "5m"), default="1d")
     for name in ("validate", "describe"):
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
@@ -438,6 +450,8 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             _print(registry.get(arguments.experiment_id))
         elif arguments.experiment_command in {"run", "run-holdout"}:
             manifest = service.describe(arguments.dataset)
+            if manifest.get("timeframe") != Timeframe.DAILY.value:
+                raise ValueError("existing experiment commands accept daily datasets only")
             identity = manifest["identity"]
             cost_model = _cost_model(arguments)
             strategy_id, strategy_family = _strategy_identity(arguments.strategy)
@@ -587,18 +601,36 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         )
         _print(imported.__dict__)
         return 0
+    if arguments.data_command == "import-intraday-fixture":
+        timeframe = Timeframe(arguments.timeframe)
+        imported = service.import_from(
+            IntradayFixtureProvider(),
+            intraday_fixture_symbols(),
+            timeframe,
+            intraday_fixture_request(timeframe),
+            load_intraday_universe(timeframe),
+        )
+        _print(imported.__dict__)
+        return 0
     if arguments.data_command == "import-alpaca":
         if settings.mode is not TradingMode.RESEARCH:
             raise ValueError("Alpaca data import requires TRADING_LAB_MODE=research")
         provider = AlpacaHistoricalProvider(
             os.environ.get("APCA_API_KEY_ID", ""), os.environ.get("APCA_API_SECRET_KEY", "")
         )
+        timeframe = Timeframe(arguments.timeframe)
+        symbols = fixture_symbols() if timeframe is Timeframe.DAILY else intraday_fixture_symbols()
+        universe = (
+            load_research_universe()
+            if timeframe is Timeframe.DAILY
+            else load_intraday_universe(timeframe)
+        )
         imported = service.import_from(
             provider,
-            fixture_symbols(),
-            Timeframe.DAILY,
+            symbols,
+            timeframe,
             TimestampRange(_parse_utc(arguments.start), _parse_utc(arguments.end)),
-            load_research_universe(),
+            universe,
         )
         _print(imported.__dict__)
         return 0

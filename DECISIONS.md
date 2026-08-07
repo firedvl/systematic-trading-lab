@@ -527,3 +527,17 @@
 - Context: an always-on VPS removes dependence on a personal computer without adding an in-program daemon or systemd unit.
 - Consequences: SSH disconnects do not stop sampling, but a VPS reboot does. Migration must stop the old writer before copying SQLite. Cleanup defaults to a preview and deletes only validated project-local data unless the operator also requests repository deletion. External broker, GitHub, backup, audit, and shell records remain outside its scope.
 - Revisit when: automatic reboot recovery or remote state requires a reviewed service manager and monitoring design.
+
+## 2026-08-07 — Intraday bars use XNYS bar-open timestamps
+
+- Decision: support `1m` and `5m` immutable bars whose UTC timestamps label bar opens, with expected intervals derived from each actual XNYS regular-session open and close.
+- Context: daily session dates could not represent multiple bars per session or prove holiday and early-close completeness.
+- Consequences: dataset identity binds `bar-open-utc-v1` and `XNYS-regular-session-bars-v1`. Missing, duplicate, non-increasing, malformed, or out-of-session records reject the dataset and remain evidence. Daily labels and validation remain unchanged.
+- Revisit when: quotes, trades, extended hours, partial bars, another venue, or a provider convention requires another versioned schedule.
+
+## 2026-08-07 — Intraday replay observes completed bars before next-bar fills
+
+- Decision: reuse the existing simulator with an explicit timeframe. An intraday bar becomes observable at open plus duration; decisions and order creation use that time, and fills use the next eligible same-symbol bar open after the configured whole-bar delay.
+- Context: treating a provider bar-open label as the decision time would allow its completed high, low, close, and volume to influence the past.
+- Consequences: contiguous next-bar fills may share the bar-close decision timestamp but never precede it. Daily behavior remains unchanged. Intraday diagnostics aggregate equity at each New York session end, while experiments, qualification, holdouts, paper execution, and broker authority remain daily-only.
+- Revisit when: quote-based spread, latency, partial-fill, impact, or intraday qualification models receive separate review.
