@@ -1,0 +1,118 @@
+{
+  "schema_version": "intraday-research-campaign-plan-v1",
+  "campaign_id": "intraday-research-v1",
+  "name": "First controlled historical intraday training and validation campaign",
+  "status": "preregistered",
+  "purpose": "Test the M5B historical intraday research workflow on fixed engineering baselines. Passing is not financial validation, a profitability claim, or authority for holdout, paper, broker, or live trading.",
+  "base_code_commit": "b1774f547da2976348430b820faf2ebdacdf46af",
+  "search_budget": 60,
+  "provider": "alpaca",
+  "feed": "iex",
+  "adjustment": "all",
+  "timeframe": "5m",
+  "symbols": ["SPY", "QQQ"],
+  "session_policy_version": "XNYS-regular-session-flat-v1",
+  "bar_timestamp_semantics_version": "bar-open-utc-v1",
+  "session_return_policy_version": "XNYS-session-close-equity-v1",
+  "benchmark_policy_version": "cash-and-continuous-underlying-v1",
+  "qualification_policy_id": "intraday-qualification-policy-v1",
+  "qualification_policy_fingerprint": "42481069d9d0295d40ff1ccc6c956632d852f58522040d01024d7798172fe127",
+  "periods": [
+    {
+      "role": "training",
+      "split": "training",
+      "new_york_session_start": "2025-07-01",
+      "new_york_session_end": "2025-12-31",
+      "start_timestamp": "2025-07-01T13:30:00Z",
+      "end_timestamp": "2025-12-31T20:55:00Z"
+    },
+    {
+      "role": "validation-a",
+      "split": "validation",
+      "new_york_session_start": "2026-01-02",
+      "new_york_session_end": "2026-02-27",
+      "start_timestamp": "2026-01-02T14:30:00Z",
+      "end_timestamp": "2026-02-27T20:55:00Z"
+    },
+    {
+      "role": "validation-b",
+      "split": "validation",
+      "new_york_session_start": "2026-03-02",
+      "new_york_session_end": "2026-04-30",
+      "start_timestamp": "2026-03-02T14:30:00Z",
+      "end_timestamp": "2026-04-30T19:55:00Z"
+    },
+    {
+      "role": "validation-c",
+      "split": "validation",
+      "new_york_session_start": "2026-05-01",
+      "new_york_session_end": "2026-06-30",
+      "start_timestamp": "2026-05-01T13:30:00Z",
+      "end_timestamp": "2026-06-30T19:55:00Z"
+    }
+  ],
+  "strategies": [
+    {
+      "strategy_id": "intraday-cash",
+      "strategy_family": "intraday-cash-baseline",
+      "parameters": {}
+    },
+    {
+      "strategy_id": "intraday-previous-bar-momentum",
+      "strategy_family": "intraday-directional-momentum",
+      "parameters": {"lookback": 1}
+    },
+    {
+      "strategy_id": "intraday-moving-average-trend",
+      "strategy_family": "intraday-trend",
+      "parameters": {"window": 12}
+    }
+  ],
+  "cost_models": [
+    {
+      "role": "base",
+      "version": "conservative-bps-v1",
+      "slippage_bps": "5",
+      "commission_bps": "1"
+    },
+    {
+      "role": "increased-cost",
+      "version": "intraday-increased-cost-bps-v1",
+      "slippage_bps": "10",
+      "commission_bps": "2"
+    },
+    {
+      "role": "harsher-cost",
+      "version": "intraday-harsher-cost-bps-v1",
+      "slippage_bps": "20",
+      "commission_bps": "5"
+    }
+  ],
+  "execution_delays": [
+    {"role": "baseline", "execution_delay_bars": 1},
+    {"role": "plus-1-bar", "execution_delay_bars": 2},
+    {"role": "plus-2-bars", "execution_delay_bars": 3}
+  ],
+  "candidate_groups": [
+    {"strategy_id": "intraday-cash", "period_role": "training", "ordinal_start": 1},
+    {"strategy_id": "intraday-cash", "period_role": "validation-a", "ordinal_start": 6},
+    {"strategy_id": "intraday-cash", "period_role": "validation-b", "ordinal_start": 11},
+    {"strategy_id": "intraday-cash", "period_role": "validation-c", "ordinal_start": 16},
+    {"strategy_id": "intraday-previous-bar-momentum", "period_role": "training", "ordinal_start": 21},
+    {"strategy_id": "intraday-previous-bar-momentum", "period_role": "validation-a", "ordinal_start": 26},
+    {"strategy_id": "intraday-previous-bar-momentum", "period_role": "validation-b", "ordinal_start": 31},
+    {"strategy_id": "intraday-previous-bar-momentum", "period_role": "validation-c", "ordinal_start": 36},
+    {"strategy_id": "intraday-moving-average-trend", "period_role": "training", "ordinal_start": 41},
+    {"strategy_id": "intraday-moving-average-trend", "period_role": "validation-a", "ordinal_start": 46},
+    {"strategy_id": "intraday-moving-average-trend", "period_role": "validation-b", "ordinal_start": 51},
+    {"strategy_id": "intraday-moving-average-trend", "period_role": "validation-c", "ordinal_start": 56}
+  ],
+  "parameter_neighbors": [],
+  "authorities": {
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "change_control": "new-version-required-after-first-observed-result"
+}

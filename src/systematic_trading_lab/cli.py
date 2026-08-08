@@ -6,7 +6,7 @@ import argparse
 import json
 import os
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -14,7 +14,12 @@ from pathlib import Path
 from . import __version__
 from .alpaca_paper import AlpacaPaperReader
 from .backtesting import CostModel
-from .campaign_specs import load_training_campaign_plan
+from .campaign_specs import (
+    build_planned_intraday_experiment,
+    load_intraday_research_campaign_plan,
+    load_training_campaign_plan,
+    parse_intraday_research_campaign_plan,
+)
 from .config import ConfigurationError, Settings, load_dotenv, load_settings
 from .datasets import (
     DatasetService,
@@ -255,6 +260,23 @@ def parser() -> argparse.ArgumentParser:
         "run-planned", help="run one pre-registered sealed training candidate"
     )
     planned_run.add_argument("experiment_id")
+    plan_intraday = experiment_commands.add_parser(
+        "plan-intraday",
+        help="atomically seal all reservations in an intraday research plan",
+    )
+    plan_intraday.add_argument("--spec", type=Path, required=True)
+    planned_intraday_run = experiment_commands.add_parser(
+        "run-planned-intraday",
+        help="run one candidate derived from a sealed intraday plan",
+    )
+    planned_intraday_run.add_argument("experiment_id")
+    planned_intraday_run.add_argument("--campaign", required=True)
+    planned_intraday_run.add_argument("--dataset", required=True)
+    inspect_intraday_plan = experiment_commands.add_parser(
+        "inspect-intraday-plan",
+        help="validate and fingerprint an intraday research preregistration",
+    )
+    inspect_intraday_plan.add_argument("--spec", type=Path, required=True)
     holdout = experiment_commands.add_parser(
         "run-holdout", help="consume one stored authorization and run its exact holdout"
     )
@@ -441,6 +463,23 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         )
         return 0 if assessment.ready else 1
     if arguments.command == "experiment":
+        if arguments.experiment_command == "inspect-intraday-plan":
+            intraday_plan = load_intraday_research_campaign_plan(arguments.spec)
+            _print(
+                {
+                    "campaign_id": intraday_plan.campaign_id,
+                    "status": "preregistered",
+                    "plan_fingerprint": intraday_plan.plan_fingerprint,
+                    "search_budget": intraday_plan.search_budget,
+                    "reserved_candidate_ordinals": [
+                        candidate.candidate_ordinal for candidate in intraday_plan.candidates
+                    ],
+                    "protected_holdout_authority": False,
+                    "paper_authority": False,
+                    "broker_write_authority": False,
+                }
+            )
+            return 0
         service = DatasetService(layout)
         registry = ExperimentRegistry(layout.experiments)
         if arguments.experiment_command == "create-campaign":
@@ -450,6 +489,46 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         elif arguments.experiment_command == "plan-training":
             plan = load_training_campaign_plan(arguments.spec)
             _print(registry.create_planned_campaign(plan.payload))
+        elif arguments.experiment_command == "plan-intraday":
+            intraday_plan = load_intraday_research_campaign_plan(arguments.spec)
+            _print(registry.create_planned_intraday_campaign(intraday_plan.payload))
+        elif arguments.experiment_command == "run-planned-intraday":
+            stored_plan = registry.get_campaign_plan(arguments.campaign)
+            plan_json = stored_plan["plan_json"]
+            if not isinstance(plan_json, Mapping):
+                raise ExperimentError("stored intraday campaign plan is malformed")
+            intraday_plan = parse_intraday_research_campaign_plan(plan_json)
+            if stored_plan["plan_fingerprint"] != intraday_plan.plan_fingerprint:
+                raise ExperimentError("stored intraday campaign plan fingerprint differs")
+            try:
+                intraday_spec = build_planned_intraday_experiment(
+                    intraday_plan,
+                    arguments.experiment_id,
+                    service.describe(arguments.dataset),
+                )
+                registry.bind_planned_intraday_experiment(intraday_spec)
+            except Exception as error:
+                _retain_failed_intraday_binding(
+                    registry,
+                    intraday_plan.campaign_id,
+                    intraday_plan.plan_fingerprint,
+                    arguments.experiment_id,
+                    error,
+                )
+                raise
+            run_cataloged_intraday_experiment(
+                registry,
+                service,
+                intraday_spec,
+                layout.reports,
+                cost_model=CostModel(
+                    intraday_spec.cost_model_version,
+                    intraday_spec.slippage_bps,
+                    intraday_spec.commission_bps,
+                ),
+                pre_registered=True,
+            )
+            _print(registry.get(arguments.experiment_id))
         elif arguments.experiment_command == "create":
             if not service.validate(arguments.dataset_id)["valid"]:
                 raise DatasetValidationError("dataset integrity validation failed")
@@ -924,6 +1003,30 @@ def _intraday_strategy_contract(name: str) -> tuple[str, str, dict[str, object]]
         ),
     }
     return contracts[name]
+
+
+def _retain_failed_intraday_binding(
+    registry: ExperimentRegistry,
+    campaign_id: str,
+    plan_fingerprint: str,
+    experiment_id: str,
+    error: Exception,
+) -> None:
+    """Retain a failed dataset-binding attempt without touching another run."""
+
+    try:
+        record = registry.get(experiment_id)
+    except KeyError:
+        return
+    spec = record.get("spec_json")
+    if (
+        record.get("campaign_id") == campaign_id
+        and record.get("campaign_plan_fingerprint") == plan_fingerprint
+        and record.get("status") == "pending"
+        and isinstance(spec, Mapping)
+        and spec.get("schema_version") == "intraday-candidate-reservation-v1"
+    ):
+        registry.fail(experiment_id, f"{type(error).__name__}: {error}")
 
 
 def _print(value: object) -> None:

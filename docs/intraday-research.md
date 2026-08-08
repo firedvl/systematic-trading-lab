@@ -98,6 +98,12 @@ uv run trading-lab experiment assess-intraday \
 
 The CLI requires an explicit policy path and verifies its content against the committed v1 policy fingerprint; callers cannot substitute thresholds at assessment time. The result is a content-addressed research artifact. It cannot authorize or inspect a holdout, create paper authority, or call a broker.
 
+## First campaign preregistration
+
+`intraday-research-campaign-plan-v1` freezes the first real campaign's M5B base commit, exact XNYS ranges, fixed strategies, costs, delays, qualification policy, search budget, and candidate ordinals before any result is observed. The strict loader fingerprints the plan and rejects changed fields, reordered roles, parameter neighbors, or any holdout, paper, broker-write, or live authority. `experiment inspect-intraday-plan` validates the file without creating runtime state. `experiment plan-intraday` atomically stores the sealed plan in the registry. The sealed campaign rejects caller-defined `run-intraday` candidates.
+
+Campaign `intraday-research-v1` reserves 60 candidates: three fixed strategies across one training and three chronological validation periods, with base, increased-cost, harsher-cost, `+1`-bar, and `+2`-bar variants for every strategy-period pair. `experiment plan-intraday` creates all 60 pending reservation records in the plan-sealing transaction. `experiment run-planned-intraday` takes a reserved ID and dataset ID, verifies that the immutable Alpaca manifest matches the candidate's exact period, and derives strategy, split, costs, delay, parent, and ordinal from the stored plan before it binds that dataset to the existing record. A failed binding, integrity check, or range load remains failed registry evidence. See [the campaign preregistration](research-campaigns/intraday-campaign-v1.md). Real execution remains blocked until this isolated worktree has independent read-only historical credentials and its requested datasets seal and validate.
+
 ## Deferred work
 
 M5B does not run broad parameter search, autonomous strategy generation, opening-range breakout, protected intraday holdout evaluation, paper execution, options, shorting, leverage, extended hours, tick replay, or market-microstructure simulation. A later review must define intraday campaign plans and validation windows at production scale, approve holdout policy, and separately build M5C market-data, risk, order, reconciliation, operational, and authority controls.

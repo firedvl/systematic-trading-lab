@@ -664,7 +664,10 @@ def _campaign_evidence(records: Sequence[Mapping[str, object]]) -> dict[str, obj
     intraday_only = bool(records)
     for record in records:
         spec = record.get("spec_json")
-        if not isinstance(spec, Mapping) or spec.get("schema_version") != "intraday-experiment-v1":
+        if not isinstance(spec, Mapping) or spec.get("schema_version") not in {
+            "intraday-candidate-reservation-v1",
+            "intraday-experiment-v1",
+        }:
             intraday_only = False
             ordinal = None
         else:

@@ -11,8 +11,12 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import StrEnum
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .fingerprints import canonical_json, canonicalize, fingerprint
+
+if TYPE_CHECKING:
+    from .campaign_specs import IntradayCandidateReservation, IntradayResearchCampaignPlan
 
 
 class ExperimentSplit(StrEnum):
@@ -362,6 +366,64 @@ class ExperimentRegistry:
             "declared_candidates": len(parsed.candidates),
         }
 
+    def create_planned_intraday_campaign(self, plan: Mapping[str, object]) -> dict[str, object]:
+        from .campaign_specs import parse_intraday_research_campaign_plan
+
+        parsed = parse_intraday_research_campaign_plan(plan)
+        timestamp = _now()
+        with self._connect() as connection:
+            try:
+                connection.execute(
+                    "INSERT INTO campaigns VALUES (?, ?, ?, ?, ?)",
+                    (
+                        parsed.campaign_id,
+                        parsed.name,
+                        timestamp,
+                        "sealed",
+                        parsed.search_budget,
+                    ),
+                )
+                connection.execute(
+                    "INSERT INTO campaign_plans VALUES (?, ?, ?, ?)",
+                    (
+                        parsed.campaign_id,
+                        canonical_json(parsed.payload),
+                        parsed.plan_fingerprint,
+                        timestamp,
+                    ),
+                )
+                for reservation in parsed.candidates:
+                    connection.execute(
+                        """
+                        INSERT INTO experiments
+                        (experiment_id, campaign_id, spec_json, split, status,
+                         qualification_state, created_at, campaign_plan_fingerprint)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            reservation.experiment_id,
+                            parsed.campaign_id,
+                            canonical_json(_planned_intraday_reservation(parsed, reservation)),
+                            reservation.split.value,
+                            ExperimentStatus.PENDING.value,
+                            QualificationState.NOT_EVALUATED.value,
+                            timestamp,
+                            parsed.plan_fingerprint,
+                        ),
+                    )
+            except sqlite3.IntegrityError as error:
+                raise ExperimentError(
+                    f"sealed campaign already exists: {parsed.campaign_id}"
+                ) from error
+        return {
+            "campaign_id": parsed.campaign_id,
+            "name": parsed.name,
+            "status": "sealed",
+            "search_budget": parsed.search_budget,
+            "plan_fingerprint": parsed.plan_fingerprint,
+            "reserved_candidates": len(parsed.candidates),
+        }
+
     def get_campaign_plan(self, campaign_id: str) -> dict[str, object]:
         with self._connect() as connection:
             row = connection.execute(
@@ -388,6 +450,78 @@ class ExperimentRegistry:
         parsed = _experiment_spec(spec)
         if not isinstance(parsed, ExperimentSpec):
             raise ExperimentError("sealed daily plan contains an intraday experiment")
+        return parsed
+
+    def bind_planned_intraday_experiment(self, spec: IntradayExperimentSpec) -> None:
+        from .campaign_specs import parse_intraday_research_campaign_plan
+
+        stored_plan = self.get_campaign_plan(spec.campaign_id)
+        plan_json = stored_plan["plan_json"]
+        assert isinstance(plan_json, Mapping)
+        plan = parse_intraday_research_campaign_plan(plan_json)
+        if stored_plan["plan_fingerprint"] != plan.plan_fingerprint:
+            raise ExperimentError("stored intraday campaign plan fingerprint differs")
+        _validate_planned_intraday_spec(plan, spec)
+        reservation = next(
+            candidate
+            for candidate in plan.candidates
+            if candidate.experiment_id == spec.experiment_id
+        )
+        expected_reservation = canonicalize(_planned_intraday_reservation(plan, reservation))
+        with self._connect() as connection:
+            campaign = connection.execute(
+                "SELECT status, search_budget FROM campaigns WHERE campaign_id = ?",
+                (spec.campaign_id,),
+            ).fetchone()
+            if campaign != ("sealed", plan.search_budget):
+                raise ExperimentError("sealed intraday campaign differs from its plan")
+            row = connection.execute(
+                """
+                SELECT spec_json, status, campaign_plan_fingerprint
+                FROM experiments WHERE experiment_id = ? AND campaign_id = ?
+                """,
+                (spec.experiment_id, spec.campaign_id),
+            ).fetchone()
+            if row is None:
+                raise ExperimentError(
+                    f"planned intraday reservation not found: {spec.experiment_id}"
+                )
+            if (
+                canonicalize(json.loads(str(row[0]))) != expected_reservation
+                or row[1] != ExperimentStatus.PENDING.value
+                or row[2] != plan.plan_fingerprint
+            ):
+                raise ExperimentError("stored intraday reservation differs from the sealed plan")
+            cursor = connection.execute(
+                """
+                UPDATE experiments SET spec_json = ?
+                WHERE experiment_id = ? AND campaign_id = ? AND status = ?
+                  AND campaign_plan_fingerprint = ?
+                """,
+                (
+                    canonical_json(spec),
+                    spec.experiment_id,
+                    spec.campaign_id,
+                    ExperimentStatus.PENDING.value,
+                    plan.plan_fingerprint,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise ExperimentError("planned intraday reservation could not be bound")
+
+    def get_planned_intraday_spec(self, experiment_id: str) -> IntradayExperimentSpec:
+        record = self.get(experiment_id)
+        if record.get("campaign_plan_fingerprint") is None:
+            raise ExperimentError(f"experiment is not from a sealed plan: {experiment_id}")
+        spec = record["spec_json"]
+        assert isinstance(spec, Mapping)
+        if spec.get("schema_version") == "intraday-candidate-reservation-v1":
+            raise ExperimentError(
+                f"planned intraday experiment is not bound to a dataset: {experiment_id}"
+            )
+        parsed = _experiment_spec(spec)
+        if not isinstance(parsed, IntradayExperimentSpec):
+            raise ExperimentError("sealed intraday plan contains a daily experiment")
         return parsed
 
     def _create_holdout_run_authorization(
@@ -583,6 +717,31 @@ class ExperimentRegistry:
             if cursor.rowcount != 1:
                 raise ExperimentError(f"planned experiment is not pending: {spec.experiment_id}")
 
+    def _claim_planned_intraday(self, spec: IntradayExperimentSpec) -> None:
+        if self.get_planned_intraday_spec(spec.experiment_id) != spec:
+            raise ExperimentError("stored planned intraday experiment differs")
+        timestamp = _now()
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE experiments
+                SET status = ?, started_at = COALESCE(started_at, ?), heartbeat_at = ?
+                WHERE experiment_id = ? AND status = ?
+                  AND campaign_plan_fingerprint IS NOT NULL
+                """,
+                (
+                    ExperimentStatus.RUNNING.value,
+                    timestamp,
+                    timestamp,
+                    spec.experiment_id,
+                    ExperimentStatus.PENDING.value,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise ExperimentError(
+                    f"planned intraday experiment is not pending: {spec.experiment_id}"
+                )
+
     def heartbeat(self, experiment_id: str) -> None:
         with self._connect() as connection:
             cursor = connection.execute(
@@ -681,6 +840,39 @@ class ExperimentRegistry:
             )
             if cursor.rowcount != 1:
                 raise ExperimentError(f"planned experiment is not running: {spec.experiment_id}")
+
+    def _complete_planned_intraday(
+        self,
+        spec: IntradayExperimentSpec,
+        metrics: Mapping[str, object],
+        artifact_locations: list[str],
+        artifact_hashes: list[str],
+    ) -> None:
+        if self.get_planned_intraday_spec(spec.experiment_id) != spec:
+            raise ExperimentError("stored planned intraday experiment differs")
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE experiments SET status = ?, metrics_json = ?, artifact_locations_json = ?,
+                    artifact_hashes_json = ?, finished_at = ?, heartbeat_at = NULL,
+                    execution_provenance = 'controlled-run'
+                WHERE experiment_id = ? AND status = ?
+                  AND campaign_plan_fingerprint IS NOT NULL
+                """,
+                (
+                    ExperimentStatus.COMPLETED.value,
+                    canonical_json(metrics),
+                    canonical_json(artifact_locations),
+                    canonical_json(artifact_hashes),
+                    _now(),
+                    spec.experiment_id,
+                    ExperimentStatus.RUNNING.value,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise ExperimentError(
+                    f"planned intraday experiment is not running: {spec.experiment_id}"
+                )
 
     def fail(self, experiment_id: str, reason: str) -> None:
         if not reason:
@@ -1113,6 +1305,99 @@ def _experiment_spec(value: Mapping[str, object]) -> ExperimentContract:
         creation_reason=str(value["creation_reason"]),
         parent_candidate=parent,
     )
+
+
+def _validate_planned_intraday_spec(
+    plan: IntradayResearchCampaignPlan, spec: IntradayExperimentSpec
+) -> None:
+    reservation = next(
+        (
+            candidate
+            for candidate in plan.candidates
+            if candidate.experiment_id == spec.experiment_id
+        ),
+        None,
+    )
+    if reservation is None:
+        raise ExperimentError("intraday experiment is not reserved by the sealed plan")
+    expected = {
+        "campaign_id": plan.campaign_id,
+        "search_budget": plan.search_budget,
+        "candidate_ordinal": reservation.candidate_ordinal,
+        "strategy_id": reservation.strategy_id,
+        "strategy_version": "1",
+        "strategy_family": reservation.strategy_family,
+        "code_commit": plan.base_code_commit,
+        "parameters": canonicalize(reservation.parameters),
+        "timeframe": "5m",
+        "session_policy_version": "XNYS-regular-session-flat-v1",
+        "bar_timestamp_semantics_version": "bar-open-utc-v1",
+        "session_return_policy_version": "XNYS-session-close-equity-v1",
+        "benchmark_policy_version": "cash-and-continuous-underlying-v1",
+        "cost_model_version": reservation.cost_model_version,
+        "slippage_bps": reservation.slippage_bps,
+        "commission_bps": reservation.commission_bps,
+        "execution_model_version": "deterministic-next-bar-open-v1",
+        "earliest_fill_semantics": "completed-bar-next-bar-open-v1",
+        "execution_delay_bars": reservation.execution_delay_bars,
+        "split": reservation.split,
+        "start_timestamp": reservation.start_timestamp,
+        "end_timestamp": reservation.end_timestamp,
+        "random_seed": 0,
+        "creation_reason": (
+            f"preregistered {reservation.variant_role} evidence for "
+            f"{reservation.strategy_id} {reservation.period_role}"
+        ),
+        "parent_candidate": reservation.parent_candidate,
+    }
+    observed = {
+        field: canonicalize(spec.parameters) if field == "parameters" else getattr(spec, field)
+        for field in expected
+    }
+    if observed != expected:
+        raise ExperimentError("intraday experiment differs from its sealed reservation")
+
+
+def _planned_intraday_reservation(
+    plan: IntradayResearchCampaignPlan,
+    reservation: IntradayCandidateReservation,
+) -> dict[str, object]:
+    """Represent one immutable candidate before a period dataset is bound."""
+
+    return {
+        "schema_version": "intraday-candidate-reservation-v1",
+        "experiment_id": reservation.experiment_id,
+        "campaign_id": plan.campaign_id,
+        "search_budget": plan.search_budget,
+        "candidate_ordinal": reservation.candidate_ordinal,
+        "strategy_id": reservation.strategy_id,
+        "strategy_version": "1",
+        "strategy_family": reservation.strategy_family,
+        "code_commit": plan.base_code_commit,
+        "parameters": reservation.parameters,
+        "timeframe": "5m",
+        "session_policy_version": "XNYS-regular-session-flat-v1",
+        "bar_timestamp_semantics_version": "bar-open-utc-v1",
+        "session_return_policy_version": "XNYS-session-close-equity-v1",
+        "benchmark_policy_version": "cash-and-continuous-underlying-v1",
+        "cost_model_version": reservation.cost_model_version,
+        "slippage_bps": reservation.slippage_bps,
+        "commission_bps": reservation.commission_bps,
+        "execution_model_version": "deterministic-next-bar-open-v1",
+        "earliest_fill_semantics": "completed-bar-next-bar-open-v1",
+        "execution_delay_bars": reservation.execution_delay_bars,
+        "split": reservation.split,
+        "start_timestamp": reservation.start_timestamp,
+        "end_timestamp": reservation.end_timestamp,
+        "random_seed": 0,
+        "creation_reason": (
+            f"preregistered {reservation.variant_role} evidence for "
+            f"{reservation.strategy_id} {reservation.period_role}"
+        ),
+        "parent_candidate": reservation.parent_candidate,
+        "period_role": reservation.period_role,
+        "variant_role": reservation.variant_role,
+    }
 
 
 def _stored_positive_int(value: Mapping[str, object], field: str) -> int:

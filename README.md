@@ -20,6 +20,9 @@ uv run trading-lab experiment create-campaign baseline-v1 --name "Baseline campa
 uv run trading-lab experiment plan-training --spec PLAN.json
 uv run trading-lab experiment run-planned candidate-1
 uv run trading-lab experiment run-intraday --help
+uv run trading-lab experiment inspect-intraday-plan --spec config/research/intraday-campaign-v1.json
+uv run trading-lab experiment plan-intraday --spec config/research/intraday-campaign-v1.json
+uv run trading-lab experiment run-planned-intraday --help
 uv run trading-lab experiment assess-intraday --help
 uv run trading-lab experiment run --help
 uv run trading-lab experiment run-holdout --help
@@ -53,6 +56,8 @@ time-series momentum, moving-average mean reversion, and volatility-targeted exp
 system checks, not optimized or financially qualified strategies.
 
 The isolated M5B workflow adds fixed intraday cash, previous-bar momentum, and 12-bar moving-average trend engineering baselines for SPY and QQQ. Controlled training and validation runs use exact catalog ranges, `XNYS-regular-session-flat-v1`, completed-bar decisions, and deterministic next-bar-open fills. `intraday-backtest-report-v1` records intraday exposure, activity, holding duration, cost, concentration, benchmark, and session-boundary evidence. `intraday-qualification-policy-v1` assesses frozen cost and delay variants as research evidence only; it grants no holdout, paper, or broker-write authority. See [docs/intraday-research.md](docs/intraday-research.md).
+
+The first real campaign preregistration uses `intraday-research-campaign-plan-v1`. Its strict read-only inspector fingerprints exact chronological periods, fixed baselines, costs, delays, policy identity, and all 60 candidate ordinals without loading data or creating runtime state. `plan-intraday` atomically seals those reservations in the official registry. `run-planned-intraday` accepts only a reserved experiment ID and one matching sealed Alpaca dataset; it derives every result-affecting candidate field from the stored plan. Real execution requires separately available read-only historical credentials and validated sealed datasets.
 
 The strategic-allocation candidate holds 35% SPY, 25% QQQ, 25% IWM, 15% GLD, and 0% TLT with a
 predeclared 21-session rebalance interval. Its controlled validation evidence passed the approved

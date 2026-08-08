@@ -9,7 +9,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from .backtesting import BacktestResult, CostModel
-from .datasets import DatasetService
+from .datasets import DatasetService, DatasetValidationError
 from .domain import OHLCVBar, Timeframe, TimestampRange
 from .experiments import (
     ExperimentError,
@@ -208,13 +208,22 @@ def run_cataloged_intraday_experiment(
     output_directory: Path,
     initial_cash: Decimal = Decimal("100000"),
     cost_model: CostModel | None = None,
+    *,
+    pre_registered: bool = False,
 ) -> BacktestResult:
     """Run one training or validation candidate under the M5B contract."""
 
     selected_costs = cost_model or CostModel()
-    registry.create_experiment(spec)
-    registry.claim(spec.experiment_id)
+    if pre_registered:
+        if registry.get_planned_intraday_spec(spec.experiment_id) != spec:
+            raise ExperimentError("stored planned intraday experiment differs")
+        registry._claim_planned_intraday(spec)
+    else:
+        registry.create_experiment(spec)
+        registry.claim(spec.experiment_id)
     try:
+        if pre_registered and not datasets.validate(spec.dataset_id)["valid"]:
+            raise DatasetValidationError("dataset integrity validation failed")
         manifest = datasets.describe(spec.dataset_id)
         _validate_intraday_models(spec, selected_costs, manifest)
         bars = datasets.load_bars_range(
@@ -250,12 +259,20 @@ def run_cataloged_intraday_experiment(
         report_fingerprint = report.get("report_fingerprint")
         if not isinstance(report_fingerprint, str):
             raise ExperimentError("intraday report fingerprint is missing")
-        registry._complete_controlled(
-            spec.experiment_id,
-            metrics,
-            [str(report_path)],
-            [report_fingerprint],
-        )
+        if pre_registered:
+            registry._complete_planned_intraday(
+                spec,
+                metrics,
+                [str(report_path)],
+                [report_fingerprint],
+            )
+        else:
+            registry._complete_controlled(
+                spec.experiment_id,
+                metrics,
+                [str(report_path)],
+                [report_fingerprint],
+            )
         return result
     except Exception as error:
         registry.fail(spec.experiment_id, f"{type(error).__name__}: {error}")

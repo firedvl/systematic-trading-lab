@@ -562,3 +562,10 @@
 - Context: M5B needs deterministic system checks without broad search or claims of profitability.
 - Consequences: the CLI exposes no strategy parameter override. Opening-range breakout, parameter optimization, shorting, leverage, extended hours, options, and autonomous generation remain deferred. Validation variants may change only preregistered costs, delay, or parameter-neighbor evidence and must retain parent lineage.
 - Revisit when: reviewed campaign plans define bounded parameter neighborhoods or another fixed baseline adds enough evidence to justify its complexity.
+
+## 2026-08-08 — The first intraday campaign reserves every base and stress run
+
+- Decision: preregister `intraday-research-v1` with SPY/QQQ `5m` data, one six-month training window, three following two-month validation windows, the three fixed M5B baselines, and five candidates per strategy-period pair: base, increased cost, harsher cost, `+1` bar, and `+2` bars.
+- Context: the first historical campaign must test chronological validation and research evidence without adding candidates or changing assumptions after results appear.
+- Consequences: the strict plan fingerprint reserves all 60 ordinals, uses 5/1, 10/2, and 20/5 slippage/commission basis points with one/two/three-bar delays, and rejects parameter neighbors or any holdout, paper, broker-write, or live authority. No real run can start until independent read-only credentials produce four valid sealed datasets. A deterministic fixture proof remains ignored and is not campaign evidence.
+- Revisit when: independent historical credentials are available, a data defect blocks the frozen windows, or a software defect requires a separately versioned campaign.
