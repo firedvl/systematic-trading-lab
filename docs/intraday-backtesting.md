@@ -16,6 +16,14 @@ A signal from the `10:00–10:05` bar cannot use its `10:00` open or any earlier
 
 Portfolio strategies receive one complete multi-symbol timestamp slice and immutable history through that completed slice. Invalid target sets fail atomically. Position reductions execute before buys. Long-only weights remain between zero and one, total target weight cannot exceed one, leverage and shorting remain unsupported.
 
+## Day-trading session policy
+
+`XNYS-regular-session-flat-v1` is the explicit flat-at-close replay policy. It treats the last validated bar open in each `America/New_York` session as the final eligible fill. An order cannot cross into the next session.
+
+The engine creates a mandatory zero-weight target early enough for the configured whole-bar delay to fill at that final bar open. This intent uses only bars completed by its decision time. It cancels a pending order and rejects a new positive target when either could leave exposure after the final fill. The engine then fails if any symbol, complete portfolio slice, or pending order remains exposed after the session. The same rule derives normal and early closes from the validated dataset.
+
+The default replay remains a generic diagnostic that may carry positions. A strategy classified as day trading must use `XNYS-regular-session-flat-v1`; no such strategy is admitted to an experiment runner yet.
+
 ## Costs and metrics
 
 The existing versioned basis-point slippage and commission model applies at the eligible bar open. Higher fixed costs cannot improve the same trade sequence. Bar-open fills do not model queue position, spread paths inside a bar, partial fills, market impact, halts, or quote latency.
@@ -24,6 +32,6 @@ Intraday equity evidence retains every completed bar. Summary return, drawdown, 
 
 ## Deliberate boundary
 
-This slice does not route intraday datasets into sealed experiment plans, approved qualification gates, protected holdouts, paper intents, risk admission, or broker adapters. Those paths remain daily-only. An intraday qualification slice must first version its report, execution, session-return, benchmark, and gate contracts. Simple intraday baseline strategies are deferred until that boundary exists.
+This slice does not route intraday datasets into sealed experiment plans, approved qualification gates, protected holdouts, paper intents, risk admission, or broker adapters. Those paths remain daily-only. An intraday qualification slice must first version its experiment, report, execution, session-return, benchmark, and gate contracts. Simple intraday baseline strategies are deferred until that boundary exists.
 
 No replay result promotes a strategy or grants paper or live authority.

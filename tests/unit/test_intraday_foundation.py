@@ -1,5 +1,5 @@
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -7,7 +7,12 @@ from typing import Any
 
 import pytest
 
-from systematic_trading_lab.backtesting import BacktestEngine, CostModel
+from systematic_trading_lab.backtesting import (
+    BacktestEngine,
+    BacktestError,
+    CostModel,
+    IntradaySessionPolicy,
+)
 from systematic_trading_lab.calendar import expected_bar_timestamps
 from systematic_trading_lab.cli import parser, run
 from systematic_trading_lab.config import load_settings
@@ -20,7 +25,7 @@ from systematic_trading_lab.datasets import (
 from systematic_trading_lab.domain import OHLCVBar, Symbol, Timeframe, TimestampRange
 from systematic_trading_lab.providers import IntradayFixtureProvider
 from systematic_trading_lab.storage import StorageLayout
-from systematic_trading_lab.strategies import BuyAndHoldStrategy
+from systematic_trading_lab.strategies import BuyAndHoldStrategy, TargetPosition
 from systematic_trading_lab.universe import load_intraday_universe
 from systematic_trading_lab.validation import validate_records
 
@@ -249,3 +254,143 @@ def test_intraday_next_bar_fill_waits_until_signal_bar_is_observable() -> None:
     assert delayed.trades[0].fill_timestamp == bars[2].timestamp
     assert repeated.artifact_fingerprint == first.artifact_fingerprint
     assert costly.metrics.total_return < first.metrics.total_return
+
+
+@pytest.mark.parametrize("fill_delay_bars", (1, 2))
+def test_day_trading_policy_flattens_normal_and_early_close_sessions(
+    fill_delay_bars: int,
+) -> None:
+    class SessionOpenEntry:
+        strategy_id = "session-open-entry"
+        version = "1"
+
+        def on_bar(self, bar: OHLCVBar, history: Sequence[OHLCVBar]) -> Sequence[TargetPosition]:
+            if len(history) == 1 or history[-2].timestamp.date() != bar.timestamp.date():
+                return (TargetPosition(bar.symbol, Decimal("1"), "session-entry"),)
+            return ()
+
+    timeframe = Timeframe.FIVE_MINUTES
+    records = IntradayFixtureProvider().fetch(
+        intraday_fixture_symbols()[:1], timeframe, intraday_fixture_request(timeframe)
+    )
+    bars = tuple(OHLCVBar.from_record(record) for record in records)
+    result = BacktestEngine(
+        Decimal("1000"),
+        CostModel(slippage_bps=Decimal("0"), commission_bps=Decimal("0")),
+        fill_delay_bars=fill_delay_bars,
+        timeframe=timeframe,
+        session_policy=IntradaySessionPolicy.DAY_TRADING_FLAT,
+    ).run(bars, SessionOpenEntry())
+
+    sells = tuple(trade for trade in result.trades if trade.quantity < 0)
+    assert [trade.fill_timestamp for trade in sells] == [
+        datetime(2025, 11, 26, 20, 55, tzinfo=UTC),
+        datetime(2025, 11, 28, 17, 55, tzinfo=UTC),
+    ]
+    assert all(trade.decision_timestamp <= trade.fill_timestamp for trade in sells)
+    if fill_delay_bars == 1:
+        assert all(trade.decision_timestamp == trade.fill_timestamp for trade in sells)
+    assert all(
+        point.positions == ((Symbol("SPY"), Decimal("0")),) for point in result.equity_curve[-1:]
+    )
+    assert all(
+        trade.decision_timestamp.date() == trade.fill_timestamp.date() for trade in result.trades
+    )
+    assert (
+        sum(
+            target.reason == "mandatory-session-flatten"
+            for decision in result.decisions
+            for target in decision.targets
+        )
+        == 2
+    )
+
+
+def test_day_trading_policy_rejects_entry_without_time_to_flatten() -> None:
+    class LateEntry:
+        strategy_id = "late-entry"
+        version = "1"
+
+        def on_bar(self, bar: OHLCVBar, history: Sequence[OHLCVBar]) -> Sequence[TargetPosition]:
+            if bar.timestamp in {
+                datetime(2025, 11, 26, 20, 50, tzinfo=UTC),
+                datetime(2025, 11, 28, 17, 50, tzinfo=UTC),
+            }:
+                return (TargetPosition(bar.symbol, Decimal("1"), "unsafe-late-entry"),)
+            return ()
+
+    timeframe = Timeframe.FIVE_MINUTES
+    records = IntradayFixtureProvider().fetch(
+        intraday_fixture_symbols()[:1], timeframe, intraday_fixture_request(timeframe)
+    )
+    bars = tuple(OHLCVBar.from_record(record) for record in records)
+    result = BacktestEngine(
+        Decimal("1000"),
+        timeframe=timeframe,
+        session_policy=IntradaySessionPolicy.DAY_TRADING_FLAT,
+    ).run(bars, LateEntry())
+
+    assert result.trades == ()
+    assert result.equity_curve[-1].positions == ()
+    assert sum(event.reason == "session-close-cutoff" for event in result.orders) == 2
+
+
+def test_day_trading_policy_rejects_partial_session_input() -> None:
+    timeframe = Timeframe.FIVE_MINUTES
+    records = IntradayFixtureProvider().fetch(
+        intraday_fixture_symbols()[:1], timeframe, intraday_fixture_request(timeframe)
+    )
+    partial = tuple(OHLCVBar.from_record(record) for record in records[:3])
+
+    with pytest.raises(BacktestError, match="complete XNYS sessions"):
+        BacktestEngine(
+            Decimal("1000"),
+            timeframe=timeframe,
+            session_policy=IntradaySessionPolicy.DAY_TRADING_FLAT,
+        ).run(partial, BuyAndHoldStrategy())
+
+
+@pytest.mark.parametrize("fill_delay_bars", (1, 2))
+def test_day_trading_policy_flattens_complete_symbol_slice_atomically(
+    fill_delay_bars: int,
+) -> None:
+    class SessionOpenPortfolio:
+        strategy_id = "session-open-portfolio"
+        version = "1"
+
+        def on_session(
+            self,
+            bars: Sequence[OHLCVBar],
+            history: Mapping[Symbol, Sequence[OHLCVBar]],
+        ) -> Sequence[TargetPosition]:
+            first = min(history.values(), key=len)
+            if len(first) == 1 or first[-2].timestamp.date() != bars[0].timestamp.date():
+                return tuple(
+                    TargetPosition(bar.symbol, Decimal("0.5"), "session-entry") for bar in bars
+                )
+            return ()
+
+    timeframe = Timeframe.FIVE_MINUTES
+    records = IntradayFixtureProvider().fetch(
+        intraday_fixture_symbols(), timeframe, intraday_fixture_request(timeframe)
+    )
+    bars = tuple(OHLCVBar.from_record(record) for record in records)
+    result = BacktestEngine(
+        Decimal("1000"),
+        CostModel(slippage_bps=Decimal("0"), commission_bps=Decimal("0")),
+        fill_delay_bars=fill_delay_bars,
+        timeframe=timeframe,
+        session_policy=IntradaySessionPolicy.DAY_TRADING_FLAT,
+    ).run_portfolio(bars, SessionOpenPortfolio())
+
+    assert all(quantity == 0 for _, quantity in result.equity_curve[-1].positions)
+    assert {
+        (trade.symbol, trade.fill_timestamp) for trade in result.trades if trade.quantity < 0
+    } == {
+        (Symbol(symbol), timestamp)
+        for symbol in ("QQQ", "SPY")
+        for timestamp in (
+            datetime(2025, 11, 26, 20, 55, tzinfo=UTC),
+            datetime(2025, 11, 28, 17, 55, tzinfo=UTC),
+        )
+    }

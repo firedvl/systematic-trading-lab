@@ -541,3 +541,10 @@
 - Context: treating a provider bar-open label as the decision time would allow its completed high, low, close, and volume to influence the past.
 - Consequences: contiguous next-bar fills may share the bar-close decision timestamp but never precede it. Daily behavior remains unchanged. Intraday diagnostics aggregate equity at each New York session end, while experiments, qualification, holdouts, paper execution, and broker authority remain daily-only.
 - Revisit when: quote-based spread, latency, partial-fill, impact, or intraday qualification models receive separate review.
+
+## 2026-08-08 — Day-trading replay flattens at the final eligible bar open
+
+- Decision: add the explicit `XNYS-regular-session-flat-v1` policy. It limits delayed fills to one New York session, creates a zero-weight intent early enough to fill at the final validated bar open, rejects unsafe late entries, and fails if exposure or a pending order survives the session.
+- Context: the generic intraday replay could carry a position or delayed order through a normal or early close. A close-price liquidation decided after the close would introduce lookahead.
+- Consequences: flat-at-close decisions use only completed bars and respect the configured whole-bar delay. The last regular-session bar may mark the already-flat portfolio but cannot create another eligible fill. Daily replay and intraday diagnostics without the day-trading policy remain unchanged. Intraday experiment and qualification paths remain blocked.
+- Revisit when: a reviewed auction, market-on-close, quote-latency, partial-fill, or halt model can replace the final-bar-open approximation.
