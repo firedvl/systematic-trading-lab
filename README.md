@@ -1,6 +1,6 @@
 # Systematic Trading Lab
 
-Research infrastructure for reproducible U.S. ETF data, backtests, qualification, and paper execution. Approved research and paper execution remain daily-only for SPY, QQQ, IWM, TLT, and GLD. The isolated intraday branch adds offline `1m` and `5m` data and replay foundations for SPY and QQQ. Live trading is disabled.
+Research infrastructure for reproducible U.S. ETF data, backtests, qualification, and paper execution. Approved research and paper execution remain daily-only for SPY, QQQ, IWM, TLT, and GLD. The isolated intraday branch adds offline `1m` and `5m` SPY/QQQ data, replay, experiment, report, fixed-baseline, and research-gate foundations. Intraday holdout and paper authority remain absent. Live trading is disabled.
 
 ## Setup
 
@@ -19,6 +19,8 @@ uv run trading-lab backtest fixture --strategy all --output .trading-lab/reports
 uv run trading-lab experiment create-campaign baseline-v1 --name "Baseline campaign" --budget 20
 uv run trading-lab experiment plan-training --spec PLAN.json
 uv run trading-lab experiment run-planned candidate-1
+uv run trading-lab experiment run-intraday --help
+uv run trading-lab experiment assess-intraday --help
 uv run trading-lab experiment run --help
 uv run trading-lab experiment run-holdout --help
 uv run trading-lab experiment compare candidate-1 candidate-2
@@ -49,6 +51,8 @@ callers cannot override its strategy, dates, parameters, provenance, parent, or 
 The baseline suite includes cash, buy-and-hold, fixed-weight allocation, moving-average trend,
 time-series momentum, moving-average mean reversion, and volatility-targeted exposure. These are
 system checks, not optimized or financially qualified strategies.
+
+The isolated M5B workflow adds fixed intraday cash, previous-bar momentum, and 12-bar moving-average trend engineering baselines for SPY and QQQ. Controlled training and validation runs use exact catalog ranges, `XNYS-regular-session-flat-v1`, completed-bar decisions, and deterministic next-bar-open fills. `intraday-backtest-report-v1` records intraday exposure, activity, holding duration, cost, concentration, benchmark, and session-boundary evidence. `intraday-qualification-policy-v1` assesses frozen cost and delay variants as research evidence only; it grants no holdout, paper, or broker-write authority. See [docs/intraday-research.md](docs/intraday-research.md).
 
 The strategic-allocation candidate holds 35% SPY, 25% QQQ, 25% IWM, 15% GLD, and 0% TLT with a
 predeclared 21-session rebalance interval. Its controlled validation evidence passed the approved

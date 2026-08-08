@@ -36,7 +36,7 @@ Machine-readable specifications, approved strategy families, bounded candidate g
 ## Proposed isolated intraday extension
 
 - M5A — Intraday data and replay foundation: immutable `1m` and `5m` SPY/QQQ bars, XNYS regular-session and early-close validation, explicit bar-open timestamps, missing-interval evidence, read-only historical acquisition, deterministic fixtures, and conservative next-bar replay. This branch implements that code slice; merge and milestone completion remain pending review and isolation checks.
-- M5B — Intraday research and qualification: versioned intraday experiment plans, session-return and benchmark policy, baseline strategies without optimization, robustness evidence, and separately approved gates. Started in this branch with the versioned XNYS day-trading flat-at-close replay policy; experiment, report, baseline, and qualification contracts remain pending.
+- M5B — Intraday research and qualification foundation: `intraday-experiment-v1`, exact-range controlled training and validation runs, `intraday-backtest-report-v1`, cash and continuous-underlying benchmarks, fixed non-optimized cash/momentum/trend baselines, flat-at-close evidence, explicit cost and delay robustness, parameter-neighbor lineage, fixed search accounting, and research-only gates. This isolated branch implements the foundation; protected intraday holdout access, production-scale campaign plans, paper execution, and milestone completion remain pending separate review.
 - M5C — Intraday paper execution: reviewed market-data freshness, risk, order, reconciliation, operational, threat-model, and authority controls after extended qualification. Not started; no intraday broker-write authority exists.
 
 ## M7 — Controlled continuous improvement

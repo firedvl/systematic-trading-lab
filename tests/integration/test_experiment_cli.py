@@ -6,12 +6,18 @@ import pytest
 
 from systematic_trading_lab.cli import parser, run
 from systematic_trading_lab.config import Settings
-from systematic_trading_lab.datasets import DatasetService, fixture_request, fixture_symbols
+from systematic_trading_lab.datasets import (
+    DatasetService,
+    fixture_request,
+    fixture_symbols,
+    intraday_fixture_request,
+    intraday_fixture_symbols,
+)
 from systematic_trading_lab.domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
 from systematic_trading_lab.experiments import ExperimentRegistry
-from systematic_trading_lab.providers import FixtureProvider
+from systematic_trading_lab.providers import FixtureProvider, IntradayFixtureProvider
 from systematic_trading_lab.storage import StorageLayout
-from systematic_trading_lab.universe import load_research_universe
+from systematic_trading_lab.universe import load_intraday_universe, load_research_universe
 
 
 def test_fixture_all_reports_every_bootstrap_baseline(
@@ -288,3 +294,60 @@ def test_cli_runs_cataloged_experiment_and_compares_candidates(
     assert isinstance(volatility_spec, dict)
     assert volatility_spec["strategy_id"] == "volatility-balanced-portfolio"
     assert volatility_spec["strategy_family"] == "portfolio-allocation"
+
+
+def test_cli_runs_isolated_intraday_baseline_without_execution_authority(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    layout = StorageLayout(tmp_path)
+    timeframe = Timeframe.FIVE_MINUTES
+    requested = intraday_fixture_request(timeframe)
+    universe = load_intraday_universe(timeframe)
+    imported = DatasetService(layout).import_from(
+        IntradayFixtureProvider(),
+        intraday_fixture_symbols(),
+        timeframe,
+        requested,
+        universe,
+    )
+    ExperimentRegistry(layout.experiments).create_campaign("m5b-cli", "M5B CLI", 1)
+    command = parser().parse_args(
+        [
+            "experiment",
+            "run-intraday",
+            "m5b-cash",
+            "--campaign",
+            "m5b-cli",
+            "--strategy",
+            "cash",
+            "--candidate-ordinal",
+            "1",
+            "--code-commit",
+            "abc123",
+            "--dataset",
+            imported.dataset_id,
+            "--timeframe",
+            "5m",
+            "--split",
+            "training",
+            "--start",
+            requested.start.isoformat(),
+            "--end",
+            requested.end.isoformat(),
+            "--reason",
+            "fixed CLI engineering baseline",
+        ]
+    )
+
+    assert run(command, Settings(TradingMode.OFFLINE, tmp_path)) == 0
+    output = json.loads(capsys.readouterr().out)
+    stored = output["spec_json"]
+
+    assert output["status"] == "completed"
+    assert output["execution_provenance"] == "controlled-run"
+    assert stored["schema_version"] == "intraday-experiment-v1"
+    assert stored["timeframe"] == "5m"
+    assert stored["session_policy_version"] == "XNYS-regular-session-flat-v1"
+    assert output["metrics_json"]["fill_count"] == 0
+    assert len(output["artifact_hashes_json"]) == 1
+    assert not layout.execution.exists()

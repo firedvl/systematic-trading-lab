@@ -1,3 +1,4 @@
+import json
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -20,6 +21,7 @@ from systematic_trading_lab.experiment_runner import (
     WalkForwardSplit,
     comparison_report,
     run_cataloged_experiment,
+    run_cataloged_intraday_experiment,
     run_experiment,
     run_holdout_experiment,
     run_sensitivity,
@@ -32,8 +34,13 @@ from systematic_trading_lab.experiments import (
     ExperimentSpec,
     ExperimentSplit,
     HoldoutAccessError,
+    IntradayExperimentSpec,
 )
 from systematic_trading_lab.fingerprints import fingerprint
+from systematic_trading_lab.intraday_qualification import (
+    evaluate_registered_intraday_qualification,
+    load_intraday_qualification_policy,
+)
 from systematic_trading_lab.providers import FixtureProvider, IntradayFixtureProvider
 from systematic_trading_lab.storage import StorageLayout
 from systematic_trading_lab.universe import load_intraday_universe, load_research_universe
@@ -270,6 +277,129 @@ def test_cataloged_experiment_runner_rejects_intraday_dataset(tmp_path: Path) ->
         run_cataloged_experiment(registry, datasets, intraday_spec, tmp_path / "reports")
 
     assert registry.get(intraday_spec.experiment_id)["status"] == "failed"
+
+
+def test_cataloged_intraday_runner_records_deterministic_zero_trade_report_and_failures(
+    tmp_path: Path,
+) -> None:
+    timeframe = Timeframe.FIVE_MINUTES
+    requested = intraday_fixture_request(timeframe)
+    universe = load_intraday_universe(timeframe)
+    layout = StorageLayout(tmp_path / "data")
+    datasets = DatasetService(layout)
+    imported = datasets.import_from(
+        IntradayFixtureProvider(),
+        intraday_fixture_symbols(),
+        timeframe,
+        requested,
+        universe,
+    )
+    registry = ExperimentRegistry(layout.experiments)
+    registry.create_campaign("m5b", "M5B fixed baselines", 2)
+    base = IntradayExperimentSpec(
+        experiment_id="m5b-cash",
+        campaign_id="m5b",
+        search_budget=2,
+        candidate_ordinal=1,
+        strategy_id="intraday-cash",
+        strategy_version="1",
+        strategy_family="intraday-cash-baseline",
+        code_commit="abc123",
+        dataset_id=imported.dataset_id,
+        dataset_fingerprint=imported.fingerprint,
+        universe_id=universe.universe_id,
+        universe_fingerprint=universe.universe_fingerprint,
+        parameters={},
+        timeframe=timeframe.value,
+        session_policy_version="XNYS-regular-session-flat-v1",
+        bar_timestamp_semantics_version="bar-open-utc-v1",
+        session_return_policy_version="XNYS-session-close-equity-v1",
+        benchmark_policy_version="cash-and-continuous-underlying-v1",
+        cost_model_version="conservative-bps-v1",
+        slippage_bps=Decimal("5"),
+        commission_bps=Decimal("1"),
+        execution_model_version="deterministic-next-bar-open-v1",
+        earliest_fill_semantics="completed-bar-next-bar-open-v1",
+        execution_delay_bars=1,
+        split=ExperimentSplit.TRAINING,
+        start_timestamp=requested.start,
+        end_timestamp=requested.end,
+        random_seed=0,
+        creation_reason="fixed cash baseline",
+    )
+
+    result = run_cataloged_intraday_experiment(registry, datasets, base, layout.reports)
+    record = registry.get(base.experiment_id)
+    stored_metrics = cast(dict[str, object], record["metrics_json"])
+    report_path = Path(cast(list[str], record["artifact_locations_json"])[0])
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+
+    assert result.trades == ()
+    assert record["status"] == "completed"
+    assert record["execution_provenance"] == "controlled-run"
+    assert stored_metrics["fill_count"] == 0
+    assert report["schema_version"] == "intraday-backtest-report-v1"
+    assert report["provenance"]["timeframe"] == "5m"
+    assert report["provenance"]["execution_delay_bars"] == 1
+    assert report["configured_fill_delay_bars"] == 1
+    assert report["report_fingerprint"] == cast(list[str], record["artifact_hashes_json"])[0]
+    assert not layout.execution.exists()
+
+    broken = replace(
+        base,
+        experiment_id="m5b-broken",
+        candidate_ordinal=2,
+        execution_model_version="unsupported-execution-v9",
+    )
+    with pytest.raises(ExperimentError, match="unsupported intraday execution model"):
+        run_cataloged_intraday_experiment(registry, datasets, broken, layout.reports)
+    failed = registry.get(broken.experiment_id)
+    assert failed["status"] == "failed"
+    assert "unsupported intraday execution model" in str(failed["failure_info"])
+    assert not layout.execution.exists()
+
+    evidence = evaluate_registered_intraday_qualification(
+        registry,
+        load_intraday_qualification_policy(
+            Path("config/research/intraday-qualification-policy-v1.json")
+        ),
+        base.experiment_id,
+        {},
+        {},
+    )
+    campaign_sources = cast(list[dict[str, object]], evidence["campaign_sources"])
+    search_accounting = cast(dict[str, object], evidence["search_accounting"])
+    assert evidence["evidence_binding"] == "controlled-registry"
+    assert evidence["state"] == "research-gates-failed"
+    assert search_accounting["search_budget_accounted"] is True
+    assert any(
+        source["experiment_id"] == broken.experiment_id and source["status"] == "failed"
+        for source in campaign_sources
+    )
+
+    daily = datasets.import_from(
+        FixtureProvider(),
+        fixture_symbols(),
+        Timeframe.DAILY,
+        fixture_request(),
+        load_research_universe(),
+    )
+    daily_manifest = datasets.describe(daily.dataset_id)
+    registry.create_campaign("m5b-daily-block", "Reject daily data", 1)
+    wrong_timeframe = replace(
+        base,
+        experiment_id="m5b-daily-data",
+        campaign_id="m5b-daily-block",
+        search_budget=1,
+        candidate_ordinal=1,
+        dataset_id=daily.dataset_id,
+        dataset_fingerprint=daily.fingerprint,
+        universe_id=cast(str, daily_manifest["universe_id"]),
+        universe_fingerprint=cast(str, daily_manifest["universe_fingerprint"]),
+    )
+    with pytest.raises(ExperimentError, match="timeframe does not match"):
+        run_cataloged_intraday_experiment(registry, datasets, wrong_timeframe, layout.reports)
+    assert registry.get(wrong_timeframe.experiment_id)["status"] == "failed"
 
 
 def test_holdout_runner_consumes_authorization_before_exact_range_read(

@@ -29,9 +29,21 @@ from .experiment_runner import (
     comparison_report,
     execution_model_version,
     run_cataloged_experiment,
+    run_cataloged_intraday_experiment,
     run_holdout_experiment,
 )
-from .experiments import ExperimentError, ExperimentRegistry, ExperimentSpec, ExperimentSplit
+from .experiments import (
+    ExperimentError,
+    ExperimentRegistry,
+    ExperimentSpec,
+    ExperimentSplit,
+    IntradayExperimentSpec,
+)
+from .intraday_qualification import (
+    evaluate_registered_intraday_qualification,
+    load_intraday_qualification_policy,
+    write_intraday_qualification_evidence,
+)
 from .paper_equivalence import PaperEquivalenceStore, load_action_plan
 from .paper_observation import (
     PaperObservation,
@@ -213,6 +225,30 @@ def parser() -> argparse.ArgumentParser:
     _add_execution_arguments(execute)
     execute.add_argument("--split", choices=("training", "validation"), required=True)
     execute.add_argument("--parent-candidate")
+    intraday = experiment_commands.add_parser(
+        "run-intraday",
+        help="run one offline M5B training or validation baseline",
+    )
+    intraday.add_argument("experiment_id")
+    intraday.add_argument("--campaign", required=True)
+    intraday.add_argument(
+        "--strategy",
+        choices=("cash", "previous-bar-momentum", "moving-average-trend"),
+        required=True,
+    )
+    intraday.add_argument("--candidate-ordinal", type=int, required=True)
+    intraday.add_argument("--code-commit", required=True)
+    intraday.add_argument("--dataset", required=True)
+    intraday.add_argument("--timeframe", choices=("1m", "5m"), required=True)
+    intraday.add_argument("--split", choices=("training", "validation"), required=True)
+    intraday.add_argument("--start", required=True)
+    intraday.add_argument("--end", required=True)
+    intraday.add_argument("--reason", required=True)
+    intraday.add_argument("--parent-candidate")
+    intraday.add_argument("--slippage-bps", type=_decimal_argument, default=Decimal("5"))
+    intraday.add_argument("--commission-bps", type=_decimal_argument, default=Decimal("1"))
+    intraday.add_argument("--cost-version")
+    intraday.add_argument("--fill-delay-bars", type=int, default=1)
     planned_run = experiment_commands.add_parser(
         "run-planned", help="run one pre-registered sealed training candidate"
     )
@@ -231,6 +267,25 @@ def parser() -> argparse.ArgumentParser:
     )
     qualify.add_argument("--evidence-manifest", type=Path, required=True)
     qualify.add_argument("--proposal", type=Path, required=True)
+    assess_intraday = experiment_commands.add_parser(
+        "assess-intraday",
+        help="evaluate research-only M5B gates without holdout authority",
+    )
+    assess_intraday.add_argument("--base", required=True, help="base experiment ID")
+    assess_intraday.add_argument(
+        "--policy",
+        type=Path,
+        default=Path("config/research/intraday-qualification-policy-v1.json"),
+    )
+    assess_intraday.add_argument(
+        "--higher-cost", action="append", default=[], help="repeatable NAME=EXPERIMENT_ID"
+    )
+    assess_intraday.add_argument(
+        "--whole-bar-delay", action="append", default=[], help="repeatable NAME=EXPERIMENT_ID"
+    )
+    assess_intraday.add_argument(
+        "--parameter-neighbor", action="append", default=[], help="repeatable NAME=EXPERIMENT_ID"
+    )
     authorize = experiment_commands.add_parser(
         "authorize-holdout",
         help="store one holdout-run authorization from approved passing evidence",
@@ -448,6 +503,59 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                 pre_registered=True,
             )
             _print(registry.get(arguments.experiment_id))
+        elif arguments.experiment_command == "run-intraday":
+            manifest = service.describe(arguments.dataset)
+            identity = manifest["identity"]
+            timeframe = Timeframe(arguments.timeframe)
+            if manifest.get("timeframe") != timeframe.value:
+                raise ValueError("declared intraday timeframe does not match the dataset")
+            cost_model = _cost_model(arguments)
+            strategy_id, strategy_family, parameters = _intraday_strategy_contract(
+                arguments.strategy
+            )
+            search_budget = registry.get_campaign(arguments.campaign)["search_budget"]
+            if not isinstance(search_budget, int):
+                raise ExperimentError("campaign search budget is invalid")
+            intraday_spec = IntradayExperimentSpec(
+                experiment_id=arguments.experiment_id,
+                campaign_id=arguments.campaign,
+                search_budget=search_budget,
+                candidate_ordinal=arguments.candidate_ordinal,
+                strategy_id=strategy_id,
+                strategy_version="1",
+                strategy_family=strategy_family,
+                code_commit=arguments.code_commit,
+                dataset_id=identity["dataset_id"],
+                dataset_fingerprint=identity["fingerprint"],
+                universe_id=manifest["universe_id"],
+                universe_fingerprint=manifest["universe_fingerprint"],
+                parameters=parameters,
+                timeframe=timeframe.value,
+                session_policy_version="XNYS-regular-session-flat-v1",
+                bar_timestamp_semantics_version="bar-open-utc-v1",
+                session_return_policy_version="XNYS-session-close-equity-v1",
+                benchmark_policy_version="cash-and-continuous-underlying-v1",
+                cost_model_version=cost_model.version,
+                slippage_bps=cost_model.slippage_bps,
+                commission_bps=cost_model.commission_bps,
+                execution_model_version="deterministic-next-bar-open-v1",
+                earliest_fill_semantics="completed-bar-next-bar-open-v1",
+                execution_delay_bars=arguments.fill_delay_bars,
+                split=ExperimentSplit(arguments.split),
+                start_timestamp=_parse_utc(arguments.start),
+                end_timestamp=_parse_utc(arguments.end),
+                random_seed=0,
+                creation_reason=arguments.reason,
+                parent_candidate=arguments.parent_candidate,
+            )
+            run_cataloged_intraday_experiment(
+                registry,
+                service,
+                intraday_spec,
+                layout.reports,
+                cost_model=cost_model,
+            )
+            _print(registry.get(arguments.experiment_id))
         elif arguments.experiment_command in {"run", "run-holdout"}:
             manifest = service.describe(arguments.dataset)
             if manifest.get("timeframe") != Timeframe.DAILY.value:
@@ -512,6 +620,26 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                     "report": str(path),
                     "candidate_ids": [report["candidate_id"] for report in reports],
                     "evidence_fingerprints": [report["evidence_fingerprint"] for report in reports],
+                }
+            )
+        elif arguments.experiment_command == "assess-intraday":
+            evidence = evaluate_registered_intraday_qualification(
+                registry,
+                load_intraday_qualification_policy(arguments.policy),
+                arguments.base,
+                _parse_named_intraday_experiments(arguments.higher_cost),
+                _parse_named_intraday_experiments(arguments.whole_bar_delay),
+                _parse_named_intraday_experiments(arguments.parameter_neighbor),
+            )
+            evidence_path = write_intraday_qualification_evidence(layout.reports, evidence)
+            _print(
+                {
+                    "state": evidence["state"],
+                    "candidate_id": evidence["candidate_id"],
+                    "report": str(evidence_path),
+                    "report_fingerprint": evidence["report_fingerprint"],
+                    "holdout_authority": False,
+                    "broker_write_authority": False,
                 }
             )
         elif arguments.experiment_command == "authorize-holdout":
@@ -689,6 +817,16 @@ def _parse_parameters(values: Sequence[str]) -> dict[str, object]:
     return parameters
 
 
+def _parse_named_intraday_experiments(values: Sequence[str]) -> dict[str, str]:
+    experiments: dict[str, str] = {}
+    for value in values:
+        name, separator, experiment_id = value.partition("=")
+        if not separator or not name or not experiment_id or name in experiments:
+            raise ValueError("intraday evidence must use unique NAME=EXPERIMENT_ID pairs")
+        experiments[name] = experiment_id
+    return experiments
+
+
 def _validate_strategy_parameters(name: str, parameters: dict[str, object]) -> None:
     allowed = {
         "cash": set(),
@@ -762,6 +900,25 @@ def _strategy_identity(name: str) -> tuple[str, str]:
         ),
         "volatility-targeted": ("volatility-targeted-exposure", "volatility"),
     }[name]
+
+
+def _intraday_strategy_contract(name: str) -> tuple[str, str, dict[str, object]]:
+    """Fixed engineering baselines; callers cannot tune them in M5B."""
+
+    contracts: dict[str, tuple[str, str, dict[str, object]]] = {
+        "cash": ("intraday-cash", "intraday-cash-baseline", {}),
+        "previous-bar-momentum": (
+            "intraday-previous-bar-momentum",
+            "intraday-directional-momentum",
+            {"lookback": 1},
+        ),
+        "moving-average-trend": (
+            "intraday-moving-average-trend",
+            "intraday-trend",
+            {"window": 12},
+        ),
+    }
+    return contracts[name]
 
 
 def _print(value: object) -> None:

@@ -22,7 +22,7 @@ Portfolio strategies receive one complete multi-symbol timestamp slice and immut
 
 The engine creates a mandatory zero-weight target early enough for the configured whole-bar delay to fill at that final bar open. This intent uses only bars completed by its decision time. It cancels a pending order and rejects a new positive target when either could leave exposure after the final fill. The engine then fails if any symbol, complete portfolio slice, or pending order remains exposed after the session. The same rule derives normal and early closes from the validated dataset.
 
-The default replay remains a generic diagnostic that may carry positions. A strategy classified as day trading must use `XNYS-regular-session-flat-v1`; no such strategy is admitted to an experiment runner yet.
+The default replay remains a generic diagnostic that may carry positions. A strategy classified as day trading must use `XNYS-regular-session-flat-v1`. The M5B controlled runner enforces that policy for its fixed baselines.
 
 ## Costs and metrics
 
@@ -30,8 +30,8 @@ The existing versioned basis-point slippage and commission model applies at the 
 
 Intraday equity evidence retains every completed bar. Summary return, drawdown, volatility, Sharpe ratio, exposure, and profit concentration use the last equity point in each `America/New_York` trading date, preserving the existing 252-session annualization convention. These reports are research diagnostics only.
 
-## Deliberate boundary
+## M5B research boundary
 
-This slice does not route intraday datasets into sealed experiment plans, approved qualification gates, protected holdouts, paper intents, risk admission, or broker adapters. Those paths remain daily-only. An intraday qualification slice must first version its experiment, report, execution, session-return, benchmark, and gate contracts. Simple intraday baseline strategies are deferred until that boundary exists.
+M5B adds `intraday-experiment-v1`, `intraday-backtest-report-v1`, fixed cash, previous-bar momentum, and moving-average trend baselines, plus research-only `intraday-qualification-policy-v1`. See [intraday-research.md](intraday-research.md) for provenance, metrics, benchmark, robustness, and CLI details.
 
-No replay result promotes a strategy or grants paper or live authority.
+Daily campaign plans, daily report v2 qualification, protected holdout authorization, paper intents, risk admission, and broker adapters remain unchanged and daily-only. No intraday replay or research-gate result promotes a strategy or grants holdout, paper, broker-write, or live authority.

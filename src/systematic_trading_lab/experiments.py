@@ -8,6 +8,7 @@ from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from enum import StrEnum
 from pathlib import Path
 
@@ -76,6 +77,100 @@ class ExperimentSpec:
             raise ValueError("experiment start must not follow end")
         if not self.creation_reason:
             raise ValueError("creation reason is required")
+
+
+@dataclass(frozen=True)
+class IntradayExperimentSpec:
+    """Versioned provenance contract for one offline intraday candidate."""
+
+    experiment_id: str
+    campaign_id: str
+    search_budget: int
+    candidate_ordinal: int
+    strategy_id: str
+    strategy_version: str
+    strategy_family: str
+    code_commit: str
+    dataset_id: str
+    dataset_fingerprint: str
+    universe_id: str
+    universe_fingerprint: str
+    parameters: Mapping[str, object]
+    timeframe: str
+    session_policy_version: str
+    bar_timestamp_semantics_version: str
+    session_return_policy_version: str
+    benchmark_policy_version: str
+    cost_model_version: str
+    slippage_bps: Decimal
+    commission_bps: Decimal
+    execution_model_version: str
+    earliest_fill_semantics: str
+    execution_delay_bars: int
+    split: ExperimentSplit
+    start_timestamp: datetime
+    end_timestamp: datetime
+    random_seed: int | None
+    creation_reason: str
+    parent_candidate: str | None = None
+    schema_version: str = "intraday-experiment-v1"
+
+    def __post_init__(self) -> None:
+        identifiers = (
+            self.experiment_id,
+            self.campaign_id,
+            self.strategy_id,
+            self.strategy_version,
+            self.strategy_family,
+            self.code_commit,
+            self.dataset_id,
+            self.dataset_fingerprint,
+            self.universe_id,
+            self.universe_fingerprint,
+        )
+        if any(not value for value in identifiers):
+            raise ValueError("intraday experiment provenance fields are required")
+        if self.schema_version != "intraday-experiment-v1":
+            raise ValueError("unsupported intraday experiment schema")
+        if self.search_budget < 1 or not 1 <= self.candidate_ordinal <= self.search_budget:
+            raise ValueError("candidate ordinal must fit the positive search budget")
+        if self.timeframe not in {"1m", "5m"}:
+            raise ValueError("intraday experiments require a 1m or 5m timeframe")
+        if self.split is ExperimentSplit.HOLDOUT:
+            raise ValueError("intraday protected holdout is not authorized")
+        if self.execution_delay_bars < 1:
+            raise ValueError("intraday execution delay must be at least one bar")
+        if self.slippage_bps < 0 or self.commission_bps < 0:
+            raise ValueError("intraday cost values must not be negative")
+        versions = (
+            self.session_policy_version,
+            self.bar_timestamp_semantics_version,
+            self.session_return_policy_version,
+            self.benchmark_policy_version,
+            self.cost_model_version,
+            self.execution_model_version,
+            self.earliest_fill_semantics,
+        )
+        if any(not value for value in versions):
+            raise ValueError("intraday model and policy versions are required")
+        if any(
+            value.tzinfo is None or value.utcoffset() != UTC.utcoffset(value)
+            for value in (self.start_timestamp, self.end_timestamp)
+        ):
+            raise ValueError("experiment timestamps must be UTC-aware")
+        if self.start_timestamp > self.end_timestamp:
+            raise ValueError("experiment start must not follow end")
+        if not self.creation_reason:
+            raise ValueError("creation reason is required")
+
+    @property
+    def configuration_fingerprint(self) -> str:
+        """Bind every assumption that can materially change replay results."""
+
+        return fingerprint(self)
+
+
+ExperimentContract = ExperimentSpec | IntradayExperimentSpec
 
 
 class ExperimentRegistry:
@@ -192,6 +287,23 @@ class ExperimentRegistry:
             "search_budget": search_budget,
         }
 
+    def get_campaign(self, campaign_id: str) -> dict[str, object]:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT campaign_id, name, created_at, status, search_budget "
+                "FROM campaigns WHERE campaign_id = ?",
+                (campaign_id,),
+            ).fetchone()
+        if row is None:
+            raise KeyError(f"campaign not found: {campaign_id}")
+        return {
+            "campaign_id": row[0],
+            "name": row[1],
+            "created_at": row[2],
+            "status": row[3],
+            "search_budget": int(row[4]),
+        }
+
     def create_planned_campaign(self, plan: Mapping[str, object]) -> dict[str, object]:
         from .campaign_specs import parse_training_campaign_plan
 
@@ -273,7 +385,10 @@ class ExperimentRegistry:
             raise ExperimentError(f"experiment is not from a sealed plan: {experiment_id}")
         spec = record["spec_json"]
         assert isinstance(spec, Mapping)
-        return _experiment_spec(spec)
+        parsed = _experiment_spec(spec)
+        if not isinstance(parsed, ExperimentSpec):
+            raise ExperimentError("sealed daily plan contains an intraday experiment")
+        return parsed
 
     def _create_holdout_run_authorization(
         self,
@@ -344,13 +459,17 @@ class ExperimentRegistry:
         return record
 
     def create_experiment(
-        self, spec: ExperimentSpec, holdout_authorization_id: str | None = None
+        self, spec: ExperimentContract, holdout_authorization_id: str | None = None
     ) -> None:
+        if isinstance(spec, IntradayExperimentSpec) and holdout_authorization_id is not None:
+            raise HoldoutAccessError("intraday experiments cannot use holdout authorization")
         if spec.split is not ExperimentSplit.HOLDOUT and holdout_authorization_id is not None:
             raise HoldoutAccessError("holdout authorization cannot be used for another split")
         created_at = _now()
         with self._connect() as connection:
             if spec.split is ExperimentSplit.HOLDOUT:
+                if not isinstance(spec, ExperimentSpec):
+                    raise HoldoutAccessError("intraday protected holdout is not authorized")
                 authorization = connection.execute(
                     """
                     SELECT candidate_id, candidate_spec_json
@@ -370,6 +489,18 @@ class ExperimentRegistry:
             ).fetchone()
             if campaign is None:
                 raise ExperimentError(f"active campaign not found: {spec.campaign_id}")
+            if isinstance(spec, IntradayExperimentSpec):
+                if int(campaign[0]) != spec.search_budget:
+                    raise ExperimentError("intraday experiment search budget differs from campaign")
+                ordinals = {
+                    json.loads(str(row[0])).get("candidate_ordinal")
+                    for row in connection.execute(
+                        "SELECT spec_json FROM experiments WHERE campaign_id = ?",
+                        (spec.campaign_id,),
+                    )
+                }
+                if spec.candidate_ordinal in ordinals:
+                    raise ExperimentError("intraday candidate ordinal already exists in campaign")
             count = connection.execute(
                 "SELECT COUNT(*) FROM experiments WHERE campaign_id = ?", (spec.campaign_id,)
             ).fetchone()
@@ -916,7 +1047,7 @@ def _parse_utc(value: str) -> datetime:
     return parsed.astimezone(UTC)
 
 
-def _experiment_spec(value: Mapping[str, object]) -> ExperimentSpec:
+def _experiment_spec(value: Mapping[str, object]) -> ExperimentContract:
     parameters = value["parameters"]
     random_seed = value["random_seed"]
     parent = value["parent_candidate"]
@@ -926,6 +1057,41 @@ def _experiment_spec(value: Mapping[str, object]) -> ExperimentSpec:
         raise ExperimentError("stored experiment random seed is invalid")
     if parent is not None and not isinstance(parent, str):
         raise ExperimentError("stored experiment parent is invalid")
+    if value.get("schema_version") == "intraday-experiment-v1":
+        return IntradayExperimentSpec(
+            experiment_id=str(value["experiment_id"]),
+            campaign_id=str(value["campaign_id"]),
+            search_budget=_stored_positive_int(value, "search_budget"),
+            candidate_ordinal=_stored_positive_int(value, "candidate_ordinal"),
+            strategy_id=str(value["strategy_id"]),
+            strategy_version=str(value["strategy_version"]),
+            strategy_family=str(value["strategy_family"]),
+            code_commit=str(value["code_commit"]),
+            dataset_id=str(value["dataset_id"]),
+            dataset_fingerprint=str(value["dataset_fingerprint"]),
+            universe_id=str(value["universe_id"]),
+            universe_fingerprint=str(value["universe_fingerprint"]),
+            parameters=parameters,
+            timeframe=str(value["timeframe"]),
+            session_policy_version=str(value["session_policy_version"]),
+            bar_timestamp_semantics_version=str(value["bar_timestamp_semantics_version"]),
+            session_return_policy_version=str(value["session_return_policy_version"]),
+            benchmark_policy_version=str(value["benchmark_policy_version"]),
+            cost_model_version=str(value["cost_model_version"]),
+            slippage_bps=Decimal(str(value["slippage_bps"])),
+            commission_bps=Decimal(str(value["commission_bps"])),
+            execution_model_version=str(value["execution_model_version"]),
+            earliest_fill_semantics=str(value["earliest_fill_semantics"]),
+            execution_delay_bars=_stored_positive_int(value, "execution_delay_bars"),
+            split=ExperimentSplit(str(value["split"])),
+            start_timestamp=_parse_utc(str(value["start_timestamp"])),
+            end_timestamp=_parse_utc(str(value["end_timestamp"])),
+            random_seed=random_seed,
+            creation_reason=str(value["creation_reason"]),
+            parent_candidate=parent,
+        )
+    if value.get("schema_version") is not None:
+        raise ExperimentError("stored experiment schema version is unsupported")
     return ExperimentSpec(
         experiment_id=str(value["experiment_id"]),
         campaign_id=str(value["campaign_id"]),
@@ -947,6 +1113,13 @@ def _experiment_spec(value: Mapping[str, object]) -> ExperimentSpec:
         creation_reason=str(value["creation_reason"]),
         parent_candidate=parent,
     )
+
+
+def _stored_positive_int(value: Mapping[str, object], field: str) -> int:
+    candidate = value.get(field)
+    if isinstance(candidate, bool) or not isinstance(candidate, int) or candidate < 1:
+        raise ExperimentError(f"stored experiment {field.replace('_', ' ')} is invalid")
+    return candidate
 
 
 def _now() -> str:
