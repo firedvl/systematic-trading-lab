@@ -40,6 +40,8 @@ from .experiments import (
     IntradayExperimentSpec,
 )
 from .intraday_qualification import (
+    REVIEWED_POLICY_FINGERPRINT,
+    IntradayQualificationPolicy,
     evaluate_registered_intraday_qualification,
     load_intraday_qualification_policy,
     write_intraday_qualification_evidence,
@@ -272,11 +274,7 @@ def parser() -> argparse.ArgumentParser:
         help="evaluate research-only M5B gates without holdout authority",
     )
     assess_intraday.add_argument("--base", required=True, help="base experiment ID")
-    assess_intraday.add_argument(
-        "--policy",
-        type=Path,
-        default=Path("config/research/intraday-qualification-policy-v1.json"),
-    )
+    assess_intraday.add_argument("--policy", type=Path, required=True)
     assess_intraday.add_argument(
         "--higher-cost", action="append", default=[], help="repeatable NAME=EXPERIMENT_ID"
     )
@@ -625,7 +623,7 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         elif arguments.experiment_command == "assess-intraday":
             evidence = evaluate_registered_intraday_qualification(
                 registry,
-                load_intraday_qualification_policy(arguments.policy),
+                _load_reviewed_intraday_policy(arguments.policy),
                 arguments.base,
                 _parse_named_intraday_experiments(arguments.higher_cost),
                 _parse_named_intraday_experiments(arguments.whole_bar_delay),
@@ -825,6 +823,13 @@ def _parse_named_intraday_experiments(values: Sequence[str]) -> dict[str, str]:
             raise ValueError("intraday evidence must use unique NAME=EXPERIMENT_ID pairs")
         experiments[name] = experiment_id
     return experiments
+
+
+def _load_reviewed_intraday_policy(path: Path) -> IntradayQualificationPolicy:
+    policy = load_intraday_qualification_policy(path)
+    if policy.fingerprint != REVIEWED_POLICY_FINGERPRINT:
+        raise ValueError("intraday assessment policy differs from the committed reviewed policy")
+    return policy
 
 
 def _validate_strategy_parameters(name: str, parameters: dict[str, object]) -> None:

@@ -253,6 +253,52 @@ def test_stress_role_rejects_changes_to_other_model_assumptions() -> None:
     )
 
 
+def test_delay_stress_roles_require_the_named_whole_bar_offsets() -> None:
+    base, costs, delays = _passing_inputs()
+    duplicate_plus_one = deepcopy(delays["plus-2-bars"])
+    provenance = cast(dict[str, Any], duplicate_plus_one["provenance"])
+    provenance["execution_model_version"] = "delayed-2-bars-v1"
+    provenance["execution_delay_bars"] = 2
+    duplicate_plus_one["report_fingerprint"] = fingerprint(
+        {key: value for key, value in duplicate_plus_one.items() if key != "report_fingerprint"}
+    )
+
+    evidence = cast(
+        dict[str, Any],
+        _evaluate(base, costs, {**delays, "plus-2-bars": duplicate_plus_one}),
+    )
+
+    assert (
+        evidence["lineage_errors"]["whole-bar-delay:plus-2-bars"]
+        == "delay-variant-does-not-match-required-whole-bar-offset"
+    )
+    delay_gate = next(
+        gate for gate in evidence["gates"] if gate["metric"] == "delay_stress_completed"
+    )
+    assert not delay_gate["passed"]
+
+
+def test_harsher_cost_role_must_exceed_the_increased_cost_role() -> None:
+    base, costs, delays = _passing_inputs()
+    duplicate_increased = deepcopy(costs["harsher-cost"])
+    provenance = cast(dict[str, Any], duplicate_increased["provenance"])
+    provenance["cost_model_version"] = "another-increased-cost-v1"
+    provenance["slippage_bps"] = "12"
+    duplicate_increased["report_fingerprint"] = fingerprint(
+        {key: value for key, value in duplicate_increased.items() if key != "report_fingerprint"}
+    )
+
+    evidence = cast(
+        dict[str, Any],
+        _evaluate(base, {**costs, "harsher-cost": duplicate_increased}, delays),
+    )
+
+    assert (
+        evidence["lineage_errors"]["higher-cost:harsher-cost"]
+        == "harsher-cost-variant-is-not-higher-than-increased-cost"
+    )
+
+
 def test_evidence_is_deterministic_and_has_no_authority_fields() -> None:
     base, costs, delays = _passing_inputs()
 

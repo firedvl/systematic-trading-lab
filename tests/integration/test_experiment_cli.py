@@ -351,3 +351,25 @@ def test_cli_runs_isolated_intraday_baseline_without_execution_authority(
     assert output["metrics_json"]["fill_count"] == 0
     assert len(output["artifact_hashes_json"]) == 1
     assert not layout.execution.exists()
+
+
+def test_intraday_assessment_does_not_accept_a_policy_override(tmp_path: Path) -> None:
+    policy = json.loads(
+        Path("config/research/intraday-qualification-policy-v1.json").read_text(encoding="utf-8")
+    )
+    policy["gates"][0]["threshold"] = "0"
+    unreviewed = tmp_path / "unreviewed.json"
+    unreviewed.write_text(json.dumps(policy), encoding="utf-8")
+    arguments = parser().parse_args(
+        [
+            "experiment",
+            "assess-intraday",
+            "--base",
+            "candidate",
+            "--policy",
+            str(unreviewed),
+        ]
+    )
+
+    with pytest.raises(ValueError, match="differs from the committed reviewed policy"):
+        run(arguments, Settings(TradingMode.OFFLINE, tmp_path))

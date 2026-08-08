@@ -88,6 +88,7 @@ Assess frozen reports with:
 
 ```console
 uv run trading-lab experiment assess-intraday \
+  --policy config/research/intraday-qualification-policy-v1.json \
   --base BASE_EXPERIMENT_ID \
   --higher-cost increased-cost=INCREASED_EXPERIMENT_ID \
   --higher-cost harsher-cost=HARSHER_EXPERIMENT_ID \
@@ -95,7 +96,7 @@ uv run trading-lab experiment assess-intraday \
   --whole-bar-delay plus-2-bars=DELAY_2_EXPERIMENT_ID
 ```
 
-The result is a content-addressed research artifact. It cannot authorize or inspect a holdout, create paper authority, or call a broker.
+The CLI requires an explicit policy path and verifies its content against the committed v1 policy fingerprint; callers cannot substitute thresholds at assessment time. The result is a content-addressed research artifact. It cannot authorize or inspect a holdout, create paper authority, or call a broker.
 
 ## Deferred work
 

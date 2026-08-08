@@ -377,6 +377,35 @@ def test_cataloged_intraday_runner_records_deterministic_zero_trade_report_and_f
         for source in campaign_sources
     )
 
+    failed_stress_evidence = evaluate_registered_intraday_qualification(
+        registry,
+        load_intraday_qualification_policy(
+            Path("config/research/intraday-qualification-policy-v1.json")
+        ),
+        base.experiment_id,
+        {"increased-cost": broken.experiment_id},
+        {},
+    )
+    failed_stress_source = next(
+        source
+        for source in cast(list[dict[str, object]], failed_stress_evidence["sources"])
+        if source["role"] == "higher-cost" and source["name"] == "increased-cost"
+    )
+    assert failed_stress_source["status"] == "failed"
+    assert failed_stress_evidence["state"] == "research-gates-failed"
+
+    reviewed_policy = load_intraday_qualification_policy(
+        Path("config/research/intraday-qualification-policy-v1.json")
+    )
+    with pytest.raises(ValueError, match="differs from the committed reviewed policy"):
+        evaluate_registered_intraday_qualification(
+            registry,
+            replace(reviewed_policy, fingerprint="unreviewed"),
+            base.experiment_id,
+            {},
+            {},
+        )
+
     daily = datasets.import_from(
         FixtureProvider(),
         fixture_symbols(),

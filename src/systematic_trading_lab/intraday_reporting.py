@@ -233,7 +233,12 @@ def build_intraday_report(
     )
     positive_symbol_profits = [profit for profit in pnl_by_symbol.values() if profit > 0]
     total_positive_symbol_profit = sum(positive_symbol_profits, Decimal("0"))
-    overnight_position_count = _overnight_position_count(result)
+    session_end_positions = _session_end_positions(result)
+    overnight_position_count = sum(
+        quantity != 0
+        for positions in session_end_positions.values()
+        for quantity in positions.values()
+    )
     report: dict[str, object] = {
         "schema_version": _REPORT_SCHEMA,
         "status": "completed",
@@ -296,6 +301,12 @@ def build_intraday_report(
                 for trade in result.trades
             ),
             "overnight_position_count": overnight_position_count,
+            "session_end_positions": session_end_positions,
+            "violating_sessions": tuple(
+                session
+                for session, positions in session_end_positions.items()
+                if any(quantity != 0 for quantity in positions.values())
+            ),
         },
         "session_evidence": {
             "outside_session_fill_count": outside_session_fill_count,
@@ -437,8 +448,8 @@ def _round_trips(
                 opened.commission * quantity / abs(opened.quantity)
             )
     return completed, {
-        symbol.value: value
-        for symbol, value in sorted(realized.items(), key=lambda item: item[0].value)
+        symbol.value: realized[symbol]
+        for symbol in sorted({bar.symbol for bar in bars}, key=lambda item: item.value)
     }
 
 
@@ -497,10 +508,11 @@ def _early_close_sessions(bars: Sequence[OHLCVBar]) -> tuple[str, ...]:
     )
 
 
-def _overnight_position_count(result: BacktestResult) -> int:
+def _session_end_positions(result: BacktestResult) -> dict[str, dict[str, Decimal]]:
     final_by_session: dict[str, EquityPoint] = {}
     for point in result.equity_curve:
         final_by_session[point.timestamp.astimezone(_NEW_YORK).date().isoformat()] = point
-    return sum(
-        quantity != 0 for point in final_by_session.values() for _, quantity in point.positions
-    )
+    return {
+        session: {symbol.value: quantity for symbol, quantity in point.positions}
+        for session, point in final_by_session.items()
+    }

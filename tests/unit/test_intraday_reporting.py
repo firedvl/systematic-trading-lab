@@ -67,7 +67,10 @@ def test_cash_report_is_deterministic_for_zero_trades() -> None:
     assert report["average_holding_duration_seconds"] is None
     assert report["best_trade_positive_profit_concentration"] is None
     assert report["sessions_traded_percentage"] == Decimal("0")
+    assert report["pnl_by_symbol"] == {"QQQ": Decimal("0"), "SPY": Decimal("0")}
     assert report["overnight_invariant"]["final_positions_flat"] is True
+    assert len(report["overnight_invariant"]["session_end_positions"]) == 2
+    assert report["overnight_invariant"]["violating_sessions"] == ()
 
 
 def test_day_trading_baselines_flatten_normal_and_early_close_sessions() -> None:

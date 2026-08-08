@@ -20,7 +20,11 @@ from .fingerprints import canonical_json, canonicalize, fingerprint
 POLICY_SCHEMA = "intraday-qualification-policy-v1"
 REPORT_SCHEMA = "intraday-backtest-report-v1"
 EVIDENCE_SCHEMA = "intraday-qualification-evidence-v1"
-_STATUS_VALUES = frozenset({"completed", "failed", "rejected"})
+REVIEWED_POLICY_FINGERPRINT = "42481069d9d0295d40ff1ccc6c956632d852f58522040d01024d7798172fe127"
+_STATUS_VALUES = frozenset({"pending", "running", "completed", "failed", "rejected"})
+_REQUIRED_COST_STRESS_NAMES = ("increased-cost", "harsher-cost")
+_REQUIRED_DELAY_STRESS_NAMES = ("plus-1-bar", "plus-2-bars")
+_DELAY_STRESS_OFFSETS = {"plus-1-bar": 1, "plus-2-bars": 2}
 _PROVENANCE_FIELDS = {
     "experiment_id",
     "campaign_id",
@@ -121,6 +125,10 @@ def load_intraday_qualification_policy(path: Path) -> IntradayQualificationPolic
         raise ValueError("policy purpose must state that it is not financial validation")
     cost_names = _names(root["required_cost_stress_names"], "required cost stress names")
     delay_names = _names(root["required_delay_stress_names"], "required delay stress names")
+    if cost_names != _REQUIRED_COST_STRESS_NAMES:
+        raise ValueError("intraday qualification policy cost stress roles differ")
+    if delay_names != _REQUIRED_DELAY_STRESS_NAMES:
+        raise ValueError("intraday qualification policy delay stress roles differ")
     gates_value = root["gates"]
     if not isinstance(gates_value, list) or not gates_value:
         raise ValueError("policy gates must be a nonempty list")
@@ -197,6 +205,7 @@ def _evaluate_intraday_qualification(
             base,
             report,
             {"execution_model_version", "earliest_fill_semantics", "execution_delay_bars"},
+            expected_delay_offset=_DELAY_STRESS_OFFSETS.get(name),
         )
         if error:
             lineage_errors[f"whole-bar-delay:{name}"] = error
@@ -204,6 +213,15 @@ def _evaluate_intraday_qualification(
         error = _variant_lineage(base, report, {"parameters"})
         if error:
             lineage_errors[f"parameter-neighbor:{name}"] = error
+    if all(name in costs for name in _REQUIRED_COST_STRESS_NAMES) and not any(
+        f"higher-cost:{name}" in lineage_errors for name in _REQUIRED_COST_STRESS_NAMES
+    ):
+        increased = cast(Mapping[str, object], costs["increased-cost"]["provenance"])
+        harsher = cast(Mapping[str, object], costs["harsher-cost"]["provenance"])
+        if not _higher_cost(increased, harsher):
+            lineage_errors["higher-cost:harsher-cost"] = (
+                "harsher-cost-variant-is-not-higher-than-increased-cost"
+            )
 
     metrics = _metrics(base, costs, delays, policy, lineage_errors)
     metrics["configuration_identity"] = Decimal(not lineage_errors)
@@ -268,6 +286,8 @@ def evaluate_registered_intraday_qualification(
 ) -> dict[str, object]:
     """Bind every report and campaign status to immutable controlled-run registry evidence."""
 
+    if policy.fingerprint != REVIEWED_POLICY_FINGERPRINT:
+        raise ValueError("intraday assessment policy differs from the committed reviewed policy")
     base_record, base_report = _registered_report(registry, base_experiment_id)
     base_spec = cast(Mapping[str, object], base_record["spec_json"])
     campaign_id = _text(base_spec.get("campaign_id"), "base campaign ID")
@@ -405,7 +425,11 @@ def _named_reports(
 
 
 def _variant_lineage(
-    base: Mapping[str, object], variant: Mapping[str, object], allowed: set[str]
+    base: Mapping[str, object],
+    variant: Mapping[str, object],
+    allowed: set[str],
+    *,
+    expected_delay_offset: int | None = None,
 ) -> str | None:
     base_provenance = cast(Mapping[str, object], base["provenance"])
     variant_provenance = cast(Mapping[str, object], variant["provenance"])
@@ -431,12 +455,15 @@ def _variant_lineage(
         "execution_model_version",
         "earliest_fill_semantics",
         "execution_delay_bars",
-    } and (
-        "execution_delay_bars" not in differences
-        or cast(int, variant_provenance["execution_delay_bars"])
-        <= cast(int, base_provenance["execution_delay_bars"])
-    ):
-        return "delay-variant-is-not-a-whole-bar-delay"
+    }:
+        if expected_delay_offset is None:
+            return "delay-stress-role-is-unsupported"
+        expected_delay = cast(int, base_provenance["execution_delay_bars"]) + expected_delay_offset
+        if (
+            "execution_delay_bars" not in differences
+            or variant_provenance["execution_delay_bars"] != expected_delay
+        ):
+            return "delay-variant-does-not-match-required-whole-bar-offset"
     return None
 
 
@@ -590,10 +617,20 @@ def _registered_report(
         raise ValueError(f"registered experiment is not an M5B candidate: {experiment_id}")
     if expected_campaign_id is not None and spec.get("campaign_id") != expected_campaign_id:
         raise ValueError("registered intraday evidence crosses campaigns")
-    if (
-        record.get("status") != "completed"
-        or record.get("execution_provenance") != "controlled-run"
-    ):
+    status = record.get("status")
+    if status != "completed":
+        if status not in _STATUS_VALUES:
+            raise ValueError(f"registered intraday evidence status is invalid: {experiment_id}")
+        unsigned_failure: dict[str, object] = {
+            "schema_version": REPORT_SCHEMA,
+            "status": status,
+            "provenance": canonicalize(spec),
+            "metrics": canonicalize(record.get("metrics_json") or {}),
+            "registry_failure_info": record.get("failure_info"),
+        }
+        failed_report = {**unsigned_failure, "report_fingerprint": fingerprint(unsigned_failure)}
+        return record, failed_report
+    if record.get("execution_provenance") != "controlled-run":
         raise ValueError(f"intraday evidence is not a completed controlled run: {experiment_id}")
     locations = record.get("artifact_locations_json")
     hashes = record.get("artifact_hashes_json")
