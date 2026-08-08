@@ -86,6 +86,18 @@ def load_research_universe(path: Path | None = None) -> UniverseDefinition:
     return UniverseDefinition(universe_id, timeframe, memberships, fingerprint(content))
 
 
+def load_intraday_universe(timeframe: Timeframe) -> UniverseDefinition:
+    if not timeframe.is_supported_intraday:
+        raise UniverseError("intraday universe supports only 1m and 5m")
+    path = (
+        Path(__file__).resolve().parents[2]
+        / "config"
+        / "research"
+        / f"intraday-universe-{timeframe.value}.json"
+    )
+    return load_research_universe(path)
+
+
 def _membership(value: object) -> Membership:
     if not isinstance(value, dict):
         raise UniverseError("membership must be an object")

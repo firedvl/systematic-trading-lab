@@ -527,3 +527,45 @@
 - Context: an always-on VPS removes dependence on a personal computer without adding an in-program daemon or systemd unit.
 - Consequences: SSH disconnects do not stop sampling, but a VPS reboot does. Migration must stop the old writer before copying SQLite. Cleanup defaults to a preview and deletes only validated project-local data unless the operator also requests repository deletion. External broker, GitHub, backup, audit, and shell records remain outside its scope.
 - Revisit when: automatic reboot recovery or remote state requires a reviewed service manager and monitoring design.
+
+## 2026-08-07 — Intraday bars use XNYS bar-open timestamps
+
+- Decision: support `1m` and `5m` immutable bars whose UTC timestamps label bar opens, with expected intervals derived from each actual XNYS regular-session open and close.
+- Context: daily session dates could not represent multiple bars per session or prove holiday and early-close completeness.
+- Consequences: dataset identity binds `bar-open-utc-v1` and `XNYS-regular-session-bars-v1`. Missing, duplicate, non-increasing, malformed, or out-of-session records reject the dataset and remain evidence. Daily labels and validation remain unchanged.
+- Revisit when: quotes, trades, extended hours, partial bars, another venue, or a provider convention requires another versioned schedule.
+
+## 2026-08-07 — Intraday replay observes completed bars before next-bar fills
+
+- Decision: reuse the existing simulator with an explicit timeframe. An intraday bar becomes observable at open plus duration; decisions and order creation use that time, and fills use the next eligible same-symbol bar open after the configured whole-bar delay.
+- Context: treating a provider bar-open label as the decision time would allow its completed high, low, close, and volume to influence the past.
+- Consequences: contiguous next-bar fills may share the bar-close decision timestamp but never precede it. Daily behavior remains unchanged. Intraday diagnostics aggregate equity at each New York session end, while experiments, qualification, holdouts, paper execution, and broker authority remain daily-only.
+- Revisit when: quote-based spread, latency, partial-fill, impact, or intraday qualification models receive separate review.
+
+## 2026-08-08 — Day-trading replay flattens at the final eligible bar open
+
+- Decision: add the explicit `XNYS-regular-session-flat-v1` policy. It limits delayed fills to one New York session, creates a zero-weight intent early enough to fill at the final validated bar open, rejects unsafe late entries, and fails if exposure or a pending order survives the session.
+- Context: the generic intraday replay could carry a position or delayed order through a normal or early close. A close-price liquidation decided after the close would introduce lookahead.
+- Consequences: flat-at-close decisions use only completed bars and respect the configured whole-bar delay. The last regular-session bar may mark the already-flat portfolio but cannot create another eligible fill. Daily replay and intraday diagnostics without the day-trading policy remain unchanged. Intraday experiment and qualification paths remain blocked.
+- Revisit when: a reviewed auction, market-on-close, quote-latency, partial-fill, or halt model can replace the final-bar-open approximation.
+
+## 2026-08-08 — Intraday research uses separate versioned evidence contracts
+
+- Decision: store `intraday-experiment-v1` in the shared lifecycle registry, run only cataloged training or validation ranges, and emit `intraday-backtest-report-v1` plus research-only `intraday-qualification-evidence-v1`.
+- Context: daily lifecycle and catalog primitives are reusable, but daily report, qualification, and holdout contracts do not bind timeframe, bar-open observability, flat-at-close policy, raw cost values, whole-bar delay, or intraday benchmarks.
+- Consequences: existing daily records and interfaces remain unchanged. Intraday candidates bind a fixed campaign budget and ordinal, preserve failures, report zero-trade results, and expose sample, holding, exposure, cost, benchmark, concentration, session, cost-stress, and delay-stress evidence. The intraday evaluator cannot authorize holdout access, paper execution, broker writes, or promotion.
+- Revisit when: production-scale sealed intraday campaign plans, a separately reviewed protected holdout, opening-range behavior, or M5C paper controls receive approval.
+
+## 2026-08-08 — Initial intraday strategies remain fixed engineering baselines
+
+- Decision: begin with cash, one-bar directional momentum, and a 12-bar moving-average trend over complete SPY/QQQ slices. Allocate at most one-half to each symbol, stay long-only and unlevered, and enforce `XNYS-regular-session-flat-v1`.
+- Context: M5B needs deterministic system checks without broad search or claims of profitability.
+- Consequences: the CLI exposes no strategy parameter override. Opening-range breakout, parameter optimization, shorting, leverage, extended hours, options, and autonomous generation remain deferred. Validation variants may change only preregistered costs, delay, or parameter-neighbor evidence and must retain parent lineage.
+- Revisit when: reviewed campaign plans define bounded parameter neighborhoods or another fixed baseline adds enough evidence to justify its complexity.
+
+## 2026-08-08 — The first intraday campaign reserves every base and stress run
+
+- Decision: preregister `intraday-research-v1` with SPY/QQQ `5m` data, one six-month training window, three following two-month validation windows, the three fixed M5B baselines, and five candidates per strategy-period pair: base, increased cost, harsher cost, `+1` bar, and `+2` bars.
+- Context: the first historical campaign must test chronological validation and research evidence without adding candidates or changing assumptions after results appear.
+- Consequences: the strict plan fingerprint reserves all 60 ordinals, uses 5/1, 10/2, and 20/5 slippage/commission basis points with one/two/three-bar delays, and rejects parameter neighbors or any holdout, paper, broker-write, or live authority. No real run can start until independent read-only credentials produce four valid sealed datasets. A deterministic fixture proof remains ignored and is not campaign evidence.
+- Revisit when: independent historical credentials are available, a data defect blocks the frozen windows, or a software defect requires a separately versioned campaign.

@@ -1,0 +1,18 @@
+{
+  "id": "liquid-etfs-intraday-1m-v1",
+  "timeframe": "1m",
+  "memberships": [
+    {
+      "symbol": "SPY",
+      "start": "1993-01-22",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-500-etf-trust-spy"
+    },
+    {
+      "symbol": "QQQ",
+      "start": "1999-03-09",
+      "end": null,
+      "source": "https://www.invesco.com/qqq-etf/en/about.html"
+    }
+  ]
+}

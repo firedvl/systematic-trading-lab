@@ -34,12 +34,14 @@ def test_fixture_import_is_immutable_describable_and_rebuildable(tmp_path: Path)
 
     assert first.created is True
     assert second.created is False
+    assert first.dataset_id == "042e1e94eee7bbc1fe47c2f473bbbf93d773296a135486fa74fb34861c46e06d"
     assert first.fingerprint == second.fingerprint
     assert first.bar_count == 25
     manifest = service.describe()
     assert manifest["identity"]["dataset_id"] == first.dataset_id
     assert manifest["universe_id"] == UNIVERSE.universe_id
     assert manifest["universe_fingerprint"] == UNIVERSE.universe_fingerprint
+    assert "timestamp_policy" not in manifest
     assert service.validate()["valid"] is True
     assert len(service.load_bars(first.dataset_id)) == 25
 

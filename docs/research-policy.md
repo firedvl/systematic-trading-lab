@@ -24,3 +24,7 @@ set before execution. The plan budget equals its candidate count; candidate IDs,
 dataset and universe provenance, strategies, parameters, dates, parents, costs, and fill model cannot
 change at run time. V1 is training-only and permits the default conservative cost and next-bar models.
 Historical unplanned campaigns remain immutable legacy evidence and are not rewritten into plans.
+
+Intraday research uses the separate `intraday-experiment-v1` and `intraday-backtest-report-v1` contracts. Every controlled run binds its timeframe, timestamp semantics, XNYS flat-at-close policy, session-return policy, benchmark policy, cost values, whole-bar delay, fixed campaign budget, and candidate ordinal. Intraday robustness reports remain linked children of one frozen parent. `training-campaign-plan-v1`, report schema v2 qualification evidence, approved daily gates, holdout authorization, and paper execution remain daily-only.
+
+`intraday-qualification-policy-v1` is research-only. Its result cannot authorize a holdout, paper execution, broker access, or promotion. A separate reviewed change must define and authorize any protected intraday holdout. Normal intraday commands must not inspect protected results.
