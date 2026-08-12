@@ -44,4 +44,4 @@ The repository includes a secret scan as one quality gate, but contributors must
 
 ## Threat model
 
-See [`docs/threat-model.md`](docs/threat-model.md) for the detailed threat model and [`docs/risk-policy.md`](docs/risk-policy.md) for risk-control semantics. Operational paper-execution boundaries are documented in [`docs/paper-execution.md`](docs/paper-execution.md) and [`docs/operations.md`](docs/operations.md).
+See [`docs/threat-model.md`](docs/threat-model.md) for the detailed threat model, [`docs/risk-policy.md`](docs/risk-policy.md) for risk-control semantics, and [`docs/paper-execution-plan.md`](docs/paper-execution-plan.md), [`docs/paper-write-readiness.md`](docs/paper-write-readiness.md), and [`docs/operations.md`](docs/operations.md) for operational paper-execution boundaries.
