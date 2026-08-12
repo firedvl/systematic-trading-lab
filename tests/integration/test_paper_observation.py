@@ -215,6 +215,26 @@ def test_completed_campaign_assessment_enforces_historical_gap(
         )
 
 
+def test_fractional_gap_reports_failed_continuity_conservatively(tmp_path: Path) -> None:
+    path = tmp_path / "execution.sqlite3"
+    baseline = _attest(path, _snapshot("fractional-baseline", NOW))
+    store = PaperObservationStore(path)
+    store.start(
+        campaign_id="fractional-gap",
+        baseline_snapshot_id=baseline.snapshot_id,
+        maximum_gap_seconds=900,
+        duration=timedelta(minutes=20),
+    )
+    snapshot = _attest(path, _snapshot("fractional-gap", NOW + timedelta(seconds=900.001)))
+    store.record_sample("fractional-gap", snapshot.snapshot_id)
+
+    status = store.assess("fractional-gap", assessed_at=NOW + timedelta(seconds=900.001))
+
+    assert not status.continuity_held
+    assert status.maximum_observed_gap_seconds == 901
+    assert status.maximum_observed_gap_seconds > status.maximum_gap_seconds
+
+
 def test_paper_equivalence_binds_intents_and_retains_mismatch(tmp_path: Path) -> None:
     path = tmp_path / "execution.sqlite3"
     baseline = _attest(path, _snapshot("equivalence-baseline", NOW))

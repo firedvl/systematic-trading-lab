@@ -6,6 +6,7 @@ import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from math import ceil
 from pathlib import Path
 
 from .alpaca_paper import AlpacaPaperError, AlpacaPaperReader
@@ -259,7 +260,7 @@ class PaperObservationStore(ReconciliationStore):
             later.observed_at - earlier.observed_at
             for earlier, later in zip(samples, samples[1:], strict=False)
         )
-        maximum_observed_gap_seconds = max((int(gap.total_seconds()) for gap in gaps), default=0)
+        maximum_observed_gap_seconds = ceil(max((gap.total_seconds() for gap in gaps), default=0))
         continuity_held = all(
             gap <= timedelta(seconds=campaign.maximum_gap_seconds) for gap in gaps
         )
