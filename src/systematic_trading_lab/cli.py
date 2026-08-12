@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sqlite3
 import sys
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
@@ -18,6 +19,7 @@ from .campaign_specs import load_training_campaign_plan
 from .config import ConfigurationError, Settings, load_dotenv, load_settings
 from .datasets import DatasetService, DatasetValidationError, fixture_request, fixture_symbols
 from .domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
+from .execution import JournalIntegrityError
 from .experiment_runner import (
     comparison_report,
     execution_model_version,
@@ -33,6 +35,12 @@ from .paper_observation import (
     record_production_observation,
 )
 from .paper_startup import assess_paper_startup, initialize_paper_storage
+from .paper_supervision import (
+    observation_supervisor_lock,
+    run_observation_loop,
+    validate_observation_supervision,
+    verify_observation_runtime,
+)
 from .providers import AlpacaHistoricalProvider, FixtureProvider
 from .qualification import load_qualification_proposal, review_holdout
 from .qualification_evidence import (
@@ -45,6 +53,7 @@ from .reconciliation import ReconciliationStore
 from .reporting import benchmark_suite, build_report, report_json, strategy_result, write_report
 from .risk import load_risk_limits
 from .runtime_build import (
+    RuntimeBuildAttestationIndeterminateError,
     RuntimeBuildVerificationError,
     verify_attested_build,
     verify_installed_runtime,
@@ -124,6 +133,19 @@ def parser() -> argparse.ArgumentParser:
         "assess-observation", help="assess paper observation continuity and drift"
     )
     observation_status.add_argument("campaign_id")
+    observation_supervisor = paper.add_parser(
+        "supervise-observation", help="run one restart-safe broker-read-only observation loop"
+    )
+    observation_supervisor.add_argument("campaign_id")
+    observation_supervisor.add_argument("--runtime", type=Path, required=True)
+    observation_supervisor.add_argument("--wheel", type=Path, required=True)
+    observation_supervisor.add_argument("--manifest", type=Path, required=True)
+    observation_supervisor.add_argument("--repository", type=Path, required=True)
+    observation_supervisor.add_argument(
+        "--risk-config", type=Path, default=Path("config/risk/alpaca-paper-v1.json")
+    )
+    observation_supervisor.add_argument("--interval-seconds", type=int, default=600)
+    observation_supervisor.add_argument("--check", action="store_true")
     equivalence = paper.add_parser(
         "record-equivalence", help="record one replay, shadow, and paper action comparison"
     )
@@ -247,13 +269,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         load_dotenv()
         settings = load_settings()
         return run(arguments, settings)
+    except RuntimeBuildAttestationIndeterminateError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return os.EX_TEMPFAIL
     except (
         ConfigurationError,
         DatasetValidationError,
         ExperimentError,
+        JournalIntegrityError,
         KeyError,
         OSError,
         RuntimeBuildVerificationError,
+        sqlite3.DatabaseError,
         ValueError,
     ) as error:
         print(f"error: {error}", file=sys.stderr)
@@ -276,16 +303,19 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             )
             return 0
         if arguments.paper_command == "start-observation":
-            limits = load_risk_limits(arguments.risk_config)
-            reader = _paper_observation_reader(settings, limits.account_id, limits.allowed_symbols)
-            snapshot = reader.record_portfolio(ReconciliationStore(layout.execution))
-            store = PaperObservationStore(layout.execution)
-            campaign = store.start(
-                campaign_id=arguments.campaign_id,
-                baseline_snapshot_id=snapshot.snapshot_id,
-                maximum_gap_seconds=arguments.maximum_gap_seconds,
-                duration=timedelta(hours=arguments.duration_hours),
-            )
+            with observation_supervisor_lock(settings.home):
+                limits = load_risk_limits(arguments.risk_config)
+                reader = _paper_observation_reader(
+                    settings, limits.account_id, limits.allowed_symbols
+                )
+                snapshot = reader.record_portfolio(ReconciliationStore(layout.execution))
+                store = PaperObservationStore(layout.execution)
+                campaign = store.start(
+                    campaign_id=arguments.campaign_id,
+                    baseline_snapshot_id=snapshot.snapshot_id,
+                    maximum_gap_seconds=arguments.maximum_gap_seconds,
+                    duration=timedelta(hours=arguments.duration_hours),
+                )
             _print(
                 {
                     "campaign_id": campaign.campaign_id,
@@ -302,14 +332,15 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             )
             return 0
         if arguments.paper_command == "record-observation":
-            limits = load_risk_limits(arguments.risk_config)
-            store = PaperObservationStore(layout.execution)
-            observation = record_production_observation(
-                store,
-                _paper_observation_reader(settings, limits.account_id, limits.allowed_symbols),
-                campaign_id=arguments.campaign_id,
-            )
-            status = store.assess(arguments.campaign_id, assessed_at=datetime.now(UTC))
+            with observation_supervisor_lock(settings.home):
+                limits = load_risk_limits(arguments.risk_config)
+                store = PaperObservationStore(layout.execution)
+                observation = record_production_observation(
+                    store,
+                    _paper_observation_reader(settings, limits.account_id, limits.allowed_symbols),
+                    campaign_id=arguments.campaign_id,
+                )
+                status = store.assess(arguments.campaign_id, assessed_at=datetime.now(UTC))
             _print(_paper_observation_result(observation, status))
             return 0 if status.healthy_now and status.campaign_passed is not False else 1
         if arguments.paper_command == "assess-observation":
@@ -318,6 +349,58 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             )
             _print(_paper_observation_result(None, status))
             return 0 if status.healthy_now and status.campaign_passed is not False else 1
+        if arguments.paper_command == "supervise-observation":
+            build_commit = validate_observation_supervision(
+                settings,
+                campaign_id=arguments.campaign_id,
+                interval_seconds=arguments.interval_seconds,
+                repository=arguments.repository,
+                runtime=arguments.runtime,
+                wheel=arguments.wheel,
+                manifest=arguments.manifest,
+                risk_config=arguments.risk_config,
+            )
+            supervisor_identity = verify_observation_runtime(
+                arguments.wheel, arguments.manifest, expected_commit=build_commit
+            )
+            limits = load_risk_limits(arguments.risk_config)
+            reader = _paper_observation_reader(settings, limits.account_id, limits.allowed_symbols)
+            if arguments.check:
+                with observation_supervisor_lock(settings.home):
+                    _print(
+                        {
+                            "campaign_id": arguments.campaign_id,
+                            "interval_seconds": arguments.interval_seconds,
+                            "runtime_source_commit": supervisor_identity.source_commit,
+                            "runtime_identity_fingerprint": (
+                                supervisor_identity.identity_fingerprint
+                            ),
+                            "broker_writes_allowed": False,
+                        }
+                    )
+                return 0
+            with observation_supervisor_lock(settings.home):
+                store = PaperObservationStore(layout.execution)
+
+                def assess() -> PaperObservationStatus:
+                    return store.assess(arguments.campaign_id, assessed_at=datetime.now(UTC))
+
+                def record_sample() -> tuple[PaperObservation, PaperObservationStatus]:
+                    observation = record_production_observation(
+                        store, reader, campaign_id=arguments.campaign_id
+                    )
+                    return observation, assess()
+
+                status = run_observation_loop(
+                    interval_seconds=arguments.interval_seconds,
+                    assess=assess,
+                    record=record_sample,
+                    emit=lambda observation, status: _print(
+                        _paper_observation_result(observation, status)
+                    ),
+                )
+            print("campaign complete; observation supervisor exiting")
+            return 0
         if arguments.paper_command == "record-equivalence":
             record = PaperEquivalenceStore(layout.execution).record(
                 comparison_id=arguments.comparison_id,

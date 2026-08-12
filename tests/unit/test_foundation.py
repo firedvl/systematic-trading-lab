@@ -4,11 +4,16 @@ from pathlib import Path
 
 import pytest
 
-from systematic_trading_lab.cli import parser, run
+import systematic_trading_lab.cli as cli
+from systematic_trading_lab.cli import main, parser, run
 from systematic_trading_lab.config import ConfigurationError, load_dotenv, load_settings
 from systematic_trading_lab.domain import OHLCVBar, Symbol, Timeframe
 from systematic_trading_lab.fingerprints import fingerprint
 from systematic_trading_lab.paper_startup import initialize_paper_storage
+from systematic_trading_lab.runtime_build import (
+    RuntimeBuildAttestationIndeterminateError,
+    RuntimeBuildVerificationError,
+)
 from systematic_trading_lab.validation import validate_records
 
 
@@ -73,12 +78,55 @@ def test_dotenv_loads_supported_values_without_overriding_environment(tmp_path: 
     }
 
 
-def test_dotenv_rejects_unknown_entries(tmp_path: Path) -> None:
+def test_dotenv_rejects_unknown_or_duplicate_entries(tmp_path: Path) -> None:
     path = tmp_path / ".env"
     path.write_text("UNSUPPORTED_SETTING=value\n", encoding="utf-8")
 
     with pytest.raises(ConfigurationError, match="invalid .env entry"):
         load_dotenv(path, {})
+
+    path.write_text("TRADING_LAB_MODE=paper\nTRADING_LAB_MODE=research\n", encoding="utf-8")
+    with pytest.raises(ConfigurationError, match="duplicate .env entry"):
+        load_dotenv(path, {})
+
+
+def test_cli_reports_malformed_database_as_configuration_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import sqlite3
+
+    with sqlite3.connect(tmp_path / "execution.sqlite3") as connection:
+        connection.execute("CREATE TABLE paper_observations (invalid TEXT)")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("TRADING_LAB_HOME", str(tmp_path))
+
+    assert main(["paper", "assess-observation", "campaign"]) == 2
+    assert "error:" in capsys.readouterr().err
+
+
+def test_cli_maps_indeterminate_attestation_to_temporary_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    def fail(*args: object, **kwargs: object) -> int:
+        raise RuntimeBuildAttestationIndeterminateError("attestation indeterminate")
+
+    monkeypatch.setattr(cli, "run", fail)
+    assert cli.main(["doctor"]) == 75
+    assert "attestation indeterminate" in capsys.readouterr().err
+
+
+def test_cli_keeps_permanent_runtime_failure_at_exit_two(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    def fail(*args: object, **kwargs: object) -> int:
+        raise RuntimeBuildVerificationError("runtime mismatch")
+
+    monkeypatch.setattr(cli, "run", fail)
+    assert cli.main(["doctor"]) == 2
 
 
 def test_paper_startup_cli_is_read_only_and_fails_closed(

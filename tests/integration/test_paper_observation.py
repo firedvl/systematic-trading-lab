@@ -9,7 +9,7 @@ import pytest
 
 from systematic_trading_lab.alpaca_paper import AlpacaPaperReader
 from systematic_trading_lab.cli import parser, run
-from systematic_trading_lab.config import Settings
+from systematic_trading_lab.config import ConfigurationError, Settings
 from systematic_trading_lab.domain import TradingMode
 from systematic_trading_lab.execution import ExecutionIntent, ExecutionStore, JournalIntegrityError
 from systematic_trading_lab.paper_equivalence import (
@@ -21,6 +21,7 @@ from systematic_trading_lab.paper_observation import (
     PaperObservationStore,
     record_production_observation,
 )
+from systematic_trading_lab.paper_supervision import observation_supervisor_lock
 from systematic_trading_lab.reconciliation import (
     _ALPACA_READER_CAPABILITY,
     PortfolioSnapshot,
@@ -233,6 +234,17 @@ def test_fractional_gap_reports_failed_continuity_conservatively(tmp_path: Path)
     assert not status.continuity_held
     assert status.maximum_observed_gap_seconds == 901
     assert status.maximum_observed_gap_seconds > status.maximum_gap_seconds
+
+
+def test_one_shot_observation_writer_respects_supervisor_lock(tmp_path: Path) -> None:
+    with (
+        observation_supervisor_lock(tmp_path),
+        pytest.raises(ConfigurationError, match="another paper observation supervisor"),
+    ):
+        run(
+            parser().parse_args(["paper", "record-observation", "paper-week-1"]),
+            Settings(TradingMode.PAPER, tmp_path),
+        )
 
 
 def test_paper_equivalence_binds_intents_and_retains_mismatch(tmp_path: Path) -> None:
