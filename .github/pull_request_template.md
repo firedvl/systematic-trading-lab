@@ -1,14 +1,28 @@
-## Change
+## What changed
 
-What changed and why?
+Describe the change and why it is needed.
 
-## Evidence
+## Boundaries touched
 
-- [ ] Format, lint, typing, tests, and secret checks pass.
+Note whether this changes research behavior, data provenance, qualification/holdout logic, risk controls, paper execution, runtime provenance, migrations, or operational behavior.
+
+## Verification
+
+- [ ] Relevant focused tests pass.
+- [ ] `ruff format --check` and `ruff check` pass.
+- [ ] `mypy` passes for the affected code.
+- [ ] Relevant `pytest` coverage passes.
+- [ ] Secret checks pass.
 - [ ] Documentation matches behavior.
-- [ ] No credentials, generated datasets, or broker responses are included.
-- [ ] Protected controls are unchanged or reviewed separately.
 
-## Safety
+List any additional verification performed.
 
-Confirm the execution mode and whether broker authority changed. Live trading must remain disabled.
+## Safety and compatibility
+
+Describe failure-path coverage, migration or compatibility impact, and any new operational assumptions.
+
+- [ ] No credentials, private account data, generated private datasets, or raw broker responses are included.
+- [ ] Protected controls are unchanged or explicitly reviewed.
+- [ ] Live trading remains disabled.
+
+State explicitly when a change adds no broker-write or live-execution authority.

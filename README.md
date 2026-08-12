@@ -1,88 +1,168 @@
 # Systematic Trading Lab
 
-Research infrastructure for reproducible U.S. ETF data, backtests, qualification, and paper execution. The current scope is daily bars for SPY, QQQ, IWM, TLT, and GLD. Live trading is disabled.
+Systematic Trading Lab is an open-source Python research platform for reproducible systematic-trading experiments, qualification, and tightly controlled paper execution.
 
-## Setup
+The project is built around one principle: **research results and execution authority should be reproducible, reviewable, and difficult to grant by accident.** Dataset identity, experiment plans, qualification evidence, runtime provenance, risk decisions, and paper-account observations are recorded as explicit evidence instead of being inferred from ad-hoc scripts or mutable local state.
 
-Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
+The current daily-bar research universe is SPY, QQQ, IWM, TLT, and GLD. Intraday research infrastructure is under active development. Real-money/live trading is intentionally unsupported.
+
+> **Project status:** active development. Interfaces and evidence schemas may still change. The repository is suitable for research and paper-trading experimentation, not unattended real-money trading.
+
+## Why this project exists
+
+Systematic research can fail in ways that ordinary backtest code does not make obvious: accidental lookahead, changed datasets, unrecorded parameter searches, repeated holdout access, unverifiable runtime builds, stale broker state, and unsafe retry behavior.
+
+This project treats those as software and evidence problems. It provides infrastructure for:
+
+- immutable and fingerprinted research inputs;
+- bounded training and validation runs;
+- preregistered experiment campaigns and search budgets;
+- protected holdout access and qualification evidence;
+- conservative backtesting with explicit execution and cost assumptions;
+- attested runtime builds and installed-runtime verification;
+- transaction-bound paper-trading authority and risk controls;
+- restart-safe paper observation and reconciliation;
+- deterministic reports and durable operational evidence.
+
+The goal is not to publish a supposedly profitable strategy. The goal is to make the path from data to research conclusion to paper execution inspectable and reproducible.
+
+## Safety boundary
+
+Real-money execution is disabled by design. Supported modes are:
+
+- `offline`
+- `research`
+- `replay`
+- `shadow`
+- `paper`
+- `live-disabled`
+
+Paper broker writes require explicit paper mode plus separate activation, runtime identity, risk, authorization, and transaction-bound checks. Missing or ambiguous evidence fails closed. Read-only research and observation paths do not grant broker-write authority.
+
+The project currently integrates with Alpaca for market data and paper-account workflows. Production trading hosts are not accepted by the paper execution boundary.
+
+## Current capabilities
+
+### Research and data
+
+- Immutable cataloged datasets with provenance and fingerprints.
+- Bounded reads that load only the declared training or validation interval.
+- Corrections represented as parent-linked dataset versions.
+- Baseline and candidate backtests with explicit execution assumptions.
+- Durable experiment records, claims, failures, and bounded campaign budgets.
+- Strict preregistered training plans that prevent run-time parameter or date overrides.
+- Qualification evidence derived from controlled runs rather than caller-entered metrics.
+- One-time, authorization-gated holdout evaluation.
+- Isolated intraday research foundations for future campaigns.
+
+### Paper execution and operations
+
+- Append-only execution evidence and deterministic local order identities.
+- Explicit paper authorization and reviewed risk configuration.
+- Capacity reservation, order lifecycle, reconciliation, and recovery controls.
+- Fixed-origin paper transport with bounded response handling and no blind retries.
+- Runtime build manifests, GitHub attestations, and installed-runtime verification.
+- Read-only startup assessment before broker mutation is permitted.
+- Restart-safe paper observation campaigns and replay/shadow/paper equivalence evidence.
+- Deployment and recovery runbooks for sustained observation.
+
+For the exact current milestone and known limitations, see [`CURRENT_STATE.md`](CURRENT_STATE.md) and [`ROADMAP.md`](ROADMAP.md).
+
+## Requirements
+
+- Python 3.12+
+- [`uv`](https://docs.astral.sh/uv/)
+- Git
+
+Some data and paper workflows require an Alpaca account and credentials. The fixture-backed research path does not.
+
+## Quick start
+
+Clone the repository and install development dependencies:
 
 ```console
+git clone https://github.com/firedvl/systematic-trading-lab.git
+cd systematic-trading-lab
 uv sync --dev
+```
+
+Check the local environment and import the committed synthetic fixture:
+
+```console
 uv run trading-lab doctor
 uv run trading-lab data import-fixture
 uv run trading-lab data describe
-TRADING_LAB_MODE=research trading-lab data import-alpaca --start 2025-01-01 --end 2025-01-31
-uv run trading-lab backtest fixture --strategy buy-and-hold
+```
+
+Run the baseline suite:
+
+```console
 uv run trading-lab backtest fixture --strategy all --output .trading-lab/reports/baselines.json
+```
+
+Runtime state defaults to `.trading-lab/` and is intentionally not committed. Set `TRADING_LAB_HOME` to use another directory.
+
+## Research workflow
+
+A typical controlled workflow is:
+
+1. Register or import immutable source data.
+2. Create a bounded campaign or preregister an exact training plan.
+3. Run candidates through the controlled experiment runner.
+4. Generate and review qualification evidence.
+5. Authorize protected holdout access only after qualification gates pass.
+6. Keep any paper-execution authorization separate from research qualification.
+
+Example commands:
+
+```console
 uv run trading-lab experiment create-campaign baseline-v1 --name "Baseline campaign" --budget 20
 uv run trading-lab experiment plan-training --spec PLAN.json
 uv run trading-lab experiment run-planned candidate-1
-uv run trading-lab experiment run --help
-uv run trading-lab experiment run-holdout --help
 uv run trading-lab experiment compare candidate-1 candidate-2
-uv run trading-lab experiment evaluate-qualification --evidence-manifest config/research/qualification-evidence-v3.json --proposal config/research/qualification-proposal.json
-uv run trading-lab experiment review-holdout --help
-uv run trading-lab paper initialize-storage
-uv run trading-lab paper assess-startup --authorization AUTHORIZATION_ID --risk-config config/risk/alpaca-paper-v1.json
-uv run trading-lab paper start-observation paper-week-1 --maximum-gap-seconds 900 --duration-hours 168
-uv run trading-lab paper record-observation paper-week-1
-uv run trading-lab paper assess-observation paper-week-1
-uv run trading-lab paper record-equivalence paper-week-1 initial-entry --replay-plan REPLAY.json --shadow-plan SHADOW.json --paper-intent INTENT_KEY
+uv run trading-lab experiment evaluate-qualification \
+  --evidence-manifest config/research/qualification-evidence-v3.json \
+  --proposal config/research/qualification-proposal.json
 ```
 
-Runtime state defaults to `.trading-lab/` and is not committed. Set `TRADING_LAB_HOME` to use another directory. `TRADING_LAB_MODE` defaults to `offline`; accepted modes are `offline`, `research`, `replay`, `shadow`, `paper`, and the deliberately non-operational `live-disabled`.
+The baseline suite includes cash, buy-and-hold, fixed-weight allocation, moving-average trend, time-series momentum, moving-average mean reversion, and volatility-targeted exposure. Baselines are system checks, not claims of profitability.
 
-The CLI loads supported settings from an ignored repository-local `.env` file. Copy `.env.example`, set `TRADING_LAB_MODE=research`, and fill in the two Alpaca values. Existing process environment variables take precedence. The loader rejects unknown names and never enables live trading. Paper broker writes pass the outer runtime gate only when paper mode names both an exact activation fingerprint and full execution commit; transaction-bound authority checks still decide every attempt.
+The repository also contains a predeclared strategic-allocation candidate whose controlled validation evidence passed the project's approved gates. That historical result is research evidence only; it does not promise future returns or by itself authorize broker writes.
 
-The Alpaca command is read-only, requires research mode and the `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY` environment variables, requests fully provider-adjusted bars, and writes only immutable local data artifacts. Imports enforce issuer-sourced point-in-time membership before provider access. Corrections create parent-linked dataset versions; unadjusted inputs are rejected. It never submits orders.
+## Paper workflow
 
-Experiment commands create durable pending records before work begins, require an explicit claim before completion, retain failures, enforce campaign search budgets, and recover stale runs as failed evidence. The bounded `experiment run` command reads and validates only the declared timestamp range from an immutable cataloged dataset before executing a training or validation candidate. Manual and executed experiments take dataset and universe provenance from the catalog, but only controlled runner completions with one fingerprinted report can supply qualification evidence. `experiment evaluate-qualification` verifies the named registry records and their roles, aggregates the approved gate metrics, and writes a content-addressed report without loading market data. `experiment authorize-holdout` reruns that evaluation and can store one authorization only for approved, passing evidence. `experiment run-holdout` consumes that authorization before reading Parquet, loads only the bound timestamp range, and stores metrics without returning them or writing a report. The approved gates reject both current validation candidates, so no holdout is authorized. Ordinary commands cannot create or reveal holdout results.
+Paper execution is deliberately more cumbersome than ordinary research. Before any mutation, the system can assess the complete startup evidence surface without writing to the broker:
 
-`experiment plan-training` loads a strict `training-campaign-plan-v1` JSON file and atomically
-preregisters every declared candidate under one immutable plan fingerprint. Its budget must equal
-the candidate count. V1 accepts training splits, explicit strategy parameters, default conservative
-costs, and next-bar fills only. `experiment run-planned` takes only a preregistered candidate ID, so
-callers cannot override its strategy, dates, parameters, provenance, parent, or models.
+```console
+uv run trading-lab paper initialize-storage
+uv run trading-lab paper assess-startup \
+  --authorization AUTHORIZATION_ID \
+  --risk-config config/risk/alpaca-paper-v1.json
+```
 
-The baseline suite includes cash, buy-and-hold, fixed-weight allocation, moving-average trend,
-time-series momentum, moving-average mean reversion, and volatility-targeted exposure. These are
-system checks, not optimized or financially qualified strategies.
+Read-only observation campaigns can then measure account continuity and drift:
 
-The strategic-allocation candidate holds 35% SPY, 25% QQQ, 25% IWM, 15% GLD, and 0% TLT with a
-predeclared 21-session rebalance interval. Its controlled validation evidence passed the approved
-gates; that result does not promise future returns or enable broker writes.
+```console
+uv run trading-lab paper start-observation paper-week-1 \
+  --maximum-gap-seconds 900 \
+  --duration-hours 168
+uv run trading-lab paper record-observation paper-week-1
+uv run trading-lab paper assess-observation paper-week-1
+```
 
-`paper initialize-storage` creates the empty paper execution schema without adding authority or
-enabling broker writes. It is safe to repeat and rejects a symbolic-link database path.
+See [`docs/operations.md`](docs/operations.md), [`docs/paper-execution-plan.md`](docs/paper-execution-plan.md), [`docs/paper-write-readiness.md`](docs/paper-write-readiness.md), and [`docs/risk-policy.md`](docs/risk-policy.md) before changing or operating paper-execution code.
 
-`paper assess-startup` is read-only. It checks the journal, authorization, limits, activation,
-installed runtime identity, unresolved mutations, emergency state, and attested risk context. Missing
-evidence appears as a blocker. The command cannot enable or call the paper operator.
+## Configuration and credentials
 
-The paper observation commands are broker-read-only and require paper mode plus Alpaca credentials,
-but no activation. A campaign binds its first production-attested snapshot, expected positions,
-maximum sample gap, and end time. Later samples record healthy state, position or open-order drift,
-or a sanitized read failure. Assessment reports current staleness, failure and drift counts, and the
-configured and largest completed sample gaps. It reports current health separately from historical
-continuity and the final campaign result. Recovered read failures remain counted but do not alone
-fail a completed campaign; any historical drift or gap above the configured maximum does. Observation
-evidence cannot submit, cancel, settle, or clear an emergency.
+Copy `.env.example` to `.env` for local workflows that require provider credentials. The repository-local `.env` is ignored.
 
-`paper supervise-observation` runs that same assessment and recording path under one store-local
-lock. It accepts only a fixed project-local attested runtime, private exact paper configuration, a
-bounded interval, and no broker-write opt-in. The repository systemd helper migrates only the exact
-mutable observer files from root ownership, keeps runtime builds root-owned, pins GitHub lookup, and
-retries recognized transient remote attestation failures at intervals of at least 60 seconds without
-a finite start-count limit. Permanent local,
-authentication, configuration, and integrity failures do not restart. See
-[operations.md](docs/operations.md). The campaign-start and one-shot observation writers use the
-same lock.
+The Alpaca data path requires `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY`. Secrets must remain outside source control and must not appear in logs, reports, fixtures, prompts, or issue content.
 
-`paper record-equivalence` compares strict replay and shadow action-plan files with immutable stored
-paper quantity intents. It retains exact matches and mismatches under the observation campaign. The
-command cannot submit, cancel, settle, or approve an action.
+The configuration loader rejects unknown names. Environment configuration alone cannot enable live trading.
 
-## Quality gates
+## Development
+
+Run the full local quality gates before opening a pull request:
 
 ```console
 uv run ruff format --check .
@@ -93,4 +173,24 @@ uv run python scripts/check_secrets.py
 bash -n scripts/*.sh
 ```
 
-Read [AGENTS.md](AGENTS.md), [CURRENT_STATE.md](CURRENT_STATE.md), and [docs/architecture.md](docs/architecture.md) before changing the system.
+Contributions are welcome. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md). Changes to protected controls, execution authority, risk semantics, evidence schemas, migrations, or security boundaries require especially careful tests and documentation.
+
+Architecture and project history are intentionally kept in the repository:
+
+- [`docs/architecture.md`](docs/architecture.md) — system boundaries and components
+- [`docs/threat-model.md`](docs/threat-model.md) — security assumptions and protected controls
+- [`DECISIONS.md`](DECISIONS.md) — durable architecture and policy decisions
+- [`CURRENT_STATE.md`](CURRENT_STATE.md) — current operational/development state
+- [`ROADMAP.md`](ROADMAP.md) — planned work and remaining gates
+
+## Security
+
+Please report vulnerabilities privately as described in [`SECURITY.md`](SECURITY.md). Do not open a public issue containing credentials, account data, sensitive broker responses, or exploitable details.
+
+## License
+
+Licensed under the Apache License 2.0. See [`LICENSE`](LICENSE).
+
+## Disclaimer
+
+This software is provided for research and software-development purposes. It does not provide financial advice, and historical or simulated results do not guarantee future performance.
