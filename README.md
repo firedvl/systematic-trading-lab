@@ -63,8 +63,10 @@ The paper observation commands are broker-read-only and require paper mode plus 
 but no activation. A campaign binds its first production-attested snapshot, expected positions,
 maximum sample gap, and end time. Later samples record healthy state, position or open-order drift,
 or a sanitized read failure. Assessment reports current staleness, failure and drift counts, and the
-largest completed sample gap. Observation evidence cannot submit, cancel, settle, or clear an
-emergency.
+configured and largest completed sample gaps. It reports current health separately from historical
+continuity and the final campaign result. Recovered read failures remain counted but do not alone
+fail a completed campaign; any historical drift or gap above the configured maximum does. Observation
+evidence cannot submit, cancel, settle, or clear an emergency.
 
 `paper record-equivalence` compares strict replay and shadow action-plan files with immutable stored
 paper quantity intents. It retains exact matches and mismatches under the observation campaign. The

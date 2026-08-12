@@ -527,3 +527,10 @@
 - Context: an always-on VPS removes dependence on a personal computer without adding an in-program daemon or systemd unit.
 - Consequences: SSH disconnects do not stop sampling, but a VPS reboot does. Migration must stop the old writer before copying SQLite. Cleanup defaults to a preview and deletes only validated project-local data unless the operator also requests repository deletion. External broker, GitHub, backup, audit, and shell records remain outside its scope.
 - Revisit when: automatic reboot recovery or remote state requires a reviewed service manager and monitoring design.
+
+## 2026-08-12 — Final observation status preserves historical failures
+
+- Decision: derive current health, completion, continuity, and final campaign result separately from immutable observations. A completed campaign passes only when its latest state is healthy and fresh, no completed sample gap exceeds the configured maximum, and no drift occurred.
+- Context: Week 1 ended healthy after 1008 healthy samples and one recovered read failure, but two VPS reboots created a real 1030-second gap against the fixed 900-second limit. The old assessor exposed the gap but based its exit code only on current health.
+- Consequences: a recovered read failure remains counted but does not alone fail the campaign because scheduled failure and recovery are M5 evidence. Historical drift and excess gaps remain final blockers after recovery. Existing databases need no migration or evidence change, and assessment grants no broker authority.
+- Revisit when: a separately reviewed policy defines tolerated failure budgets or restart-safe supervision.

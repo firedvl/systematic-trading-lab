@@ -31,11 +31,23 @@ the outer runtime gate and cannot override transaction-bound authority.
 Start a bounded read-only campaign with `trading-lab paper start-observation CAMPAIGN_ID`. Set its
 maximum gap to the planned sampling interval plus measured scheduler tolerance and set an explicit
 duration. Run `record-observation` on that schedule and `assess-observation` after interruptions.
-The command exits nonzero for current drift, read failure, or staleness. Failure records contain no
-broker response text. A later healthy sample restores current health but does not erase historical
-failure or drift counts. Campaign completion remains stale unless a final sample falls within the
-configured gap of the end time. These records grant no activation, risk, settlement, emergency, or
-broker authority.
+`healthy_now` describes only the latest sample and staleness. `continuity_held` compares the largest
+completed sample gap with the immutable configured maximum. `campaign_passed` remains null until the
+campaign ends, then requires current health, continuity, and no historical drift. A recovered read
+failure remains in `failure_count` but does not alone fail the campaign. `campaign_reasons` records
+final blockers. A completed failed campaign exits nonzero even when `healthy_now` is true. Campaign
+completion remains stale unless a final sample falls within the configured gap of the end time.
+Failure records contain no broker response text. These records grant no activation, risk,
+settlement, emergency, or broker authority.
+
+### Week 1 closeout
+
+Campaign `paper-week-1-vps-20260804` completed with 1008 healthy samples, no position drift, and one
+isolated read failure that recovered at the next 10-minute sample. Its final state was healthy. The
+largest observed gap was 1030 seconds, above the fixed 900-second limit, so continuity and the final
+campaign result failed. VPS logs show two orderly whole-host reboots during that gap. The cause
+distinguishes the event from an unexplained application stall but does not turn the failed limit into
+a pass. The preserved database remains the evidence source; do not edit or replace its observations.
 
 Record action-plan equivalence with `paper record-equivalence`. Supply one replay plan, one shadow
 plan, and every paper intent key for the decision. Replay and shadow files use this strict shape:
@@ -79,7 +91,8 @@ Detach with `Ctrl-A`, then `D`. Stop the loop with
 uses the repository working directory so `.env` loads, rejects a second local loop, stops when the
 campaign reports completion, and exits on configuration or journal-integrity errors. It continues
 after recorded drift or read failure so recovery remains visible. A `screen` session survives SSH
-disconnects but not a VPS reboot; relaunch it after a reboot.
+disconnects but not a VPS reboot; relaunch it after a reboot. Automatic reboot recovery remains a
+separately reviewed operational follow-up.
 
 Cleanup is dry-run-first:
 
