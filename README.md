@@ -150,7 +150,7 @@ uv run trading-lab paper record-observation paper-week-1
 uv run trading-lab paper assess-observation paper-week-1
 ```
 
-See [`docs/operations.md`](docs/operations.md), [`docs/paper-execution.md`](docs/paper-execution.md), and [`docs/risk-policy.md`](docs/risk-policy.md) before changing or operating paper-execution code.
+See [`docs/operations.md`](docs/operations.md), [`docs/paper-execution-plan.md`](docs/paper-execution-plan.md), [`docs/paper-write-readiness.md`](docs/paper-write-readiness.md), and [`docs/risk-policy.md`](docs/risk-policy.md) before changing or operating paper-execution code.
 
 ## Configuration and credentials
 
