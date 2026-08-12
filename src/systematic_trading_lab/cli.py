@@ -311,13 +311,13 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             )
             status = store.assess(arguments.campaign_id, assessed_at=datetime.now(UTC))
             _print(_paper_observation_result(observation, status))
-            return 0 if status.healthy_now else 1
+            return 0 if status.healthy_now and status.campaign_passed is not False else 1
         if arguments.paper_command == "assess-observation":
             status = PaperObservationStore(layout.execution).assess(
                 arguments.campaign_id, assessed_at=datetime.now(UTC)
             )
             _print(_paper_observation_result(None, status))
-            return 0 if status.healthy_now else 1
+            return 0 if status.healthy_now and status.campaign_passed is not False else 1
         if arguments.paper_command == "record-equivalence":
             record = PaperEquivalenceStore(layout.execution).record(
                 comparison_id=arguments.comparison_id,
@@ -758,10 +758,14 @@ def _paper_observation_result(
         "observation_status": (observation.status if observation is not None else None),
         "healthy_now": status.healthy_now,
         "campaign_complete": status.campaign_complete,
+        "continuity_held": status.continuity_held,
+        "campaign_passed": status.campaign_passed,
         "reasons": status.reasons,
+        "campaign_reasons": status.campaign_reasons,
         "success_count": status.success_count,
         "drift_count": status.drift_count,
         "failure_count": status.failure_count,
+        "maximum_gap_seconds": status.maximum_gap_seconds,
         "maximum_observed_gap_seconds": status.maximum_observed_gap_seconds,
         "latest_observed_at": status.latest_observed_at.isoformat().replace("+00:00", "Z"),
         "assessed_at": status.assessed_at.isoformat().replace("+00:00", "Z"),

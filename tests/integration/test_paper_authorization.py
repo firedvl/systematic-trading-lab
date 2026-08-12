@@ -379,12 +379,16 @@ def test_durable_risk_decision_uses_persistent_emergency_state(tmp_path: Path) -
 def test_terminal_replay_recovery_requires_stable_exact_post_fill_state(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    limits = _limits()
     report = _evidence()
-    authorization = _authorization(report, limits)
     store = ReconciliationStore(tmp_path / "terminal-recovery.sqlite3")
-    store.authorize_paper(authorization, report, limits)
     start = store.get_emergency().changed_at
+    limits = replace(
+        _limits(), effective_at=start - timedelta(days=1), expires_at=start + timedelta(days=30)
+    )
+    authorization = replace(
+        _authorization(report, limits), authorized_at=start, expires_at=start + timedelta(days=7)
+    )
+    store.authorize_paper(authorization, report, limits)
     expected = _flat_snapshot(
         SnapshotSource.LOCAL_EXPECTED,
         "terminal-recovery-expected",

@@ -6,6 +6,7 @@ import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from math import ceil
 from pathlib import Path
 
 from .alpaca_paper import AlpacaPaperError, AlpacaPaperReader
@@ -85,10 +86,14 @@ class PaperObservationStatus:
     campaign_id: str
     healthy_now: bool
     campaign_complete: bool
+    continuity_held: bool
+    campaign_passed: bool | None
     reasons: tuple[str, ...]
+    campaign_reasons: tuple[str, ...]
     success_count: int
     drift_count: int
     failure_count: int
+    maximum_gap_seconds: int
     maximum_observed_gap_seconds: int
     latest_observed_at: datetime
     assessed_at: datetime
@@ -252,9 +257,14 @@ class PaperObservationStore(ReconciliationStore):
         )
         latest = samples[-1]
         gaps = tuple(
-            int((later.observed_at - earlier.observed_at).total_seconds())
+            later.observed_at - earlier.observed_at
             for earlier, later in zip(samples, samples[1:], strict=False)
         )
+        maximum_observed_gap_seconds = ceil(max((gap.total_seconds() for gap in gaps), default=0))
+        continuity_held = all(
+            gap <= timedelta(seconds=campaign.maximum_gap_seconds) for gap in gaps
+        )
+        drift_count = sum(item.status == "drift" for item in samples)
         reasons = list(latest.reasons)
         if assessed_at < campaign.starts_at:
             reasons.append("campaign-not-started")
@@ -262,15 +272,26 @@ class PaperObservationStore(ReconciliationStore):
             min(assessed_at, campaign.ends_at) - latest.observed_at
         ).total_seconds() > campaign.maximum_gap_seconds:
             reasons.append("observation-stale")
+        current_reasons = tuple(dict.fromkeys(reasons))
+        campaign_reasons = list(current_reasons)
+        if not continuity_held:
+            campaign_reasons.append("maximum-observation-gap-exceeded")
+        if drift_count:
+            campaign_reasons.append("historical-drift")
+        campaign_complete = assessed_at >= campaign.ends_at
         return PaperObservationStatus(
             campaign_id=campaign_id,
-            healthy_now=not reasons,
-            campaign_complete=assessed_at >= campaign.ends_at,
-            reasons=tuple(dict.fromkeys(reasons)),
+            healthy_now=not current_reasons,
+            campaign_complete=campaign_complete,
+            continuity_held=continuity_held,
+            campaign_passed=(not campaign_reasons if campaign_complete else None),
+            reasons=current_reasons,
+            campaign_reasons=tuple(dict.fromkeys(campaign_reasons)),
             success_count=sum(item.status == "healthy" for item in samples),
-            drift_count=sum(item.status == "drift" for item in samples),
+            drift_count=drift_count,
             failure_count=sum(item.status == "read-failed" for item in samples),
-            maximum_observed_gap_seconds=max(gaps, default=0),
+            maximum_gap_seconds=campaign.maximum_gap_seconds,
+            maximum_observed_gap_seconds=maximum_observed_gap_seconds,
             latest_observed_at=latest.observed_at,
             assessed_at=assessed_at,
         )
