@@ -72,7 +72,8 @@ evidence cannot submit, cancel, settle, or clear an emergency.
 lock. It accepts only a fixed project-local attested runtime, private exact paper configuration, a
 bounded interval, and no broker-write opt-in. The repository systemd helper migrates only the exact
 mutable observer files from root ownership, keeps runtime builds root-owned, pins GitHub lookup, and
-retries indeterminate remote attestation failures within a fixed restart budget. Permanent local,
+retries recognized transient remote attestation failures at intervals of at least 60 seconds without
+a finite start-count limit. Permanent local,
 authentication, configuration, and integrity failures do not restart. See
 [operations.md](docs/operations.md). The campaign-start and one-shot observation writers use the
 same lock.

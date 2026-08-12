@@ -277,12 +277,12 @@ The service handles terminal states as follows:
 | Event | Result |
 |---|---|
 | Clean host reboot | systemd stops the process group, boot enablement starts it after network-online, and the loop samples immediately after preflight. |
-| Unexpected crash or signal | Restart after 60 seconds, limited to five starts per 900 seconds. |
+| Unexpected crash or signal | Restart after at least 60 seconds, with no finite start-count limit. |
 | Manual service restart | Release and reacquire the same store-local lock, reassess, then sample immediately if the campaign is active. |
 | Campaign already complete | Print the immutable assessment and exit 0 without another sample, whether the campaign passed or failed. |
 | Invalid runtime, campaign, interval, `.env`, home, store, or journal | Exit 2, remain visibly failed, and do not restart automatically. |
 | Missing `gh`, GitHub authentication failure, or local provenance/integrity mismatch | Exit 2, remain failed, and do not restart automatically. |
-| Timeout or recognized DNS, connection, rate-limit, or HTTP 5xx attestation failure | Exit 75 without observing, then use the bounded 60-second restart policy. |
+| Timeout or recognized DNS, connection, rate-limit, or HTTP 5xx attestation failure | Exit 75 without observing, then retry after at least 60 seconds with no finite start-count limit. |
 | Lock already held | Exit 2 without a second observer; stop the old runner, then use `systemctl reset-failed` and `systemctl start`. |
 | Broker read failure or drift | Record the existing immutable result and continue so later recovery remains visible. |
 
@@ -290,8 +290,10 @@ GitHub CLI does not expose separate stable exit codes for transport failure, a m
 and a remote policy or signature rejection. Every exit remains fail-closed. The wrapper retries only
 a timeout or explicit transport, rate-limit, or server-availability error. Authentication, missing
 attestation, policy/signature rejection, and unrecognized failures exit 2. A retryable failure gets
-at most five starts in 900 seconds, then remains failed for operator review; a retry never infers a
-valid attestation.
+another attempt after at least 60 seconds. `StartLimitIntervalSec=0` disables systemd's finite
+start-count limiter, so repeated exit 75 results cannot permanently latch the service off. If an
+outage has already failed the 900-second continuity gate, verification and recovery attempts still
+continue; a retry never infers a valid attestation or permits an observation before verification.
 
 Use `trading-lab paper assess-observation CAMPAIGN_ID` for the authoritative final exit status. The
 supervisor's clean terminal exit means only that no more samples are due; it does not turn a failed

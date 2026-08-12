@@ -107,8 +107,7 @@ render_unit() {
 Description=Systematic Trading Lab broker-read-only paper observation
 Wants=network-online.target
 After=network-online.target
-StartLimitIntervalSec=900
-StartLimitBurst=5
+StartLimitIntervalSec=0
 
 [Service]
 Type=exec

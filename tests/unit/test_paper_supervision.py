@@ -493,10 +493,23 @@ def test_generated_systemd_unit_is_boot_enabled_fixed_and_secret_free(tmp_path: 
     assert "--interval-seconds 600" in unit
     assert "WantedBy=multi-user.target" in unit
     assert "Restart=on-failure" in unit
-    assert "RestartPreventExitStatus=2" in unit
-    assert "RestartSec=60" in unit
-    assert "StartLimitIntervalSec=900" in unit
-    assert "StartLimitBurst=5" in unit
+    prevented_exit_statuses = next(
+        line.removeprefix("RestartPreventExitStatus=").split()
+        for line in unit.splitlines()
+        if line.startswith("RestartPreventExitStatus=")
+    )
+    assert prevented_exit_statuses == ["2"]
+    assert str(os.EX_TEMPFAIL) not in prevented_exit_statuses
+    restart_seconds = int(
+        next(
+            line.removeprefix("RestartSec=")
+            for line in unit.splitlines()
+            if line.startswith("RestartSec=")
+        )
+    )
+    assert restart_seconds >= 60
+    assert "StartLimitIntervalSec=0" in unit
+    assert "StartLimitBurst=" not in unit
     assert "Environment=HOME=/var/lib/systematic-trading-lab" in unit
     assert "Environment=GH_CONFIG_DIR=/var/lib/systematic-trading-lab/.config/gh" in unit
     assert "Environment=GH_HOST=github.com" in unit
