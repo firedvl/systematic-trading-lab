@@ -10,7 +10,7 @@ Read:
 - `CURRENT_STATE.md` for the current implementation state;
 - `docs/architecture.md` for system boundaries;
 - `docs/threat-model.md` for security assumptions;
-- `docs/risk-policy.md` and `docs/paper-execution.md` before changing execution or risk behavior.
+- `docs/risk-policy.md`, `docs/paper-execution-plan.md`, and `docs/paper-write-readiness.md` before changing execution or risk behavior.
 
 For a substantial change, open an issue first when practical. Small fixes, tests, documentation improvements, and clearly scoped refactors can go directly to a pull request.
 
