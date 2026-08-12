@@ -53,6 +53,7 @@ from .reconciliation import ReconciliationStore
 from .reporting import benchmark_suite, build_report, report_json, strategy_result, write_report
 from .risk import load_risk_limits
 from .runtime_build import (
+    RuntimeBuildAttestationIndeterminateError,
     RuntimeBuildVerificationError,
     verify_attested_build,
     verify_installed_runtime,
@@ -268,6 +269,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         load_dotenv()
         settings = load_settings()
         return run(arguments, settings)
+    except RuntimeBuildAttestationIndeterminateError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return os.EX_TEMPFAIL
     except (
         ConfigurationError,
         DatasetValidationError,

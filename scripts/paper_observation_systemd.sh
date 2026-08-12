@@ -6,11 +6,18 @@ unit_name="systematic-trading-lab-paper-observation.service"
 unit_path="/etc/systemd/system/$unit_name"
 script_path="$(realpath -- "${BASH_SOURCE[0]}")"
 repository="$(dirname -- "$(dirname -- "$script_path")")"
+state_helper="$repository/scripts/migrate_paper_observation_state.py"
+service_home="/var/lib/systematic-trading-lab"
+github_config_parent="$service_home/.config"
+github_config_dir="$github_config_parent/gh"
+github_cache_parent="$service_home/.cache"
+github_cache_dir="$github_cache_parent/gh"
 
 usage() {
   cat >&2 <<EOF
 usage:
   $0 render|check|install CAMPAIGN_ID RUNTIME WHEEL MANIFEST TRADING_LAB_HOME SERVICE_USER SERVICE_GROUP [INTERVAL_SECONDS]
+  $0 check-state|migrate-state TRADING_LAB_HOME SERVICE_USER SERVICE_GROUP
   $0 status | logs | uninstall
 EOF
 }
@@ -67,12 +74,31 @@ validate_fixed_inputs() {
   [[ "$trading_home" == "$repository/.trading-lab" ]] || \
     fail "TRADING_LAB_HOME must be the project-local .trading-lab directory"
   command -v git >/dev/null || fail "Git is required"
-  [[ "$(git -C "$repository" rev-parse --verify HEAD)" == "$build_commit" ]] || \
+  git_command=(
+    env -i
+    HOME=/nonexistent
+    XDG_CONFIG_HOME=/nonexistent
+    GIT_CONFIG_GLOBAL=/dev/null
+    GIT_CONFIG_NOSYSTEM=1
+    PATH=/usr/local/bin:/usr/bin:/bin
+    git --no-replace-objects --git-dir "$repository/.git"
+  )
+  [[ "$("${git_command[@]}" rev-parse --verify HEAD)" == "$build_commit" ]] || \
     fail "repository commit differs from the verified runtime"
-  git -C "$repository" ls-files --error-unmatch config/risk/alpaca-paper-v1.json >/dev/null \
-    || fail "risk configuration is not tracked"
-  git -C "$repository" diff --quiet HEAD -- config/risk/alpaca-paper-v1.json \
+  "${git_command[@]}" cat-file blob \
+    "$build_commit:config/risk/alpaca-paper-v1.json" \
+    | cmp -s - "$repository/config/risk/alpaca-paper-v1.json" \
     || fail "risk configuration differs from the runtime commit"
+}
+
+state_check() {
+  command -v python3 >/dev/null || fail "Python 3 is required for state ownership checks"
+  [[ -f "$state_helper" && ! -L "$state_helper" ]] || fail "state migration helper is invalid"
+  python3 "$state_helper" check \
+    --repository "$repository" \
+    --home "$trading_home" \
+    --service-user "$service_user" \
+    --service-group "$service_group"
 }
 
 render_unit() {
@@ -82,7 +108,7 @@ Description=Systematic Trading Lab broker-read-only paper observation
 Wants=network-online.target
 After=network-online.target
 StartLimitIntervalSec=900
-StartLimitBurst=3
+StartLimitBurst=5
 
 [Service]
 Type=exec
@@ -93,11 +119,20 @@ Environment=TRADING_LAB_MODE=paper
 Environment=TRADING_LAB_HOME=$trading_home
 Environment=TRADING_LAB_PAPER_ACTIVATION_ID=
 Environment=TRADING_LAB_PAPER_CODE_COMMIT=
+Environment=HOME=$service_home
+Environment=GH_CONFIG_DIR=$github_config_dir
+Environment=XDG_CACHE_HOME=$service_home/.cache
+Environment=GH_HOST=github.com
+Environment=GH_PROMPT_DISABLED=1
+Environment=GH_TOKEN=
+Environment=GITHUB_TOKEN=
+Environment=GH_ENTERPRISE_TOKEN=
+Environment=GITHUB_ENTERPRISE_TOKEN=
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
 ExecStart=$runtime paper supervise-observation $campaign_id --runtime $runtime --wheel $wheel --manifest $manifest --repository $repository --risk-config $repository/config/risk/alpaca-paper-v1.json --interval-seconds $interval
 Restart=on-failure
 RestartPreventExitStatus=2
-RestartSec=30
+RestartSec=60
 TimeoutStopSec=30
 KillMode=control-group
 UMask=0077
@@ -106,8 +141,8 @@ PrivateTmp=yes
 PrivateDevices=yes
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=$trading_home
-ReadOnlyPaths=$build_directory
+ReadWritePaths=$trading_home $github_cache_dir
+ReadOnlyPaths=$repository $build_directory $github_config_dir
 CapabilityBoundingSet=
 RestrictSUIDSGID=yes
 LockPersonality=yes
@@ -138,12 +173,39 @@ preflight() {
     *) fail "GitHub CLI must be installed in the service PATH" ;;
   esac
   command -v runuser >/dev/null || fail "runuser is required"
-  service_home="$(getent passwd "$service_user" | cut -d: -f6)"
-  [[ -n "$service_home" ]] || fail "service user home is missing"
-  command=(
+  [[ "$(getent passwd "$service_user" | cut -d: -f6)" == "$service_home" ]] || \
+    fail "service user home must be $service_home"
+  service_uid="$(id -u "$service_user")"
+  service_gid="$(id -g "$service_user")"
+  for directory in \
+    "$service_home" \
+    "$github_config_parent" \
+    "$github_config_dir" \
+    "$github_cache_parent" \
+    "$github_cache_dir"; do
+    [[ -d "$directory" && ! -L "$directory" ]] || fail "service GitHub directory is invalid: $directory"
+    [[ "$(stat -c '%u:%g:%a' "$directory")" == "$service_uid:$service_gid:700" ]] || \
+      fail "service GitHub directory must be service-owned with mode 0700: $directory"
+  done
+  service_environment=(
     env -i
     HOME="$service_home"
+    GH_CONFIG_DIR="$github_config_dir"
+    XDG_CACHE_HOME="$service_home/.cache"
+    GH_HOST=github.com
+    GH_PROMPT_DISABLED=1
     PATH=/usr/local/bin:/usr/bin:/bin
+  )
+  if [[ "$(id -un)" == "$service_user" ]]; then
+    "${service_environment[@]}" gh auth status --hostname github.com >/dev/null
+  elif ((EUID == 0)); then
+    runuser -u "$service_user" -- \
+      "${service_environment[@]}" gh auth status --hostname github.com >/dev/null
+  else
+    fail "run check or install as root or the service user"
+  fi
+  command=(
+    "${service_environment[@]}"
     TRADING_LAB_MODE=paper
     TRADING_LAB_HOME="$trading_home"
     TRADING_LAB_PAPER_ACTIVATION_ID=
@@ -177,6 +239,7 @@ case "$command_name" in
       render_unit
       exit 0
     fi
+    state_check
     preflight
     [[ "$command_name" == check ]] && exit 0
     ((EUID == 0)) || fail "install must run as root"
@@ -195,6 +258,28 @@ case "$command_name" in
     systemctl daemon-reload
     systemctl enable --now "$unit_name"
     echo "installed and boot-enabled: $unit_name"
+    ;;
+  check-state|migrate-state)
+    [[ $# -eq 4 ]] || { usage; exit 2; }
+    trading_home="$2"
+    service_user="$3"
+    service_group="$4"
+    for path in "$repository" "$trading_home"; do
+      [[ "$path" =~ ^/[A-Za-z0-9_./:-]+$ ]] || fail "paths must be absolute and systemd-safe"
+    done
+    [[ "$trading_home" == "$repository/.trading-lab" ]] || \
+      fail "TRADING_LAB_HOME must be the project-local .trading-lab directory"
+    [[ "$service_user" =~ ^[a-z_][a-z0-9_-]*$ ]] || fail "invalid service user"
+    [[ "$service_group" =~ ^[a-z_][a-z0-9_-]*$ ]] || fail "invalid service group"
+    command -v python3 >/dev/null || fail "Python 3 is required for state migration"
+    [[ -f "$state_helper" && ! -L "$state_helper" ]] || fail "state migration helper is invalid"
+    action=check
+    [[ "$command_name" == migrate-state ]] && action=migrate
+    python3 "$state_helper" "$action" \
+      --repository "$repository" \
+      --home "$trading_home" \
+      --service-user "$service_user" \
+      --service-group "$service_group"
     ;;
   status)
     [[ $# -eq 1 ]] || { usage; exit 2; }

@@ -8,10 +8,15 @@ from pathlib import Path
 
 import pytest
 
+import systematic_trading_lab.cli as cli
 import systematic_trading_lab.paper_supervision as supervision
 from systematic_trading_lab.config import ConfigurationError, load_settings
 from systematic_trading_lab.paper_observation import PaperObservation, PaperObservationStatus
-from systematic_trading_lab.runtime_build import InstalledRuntimeIdentity, RuntimeBuildIdentity
+from systematic_trading_lab.runtime_build import (
+    InstalledRuntimeIdentity,
+    RuntimeBuildAttestationIndeterminateError,
+    RuntimeBuildIdentity,
+)
 
 NOW = datetime(2026, 8, 12, tzinfo=UTC)
 COMMIT = "a" * 40
@@ -125,6 +130,36 @@ def _status(*, complete: bool) -> PaperObservationStatus:
     )
 
 
+def _replace_head_with_modified_risk(repository: Path, risk_config: Path) -> None:
+    original = subprocess.run(
+        ["git", "-C", str(repository), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    risk_config.write_text('{"changed":true}\n', encoding="utf-8")
+    subprocess.run(["git", "-C", str(repository), "add", str(risk_config)], check=True)
+    subprocess.run(
+        ["git", "-C", str(repository), "commit", "-qm", "replacement risk"],
+        check=True,
+        env={
+            "PATH": os.environ["PATH"],
+            "GIT_AUTHOR_NAME": "Test",
+            "GIT_AUTHOR_EMAIL": "test@example.com",
+            "GIT_COMMITTER_NAME": "Test",
+            "GIT_COMMITTER_EMAIL": "test@example.com",
+        },
+    )
+    replacement = subprocess.run(
+        ["git", "-C", str(repository), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    subprocess.run(["git", "-C", str(repository), "reset", "-q", original], check=True)
+    subprocess.run(["git", "-C", str(repository), "replace", original, replacement], check=True)
+
+
 def test_supervision_accepts_only_fixed_private_read_only_configuration(tmp_path: Path) -> None:
     repository, home, runtime, wheel, manifest, environment = _supervision_files(tmp_path)
     assert (
@@ -173,12 +208,43 @@ def test_supervision_rejects_missing_or_write_enabled_environment(tmp_path: Path
         _validate(repository, home, runtime, wheel, manifest, environment)
 
 
-def test_supervision_rejects_stale_or_modified_risk_configuration(tmp_path: Path) -> None:
+def test_supervision_rejects_stale_or_modified_risk_configuration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     repository, home, runtime, wheel, manifest, environment = _supervision_files(tmp_path)
     risk_config = repository / "config/risk/alpaca-paper-v1.json"
+    alternate_worktree = tmp_path / "clean-worktree"
+    subprocess.run(
+        ["git", "-C", str(repository), "worktree", "add", "--detach", str(alternate_worktree)],
+        check=True,
+        capture_output=True,
+    )
     risk_config.write_text('{"changed":true}\n', encoding="utf-8")
+    monkeypatch.setenv("GIT_WORK_TREE", str(alternate_worktree))
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(tmp_path / "untrusted-git-config"))
     with pytest.raises(ConfigurationError, match="risk configuration is not clean"):
         _validate(repository, home, runtime, wheel, manifest, environment)
+    monkeypatch.delenv("GIT_WORK_TREE")
+    monkeypatch.delenv("GIT_CONFIG_GLOBAL")
+
+    _replace_head_with_modified_risk(repository, risk_config)
+    subprocess.run(
+        ["git", "-C", str(repository), "config", "core.worktree", str(alternate_worktree)],
+        check=True,
+    )
+    fsmonitor_marker = tmp_path / "fsmonitor-ran"
+    subprocess.run(
+        ["git", "-C", str(repository), "config", "core.fsmonitor", f"touch {fsmonitor_marker}"],
+        check=True,
+    )
+    with pytest.raises(ConfigurationError, match="risk configuration is not clean"):
+        _validate(repository, home, runtime, wheel, manifest, environment)
+    assert not fsmonitor_marker.exists()
+    subprocess.run(["git", "-C", str(repository), "replace", "-d", "HEAD"], check=True)
+    subprocess.run(
+        ["git", "--git-dir", str(repository / ".git"), "config", "--unset", "core.worktree"],
+        check=True,
+    )
 
     risk_config.write_text("{}\n", encoding="utf-8")
     (repository / "pyproject.toml").write_text(
@@ -250,6 +316,42 @@ def test_runtime_verification_binds_attestation_install_and_commit(
     assert calls == ["attested", "installed"]
     with pytest.raises(ConfigurationError, match="commit differs"):
         supervision.verify_observation_runtime(wheel, manifest, expected_commit="f" * 40)
+
+
+def test_indeterminate_attestation_stops_before_observation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    arguments = cli.parser().parse_args(
+        [
+            "paper",
+            "supervise-observation",
+            "paper-reboot-drill",
+            "--runtime",
+            str(tmp_path / "runtime"),
+            "--wheel",
+            str(tmp_path / "runtime.whl"),
+            "--manifest",
+            str(tmp_path / "runtime-build-manifest.json"),
+            "--repository",
+            str(tmp_path),
+        ]
+    )
+    settings = load_settings(
+        {"TRADING_LAB_MODE": "paper", "TRADING_LAB_HOME": str(tmp_path / "state")}
+    )
+    monkeypatch.setattr(cli, "validate_observation_supervision", lambda *args, **kwargs: COMMIT)
+
+    def indeterminate(*args: object, **kwargs: object) -> None:
+        raise RuntimeBuildAttestationIndeterminateError("indeterminate")
+
+    monkeypatch.setattr(cli, "verify_observation_runtime", indeterminate)
+    monkeypatch.setattr(
+        cli,
+        "_paper_observation_reader",
+        lambda *args, **kwargs: pytest.fail("observation must not start"),
+    )
+    with pytest.raises(RuntimeBuildAttestationIndeterminateError):
+        cli.run(arguments, settings)
 
 
 def test_supervisor_lock_blocks_a_second_local_writer(tmp_path: Path) -> None:
@@ -392,8 +494,22 @@ def test_generated_systemd_unit_is_boot_enabled_fixed_and_secret_free(tmp_path: 
     assert "WantedBy=multi-user.target" in unit
     assert "Restart=on-failure" in unit
     assert "RestartPreventExitStatus=2" in unit
+    assert "RestartSec=60" in unit
     assert "StartLimitIntervalSec=900" in unit
-    assert "StartLimitBurst=3" in unit
+    assert "StartLimitBurst=5" in unit
+    assert "Environment=HOME=/var/lib/systematic-trading-lab" in unit
+    assert "Environment=GH_CONFIG_DIR=/var/lib/systematic-trading-lab/.config/gh" in unit
+    assert "Environment=GH_HOST=github.com" in unit
+    assert "Environment=GH_PROMPT_DISABLED=1" in unit
+    for token_name in (
+        "GH_TOKEN",
+        "GITHUB_TOKEN",
+        "GH_ENTERPRISE_TOKEN",
+        "GITHUB_ENTERPRISE_TOKEN",
+    ):
+        assert f"Environment={token_name}=" in unit
+    assert "ReadOnlyPaths=" in unit and "/var/lib/systematic-trading-lab/.config/gh" in unit
+    assert "ReadWritePaths=" in unit and "/var/lib/systematic-trading-lab/.cache/gh" in unit
     assert "APCA_API_KEY_ID" not in unit
     assert "APCA_API_SECRET_KEY" not in unit
     if systemd_analyze := shutil.which("systemd-analyze"):
@@ -418,6 +534,44 @@ def test_generated_systemd_unit_is_boot_enabled_fixed_and_secret_free(tmp_path: 
         text=True,
     )
     assert invalid.returncode == 2
+
+    alternate_worktree = tmp_path / "redirected-worktree"
+    alternate_risk_config = alternate_worktree / "config/risk/alpaca-paper-v1.json"
+    alternate_risk_config.parent.mkdir(parents=True)
+    shutil.copyfile(repository / "config/risk/alpaca-paper-v1.json", alternate_risk_config)
+    _replace_head_with_modified_risk(repository, repository / "config/risk/alpaca-paper-v1.json")
+    subprocess.run(
+        ["git", "-C", str(repository), "config", "core.worktree", str(alternate_worktree)],
+        check=True,
+    )
+    fsmonitor_marker = tmp_path / "shell-fsmonitor-ran"
+    subprocess.run(
+        ["git", "-C", str(repository), "config", "core.fsmonitor", f"touch {fsmonitor_marker}"],
+        check=True,
+    )
+    (repository / "config/risk/alpaca-paper-v1.json").write_text(
+        '{"changed":true}\n', encoding="utf-8"
+    )
+    redirected = subprocess.run(
+        [
+            "bash",
+            str(helper),
+            "render",
+            "paper-reboot-drill",
+            str(runtime),
+            str(wheel),
+            str(manifest),
+            str(home),
+            service_user,
+            service_group,
+            "600",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert redirected.returncode == 2
+    assert "risk configuration differs from the runtime commit" in redirected.stderr
+    assert not fsmonitor_marker.exists()
 
 
 def test_supervision_shell_scripts_parse() -> None:

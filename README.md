@@ -70,9 +70,12 @@ evidence cannot submit, cancel, settle, or clear an emergency.
 
 `paper supervise-observation` runs that same assessment and recording path under one store-local
 lock. It accepts only a fixed project-local attested runtime, private exact paper configuration, a
-bounded interval, and no broker-write opt-in. The repository systemd helper pins those inputs in a
-boot-enabled, rate-limited service and logs to journald; see [operations.md](docs/operations.md).
-The campaign-start and one-shot observation writers use the same lock.
+bounded interval, and no broker-write opt-in. The repository systemd helper migrates only the exact
+mutable observer files from root ownership, keeps runtime builds root-owned, pins GitHub lookup, and
+retries indeterminate remote attestation failures within a fixed restart budget. Permanent local,
+authentication, configuration, and integrity failures do not restart. See
+[operations.md](docs/operations.md). The campaign-start and one-shot observation writers use the
+same lock.
 
 `paper record-equivalence` compares strict replay and shadow action-plan files with immutable stored
 paper quantity intents. It retains exact matches and mismatches under the observation campaign. The

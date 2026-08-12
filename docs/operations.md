@@ -77,12 +77,26 @@ resulting gap remains evidence. The one-shot command and database remain authori
 
 ### Linux VPS configuration
 
-Stop or disable every other observation runner before moving `execution.sqlite3`. Never synchronize
-an active SQLite store between machines. The Screen launcher and systemd service now call the same
-packaged supervisor command and contend on
-`TRADING_LAB_HOME/paper-observation.lock`, so only one can observe a store. The supervisor also holds
-the prior Screen lock name so an observer started before this upgrade blocks the new service.
-The campaign-start and one-shot record commands also take these locks.
+The Week 1 archive remains immutable and out of scope. Upgrade only the VPS working store. The
+migration changes ownership metadata in place; it does not copy, replace, or edit SQLite contents.
+It hashes the database and every present `-wal`, `-shm`, or `-journal` sidecar before and after the
+change. It creates or reuses both observation lock files, holds both locks, refuses active root or
+service-user Screen sessions and the systemd unit, and checks `/proc` for another process with the
+database or a sidecar open.
+
+Only these paths can become `trading-lab:trading-lab` mode `0600`:
+
+- `/opt/systematic-trading-lab/.env`;
+- `.trading-lab/execution.sqlite3` and present `execution.sqlite3-wal`,
+  `execution.sqlite3-shm`, or `execution.sqlite3-journal` files;
+- `.trading-lab/paper-observation-screen.lock` and `.trading-lab/paper-observation.lock`.
+
+The `.trading-lab` directory becomes `root:trading-lab` mode `1770`. Its sticky bit lets the service
+create SQLite journals and locks without letting it replace the root-owned `runtime-builds` entry.
+The repository, `.git`, risk configuration, `runtime-builds`, build directory, wheel, manifest, and
+verified environment remain root-owned and non-writable by the service user. The migration refuses
+unsafe links, multiple hard links, a writable repository root, or any protected runtime path that is
+not root-owned and non-group/world-writable. It never uses recursive `chown`.
 
 Use one dedicated, unprivileged service account. The repository and exact attested runtime must
 already exist under `/opt/systematic-trading-lab`. Put the wheel and manifest beside the verified
@@ -109,27 +123,105 @@ MANIFEST=$BUILD_DIRECTORY/runtime-build-manifest.json
 CAMPAIGN_ID=CAMPAIGN_ID
 SERVICE_USER=trading-lab
 SERVICE_GROUP=trading-lab
+SERVICE_HOME=/var/lib/systematic-trading-lab
+GH_CONFIG_DIR=$SERVICE_HOME/.config/gh
+GH_CACHE_DIR=$SERVICE_HOME/.cache/gh
 ```
 
-Create the service account and private state directory once. If `.env` already exists, do not run the
-`install /dev/null` command; verify its owner and mode instead.
+From the first SSH login, stop the old root runner, prepare the fixed service home, and migrate the
+working store before installation. `migrate-state` is safe to repeat after a completed migration. If
+the pre-migration `check-state` reports root-owned files, that is the expected upgrade blocker. Any
+active process, lock, unsafe path, or protected-runtime error must be resolved rather than bypassed.
 
 ```console
-sudo useradd --system --user-group --create-home --home-dir /var/lib/systematic-trading-lab --shell /usr/sbin/nologin "$SERVICE_USER"
-sudo install -d -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0700 "$TRADING_HOME"
-sudo test ! -e "$REPOSITORY/.env"
-sudo install -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0600 /dev/null "$REPOSITORY/.env"
+ssh VPS_USER@VPS_HOST
+cd /opt/systematic-trading-lab
+REPOSITORY=/opt/systematic-trading-lab
+TRADING_HOME=$REPOSITORY/.trading-lab
+BUILD_COMMIT=FULL_COMMIT
+BUILD_DIRECTORY=$TRADING_HOME/runtime-builds/$BUILD_COMMIT
+RUNTIME=$BUILD_DIRECTORY/verified-venv/bin/trading-lab
+WHEEL=$BUILD_DIRECTORY/systematic_trading_lab-0.1.0-py3-none-any.whl
+MANIFEST=$BUILD_DIRECTORY/runtime-build-manifest.json
+CAMPAIGN_ID=CAMPAIGN_ID
+SERVICE_USER=trading-lab
+SERVICE_GROUP=trading-lab
+SERVICE_HOME=/var/lib/systematic-trading-lab
+GH_CONFIG_DIR=$SERVICE_HOME/.config/gh
+GH_CACHE_DIR=$SERVICE_HOME/.cache/gh
+
+if ! id "$SERVICE_USER" >/dev/null 2>&1; then
+  sudo useradd --system --user-group --create-home --home-dir "$SERVICE_HOME" --shell /usr/sbin/nologin "$SERVICE_USER"
+fi
+sudo install -d -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0700 \
+  "$SERVICE_HOME" "$SERVICE_HOME/.config" "$GH_CONFIG_DIR" \
+  "$SERVICE_HOME/.cache" "$GH_CACHE_DIR"
+sudo chown root:root "$REPOSITORY"
+sudo chmod 0755 "$REPOSITORY"
+
+sudo "$REPOSITORY/scripts/paper_observation_systemd.sh" uninstall
+if command -v screen >/dev/null; then
+  sudo "$REPOSITORY/scripts/paper_observation_screen.sh" stop
+  sudo -u "$SERVICE_USER" env HOME="$SERVICE_HOME" \
+    "$REPOSITORY/scripts/paper_observation_screen.sh" stop
+fi
+! sudo systemctl is-active --quiet systematic-trading-lab-paper-observation.service
+! sudo pgrep -af '[t]rading-lab paper (start-observation|record-observation|supervise-observation)'
+
+if sudo test ! -e "$REPOSITORY/.env"; then
+  sudo install -o root -g root -m 0600 /dev/null "$REPOSITORY/.env"
+fi
 sudoedit "$REPOSITORY/.env"
-sudo chown "$SERVICE_USER:$SERVICE_GROUP" "$REPOSITORY/.env"
-sudo chmod 0600 "$REPOSITORY/.env"
-sudo -u "$SERVICE_USER" -H gh auth status
-chmod +x scripts/paper_observation_screen.sh scripts/paper_observation_systemd.sh scripts/cleanup_vps.sh
+# Expected to report the old root-owned mutable files before the first migration.
+sudo "$REPOSITORY/scripts/paper_observation_systemd.sh" check-state \
+  "$TRADING_HOME" "$SERVICE_USER" "$SERVICE_GROUP"
+sudo "$REPOSITORY/scripts/paper_observation_systemd.sh" migrate-state \
+  "$TRADING_HOME" "$SERVICE_USER" "$SERVICE_GROUP"
+sudo "$REPOSITORY/scripts/paper_observation_systemd.sh" check-state \
+  "$TRADING_HOME" "$SERVICE_USER" "$SERVICE_GROUP"
 ```
 
-If the GitHub check reports no login, authenticate that service account with
-`sudo -u "$SERVICE_USER" -H gh auth login --hostname github.com --git-protocol https --web`, then
-rerun `gh auth status`. GitHub credentials stay in the service account's home, not the repository or
-unit.
+Verify exact owners, modes, store access, and effective runtime protection. Both store access tests
+must pass, the read-only SQLite check must print `ok`, and every protected-runtime write test must
+remain false.
+
+```console
+sudo stat -c '%U:%G %a %n' "$TRADING_HOME" "$REPOSITORY/.env" \
+  "$TRADING_HOME/execution.sqlite3" \
+  "$TRADING_HOME/paper-observation-screen.lock" \
+  "$TRADING_HOME/paper-observation.lock"
+sudo stat -c '%U:%G %a %n' "$TRADING_HOME/runtime-builds" "$BUILD_DIRECTORY" \
+  "$WHEEL" "$MANIFEST" "$RUNTIME"
+sudo -u "$SERVICE_USER" test -r "$TRADING_HOME/execution.sqlite3"
+sudo -u "$SERVICE_USER" test -w "$TRADING_HOME/execution.sqlite3"
+sudo -u "$SERVICE_USER" test -x "$RUNTIME"
+sudo -u "$SERVICE_USER" test -r "$WHEEL"
+sudo -u "$SERVICE_USER" test -r "$MANIFEST"
+sudo -u "$SERVICE_USER" env -i PATH=/usr/local/bin:/usr/bin:/bin \
+  DATABASE="$TRADING_HOME/execution.sqlite3" python3 -c \
+  'import os, sqlite3; from pathlib import Path; connection = sqlite3.connect(Path(os.environ["DATABASE"]).as_uri() + "?mode=ro", uri=True); assert connection.execute("PRAGMA quick_check").fetchone() == ("ok",); print("ok")'
+while IFS= read -r -d '' path; do
+  sudo -u "$SERVICE_USER" test ! -w "$path" || { echo "writable protected runtime: $path" >&2; exit 1; }
+done < <(sudo find "$BUILD_DIRECTORY" -print0)
+```
+
+Authenticate with the same fixed, secret-free lookup environment used by the unit. If the status
+command reports no login, run the login command once, then rerun status. Tokens stay in the private
+GitHub CLI configuration, never in the unit.
+
+```console
+if ! sudo -u "$SERVICE_USER" env -i HOME="$SERVICE_HOME" GH_CONFIG_DIR="$GH_CONFIG_DIR" \
+  XDG_CACHE_HOME="$SERVICE_HOME/.cache" GH_HOST=github.com GH_PROMPT_DISABLED=1 \
+  PATH=/usr/local/bin:/usr/bin:/bin gh auth status --hostname github.com; then
+  sudo -u "$SERVICE_USER" env -i HOME="$SERVICE_HOME" GH_CONFIG_DIR="$GH_CONFIG_DIR" \
+    XDG_CACHE_HOME="$SERVICE_HOME/.cache" GH_HOST=github.com \
+    PATH=/usr/local/bin:/usr/bin:/bin \
+    gh auth login --hostname github.com --git-protocol https --web
+fi
+sudo -u "$SERVICE_USER" env -i HOME="$SERVICE_HOME" GH_CONFIG_DIR="$GH_CONFIG_DIR" \
+  XDG_CACHE_HOME="$SERVICE_HOME/.cache" GH_HOST=github.com GH_PROMPT_DISABLED=1 \
+  PATH=/usr/local/bin:/usr/bin:/bin gh auth status --hostname github.com
+```
 
 The private `.env` must contain exactly `TRADING_LAB_MODE=paper`, the same absolute
 `TRADING_LAB_HOME` shown above, and nonempty `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY` values. The
@@ -139,6 +231,9 @@ code-commit entries. The generated unit contains no credentials and explicitly b
 broker-write opt-in variables. The CLI reads the four allowed values from the repository `.env` after
 systemd sets the working directory.
 Runtime-verification `git` and `gh` subprocesses receive no broker credentials or write opt-in.
+Git ignores inherited `GIT_*` controls. Attestation verification uses explicit `github.com`, fixed
+`HOME`, `GH_CONFIG_DIR`, and cache paths. The unit clears every GitHub CLI token variable so the
+private `GH_CONFIG_DIR` is the only credential source; the unit contains no token.
 
 Check the exact runtime, manifest, wheel, installed distribution, configuration, interval, and
 write-disabled state before installation:
@@ -165,7 +260,8 @@ sudo ./scripts/paper_observation_systemd.sh logs
 sudo systemctl show systematic-trading-lab-paper-observation.service -p MainPID -p ExecMainStatus -p NRestarts
 ```
 
-The installer runs the same fail-closed preflight as the service, refuses an active Screen observer,
+The installer first repeats the ownership check. It then runs the same fail-closed preflight as the
+service, refuses an active Screen observer,
 checks the rendered unit with `systemd-analyze verify`, writes one root-owned unit, runs
 `daemon-reload`, and calls `enable --now`. `WantedBy=multi-user.target`
 starts it after later boots; `Wants=` and `After=network-online.target` place it after the host's
@@ -173,19 +269,29 @@ configured online wait. Output and errors go to journald. The service uses a 600
 samples immediately on each start. A reboot just before the next scheduled sample leaves roughly 300
 seconds for boot and recovery before the fixed 900-second gap is breached. Software cannot guarantee
 that limit during a long provider outage, host outage, boot, DNS failure, or runtime-attestation
-failure.
+failure. Startup still requires live GitHub attestation access; no cached proof lifecycle has been
+reviewed. A failed or indeterminate remote verdict never permits an observation.
 
 The service handles terminal states as follows:
 
 | Event | Result |
 |---|---|
 | Clean host reboot | systemd stops the process group, boot enablement starts it after network-online, and the loop samples immediately after preflight. |
-| Unexpected crash or signal | Restart after 30 seconds, limited to three starts per 900 seconds. |
+| Unexpected crash or signal | Restart after 60 seconds, limited to five starts per 900 seconds. |
 | Manual service restart | Release and reacquire the same store-local lock, reassess, then sample immediately if the campaign is active. |
 | Campaign already complete | Print the immutable assessment and exit 0 without another sample, whether the campaign passed or failed. |
 | Invalid runtime, campaign, interval, `.env`, home, store, or journal | Exit 2, remain visibly failed, and do not restart automatically. |
+| Missing `gh`, GitHub authentication failure, or local provenance/integrity mismatch | Exit 2, remain failed, and do not restart automatically. |
+| Timeout or recognized DNS, connection, rate-limit, or HTTP 5xx attestation failure | Exit 75 without observing, then use the bounded 60-second restart policy. |
 | Lock already held | Exit 2 without a second observer; stop the old runner, then use `systemctl reset-failed` and `systemctl start`. |
 | Broker read failure or drift | Record the existing immutable result and continue so later recovery remains visible. |
+
+GitHub CLI does not expose separate stable exit codes for transport failure, a missing attestation,
+and a remote policy or signature rejection. Every exit remains fail-closed. The wrapper retries only
+a timeout or explicit transport, rate-limit, or server-availability error. Authentication, missing
+attestation, policy/signature rejection, and unrecognized failures exit 2. A retryable failure gets
+at most five starts in 900 seconds, then remains failed for operator review; a retry never infers a
+valid attestation.
 
 Use `trading-lab paper assess-observation CAMPAIGN_ID` for the authoritative final exit status. The
 supervisor's clean terminal exit means only that no more samples are due; it does not turn a failed

@@ -234,7 +234,10 @@ def _regular_file(path: Path, name: str, *, executable: bool = False) -> Path:
 def _private_directory(path: Path, name: str) -> Path:
     resolved = _regular_directory(path, name)
     details = resolved.stat()
-    if details.st_uid != os.geteuid() or stat.S_IMODE(details.st_mode) & 0o077:
+    mode = stat.S_IMODE(details.st_mode)
+    service_owned = details.st_uid == os.geteuid() and mode == 0o700
+    root_shared = details.st_uid == 0 and details.st_gid == os.getegid() and mode == 0o1770
+    if not service_owned and not root_shared:
         raise ConfigurationError(f"paper observation {name} must be owned privately")
     return resolved
 
@@ -248,22 +251,45 @@ def _private_file(path: Path, name: str) -> Path:
 
 
 def _verify_repository_binding(repository: Path, risk_config: Path, build_commit: str) -> None:
-    commands = (
-        (["rev-parse", "--verify", "HEAD"], build_commit),
-        (["ls-files", "--error-unmatch", str(risk_config.relative_to(repository))], None),
-        (["diff", "--quiet", "HEAD", "--", str(risk_config.relative_to(repository))], None),
+    git_command = [
+        "git",
+        "--no-replace-objects",
+        "--git-dir",
+        str(repository / ".git"),
+    ]
+    environment = non_broker_subprocess_environment()
+    environment.update(
+        {
+            "GIT_CONFIG_GLOBAL": "/dev/null",
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "HOME": "/nonexistent",
+            "XDG_CONFIG_HOME": "/nonexistent",
+        }
     )
     try:
-        for arguments, expected_output in commands:
-            result = subprocess.run(
-                ["git", "-C", str(repository), *arguments],
-                check=True,
-                capture_output=True,
-                env=non_broker_subprocess_environment(),
-                text=True,
-                timeout=10,
-            )
-            if expected_output is not None and result.stdout.strip() != expected_output:
-                raise ConfigurationError("repository commit differs from the verified runtime")
+        head = subprocess.run(
+            [*git_command, "rev-parse", "--verify", "HEAD"],
+            check=True,
+            capture_output=True,
+            env=environment,
+            text=True,
+            timeout=10,
+        )
+        if head.stdout.strip() != build_commit:
+            raise ConfigurationError("repository commit differs from the verified runtime")
+        committed_risk = subprocess.run(
+            [
+                *git_command,
+                "cat-file",
+                "blob",
+                f"{build_commit}:{risk_config.relative_to(repository)}",
+            ],
+            check=True,
+            capture_output=True,
+            env=environment,
+            timeout=10,
+        )
+        if committed_risk.stdout != risk_config.read_bytes():
+            raise ConfigurationError("risk configuration is not clean at the runtime commit")
     except (OSError, subprocess.SubprocessError) as error:
         raise ConfigurationError("risk configuration is not clean at the runtime commit") from error

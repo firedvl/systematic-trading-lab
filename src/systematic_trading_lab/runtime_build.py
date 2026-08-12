@@ -34,10 +34,28 @@ _MANIFEST_KEYS = {
     "wheel_filename",
     "wheel_sha256",
 }
+_TRANSIENT_ATTESTATION_FAILURES = (
+    "connection refused",
+    "connection reset",
+    "could not resolve host",
+    "dial tcp",
+    "i/o timeout",
+    "network is unreachable",
+    "no such host",
+    "rate limit exceeded",
+    "server misbehaving",
+    "temporary failure in name resolution",
+    "tls handshake timeout",
+    "timeout awaiting response headers",
+)
 
 
 class RuntimeBuildVerificationError(RuntimeError):
     pass
+
+
+class RuntimeBuildAttestationIndeterminateError(RuntimeBuildVerificationError):
+    """The remote attestation verdict could not be established for this attempt."""
 
 
 @dataclass(frozen=True)
@@ -320,6 +338,8 @@ def _verify_github_attestation(path: Path) -> None:
                 str(path),
                 "--repo",
                 SOURCE_REPOSITORY,
+                "--hostname",
+                "github.com",
                 "--signer-workflow",
                 f"{SOURCE_REPOSITORY}/{SIGNER_WORKFLOW}",
                 "--deny-self-hosted-runners",
@@ -330,6 +350,20 @@ def _verify_github_attestation(path: Path) -> None:
             text=True,
             timeout=30,
         )
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeBuildAttestationIndeterminateError(
+            "runtime build attestation verdict is indeterminate"
+        ) from error
+    except subprocess.CalledProcessError as error:
+        stderr = error.stderr.lower() if isinstance(error.stderr, str) else ""
+        if error.returncode == 1 and (
+            any(message in stderr for message in _TRANSIENT_ATTESTATION_FAILURES)
+            or any(f"http {status}" in stderr for status in (429, 500, 502, 503, 504))
+        ):
+            raise RuntimeBuildAttestationIndeterminateError(
+                "runtime build attestation verdict is indeterminate"
+            ) from error
+        raise RuntimeBuildVerificationError("runtime build attestation failed") from error
     except (OSError, UnicodeError, subprocess.SubprocessError) as error:
         raise RuntimeBuildVerificationError("runtime build attestation failed") from error
 
