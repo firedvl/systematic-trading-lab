@@ -70,6 +70,7 @@ def load_dotenv(
         return
     except OSError as error:
         raise ConfigurationError(f"cannot read environment file: {source}") from error
+    names: set[str] = set()
     for line_number, line in enumerate(lines, 1):
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
@@ -77,6 +78,9 @@ def load_dotenv(
         name, separator, raw_value = stripped.partition("=")
         if not separator or not _ENVIRONMENT_NAME.fullmatch(name) or name not in _DOTENV_KEYS:
             raise ConfigurationError(f"invalid .env entry at line {line_number}")
+        if name in names:
+            raise ConfigurationError(f"duplicate .env entry at line {line_number}")
+        names.add(name)
         value = raw_value.strip()
         if value[:1] in {'"', "'"} or value[-1:] in {'"', "'"}:
             if len(value) < 2 or value[0] != value[-1]:
@@ -109,3 +113,15 @@ def load_settings(environment: Mapping[str, str] | None = None) -> Settings:
         home=Path(raw_home).expanduser().resolve(),
         paper_write_request=request,
     )
+
+
+def non_broker_subprocess_environment(
+    environment: Mapping[str, str] | None = None,
+) -> dict[str, str]:
+    """Copy an environment without broker credentials or write opt-in."""
+    values = os.environ if environment is None else environment
+    return {
+        name: value
+        for name, value in values.items()
+        if not name.startswith(("APCA_", "TRADING_LAB_PAPER_"))
+    }

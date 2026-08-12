@@ -18,6 +18,7 @@ from pathlib import Path, PurePosixPath
 from urllib.parse import unquote, urlparse
 from zipfile import BadZipFile, ZipFile
 
+from .config import non_broker_subprocess_environment
 from .fingerprints import fingerprint
 
 SCHEMA_VERSION = "runtime-build-manifest-v1"
@@ -325,6 +326,7 @@ def _verify_github_attestation(path: Path) -> None:
             ],
             check=True,
             capture_output=True,
+            env=non_broker_subprocess_environment(),
             text=True,
             timeout=30,
         )

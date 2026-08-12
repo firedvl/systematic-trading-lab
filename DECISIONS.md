@@ -531,6 +531,13 @@
 ## 2026-08-12 — Final observation status preserves historical failures
 
 - Decision: derive current health, completion, continuity, and final campaign result separately from immutable observations. A completed campaign passes only when its latest state is healthy and fresh, no completed sample gap exceeds the configured maximum, and no drift occurred.
-- Context: Week 1 ended healthy after 1008 healthy samples and one recovered read failure, but two VPS reboots created a real 1030-second gap against the fixed 900-second limit. The old assessor exposed the gap but based its exit code only on current health.
+- Context: Week 1 ended healthy after 1008 healthy samples and one recovered read failure, but two VPS reboots created a real gap of approximately 1030.755 seconds, reported as 1031 seconds, against the fixed 900-second limit. The old assessor exposed the gap but based its exit code only on current health.
 - Consequences: a recovered read failure remains counted but does not alone fail the campaign because scheduled failure and recovery are M5 evidence. Historical drift and excess gaps remain final blockers after recovery. Existing databases need no migration or evidence change, and assessment grants no broker authority.
 - Revisit when: a separately reviewed policy defines tolerated failure budgets or restart-safe supervision.
+
+## 2026-08-12 — systemd supervises one verified read-only observation loop
+
+- Decision: use one boot-enabled systemd service to run the packaged paper-observation supervisor from an exact project-local attested runtime. Pin the campaign, runtime artifacts, home, and interval in a generated unit; hold one lock beside the execution store; keep Screen as an optional launcher for the same command.
+- Context: GNU Screen survives SSH disconnects but not a host reboot. Week 1 proved that manual restart can breach the 900-second continuity limit.
+- Consequences: normal boot and unexpected process failure restart the read-only loop, while status 2 configuration, provenance, journal, and lock failures stay failed without a restart storm. The service blanks paper-write opt-in, loads credentials only from a private repository `.env`, logs to journald, and exits after either final campaign result. A 600-second interval leaves limited reboot tolerance; sufficiently long host, network, DNS, broker, or provenance-verification outages still fail continuity.
+- Revisit when: the bounded VPS recovery drill exposes a missing boot dependency or the observation store moves off-host.

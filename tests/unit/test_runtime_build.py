@@ -212,6 +212,9 @@ def test_github_attestation_uses_fixed_authority(
 ) -> None:
     artifact = tmp_path / "artifact.whl"
     calls: list[tuple[list[str], dict[str, object]]] = []
+    monkeypatch.setenv("APCA_API_SECRET_KEY", "must-not-reach-gh")
+    monkeypatch.setenv("TRADING_LAB_PAPER_ACTIVATION_ID", "must-not-reach-gh")
+    monkeypatch.setenv("GH_TOKEN", "test-github-token")
 
     def run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
         calls.append((command, kwargs))
@@ -219,6 +222,11 @@ def test_github_attestation_uses_fixed_authority(
 
     monkeypatch.setattr(subprocess, "run", run)
     _verify_github_attestation(artifact)
+    subprocess_environment = calls[0][1].pop("env")
+    assert isinstance(subprocess_environment, dict)
+    assert subprocess_environment["GH_TOKEN"] == "test-github-token"
+    assert "APCA_API_SECRET_KEY" not in subprocess_environment
+    assert "TRADING_LAB_PAPER_ACTIVATION_ID" not in subprocess_environment
     assert calls == [
         (
             [
