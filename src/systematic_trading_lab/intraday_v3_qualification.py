@@ -7,11 +7,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
-from .experiments import ExperimentError, ExperimentRegistry
+from .experiments import ExperimentError
 from .fingerprints import canonicalize, fingerprint
 from .intraday_qualification import REVIEWED_POLICY_FINGERPRINT, IntradayQualificationPolicy
+from .intraday_v3_campaign import parse_intraday_v3_campaign_plan
 
 BINDING_SCHEMA = "intraday-v3-qualification-binding-v1"
 REPORT_SCHEMA = "intraday-backtest-report-v2"
@@ -64,6 +65,18 @@ _REQUIRED_INTEGRITY_FINGERPRINTS = (
     "evidence_integrity_fingerprint",
     "report_fingerprint",
 )
+
+
+class IntradayV3QualificationRegistry(Protocol):
+    def get(self, experiment_id: str) -> Mapping[str, object]: ...
+
+    def list(self, campaign_id: str) -> Sequence[Mapping[str, object]]: ...
+
+    def get_campaign_plan(self, campaign_id: str) -> Mapping[str, object]: ...
+
+    def verify_intraday_execution_source_evidence(
+        self, experiment_id: str, evidence: object
+    ) -> None: ...
 
 
 @dataclass(frozen=True)
@@ -334,34 +347,62 @@ def _evaluate_normalized_v3_qualification(
 
 
 def evaluate_registered_v3_qualification(
-    registry: ExperimentRegistry,
+    registry: IntradayV3QualificationRegistry,
     binding: IntradayV3QualificationBinding,
     policy: IntradayQualificationPolicy,
     base_experiment_id: str,
-    higher_cost_experiment_ids: Mapping[str, str],
-    delay_experiment_ids: Mapping[str, str],
 ) -> dict[str, object]:
     if (
         policy.policy_id != binding.threshold_policy_id
         or policy.fingerprint != binding.threshold_policy_fingerprint
     ):
         raise ValueError("V3 qualification policy differs from binding")
-    _exact_report_roles(
-        higher_cost_experiment_ids, ("increased-cost", "harsher-cost"), "higher-cost"
-    )
-    _exact_report_roles(delay_experiment_ids, ("plus-1-bar", "plus-2-bars"), "delay")
+    plan = parse_intraday_v3_campaign_plan(registry.get_campaign_plan(binding.campaign_id))
+    selected = _sealed_qualification_group(plan.payload, binding, base_experiment_id)
     records = registry.list(binding.campaign_id)
-    completed = _registered_campaign_evidence(registry, binding, records)
-    selected = {
-        "base": base_experiment_id,
-        **higher_cost_experiment_ids,
-        **delay_experiment_ids,
-    }
+    completed, campaign_sources = _registered_campaign_evidence(registry, binding, records)
     try:
         reports = {role: completed[experiment_id] for role, experiment_id in selected.items()}
     except KeyError as error:
         raise ValueError("registered V3 qualification source is not completed") from error
-    return _evaluate_normalized_v3_qualification(binding, policy, reports, records, True)
+    for report in reports.values():
+        provenance = report.get("provenance")
+        if (
+            not isinstance(provenance, Mapping)
+            or provenance.get("campaign_plan_fingerprint") != plan.plan_fingerprint
+        ):
+            raise ValueError("registered V3 qualification source plan differs")
+    evidence = _evaluate_normalized_v3_qualification(binding, policy, reports, records, True)
+    evidence["campaign_sources"] = campaign_sources
+    evidence["campaign_evidence_fingerprint"] = fingerprint(campaign_sources)
+    unsigned = dict(evidence)
+    unsigned.pop("report_fingerprint")
+    evidence["report_fingerprint"] = fingerprint(unsigned)
+    return evidence
+
+
+def _sealed_qualification_group(
+    plan: Mapping[str, object],
+    binding: IntradayV3QualificationBinding,
+    base_experiment_id: str,
+) -> dict[str, str]:
+    if plan.get("campaign_id") != binding.campaign_id:
+        raise ValueError("sealed V3 qualification plan differs")
+    groups = plan.get("qualification_groups")
+    if not isinstance(groups, list):
+        raise ValueError("sealed V3 qualification groups differ")
+    matches = []
+    for group in groups:
+        roles = group.get("roles") if isinstance(group, Mapping) else None
+        if isinstance(roles, Mapping) and roles.get("base") == base_experiment_id:
+            matches.append(roles)
+    if (
+        len(matches) != 1
+        or set(matches[0]) != set(_ROLES)
+        or not all(isinstance(value, str) and value for value in matches[0].values())
+    ):
+        raise ValueError("sealed V3 qualification group differs")
+    return dict(matches[0])
 
 
 def _exact_report_roles(
@@ -508,11 +549,11 @@ def _report(
 
 
 def _registered(
-    registry: ExperimentRegistry,
+    registry: IntradayV3QualificationRegistry,
     binding: IntradayV3QualificationBinding,
     experiment_id: str,
     campaign: object | None = None,
-) -> tuple[dict[str, object], dict[str, object]]:
+) -> tuple[Mapping[str, object], dict[str, object]]:
     record = registry.get(experiment_id)
     spec = record.get("spec_json")
     if (
@@ -523,6 +564,8 @@ def _registered(
         and spec.get("campaign_id") != campaign
     ):
         raise ValueError("registered V3 evidence provenance differs")
+    if record.get("publication_integrity_conflict") is not None:
+        raise ValueError("registered V3 publication integrity conflict is present")
     if record.get("status") != "completed":
         # A failed reservation is accounting evidence, not an execution report.  In
         # particular, never invent a V3 execution contract or diagnostic pair for it.
@@ -557,21 +600,28 @@ def _registered(
     ):
         raise ValueError("registered V3 report differs from record")
     evidence = raw.get("execution_source_provenance")
-    if not isinstance(evidence, Mapping):
+    review = evidence.get("review") if isinstance(evidence, Mapping) else None
+    source_binding = evidence.get("binding") if isinstance(evidence, Mapping) else None
+    if not isinstance(review, Mapping) or not isinstance(source_binding, Mapping):
         raise ValueError("registered V3 report lacks execution source evidence")
     try:
         registry.verify_intraday_execution_source_evidence(experiment_id, evidence)
     except ExperimentError as error:
         raise ValueError("registered V3 execution source evidence differs") from error
-    return record, report
+    return record, {
+        **report,
+        "source_review_fingerprint": fingerprint(review),
+        "source_binding_fingerprint": fingerprint(source_binding),
+    }
 
 
 def _registered_campaign_evidence(
-    registry: ExperimentRegistry,
+    registry: IntradayV3QualificationRegistry,
     binding: IntradayV3QualificationBinding,
     records: Sequence[Mapping[str, object]],
-) -> dict[str, dict[str, object]]:
+) -> tuple[dict[str, dict[str, object]], list[dict[str, object]]]:
     completed: dict[str, dict[str, object]] = {}
+    sources: list[dict[str, object]] = []
     seen: set[str] = set()
     for listed in records:
         experiment_id = listed.get("experiment_id")
@@ -583,11 +633,40 @@ def _registered_campaign_evidence(
             raise ValueError("registered V3 campaign record differs")
         if record.get("status") == "completed":
             completed[experiment_id] = report
+            sources.append(
+                {
+                    "experiment_id": experiment_id,
+                    "status": "completed",
+                    "report_fingerprint": report["fingerprint"],
+                    "source_review_fingerprint": report["source_review_fingerprint"],
+                    "source_binding_fingerprint": report["source_binding_fingerprint"],
+                }
+            )
         elif record.get("status") == "failed":
             failure = record.get("failure_info")
             if not isinstance(failure, str) or not failure.strip():
                 raise ValueError("registered V3 failed candidate lacks a durable reason")
-    return completed
+            spec = record.get("spec_json")
+            sources.append(
+                {
+                    "experiment_id": experiment_id,
+                    "status": "failed",
+                    "failure_info": failure,
+                    "spec_fingerprint": fingerprint(spec),
+                    "record_identity_fingerprint": fingerprint(
+                        {
+                            "experiment_id": experiment_id,
+                            "status": "failed",
+                            "spec": spec,
+                            "failure": failure,
+                        }
+                    ),
+                }
+            )
+        else:
+            raise ValueError("registered V3 campaign is not terminal")
+    sources.sort(key=lambda source: str(source["experiment_id"]))
+    return completed, sources
 
 
 def _gate_metrics(

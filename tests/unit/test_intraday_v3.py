@@ -398,6 +398,12 @@ def _spec(bars: Sequence[OHLCVBar]) -> IntradayV3ExperimentSpec:
         strategy_version="1",
         strategy_family="intraday-directional-momentum",
         code_commit="development-only-not-reviewed",
+        source_foundation_commit="development-only-not-reviewed",
+        campaign_plan_fingerprint="development-only-not-reviewed",
+        qualification_binding_id="intraday-v3-qualification-binding-v1",
+        qualification_binding_fingerprint="development-only-not-reviewed",
+        period_role="training",
+        variant_role="base",
         dataset_id="deterministic-intraday-fixture-v1",
         dataset_fingerprint=fingerprint(
             tuple(

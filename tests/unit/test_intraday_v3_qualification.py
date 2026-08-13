@@ -36,6 +36,9 @@ from systematic_trading_lab.providers import IntradayFixtureProvider
 
 _BINDING_PATH = Path("config/research/intraday-v3-qualification-binding-v1.json")
 _POLICY_PATH = Path("config/research/intraday-qualification-policy-v1.json")
+_PLAN_PATH = Path("config/research/intraday-campaign-v3.json")
+_PLAN = json.loads(_PLAN_PATH.read_text(encoding="utf-8"))
+_PLAN_FINGERPRINT = _PLAN["plan_fingerprint"]
 _AUTHORITY = {
     "research_qualification": False,
     "protected_holdout": False,
@@ -56,21 +59,21 @@ _PERIODS = (
     (
         "validation-a",
         "validation",
-        "2026-08-14T13:30:00+00:00",
-        "2026-10-16T19:55:00+00:00",
+        "2026-10-01T13:30:00+00:00",
+        "2026-12-03T20:55:00+00:00",
     ),
     ("training", "training", "2025-07-01T13:30:00+00:00", "2026-06-30T19:55:00+00:00"),
     (
         "validation-b",
         "validation",
-        "2026-10-19T13:30:00+00:00",
-        "2026-12-18T20:55:00+00:00",
+        "2026-12-04T14:30:00+00:00",
+        "2027-02-09T20:55:00+00:00",
     ),
     (
         "validation-c",
         "validation",
-        "2026-12-21T14:30:00+00:00",
-        "2027-02-26T20:55:00+00:00",
+        "2027-02-10T14:30:00+00:00",
+        "2027-04-15T19:55:00+00:00",
     ),
 )
 _PERIOD_FINGERPRINTS = {
@@ -79,6 +82,7 @@ _PERIOD_FINGERPRINTS = {
     "validation-b": "c" * 64,
     "validation-c": "d" * 64,
 }
+_SEALED_BASE_ID = "intraday-research-v3-event-driven-ma-trend-validation-a-base"
 
 
 def _binding_and_policy():
@@ -127,7 +131,7 @@ def _report(role: str, ordinal: int, base_id: str = "v3-base") -> dict[str, obje
         "source_foundation_commit": "d03be5eaa1e5d2d360424a6c0d06c1ce0bc6a723",
         "qualification_binding_id": binding.binding_id,
         "qualification_binding_fingerprint": binding.fingerprint,
-        "campaign_plan_fingerprint": "d" * 64,
+        "campaign_plan_fingerprint": _PLAN_FINGERPRINT,
         "execution_model_version": binding.execution_contract["model"],
         "earliest_fill_semantics": binding.execution_contract["earliest_fill_semantics"],
         "decision_queue_policy_version": binding.execution_contract["queue_policy"],
@@ -234,7 +238,7 @@ def _records(statuses: dict[int, str] | None = None) -> list[dict[str, object]]:
                     "candidate_ordinal": ordinal,
                     "qualification_binding_id": binding.binding_id,
                     "qualification_binding_fingerprint": binding.fingerprint,
-                    "campaign_plan_fingerprint": "d" * 64,
+                    "campaign_plan_fingerprint": _PLAN_FINGERPRINT,
                     "strategy_id": strategy[0],
                     "strategy_family": strategy[1],
                     "strategy_version": "1",
@@ -297,6 +301,22 @@ def _reports() -> dict[str, dict[str, object]]:
     }
 
 
+def _sealed_group_reports() -> dict[str, dict[str, object]]:
+    reports = _reports()
+    identifiers = {
+        "base": _SEALED_BASE_ID,
+        "increased-cost": "intraday-research-v3-event-driven-ma-trend-validation-a-increased-cost",
+        "harsher-cost": "intraday-research-v3-event-driven-ma-trend-validation-a-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-event-driven-ma-trend-validation-a-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-event-driven-ma-trend-validation-a-plus-2-bars",
+    }
+    for role, report in reports.items():
+        report["provenance"]["experiment_id"] = identifiers[role]
+        report["provenance"]["parent_candidate"] = None if role == "base" else identifiers["base"]
+        reports[role] = _rebind(report)
+    return reports
+
+
 def test_v3_qualification_binding_is_deterministic() -> None:
     first, _ = _binding_and_policy()
     assert first == load_intraday_v3_qualification_binding(_BINDING_PATH)
@@ -323,6 +343,12 @@ def test_builder_report_reaches_v3_qualification_report_boundary() -> None:
         strategy_version="1",
         strategy_family="intraday-directional-momentum",
         code_commit="development-only-not-reviewed",
+        source_foundation_commit="development-only-not-reviewed",
+        campaign_plan_fingerprint="development-only-not-reviewed",
+        qualification_binding_id="intraday-v3-qualification-binding-v1",
+        qualification_binding_fingerprint="development-only-not-reviewed",
+        period_role="training",
+        variant_role="base",
         dataset_id="deterministic-intraday-fixture-v1",
         dataset_fingerprint=fingerprint(
             tuple(
@@ -520,12 +546,17 @@ def test_v3_rejects_v1_report_and_forged_integrity() -> None:
 class _Registry:
     def __init__(self, records):
         self.records = records
+        self.plan = deepcopy(_PLAN)
 
     def get(self, experiment_id: str):
         return next(record for record in self.records if record["experiment_id"] == experiment_id)
 
     def list(self, campaign_id: str):
         return self.records
+
+    def get_campaign_plan(self, campaign_id: str):
+        assert campaign_id == "intraday-research-v3"
+        return self.plan
 
     def verify_intraday_execution_source_evidence(self, experiment_id: str, evidence: object):
         return None
@@ -566,14 +597,12 @@ def test_registered_v3_rejects_missing_source_binding_and_keeps_failed_visible(
             _Registry(records),
             binding,
             policy,
-            "v3-base",
-            {"increased-cost": "v3-increased-cost", "harsher-cost": "v3-harsher-cost"},
-            {"plus-1-bar": "v3-plus-1-bar", "plus-2-bars": "v3-plus-2-bars"},
+            _SEALED_BASE_ID,
         )
 
 
 def test_registered_v3_passing_gates_keep_all_authorities_false(tmp_path: Path) -> None:
-    reports = _reports()
+    reports = _sealed_group_reports()
     records = _records({ordinal: "failed" for ordinal in range(6, 61)})
     _bind_registered_reports(tmp_path, records, reports, source_bound=True)
 
@@ -582,19 +611,86 @@ def test_registered_v3_passing_gates_keep_all_authorities_false(tmp_path: Path) 
         _Registry(records),
         binding,
         policy,
-        "v3-base",
-        {"increased-cost": "v3-increased-cost", "harsher-cost": "v3-harsher-cost"},
-        {"plus-1-bar": "v3-plus-1-bar", "plus-2-bars": "v3-plus-2-bars"},
+        _SEALED_BASE_ID,
     )
     assert evidence["state"] == "research-gates-passed"
     assert evidence["evidence_binding"] == "controlled-registry"
     assert evidence["authorities"] == _AUTHORITY
+    assert len(evidence["campaign_sources"]) == 60
+    assert evidence["campaign_evidence_fingerprint"] == fingerprint(evidence["campaign_sources"])
+    assert all(
+        "report_fingerprint" in source
+        if source["status"] == "completed"
+        else "record_identity_fingerprint" in source
+        for source in evidence["campaign_sources"]
+    )
+
+
+def test_registered_v3_rejects_publication_integrity_conflict(tmp_path: Path) -> None:
+    reports = _sealed_group_reports()
+    records = _records({ordinal: "failed" for ordinal in range(6, 61)})
+    _bind_registered_reports(tmp_path, records, reports, source_bound=True)
+    records[0]["publication_integrity_conflict"] = {
+        "schema_version": "intraday-v3-publication-integrity-conflict-v1"
+    }
+    binding, policy = _binding_and_policy()
+
+    with pytest.raises(ValueError, match="publication integrity conflict"):
+        evaluate_registered_v3_qualification(_Registry(records), binding, policy, _SEALED_BASE_ID)
+
+
+def test_registered_v3_derives_exact_sealed_group_and_binds_mutations(tmp_path: Path) -> None:
+    reports = _sealed_group_reports()
+    records = _records({ordinal: "failed" for ordinal in range(6, 61)})
+    _bind_registered_reports(tmp_path, records, reports, source_bound=True)
+    binding, policy = _binding_and_policy()
+    registry = _Registry(records)
+    evidence = evaluate_registered_v3_qualification(registry, binding, policy, _SEALED_BASE_ID)
+
+    with pytest.raises(ValueError, match="qualification group differs"):
+        evaluate_registered_v3_qualification(registry, binding, policy, "candidate-substitution")
+
+    path = Path(records[0]["artifact_locations_json"][0])
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    raw["realistic"]["metrics"]["total_return"] = "0.99"
+    path.write_text(json.dumps(raw), encoding="utf-8")
+    with pytest.raises(ValueError, match="fingerprint"):
+        evaluate_registered_v3_qualification(registry, binding, policy, _SEALED_BASE_ID)
+
+    reports = _sealed_group_reports()
+    records = _records({ordinal: "failed" for ordinal in range(6, 61)})
+    _bind_registered_reports(tmp_path, records, reports, source_bound=True)
+    changed = evaluate_registered_v3_qualification(
+        _Registry(records), binding, policy, _SEALED_BASE_ID
+    )
+    records[5]["failure_info"] = "different durable reason"
+    changed_reason = evaluate_registered_v3_qualification(
+        _Registry(records), binding, policy, _SEALED_BASE_ID
+    )
+    assert (
+        evidence["campaign_evidence_fingerprint"] != changed_reason["campaign_evidence_fingerprint"]
+    )
+    assert (
+        changed["campaign_evidence_fingerprint"] != changed_reason["campaign_evidence_fingerprint"]
+    )
+
+
+def test_registered_v3_rejects_stored_plan_role_substitution(tmp_path: Path) -> None:
+    reports = _sealed_group_reports()
+    records = _records({ordinal: "failed" for ordinal in range(6, 61)})
+    _bind_registered_reports(tmp_path, records, reports, source_bound=True)
+    binding, policy = _binding_and_policy()
+    registry = _Registry(records)
+    registry.plan["qualification_groups"][1]["roles"]["increased-cost"] = "substituted"
+
+    with pytest.raises(ValueError):
+        evaluate_registered_v3_qualification(registry, binding, policy, _SEALED_BASE_ID)
 
 
 def test_registered_v3_rejects_unselected_completed_candidate_without_evidence(
     tmp_path: Path,
 ) -> None:
-    reports = _reports()
+    reports = _sealed_group_reports()
     records = _records({ordinal: "failed" for ordinal in range(7, 61)})
     _bind_registered_reports(tmp_path, records, reports, source_bound=True)
     records[5]["execution_provenance"] = "controlled-run"
@@ -605,14 +701,12 @@ def test_registered_v3_rejects_unselected_completed_candidate_without_evidence(
             _Registry(records),
             binding,
             policy,
-            "v3-base",
-            {"increased-cost": "v3-increased-cost", "harsher-cost": "v3-harsher-cost"},
-            {"plus-1-bar": "v3-plus-1-bar", "plus-2-bars": "v3-plus-2-bars"},
+            _SEALED_BASE_ID,
         )
 
 
 def test_registered_v3_rejects_failed_candidate_without_durable_reason(tmp_path: Path) -> None:
-    reports = _reports()
+    reports = _sealed_group_reports()
     records = _records({ordinal: "failed" for ordinal in range(6, 61)})
     records[5]["failure_info"] = None
     _bind_registered_reports(tmp_path, records, reports, source_bound=True)
@@ -623,9 +717,7 @@ def test_registered_v3_rejects_failed_candidate_without_durable_reason(tmp_path:
             _Registry(records),
             binding,
             policy,
-            "v3-base",
-            {"increased-cost": "v3-increased-cost", "harsher-cost": "v3-harsher-cost"},
-            {"plus-1-bar": "v3-plus-1-bar", "plus-2-bars": "v3-plus-2-bars"},
+            _SEALED_BASE_ID,
         )
 
 

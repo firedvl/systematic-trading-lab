@@ -126,30 +126,47 @@ only `realistic.metrics`, requires exact five-role lineage and complete 60-candi
 accounting, and keeps the zero-cost result diagnostic-only. It grants no authority and has no
 controlled V3 reports to assess.
 
-The V3 campaign file remains an unsealable 60-candidate draft. A fingerprinted exposure audit
-proposes 2025-07-01 through 2026-06-30 as explicitly exposed Training and three forward validation
-blocks beginning 2026-08-14. They avoid repository-known dated exposure and exceed the policy's
-20-session floor, but ignored runtime state, provider records, other clones, and human exposure remain
-unresolved. Every validation approval is false, so the draft contract keeps its dates unset and no
-final plan fingerprint exists. See [the V3 draft](research-campaigns/intraday-campaign-v3-draft.md)
-and [exposure inventory](research-campaigns/intraday-exposure-inventory.md).
+The final V3 plan fixes 60 candidates: three strategies, four periods, and five cost/delay variants.
+Its fingerprint is `5e81cf8f0db1143f293a0f93900f1e797718443a559c1caaaa2e986851d5241a`.
+Training reuses the exposed V2 window. Validation A/B/C are three chronological 45-session forward
+blocks from 2026-10-01 through 2027-04-15. Unknown historical state still prevents a universal
+freshness claim, but it cannot contain market bars that did not yet exist. The narrower prospective
+property requires no known overlap, no selected-period data in the design, immutable dates and
+parameters, and a GitHub/main attestation of the exact selection and plan before Validation A's first
+bar. See [the V3 plan](research-campaigns/intraday-campaign-v3-draft.md) and
+[exposure inventory](research-campaigns/intraday-exposure-inventory.md).
 
-The provenance workflow can produce a canonical exact-byte manifest for every application-package
-source file, the source commit, V3 foundation commit, and `uv.lock`. The non-authoritative V3
-preassessment can verify the post-merge attested wheel, build and surface manifests, same trusted
-`gh` identity, exact installed package, fixed lock, dependency wheels, and isolated runtime. It has
-no campaign, plan, review, binding, dataset, runner, or authority fields. A trusted V3 source identity
-still requires human review, immutable campaign source review, and per-candidate binding.
+On each main push, the provenance workflow builds the whole-package surface, wheel, runtime manifest,
+and preregistration seal. The seal binds the inventory, selection, plan, qualification binding,
+source commit, first validation bar, and false authorities. Verification requires the exact
+repository, main ref, signer workflow, source commit, seal digest, trusted `gh` identity, and a
+verified Sigstore transparency-log timestamp before `2026-10-01T13:30:00Z`. Commit dates, file mtimes,
+local clocks, the author-recorded selection date, and caller-entered timestamps are not trusted. The
+verified transparency-log timestamp is the sole effective selection cutoff. The artifact
+preassessment remains non-authoritative until a human records the campaign-bound review.
+
+The V3 registry owns only `intraday_v3_*` tables. Its materialization boundary verifies the attested
+seal and trusted timestamp before atomically storing the exact seal bytes, plan, and 60 pending
+reservations. Adding the plan file alone creates no state. Dataset binding resolves four IDs through
+the shared catalog and fully validates all raw and normalized artifacts before one transaction binds
+the role datasets and 60 stored specs. Source review reruns the fixed artifact assessment and requires
+the explicitly reviewed fingerprint. The runner accepts only a candidate ID, one storage root, and
+the fixed source artifacts. It derives the review, spec, dataset, costs, dates, delay, cash, and report
+path from stored state, reverifies source before compute and publication, and terminally fails only an
+invocation that acquired the claim. Running candidates heartbeat. Publication commits a canonical
+report intent before its create-only final file and completion; stale recovery takes that intent's
+ownership or records failure when no intent exists, and completed intents can restore a missing file.
+Registered qualification reads its five roles from the immutable stored plan. Candidate 1 cannot run
+before Validation C completes at `2027-04-15T20:00:00Z`, and then only after the four-dataset bind and
+source review.
 
 ## Deferred work
 
 M5B does not run broad parameter search, autonomous strategy generation, protected intraday holdout
 evaluation, paper execution, options, shorting, leverage, extended hours, tick replay, or
-market-microstructure simulation. V3 still needs external freshness attestation, a separately
-reviewed sealed plan, merged and source-reviewed whole-package provenance, independently acquired and
-validated datasets, exactly 60 pending reservations, atomic binding, and a controlled runner before
-any candidate. The future sealed contract must reserve the V3 namespace and expose only a stored-spec
-V3 runner. Caller-configured V1 runs remain separate V1 evidence and any use on candidate validation
-dates would invalidate the current freshness assumption. A later review must approve any holdout
-policy and separately build M5C market-data, risk, order, reconciliation, operational, and authority
-controls.
+market-microstructure simulation. V3 still needs the post-merge pre-bar GitHub attestation, explicit
+runtime materialization, four independently acquired and validated datasets, a human source review,
+and the end of Validation C before any candidate. Caller-configured V1 runs remain separate V1
+evidence; using selected validation dates before the trusted seal would invalidate this campaign. A
+later review must approve any holdout policy and separately build M5C market-data, risk, order,
+reconciliation, operational, and authority controls.

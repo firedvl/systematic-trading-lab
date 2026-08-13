@@ -243,6 +243,12 @@ class IntradayV3ExperimentSpec:
     strategy_version: str
     strategy_family: str
     code_commit: str
+    source_foundation_commit: str
+    campaign_plan_fingerprint: str
+    qualification_binding_id: str
+    qualification_binding_fingerprint: str
+    period_role: str
+    variant_role: str
     dataset_id: str
     dataset_fingerprint: str
     universe_id: str
@@ -279,6 +285,12 @@ class IntradayV3ExperimentSpec:
             self.strategy_version,
             self.strategy_family,
             self.code_commit,
+            self.source_foundation_commit,
+            self.campaign_plan_fingerprint,
+            self.qualification_binding_id,
+            self.qualification_binding_fingerprint,
+            self.period_role,
+            self.variant_role,
             self.dataset_id,
             self.dataset_fingerprint,
             self.universe_id,
@@ -292,6 +304,8 @@ class IntradayV3ExperimentSpec:
             raise ValueError("unsupported V3 intraday experiment schema")
         if self.campaign_id != V3_CAMPAIGN_ID:
             raise ValueError("V3 experiment campaign identity differs")
+        if self.qualification_binding_id != "intraday-v3-qualification-binding-v1":
+            raise ValueError("V3 qualification binding identity differs")
         if (
             type(self.search_budget) is not int
             or type(self.candidate_ordinal) is not int

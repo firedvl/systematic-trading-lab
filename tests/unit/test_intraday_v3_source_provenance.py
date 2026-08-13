@@ -11,7 +11,7 @@ import pytest
 
 import systematic_trading_lab.intraday_source_provenance as v2_provenance
 import systematic_trading_lab.intraday_v3_source_provenance as provenance
-from systematic_trading_lab.fingerprints import canonicalize
+from systematic_trading_lab.fingerprints import canonicalize, fingerprint
 from systematic_trading_lab.intraday_campaigns import INTRADAY_FOUNDATION_LOCK_SHA256
 from systematic_trading_lab.intraday_source_provenance import IntradayRuntimeEnvironmentIdentity
 from systematic_trading_lab.runtime_build import (
@@ -186,6 +186,31 @@ def test_v3_source_preassessment_is_exact_deterministic_and_non_authoritative(
         "surface_identity",
     }
     assert not {"campaign_id", "plan_fingerprint", "authorities"} & payload.keys()
+
+
+def test_v3_source_assessment_binds_exact_plan_and_publication_without_authority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    paths, _ = _artifacts(tmp_path)
+    _mock_runtime(monkeypatch, paths["wheel"])
+    assessment = provenance.bind_intraday_v3_source_assessment(
+        _assess(paths),
+        plan_fingerprint="1" * 64,
+        publication_fingerprint="2" * 64,
+    )
+
+    assert assessment.campaign_id == "intraday-research-v3"
+    assert assessment.build_identity.source_commit == "a" * 40
+    assert assessment.assessment_fingerprint == fingerprint(assessment)
+    payload = canonicalize(assessment)
+    assert isinstance(payload, dict)
+    assert "authorities" not in payload
+    with pytest.raises(ValueError):
+        provenance.bind_intraday_v3_source_assessment(
+            _assess(paths),
+            plan_fingerprint="not-a-fingerprint",
+            publication_fingerprint="2" * 64,
+        )
 
 
 @pytest.mark.parametrize(

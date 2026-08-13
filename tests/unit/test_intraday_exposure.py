@@ -17,7 +17,7 @@ from systematic_trading_lab.intraday_exposure import (
 )
 
 _INVENTORY_PATH = Path("config/research/intraday-known-exposures-v1.json")
-_SELECTION_PATH = Path("config/research/intraday-v3-period-selection-v1.json")
+_SELECTION_PATH = Path("config/research/intraday-v3-period-selection-v2.json")
 
 
 def _inventory() -> ExposureInventory:
@@ -43,7 +43,7 @@ def test_real_market_v2_and_daily_acquisition_overlap_are_rejected() -> None:
     )
 
 
-def test_synthetic_fixture_and_date_reference_do_not_certify_freshness() -> None:
+def test_synthetic_fixture_and_date_reference_do_not_contaminate_future_period() -> None:
     inventory = _inventory()
 
     fixture = next(
@@ -57,6 +57,9 @@ def test_synthetic_fixture_and_date_reference_do_not_certify_freshness() -> None
     assert not reference.disqualifies_v3_validation
     assessment = assess_validation_exposure(inventory, date(2026, 8, 12), date(2026, 8, 13))
     assert assessment.status == "unresolved"
+    future = assess_validation_exposure(inventory, date(2026, 10, 1), date(2026, 12, 3))
+    assert future.status == "unresolved"
+    assert future.overlapping_entry_ids == ()
 
 
 def test_unknown_external_state_stays_unresolved() -> None:
@@ -103,17 +106,22 @@ def test_selection_uses_exact_calendar_counts_and_future_validation() -> None:
     ]
     assert counts == [
         (251, 19470, 38940),
+        (45, 3474, 6948),
+        (45, 3474, 6948),
         (45, 3510, 7020),
-        (44, 3396, 6792),
-        (46, 3552, 7104),
     ]
     assert selection.periods[0].exposed_training
     assert all(period.selection_rationale for period in selection.periods)
     assert not selection.periods[0].approved_for_v3_validation
     assert all(period.start > selection.selection_date for period in selection.periods[1:])
+    assert not selection.selection_date_is_authoritative
+    assert selection.trusted_cutoff_source == "verified-main-seal-tlog-timestamp"
     assert not any(period.approved_for_v3_validation for period in selection.periods[1:])
-    assert selection.status == "repository-known-overlap-safe-pending-external-attestation"
+    assert all(period.prospective_freshness_eligible for period in selection.periods[1:])
+    assert selection.status == "prospective-freshness-eligible-awaiting-pre-bar-main-attestation"
     assert not selection.universal_freshness_proven
+    assert not selection.prospective_market_data_freshness
+    assert selection.prospective_market_data_freshness_eligible
 
 
 def test_training_exposure_requires_explicit_training_only_status() -> None:
@@ -125,7 +133,7 @@ def test_training_exposure_requires_explicit_training_only_status() -> None:
         parse_intraday_v3_period_selection(raw, inventory)
 
 
-def test_unresolved_freshness_cannot_be_represented_as_validation_approval() -> None:
+def test_unattested_selection_cannot_claim_validation_approval() -> None:
     inventory = _inventory()
     raw = json.loads(_SELECTION_PATH.read_text(encoding="utf-8"))
     raw["periods"][1]["approved_for_v3_validation"] = True

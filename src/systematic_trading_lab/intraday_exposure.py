@@ -78,17 +78,22 @@ class IntradayPeriod:
     selection_rationale: str
     review_status: str
     approved_for_v3_validation: bool
+    prospective_freshness_eligible: bool
     exposed_training: bool
 
 
 @dataclass(frozen=True)
 class V3PeriodSelection:
     selection_date: date
-    review_cutoff: date
+    selection_date_is_authoritative: bool
+    trusted_cutoff_source: str
     inventory_fingerprint: str
     periods: tuple[IntradayPeriod, ...]
     status: str
     universal_freshness_proven: bool
+    prospective_market_data_freshness: bool
+    prospective_market_data_freshness_eligible: bool
+    freshness_basis: str
     selection_fingerprint: str
 
 
@@ -166,32 +171,40 @@ def parse_intraday_v3_period_selection(
     required = {
         "schema_version",
         "selection_date",
-        "review_cutoff",
         "inventory_fingerprint",
+        "freshness_contract",
         "periods",
         "status",
-        "universal_freshness_proven",
         "selection_fingerprint",
     }
     payload = _mapping(value, "V3 period selection")
-    if set(payload) != required or payload["schema_version"] != "intraday-v3-period-selection-v1":
+    if set(payload) != required or payload["schema_version"] != "intraday-v3-period-selection-v2":
         raise ValueError("V3 period selection fields differ")
     if payload["inventory_fingerprint"] != inventory.inventory_fingerprint:
         raise ValueError("V3 period selection inventory fingerprint differs")
     selection_date = _date(payload["selection_date"], "selection date")
-    review_cutoff = _date(payload["review_cutoff"], "review cutoff")
-    if (selection_date, review_cutoff) != (date(2026, 8, 13), date(2026, 8, 13)):
-        raise ValueError("V3 period selection cutoff differs")
-    if payload["status"] != "repository-known-overlap-safe-pending-external-attestation":
+    if selection_date != date(2026, 8, 13):
+        raise ValueError("V3 period selection date differs")
+    if payload["status"] != "prospective-freshness-eligible-awaiting-pre-bar-main-attestation":
         raise ValueError("V3 period selection status differs")
-    if payload["universal_freshness_proven"] is not False:
-        raise ValueError("V3 period selection cannot prove universal freshness")
+    freshness = _mapping(payload["freshness_contract"], "V3 freshness contract")
+    if freshness != {
+        "universal_freshness_proven": False,
+        "prospective_market_data_freshness": False,
+        "prospective_market_data_freshness_eligible": True,
+        "basis": "main-attested-design-before-first-market-bar-v1",
+        "selection_date_is_authoritative": False,
+        "trusted_cutoff_source": "verified-main-seal-tlog-timestamp",
+        "known_dated_overlap_absent": True,
+        "immutable_design_required_before_selected_period_data_observation": True,
+        "future_data_acquisition_may_change_design": False,
+        "trusted_main_attestation_required_before_runtime_sealing": True,
+    }:
+        raise ValueError("V3 prospective freshness contract differs")
     values = payload["periods"]
     if not isinstance(values, list) or len(values) != len(_PERIOD_ROLES):
         raise ValueError("V3 period selection requires four periods")
-    periods = tuple(
-        _parse_period(item, index, inventory, selection_date) for index, item in enumerate(values)
-    )
+    periods = tuple(_parse_period(item, index, inventory) for index, item in enumerate(values))
     for prior, current in zip(periods[:-1], periods[1:], strict=True):
         if prior.end >= current.start or prior.end_timestamp >= current.start_timestamp:
             raise ValueError("V3 selected periods must be chronological and non-overlapping")
@@ -201,11 +214,15 @@ def parse_intraday_v3_period_selection(
         raise ValueError("V3 period selection fingerprint differs")
     return V3PeriodSelection(
         selection_date,
-        review_cutoff,
+        False,
+        "verified-main-seal-tlog-timestamp",
         inventory.inventory_fingerprint,
         periods,
         payload["status"],
         False,
+        False,
+        True,
+        "main-attested-design-before-first-market-bar-v1",
         claimed,
     )
 
@@ -260,9 +277,7 @@ def _parse_entry(value: object) -> ExposureEntry:
     )
 
 
-def _parse_period(
-    value: object, index: int, inventory: ExposureInventory, selection_date: date
-) -> IntradayPeriod:
+def _parse_period(value: object, index: int, inventory: ExposureInventory) -> IntradayPeriod:
     required = {
         "role",
         "start",
@@ -277,6 +292,7 @@ def _parse_period(
         "selection_rationale",
         "review_status",
         "approved_for_v3_validation",
+        "prospective_freshness_eligible",
         "exposed_training",
     }
     item = _mapping(value, "V3 selected period")
@@ -302,20 +318,24 @@ def _parse_period(
     validation = index > 0
     if validation:
         if (
-            start <= selection_date
-            or item["review_status"] != "repository-known-overlap-safe-pending-external-attestation"
+            item["review_status"]
+            != "prospective-freshness-eligible-awaiting-pre-bar-main-attestation"
             or item["approved_for_v3_validation"] is not False
+            or item["prospective_freshness_eligible"] is not True
             or item["exposed_training"] is not False
         ):
             raise ValueError("V3 validation period review status differs")
         assessment = assess_validation_exposure(inventory, start, end)
         if assessment.status == "rejected":
             raise ValueError("V3 validation period overlaps known exposure")
-        if assessment.status != "unresolved":
-            raise ValueError("V3 validation period must retain unresolved external freshness")
+        # Unknown historical or external state remains unresolved, but it cannot
+        # contain real bars from a period that had not begun at review time.
+        if not assessment.unresolved_entry_ids:
+            raise ValueError("V3 selection must retain the universal-freshness limit")
     elif (
         item["review_status"] != "explicitly-exposed-training-only"
         or item["approved_for_v3_validation"] is not False
+        or item["prospective_freshness_eligible"] is not False
         or item["exposed_training"] is not True
     ):
         raise ValueError("V3 training period must be explicitly exposed")
@@ -331,6 +351,7 @@ def _parse_period(
         _text(item["selection_rationale"], "V3 period selection rationale"),
         item["review_status"],
         item["approved_for_v3_validation"],
+        item["prospective_freshness_eligible"],
         item["exposed_training"],
     )
 

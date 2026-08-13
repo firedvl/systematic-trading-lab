@@ -4,9 +4,11 @@ Machine inventory: `config/research/intraday-known-exposures-v1.json`.
 
 Inventory fingerprint: `0666996faabb50abce0b8959c49980e36a655ea290618bc1463342d2ab5122f9`.
 
-Candidate selection: `config/research/intraday-v3-period-selection-v1.json`.
+Candidate selection: `config/research/intraday-v3-period-selection-v2.json`.
 
-Selection fingerprint: `d371488a56a1b960ebb54c9d5a1cfe46e043523e21c99a49da392e69cc75d0b1`.
+Selection fingerprint: `c2718c3871bb95e22d4647e119f6bfb54cd51ec7b1b2cc472cfa1a7dfbcfc5d0`.
+
+The superseded `intraday-v3-period-selection-v1.json` remains historical evidence.
 
 ## Audit boundary
 
@@ -17,8 +19,9 @@ protected holdout rows. Ignored runtime stores, CI artifacts, other clones, prov
 human memory remain outside repository proof.
 
 Real-market acquisition disqualifies validation even when no strategy result was read. Synthetic
-fixtures and date-only examples do not become market exposure, but they also do not certify
-freshness. Unknown or external evidence keeps freshness unresolved.
+fixtures and date-only examples do not become market exposure. Unknown or external evidence keeps
+universal freshness unresolved, but it does not imply possession of market bars that did not yet
+exist. Prospective freshness is a separate, narrower property.
 
 ## Findings
 
@@ -49,24 +52,36 @@ inspected.
 | Role | Dates | First and last UTC `5m` opens | Sessions | Opens per symbol | Two-symbol opens |
 | --- | --- | --- | ---: | ---: | ---: |
 | Training | 2025-07-01–2026-06-30 | `2025-07-01T13:30:00Z`–`2026-06-30T19:55:00Z` | 251 | 19,470 | 38,940 |
-| Validation A | 2026-08-14–2026-10-16 | `2026-08-14T13:30:00Z`–`2026-10-16T19:55:00Z` | 45 | 3,510 | 7,020 |
-| Validation B | 2026-10-19–2026-12-18 | `2026-10-19T13:30:00Z`–`2026-12-18T20:55:00Z` | 44 | 3,396 | 6,792 |
-| Validation C | 2026-12-21–2027-02-26 | `2026-12-21T14:30:00Z`–`2027-02-26T20:55:00Z` | 46 | 3,552 | 7,104 |
+| Validation A | 2026-10-01–2026-12-03 | `2026-10-01T13:30:00Z`–`2026-12-03T20:55:00Z` | 45 | 3,474 | 6,948 |
+| Validation B | 2026-12-04–2027-02-09 | `2026-12-04T14:30:00Z`–`2027-02-09T20:55:00Z` | 45 | 3,474 | 6,948 |
+| Validation C | 2027-02-10–2027-04-15 | `2027-02-10T14:30:00Z`–`2027-04-15T19:55:00Z` | 45 | 3,510 | 7,020 |
 
-Training deliberately reuses V2's exposed window and is training-only. Validation A begins after the
-2026-08-13 review cutoff and the last dated paper-account observation. Validation B and C continue as
-chronological, non-overlapping forward blocks. Each validation block exceeds the unchanged policy's
-20-session coverage floor. Session count does not prove active-session, trade-count, return, or
-freshness gates; those remain unknown until later controlled execution.
+Training deliberately reuses V2's exposed window and is training-only. Validation A moved from
+August 14 to October 1 so review, merge, and main attestation need not race the first bar. Validation
+B and C are the next two 45-session XNYS blocks. The choice used calendar metadata only. Each block
+exceeds the unchanged 20-session floor. Session count does not prove activity, returns, or
+qualification.
 
 ## Freshness decision
 
-Independent review found no dated repository-known overlap in Validation A/B/C. It did not establish
-universal freshness because ignored runtime state, provider records, other clones, and human exposure
-remain unresolved. All three periods therefore have status
-`repository-known-overlap-safe-pending-external-attestation` and
-`approved_for_v3_validation: false`.
+Independent review found no dated overlap in Validation A/B/C. Universal freshness remains false
+because ignored runtime state, provider records, other clones, and human exposure cannot be fully
+known. The periods are eligible for the enforceable prospective property because no known dated
+exposure overlaps them and the exact inventory, selection, plan, and qualification binding can still
+be GitHub/main-attested before `2026-10-01T13:30:00Z`. Eligibility is not established freshness. The
+author-recorded selection date is descriptive, not a trusted cutoff. The selection artifact records
+`prospective_market_data_freshness: false` and `approved_for_v3_validation: false` for every
+validation block. Only a verified Sigstore transparency-log timestamp for the exact seal establishes
+the effective selection cutoff and both statuses later. Local time, commit timestamps, file mtimes,
+and caller-entered verification time do not. The seal paths use the strict inventory and selection
+parsers, so a known overlapping acquisition blocks sealing even after dependent fingerprints change.
 
-No final V3 plan or plan fingerprint exists. No V3 dataset has been acquired, no V3 candidate has
-run, no V3 result has been observed, and no V3 qualification has passed. A separate external
-attestation must approve or reject each validation period before a campaign can be sealed.
+The final plan fingerprint is
+`5e81cf8f0db1143f293a0f93900f1e797718443a559c1caaaa2e986851d5241a`.
+Committing it creates no runtime plan, reservation, dataset, or result. A missing, late, or
+substituted attestation blocks materialization. No V3 dataset has been acquired, no V3 candidate has
+run, no V3 result has been observed, and no V3 qualification has passed.
+
+All four datasets must validate and bind atomically before candidate 1. Validation C's final bar
+opens at `2027-04-15T19:55:00Z` and completes at `2027-04-15T20:00:00Z`. Candidate 1 cannot legally
+run before that completion time, and may run later only after dataset binding and source review.

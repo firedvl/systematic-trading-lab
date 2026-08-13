@@ -90,6 +90,49 @@ class IntradayV3SourcePreassessment:
         return fingerprint(self)
 
 
+@dataclass(frozen=True)
+class IntradayV3SourceAssessment:
+    """Campaign-bound execution-source evidence reviewed before candidate claims."""
+
+    campaign_id: str
+    plan_fingerprint: str
+    publication_fingerprint: str
+    preassessment: IntradayV3SourcePreassessment
+
+    def __post_init__(self) -> None:
+        if (
+            self.campaign_id != "intraday-research-v3"
+            or not _hex(self.plan_fingerprint, 64)
+            or not _hex(self.publication_fingerprint, 64)
+            or not isinstance(self.preassessment, IntradayV3SourcePreassessment)
+        ):
+            raise ValueError("V3 campaign source assessment is invalid")
+
+    @property
+    def build_identity(self) -> IntradayExecutionBuildIdentity:
+        return self.preassessment.build_identity
+
+    @property
+    def assessment_fingerprint(self) -> str:
+        return fingerprint(self)
+
+
+def bind_intraday_v3_source_assessment(
+    preassessment: IntradayV3SourcePreassessment,
+    *,
+    plan_fingerprint: str,
+    publication_fingerprint: str,
+) -> IntradayV3SourceAssessment:
+    """Bind exact artifact evidence to the one sealed V3 campaign."""
+
+    return IntradayV3SourceAssessment(
+        "intraday-research-v3",
+        plan_fingerprint,
+        publication_fingerprint,
+        preassessment,
+    )
+
+
 def assess_intraday_v3_source_preassessment(
     wheel: Path,
     build_manifest: Path,
