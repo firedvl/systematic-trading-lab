@@ -53,7 +53,7 @@ The project currently integrates with Alpaca for market data and paper-account w
 - Strict preregistered training plans that prevent run-time parameter or date overrides.
 - Qualification evidence derived from controlled runs rather than caller-entered metrics.
 - One-time, authorization-gated holdout evaluation.
-- Research-only `1m` and `5m` SPY/QQQ data, replay, exact-range experiments, qualification evidence, and a preregistered intraday campaign.
+- Research-only `1m` and `5m` SPY/QQQ data, replay, exact-range experiments, qualification evidence, closed V1/V2 campaigns, and a development-only V3 foundation.
 
 ### Paper execution and operations
 
@@ -135,34 +135,9 @@ The intraday workflow adds fixed cash, previous-bar-momentum, and 12-bar moving-
 
 Campaign V1 was preregistered and source-reviewed, but its first real Alpaca Training acquisition exposed an extended-hours filtering defect before dataset publication. No candidate ran and no strategy result was observed. Its sealed plan, source review, runtime state, and quarantine evidence remain unchanged and read-only.
 
-Campaign V2 carries forward the same 60-candidate research design under plan fingerprint `52db8a27fa4ff86865ab69b6bd7456899329ef3b861a582e59ab32904c03c122`. The Alpaca adapter now admits only exact expected XNYS bar opens to normalization while retaining all mapped transport extras in raw evidence. V2's exact 49-module source manifest includes that correction. All four immutable period datasets must pass full validation before all 60 reservations bind atomically. Candidate execution remains blocked until a human reviews the full main-attested source commit and wheel, verifier identity, isolated locked runtime, and assessment fingerprint. See [the V1 disposition](docs/research-campaigns/intraday-campaign-v1.md) and [the V2 runbook](docs/research-campaigns/intraday-campaign-v2.md).
+Campaign V2 completed all 60 controlled candidates and failed all 12 base research qualification groups under plan fingerprint `52db8a27fa4ff86865ab69b6bd7456899329ef3b861a582e59ab32904c03c122`. It remains closed immutable failed evidence. No intraday holdout was accessed or authorized. See [the V2 postmortem](docs/research-campaigns/intraday-campaign-v2-postmortem.md) and [historical runbook](docs/research-campaigns/intraday-campaign-v2.md).
 
-Build the clean runtime with CPython 3.12's standard-library venv, not `uv venv`. Prepare the locked dependency wheelhouse, create the runtime, and install the ten dependencies and `APPLICATION.whl` with the exact commands in [the Campaign V2 execution-source runbook](docs/research-campaigns/intraday-campaign-v2.md#execution-source-review). Once prepared, use absolute canonical paths and the fixed bootstrap for every provenance command:
-
-```console
-CAMPAIGN_RUNTIME=/absolute/canonical/runtime
-CAMPAIGN_SITE_PACKAGES=/absolute/canonical/runtime/lib/python3.12/site-packages
-CAMPAIGN_BOOTSTRAP='import runpy,sys; sys.path.append(sys.argv.pop(1)); runpy.run_module("systematic_trading_lab.cli", run_name="__main__")'
-
-"$CAMPAIGN_RUNTIME/bin/python" -I -B -S -c "$CAMPAIGN_BOOTSTRAP" "$CAMPAIGN_SITE_PACKAGES" \
-  experiment assess-intraday-source \
-  --campaign intraday-research-v2 \
-  --wheel APPLICATION.whl \
-  --build-manifest runtime-build-manifest.json \
-  --lockfile uv.lock \
-  --dependency-wheelhouse DEPENDENCY_WHEELHOUSE
-
-"$CAMPAIGN_RUNTIME/bin/python" -I -B -S -c "$CAMPAIGN_BOOTSTRAP" "$CAMPAIGN_SITE_PACKAGES" \
-  experiment record-intraday-source REVIEW_ID \
-  --campaign intraday-research-v2 \
-  --wheel APPLICATION.whl \
-  --build-manifest runtime-build-manifest.json \
-  --lockfile uv.lock \
-  --dependency-wheelhouse DEPENDENCY_WHEELHOUSE \
-  --assessment-fingerprint REVIEWED_ASSESSMENT_FINGERPRINT \
-  --reviewer REVIEWER \
-  --reason "reviewed Campaign V2 execution build"
-```
+The development-only V3 foundation uses state-transition trades and a FIFO N-bar delay so unchanged long states do not rebalance and pending transitions do not suppress later decisions. It adds fixed 12-bar MA, six-bar momentum, and six-bar opening-range breakout strategies plus a paired realistic/zero-cost diagnostic. The 60-candidate V3 design is a draft with no selected dates and cannot be sealed or executed. See [the V3 draft](docs/research-campaigns/intraday-campaign-v3-draft.md).
 
 ## Paper workflow
 

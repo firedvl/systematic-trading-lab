@@ -1,0 +1,132 @@
+{
+  "schema_version": "intraday-research-campaign-v3-draft-v1",
+  "campaign_id": "intraday-research-v3",
+  "status": "draft-unpreregistered",
+  "purpose": "Define the development-only V3 research matrix and corrected execution semantics. This is not financial validation, a profitability claim, a sealed campaign, or authority for holdout, paper, broker, or live trading.",
+  "search_budget": 60,
+  "data_contract": {
+    "provider": "alpaca",
+    "feed": "iex",
+    "adjustment": "all",
+    "timeframe": "5m",
+    "symbols": ["SPY", "QQQ"]
+  },
+  "execution_contract": {
+    "experiment_schema": "intraday-experiment-v2",
+    "report_schema": "intraday-backtest-report-v2",
+    "execution_model": "state-transition-delayed-fifo-v1",
+    "earliest_fill_semantics": "completed-bar-nth-later-open-v1",
+    "queue_policy": "fifo-no-supersession-session-close-override-v1",
+    "session_policy": "XNYS-regular-session-state-transition-flat-v2",
+    "periodic_rebalance_policy": "none-v1",
+    "diagnostic_policy": "paired-exact-zero-cost-counterfactual-v1",
+    "initial_cash": "100000"
+  },
+  "known_exposed_periods": [
+    {
+      "source": "intraday-research-v2-training-and-validation",
+      "start": "2025-07-01",
+      "end": "2026-06-30"
+    }
+  ],
+  "period_selection": {
+    "policy": "known-exposure-exclusion-and-independent-review-v1",
+    "validation_preference": "forward",
+    "status": "unselected",
+    "selection_does_not_certify_unobserved": true
+  },
+  "periods": [
+    {"role": "training", "split": "training", "selection_status": "unselected"},
+    {"role": "validation-a", "split": "validation", "selection_status": "unselected"},
+    {"role": "validation-b", "split": "validation", "selection_status": "unselected"},
+    {"role": "validation-c", "split": "validation", "selection_status": "unselected"}
+  ],
+  "strategies": [
+    {
+      "strategy_id": "intraday-event-driven-ma-trend",
+      "strategy_version": "1",
+      "strategy_family": "intraday-trend",
+      "parameters": {"window": 12}
+    },
+    {
+      "strategy_id": "intraday-30-minute-momentum",
+      "strategy_version": "1",
+      "strategy_family": "intraday-directional-momentum",
+      "parameters": {"lookback": 6}
+    },
+    {
+      "strategy_id": "intraday-30-minute-opening-range-breakout",
+      "strategy_version": "1",
+      "strategy_family": "intraday-opening-range-breakout",
+      "parameters": {"opening_range_bars": 6}
+    }
+  ],
+  "variants": [
+    {
+      "role": "base",
+      "cost_model_version": "conservative-bps-v1",
+      "slippage_bps": "5",
+      "commission_bps": "1",
+      "execution_delay_bars": 1
+    },
+    {
+      "role": "increased-cost",
+      "cost_model_version": "intraday-increased-cost-bps-v1",
+      "slippage_bps": "10",
+      "commission_bps": "2",
+      "execution_delay_bars": 1
+    },
+    {
+      "role": "harsher-cost",
+      "cost_model_version": "intraday-harsher-cost-bps-v1",
+      "slippage_bps": "20",
+      "commission_bps": "5",
+      "execution_delay_bars": 1
+    },
+    {
+      "role": "plus-1-bar",
+      "cost_model_version": "conservative-bps-v1",
+      "slippage_bps": "5",
+      "commission_bps": "1",
+      "execution_delay_bars": 2
+    },
+    {
+      "role": "plus-2-bars",
+      "cost_model_version": "conservative-bps-v1",
+      "slippage_bps": "5",
+      "commission_bps": "1",
+      "execution_delay_bars": 3
+    }
+  ],
+  "cash_sanity_test": {
+    "strategy_id": "intraday-cash",
+    "budgeted": false,
+    "authority": "software-sanity-only"
+  },
+  "qualification": {
+    "threshold_source": "intraday-qualification-policy-v1",
+    "thresholds_changed": false,
+    "activation_status": "requires-reviewed-v3-qualification-contract",
+    "turnover_gate_status": "not-proposed",
+    "zero_cost_results_are_qualification_inputs": false
+  },
+  "source_provenance": {
+    "status": "required-before-preregistration",
+    "surface_scope": "whole-application-package-exact-bytes-v1",
+    "required_new_modules": ["systematic_trading_lab/intraday_v3.py"],
+    "reviewed_source_merged": false,
+    "main_attested_wheel": false,
+    "exact_runtime_closure": false,
+    "source_assessment": false,
+    "human_review": false,
+    "immutable_source_review": false,
+    "atomic_dataset_binding": false
+  },
+  "authorities": {
+    "research_qualification": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  }
+}

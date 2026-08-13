@@ -110,9 +110,9 @@ def test_current_build_surface_exactly_matches_campaign_v2(tmp_path: Path) -> No
     assert comparison.surface_manifest_fingerprint
 
 
-def test_campaign_v2_manifest_covers_every_current_python_module() -> None:
+def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
     root = Path("src/systematic_trading_lab")
-    observed = tuple(
+    observed = dict(
         (
             path.relative_to("src").as_posix(),
             hashlib.sha256(path.read_bytes()).hexdigest(),
@@ -120,7 +120,16 @@ def test_campaign_v2_manifest_covers_every_current_python_module() -> None:
         for path in sorted(root.rglob("*.py"), key=lambda item: item.relative_to("src").as_posix())
     )
 
-    assert CAMPAIGN_V2_SURFACE.hashes == observed
+    assert hashlib.sha256(CAMPAIGN_V2_SURFACE.raw).hexdigest() == (
+        "3789c1c2549065cc40a9fcc362435a17c75d0cf48f8bb570b146a18fa511ecb6"
+    )
+    assert len(CAMPAIGN_V2_SURFACE.hashes) == 49
+    assert dict(CAMPAIGN_V2_SURFACE.hashes) == {
+        path: observed[path] for path, _ in CAMPAIGN_V2_SURFACE.hashes
+    }
+    assert set(observed) - dict(CAMPAIGN_V2_SURFACE.hashes).keys() == {
+        "systematic_trading_lab/intraday_v3.py"
+    }
 
 
 def test_current_build_cannot_execute_campaign_v1(tmp_path: Path) -> None:

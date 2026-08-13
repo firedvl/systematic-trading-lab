@@ -35,3 +35,25 @@ Intraday equity evidence retains every completed bar. Summary return, drawdown, 
 M5B adds `intraday-experiment-v1`, `intraday-backtest-report-v1`, fixed cash, previous-bar momentum, and moving-average trend baselines, plus research-only `intraday-qualification-policy-v1`. See [intraday-research.md](intraday-research.md) for provenance, metrics, benchmark, robustness, and CLI details.
 
 Daily campaign plans, daily report v2 qualification, protected holdout authorization, paper intents, risk admission, and broker adapters remain unchanged and daily-only. No intraday replay or research-gate result promotes a strategy or grants holdout, paper, broker-write, or live authority.
+
+## V3 development execution
+
+Campaign V2 exposed that the v1 exact-weight engine rescheduled unchanged targets and recalculated
+their quantities from current equity at each fill. Its pending-order rule also made longer delays
+suppress later target applications. Those mechanics remain unchanged for V1/V2 reproduction.
+
+The development-only V3 path uses `state-transition-delayed-fifo-v1`. It evaluates a full SPY/QQQ
+cash-or-0.5 desired state after every completed five-minute slice. A changed per-symbol state enters a
+FIFO queue for the Nth later same-session bar open. An unchanged state creates no order, and later
+state changes are not rejected because an earlier transition is pending. Entries size once; exits
+close the held quantity. There is no implicit or periodic rebalance.
+
+The V3 close controller records and cancels queued transitions at its deterministic cutoff, rejects
+later positive changes, and schedules any required exit for the final validated bar open. Complete
+XNYS input, completed-bar causality, normal and early closes, no outside-session fills, and no
+overnight positions remain mandatory.
+
+V3 pairs the realistic replay with an exact zero-cost replay under the same state-decision trace,
+delay, and close policy. `intraday-backtest-report-v2` fingerprints both but marks the result as a
+non-authoritative diagnostic. The existing V1 qualification evaluator rejects it. See
+[the V3 draft](research-campaigns/intraday-campaign-v3-draft.md).

@@ -1,6 +1,6 @@
-# Intraday research campaign v2 preregistration
+# Intraday research campaign V2 historical runbook
 
-Status: preregistered successor; no dataset has been acquired, no runtime state has been created, and no candidate has run.
+Status: closed immutable failed evidence; 60/60 controlled candidates completed and 12/12 base research qualification groups failed.
 
 Campaign ID: `intraday-research-v2`
 
@@ -12,7 +12,11 @@ Reviewed foundation reference: `f3d7ee7d86c3a02b52c09270a6399aa1bf5f78b7`
 
 Campaign V2 replaces the aborted V1 acquisition attempt. V1's plan, source review, runtime state, and quarantine evidence remain unchanged and read-only. No V1 candidate ran, so V2 carries forward the research matrix without using or reacting to a strategy result.
 
-The foundation reference is not the execution commit. The execution-source review separately binds the final main-only attested wheel and installed runtime that may run V2.
+The foundation reference is not the execution commit. The execution-source review separately bound the main-only attested wheel and installed runtime used for V2.
+
+No V2 holdout was accessed or authorized. V2 granted no paper, broker-write, or live authority. Do not
+use this historical runbook to create or run new V2 state. Reproduction requires the exact immutable
+V2 artifacts and contracts. See [the postmortem](intraday-campaign-v2-postmortem.md).
 
 ## Frozen research design
 
@@ -39,7 +43,7 @@ For `1m` and `5m`, `AlpacaHistoricalProvider` derives the exact expected XNYS re
 
 `DatasetService` and `validate_records` remain unchanged authorities for missing intervals, duplicates, unexpected symbols, ordering, and OHLCV validity. A malformed Alpaca payload or bar still aborts acquisition. An invalid mapped OHLCV record enters validation and fails even outside the requested grid. Transport extras cannot enter Parquet, but remain auditable raw evidence.
 
-## Plan and dataset binding
+## Historical plan and dataset binding
 
 Inspecting the plan creates no state:
 
@@ -48,14 +52,14 @@ uv run trading-lab experiment inspect-intraday-plan \
   --spec config/research/intraday-campaign-v2.json
 ```
 
-After this change reaches `main`, seal the plan once in the official registry:
+The official workflow sealed the plan once in its registry:
 
 ```console
 uv run trading-lab experiment plan-intraday \
   --spec config/research/intraday-campaign-v2.json
 ```
 
-Acquire each exact period with independent read-only historical credentials. Record the dataset ID printed by each command:
+The official workflow acquired each exact period with independent read-only historical credentials:
 
 ```console
 uv run trading-lab data import-alpaca \
@@ -64,7 +68,7 @@ uv run trading-lab data import-alpaca \
   --end 2025-12-31T20:55:00Z
 ```
 
-Repeat only for the three exact Validation ranges in the table. Validate each published dataset, then bind all four in one transaction:
+It repeated the command only for the three exact Validation ranges, validated each published dataset, and bound all four in one transaction:
 
 ```console
 uv run trading-lab data validate DATASET_ID
@@ -79,7 +83,7 @@ uv run trading-lab experiment bind-intraday-datasets \
 
 Binding checks the provider adapter, IEX feed, timeframe, adjustment, XNYS and timestamp policies, symbols, requested and actual ranges, dataset identity, and reviewed universe identity. Missing, invalid, duplicated, substituted, partial, or changed input leaves every reservation pending and unbound.
 
-## Execution-source review
+## Historical execution-source review
 
 Campaign V2 preserves the V1 provenance controls:
 
@@ -92,9 +96,9 @@ Campaign V2 preserves the V1 provenance controls:
 - a fresh matching assessment atomically bound to each candidate claim; and
 - another assessment before immutable report publication.
 
-The wheel-bound `intraday_campaign_v2_surface.json` manifest covers all 49 current application-package `.py` files by exact SHA-256, including `providers.py`, `datasets.py`, campaign admission, source review, runner, and qualification code. Added, missing, or changed modules fail. The manifest is inert; the reviewer must inspect the full main-attested source commit and wheel, verifier identity, and assessment fingerprint.
+The wheel-bound `intraday_campaign_v2_surface.json` manifest covers all 49 application-package `.py` files in the reviewed V2 source by exact SHA-256, including `providers.py`, `datasets.py`, campaign admission, source review, runner, and qualification code. Added, missing, or changed modules failed that assessment. The frozen manifest is inert; the reviewer had to inspect the full main-attested source commit and wheel, verifier identity, and assessment fingerprint.
 
-Prepare the fixed dependency wheelhouse and install the main-attested application wheel in a clean runtime:
+The execution workflow prepared the fixed dependency wheelhouse and installed the main-attested application wheel in a clean runtime:
 
 ```console
 uv export --frozen --no-dev --no-emit-project \
@@ -125,7 +129,7 @@ uvx --from pip pip \
   APPLICATION.whl
 ```
 
-Assess without changing the registry:
+It assessed the runtime without changing the registry:
 
 ```console
 "$CAMPAIGN_RUNTIME/bin/python" -I -B -S -c "$CAMPAIGN_BOOTSTRAP" "$CAMPAIGN_SITE_PACKAGES" \
@@ -137,7 +141,7 @@ Assess without changing the registry:
   --dependency-wheelhouse DEPENDENCY_WHEELHOUSE
 ```
 
-After a human reviews that exact output and the full attested source, record one immutable review:
+After human review of that exact output and the full attested source, it recorded one immutable review:
 
 ```console
 "$CAMPAIGN_RUNTIME/bin/python" -I -B -S -c "$CAMPAIGN_BOOTSTRAP" "$CAMPAIGN_SITE_PACKAGES" \
@@ -152,7 +156,7 @@ After a human reviews that exact output and the full attested source, record one
   --reason "reviewed Campaign V2 execution build"
 ```
 
-Only after the plan, all four datasets, and the source review exist may an operator run a reserved candidate:
+Only after the plan, all four datasets, and the source review existed did the operator run a reserved candidate:
 
 ```console
 "$CAMPAIGN_RUNTIME/bin/python" -I -B -S -c "$CAMPAIGN_BOOTSTRAP" "$CAMPAIGN_SITE_PACKAGES" \
@@ -164,4 +168,4 @@ Only after the plan, all four datasets, and the source review exist may an opera
   --dependency-wheelhouse DEPENDENCY_WHEELHOUSE
 ```
 
-Run one candidate per fresh single-purpose process. The command accepts no dataset, strategy, parameter, capital, cost, delay, window, or authority override. It grants no protected holdout, paper, broker-write, or live authority.
+Each candidate ran in a fresh single-purpose process. The command accepted no dataset, strategy, parameter, capital, cost, delay, window, or authority override. It granted no protected holdout, paper, broker-write, or live authority.
