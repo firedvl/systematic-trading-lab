@@ -436,13 +436,13 @@ def test_cataloged_intraday_runner_records_deterministic_zero_trade_report_and_f
     assert registry.get(wrong_timeframe.experiment_id)["status"] == "failed"
 
 
-def test_planned_intraday_binding_is_atomic_and_campaign_execution_stays_blocked(
+def test_campaign_v2_binding_is_atomic_and_execution_requires_source_review(
     tmp_path: Path,
 ) -> None:
     layout = StorageLayout(tmp_path)
     registry = ExperimentRegistry(layout.experiments)
     datasets = DatasetService(layout)
-    plan = load_intraday_research_campaign_plan(Path("config/research/intraday-campaign-v1.json"))
+    plan = load_intraday_research_campaign_plan(Path("config/research/intraday-campaign-v2.json"))
     registry.create_planned_intraday_campaign(plan.payload)
     manifests: dict[str, dict[str, object]] = {}
     for period in plan.periods:
@@ -475,7 +475,7 @@ def test_planned_intraday_binding_is_atomic_and_campaign_execution_stays_blocked
             CREATE TRIGGER reject_final_intraday_binding
             BEFORE UPDATE OF spec_json ON experiments
             WHEN OLD.experiment_id =
-                'intraday-research-v1-moving-average-trend-validation-c-plus-2-bars'
+                'intraday-research-v2-moving-average-trend-validation-c-plus-2-bars'
             BEGIN SELECT RAISE(ABORT, 'forced atomic binding failure'); END
             """
         )
@@ -489,7 +489,7 @@ def test_planned_intraday_binding_is_atomic_and_campaign_execution_stays_blocked
     with sqlite3.connect(layout.experiments) as connection:
         connection.execute("DROP TRIGGER reject_final_intraday_binding")
     registry.bind_planned_intraday_experiments(planned_specs)
-    spec = specs_by_id["intraday-research-v1-cash-training-base"]
+    spec = specs_by_id["intraday-research-v2-cash-training-base"]
     assert {
         record["spec_json"]["schema_version"]
         for record in registry.list(plan.campaign_id)

@@ -13,6 +13,7 @@ from .calendar import expected_bar_timestamps
 from .domain import Timeframe
 from .experiments import ExperimentSpec, ExperimentSplit, IntradayExperimentSpec
 from .fingerprints import fingerprint
+from .intraday_campaigns import get_intraday_campaign_contract
 from .intraday_qualification import REVIEWED_POLICY_FINGERPRINT
 from .providers import ALPACA_HISTORICAL_PROVIDER_NAME
 
@@ -312,13 +313,14 @@ def load_intraday_research_campaign_plan(path: Path) -> IntradayResearchCampaign
 
 
 def parse_intraday_research_campaign_plan(raw: object) -> IntradayResearchCampaignPlan:
-    """Validate the frozen M5B campaign-v1 preregistration without loading market data."""
+    """Validate one closed M5B campaign preregistration without loading market data."""
 
     if not isinstance(raw, dict) or set(raw) != _INTRADAY_ROOT_FIELDS:
         raise ValueError("intraday research campaign plan fields differ")
     if raw["schema_version"] != "intraday-research-campaign-plan-v1":
         raise ValueError("intraday research campaign plan schema differs")
     campaign_id = _text(raw["campaign_id"], "intraday campaign ID")
+    contract = get_intraday_campaign_contract(campaign_id)
     name = _text(raw["name"], "intraday campaign name")
     base_code_commit = _text(raw["base_code_commit"], "intraday base code commit")
     if raw["status"] != "preregistered":
@@ -348,7 +350,7 @@ def parse_intraday_research_campaign_plan(raw: object) -> IntradayResearchCampai
     ):
         raise ValueError("intraday campaign qualification policy differs")
     if raw["parameter_neighbors"] != []:
-        raise ValueError("intraday campaign v1 does not authorize parameter neighbors")
+        raise ValueError("intraday campaign does not authorize parameter neighbors")
     if raw["authorities"] != _INTRADAY_AUTHORITIES:
         raise ValueError("intraday campaign authority boundary differs")
     if raw["change_control"] != "new-version-required-after-first-observed-result":
@@ -369,8 +371,11 @@ def parse_intraday_research_campaign_plan(raw: object) -> IntradayResearchCampai
     if type(budget) is not int or budget != len(candidates):
         raise ValueError("intraday campaign search budget must equal reserved candidates")
     plan_fingerprint = fingerprint(raw)
-    if plan_fingerprint != REVIEWED_INTRADAY_CAMPAIGN_V1_FINGERPRINT:
-        raise ValueError("intraday campaign differs from the reviewed v1 preregistration")
+    if (
+        plan_fingerprint != contract.plan_fingerprint
+        or base_code_commit != contract.foundation_commit
+    ):
+        raise ValueError("intraday campaign differs from its reviewed preregistration")
     return IntradayResearchCampaignPlan(
         campaign_id=campaign_id,
         name=name,

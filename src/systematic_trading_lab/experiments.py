@@ -14,6 +14,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .fingerprints import canonical_json, canonicalize, fingerprint
+from .intraday_campaigns import (
+    INTRADAY_CAMPAIGN_V1_ID,
+    RESERVED_INTRADAY_CAMPAIGN_IDS,
+    get_intraday_campaign_contract,
+)
 
 if TYPE_CHECKING:
     from .campaign_specs import IntradayCandidateReservation, IntradayResearchCampaignPlan
@@ -178,7 +183,7 @@ ExperimentContract = ExperimentSpec | IntradayExperimentSpec
 
 
 class ExperimentRegistry:
-    _RESERVED_CAMPAIGN_IDS = frozenset({"intraday-research-v1"})
+    _RESERVED_CAMPAIGN_IDS = RESERVED_INTRADAY_CAMPAIGN_IDS
 
     def __init__(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -264,6 +269,30 @@ class ExperimentRegistry:
                 CREATE TRIGGER IF NOT EXISTS intraday_execution_source_bindings_no_delete
                 BEFORE DELETE ON intraday_experiment_execution_sources
                 BEGIN SELECT RAISE(ABORT, 'intraday execution source bindings are immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS intraday_campaign_v1_campaign_no_update
+                BEFORE UPDATE ON campaigns
+                WHEN OLD.campaign_id = 'intraday-research-v1'
+                BEGIN SELECT RAISE(ABORT, 'Campaign V1 evidence is immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS intraday_campaign_v1_campaign_no_delete
+                BEFORE DELETE ON campaigns
+                WHEN OLD.campaign_id = 'intraday-research-v1'
+                BEGIN SELECT RAISE(ABORT, 'Campaign V1 evidence is immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS intraday_campaign_v1_plan_no_update
+                BEFORE UPDATE ON campaign_plans
+                WHEN OLD.campaign_id = 'intraday-research-v1'
+                BEGIN SELECT RAISE(ABORT, 'Campaign V1 evidence is immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS intraday_campaign_v1_plan_no_delete
+                BEFORE DELETE ON campaign_plans
+                WHEN OLD.campaign_id = 'intraday-research-v1'
+                BEGIN SELECT RAISE(ABORT, 'Campaign V1 evidence is immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS intraday_campaign_v1_experiment_no_update
+                BEFORE UPDATE ON experiments
+                WHEN OLD.campaign_id = 'intraday-research-v1'
+                BEGIN SELECT RAISE(ABORT, 'Campaign V1 evidence is immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS intraday_campaign_v1_experiment_no_delete
+                BEFORE DELETE ON experiments
+                WHEN OLD.campaign_id = 'intraday-research-v1'
+                BEGIN SELECT RAISE(ABORT, 'Campaign V1 evidence is immutable'); END;
                 """
             )
             experiment_columns = {
@@ -398,6 +427,8 @@ class ExperimentRegistry:
         from .campaign_specs import parse_intraday_research_campaign_plan
 
         parsed = parse_intraday_research_campaign_plan(plan)
+        if not get_intraday_campaign_contract(parsed.campaign_id).execution_enabled:
+            raise ExperimentError("Campaign V1 is aborted and remains read-only evidence")
         timestamp = _now()
         with self._connect() as connection:
             try:
@@ -479,17 +510,16 @@ class ExperimentRegistry:
         expected_assessment_fingerprint: str,
         reviewer: str,
         reason: str,
+        campaign_id: str = INTRADAY_CAMPAIGN_V1_ID,
     ) -> dict[str, object]:
-        """Verify and record one immutable review of Campaign V1's actual build."""
+        """Verify and record one immutable review of a campaign's actual build."""
 
         from .campaign_specs import parse_intraday_research_campaign_plan
-        from .intraday_source_provenance import (
-            INTRADAY_CAMPAIGN_ID,
-            INTRADAY_FOUNDATION_COMMIT,
-            INTRADAY_PLAN_FINGERPRINT,
-            assess_intraday_execution_source,
-        )
+        from .intraday_source_provenance import assess_intraday_execution_source
 
+        contract = get_intraday_campaign_contract(campaign_id)
+        if not contract.execution_enabled:
+            raise ExperimentError("Campaign V1 is aborted and remains read-only evidence")
         if (
             not review_id.strip()
             or not expected_assessment_fingerprint.strip()
@@ -501,12 +531,16 @@ class ExperimentRegistry:
                 "are required"
             )
         assessment = assess_intraday_execution_source(
-            wheel, manifest, lockfile, dependency_wheelhouse
+            wheel,
+            manifest,
+            lockfile,
+            dependency_wheelhouse,
+            campaign_id=campaign_id,
         )
         if (
-            assessment.campaign_id != INTRADAY_CAMPAIGN_ID
-            or assessment.plan_fingerprint != INTRADAY_PLAN_FINGERPRINT
-            or assessment.surface_comparison.foundation_commit != INTRADAY_FOUNDATION_COMMIT
+            assessment.campaign_id != contract.campaign_id
+            or assessment.plan_fingerprint != contract.plan_fingerprint
+            or assessment.surface_comparison.foundation_commit != contract.foundation_commit
             or not assessment.surface_comparison.equivalent
         ):
             raise ExperimentError(
@@ -527,7 +561,7 @@ class ExperimentRegistry:
                 SELECT review_json FROM intraday_execution_source_reviews
                 WHERE review_id = ? OR campaign_id = ?
                 """,
-                (review_id, INTRADAY_CAMPAIGN_ID),
+                (review_id, campaign_id),
             ).fetchone()
             if existing is not None:
                 review = _fingerprinted_record(
@@ -543,39 +577,39 @@ class ExperimentRegistry:
                     and review["reason"] == reason
                 ):
                     return review
-                raise ExperimentError("Campaign V1 already has a different execution source review")
+                raise ExperimentError("campaign already has a different execution source review")
             plan_row = connection.execute(
                 """
                 SELECT plan_json, plan_fingerprint FROM campaign_plans
                 WHERE campaign_id = ?
                 """,
-                (INTRADAY_CAMPAIGN_ID,),
+                (campaign_id,),
             ).fetchone()
             if plan_row is None:
-                raise ExperimentError("Campaign V1 must be sealed before source review")
+                raise ExperimentError("campaign must be sealed before source review")
             plan = parse_intraday_research_campaign_plan(json.loads(str(plan_row[0])))
             if (
-                plan_row[1] != INTRADAY_PLAN_FINGERPRINT
-                or plan.plan_fingerprint != INTRADAY_PLAN_FINGERPRINT
-                or plan.base_code_commit != INTRADAY_FOUNDATION_COMMIT
+                plan_row[1] != contract.plan_fingerprint
+                or plan.plan_fingerprint != contract.plan_fingerprint
+                or plan.base_code_commit != contract.foundation_commit
             ):
-                raise ExperimentError("sealed Campaign V1 identity differs")
+                raise ExperimentError("sealed intraday campaign identity differs")
             statuses = connection.execute(
                 "SELECT status FROM experiments WHERE campaign_id = ?",
-                (INTRADAY_CAMPAIGN_ID,),
+                (campaign_id,),
             ).fetchall()
             if len(statuses) != plan.search_budget or any(
                 row[0] != ExperimentStatus.PENDING.value for row in statuses
             ):
                 raise ExperimentError(
-                    "execution source review requires every Campaign V1 candidate to be pending"
+                    "execution source review requires every campaign candidate to be pending"
                 )
             unsigned: dict[str, object] = {
                 "schema_version": "intraday-execution-source-review-v1",
                 "review_id": review_id,
-                "campaign_id": INTRADAY_CAMPAIGN_ID,
-                "plan_fingerprint": INTRADAY_PLAN_FINGERPRINT,
-                "foundation_commit": INTRADAY_FOUNDATION_COMMIT,
+                "campaign_id": campaign_id,
+                "plan_fingerprint": contract.plan_fingerprint,
+                "foundation_commit": contract.foundation_commit,
                 "execution_commit": assessment.build_identity.source_commit,
                 "assessment": assessment_json,
                 "assessment_fingerprint": assessment_fingerprint,
@@ -599,7 +633,7 @@ class ExperimentRegistry:
                 """,
                 (
                     review_id,
-                    INTRADAY_CAMPAIGN_ID,
+                    campaign_id,
                     canonical_json(review),
                     review["review_fingerprint"],
                 ),
@@ -643,10 +677,15 @@ class ExperimentRegistry:
 
         from .intraday_source_provenance import assess_intraday_execution_source
 
-        assessment = assess_intraday_execution_source(
-            wheel, manifest, lockfile, dependency_wheelhouse
-        )
         review = self.get_intraday_execution_source_review(review_id)
+        campaign_id = str(review["campaign_id"])
+        assessment = assess_intraday_execution_source(
+            wheel,
+            manifest,
+            lockfile,
+            dependency_wheelhouse,
+            campaign_id=campaign_id,
+        )
         if (
             review["assessment_fingerprint"] != assessment.assessment_fingerprint
             or review["execution_commit"] != assessment.build_identity.source_commit
@@ -657,7 +696,7 @@ class ExperimentRegistry:
             or canonicalize(review["assessment"]) != canonicalize(assessment)
         ):
             raise ExperimentError(
-                "current execution build differs from its recorded Campaign V1 review; "
+                "current execution build differs from its recorded campaign review; "
                 "a new campaign version is required"
             )
 
@@ -725,6 +764,8 @@ class ExperimentRegistry:
         plan_json = stored_plan["plan_json"]
         assert isinstance(plan_json, Mapping)
         plan = parse_intraday_research_campaign_plan(plan_json)
+        if not get_intraday_campaign_contract(plan.campaign_id).execution_enabled:
+            raise ExperimentError("Campaign V1 is aborted and remains read-only evidence")
         if stored_plan["plan_fingerprint"] != plan.plan_fingerprint:
             raise ExperimentError("stored intraday campaign plan fingerprint differs")
         expected_ids = {candidate.experiment_id for candidate in plan.candidates}
@@ -1001,44 +1042,24 @@ class ExperimentRegistry:
     ) -> dict[str, object] | None:
         if self.get_planned_intraday_spec(spec.experiment_id) != spec:
             raise ExperimentError("stored planned intraday experiment differs")
-        if spec.campaign_id == "intraday-research-v1":
-            if (
-                review_id is None
-                or wheel is None
-                or manifest is None
-                or lockfile is None
-                or dependency_wheelhouse is None
-            ):
-                raise ExperimentError(
-                    "Campaign V1 execution requires an explicit reviewed execution build"
-                )
-            return self._claim_campaign_v1_intraday(
-                spec, review_id, wheel, manifest, lockfile, dependency_wheelhouse
+        contract = get_intraday_campaign_contract(spec.campaign_id)
+        if not contract.execution_enabled:
+            raise ExperimentError("Campaign V1 is aborted and remains read-only evidence")
+        if (
+            review_id is None
+            or wheel is None
+            or manifest is None
+            or lockfile is None
+            or dependency_wheelhouse is None
+        ):
+            raise ExperimentError(
+                "planned intraday execution requires an explicit reviewed execution build"
             )
-        timestamp = _now()
-        with self._connect() as connection:
-            cursor = connection.execute(
-                """
-                UPDATE experiments
-                SET status = ?, started_at = COALESCE(started_at, ?), heartbeat_at = ?
-                WHERE experiment_id = ? AND status = ?
-                  AND campaign_plan_fingerprint IS NOT NULL
-                """,
-                (
-                    ExperimentStatus.RUNNING.value,
-                    timestamp,
-                    timestamp,
-                    spec.experiment_id,
-                    ExperimentStatus.PENDING.value,
-                ),
-            )
-            if cursor.rowcount != 1:
-                raise ExperimentError(
-                    f"planned intraday experiment is not pending: {spec.experiment_id}"
-                )
-        return None
+        return self._claim_source_bound_intraday(
+            spec, review_id, wheel, manifest, lockfile, dependency_wheelhouse
+        )
 
-    def _claim_campaign_v1_intraday(
+    def _claim_source_bound_intraday(
         self,
         spec: IntradayExperimentSpec,
         review_id: str,
@@ -1047,17 +1068,20 @@ class ExperimentRegistry:
         lockfile: Path,
         dependency_wheelhouse: Path,
     ) -> dict[str, object]:
-        from .intraday_source_provenance import (
-            INTRADAY_CAMPAIGN_ID,
-            INTRADAY_FOUNDATION_COMMIT,
-            INTRADAY_PLAN_FINGERPRINT,
-            assess_intraday_execution_source,
-        )
+        from .intraday_source_provenance import assess_intraday_execution_source
 
+        contract = get_intraday_campaign_contract(spec.campaign_id)
         assessment = assess_intraday_execution_source(
-            wheel, manifest, lockfile, dependency_wheelhouse
+            wheel,
+            manifest,
+            lockfile,
+            dependency_wheelhouse,
+            campaign_id=spec.campaign_id,
         )
-        if spec.campaign_id != INTRADAY_CAMPAIGN_ID or not assessment.surface_comparison.equivalent:
+        if (
+            assessment.campaign_id != spec.campaign_id
+            or not assessment.surface_comparison.equivalent
+        ):
             raise ExperimentError(
                 "execution source differs from the reviewed foundation; "
                 "a new intraday campaign version is required"
@@ -1083,9 +1107,9 @@ class ExperimentRegistry:
             )
             if (
                 review["review_fingerprint"] != review_row[1]
-                or review["campaign_id"] != INTRADAY_CAMPAIGN_ID
-                or review["plan_fingerprint"] != INTRADAY_PLAN_FINGERPRINT
-                or review["foundation_commit"] != INTRADAY_FOUNDATION_COMMIT
+                or review["campaign_id"] != spec.campaign_id
+                or review["plan_fingerprint"] != contract.plan_fingerprint
+                or review["foundation_commit"] != contract.foundation_commit
                 or review["execution_commit"] != assessment.build_identity.source_commit
                 or review["assessment_fingerprint"] != assessment.assessment_fingerprint
                 or review["build_identity_fingerprint"]
@@ -1095,20 +1119,20 @@ class ExperimentRegistry:
                 or canonicalize(review["assessment"]) != assessment_json
             ):
                 raise ExperimentError(
-                    "current execution source differs from its recorded Campaign V1 review"
+                    "current execution source differs from its recorded campaign review"
                 )
             row = connection.execute(
                 """
                 SELECT spec_json, status, campaign_plan_fingerprint
                 FROM experiments WHERE experiment_id = ? AND campaign_id = ?
                 """,
-                (spec.experiment_id, INTRADAY_CAMPAIGN_ID),
+                (spec.experiment_id, spec.campaign_id),
             ).fetchone()
             if (
                 row is None
                 or canonicalize(json.loads(str(row[0]))) != canonicalize(spec)
                 or row[1] != ExperimentStatus.PENDING.value
-                or row[2] != INTRADAY_PLAN_FINGERPRINT
+                or row[2] != contract.plan_fingerprint
             ):
                 raise ExperimentError(
                     f"planned intraday experiment is not pending: {spec.experiment_id}"
@@ -1154,7 +1178,7 @@ class ExperimentRegistry:
                         timestamp,
                         spec.experiment_id,
                         ExperimentStatus.PENDING.value,
-                        INTRADAY_PLAN_FINGERPRINT,
+                        contract.plan_fingerprint,
                     ),
                 )
             except sqlite3.IntegrityError as error:
@@ -1170,8 +1194,14 @@ class ExperimentRegistry:
     def heartbeat(self, experiment_id: str) -> None:
         with self._connect() as connection:
             cursor = connection.execute(
-                "UPDATE experiments SET heartbeat_at = ? WHERE experiment_id = ? AND status = ?",
-                (_now(), experiment_id, ExperimentStatus.RUNNING.value),
+                "UPDATE experiments SET heartbeat_at = ? "
+                "WHERE experiment_id = ? AND status = ? AND campaign_id != ?",
+                (
+                    _now(),
+                    experiment_id,
+                    ExperimentStatus.RUNNING.value,
+                    INTRADAY_CAMPAIGN_V1_ID,
+                ),
             )
             if cursor.rowcount != 1:
                 raise ExperimentError(f"running experiment not found: {experiment_id}")
@@ -1307,7 +1337,7 @@ class ExperimentRegistry:
                 """
                 UPDATE experiments
                 SET status = ?, failure_info = ?, finished_at = ?, heartbeat_at = NULL
-                WHERE experiment_id = ? AND status IN (?, ?)
+                WHERE experiment_id = ? AND status IN (?, ?) AND campaign_id != ?
                 """,
                 (
                     ExperimentStatus.FAILED.value,
@@ -1316,6 +1346,7 @@ class ExperimentRegistry:
                     experiment_id,
                     ExperimentStatus.PENDING.value,
                     ExperimentStatus.RUNNING.value,
+                    INTRADAY_CAMPAIGN_V1_ID,
                 ),
             )
             if cursor.rowcount != 1:
@@ -1328,8 +1359,9 @@ class ExperimentRegistry:
         recovered: list[str] = []
         with self._connect() as connection:
             rows = connection.execute(
-                "SELECT experiment_id, heartbeat_at FROM experiments WHERE status = ?",
-                (ExperimentStatus.RUNNING.value,),
+                "SELECT experiment_id, heartbeat_at FROM experiments "
+                "WHERE status = ? AND campaign_id != ?",
+                (ExperimentStatus.RUNNING.value, INTRADAY_CAMPAIGN_V1_ID),
             ).fetchall()
             for experiment_id, heartbeat in rows:
                 if heartbeat is None or datetime.fromisoformat(heartbeat) < cutoff:

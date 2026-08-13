@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from systematic_trading_lab.calendar import expected_bar_timestamps
 from systematic_trading_lab.campaign_specs import (
     REVIEWED_INTRADAY_UNIVERSE_FINGERPRINT,
     REVIEWED_INTRADAY_UNIVERSE_ID,
@@ -16,7 +17,8 @@ from systematic_trading_lab.campaign_specs import (
 from systematic_trading_lab.domain import Timeframe
 from systematic_trading_lab.universe import load_intraday_universe
 
-INTRADAY_PLAN = Path("config/research/intraday-campaign-v1.json")
+INTRADAY_V1_PLAN = Path("config/research/intraday-campaign-v1.json")
+INTRADAY_V2_PLAN = Path("config/research/intraday-campaign-v2.json")
 
 
 def plan_payload() -> dict[str, object]:
@@ -135,8 +137,8 @@ def test_training_plan_accepts_strategic_allocation(tmp_path: Path) -> None:
 
 
 def test_intraday_campaign_v1_reserves_the_complete_fixed_matrix() -> None:
-    first = load_intraday_research_campaign_plan(INTRADAY_PLAN)
-    second = load_intraday_research_campaign_plan(INTRADAY_PLAN)
+    first = load_intraday_research_campaign_plan(INTRADAY_V1_PLAN)
+    second = load_intraday_research_campaign_plan(INTRADAY_V1_PLAN)
 
     assert first.plan_fingerprint == second.plan_fingerprint
     assert (
@@ -171,8 +173,65 @@ def test_intraday_campaign_v1_reserves_the_complete_fixed_matrix() -> None:
         assert [candidate.execution_delay_bars for candidate in group] == [1, 1, 1, 2, 3]
 
 
+def test_intraday_campaign_v2_carries_forward_the_fixed_design_under_a_new_identity() -> None:
+    v1 = load_intraday_research_campaign_plan(INTRADAY_V1_PLAN)
+    v2 = load_intraday_research_campaign_plan(INTRADAY_V2_PLAN)
+
+    assert v2.campaign_id == "intraday-research-v2"
+    assert v2.plan_fingerprint == (
+        "52db8a27fa4ff86865ab69b6bd7456899329ef3b861a582e59ab32904c03c122"
+    )
+    assert v2.base_code_commit == "f3d7ee7d86c3a02b52c09270a6399aa1bf5f78b7"
+    assert len(v2.candidates) == v2.search_budget == 60
+    assert [
+        len(
+            expected_bar_timestamps(
+                period.start_timestamp,
+                period.end_timestamp,
+                Timeframe.FIVE_MINUTES,
+            )
+        )
+        for period in v2.periods
+    ] == [9876, 3042, 3354, 3198]
+    assert [
+        (
+            candidate.candidate_ordinal,
+            candidate.strategy_id,
+            candidate.strategy_family,
+            candidate.parameters,
+            candidate.period_role,
+            candidate.split,
+            candidate.start_timestamp,
+            candidate.end_timestamp,
+            candidate.variant_role,
+            candidate.cost_model_version,
+            candidate.slippage_bps,
+            candidate.commission_bps,
+            candidate.execution_delay_bars,
+        )
+        for candidate in v2.candidates
+    ] == [
+        (
+            candidate.candidate_ordinal,
+            candidate.strategy_id,
+            candidate.strategy_family,
+            candidate.parameters,
+            candidate.period_role,
+            candidate.split,
+            candidate.start_timestamp,
+            candidate.end_timestamp,
+            candidate.variant_role,
+            candidate.cost_model_version,
+            candidate.slippage_bps,
+            candidate.commission_bps,
+            candidate.execution_delay_bars,
+        )
+        for candidate in v1.candidates
+    ]
+
+
 def test_intraday_campaign_v1_binds_only_the_exact_planned_dataset() -> None:
-    plan = load_intraday_research_campaign_plan(INTRADAY_PLAN)
+    plan = load_intraday_research_campaign_plan(INTRADAY_V1_PLAN)
     manifest: dict[str, object] = {
         "identity": {"dataset_id": "dataset-1", "fingerprint": "dataset-fingerprint-1"},
         "provider": "alpaca-historical-v2",
@@ -228,7 +287,7 @@ def test_intraday_campaign_v1_binds_only_the_exact_planned_dataset() -> None:
 
 
 def test_intraday_campaign_requires_one_dataset_per_period() -> None:
-    plan = load_intraday_research_campaign_plan(INTRADAY_PLAN)
+    plan = load_intraday_research_campaign_plan(INTRADAY_V2_PLAN)
     manifests: dict[str, dict[str, object]] = {}
     for index, period in enumerate(plan.periods):
         start = period.start_timestamp.isoformat().replace("+00:00", "Z")
@@ -268,17 +327,18 @@ def test_intraday_campaign_requires_one_dataset_per_period() -> None:
         ("strategy", "fixed strategy contract differs"),
         ("period", "UTC bounds do not cover exact XNYS sessions"),
         ("cost", "cost stresses must increase"),
-        ("ordered-cost-change", "differs from the reviewed v1 preregistration"),
+        ("ordered-cost-change", "differs from its reviewed preregistration"),
         ("group", "candidate group ordering differs"),
         ("neighbors", "does not authorize parameter neighbors"),
         ("holdout", "authority boundary differs"),
         ("policy", "qualification policy differs"),
     ),
 )
-def test_intraday_campaign_v1_rejects_post_registration_variation(
-    defect: str, message: str
+@pytest.mark.parametrize("plan_path", (INTRADAY_V1_PLAN, INTRADAY_V2_PLAN))
+def test_intraday_campaigns_reject_post_registration_variation(
+    plan_path: Path, defect: str, message: str
 ) -> None:
-    payload = json.loads(INTRADAY_PLAN.read_text(encoding="utf-8"))
+    payload = json.loads(plan_path.read_text(encoding="utf-8"))
     if defect == "strategy":
         payload["strategies"][1]["parameters"]["lookback"] = 2
     elif defect == "period":

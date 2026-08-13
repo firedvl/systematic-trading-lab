@@ -47,6 +47,7 @@ from .experiments import (
     IntradayExperimentSpec,
 )
 from .fingerprints import canonicalize
+from .intraday_campaigns import get_intraday_campaign_contract
 from .intraday_qualification import (
     REVIEWED_POLICY_FINGERPRINT,
     IntradayQualificationPolicy,
@@ -55,7 +56,6 @@ from .intraday_qualification import (
     write_intraday_qualification_evidence,
 )
 from .intraday_source_provenance import (
-    INTRADAY_CAMPAIGN_ID,
     IntradayExecutionSourceProvenanceError,
     assess_intraday_execution_source,
 )
@@ -314,7 +314,7 @@ def parser() -> argparse.ArgumentParser:
     planned_intraday_run.add_argument("--dependency-wheelhouse", type=Path, required=True)
     assess_intraday_source = experiment_commands.add_parser(
         "assess-intraday-source",
-        help="compare a clean Campaign V1 checkout with its reviewed foundation",
+        help="compare a clean campaign build with its reviewed foundation",
     )
     assess_intraday_source.add_argument("--campaign", required=True)
     assess_intraday_source.add_argument("--wheel", type=Path, required=True)
@@ -323,7 +323,7 @@ def parser() -> argparse.ArgumentParser:
     assess_intraday_source.add_argument("--dependency-wheelhouse", type=Path, required=True)
     record_intraday_source = experiment_commands.add_parser(
         "record-intraday-source",
-        help="record one reviewed Campaign V1 execution checkout",
+        help="record one reviewed intraday campaign execution build",
     )
     record_intraday_source.add_argument("review_id")
     record_intraday_source.add_argument("--campaign", required=True)
@@ -605,13 +605,13 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             )
             return 0
         if arguments.experiment_command == "assess-intraday-source":
-            if arguments.campaign != INTRADAY_CAMPAIGN_ID:
-                raise ExperimentError("execution-source assessment supports Campaign V1 only")
+            get_intraday_campaign_contract(arguments.campaign)
             source_assessment = assess_intraday_execution_source(
                 arguments.wheel,
                 arguments.build_manifest,
                 arguments.lockfile,
                 arguments.dependency_wheelhouse,
+                campaign_id=arguments.campaign,
             )
             payload = canonicalize(source_assessment)
             assert isinstance(payload, dict)
@@ -639,8 +639,6 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             intraday_plan = load_intraday_research_campaign_plan(arguments.spec)
             _print(registry.create_planned_intraday_campaign(intraday_plan.payload))
         elif arguments.experiment_command == "record-intraday-source":
-            if arguments.campaign != INTRADAY_CAMPAIGN_ID:
-                raise ExperimentError("execution-source review supports Campaign V1 only")
             review = registry.record_intraday_execution_source_review(
                 arguments.review_id,
                 arguments.wheel,
@@ -650,6 +648,7 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                 arguments.assessment_fingerprint,
                 arguments.reviewer,
                 arguments.reason,
+                campaign_id=arguments.campaign,
             )
             _print(
                 {

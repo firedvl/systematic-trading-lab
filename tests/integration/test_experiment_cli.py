@@ -24,7 +24,7 @@ from systematic_trading_lab.universe import load_intraday_universe, load_researc
 
 
 def planned_intraday_manifests() -> dict[str, dict[str, object]]:
-    plan = load_intraday_research_campaign_plan(Path("config/research/intraday-campaign-v1.json"))
+    plan = load_intraday_research_campaign_plan(Path("config/research/intraday-campaign-v2.json"))
     manifests: dict[str, dict[str, object]] = {}
     for period in plan.periods:
         start = period.start_timestamp.isoformat().replace("+00:00", "Z")
@@ -74,7 +74,7 @@ def test_cli_inspects_intraday_plan_without_creating_runtime_state(
     assert not runtime_home.exists()
 
 
-def test_cli_seals_intraday_plan_and_blocks_arbitrary_campaign_runs(
+def test_cli_seals_campaign_v2_and_blocks_arbitrary_campaign_runs(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     settings = Settings(TradingMode.OFFLINE, tmp_path)
@@ -83,7 +83,7 @@ def test_cli_seals_intraday_plan_and_blocks_arbitrary_campaign_runs(
             "experiment",
             "plan-intraday",
             "--spec",
-            "config/research/intraday-campaign-v1.json",
+            "config/research/intraday-campaign-v2.json",
         ]
     )
 
@@ -92,8 +92,8 @@ def test_cli_seals_intraday_plan_and_blocks_arbitrary_campaign_runs(
     assert planned["status"] == "sealed"
     assert planned["reserved_candidates"] == 60
     registry = ExperimentRegistry(StorageLayout(tmp_path).experiments)
-    assert registry.get_campaign("intraday-research-v1")["status"] == "sealed"
-    reservations = registry.list("intraday-research-v1")
+    assert registry.get_campaign("intraday-research-v2")["status"] == "sealed"
+    reservations = registry.list("intraday-research-v2")
     assert len(reservations) == 60
     assert {record["status"] for record in reservations} == {"pending"}
     reservation_specs = [record["spec_json"] for record in reservations]
@@ -118,7 +118,7 @@ def test_cli_seals_intraday_plan_and_blocks_arbitrary_campaign_runs(
             "run-intraday",
             "not-reserved",
             "--campaign",
-            "intraday-research-v1",
+            "intraday-research-v2",
             "--strategy",
             "cash",
             "--candidate-ordinal",
@@ -142,14 +142,17 @@ def test_cli_seals_intraday_plan_and_blocks_arbitrary_campaign_runs(
 
     with pytest.raises(ExperimentError, match="active campaign not found"):
         run(arbitrary, settings)
-    assert len(registry.list("intraday-research-v1")) == 60
+    assert len(registry.list("intraday-research-v2")) == 60
 
 
-def test_campaign_v1_id_cannot_bypass_the_sealed_plan(tmp_path: Path) -> None:
+@pytest.mark.parametrize("campaign_id", ("intraday-research-v1", "intraday-research-v2"))
+def test_reserved_intraday_campaign_ids_cannot_bypass_sealed_plans(
+    tmp_path: Path, campaign_id: str
+) -> None:
     registry = ExperimentRegistry(StorageLayout(tmp_path).experiments)
 
     with pytest.raises(ExperimentError, match="reserved for a sealed plan"):
-        registry.create_campaign("intraday-research-v1", "Bypass", 1)
+        registry.create_campaign(campaign_id, "Bypass", 1)
 
 
 def test_cli_validates_and_atomically_binds_planned_intraday_datasets(
@@ -165,7 +168,7 @@ def test_cli_validates_and_atomically_binds_planned_intraday_datasets(
                     "experiment",
                     "plan-intraday",
                     "--spec",
-                    "config/research/intraday-campaign-v1.json",
+                    "config/research/intraday-campaign-v2.json",
                 ]
             ),
             settings,
@@ -199,7 +202,7 @@ def test_cli_validates_and_atomically_binds_planned_intraday_datasets(
             "experiment",
             "bind-intraday-datasets",
             "--campaign",
-            "intraday-research-v1",
+            "intraday-research-v2",
             "--training",
             "sealed-training",
             "--validation-a",
@@ -215,10 +218,10 @@ def test_cli_validates_and_atomically_binds_planned_intraday_datasets(
     result = json.loads(capsys.readouterr().out)
     assert result["bound_candidates"] == 60
     assert result["plan_fingerprint"] == (
-        "ce81be36d02cc15f421390bf3d3787714bb0b025797ccfb8de2c1d1236052c1a"
+        "52db8a27fa4ff86865ab69b6bd7456899329ef3b861a582e59ab32904c03c122"
     )
     registry = ExperimentRegistry(StorageLayout(tmp_path).experiments)
-    records = registry.list("intraday-research-v1")
+    records = registry.list("intraday-research-v2")
     assert len(records) == 60
     assert {record["status"] for record in records} == {"pending"}
     assert {
@@ -226,7 +229,7 @@ def test_cli_validates_and_atomically_binds_planned_intraday_datasets(
         for record in records
         if isinstance(record["spec_json"], dict)
     } == {"intraday-experiment-v1"}
-    record = registry.get("intraday-research-v1-previous-bar-momentum-training-harsher-cost")
+    record = registry.get("intraday-research-v2-previous-bar-momentum-training-harsher-cost")
     spec_json = cast(dict[str, object], record["spec_json"])
     assert spec_json["candidate_ordinal"] == 23
     assert spec_json["slippage_bps"] == "20"
@@ -244,7 +247,7 @@ def test_cli_validates_and_atomically_binds_planned_intraday_datasets(
         run(arguments, settings)
     assert all(
         record["spec_json"]["schema_version"] == "intraday-experiment-v1"
-        for record in registry.list("intraday-research-v1")
+        for record in registry.list("intraday-research-v2")
         if isinstance(record["spec_json"], dict)
     )
 
@@ -253,10 +256,10 @@ def test_cli_validates_and_atomically_binds_planned_intraday_datasets(
             [
                 "experiment",
                 "run-planned-intraday",
-                "intraday-research-v1-cash-training-base",
+                "intraday-research-v2-cash-training-base",
             ]
         )
-    assert registry.get("intraday-research-v1-cash-training-base")["status"] == "pending"
+    assert registry.get("intraday-research-v2-cash-training-base")["status"] == "pending"
 
 
 def test_cli_invalid_intraday_dataset_preflight_leaves_every_reservation_pending(
@@ -271,7 +274,7 @@ def test_cli_invalid_intraday_dataset_preflight_leaves_every_reservation_pending
                     "experiment",
                     "plan-intraday",
                     "--spec",
-                    "config/research/intraday-campaign-v1.json",
+                    "config/research/intraday-campaign-v2.json",
                 ]
             ),
             settings,
@@ -302,7 +305,7 @@ def test_cli_invalid_intraday_dataset_preflight_leaves_every_reservation_pending
                     "experiment",
                     "bind-intraday-datasets",
                     "--campaign",
-                    "intraday-research-v1",
+                    "intraday-research-v2",
                     "--training",
                     "sealed-training",
                     "--validation-a",
@@ -322,7 +325,7 @@ def test_cli_invalid_intraday_dataset_preflight_leaves_every_reservation_pending
         "sealed-validation-b",
         "sealed-validation-c",
     ]
-    records = ExperimentRegistry(StorageLayout(tmp_path).experiments).list("intraday-research-v1")
+    records = ExperimentRegistry(StorageLayout(tmp_path).experiments).list("intraday-research-v2")
     assert {record["status"] for record in records} == {"pending"}
     assert {
         record["spec_json"]["schema_version"]

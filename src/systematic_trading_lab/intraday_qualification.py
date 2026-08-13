@@ -16,6 +16,7 @@ from typing import cast
 
 from .experiments import ExperimentError, ExperimentRegistry
 from .fingerprints import canonical_json, canonicalize, fingerprint
+from .intraday_campaigns import get_intraday_campaign_contract
 
 POLICY_SCHEMA = "intraday-qualification-policy-v1"
 REPORT_SCHEMA = "intraday-backtest-report-v1"
@@ -656,14 +657,23 @@ def _registered_report(
         raise ValueError("registered intraday report provenance differs")
     if canonicalize(validated["metrics"]) != canonicalize(record.get("metrics_json")):
         raise ValueError("registered intraday report metrics differ")
-    if spec.get("campaign_id") == "intraday-research-v1":
+    campaign_id = spec.get("campaign_id")
+    try:
+        source_bound = isinstance(campaign_id, str) and bool(
+            get_intraday_campaign_contract(campaign_id)
+        )
+    except ValueError:
+        source_bound = False
+    if source_bound:
         source_evidence = report.get("execution_source_provenance")
         if not isinstance(source_evidence, Mapping):
-            raise ValueError("Campaign V1 report lacks execution source provenance")
+            raise ValueError("planned intraday report lacks execution source provenance")
         try:
             registry.verify_intraday_execution_source_evidence(experiment_id, source_evidence)
         except ExperimentError as error:
-            raise ValueError("Campaign V1 report execution source provenance differs") from error
+            raise ValueError(
+                "planned intraday report execution source provenance differs"
+            ) from error
     return record, report
 
 

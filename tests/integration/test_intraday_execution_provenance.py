@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import replace
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import cast
@@ -20,14 +21,21 @@ from systematic_trading_lab.config import Settings
 from systematic_trading_lab.datasets import DatasetService, intraday_fixture_request
 from systematic_trading_lab.domain import OHLCVBar, Symbol, Timeframe, TradingMode
 from systematic_trading_lab.experiment_runner import run_cataloged_intraday_experiment
-from systematic_trading_lab.experiments import ExperimentError, ExperimentRegistry
+from systematic_trading_lab.experiments import (
+    ExperimentError,
+    ExperimentRegistry,
+    QualificationState,
+    _planned_intraday_reservation,
+)
 from systematic_trading_lab.fingerprints import canonical_json, fingerprint
+from systematic_trading_lab.intraday_campaigns import (
+    INTRADAY_CAMPAIGN_V1_ID,
+    INTRADAY_CAMPAIGN_V2_ID,
+    INTRADAY_FOUNDATION_LOCK_SHA256,
+    get_intraday_campaign_contract,
+)
 from systematic_trading_lab.intraday_qualification import _registered_report
 from systematic_trading_lab.intraday_source_provenance import (
-    INTRADAY_CAMPAIGN_ID,
-    INTRADAY_FOUNDATION_COMMIT,
-    INTRADAY_FOUNDATION_LOCK_SHA256,
-    INTRADAY_PLAN_FINGERPRINT,
     IntradayExecutionBuildIdentity,
     IntradayExecutionSourceAssessment,
     IntradayExecutionSurfaceComparison,
@@ -37,15 +45,20 @@ from systematic_trading_lab.providers import IntradayFixtureProvider
 from systematic_trading_lab.runtime_build import AttestationVerifierIdentity
 from systematic_trading_lab.storage import StorageLayout
 
+CAMPAIGN_ID = INTRADAY_CAMPAIGN_V2_ID
+CAMPAIGN_CONTRACT = get_intraday_campaign_contract(CAMPAIGN_ID)
+CAMPAIGN_SURFACE = provenance._load_reviewed_surface_manifest(CAMPAIGN_ID)
+SOURCE_REVIEW_ID = "campaign-v2-source-review"
+
 
 def _assessment(
     commit: str = "a" * 40, environment_marker: str = "1"
 ) -> IntradayExecutionSourceAssessment:
-    components = provenance._REVIEWED_COMPONENT_HASHES
+    components = CAMPAIGN_SURFACE.hashes
     surface = IntradayExecutionSurfaceComparison(
-        foundation_commit=INTRADAY_FOUNDATION_COMMIT,
-        surface_manifest_sha256=provenance._sha256(provenance._SURFACE_MANIFEST_RAW),
-        surface_manifest_fingerprint=fingerprint(provenance._SURFACE_DEFINITION),
+        foundation_commit=CAMPAIGN_CONTRACT.foundation_commit,
+        surface_manifest_sha256=provenance._sha256(CAMPAIGN_SURFACE.raw),
+        surface_manifest_fingerprint=fingerprint(CAMPAIGN_SURFACE.definition),
         reviewed_surface_fingerprint=fingerprint(components),
         observed_surface_fingerprint=fingerprint(components),
         reviewed_component_hashes=components,
@@ -54,8 +67,8 @@ def _assessment(
         equivalent=True,
     )
     return IntradayExecutionSourceAssessment(
-        campaign_id=INTRADAY_CAMPAIGN_ID,
-        plan_fingerprint=INTRADAY_PLAN_FINGERPRINT,
+        campaign_id=CAMPAIGN_ID,
+        plan_fingerprint=CAMPAIGN_CONTRACT.plan_fingerprint,
         build_identity=IntradayExecutionBuildIdentity(
             source_commit=commit,
             wheel_sha256="b" * 64,
@@ -111,16 +124,16 @@ def _assessment(
 
 def _mismatched_assessment() -> IntradayExecutionSourceAssessment:
     assessment = _assessment()
-    observed = list(provenance._REVIEWED_COMPONENT_HASHES)
+    observed = list(CAMPAIGN_SURFACE.hashes)
     component, _ = observed[0]
     observed[0] = (component, "0" * 64)
     surface = IntradayExecutionSurfaceComparison(
-        foundation_commit=INTRADAY_FOUNDATION_COMMIT,
-        surface_manifest_sha256=provenance._sha256(provenance._SURFACE_MANIFEST_RAW),
-        surface_manifest_fingerprint=fingerprint(provenance._SURFACE_DEFINITION),
-        reviewed_surface_fingerprint=fingerprint(provenance._REVIEWED_COMPONENT_HASHES),
+        foundation_commit=CAMPAIGN_CONTRACT.foundation_commit,
+        surface_manifest_sha256=provenance._sha256(CAMPAIGN_SURFACE.raw),
+        surface_manifest_fingerprint=fingerprint(CAMPAIGN_SURFACE.definition),
+        reviewed_surface_fingerprint=fingerprint(CAMPAIGN_SURFACE.hashes),
         observed_surface_fingerprint=fingerprint(tuple(observed)),
-        reviewed_component_hashes=provenance._REVIEWED_COMPONENT_HASHES,
+        reviewed_component_hashes=CAMPAIGN_SURFACE.hashes,
         observed_component_hashes=tuple(observed),
         mismatches=(component,),
         equivalent=False,
@@ -129,7 +142,7 @@ def _mismatched_assessment() -> IntradayExecutionSourceAssessment:
 
 
 def _manifests() -> dict[str, dict[str, object]]:
-    plan = load_intraday_research_campaign_plan(Path("config/research/intraday-campaign-v1.json"))
+    plan = load_intraday_research_campaign_plan(Path("config/research/intraday-campaign-v2.json"))
     result: dict[str, dict[str, object]] = {}
     for period in plan.periods:
         start = period.start_timestamp.isoformat().replace("+00:00", "Z")
@@ -158,7 +171,7 @@ def _manifests() -> dict[str, dict[str, object]]:
 
 def _registry(tmp_path: Path, *, bind: bool = True) -> ExperimentRegistry:
     registry = ExperimentRegistry(tmp_path / "experiments.sqlite3")
-    plan = load_intraday_research_campaign_plan(Path("config/research/intraday-campaign-v1.json"))
+    plan = load_intraday_research_campaign_plan(Path("config/research/intraday-campaign-v2.json"))
     registry.create_planned_intraday_campaign(plan.payload)
     if bind:
         registry.bind_planned_intraday_experiments(
@@ -183,14 +196,15 @@ def _record_review(
 ) -> dict[str, object]:
     wheel, manifest, lockfile, wheelhouse = _artifacts(tmp_path)
     return registry.record_intraday_execution_source_review(
-        "campaign-v1-source-review",
+        SOURCE_REVIEW_ID,
         wheel,
         manifest,
         lockfile,
         wheelhouse,
         assessment.assessment_fingerprint,
         "independent-reviewer",
-        "reviewed attested Campaign V1 execution build",
+        "reviewed attested Campaign V2 execution build",
+        campaign_id=CAMPAIGN_ID,
     )
 
 
@@ -199,12 +213,14 @@ def test_source_review_requires_explicit_fingerprint_and_is_immutable(
 ) -> None:
     registry = _registry(tmp_path, bind=False)
     assessment = _assessment()
-    monkeypatch.setattr(provenance, "assess_intraday_execution_source", lambda *args: assessment)
+    monkeypatch.setattr(
+        provenance, "assess_intraday_execution_source", lambda *args, **kwargs: assessment
+    )
     wheel, manifest, lockfile, wheelhouse = _artifacts(tmp_path)
 
     with pytest.raises(ExperimentError, match="explicitly reviewed assessment"):
         registry.record_intraday_execution_source_review(
-            "campaign-v1-source-review",
+            SOURCE_REVIEW_ID,
             wheel,
             manifest,
             lockfile,
@@ -212,12 +228,13 @@ def test_source_review_requires_explicit_fingerprint_and_is_immutable(
             "f" * 64,
             "independent-reviewer",
             "reviewed build",
+            campaign_id=CAMPAIGN_ID,
         )
     with pytest.raises(ExperimentError, match="review not found"):
-        registry.get_intraday_execution_source_review("campaign-v1-source-review")
+        registry.get_intraday_execution_source_review(SOURCE_REVIEW_ID)
 
     review = _record_review(registry, tmp_path, assessment)
-    assert review["foundation_commit"] == INTRADAY_FOUNDATION_COMMIT
+    assert review["foundation_commit"] == CAMPAIGN_CONTRACT.foundation_commit
     assert review["execution_commit"] == "a" * 40
     assert _record_review(registry, tmp_path, assessment) == review
     with pytest.raises(ExperimentError, match="already has a different"):
@@ -230,6 +247,7 @@ def test_source_review_requires_explicit_fingerprint_and_is_immutable(
             assessment.assessment_fingerprint,
             "independent-reviewer",
             "reviewed build",
+            campaign_id=CAMPAIGN_ID,
         )
     with sqlite3.connect(registry.path) as connection:
         with pytest.raises(sqlite3.IntegrityError, match="immutable"):
@@ -238,17 +256,164 @@ def test_source_review_requires_explicit_fingerprint_and_is_immutable(
             connection.execute("DELETE FROM intraday_execution_source_reviews")
 
 
+def test_campaign_v1_evidence_remains_readable_immutable_and_closed(tmp_path: Path) -> None:
+    registry = ExperimentRegistry(tmp_path / "experiments.sqlite3")
+    v1 = get_intraday_campaign_contract(INTRADAY_CAMPAIGN_V1_ID)
+    v1_plan = load_intraday_research_campaign_plan(
+        Path("config/research/intraday-campaign-v1.json")
+    )
+    unsigned: dict[str, object] = {
+        "schema_version": "intraday-execution-source-review-v1",
+        "review_id": "historical-v1-review",
+        "campaign_id": INTRADAY_CAMPAIGN_V1_ID,
+        "plan_fingerprint": v1.plan_fingerprint,
+        "foundation_commit": v1.foundation_commit,
+        "execution_commit": "a" * 40,
+        "assessment": {"historical": True},
+        "assessment_fingerprint": "b" * 64,
+        "build_identity_fingerprint": "c" * 64,
+        "environment_identity_fingerprint": "d" * 64,
+        "surface_comparison_fingerprint": "e" * 64,
+        "reviewer": "historical-reviewer",
+        "reason": "recorded before the acquisition defect",
+        "reviewed_at": "2026-08-13T00:00:00Z",
+    }
+    review = {**unsigned, "review_fingerprint": fingerprint(unsigned)}
+    with sqlite3.connect(registry.path) as connection:
+        connection.execute(
+            "INSERT INTO campaigns VALUES (?, ?, ?, ?, ?)",
+            (
+                v1_plan.campaign_id,
+                v1_plan.name,
+                "2026-08-12T00:00:00Z",
+                "sealed",
+                v1_plan.search_budget,
+            ),
+        )
+        connection.execute(
+            "INSERT INTO campaign_plans VALUES (?, ?, ?, ?)",
+            (
+                v1_plan.campaign_id,
+                canonical_json(v1_plan.payload),
+                v1_plan.plan_fingerprint,
+                "2026-08-12T00:00:00Z",
+            ),
+        )
+        for index, reservation in enumerate(v1_plan.candidates):
+            status = "running" if index == 1 else "pending"
+            connection.execute(
+                """
+                INSERT INTO experiments
+                (experiment_id, campaign_id, spec_json, split, status, qualification_state,
+                 created_at, heartbeat_at, campaign_plan_fingerprint)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    reservation.experiment_id,
+                    v1_plan.campaign_id,
+                    canonical_json(_planned_intraday_reservation(v1_plan, reservation)),
+                    reservation.split.value,
+                    status,
+                    "not-evaluated",
+                    "2026-08-12T00:00:00Z",
+                    "2026-08-12T00:00:00+00:00" if status == "running" else None,
+                    v1_plan.plan_fingerprint,
+                ),
+            )
+        connection.execute(
+            "INSERT INTO intraday_execution_source_reviews VALUES (?, ?, ?, ?)",
+            (
+                review["review_id"],
+                review["campaign_id"],
+                canonical_json(review),
+                review["review_fingerprint"],
+            ),
+        )
+
+    def v1_state() -> tuple[list[tuple[object, ...]], ...]:
+        with sqlite3.connect(registry.path) as connection:
+            return tuple(
+                connection.execute(
+                    f"SELECT * FROM {table} ORDER BY 1"  # noqa: S608 - fixed test table names
+                ).fetchall()
+                for table in (
+                    "campaigns",
+                    "campaign_plans",
+                    "experiments",
+                    "intraday_execution_source_reviews",
+                )
+            )
+
+    before = v1_state()
+    pending_id = v1_plan.candidates[0].experiment_id
+    running_id = v1_plan.candidates[1].experiment_id
+    assert registry.get_intraday_execution_source_review("historical-v1-review") == review
+    assert registry.get_campaign(v1_plan.campaign_id)["status"] == "sealed"
+    assert (
+        registry.get_campaign_plan(v1_plan.campaign_id)["plan_fingerprint"] == v1.plan_fingerprint
+    )
+    with pytest.raises(ExperimentError, match="aborted and remains read-only"):
+        registry.create_planned_intraday_campaign(v1_plan.payload)
+    with pytest.raises(ExperimentError, match="aborted and remains read-only"):
+        registry.record_intraday_execution_source_review(
+            "replacement-v1-review",
+            *_artifacts(tmp_path),
+            "f" * 64,
+            "reviewer",
+            "replacement",
+            campaign_id=INTRADAY_CAMPAIGN_V1_ID,
+        )
+    with pytest.raises(ExperimentError, match="cannot be failed"):
+        registry.fail(pending_id, "must remain historical evidence")
+    with pytest.raises(ExperimentError, match="running experiment not found"):
+        registry.heartbeat(running_id)
+    assert registry.recover_stale(timedelta(minutes=5)) == []
+    with pytest.raises(ExperimentError, match="only completed experiments"):
+        registry.record_qualification(
+            pending_id,
+            QualificationState.REJECTED,
+            {"state": "rejected", "gates": [{"approved": True, "passed": False}]},
+        )
+    bound_specs = build_planned_intraday_experiments(v1_plan, _manifests())
+    with pytest.raises(ExperimentError, match="aborted and remains read-only"):
+        registry.bind_planned_intraday_experiments(bound_specs)
+    with pytest.raises(ExperimentError, match="aborted and remains read-only"):
+        run_cataloged_intraday_experiment(
+            registry,
+            DatasetService(StorageLayout(tmp_path)),
+            bound_specs[0],
+            StorageLayout(tmp_path).reports,
+            pre_registered=True,
+        )
+    with sqlite3.connect(registry.path) as connection:
+        for statement in (
+            "UPDATE campaigns SET status = 'changed' WHERE campaign_id = 'intraday-research-v1'",
+            "DELETE FROM campaigns WHERE campaign_id = 'intraday-research-v1'",
+            "UPDATE campaign_plans SET sealed_at = 'changed' "
+            "WHERE campaign_id = 'intraday-research-v1'",
+            "DELETE FROM campaign_plans WHERE campaign_id = 'intraday-research-v1'",
+            "UPDATE experiments SET status = 'failed' WHERE campaign_id = 'intraday-research-v1'",
+            "DELETE FROM experiments WHERE campaign_id = 'intraday-research-v1'",
+            "DELETE FROM intraday_execution_source_reviews",
+        ):
+            with pytest.raises(sqlite3.IntegrityError, match="immutable"):
+                connection.execute(statement)
+    assert v1_state() == before
+
+
 def test_surface_mismatch_requires_a_new_campaign_version(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     registry = _registry(tmp_path, bind=False)
     assessment = _mismatched_assessment()
-    monkeypatch.setattr(provenance, "assess_intraday_execution_source", lambda *args: assessment)
+    monkeypatch.setattr(
+        provenance, "assess_intraday_execution_source", lambda *args, **kwargs: assessment
+    )
 
     with pytest.raises(ExperimentError, match="new intraday campaign version"):
         _record_review(registry, tmp_path, assessment)
 
-    assert {record["status"] for record in registry.list(INTRADAY_CAMPAIGN_ID)} == {"pending"}
+    assert {record["status"] for record in registry.list(CAMPAIGN_ID)} == {"pending"}
 
 
 def test_cli_assesses_and_records_only_the_explicit_attested_build(
@@ -257,8 +422,10 @@ def test_cli_assesses_and_records_only_the_explicit_attested_build(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     assessment = _assessment()
-    monkeypatch.setattr(provenance, "assess_intraday_execution_source", lambda *args: assessment)
-    monkeypatch.setattr(cli, "assess_intraday_execution_source", lambda *args: assessment)
+    monkeypatch.setattr(
+        provenance, "assess_intraday_execution_source", lambda *args, **kwargs: assessment
+    )
+    monkeypatch.setattr(cli, "assess_intraday_execution_source", lambda *args, **kwargs: assessment)
     settings = Settings(TradingMode.OFFLINE, tmp_path)
     assert (
         cli.run(
@@ -267,7 +434,7 @@ def test_cli_assesses_and_records_only_the_explicit_attested_build(
                     "experiment",
                     "plan-intraday",
                     "--spec",
-                    "config/research/intraday-campaign-v1.json",
+                    "config/research/intraday-campaign-v2.json",
                 ]
             ),
             settings,
@@ -278,7 +445,7 @@ def test_cli_assesses_and_records_only_the_explicit_attested_build(
     wheel, manifest, lockfile, wheelhouse = _artifacts(tmp_path)
     common = [
         "--campaign",
-        INTRADAY_CAMPAIGN_ID,
+        CAMPAIGN_ID,
         "--wheel",
         str(wheel),
         "--build-manifest",
@@ -304,14 +471,14 @@ def test_cli_assesses_and_records_only_the_explicit_attested_build(
                 [
                     "experiment",
                     "record-intraday-source",
-                    "campaign-v1-source-review",
+                    SOURCE_REVIEW_ID,
                     *common,
                     "--assessment-fingerprint",
                     assessment.assessment_fingerprint,
                     "--reviewer",
                     "independent-reviewer",
                     "--reason",
-                    "reviewed attested Campaign V1 execution build",
+                    "reviewed attested Campaign V2 execution build",
                 ]
             ),
             settings,
@@ -322,13 +489,13 @@ def test_cli_assesses_and_records_only_the_explicit_attested_build(
     assert recorded["review"]["execution_commit"] == "a" * 40
     assert not recorded["protected_holdout_authority"]
     registry = ExperimentRegistry(StorageLayout(tmp_path).experiments)
-    assert {record["status"] for record in registry.list(INTRADAY_CAMPAIGN_ID)} == {"pending"}
+    assert {record["status"] for record in registry.list(CAMPAIGN_ID)} == {"pending"}
 
 
-def test_campaign_v1_rejects_caller_controlled_computation_inputs(tmp_path: Path) -> None:
+def test_campaign_v2_rejects_caller_controlled_computation_inputs(tmp_path: Path) -> None:
     registry = _registry(tmp_path)
     datasets = DatasetService(StorageLayout(tmp_path))
-    spec = registry.get_planned_intraday_spec("intraday-research-v1-cash-training-base")
+    spec = registry.get_planned_intraday_spec("intraday-research-v2-cash-training-base")
 
     with pytest.raises(ExperimentError, match="initial cash differs"):
         run_cataloged_intraday_experiment(
@@ -361,7 +528,7 @@ def test_campaign_v1_rejects_caller_controlled_computation_inputs(tmp_path: Path
         def commission(self, notional: Decimal) -> Decimal:
             return Decimal("0")
 
-    with pytest.raises(ExperimentError, match="costs are derived"):
+    with pytest.raises(ExperimentError, match="costs come from"):
         run_cataloged_intraday_experiment(
             registry,
             datasets,
@@ -378,7 +545,7 @@ def test_campaign_v1_rejects_caller_controlled_computation_inputs(tmp_path: Path
     class InjectedDatasetService(DatasetService):
         pass
 
-    with pytest.raises(ExperimentError, match="concrete registry and dataset service"):
+    with pytest.raises(ExperimentError, match="concrete storage services"):
         run_cataloged_intraday_experiment(
             registry,
             InjectedDatasetService(StorageLayout(tmp_path)),
@@ -395,17 +562,21 @@ def test_fresh_source_mismatch_fails_before_atomic_binding_and_claim(
 ) -> None:
     registry = _registry(tmp_path)
     reviewed = _assessment()
-    monkeypatch.setattr(provenance, "assess_intraday_execution_source", lambda *args: reviewed)
+    monkeypatch.setattr(
+        provenance, "assess_intraday_execution_source", lambda *args, **kwargs: reviewed
+    )
     _record_review(registry, tmp_path, reviewed)
     observed = replace(
         reviewed, environment_identity=_assessment(environment_marker="4").environment_identity
     )
-    monkeypatch.setattr(provenance, "assess_intraday_execution_source", lambda *args: observed)
-    experiment_id = "intraday-research-v1-cash-training-base"
+    monkeypatch.setattr(
+        provenance, "assess_intraday_execution_source", lambda *args, **kwargs: observed
+    )
+    experiment_id = "intraday-research-v2-cash-training-base"
     spec = registry.get_planned_intraday_spec(experiment_id)
 
     with pytest.raises(ExperimentError, match="differs from its recorded"):
-        registry._claim_planned_intraday(spec, "campaign-v1-source-review", *_artifacts(tmp_path))
+        registry._claim_planned_intraday(spec, SOURCE_REVIEW_ID, *_artifacts(tmp_path))
 
     assert registry.get(experiment_id)["status"] == "pending"
     with pytest.raises(ExperimentError, match="binding not found"):
@@ -417,13 +588,13 @@ def test_source_binding_and_claim_commit_or_rollback_together(
 ) -> None:
     registry = _registry(tmp_path)
     assessment = _assessment()
-    monkeypatch.setattr(provenance, "assess_intraday_execution_source", lambda *args: assessment)
-    _record_review(registry, tmp_path, assessment)
-    experiment_id = "intraday-research-v1-cash-training-base"
-    spec = registry.get_planned_intraday_spec(experiment_id)
-    binding = registry._claim_planned_intraday(
-        spec, "campaign-v1-source-review", *_artifacts(tmp_path)
+    monkeypatch.setattr(
+        provenance, "assess_intraday_execution_source", lambda *args, **kwargs: assessment
     )
+    _record_review(registry, tmp_path, assessment)
+    experiment_id = "intraday-research-v2-cash-training-base"
+    spec = registry.get_planned_intraday_spec(experiment_id)
+    binding = registry._claim_planned_intraday(spec, SOURCE_REVIEW_ID, *_artifacts(tmp_path))
 
     assert binding is not None
     assert binding["execution_commit"] == "a" * 40
@@ -436,14 +607,16 @@ def test_source_binding_and_claim_commit_or_rollback_together(
         connection.execute("DELETE FROM intraday_experiment_execution_sources")
 
     changed = _assessment(environment_marker="4")
-    monkeypatch.setattr(provenance, "assess_intraday_execution_source", lambda *args: changed)
+    monkeypatch.setattr(
+        provenance, "assess_intraday_execution_source", lambda *args, **kwargs: changed
+    )
     with pytest.raises(ExperimentError, match="new campaign version"):
-        registry.verify_intraday_execution_source_review(
-            "campaign-v1-source-review", *_artifacts(tmp_path)
-        )
-    monkeypatch.setattr(provenance, "assess_intraday_execution_source", lambda *args: assessment)
+        registry.verify_intraday_execution_source_review(SOURCE_REVIEW_ID, *_artifacts(tmp_path))
+    monkeypatch.setattr(
+        provenance, "assess_intraday_execution_source", lambda *args, **kwargs: assessment
+    )
 
-    rollback_id = "intraday-research-v1-cash-training-increased-cost"
+    rollback_id = "intraday-research-v2-cash-training-increased-cost"
     rollback_spec = registry.get_planned_intraday_spec(rollback_id)
     with sqlite3.connect(registry.path) as connection:
         connection.execute(
@@ -455,9 +628,7 @@ def test_source_binding_and_claim_commit_or_rollback_together(
             """
         )
     with pytest.raises(ExperimentError, match="could not be bound"):
-        registry._claim_planned_intraday(
-            rollback_spec, "campaign-v1-source-review", *_artifacts(tmp_path)
-        )
+        registry._claim_planned_intraday(rollback_spec, SOURCE_REVIEW_ID, *_artifacts(tmp_path))
     assert registry.get(rollback_id)["status"] == "pending"
     with pytest.raises(ExperimentError, match="binding not found"):
         registry.get_intraday_execution_source_binding(rollback_id)
@@ -470,7 +641,7 @@ def test_matching_build_runs_and_report_binds_foundation_and_actual_execution(
     assessment = _assessment()
     calls: list[str] = []
 
-    def assess(*args: object) -> IntradayExecutionSourceAssessment:
+    def assess(*args: object, **kwargs: object) -> IntradayExecutionSourceAssessment:
         calls.append("assess")
         return assessment
 
@@ -478,7 +649,7 @@ def test_matching_build_runs_and_report_binds_foundation_and_actual_execution(
     _record_review(registry, tmp_path, assessment)
     calls.clear()
     dataset_service = DatasetService(StorageLayout(tmp_path))
-    spec = registry.get_planned_intraday_spec("intraday-research-v1-cash-training-base")
+    spec = registry.get_planned_intraday_spec("intraday-research-v2-cash-training-base")
     manifest = _manifests()["training"]
     fixture_records = IntradayFixtureProvider().fetch(
         (Symbol("SPY"), Symbol("QQQ")),
@@ -501,7 +672,7 @@ def test_matching_build_runs_and_report_binds_foundation_and_actual_execution(
         spec,
         StorageLayout(tmp_path).reports,
         pre_registered=True,
-        execution_source_review_id="campaign-v1-source-review",
+        execution_source_review_id=SOURCE_REVIEW_ID,
         execution_source_wheel=_artifacts(tmp_path)[0],
         execution_source_manifest=_artifacts(tmp_path)[1],
         execution_source_lockfile=_artifacts(tmp_path)[2],
@@ -514,7 +685,7 @@ def test_matching_build_runs_and_report_binds_foundation_and_actual_execution(
     assert record["status"] == "completed"
     report_path = Path(cast(list[str], record["artifact_locations_json"])[0])
     report = json.loads(report_path.read_text(encoding="utf-8"))
-    assert report["provenance"]["code_commit"] == INTRADAY_FOUNDATION_COMMIT
+    assert report["provenance"]["code_commit"] == CAMPAIGN_CONTRACT.foundation_commit
     source = report["execution_source_provenance"]
     assert source["review"]["execution_commit"] == "a" * 40
     assert source["binding"]["execution_commit"] == "a" * 40
@@ -552,10 +723,12 @@ def test_post_claim_failure_retains_source_binding(
 ) -> None:
     registry = _registry(tmp_path)
     assessment = _assessment()
-    monkeypatch.setattr(provenance, "assess_intraday_execution_source", lambda *args: assessment)
+    monkeypatch.setattr(
+        provenance, "assess_intraday_execution_source", lambda *args, **kwargs: assessment
+    )
     _record_review(registry, tmp_path, assessment)
     datasets = DatasetService(StorageLayout(tmp_path))
-    spec = registry.get_planned_intraday_spec("intraday-research-v1-cash-training-base")
+    spec = registry.get_planned_intraday_spec("intraday-research-v2-cash-training-base")
     monkeypatch.setattr(
         datasets,
         "validate",
@@ -569,7 +742,7 @@ def test_post_claim_failure_retains_source_binding(
             spec,
             StorageLayout(tmp_path).reports,
             pre_registered=True,
-            execution_source_review_id="campaign-v1-source-review",
+            execution_source_review_id=SOURCE_REVIEW_ID,
             execution_source_wheel=_artifacts(tmp_path)[0],
             execution_source_manifest=_artifacts(tmp_path)[1],
             execution_source_lockfile=_artifacts(tmp_path)[2],

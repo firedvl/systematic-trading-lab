@@ -1,6 +1,6 @@
 # Intraday research campaign v1 preregistration
 
-Status: preregistered; no real candidate has run. Dataset acquisition and four-dataset binding are technically ready only after merge. Candidate execution remains blocked until the final merged-main build and runtime are explicitly reviewed and recorded.
+Status: aborted before dataset publication and before any candidate execution. The immutable source review remains historical evidence. New sealing, dataset binding, source review, and candidate execution are blocked under this campaign ID.
 
 Campaign ID: `intraday-research-v1`
 
@@ -11,6 +11,12 @@ Plan fingerprint: `ce81be36d02cc15f421390bf3d3787714bb0b025797ccfb8de2c1d1236052
 Reviewed M5B foundation reference: `b1774f547da2976348430b820faf2ebdacdf46af`
 
 The sealed foundation reference identifies the code reviewed when Campaign V1 was registered. It is not proof of the checkout or build that would execute a candidate. The sealed value is unchanged and must not be replaced during reconciliation. Execution-source evidence is stored separately.
+
+## Final disposition
+
+The first real Training import requested adjusted Alpaca IEX SPY/QQQ `5m` data. Alpaca returned the complete expected XNYS regular-session grid plus premarket, postmarket, normal-close-boundary, and early-close-boundary bars. `DatasetService` correctly rejected 2,758 out-of-session records, with no missing intervals and no duplicates. It published no dataset. No Campaign V1 strategy candidate ran, so no strategy result was observed.
+
+The defect was in `AlpacaHistoricalProvider.fetch()`: it used the XNYS grid to set Alpaca's exclusive request end but passed every returned bar to dataset validation. Campaign V1 remains unchanged as evidence of that aborted attempt. Campaign V2 carries the same research design under a new plan and reviewed execution surface that includes the corrected adapter. See [the Campaign V2 runbook](intraday-campaign-v2.md).
 
 The plan tests the M5B data, replay, registry, report, stress, and research-gate path. It does not search for a profitable strategy. A passing assessment would remain research evidence only.
 
@@ -73,7 +79,7 @@ The strict plan loader rejects changed strategies, parameters, XNYS ranges, role
 uv run trading-lab experiment inspect-intraday-plan --spec config/research/intraday-campaign-v1.json
 ```
 
-Seal all 60 reservations atomically in the official registry before data binding or execution:
+The following command was V1's sealing procedure. Do not run it now; the registry keeps V1 read-only and rejects new sealing:
 
 ```console
 uv run trading-lab experiment plan-intraday --spec config/research/intraday-campaign-v1.json
@@ -95,6 +101,8 @@ uv run trading-lab experiment bind-intraday-datasets \
 The command verifies provider adapter, IEX feed, timeframe, adjustment, XNYS and timestamp policies, symbols, requested and actual ranges, dataset identity, and the reviewed universe identity. It derives strategy, split, costs, delay, parent, reviewed foundation reference, reason, and ordinal from the stored plan. Missing, invalid, duplicated, substituted, partially bound, or previously bound state fails before any registry mutation; all 60 reservations remain pending and unbound if the transaction fails.
 
 ## Execution-source review
+
+This section records V1's historical review contract. It does not authorize another review or execution attempt.
 
 Campaign V1 uses the existing main-only GitHub build attestation as the application-code trust anchor. The assessment snapshots the supplied artifacts and verifies:
 
@@ -189,7 +197,7 @@ After an explicit review of the output, record that exact assessment fingerprint
   --dependency-wheelhouse DEPENDENCY_WHEELHOUSE
 ```
 
-No source review exists yet because the final merged-main artifact does not exist. Do not run this command until that human review, independent read-only historical credentials, and all four validated dataset bindings exist. Do not change `base_code_commit` to bridge a provenance gap.
+The V1 source review was recorded before the acquisition attempt and remains immutable. It cannot authorize a retry from changed code. Do not rerun, rebind, or replace it, and do not change `base_code_commit` to bridge the provenance gap.
 
 The verifier assumes the host kernel, Python process, GitHub attestation service, and SHA-256 remain trustworthy. Snapshots, attestation-verifier checks, pre-claim verification, and pre-publication verification detect persistent artifact or installed-file changes. They do not prove that transient privileged memory or executable modification did not occur and get restored in the same process, or that the OS kernel or loader was not compromised. Remote attestation is only valid after merge. Keep the GitHub CLI installation owned by another trusted account, keep it, the installed runtime, and artifacts non-writable by the execution account, and run one candidate in a fresh single-purpose process.
 
