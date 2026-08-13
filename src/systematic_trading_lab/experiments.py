@@ -240,6 +240,30 @@ class ExperimentRegistry:
                     consumed_by_experiment_id TEXT UNIQUE REFERENCES experiments(experiment_id),
                     consumed_at TEXT
                 );
+                CREATE TABLE IF NOT EXISTS intraday_execution_source_reviews (
+                    review_id TEXT PRIMARY KEY,
+                    campaign_id TEXT NOT NULL UNIQUE,
+                    review_json TEXT NOT NULL,
+                    review_fingerprint TEXT NOT NULL UNIQUE
+                );
+                CREATE TABLE IF NOT EXISTS intraday_experiment_execution_sources (
+                    experiment_id TEXT PRIMARY KEY REFERENCES experiments(experiment_id),
+                    review_id TEXT NOT NULL REFERENCES intraday_execution_source_reviews(review_id),
+                    binding_json TEXT NOT NULL,
+                    binding_fingerprint TEXT NOT NULL UNIQUE
+                );
+                CREATE TRIGGER IF NOT EXISTS intraday_execution_source_reviews_no_update
+                BEFORE UPDATE ON intraday_execution_source_reviews
+                BEGIN SELECT RAISE(ABORT, 'intraday execution source reviews are immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS intraday_execution_source_reviews_no_delete
+                BEFORE DELETE ON intraday_execution_source_reviews
+                BEGIN SELECT RAISE(ABORT, 'intraday execution source reviews are immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS intraday_execution_source_bindings_no_update
+                BEFORE UPDATE ON intraday_experiment_execution_sources
+                BEGIN SELECT RAISE(ABORT, 'intraday execution source bindings are immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS intraday_execution_source_bindings_no_delete
+                BEFORE DELETE ON intraday_experiment_execution_sources
+                BEGIN SELECT RAISE(ABORT, 'intraday execution source bindings are immutable'); END;
                 """
             )
             experiment_columns = {
@@ -444,6 +468,240 @@ class ExperimentRegistry:
             "plan_fingerprint": row[1],
             "sealed_at": row[2],
         }
+
+    def record_intraday_execution_source_review(
+        self,
+        review_id: str,
+        wheel: Path,
+        manifest: Path,
+        lockfile: Path,
+        dependency_wheelhouse: Path,
+        expected_assessment_fingerprint: str,
+        reviewer: str,
+        reason: str,
+    ) -> dict[str, object]:
+        """Verify and record one immutable review of Campaign V1's actual build."""
+
+        from .campaign_specs import parse_intraday_research_campaign_plan
+        from .intraday_source_provenance import (
+            INTRADAY_CAMPAIGN_ID,
+            INTRADAY_FOUNDATION_COMMIT,
+            INTRADAY_PLAN_FINGERPRINT,
+            assess_intraday_execution_source,
+        )
+
+        if (
+            not review_id.strip()
+            or not expected_assessment_fingerprint.strip()
+            or not reviewer.strip()
+            or not reason.strip()
+        ):
+            raise ValueError(
+                "source review ID, expected assessment fingerprint, reviewer, and reason "
+                "are required"
+            )
+        assessment = assess_intraday_execution_source(
+            wheel, manifest, lockfile, dependency_wheelhouse
+        )
+        if (
+            assessment.campaign_id != INTRADAY_CAMPAIGN_ID
+            or assessment.plan_fingerprint != INTRADAY_PLAN_FINGERPRINT
+            or assessment.surface_comparison.foundation_commit != INTRADAY_FOUNDATION_COMMIT
+            or not assessment.surface_comparison.equivalent
+        ):
+            raise ExperimentError(
+                "execution source differs from the reviewed foundation; "
+                "a new intraday campaign version is required"
+            )
+        assessment_json = canonicalize(assessment)
+        assert isinstance(assessment_json, dict)
+        assessment_fingerprint = assessment.assessment_fingerprint
+        if assessment_fingerprint != expected_assessment_fingerprint:
+            raise ExperimentError(
+                "execution source differs from the explicitly reviewed assessment"
+            )
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            existing = connection.execute(
+                """
+                SELECT review_json FROM intraday_execution_source_reviews
+                WHERE review_id = ? OR campaign_id = ?
+                """,
+                (review_id, INTRADAY_CAMPAIGN_ID),
+            ).fetchone()
+            if existing is not None:
+                review = _fingerprinted_record(
+                    json.loads(str(existing[0])),
+                    _INTRADAY_SOURCE_REVIEW_FIELDS,
+                    "review_fingerprint",
+                    "intraday execution source review",
+                )
+                if (
+                    review["review_id"] == review_id
+                    and canonicalize(review["assessment"]) == assessment_json
+                    and review["reviewer"] == reviewer
+                    and review["reason"] == reason
+                ):
+                    return review
+                raise ExperimentError("Campaign V1 already has a different execution source review")
+            plan_row = connection.execute(
+                """
+                SELECT plan_json, plan_fingerprint FROM campaign_plans
+                WHERE campaign_id = ?
+                """,
+                (INTRADAY_CAMPAIGN_ID,),
+            ).fetchone()
+            if plan_row is None:
+                raise ExperimentError("Campaign V1 must be sealed before source review")
+            plan = parse_intraday_research_campaign_plan(json.loads(str(plan_row[0])))
+            if (
+                plan_row[1] != INTRADAY_PLAN_FINGERPRINT
+                or plan.plan_fingerprint != INTRADAY_PLAN_FINGERPRINT
+                or plan.base_code_commit != INTRADAY_FOUNDATION_COMMIT
+            ):
+                raise ExperimentError("sealed Campaign V1 identity differs")
+            statuses = connection.execute(
+                "SELECT status FROM experiments WHERE campaign_id = ?",
+                (INTRADAY_CAMPAIGN_ID,),
+            ).fetchall()
+            if len(statuses) != plan.search_budget or any(
+                row[0] != ExperimentStatus.PENDING.value for row in statuses
+            ):
+                raise ExperimentError(
+                    "execution source review requires every Campaign V1 candidate to be pending"
+                )
+            unsigned: dict[str, object] = {
+                "schema_version": "intraday-execution-source-review-v1",
+                "review_id": review_id,
+                "campaign_id": INTRADAY_CAMPAIGN_ID,
+                "plan_fingerprint": INTRADAY_PLAN_FINGERPRINT,
+                "foundation_commit": INTRADAY_FOUNDATION_COMMIT,
+                "execution_commit": assessment.build_identity.source_commit,
+                "assessment": assessment_json,
+                "assessment_fingerprint": assessment_fingerprint,
+                "build_identity_fingerprint": assessment.build_identity.identity_fingerprint,
+                "environment_identity_fingerprint": (
+                    assessment.environment_identity.identity_fingerprint
+                ),
+                "surface_comparison_fingerprint": (
+                    assessment.surface_comparison.comparison_fingerprint
+                ),
+                "reviewer": reviewer,
+                "reason": reason,
+                "reviewed_at": _now(),
+            }
+            review = {**unsigned, "review_fingerprint": fingerprint(unsigned)}
+            connection.execute(
+                """
+                INSERT INTO intraday_execution_source_reviews
+                (review_id, campaign_id, review_json, review_fingerprint)
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    review_id,
+                    INTRADAY_CAMPAIGN_ID,
+                    canonical_json(review),
+                    review["review_fingerprint"],
+                ),
+            )
+        return review
+
+    def get_intraday_execution_source_review(self, review_id: str) -> dict[str, object]:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT campaign_id, review_json, review_fingerprint
+                FROM intraday_execution_source_reviews WHERE review_id = ?
+                """,
+                (review_id,),
+            ).fetchone()
+        if row is None:
+            raise ExperimentError(f"intraday execution source review not found: {review_id}")
+        review = _fingerprinted_record(
+            json.loads(str(row[1])),
+            _INTRADAY_SOURCE_REVIEW_FIELDS,
+            "review_fingerprint",
+            "intraday execution source review",
+        )
+        if (
+            review["review_id"] != review_id
+            or review["campaign_id"] != row[0]
+            or review["review_fingerprint"] != row[2]
+        ):
+            raise ExperimentError("stored intraday execution source review differs")
+        return review
+
+    def verify_intraday_execution_source_review(
+        self,
+        review_id: str,
+        wheel: Path,
+        manifest: Path,
+        lockfile: Path,
+        dependency_wheelhouse: Path,
+    ) -> None:
+        """Reverify the executing build against its immutable review."""
+
+        from .intraday_source_provenance import assess_intraday_execution_source
+
+        assessment = assess_intraday_execution_source(
+            wheel, manifest, lockfile, dependency_wheelhouse
+        )
+        review = self.get_intraday_execution_source_review(review_id)
+        if (
+            review["assessment_fingerprint"] != assessment.assessment_fingerprint
+            or review["execution_commit"] != assessment.build_identity.source_commit
+            or review["build_identity_fingerprint"]
+            != assessment.build_identity.identity_fingerprint
+            or review["environment_identity_fingerprint"]
+            != assessment.environment_identity.identity_fingerprint
+            or canonicalize(review["assessment"]) != canonicalize(assessment)
+        ):
+            raise ExperimentError(
+                "current execution build differs from its recorded Campaign V1 review; "
+                "a new campaign version is required"
+            )
+
+    def get_intraday_execution_source_binding(self, experiment_id: str) -> dict[str, object]:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT review_id, binding_json, binding_fingerprint
+                FROM intraday_experiment_execution_sources WHERE experiment_id = ?
+                """,
+                (experiment_id,),
+            ).fetchone()
+        if row is None:
+            raise ExperimentError(f"intraday execution source binding not found: {experiment_id}")
+        binding = _fingerprinted_record(
+            json.loads(str(row[1])),
+            _INTRADAY_SOURCE_BINDING_FIELDS,
+            "binding_fingerprint",
+            "intraday execution source binding",
+        )
+        if (
+            binding["experiment_id"] != experiment_id
+            or binding["review_id"] != row[0]
+            or binding["binding_fingerprint"] != row[2]
+        ):
+            raise ExperimentError("stored intraday execution source binding differs")
+        return binding
+
+    def intraday_execution_source_evidence(self, experiment_id: str) -> dict[str, object]:
+        binding = self.get_intraday_execution_source_binding(experiment_id)
+        review_id = binding["review_id"]
+        assert isinstance(review_id, str)
+        return {
+            "review": self.get_intraday_execution_source_review(review_id),
+            "binding": binding,
+        }
+
+    def verify_intraday_execution_source_evidence(
+        self, experiment_id: str, evidence: object
+    ) -> None:
+        if canonicalize(evidence) != canonicalize(
+            self.intraday_execution_source_evidence(experiment_id)
+        ):
+            raise ExperimentError("intraday report execution source provenance differs")
 
     def get_planned_spec(self, experiment_id: str) -> ExperimentSpec:
         record = self.get(experiment_id)
@@ -732,9 +990,31 @@ class ExperimentRegistry:
             if cursor.rowcount != 1:
                 raise ExperimentError(f"planned experiment is not pending: {spec.experiment_id}")
 
-    def _claim_planned_intraday(self, spec: IntradayExperimentSpec) -> None:
+    def _claim_planned_intraday(
+        self,
+        spec: IntradayExperimentSpec,
+        review_id: str | None = None,
+        wheel: Path | None = None,
+        manifest: Path | None = None,
+        lockfile: Path | None = None,
+        dependency_wheelhouse: Path | None = None,
+    ) -> dict[str, object] | None:
         if self.get_planned_intraday_spec(spec.experiment_id) != spec:
             raise ExperimentError("stored planned intraday experiment differs")
+        if spec.campaign_id == "intraday-research-v1":
+            if (
+                review_id is None
+                or wheel is None
+                or manifest is None
+                or lockfile is None
+                or dependency_wheelhouse is None
+            ):
+                raise ExperimentError(
+                    "Campaign V1 execution requires an explicit reviewed execution build"
+                )
+            return self._claim_campaign_v1_intraday(
+                spec, review_id, wheel, manifest, lockfile, dependency_wheelhouse
+            )
         timestamp = _now()
         with self._connect() as connection:
             cursor = connection.execute(
@@ -756,6 +1036,136 @@ class ExperimentRegistry:
                 raise ExperimentError(
                     f"planned intraday experiment is not pending: {spec.experiment_id}"
                 )
+        return None
+
+    def _claim_campaign_v1_intraday(
+        self,
+        spec: IntradayExperimentSpec,
+        review_id: str,
+        wheel: Path,
+        manifest: Path,
+        lockfile: Path,
+        dependency_wheelhouse: Path,
+    ) -> dict[str, object]:
+        from .intraday_source_provenance import (
+            INTRADAY_CAMPAIGN_ID,
+            INTRADAY_FOUNDATION_COMMIT,
+            INTRADAY_PLAN_FINGERPRINT,
+            assess_intraday_execution_source,
+        )
+
+        assessment = assess_intraday_execution_source(
+            wheel, manifest, lockfile, dependency_wheelhouse
+        )
+        if spec.campaign_id != INTRADAY_CAMPAIGN_ID or not assessment.surface_comparison.equivalent:
+            raise ExperimentError(
+                "execution source differs from the reviewed foundation; "
+                "a new intraday campaign version is required"
+            )
+        assessment_json = canonicalize(assessment)
+        timestamp = _now()
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            review_row = connection.execute(
+                """
+                SELECT review_json, review_fingerprint
+                FROM intraday_execution_source_reviews WHERE review_id = ?
+                """,
+                (review_id,),
+            ).fetchone()
+            if review_row is None:
+                raise ExperimentError(f"intraday execution source review not found: {review_id}")
+            review = _fingerprinted_record(
+                json.loads(str(review_row[0])),
+                _INTRADAY_SOURCE_REVIEW_FIELDS,
+                "review_fingerprint",
+                "intraday execution source review",
+            )
+            if (
+                review["review_fingerprint"] != review_row[1]
+                or review["campaign_id"] != INTRADAY_CAMPAIGN_ID
+                or review["plan_fingerprint"] != INTRADAY_PLAN_FINGERPRINT
+                or review["foundation_commit"] != INTRADAY_FOUNDATION_COMMIT
+                or review["execution_commit"] != assessment.build_identity.source_commit
+                or review["assessment_fingerprint"] != assessment.assessment_fingerprint
+                or review["build_identity_fingerprint"]
+                != assessment.build_identity.identity_fingerprint
+                or review["environment_identity_fingerprint"]
+                != assessment.environment_identity.identity_fingerprint
+                or canonicalize(review["assessment"]) != assessment_json
+            ):
+                raise ExperimentError(
+                    "current execution source differs from its recorded Campaign V1 review"
+                )
+            row = connection.execute(
+                """
+                SELECT spec_json, status, campaign_plan_fingerprint
+                FROM experiments WHERE experiment_id = ? AND campaign_id = ?
+                """,
+                (spec.experiment_id, INTRADAY_CAMPAIGN_ID),
+            ).fetchone()
+            if (
+                row is None
+                or canonicalize(json.loads(str(row[0]))) != canonicalize(spec)
+                or row[1] != ExperimentStatus.PENDING.value
+                or row[2] != INTRADAY_PLAN_FINGERPRINT
+            ):
+                raise ExperimentError(
+                    f"planned intraday experiment is not pending: {spec.experiment_id}"
+                )
+            unsigned: dict[str, object] = {
+                "schema_version": "intraday-execution-source-binding-v1",
+                "experiment_id": spec.experiment_id,
+                "review_id": review_id,
+                "review_fingerprint": review["review_fingerprint"],
+                "assessment_fingerprint": assessment.assessment_fingerprint,
+                "execution_commit": assessment.build_identity.source_commit,
+                "build_identity_fingerprint": assessment.build_identity.identity_fingerprint,
+                "environment_identity_fingerprint": (
+                    assessment.environment_identity.identity_fingerprint
+                ),
+                "verified_at": timestamp,
+            }
+            binding = {**unsigned, "binding_fingerprint": fingerprint(unsigned)}
+            try:
+                connection.execute(
+                    """
+                    INSERT INTO intraday_experiment_execution_sources
+                    (experiment_id, review_id, binding_json, binding_fingerprint)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (
+                        spec.experiment_id,
+                        review_id,
+                        canonical_json(binding),
+                        binding["binding_fingerprint"],
+                    ),
+                )
+                cursor = connection.execute(
+                    """
+                    UPDATE experiments
+                    SET status = ?, started_at = COALESCE(started_at, ?), heartbeat_at = ?
+                    WHERE experiment_id = ? AND status = ?
+                      AND campaign_plan_fingerprint = ?
+                    """,
+                    (
+                        ExperimentStatus.RUNNING.value,
+                        timestamp,
+                        timestamp,
+                        spec.experiment_id,
+                        ExperimentStatus.PENDING.value,
+                        INTRADAY_PLAN_FINGERPRINT,
+                    ),
+                )
+            except sqlite3.IntegrityError as error:
+                raise ExperimentError(
+                    "planned intraday execution source could not be bound"
+                ) from error
+            if cursor.rowcount != 1:
+                raise ExperimentError(
+                    f"planned intraday experiment is not pending: {spec.experiment_id}"
+                )
+        return binding
 
     def heartbeat(self, experiment_id: str) -> None:
         with self._connect() as connection:
@@ -1078,11 +1488,59 @@ class ExperimentRegistry:
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
         connection = sqlite3.connect(self.path)
+        connection.execute("PRAGMA foreign_keys = ON")
         try:
             with connection:
                 yield connection
         finally:
             connection.close()
+
+
+_INTRADAY_SOURCE_REVIEW_FIELDS = {
+    "schema_version",
+    "review_id",
+    "campaign_id",
+    "plan_fingerprint",
+    "foundation_commit",
+    "execution_commit",
+    "assessment",
+    "assessment_fingerprint",
+    "build_identity_fingerprint",
+    "environment_identity_fingerprint",
+    "surface_comparison_fingerprint",
+    "reviewer",
+    "reason",
+    "reviewed_at",
+    "review_fingerprint",
+}
+_INTRADAY_SOURCE_BINDING_FIELDS = {
+    "schema_version",
+    "experiment_id",
+    "review_id",
+    "review_fingerprint",
+    "assessment_fingerprint",
+    "execution_commit",
+    "build_identity_fingerprint",
+    "environment_identity_fingerprint",
+    "verified_at",
+    "binding_fingerprint",
+}
+
+
+def _fingerprinted_record(
+    value: object,
+    fields: set[str],
+    fingerprint_field: str,
+    context: str,
+) -> dict[str, object]:
+    if not isinstance(value, dict) or set(value) != fields:
+        raise ExperimentError(f"stored {context} fields differ")
+    claimed = value.get(fingerprint_field)
+    unsigned = dict(value)
+    unsigned.pop(fingerprint_field, None)
+    if not isinstance(claimed, str) or fingerprint(unsigned) != claimed:
+        raise ExperimentError(f"stored {context} fingerprint differs")
+    return value
 
 
 _CANDIDATE_SPEC_FIELDS = {

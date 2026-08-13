@@ -7,6 +7,9 @@ import csv
 import hashlib
 import io
 import json
+import os
+import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -59,6 +62,19 @@ class RuntimeBuildAttestationIndeterminateError(RuntimeBuildVerificationError):
 
 
 @dataclass(frozen=True)
+class AttestationVerifierIdentity:
+    """Exact executable used to verify GitHub artifact attestations."""
+
+    path: str
+    sha256: str
+
+    def __post_init__(self) -> None:
+        if not Path(self.path).is_absolute():
+            raise ValueError("attestation verifier path must be absolute")
+        _sha256("attestation verifier", self.sha256)
+
+
+@dataclass(frozen=True)
 class RuntimeBuildIdentity:
     source_commit: str
     wheel_sha256: str
@@ -68,6 +84,7 @@ class RuntimeBuildIdentity:
     source_repository: str
     signer_workflow: str
     verified_at: datetime
+    attestation_verifier: AttestationVerifierIdentity | None = None
 
     def __post_init__(self) -> None:
         _git_sha(self.source_commit)
@@ -109,11 +126,18 @@ class InstalledRuntimeIdentity:
 def verify_attested_build(
     wheel: Path, manifest: Path, *, verified_at: datetime
 ) -> RuntimeBuildIdentity:
+    verifier: AttestationVerifierIdentity | None = None
+
+    def attest(path: Path, source_commit: str) -> AttestationVerifierIdentity:
+        nonlocal verifier
+        verifier = verifier or _resolve_attestation_verifier()
+        return _verify_github_attestation(path, source_commit, verifier)
+
     return _verify_attested_build(
         wheel,
         manifest,
         verified_at=verified_at,
-        attest=_verify_github_attestation,
+        attest=attest,
     )
 
 
@@ -154,6 +178,8 @@ def verify_installed_runtime(
             package_file=Path(package_file),
             package_paths=tuple(Path(path) for path in package_paths),
             loaded_files=tuple(loaded_files),
+            script_path=Path(sys.executable).parent
+            / ("trading-lab.exe" if sys.platform == "win32" else "trading-lab"),
             verified_at=verified_at,
         )
     except (metadata.PackageNotFoundError, OSError, TypeError, ValueError) as error:
@@ -169,6 +195,7 @@ def _verify_installed_runtime(
     package_file: Path | None = None,
     package_paths: tuple[Path, ...] | None = None,
     loaded_files: tuple[Path, ...] | None = None,
+    script_path: Path | None = None,
     verified_at: datetime,
 ) -> InstalledRuntimeIdentity:
     try:
@@ -184,6 +211,14 @@ def _verify_installed_runtime(
             names = [name for name in archive.namelist() if not name.endswith("/")]
             if len(names) != len(set(names)) or record_name not in names:
                 raise ValueError("runtime wheel file set is invalid")
+            if any(
+                not (
+                    name.startswith("systematic_trading_lab/")
+                    or name.startswith(f"{dist_info_name}/")
+                )
+                for name in names
+            ):
+                raise ValueError("runtime wheel contains files outside its package")
             wheel_records = _records(archive.read(record_name))
             if set(wheel_records) != set(names) or wheel_records[record_name] != ("", None):
                 raise ValueError("runtime wheel record differs from its files")
@@ -197,6 +232,35 @@ def _verify_installed_runtime(
         installed_records = _records(installed_record_raw, allow_parent=True)
         if installed_records.get(record_name) != ("", None):
             raise ValueError("installed distribution record self-entry is invalid")
+        direct_url_name = f"{dist_info_name}/direct_url.json"
+        generated_metadata = {
+            f"{dist_info_name}/INSTALLER": b"pip\n",
+            f"{dist_info_name}/REQUESTED": b"",
+            direct_url_name: None,
+        }
+        generated = set(installed_records) - set(wheel_records)
+        script_records = {
+            name
+            for name in generated
+            if PurePosixPath(name).name in {"trading-lab", "trading-lab.exe"}
+        }
+        if generated != {*generated_metadata, *script_records} or len(script_records) != 1:
+            raise ValueError("installed distribution record has unexpected generated files")
+        for name in generated:
+            path = root / PurePosixPath(name)
+            if path.is_symlink() or not path.is_file():
+                raise ValueError("installed generated file is invalid")
+            resolved = path.resolve(strict=True)
+            if name in generated_metadata:
+                if not resolved.is_relative_to(dist_info):
+                    raise ValueError("installed generated metadata escapes its distribution")
+                generated_contents = generated_metadata[name]
+                if generated_contents is not None and path.read_bytes() != generated_contents:
+                    raise ValueError("installed generated metadata is invalid")
+            elif script_path is not None and resolved != script_path.resolve(strict=True):
+                raise ValueError("installed console script path differs")
+            if not _record_matches(path.read_bytes(), installed_records[name]):
+                raise ValueError("installed generated file differs from RECORD")
         source_records: list[tuple[str, str]] = []
         for name, contents in wheel_files.items():
             expected = wheel_records[name]
@@ -248,7 +312,6 @@ def _verify_installed_runtime(
                 raise ValueError("loaded runtime module is outside the installed distribution")
         direct_url = dist_info / "direct_url.json"
         direct_url_raw = direct_url.read_bytes()
-        direct_url_name = f"{dist_info_name}/direct_url.json"
         direct_url_record = installed_records.get(direct_url_name)
         if direct_url_record is None or not _record_matches(direct_url_raw, direct_url_record):
             raise ValueError("installed runtime origin record is invalid")
@@ -279,7 +342,7 @@ def _verify_attested_build(
     manifest: Path,
     *,
     verified_at: datetime,
-    attest: Callable[[Path], None],
+    attest: Callable[[Path, str], AttestationVerifierIdentity | None],
 ) -> RuntimeBuildIdentity:
     try:
         _utc(verified_at)
@@ -312,8 +375,10 @@ def _verify_attested_build(
             snapshot_manifest = Path(directory, manifest.name)
             snapshot_wheel.write_bytes(wheel_bytes)
             snapshot_manifest.write_bytes(raw)
-            attest(snapshot_wheel)
-            attest(snapshot_manifest)
+            wheel_verifier = attest(snapshot_wheel, source_commit)
+            manifest_verifier = attest(snapshot_manifest, source_commit)
+            if wheel_verifier != manifest_verifier:
+                raise ValueError("runtime build attestations used different verifiers")
         return RuntimeBuildIdentity(
             source_commit=source_commit,
             wheel_sha256=wheel_sha256,
@@ -323,16 +388,77 @@ def _verify_attested_build(
             source_repository=fields["source_repository"],
             signer_workflow=fields["signer_workflow"],
             verified_at=verified_at,
+            attestation_verifier=wheel_verifier,
         )
     except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError) as error:
         raise RuntimeBuildVerificationError("runtime build verification failed") from error
 
 
-def _verify_github_attestation(path: Path) -> None:
+def _resolve_attestation_verifier() -> AttestationVerifierIdentity:
+    selected = shutil.which("gh")
+    if selected is None:
+        raise RuntimeBuildVerificationError("runtime build attestation verifier is unavailable")
     try:
+        return _attestation_verifier_identity(Path(selected).resolve(strict=True))
+    except (OSError, ValueError) as error:
+        raise RuntimeBuildVerificationError(
+            "runtime build attestation verifier is invalid"
+        ) from error
+
+
+def _attestation_verifier_identity(path: Path) -> AttestationVerifierIdentity:
+    if not path.is_absolute() or path.resolve(strict=True) != path:
+        raise ValueError("attestation verifier path is not canonical")
+    if path.name != "gh":
+        raise ValueError("attestation verifier executable name is invalid")
+    before = path.lstat()
+    if not stat.S_ISREG(before.st_mode) or not before.st_mode & 0o111:
+        raise ValueError("attestation verifier is not an executable regular file")
+    if any(_process_can_replace(candidate) for candidate in (path, *path.parents)):
+        raise ValueError("attestation verifier install path is replaceable")
+    contents = path.read_bytes()
+    after = path.lstat()
+    if (
+        before.st_dev,
+        before.st_ino,
+        before.st_mode,
+        before.st_size,
+        before.st_mtime_ns,
+    ) != (
+        after.st_dev,
+        after.st_ino,
+        after.st_mode,
+        after.st_size,
+        after.st_mtime_ns,
+    ):
+        raise ValueError("attestation verifier changed while it was read")
+    return AttestationVerifierIdentity(path=str(path), sha256=hashlib.sha256(contents).hexdigest())
+
+
+def _process_can_replace(path: Path) -> bool:
+    if (
+        os.name != "posix"
+        or os.access not in os.supports_effective_ids
+        or os.getuid() != os.geteuid()
+    ):
+        return True
+    return path.lstat().st_uid == os.geteuid() or os.access(path, os.W_OK, effective_ids=True)
+
+
+def _verify_github_attestation(
+    path: Path,
+    source_commit: str,
+    verifier: AttestationVerifierIdentity | None = None,
+) -> AttestationVerifierIdentity:
+    _git_sha(source_commit)
+    try:
+        verifier = verifier or _resolve_attestation_verifier()
+        verifier_path = Path(verifier.path)
+        if _attestation_verifier_identity(verifier_path) != verifier:
+            raise ValueError("attestation verifier differs before verification")
         subprocess.run(
             [
-                "gh",
+                verifier.path,
                 "attestation",
                 "verify",
                 str(path),
@@ -342,6 +468,10 @@ def _verify_github_attestation(path: Path) -> None:
                 "github.com",
                 "--signer-workflow",
                 f"{SOURCE_REPOSITORY}/{SIGNER_WORKFLOW}",
+                "--source-ref",
+                "refs/heads/main",
+                "--source-digest",
+                source_commit,
                 "--deny-self-hosted-runners",
             ],
             check=True,
@@ -350,6 +480,9 @@ def _verify_github_attestation(path: Path) -> None:
             text=True,
             timeout=30,
         )
+        if _attestation_verifier_identity(verifier_path) != verifier:
+            raise ValueError("attestation verifier changed during verification")
+        return verifier
     except subprocess.TimeoutExpired as error:
         raise RuntimeBuildAttestationIndeterminateError(
             "runtime build attestation verdict is indeterminate"
@@ -364,7 +497,7 @@ def _verify_github_attestation(path: Path) -> None:
                 "runtime build attestation verdict is indeterminate"
             ) from error
         raise RuntimeBuildVerificationError("runtime build attestation failed") from error
-    except (OSError, UnicodeError, subprocess.SubprocessError) as error:
+    except (OSError, UnicodeError, ValueError, subprocess.SubprocessError) as error:
         raise RuntimeBuildVerificationError("runtime build attestation failed") from error
 
 

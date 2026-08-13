@@ -9,6 +9,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from .backtesting import BacktestResult, CostModel
+from .catalog import DatasetCatalog
 from .datasets import DatasetService, DatasetValidationError
 from .domain import OHLCVBar, Timeframe, TimestampRange
 from .experiments import (
@@ -24,6 +25,10 @@ from .intraday_reporting import (
     build_intraday_report,
     intraday_strategy_result,
     write_intraday_report,
+)
+from .intraday_source_provenance import (
+    bind_intraday_execution_source,
+    write_intraday_execution_report,
 )
 from .reporting import build_report, strategy_result, summarize, write_report
 
@@ -210,54 +215,70 @@ def run_cataloged_intraday_experiment(
     cost_model: CostModel | None = None,
     *,
     pre_registered: bool = False,
+    execution_source_review_id: str | None = None,
+    execution_source_wheel: Path | None = None,
+    execution_source_manifest: Path | None = None,
+    execution_source_lockfile: Path | None = None,
+    execution_source_dependency_wheelhouse: Path | None = None,
 ) -> BacktestResult:
     """Run one training or validation candidate under the M5B contract."""
 
-    if pre_registered and spec.campaign_id == "intraday-research-v1":
-        raise ExperimentError(
-            "Campaign V1 execution is blocked until the actual execution source "
-            "is separately reviewed and recorded"
+    selected_costs = (
+        _campaign_v1_execution_inputs(
+            registry,
+            datasets,
+            spec,
+            output_directory,
+            initial_cash,
+            cost_model,
         )
-    selected_costs = cost_model or CostModel()
+        if pre_registered and spec.campaign_id == "intraday-research-v1"
+        else cost_model or CostModel()
+    )
+    source_binding: dict[str, object] | None = None
     if pre_registered:
         if registry.get_planned_intraday_spec(spec.experiment_id) != spec:
             raise ExperimentError("stored planned intraday experiment differs")
-        registry._claim_planned_intraday(spec)
+        source_binding = registry._claim_planned_intraday(
+            spec,
+            execution_source_review_id,
+            execution_source_wheel,
+            execution_source_manifest,
+            execution_source_lockfile,
+            execution_source_dependency_wheelhouse,
+        )
     else:
         registry.create_experiment(spec)
         registry.claim(spec.experiment_id)
     try:
         if pre_registered and not datasets.validate(spec.dataset_id)["valid"]:
             raise DatasetValidationError("dataset integrity validation failed")
-        manifest = datasets.describe(spec.dataset_id)
-        _validate_intraday_models(spec, selected_costs, manifest)
-        bars = datasets.load_bars_range(
-            spec.dataset_id,
-            TimestampRange(spec.start_timestamp, spec.end_timestamp),
-            expected_fingerprint=spec.dataset_fingerprint,
-            expected_universe_id=spec.universe_id,
-            expected_universe_fingerprint=spec.universe_fingerprint,
-        )
         registry.heartbeat(spec.experiment_id)
-        result = intraday_strategy_result(
-            spec.strategy_id,
-            bars,
-            initial_cash,
-            selected_costs,
-            Timeframe(spec.timeframe),
-            spec.execution_delay_bars,
-            spec.parameters,
-        )
-        if (result.strategy_id, result.strategy_version) != (
-            spec.strategy_id,
-            spec.strategy_version,
-        ):
-            raise ExperimentError("intraday strategy identity does not match the experiment")
-        provenance = canonicalize(spec)
+        result, report, bars = _intraday_computation(datasets, spec, initial_cash, selected_costs)
+        if source_binding is not None:
+            assert execution_source_review_id is not None
+            assert execution_source_wheel is not None
+            assert execution_source_manifest is not None
+            assert execution_source_lockfile is not None
+            assert execution_source_dependency_wheelhouse is not None
+            registry.verify_intraday_execution_source_review(
+                execution_source_review_id,
+                execution_source_wheel,
+                execution_source_manifest,
+                execution_source_lockfile,
+                execution_source_dependency_wheelhouse,
+            )
+        provenance = report["provenance"]
         assert isinstance(provenance, dict)
-        report = build_intraday_report(provenance, result, bars)
         report_path = output_directory / f"{spec.configuration_fingerprint}.json"
-        write_intraday_report(report_path, provenance, result, bars)
+        if source_binding is None:
+            write_intraday_report(report_path, provenance, result, bars)
+        else:
+            report = bind_intraday_execution_source(
+                report,
+                registry.intraday_execution_source_evidence(spec.experiment_id),
+            )
+            write_intraday_execution_report(report_path, report)
         metrics = report.get("metrics")
         if not isinstance(metrics, Mapping):
             raise ExperimentError("intraday report metrics are malformed")
@@ -282,6 +303,77 @@ def run_cataloged_intraday_experiment(
     except Exception as error:
         registry.fail(spec.experiment_id, f"{type(error).__name__}: {error}")
         raise
+
+
+def _intraday_computation(
+    datasets: DatasetService,
+    spec: IntradayExperimentSpec,
+    initial_cash: Decimal,
+    selected_costs: CostModel,
+) -> tuple[BacktestResult, dict[str, object], tuple[OHLCVBar, ...]]:
+    """Compute one candidate; provenance and lifecycle plumbing stay outside this surface."""
+
+    manifest = datasets.describe(spec.dataset_id)
+    _validate_intraday_models(spec, selected_costs, manifest)
+    bars = datasets.load_bars_range(
+        spec.dataset_id,
+        TimestampRange(spec.start_timestamp, spec.end_timestamp),
+        expected_fingerprint=spec.dataset_fingerprint,
+        expected_universe_id=spec.universe_id,
+        expected_universe_fingerprint=spec.universe_fingerprint,
+    )
+    result = intraday_strategy_result(
+        spec.strategy_id,
+        bars,
+        initial_cash,
+        selected_costs,
+        Timeframe(spec.timeframe),
+        spec.execution_delay_bars,
+        spec.parameters,
+    )
+    if (result.strategy_id, result.strategy_version) != (
+        spec.strategy_id,
+        spec.strategy_version,
+    ):
+        raise ExperimentError("intraday strategy identity does not match the experiment")
+    provenance = canonicalize(spec)
+    assert isinstance(provenance, dict)
+    report = build_intraday_report(provenance, result, bars)
+    return result, report, bars
+
+
+def _campaign_v1_execution_inputs(
+    registry: ExperimentRegistry,
+    datasets: DatasetService,
+    spec: IntradayExperimentSpec,
+    output_directory: Path,
+    initial_cash: Decimal,
+    cost_model: CostModel | None,
+) -> CostModel:
+    """Derive Campaign V1 inputs from its stored spec and one storage root."""
+
+    if (
+        type(registry) is not ExperimentRegistry
+        or type(datasets) is not DatasetService
+        or type(datasets.catalog) is not DatasetCatalog
+    ):
+        raise ExperimentError("Campaign V1 requires the concrete registry and dataset service")
+    if type(initial_cash) is not Decimal or initial_cash != Decimal("100000"):
+        raise ExperimentError("Campaign V1 initial cash differs from its reviewed foundation")
+    if cost_model is not None:
+        raise ExperimentError("Campaign V1 costs are derived from its sealed stored spec")
+    layout = datasets.layout
+    if (
+        registry.path.resolve() != layout.experiments.resolve()
+        or datasets.catalog.path.resolve() != layout.catalog.resolve()
+        or output_directory.resolve() != layout.reports.resolve()
+    ):
+        raise ExperimentError("Campaign V1 registry, datasets, and reports must share one root")
+    return CostModel(
+        spec.cost_model_version,
+        spec.slippage_bps,
+        spec.commission_bps,
+    )
 
 
 def run_holdout_experiment(

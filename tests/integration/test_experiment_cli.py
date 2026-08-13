@@ -248,16 +248,13 @@ def test_cli_validates_and_atomically_binds_planned_intraday_datasets(
         if isinstance(record["spec_json"], dict)
     )
 
-    with pytest.raises(ExperimentError, match="actual execution source"):
-        run(
-            parser().parse_args(
-                [
-                    "experiment",
-                    "run-planned-intraday",
-                    "intraday-research-v1-cash-training-base",
-                ]
-            ),
-            settings,
+    with pytest.raises(SystemExit):
+        parser().parse_args(
+            [
+                "experiment",
+                "run-planned-intraday",
+                "intraday-research-v1-cash-training-base",
+            ]
         )
     assert registry.get("intraday-research-v1-cash-training-base")["status"] == "pending"
 

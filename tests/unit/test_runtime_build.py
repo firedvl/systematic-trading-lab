@@ -6,22 +6,36 @@ import hashlib
 import io
 import json
 import subprocess
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
 
+import systematic_trading_lab.runtime_build as runtime_build
 from systematic_trading_lab.runtime_build import (
+    AttestationVerifierIdentity,
     RuntimeBuildAttestationIndeterminateError,
     RuntimeBuildIdentity,
     RuntimeBuildVerificationError,
+    _attestation_verifier_identity,
+    _resolve_attestation_verifier,
     _verify_attested_build,
     _verify_github_attestation,
     _verify_installed_runtime,
 )
 
 NOW = datetime(2026, 8, 4, tzinfo=UTC)
+
+
+def _fake_gh(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    executable = (tmp_path / "gh").resolve()
+    executable.write_bytes(b"reviewed gh executable")
+    executable.chmod(0o555)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.setattr(runtime_build, "_process_can_replace", lambda _: False)
+    return executable
 
 
 def _artifacts(tmp_path: Path) -> tuple[Path, Path]:
@@ -93,6 +107,10 @@ def _installed_runtime(
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(contents)
     dist_info = root / "systematic_trading_lab-0.1.0.dist-info"
+    installer = dist_info / "INSTALLER"
+    installer.write_bytes(b"pip\n")
+    requested = dist_info / "REQUESTED"
+    requested.write_bytes(b"")
     direct_url = dist_info / "direct_url.json"
     direct_url.write_text(
         json.dumps(
@@ -106,8 +124,13 @@ def _installed_runtime(
         ),
         encoding="utf-8",
     )
+    script = root.parent / "bin/trading-lab"
+    script.parent.mkdir()
+    script.write_bytes(b"generated launcher")
     installed_rows = list(csv.reader(io.StringIO(files[record_name].decode())))
-    installed_rows.append(["../../Scripts/trading-lab.exe", *_record(b"generated launcher")])
+    installed_rows.append(["../bin/trading-lab", *_record(script.read_bytes())])
+    installed_rows.append([f"{dist_info.name}/INSTALLER", *_record(installer.read_bytes())])
+    installed_rows.append([f"{dist_info.name}/REQUESTED", *_record(requested.read_bytes())])
     installed_rows.append([f"{dist_info.name}/direct_url.json", *_record(direct_url.read_bytes())])
     installed_output = io.StringIO()
     csv.writer(installed_output, lineterminator="\n").writerows(installed_rows)
@@ -127,14 +150,17 @@ def _update_direct_url_record(root: Path, direct_url: Path) -> None:
 
 def test_attested_build_binds_exact_wheel_manifest_and_authority(tmp_path: Path) -> None:
     wheel, manifest = _artifacts(tmp_path)
-    calls: list[Path] = []
+    calls: list[tuple[Path, str]] = []
     identity = _verify_attested_build(
         wheel,
         manifest,
         verified_at=NOW,
-        attest=calls.append,
+        attest=lambda path, source_commit: calls.append((path, source_commit)),
     )
-    assert [path.name for path in calls] == [wheel.name, manifest.name]
+    assert [(path.name, commit) for path, commit in calls] == [
+        (wheel.name, "a" * 40),
+        (manifest.name, "a" * 40),
+    ]
     assert identity.source_commit == "a" * 40
     assert identity.wheel_sha256 == hashlib.sha256(wheel.read_bytes()).hexdigest()
     assert identity.manifest_sha256 == hashlib.sha256(manifest.read_bytes()).hexdigest()
@@ -144,13 +170,13 @@ def test_attested_build_binds_exact_wheel_manifest_and_authority(tmp_path: Path)
 def test_attested_build_rejects_tamper_before_attestation(tmp_path: Path) -> None:
     wheel, manifest = _artifacts(tmp_path)
     wheel.write_bytes(b"changed wheel")
-    calls: list[Path] = []
+    calls: list[tuple[Path, str]] = []
     with pytest.raises(RuntimeBuildVerificationError, match="verification failed") as captured:
         _verify_attested_build(
             wheel,
             manifest,
             verified_at=NOW,
-            attest=calls.append,
+            attest=lambda path, source_commit: calls.append((path, source_commit)),
         )
     assert not isinstance(captured.value, RuntimeBuildAttestationIndeterminateError)
     assert not calls
@@ -164,11 +190,11 @@ def test_attested_build_rejects_wrong_authority_and_attestation_failure(
     value["source_repository"] = "other/repository"
     manifest.write_text(json.dumps(value), encoding="utf-8")
     with pytest.raises(RuntimeBuildVerificationError, match="verification failed"):
-        _verify_attested_build(wheel, manifest, verified_at=NOW, attest=lambda _: None)
+        _verify_attested_build(wheel, manifest, verified_at=NOW, attest=lambda _path, _sha: None)
 
     _, manifest = _artifacts(tmp_path)
 
-    def fail(_path: Path) -> None:
+    def fail(_path: Path, _source_commit: str) -> None:
         raise RuntimeBuildVerificationError("runtime build attestation failed")
 
     with pytest.raises(RuntimeBuildVerificationError, match="attestation failed"):
@@ -181,7 +207,8 @@ def test_attested_build_uses_immutable_snapshots_and_rejects_bad_inputs(
     wheel, manifest = _artifacts(tmp_path)
     snapshots: list[bytes] = []
 
-    def mutate_sources(snapshot: Path) -> None:
+    def mutate_sources(snapshot: Path, source_commit: str) -> None:
+        assert source_commit == "a" * 40
         snapshots.append(snapshot.read_bytes())
         wheel.write_bytes(b"changed after snapshot")
         manifest.write_text("{}", encoding="utf-8")
@@ -196,7 +223,7 @@ def test_attested_build_uses_immutable_snapshots_and_rejects_bad_inputs(
             wheel,
             manifest,
             verified_at=datetime(2026, 8, 4),
-            attest=lambda _: None,
+            attest=lambda _path, _sha: None,
         )
     manifest.write_text(
         manifest.read_text(encoding="utf-8").replace(
@@ -206,13 +233,14 @@ def test_attested_build_uses_immutable_snapshots_and_rejects_bad_inputs(
         encoding="utf-8",
     )
     with pytest.raises(RuntimeBuildVerificationError, match="verification failed"):
-        _verify_attested_build(wheel, manifest, verified_at=NOW, attest=lambda _: None)
+        _verify_attested_build(wheel, manifest, verified_at=NOW, attest=lambda _path, _sha: None)
 
 
 def test_github_attestation_uses_fixed_authority(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     artifact = tmp_path / "artifact.whl"
+    executable = _fake_gh(tmp_path, monkeypatch)
     calls: list[tuple[list[str], dict[str, object]]] = []
     monkeypatch.setenv("APCA_API_SECRET_KEY", "must-not-reach-gh")
     monkeypatch.setenv("TRADING_LAB_PAPER_ACTIVATION_ID", "must-not-reach-gh")
@@ -226,7 +254,10 @@ def test_github_attestation_uses_fixed_authority(
         return subprocess.CompletedProcess(command, 0)
 
     monkeypatch.setattr(subprocess, "run", run)
-    _verify_github_attestation(artifact)
+    identity = _verify_github_attestation(artifact, "a" * 40)
+    assert identity == AttestationVerifierIdentity(
+        path=str(executable), sha256=hashlib.sha256(executable.read_bytes()).hexdigest()
+    )
     subprocess_environment = calls[0][1].pop("env")
     assert isinstance(subprocess_environment, dict)
     assert subprocess_environment["GH_TOKEN"] == "test-github-token"
@@ -238,7 +269,7 @@ def test_github_attestation_uses_fixed_authority(
     assert calls == [
         (
             [
-                "gh",
+                str(executable),
                 "attestation",
                 "verify",
                 str(artifact),
@@ -248,6 +279,10 @@ def test_github_attestation_uses_fixed_authority(
                 "github.com",
                 "--signer-workflow",
                 "firedvl/systematic-trading-lab/.github/workflows/build-provenance.yml",
+                "--source-ref",
+                "refs/heads/main",
+                "--source-digest",
+                "a" * 40,
                 "--deny-self-hosted-runners",
             ],
             {"check": True, "capture_output": True, "text": True, "timeout": 30},
@@ -259,13 +294,14 @@ def test_github_attestation_timeout_is_indeterminate(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     artifact = tmp_path / "artifact.whl"
+    _fake_gh(tmp_path, monkeypatch)
 
     def timeout(*args: object, **kwargs: object) -> None:
         raise subprocess.TimeoutExpired("gh", 30)
 
     monkeypatch.setattr(subprocess, "run", timeout)
     with pytest.raises(RuntimeBuildAttestationIndeterminateError, match="indeterminate"):
-        _verify_github_attestation(artifact)
+        _verify_github_attestation(artifact, "a" * 40)
 
 
 @pytest.mark.parametrize(
@@ -279,13 +315,14 @@ def test_github_attestation_transport_exit_is_indeterminate(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, stderr: str
 ) -> None:
     artifact = tmp_path / "artifact.whl"
+    _fake_gh(tmp_path, monkeypatch)
 
     def fail(*args: object, **kwargs: object) -> None:
         raise subprocess.CalledProcessError(1, "gh", stderr=stderr)
 
     monkeypatch.setattr(subprocess, "run", fail)
     with pytest.raises(RuntimeBuildAttestationIndeterminateError, match="indeterminate"):
-        _verify_github_attestation(artifact)
+        _verify_github_attestation(artifact, "a" * 40)
 
 
 @pytest.mark.parametrize(
@@ -301,20 +338,99 @@ def test_github_attestation_local_or_auth_failure_is_permanent(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error: BaseException
 ) -> None:
     artifact = tmp_path / "artifact.whl"
+    _fake_gh(tmp_path, monkeypatch)
 
     def fail(*args: object, **kwargs: object) -> None:
         raise error
 
     monkeypatch.setattr(subprocess, "run", fail)
     with pytest.raises(RuntimeBuildVerificationError, match="attestation failed") as captured:
-        _verify_github_attestation(artifact)
+        _verify_github_attestation(artifact, "a" * 40)
     assert not isinstance(captured.value, RuntimeBuildAttestationIndeterminateError)
+
+
+def test_github_attestation_binds_path_and_rejects_mid_call_mutation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    artifact = tmp_path / "artifact.whl"
+    first_directory = tmp_path / "first"
+    first_directory.mkdir()
+    _fake_gh(first_directory, monkeypatch)
+    first_identity = _resolve_attestation_verifier()
+    second_directory = tmp_path / "second"
+    second_directory.mkdir()
+    second = _fake_gh(second_directory, monkeypatch)
+    assert _resolve_attestation_verifier() != first_identity
+
+    def mutate(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        second.chmod(0o755)
+        second.write_bytes(b"changed verifier")
+        second.chmod(0o555)
+        return subprocess.CompletedProcess([], 0)
+
+    monkeypatch.setattr(subprocess, "run", mutate)
+    with pytest.raises(RuntimeBuildVerificationError, match="attestation failed"):
+        _verify_github_attestation(artifact, "a" * 40)
+
+
+def test_attestation_verifier_rejects_noncanonical_and_nonregular_paths(tmp_path: Path) -> None:
+    missing = (tmp_path / "missing").resolve()
+    target = tmp_path / "target"
+    target.write_bytes(b"target")
+    target.chmod(0o555)
+    symlink = tmp_path / "symlink"
+    symlink.symlink_to(target)
+    directory = tmp_path / "directory"
+    directory.mkdir()
+
+    for path in (missing, symlink, directory):
+        with pytest.raises((OSError, ValueError)):
+            _attestation_verifier_identity(path)
+
+
+def test_attestation_verifier_rejects_writable_install_path(tmp_path: Path) -> None:
+    executable = (tmp_path / "gh").resolve()
+    executable.write_bytes(b"stable malicious verifier")
+    executable.chmod(0o555)
+
+    with pytest.raises(ValueError, match="install path is replaceable"):
+        _attestation_verifier_identity(executable)
+
+
+def test_attestation_verifier_checks_parent_install_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    executable = (tmp_path / "gh").resolve()
+    executable.write_bytes(b"reviewed verifier")
+    executable.chmod(0o555)
+    checked: list[Path] = []
+
+    def replaceable(path: Path) -> bool:
+        checked.append(path)
+        return path == executable.parent
+
+    monkeypatch.setattr(runtime_build, "_process_can_replace", replaceable)
+    with pytest.raises(ValueError, match="install path is replaceable"):
+        _attestation_verifier_identity(executable)
+    assert checked == [executable, executable.parent]
+
+
+def test_attestation_verifier_rejects_wrong_executable_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    executable = (tmp_path / "true").resolve()
+    executable.write_bytes(b"always succeeds")
+    executable.chmod(0o555)
+    monkeypatch.setattr(runtime_build, "_process_can_replace", lambda _: False)
+
+    with pytest.raises(ValueError, match="executable name is invalid"):
+        _attestation_verifier_identity(executable)
 
 
 def test_attested_build_preserves_indeterminate_attestation_failure(tmp_path: Path) -> None:
     wheel, manifest = _artifacts(tmp_path)
 
-    def fail(_path: Path) -> None:
+    def fail(_path: Path, _source_commit: str) -> None:
         raise RuntimeBuildAttestationIndeterminateError("indeterminate")
 
     with pytest.raises(RuntimeBuildAttestationIndeterminateError):
@@ -426,5 +542,57 @@ def test_installed_runtime_rejects_source_tamper_and_extra_source(tmp_path: Path
             root=root,
             module_file=module_file,
             loaded_files=(module_file, foreign),
+            verified_at=NOW,
+        )
+
+
+def test_installed_runtime_rejects_extra_record_owned_file(tmp_path: Path) -> None:
+    build, wheel, root, module_file, _ = _installed_runtime(tmp_path)
+    injected = root / "injected.py"
+    injected.write_bytes(b"INJECTED = True\n")
+    record = root / "systematic_trading_lab-0.1.0.dist-info/RECORD"
+    rows = list(csv.reader(io.StringIO(record.read_text(encoding="utf-8"))))
+    rows.append(["injected.py", *_record(injected.read_bytes())])
+    output = io.StringIO()
+    csv.writer(output, lineterminator="\n").writerows(rows)
+    record.write_text(output.getvalue(), encoding="utf-8")
+
+    with pytest.raises(RuntimeBuildVerificationError, match="verification failed"):
+        _verify_installed_runtime(
+            build,
+            wheel,
+            root=root,
+            module_file=module_file,
+            verified_at=NOW,
+        )
+
+
+def test_installed_runtime_rejects_wheel_owned_top_level_file(tmp_path: Path) -> None:
+    build, wheel, root, module_file, _ = _installed_runtime(tmp_path)
+    record_name = "systematic_trading_lab-0.1.0.dist-info/RECORD"
+    with ZipFile(wheel) as archive:
+        files = {
+            name: archive.read(name)
+            for name in archive.namelist()
+            if not name.endswith("/") and name != record_name
+        }
+    files["injected.py"] = b"INJECTED = True\n"
+    output = io.StringIO()
+    writer = csv.writer(output, lineterminator="\n")
+    for name, contents in files.items():
+        writer.writerow((name, *_record(contents)))
+    writer.writerow((record_name, "", ""))
+    files[record_name] = output.getvalue().encode()
+    with ZipFile(wheel, "w") as archive:
+        for name, contents in files.items():
+            archive.writestr(name, contents)
+    build = replace(build, wheel_sha256=hashlib.sha256(wheel.read_bytes()).hexdigest())
+
+    with pytest.raises(RuntimeBuildVerificationError, match="verification failed"):
+        _verify_installed_runtime(
+            build,
+            wheel,
+            root=root,
+            module_file=module_file,
             verified_at=NOW,
         )

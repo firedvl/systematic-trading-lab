@@ -46,12 +46,18 @@ from .experiments import (
     ExperimentSplit,
     IntradayExperimentSpec,
 )
+from .fingerprints import canonicalize
 from .intraday_qualification import (
     REVIEWED_POLICY_FINGERPRINT,
     IntradayQualificationPolicy,
     evaluate_registered_intraday_qualification,
     load_intraday_qualification_policy,
     write_intraday_qualification_evidence,
+)
+from .intraday_source_provenance import (
+    INTRADAY_CAMPAIGN_ID,
+    IntradayExecutionSourceProvenanceError,
+    assess_intraday_execution_source,
 )
 from .paper_equivalence import PaperEquivalenceStore, load_action_plan
 from .paper_observation import (
@@ -301,6 +307,33 @@ def parser() -> argparse.ArgumentParser:
         help="run one dataset-bound candidate from a sealed intraday plan",
     )
     planned_intraday_run.add_argument("experiment_id")
+    planned_intraday_run.add_argument("--source-review", required=True)
+    planned_intraday_run.add_argument("--wheel", type=Path, required=True)
+    planned_intraday_run.add_argument("--build-manifest", type=Path, required=True)
+    planned_intraday_run.add_argument("--lockfile", type=Path, required=True)
+    planned_intraday_run.add_argument("--dependency-wheelhouse", type=Path, required=True)
+    assess_intraday_source = experiment_commands.add_parser(
+        "assess-intraday-source",
+        help="compare a clean Campaign V1 checkout with its reviewed foundation",
+    )
+    assess_intraday_source.add_argument("--campaign", required=True)
+    assess_intraday_source.add_argument("--wheel", type=Path, required=True)
+    assess_intraday_source.add_argument("--build-manifest", type=Path, required=True)
+    assess_intraday_source.add_argument("--lockfile", type=Path, required=True)
+    assess_intraday_source.add_argument("--dependency-wheelhouse", type=Path, required=True)
+    record_intraday_source = experiment_commands.add_parser(
+        "record-intraday-source",
+        help="record one reviewed Campaign V1 execution checkout",
+    )
+    record_intraday_source.add_argument("review_id")
+    record_intraday_source.add_argument("--campaign", required=True)
+    record_intraday_source.add_argument("--wheel", type=Path, required=True)
+    record_intraday_source.add_argument("--build-manifest", type=Path, required=True)
+    record_intraday_source.add_argument("--lockfile", type=Path, required=True)
+    record_intraday_source.add_argument("--dependency-wheelhouse", type=Path, required=True)
+    record_intraday_source.add_argument("--assessment-fingerprint", required=True)
+    record_intraday_source.add_argument("--reviewer", required=True)
+    record_intraday_source.add_argument("--reason", required=True)
     inspect_intraday_plan = experiment_commands.add_parser(
         "inspect-intraday-plan",
         help="validate and fingerprint an intraday research preregistration",
@@ -370,6 +403,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         ConfigurationError,
         DatasetValidationError,
         ExperimentError,
+        IntradayExecutionSourceProvenanceError,
         JournalIntegrityError,
         KeyError,
         OSError,
@@ -570,6 +604,28 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                 }
             )
             return 0
+        if arguments.experiment_command == "assess-intraday-source":
+            if arguments.campaign != INTRADAY_CAMPAIGN_ID:
+                raise ExperimentError("execution-source assessment supports Campaign V1 only")
+            source_assessment = assess_intraday_execution_source(
+                arguments.wheel,
+                arguments.build_manifest,
+                arguments.lockfile,
+                arguments.dependency_wheelhouse,
+            )
+            payload = canonicalize(source_assessment)
+            assert isinstance(payload, dict)
+            _print(
+                {
+                    **payload,
+                    "assessment_fingerprint": source_assessment.assessment_fingerprint,
+                    "protected_holdout_authority": False,
+                    "paper_authority": False,
+                    "broker_write_authority": False,
+                    "live_authority": False,
+                }
+            )
+            return 0 if source_assessment.surface_comparison.equivalent else 1
         service = DatasetService(layout)
         registry = ExperimentRegistry(layout.experiments)
         if arguments.experiment_command == "create-campaign":
@@ -582,6 +638,28 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         elif arguments.experiment_command == "plan-intraday":
             intraday_plan = load_intraday_research_campaign_plan(arguments.spec)
             _print(registry.create_planned_intraday_campaign(intraday_plan.payload))
+        elif arguments.experiment_command == "record-intraday-source":
+            if arguments.campaign != INTRADAY_CAMPAIGN_ID:
+                raise ExperimentError("execution-source review supports Campaign V1 only")
+            review = registry.record_intraday_execution_source_review(
+                arguments.review_id,
+                arguments.wheel,
+                arguments.build_manifest,
+                arguments.lockfile,
+                arguments.dependency_wheelhouse,
+                arguments.assessment_fingerprint,
+                arguments.reviewer,
+                arguments.reason,
+            )
+            _print(
+                {
+                    "review": review,
+                    "protected_holdout_authority": False,
+                    "paper_authority": False,
+                    "broker_write_authority": False,
+                    "live_authority": False,
+                }
+            )
         elif arguments.experiment_command == "bind-intraday-datasets":
             stored_plan = registry.get_campaign_plan(arguments.campaign)
             plan_json = stored_plan["plan_json"]
@@ -624,12 +702,12 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                 service,
                 intraday_spec,
                 layout.reports,
-                cost_model=CostModel(
-                    intraday_spec.cost_model_version,
-                    intraday_spec.slippage_bps,
-                    intraday_spec.commission_bps,
-                ),
                 pre_registered=True,
+                execution_source_review_id=arguments.source_review,
+                execution_source_wheel=arguments.wheel,
+                execution_source_manifest=arguments.build_manifest,
+                execution_source_lockfile=arguments.lockfile,
+                execution_source_dependency_wheelhouse=arguments.dependency_wheelhouse,
             )
             _print(registry.get(arguments.experiment_id))
         elif arguments.experiment_command == "create":

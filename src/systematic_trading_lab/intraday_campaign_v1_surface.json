@@ -1,0 +1,391 @@
+{
+  "components": [
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "500e5a33c6a1067a9ce2e3c5b074256a7d1207d18ab797830d5c704d5def0942",
+      "patch_id": null,
+      "path": "systematic_trading_lab/__init__.py",
+      "sha256": "500e5a33c6a1067a9ce2e3c5b074256a7d1207d18ab797830d5c704d5def0942"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "83a567317904d62b3690f6e7d7a4a5e8613950a50c0c7acda99f7980aea011c4",
+      "patch_id": null,
+      "path": "systematic_trading_lab/alpaca_paper.py",
+      "sha256": "83a567317904d62b3690f6e7d7a4a5e8613950a50c0c7acda99f7980aea011c4"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "6c5d7bd4dfa3363a60a4a0dc959f3fcb909e6ee02fc27af3e5a31a672443d267",
+      "patch_id": null,
+      "path": "systematic_trading_lab/alpaca_paper_transport.py",
+      "sha256": "6c5d7bd4dfa3363a60a4a0dc959f3fcb909e6ee02fc27af3e5a31a672443d267"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "dfe84c05d3cc468a527fa1f18c88eb9d9ba7d03369c700dc01abb88c9e5299c3",
+      "patch_id": null,
+      "path": "systematic_trading_lab/backtesting.py",
+      "sha256": "dfe84c05d3cc468a527fa1f18c88eb9d9ba7d03369c700dc01abb88c9e5299c3"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "08478ecd458c62074046fd3eb3d368f05168da6c5f75cfe135c9a783f7ae805c",
+      "patch_id": null,
+      "path": "systematic_trading_lab/broker_events.py",
+      "sha256": "08478ecd458c62074046fd3eb3d368f05168da6c5f75cfe135c9a783f7ae805c"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace",
+      "patch_id": null,
+      "path": "systematic_trading_lab/calendar.py",
+      "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+    },
+    {
+      "classification": "reviewed-delta",
+      "diff_sha256": "1904e4f6f48c8b2282a842d941f36b1c6bab9391003d94c0176a83fd555d536e",
+      "foundation_sha256": "3c800bf8925cd35132a9aafc9d449310f5a53140d461cb38386edc23bdada145",
+      "patch_id": "2ef634fae527dd1afe80a0ecb96d3109265849b0",
+      "path": "systematic_trading_lab/campaign_specs.py",
+      "sha256": "1b73b646dbb6275cb69fb80b5708cea27756701116293f58b3018cbe40ee2639"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "af844a197daf7c7b601df1b33918d5fc5c80abbeaba9213e4e8792f61048482b",
+      "patch_id": null,
+      "path": "systematic_trading_lab/cancel_all.py",
+      "sha256": "af844a197daf7c7b601df1b33918d5fc5c80abbeaba9213e4e8792f61048482b"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "0b80464fab4ca6be1516fa7267a1db8f4bc04282d940950acd203f2a35e801cd",
+      "patch_id": null,
+      "path": "systematic_trading_lab/catalog.py",
+      "sha256": "0b80464fab4ca6be1516fa7267a1db8f4bc04282d940950acd203f2a35e801cd"
+    },
+    {
+      "classification": "reviewed-delta",
+      "diff_sha256": "95dd2895e61c0110932db85a5d4787ab33da1ce2837edecdf1655f163a27cef7",
+      "foundation_sha256": "fbe10a7bd2471335753a07f1725116923073a50bc57975e7daa2e2bfbf7be156",
+      "patch_id": "3e002ef520de559e1a92e8f2afc05d638117a484",
+      "path": "systematic_trading_lab/cli.py",
+      "sha256": "530d24138018830b6cc0d93a6e18e507f8eba1d738e052b9d0f008b4425ed229"
+    },
+    {
+      "classification": "reviewed-delta",
+      "diff_sha256": "4da7d54380c4c9fe69932bd4bc36edfe6cb1a8a18bbc248033cca755c212442b",
+      "foundation_sha256": "3c71466a63e906ac0c34028b4fe800c5ffbd523de003569734d1296a826eb62c",
+      "patch_id": "efff1afe1fb91aebf542074c1288ed0f7bd8e891",
+      "path": "systematic_trading_lab/config.py",
+      "sha256": "1278d090ea15c518601b9db5b3460de700333508d19b32a6e03e59e531fdeea1"
+    },
+    {
+      "classification": "reviewed-delta",
+      "diff_sha256": "4ac13c3d58d675544a11b4bb00ea9d52996e53b1dc6e84c21658fc0485ec7f92",
+      "foundation_sha256": "a5d384f1a717501bfaf9feb1b8022073e39e7ed8dae3febedec548b7c59ce4e8",
+      "patch_id": "3a339ab7866a22a2e200aee617395d9cc05e45c9",
+      "path": "systematic_trading_lab/datasets.py",
+      "sha256": "11cc17d3690b473ddd00fd3a9a3d13fc71e0a7af29dd909c33c639836c3fb494"
+    },
+    {
+      "classification": "reviewed-delta",
+      "diff_sha256": "c3ded022ed3c9a7a8841c09c8d8c32dac167227c4e4bd084b0ef0605b564a65d",
+      "foundation_sha256": "a81b76ecb812c9df9e03d042f6358dd9764852a74aefff0c704bc44f39cefa30",
+      "patch_id": "952fc104c15c25260b0e29488df7ab61ae4b9a50",
+      "path": "systematic_trading_lab/domain.py",
+      "sha256": "30aeb54b7c167b86354b68353c1f8a865e40af86aad70a207a16af25f4212b1e"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "87605f0395cafd5eac729f55c22d4855de2a6d9e3c30504ccf20c30cc1f8c53b",
+      "patch_id": null,
+      "path": "systematic_trading_lab/execution.py",
+      "sha256": "87605f0395cafd5eac729f55c22d4855de2a6d9e3c30504ccf20c30cc1f8c53b"
+    },
+    {
+      "classification": "reviewed-delta",
+      "diff_sha256": "6f0478e85815f2094a072ad28164b8848f1621df6dab173db635385d8fdab9d0",
+      "foundation_sha256": "0987fdb93651a6939251b5a405276cc5460214760eb7b221ba6915fa10a6ee0f",
+      "patch_id": "112c84ce9631acdf8be9a6ce8e8762feac62269a",
+      "path": "systematic_trading_lab/experiment_runner.py",
+      "sha256": "e2a075246d5943b122ea13deae5c48d141e14a2eecee3208967903203551f619"
+    },
+    {
+      "classification": "reviewed-delta",
+      "diff_sha256": "6abc6d0bbd9fcefe8c9eca72bc1cac012e1a12ea5be85d3a9744358c0cab12f1",
+      "foundation_sha256": "1cd1e81c6e87dedcdc8b0e7580e1d8df9509311fc49938d2dfcc99987696e96e",
+      "patch_id": "1bf8affb56a4e1fa45c5302476d6405d654ca9c1",
+      "path": "systematic_trading_lab/experiments.py",
+      "sha256": "fe7b1314b562c002929fc9a3e7ad3317f5b0754fadda3626d3842b8149fa485d"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47",
+      "patch_id": null,
+      "path": "systematic_trading_lab/fingerprints.py",
+      "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+    },
+    {
+      "classification": "reviewed-delta",
+      "diff_sha256": "b40666a9fb142d9f8c54a9d0a6ea8308806bbf15220ea7448a761ed19ab7de12",
+      "foundation_sha256": "e643233ece79661e638c7559e6ec1456673ccf167a835c0d04e0902579ec27db",
+      "patch_id": "16faf5b456e531e183ba8d6ebb50eac3106f1b58",
+      "path": "systematic_trading_lab/intraday_qualification.py",
+      "sha256": "5e497a074d2190fb55a5f2dde9c35f464e348f0db0df72802d547b78add3cfe1"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "196ca11cd8e0208984ba746b1b4d58428a879e2c2a808f569483640aab039d15",
+      "patch_id": null,
+      "path": "systematic_trading_lab/intraday_reporting.py",
+      "sha256": "196ca11cd8e0208984ba746b1b4d58428a879e2c2a808f569483640aab039d15"
+    },
+    {
+      "classification": "reviewed-new-file",
+      "diff_sha256": "a4886068e4519d5f5af7f561cff3a71b787277a458f13e994aa6c97ff0733d38",
+      "foundation_sha256": null,
+      "patch_id": "198d9cec06d35d6d3c2310970589626660146b92",
+      "path": "systematic_trading_lab/intraday_source_provenance.py",
+      "sha256": "614b47665ce339a2ae1bec681146da2e9e72efe63643db73fd557cc69f7a07fd"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "7e5b8c0a2398d561287ba3cd4a19c2e9adb1cdaf13130c2059ca3878c2b74d86",
+      "patch_id": null,
+      "path": "systematic_trading_lab/orders.py",
+      "sha256": "7e5b8c0a2398d561287ba3cd4a19c2e9adb1cdaf13130c2059ca3878c2b74d86"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "986979ebf7035bedc8d22874955424b76386a4f17501d73cd7f8a76e92f6c634",
+      "patch_id": null,
+      "path": "systematic_trading_lab/paper_activation.py",
+      "sha256": "986979ebf7035bedc8d22874955424b76386a4f17501d73cd7f8a76e92f6c634"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "64f20b626a811c6ca52fa2f18f7ae39cc39ef78a4dee2a77d974c8a3bf79e36e",
+      "patch_id": null,
+      "path": "systematic_trading_lab/paper_cancellation.py",
+      "sha256": "64f20b626a811c6ca52fa2f18f7ae39cc39ef78a4dee2a77d974c8a3bf79e36e"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "83990de2a847bda6d60e8a149c4a07b75803890f4a1e5e6b4683ac8233f9c0e5",
+      "patch_id": null,
+      "path": "systematic_trading_lab/paper_equivalence.py",
+      "sha256": "83990de2a847bda6d60e8a149c4a07b75803890f4a1e5e6b4683ac8233f9c0e5"
+    },
+    {
+      "classification": "reviewed-delta",
+      "diff_sha256": "82bc3f5483c7d1cc0fce2e6af46054ad5ce7dfbf77292f4a64629db89c024d87",
+      "foundation_sha256": "66a5ba04924e81be4101a3ad4530faff6de1e1594f84c0a0518a3ef7dff173ac",
+      "patch_id": "654d059b54d250eb27f278c4f00b7e197800a097",
+      "path": "systematic_trading_lab/paper_observation.py",
+      "sha256": "58dbc40d0064fe26040142fb1e9a5bbc8a092070cb0aaf46b172e6c49bcdb9f3"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "4688d8b734f4d39bd84f05828fa1597cce3cf0b826ad709e07f726da4ececb09",
+      "patch_id": null,
+      "path": "systematic_trading_lab/paper_operator.py",
+      "sha256": "4688d8b734f4d39bd84f05828fa1597cce3cf0b826ad709e07f726da4ececb09"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "88a0265a72f4c67dad1e2bd9c89ee3f7eb7d8db9819e9d2c7eb4d610d62d1eee",
+      "patch_id": null,
+      "path": "systematic_trading_lab/paper_startup.py",
+      "sha256": "88a0265a72f4c67dad1e2bd9c89ee3f7eb7d8db9819e9d2c7eb4d610d62d1eee"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "c8bc8b81fcd812dceb2439f4491199f2ab6aa3c88772aa56b7b780be9ca18619",
+      "patch_id": null,
+      "path": "systematic_trading_lab/paper_submission.py",
+      "sha256": "c8bc8b81fcd812dceb2439f4491199f2ab6aa3c88772aa56b7b780be9ca18619"
+    },
+    {
+      "classification": "reviewed-new-file",
+      "diff_sha256": "7b5c9c0535297700bab6e3b20f420d1c0d4f5dd59c1521b69fb233f756e81ab1",
+      "foundation_sha256": null,
+      "patch_id": "9f2b9423029e21a60262377a3c25ad622916d552",
+      "path": "systematic_trading_lab/paper_supervision.py",
+      "sha256": "3e2e862befcce29a3cbb8b54a77e57070bea014318631ddfb8f854df48f824f2"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "34e97c421d1483dd55b4b179285e7a11fcefee86c16f096eaf711318d62e8799",
+      "patch_id": null,
+      "path": "systematic_trading_lab/parquet.py",
+      "sha256": "34e97c421d1483dd55b4b179285e7a11fcefee86c16f096eaf711318d62e8799"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "171b3542cf9269065202e3aae2e63abcc3007131d9aa0eca1ce8f8f4e4a9d9cc",
+      "patch_id": null,
+      "path": "systematic_trading_lab/position_settlement.py",
+      "sha256": "171b3542cf9269065202e3aae2e63abcc3007131d9aa0eca1ce8f8f4e4a9d9cc"
+    },
+    {
+      "classification": "reviewed-delta",
+      "diff_sha256": "f0e0fa028b7040f349363be6dfa49f7289b425b837ad8bcac336e373b88dc5ce",
+      "foundation_sha256": "af79c88fd9228d377a5be73f7c62df4c9579a2eb861d0e4eb9605a665711d1f0",
+      "patch_id": "c479f8287ac6a6289936c15773353b6a7eb150b9",
+      "path": "systematic_trading_lab/providers.py",
+      "sha256": "b18b2ba5466f8830ab2e9d39982487aaf95dd3a4e27a42b6d35124bffed71e76"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "711dd258b895a29d93520017de3a936c1c81c95da7a8a2d63905b2b62b961697",
+      "patch_id": null,
+      "path": "systematic_trading_lab/qualification.py",
+      "sha256": "711dd258b895a29d93520017de3a936c1c81c95da7a8a2d63905b2b62b961697"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "65c5f437830c14eb8f9a88d5dd20688ce88839a56a624f4fbe43ef7dabaad149",
+      "patch_id": null,
+      "path": "systematic_trading_lab/qualification_evidence.py",
+      "sha256": "65c5f437830c14eb8f9a88d5dd20688ce88839a56a624f4fbe43ef7dabaad149"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "4fe08fff67077dc4abe641c1097830f0e7770dc47c03cbcdb87e668877710c5d",
+      "patch_id": null,
+      "path": "systematic_trading_lab/reconciliation.py",
+      "sha256": "4fe08fff67077dc4abe641c1097830f0e7770dc47c03cbcdb87e668877710c5d"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "af4fe67752411f2eb075ad0ee483e6d1775c074d582e6a381c44f5b5ead3f124",
+      "patch_id": null,
+      "path": "systematic_trading_lab/recovery.py",
+      "sha256": "af4fe67752411f2eb075ad0ee483e6d1775c074d582e6a381c44f5b5ead3f124"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "27ebd66eea08e138c1d10799bcb8decc606e824bea48b18f4fa109bc86e764d1",
+      "patch_id": null,
+      "path": "systematic_trading_lab/reporting.py",
+      "sha256": "27ebd66eea08e138c1d10799bcb8decc606e824bea48b18f4fa109bc86e764d1"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "723874543b76d71c26c37358e195f56afc775a33f76b97d757edfb5a639fe6bc",
+      "patch_id": null,
+      "path": "systematic_trading_lab/risk.py",
+      "sha256": "723874543b76d71c26c37358e195f56afc775a33f76b97d757edfb5a639fe6bc"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "cf777d71e8537bd76e322896b29220956b4a2e16d7b2149a94b8243c7929c0f2",
+      "patch_id": null,
+      "path": "systematic_trading_lab/risk_context.py",
+      "sha256": "cf777d71e8537bd76e322896b29220956b4a2e16d7b2149a94b8243c7929c0f2"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "22ebe0c943e9261ae393cad4b8a116f4af4f531f4af648e059dfa7d1c5b1d0d8",
+      "patch_id": null,
+      "path": "systematic_trading_lab/risk_inputs.py",
+      "sha256": "22ebe0c943e9261ae393cad4b8a116f4af4f531f4af648e059dfa7d1c5b1d0d8"
+    },
+    {
+      "classification": "reviewed-delta",
+      "diff_sha256": "a205eae8c2c278ea2e751f2ace20422e37fff9000e9d724eb3e846ac635024c7",
+      "foundation_sha256": "d2d0e1291209de62517e955ce128dead5d34ec55df89cf2989aea950b4f95705",
+      "patch_id": "853df7eb68ad81e63f3186504f0ae0eb9c5dc098",
+      "path": "systematic_trading_lab/runtime_build.py",
+      "sha256": "499d32fe1ee9cdf034a84b7c495deaec50f0d98c6b25dac93de95fbe3c20ad0f"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "f803ae6bbbd62aa093ca9d88783211e6d2691b0b507b27ea4a585408be2c0432",
+      "patch_id": null,
+      "path": "systematic_trading_lab/settled_capacity.py",
+      "sha256": "f803ae6bbbd62aa093ca9d88783211e6d2691b0b507b27ea4a585408be2c0432"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "d18f7f7e27d76f5979eecdc2790ddc2259b5afd7651f150c74d25fd913d9c07c",
+      "patch_id": null,
+      "path": "systematic_trading_lab/storage.py",
+      "sha256": "d18f7f7e27d76f5979eecdc2790ddc2259b5afd7651f150c74d25fd913d9c07c"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "9917f996e2ddf2a318a72a83e28e4238ef97dac225486f105708b172804ef824",
+      "patch_id": null,
+      "path": "systematic_trading_lab/strategies.py",
+      "sha256": "9917f996e2ddf2a318a72a83e28e4238ef97dac225486f105708b172804ef824"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "2fb0e3f3319cb263ae071e5c66b7871dc7c4f326ee89559889ff9c62cbeb49ad",
+      "patch_id": null,
+      "path": "systematic_trading_lab/strategy_equity.py",
+      "sha256": "2fb0e3f3319cb263ae071e5c66b7871dc7c4f326ee89559889ff9c62cbeb49ad"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "c3ade9062bcbe6eb9a37b1304a0361619964edf8cb5f9419bcb70f0cb31fbb00",
+      "patch_id": null,
+      "path": "systematic_trading_lab/terminal_recovery.py",
+      "sha256": "c3ade9062bcbe6eb9a37b1304a0361619964edf8cb5f9419bcb70f0cb31fbb00"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "58905a9339c50d862483d27612211f42b037216f252576e64a800bea9d0d89f2",
+      "patch_id": null,
+      "path": "systematic_trading_lab/universe.py",
+      "sha256": "58905a9339c50d862483d27612211f42b037216f252576e64a800bea9d0d89f2"
+    },
+    {
+      "classification": "foundation-exact",
+      "diff_sha256": null,
+      "foundation_sha256": "c1b49854c4289065352b88bec19a2417902c84dabf4132cee157dbb078dd23d4",
+      "patch_id": null,
+      "path": "systematic_trading_lab/validation.py",
+      "sha256": "c1b49854c4289065352b88bec19a2417902c84dabf4132cee157dbb078dd23d4"
+    }
+  ],
+  "foundation_commit": "b1774f547da2976348430b820faf2ebdacdf46af",
+  "lock_sha256": "d6d60aa5d93644dd3bf932ef84f6793bab6d33992659ed48e968850c6673c00d",
+  "schema_version": "intraday-campaign-v1-surface-manifest-v1"
+}
