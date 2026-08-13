@@ -56,6 +56,7 @@ from .intraday_qualification import (
 )
 from .intraday_source_provenance import (
     INTRADAY_CAMPAIGN_ID,
+    IntradayExecutionSourceProvenanceError,
     assess_intraday_execution_source,
 )
 from .paper_equivalence import PaperEquivalenceStore, load_action_plan
@@ -402,6 +403,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         ConfigurationError,
         DatasetValidationError,
         ExperimentError,
+        IntradayExecutionSourceProvenanceError,
         JournalIntegrityError,
         KeyError,
         OSError,

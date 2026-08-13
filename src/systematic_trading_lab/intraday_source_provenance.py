@@ -2,19 +2,21 @@
 
 from __future__ import annotations
 
-import ast
 import base64
 import csv
 import hashlib
 import io
+import json
 import os
 import platform
 import re
 import shutil
+import stat
 import sys
 import tempfile
 import tomllib
-from collections.abc import Mapping, Sequence
+import types
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import getcontext
@@ -27,7 +29,11 @@ from zipfile import BadZipFile, ZipFile
 from zoneinfo import TZPATH
 
 from .fingerprints import canonical_json, canonicalize, fingerprint
-from .runtime_build import verify_attested_build, verify_installed_runtime
+from .runtime_build import (
+    AttestationVerifierIdentity,
+    verify_attested_build,
+    verify_installed_runtime,
+)
 
 INTRADAY_CAMPAIGN_ID = "intraday-research-v1"
 INTRADAY_PLAN_FINGERPRINT = "ce81be36d02cc15f421390bf3d3787714bb0b025797ccfb8de2c1d1236052c1a"
@@ -36,142 +42,122 @@ INTRADAY_FOUNDATION_LOCK_SHA256 = "d6d60aa5d93644dd3bf932ef84f6793bab6d33992659e
 _GIT_SHA = 40
 _SHA256 = 64
 _PACKAGE_PREFIX = "systematic_trading_lab/"
-_WHOLE_MODULES = (
-    "backtesting.py",
-    "calendar.py",
-    "catalog.py",
-    "fingerprints.py",
-    "intraday_reporting.py",
-    "parquet.py",
-    "storage.py",
-    "strategies.py",
-    "validation.py",
+_SURFACE_MANIFEST_NAME = "intraday_campaign_v1_surface.json"
+INTRADAY_RUNTIME_BOOTSTRAP = (
+    "import runpy,sys; sys.path.append(sys.argv.pop(1)); "
+    'runpy.run_module("systematic_trading_lab.cli", run_name="__main__")'
 )
-_AST_COMPONENTS = (
+_LOADER_ENVIRONMENT_NAMES = {
+    "LD_AUDIT",
+    "LD_LIBRARY_PATH",
+    "LD_PRELOAD",
+    "PYTHONHOME",
+    "PYTHONPATH",
+}
+_EXPECTED_META_PATH = (
+    ("_frozen_importlib", "BuiltinImporter"),
+    ("_frozen_importlib", "FrozenImporter"),
+    ("_frozen_importlib_external", "PathFinder"),
+    ("six", "_SixMetaPathImporter"),
+)
+_DEFAULT_PATH_HOOKS = (
+    ("zipimport", "zipimporter"),
     (
-        "experiment_runner.py:run_cataloged_intraday_experiment",
-        "experiment_runner.py",
-        None,
-        "run_cataloged_intraday_experiment",
+        "_frozen_importlib_external",
+        "FileFinder.path_hook.<locals>.path_hook_for_FileFinder",
     ),
-    (
-        "experiment_runner.py:_campaign_v1_execution_inputs",
-        "experiment_runner.py",
-        None,
-        "_campaign_v1_execution_inputs",
-    ),
-    (
-        "experiment_runner.py:_intraday_computation",
-        "experiment_runner.py",
-        None,
-        "_intraday_computation",
-    ),
-    (
-        "experiment_runner.py:_validate_intraday_models",
-        "experiment_runner.py",
-        None,
-        "_validate_intraday_models",
-    ),
-    ("experiments.py:ExperimentSplit", "experiments.py", None, "ExperimentSplit"),
-    ("experiments.py:IntradayExperimentSpec", "experiments.py", None, "IntradayExperimentSpec"),
-    ("experiments.py:_experiment_spec", "experiments.py", None, "_experiment_spec"),
-    ("experiments.py:_parse_utc", "experiments.py", None, "_parse_utc"),
-    ("experiments.py:_stored_positive_int", "experiments.py", None, "_stored_positive_int"),
+)
+
+
+def _sha256(contents: bytes) -> str:
+    return hashlib.sha256(contents).hexdigest()
+
+
+def _lower_hex(value: str, length: int) -> bool:
+    return len(value) == length and all(character in "0123456789abcdef" for character in value)
+
+
+def _load_reviewed_surface_manifest() -> tuple[
+    bytes, tuple[Mapping[str, object], ...], tuple[tuple[str, str], ...]
+]:
+    raw = Path(__file__).with_name(_SURFACE_MANIFEST_NAME).read_bytes()
+    value = json.loads(raw)
+    if not isinstance(value, Mapping) or set(value) != {
+        "components",
+        "foundation_commit",
+        "lock_sha256",
+        "schema_version",
+    }:
+        raise RuntimeError("Campaign V1 surface manifest is invalid")
+    components = value["components"]
+    if (
+        value["schema_version"] != "intraday-campaign-v1-surface-manifest-v1"
+        or value["foundation_commit"] != INTRADAY_FOUNDATION_COMMIT
+        or value["lock_sha256"] != INTRADAY_FOUNDATION_LOCK_SHA256
+        or not isinstance(components, list)
+        or not components
+    ):
+        raise RuntimeError("Campaign V1 surface manifest identity differs")
+    records: list[Mapping[str, object]] = []
+    hashes: list[tuple[str, str]] = []
+    for component in components:
+        if not isinstance(component, Mapping) or set(component) != {
+            "classification",
+            "diff_sha256",
+            "foundation_sha256",
+            "patch_id",
+            "path",
+            "sha256",
+        }:
+            raise RuntimeError("Campaign V1 surface component is invalid")
+        path = component["path"]
+        digest = component["sha256"]
+        foundation_digest = component["foundation_sha256"]
+        classification = component["classification"]
+        patch_id = component["patch_id"]
+        diff_sha256 = component["diff_sha256"]
+        if (
+            not isinstance(path, str)
+            or not path.startswith(_PACKAGE_PREFIX)
+            or not path.endswith(".py")
+            or PurePosixPath(path).is_absolute()
+            or ".." in PurePosixPath(path).parts
+            or not isinstance(digest, str)
+            or not _lower_hex(digest, _SHA256)
+            or classification not in {"foundation-exact", "reviewed-delta", "reviewed-new-file"}
+        ):
+            raise RuntimeError("Campaign V1 surface component identity is invalid")
+        if classification == "foundation-exact":
+            valid_classification = (
+                foundation_digest == digest and patch_id is None and diff_sha256 is None
+            )
+        else:
+            valid_classification = (
+                (foundation_digest is None or _lower_hex(str(foundation_digest), _SHA256))
+                and isinstance(patch_id, str)
+                and _lower_hex(patch_id, _GIT_SHA)
+                and isinstance(diff_sha256, str)
+                and _lower_hex(diff_sha256, _SHA256)
+                and (classification != "reviewed-new-file" or foundation_digest is None)
+            )
+        if not valid_classification:
+            raise RuntimeError("Campaign V1 surface delta identity is invalid")
+        records.append(dict(component))
+        hashes.append((path, digest))
+    if tuple(path for path, _ in hashes) != tuple(sorted({path for path, _ in hashes})):
+        raise RuntimeError("Campaign V1 surface component paths are invalid")
+    return raw, tuple(records), tuple(hashes)
+
+
+_SURFACE_MANIFEST_RAW, _SURFACE_COMPONENTS, _REVIEWED_COMPONENT_HASHES = (
+    _load_reviewed_surface_manifest()
 )
 _SURFACE_DEFINITION = {
-    "whole_modules": _WHOLE_MODULES,
-    "normalized_modules": ("datasets.py:feed-reconciliation-v1", "domain.py:feed-field-v1"),
-    "ast_components": _AST_COMPONENTS,
+    "schema_version": "intraday-campaign-v1-whole-package-surface-v1",
+    "surface_manifest_sha256": _sha256(_SURFACE_MANIFEST_RAW),
+    "components": _SURFACE_COMPONENTS,
     "lock_sha256": INTRADAY_FOUNDATION_LOCK_SHA256,
 }
-
-# Generated from the sealed foundation computation and the reviewed Campaign V1 bridge.
-_FOUNDATION_COMPONENT_HASHES = (
-    (
-        "experiment_runner.py:_campaign_v1_execution_inputs",
-        "c5cbce7bc150c9e825ec84d41b384d471981d70f47227a2289129d4bbaf64143",
-    ),
-    (
-        "experiment_runner.py:_intraday_computation",
-        "1a43a0247527a894030dedbb8d116206512ce9f03e46e6b515f80b57fe40f324",
-    ),
-    (
-        "experiment_runner.py:_validate_intraday_models",
-        "9170a97d49374af881ccf3ba86208e6cba96a9eefe52bb59cb13d940cc33fb24",
-    ),
-    (
-        "experiment_runner.py:run_cataloged_intraday_experiment",
-        "cdb0987a699d286e7aa3de5f268ea14284442ae39fb2b0bc6fc5a76217799fdd",
-    ),
-    (
-        "experiments.py:ExperimentSplit",
-        "96486222da68282d4d9e003ab59adb1caa83898d7d2e01fc462d85f327c616a4",
-    ),
-    (
-        "experiments.py:IntradayExperimentSpec",
-        "66bb274a9332b772aa97884dd7239ba8a9f53721833f88e9b8c3a36990918f52",
-    ),
-    (
-        "experiments.py:_experiment_spec",
-        "01a4b11bd988b956d4589940a7ae31ff8c354e5a19085e735c1600f8b59dfda1",
-    ),
-    (
-        "experiments.py:_parse_utc",
-        "583833f0cd6ce6946cf4c3920515736ecae2cfde0305da14d1fc8876b202fa93",
-    ),
-    (
-        "experiments.py:_stored_positive_int",
-        "7542617751085cf52169a23182f05d84f41c95962248f81e711d05a3534629b5",
-    ),
-    (
-        "systematic_trading_lab/backtesting.py",
-        "dfe84c05d3cc468a527fa1f18c88eb9d9ba7d03369c700dc01abb88c9e5299c3",
-    ),
-    (
-        "systematic_trading_lab/calendar.py",
-        "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace",
-    ),
-    (
-        "systematic_trading_lab/catalog.py",
-        "0b80464fab4ca6be1516fa7267a1db8f4bc04282d940950acd203f2a35e801cd",
-    ),
-    (
-        "systematic_trading_lab/datasets.py:feed-reconciliation-v1",
-        "344e0e59950ceb0de6952bd63324e8b33f2c80e212883e146eaab231cb2d2bf5",
-    ),
-    (
-        "systematic_trading_lab/domain.py:feed-field-v1",
-        "a2c387199286ff65d1fb639717339afefcf99cab08c0279e2ba42c3265516f61",
-    ),
-    (
-        "systematic_trading_lab/fingerprints.py",
-        "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47",
-    ),
-    (
-        "systematic_trading_lab/intraday_reporting.py",
-        "196ca11cd8e0208984ba746b1b4d58428a879e2c2a808f569483640aab039d15",
-    ),
-    (
-        "systematic_trading_lab/parquet.py",
-        "34e97c421d1483dd55b4b179285e7a11fcefee86c16f096eaf711318d62e8799",
-    ),
-    (
-        "systematic_trading_lab/storage.py",
-        "d18f7f7e27d76f5979eecdc2790ddc2259b5afd7651f150c74d25fd913d9c07c",
-    ),
-    (
-        "systematic_trading_lab/strategies.py",
-        "9917f996e2ddf2a318a72a83e28e4238ef97dac225486f105708b172804ef824",
-    ),
-    (
-        "systematic_trading_lab/validation.py",
-        "c1b49854c4289065352b88bec19a2417902c84dabf4132cee157dbb078dd23d4",
-    ),
-    (
-        "uv.lock",
-        "d6d60aa5d93644dd3bf932ef84f6793bab6d33992659ed48e968850c6673c00d",
-    ),
-)
 
 
 class IntradayExecutionSourceProvenanceError(RuntimeError):
@@ -189,6 +175,7 @@ class IntradayExecutionBuildIdentity:
     package_version: str
     source_repository: str
     signer_workflow: str
+    attestation_verifier: AttestationVerifierIdentity
     distribution_record_sha256: str
     source_files_fingerprint: str
 
@@ -208,6 +195,7 @@ class IntradayExecutionBuildIdentity:
             or not self.package_version
             or self.source_repository != "firedvl/systematic-trading-lab"
             or self.signer_workflow != ".github/workflows/build-provenance.yml"
+            or not isinstance(self.attestation_verifier, AttestationVerifierIdentity)
         ):
             raise ValueError("intraday execution build authority is invalid")
 
@@ -218,15 +206,28 @@ class IntradayExecutionBuildIdentity:
 
 @dataclass(frozen=True)
 class IntradayRuntimeEnvironmentIdentity:
-    """Exact locked interpreter, timezone, and runtime-dependency identity."""
+    """Exact startup, interpreter, timezone, and runtime-dependency identity."""
 
     uv_lock_sha256: str
+    runtime_root: str
+    pyvenv_config_sha256: str
+    python_executable: str
+    python_executable_chain: tuple[tuple[str, str, str], ...]
     python_executable_sha256: str
+    base_prefix: str
+    base_runtime_fingerprint: str
+    base_runtime_entry_count: int
+    site_packages_path: str
+    site_packages_fingerprint: str
+    site_packages_entry_count: int
+    sys_path: tuple[str, ...]
     python_implementation: str
     python_version: str
     python_cache_tag: str
     python_flags: str
     platform: str
+    meta_path: tuple[tuple[str, str], ...]
+    path_hooks: tuple[tuple[str, str], ...]
     decimal_context: tuple[tuple[str, object], ...]
     timezone_source: str
     timezone_sha256: str
@@ -236,18 +237,37 @@ class IntradayRuntimeEnvironmentIdentity:
         if self.uv_lock_sha256 != INTRADAY_FOUNDATION_LOCK_SHA256 or any(
             not _lower_hex(value, _SHA256)
             for value in (
+                self.pyvenv_config_sha256,
                 self.python_executable_sha256,
+                self.base_runtime_fingerprint,
+                self.site_packages_fingerprint,
                 self.timezone_sha256,
                 *(value for item in self.distributions for value in item[3:]),
             )
         ):
             raise ValueError("intraday runtime environment hashes are invalid")
         if (
-            not self.python_implementation
+            not Path(self.runtime_root).is_absolute()
+            or not Path(self.python_executable).is_absolute()
+            or not Path(self.base_prefix).is_absolute()
+            or not Path(self.site_packages_path).is_absolute()
+            or not self.python_executable_chain
+            or self.python_executable_chain[-1][1] != "file"
+            or self.python_executable_chain[-1][2] != self.python_executable_sha256
+            or any(
+                not Path(path).is_absolute() or kind not in {"file", "symlink"} or not value
+                for path, kind, value in self.python_executable_chain
+            )
+            or self.base_runtime_entry_count < 1
+            or self.site_packages_entry_count < 1
+            or not self.sys_path
+            or not self.python_implementation
             or not self.python_version
             or not self.python_cache_tag
             or not self.python_flags
             or not self.platform
+            or self.meta_path != _EXPECTED_META_PATH
+            or self.path_hooks != _DEFAULT_PATH_HOOKS
             or not self.timezone_source
             or self.distributions != tuple(sorted(self.distributions))
             or any(
@@ -264,13 +284,14 @@ class IntradayRuntimeEnvironmentIdentity:
 
 @dataclass(frozen=True)
 class IntradayExecutionSurfaceComparison:
-    """Mechanical comparison of the result-affecting build surface to M5B."""
+    """Exact comparison to the reviewed whole-package Campaign V1 surface."""
 
     foundation_commit: str
-    definition_fingerprint: str
-    foundation_surface_fingerprint: str
+    surface_manifest_sha256: str
+    surface_manifest_fingerprint: str
+    reviewed_surface_fingerprint: str
     observed_surface_fingerprint: str
-    foundation_component_hashes: tuple[tuple[str, str], ...]
+    reviewed_component_hashes: tuple[tuple[str, str], ...]
     observed_component_hashes: tuple[tuple[str, str], ...]
     mismatches: tuple[str, ...]
     equivalent: bool
@@ -278,20 +299,12 @@ class IntradayExecutionSurfaceComparison:
     def __post_init__(self) -> None:
         if (
             self.foundation_commit != INTRADAY_FOUNDATION_COMMIT
-            or self.definition_fingerprint != fingerprint(_SURFACE_DEFINITION)
-            or self.foundation_component_hashes != _FOUNDATION_COMPONENT_HASHES
-            or self.foundation_surface_fingerprint != fingerprint(_FOUNDATION_COMPONENT_HASHES)
+            or self.surface_manifest_sha256 != _sha256(_SURFACE_MANIFEST_RAW)
+            or self.surface_manifest_fingerprint != fingerprint(_SURFACE_DEFINITION)
+            or self.reviewed_component_hashes != _REVIEWED_COMPONENT_HASHES
+            or self.reviewed_surface_fingerprint != fingerprint(_REVIEWED_COMPONENT_HASHES)
             or self.observed_surface_fingerprint != fingerprint(self.observed_component_hashes)
-            or self.mismatches
-            != tuple(
-                name
-                for (name, expected), (_, observed) in zip(
-                    self.foundation_component_hashes,
-                    self.observed_component_hashes,
-                    strict=True,
-                )
-                if expected != observed
-            )
+            or self.mismatches != _surface_mismatches(self.observed_component_hashes)
             or self.equivalent != (not self.mismatches)
         ):
             raise ValueError("intraday execution surface comparison is inconsistent")
@@ -347,6 +360,8 @@ def assess_intraday_execution_source(
             if _sha256(lock_bytes) != INTRADAY_FOUNDATION_LOCK_SHA256:
                 raise ValueError("Campaign V1 lockfile differs from its foundation")
             build = verify_attested_build(snapshot_wheel, snapshot_manifest, verified_at=timestamp)
+            if build.attestation_verifier is None:
+                raise ValueError("attested build lacks verifier identity")
             installed = verify_installed_runtime(build, snapshot_wheel, verified_at=timestamp)
             stable_build = IntradayExecutionBuildIdentity(
                 source_commit=build.source_commit,
@@ -356,6 +371,7 @@ def assess_intraday_execution_source(
                 package_version=build.package_version,
                 source_repository=build.source_repository,
                 signer_workflow=build.signer_workflow,
+                attestation_verifier=build.attestation_verifier,
                 distribution_record_sha256=installed.distribution_record_sha256,
                 source_files_fingerprint=installed.source_files_fingerprint,
             )
@@ -452,22 +468,14 @@ def write_intraday_execution_report(path: Path, report: Mapping[str, object]) ->
 
 def _surface_comparison(wheel: Path) -> IntradayExecutionSurfaceComparison:
     observed = _wheel_surface_component_hashes(wheel)
-    expected_names = tuple(name for name, _ in _FOUNDATION_COMPONENT_HASHES)
-    if tuple(name for name, _ in observed) != expected_names:
-        raise IntradayExecutionSourceProvenanceError(
-            "intraday execution surface component definitions differ"
-        )
-    mismatches = tuple(
-        name
-        for (name, expected), (_, value) in zip(_FOUNDATION_COMPONENT_HASHES, observed, strict=True)
-        if expected != value
-    )
+    mismatches = _surface_mismatches(observed)
     return IntradayExecutionSurfaceComparison(
         foundation_commit=INTRADAY_FOUNDATION_COMMIT,
-        definition_fingerprint=fingerprint(_SURFACE_DEFINITION),
-        foundation_surface_fingerprint=fingerprint(_FOUNDATION_COMPONENT_HASHES),
+        surface_manifest_sha256=_sha256(_SURFACE_MANIFEST_RAW),
+        surface_manifest_fingerprint=fingerprint(_SURFACE_DEFINITION),
+        reviewed_surface_fingerprint=fingerprint(_REVIEWED_COMPONENT_HASHES),
         observed_surface_fingerprint=fingerprint(observed),
-        foundation_component_hashes=_FOUNDATION_COMPONENT_HASHES,
+        reviewed_component_hashes=_REVIEWED_COMPONENT_HASHES,
         observed_component_hashes=observed,
         mismatches=mismatches,
         equivalent=not mismatches,
@@ -476,179 +484,320 @@ def _surface_comparison(wheel: Path) -> IntradayExecutionSurfaceComparison:
 
 def _wheel_surface_component_hashes(wheel: Path) -> tuple[tuple[str, str], ...]:
     with ZipFile(wheel) as archive:
-        names = archive.namelist()
-        if len(names) != len(set(names)):
-            raise ValueError("execution wheel contains duplicate paths")
-        sources = {
-            path: archive.read(f"{_PACKAGE_PREFIX}{path}") for path in _surface_module_paths()
-        }
-    components = {
-        f"systematic_trading_lab/{path}": _sha256(sources[path]) for path in _WHOLE_MODULES
-    }
-    components["systematic_trading_lab/datasets.py:feed-reconciliation-v1"] = _sha256(
-        _normalized_datasets(sources["datasets.py"])
-    )
-    components["systematic_trading_lab/domain.py:feed-field-v1"] = _sha256(
-        _normalized_domain(sources["domain.py"])
-    )
-    parsed = {
-        path: ast.parse(source.decode("utf-8", errors="strict"), filename=path)
-        for path, source in sources.items()
-        if path in {item[1] for item in _AST_COMPONENTS}
-    }
-    for component, path, container, name in _AST_COMPONENTS:
-        node = _selected_ast_node(parsed[path], container, name)
-        components[component] = _sha256(_ast_bytes(node))
-    components["uv.lock"] = INTRADAY_FOUNDATION_LOCK_SHA256
-    return tuple(sorted(components.items()))
+        names = _wheel_file_names(archive)
+        package_names = tuple(sorted(name for name in names if name.startswith(_PACKAGE_PREFIX)))
+        expected_names = tuple(
+            sorted((*_surface_component_paths(), f"{_PACKAGE_PREFIX}{_SURFACE_MANIFEST_NAME}"))
+        )
+        if package_names != expected_names:
+            return tuple(
+                sorted(
+                    (name, _sha256(archive.read(name)))
+                    for name in package_names
+                    if name != f"{_PACKAGE_PREFIX}{_SURFACE_MANIFEST_NAME}"
+                )
+            )
+        manifest_raw = archive.read(f"{_PACKAGE_PREFIX}{_SURFACE_MANIFEST_NAME}")
+        if manifest_raw != _SURFACE_MANIFEST_RAW:
+            raise ValueError("execution wheel surface manifest differs from its reviewed manifest")
+        return tuple((path, _sha256(archive.read(path))) for path in _surface_component_paths())
 
 
 def _surface_module_paths() -> tuple[str, ...]:
+    return tuple(path.removeprefix(_PACKAGE_PREFIX) for path in _surface_component_paths())
+
+
+def _surface_component_paths() -> tuple[str, ...]:
+    return tuple(path for path, _ in _REVIEWED_COMPONENT_HASHES)
+
+
+def _surface_mismatches(observed: tuple[tuple[str, str], ...]) -> tuple[str, ...]:
+    expected = dict(_REVIEWED_COMPONENT_HASHES)
+    actual = dict(observed)
     return tuple(
         sorted(
-            {
-                *_WHOLE_MODULES,
-                "datasets.py",
-                "domain.py",
-                *(path for _, path, _, _ in _AST_COMPONENTS),
-            }
+            (
+                *(f"missing:{path}" for path in expected.keys() - actual.keys()),
+                *(f"extra:{path}" for path in actual.keys() - expected.keys()),
+                *(
+                    path
+                    for path in expected.keys() & actual.keys()
+                    if expected[path] != actual[path]
+                ),
+            )
         )
     )
 
 
-def _normalized_domain(source: bytes) -> bytes:
-    tree = ast.parse(source.decode("utf-8", errors="strict"), filename="domain.py")
-    manifest = _selected_ast_node(tree, None, "DatasetManifest")
-    assert isinstance(manifest, ast.ClassDef)
-    feed_fields = [
-        node
-        for node in manifest.body
-        if isinstance(node, ast.AnnAssign)
-        and isinstance(node.target, ast.Name)
-        and node.target.id == "feed"
-    ]
-    if len(feed_fields) > 1:
-        raise ValueError("DatasetManifest feed reconciliation is ambiguous")
-    manifest.body = [node for node in manifest.body if node not in feed_fields]
-    return _ast_bytes(tree)
+@dataclass(frozen=True)
+class _RuntimeLayoutEvidence:
+    runtime_root: Path
+    pyvenv_config_sha256: str
+    python_executable: Path
+    python_executable_chain: tuple[tuple[str, str, str], ...]
+    resolved_executable: Path
+    base_prefix: Path
+    base_runtime_fingerprint: str
+    base_runtime_entry_count: int
+    base_runtime_files: frozenset[Path]
+    site_packages: Path
+    sys_path: tuple[str, ...]
+    meta_path: tuple[tuple[str, str], ...]
+    path_hooks: tuple[tuple[str, str], ...]
 
 
-class _DatasetFeedReconciliation(ast.NodeTransformer):
-    """Remove only PR #114's reviewed feed-identity additions."""
-
-    removed: int = 0
-
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST | None:
-        if node.name == "_optional_text":
-            self.removed += 1
-            return None
-        if node.name in {"_lineage_parent", "_version_key"}:
-            before = len(node.args.args)
-            node.args.args = [argument for argument in node.args.args if argument.arg != "feed"]
-            self.removed += before - len(node.args.args)
-        return self.generic_visit(node)
-
-    def visit_Dict(self, node: ast.Dict) -> ast.AST:
-        kept = [
-            (key, value)
-            for key, value in zip(node.keys, node.values, strict=True)
-            if not (isinstance(key, ast.Constant) and key.value == "feed")
-        ]
-        self.removed += len(node.keys) - len(kept)
-        node.keys = [key for key, _ in kept]
-        node.values = [value for _, value in kept]
-        return self.generic_visit(node)
-
-    def visit_keyword(self, node: ast.keyword) -> ast.AST | None:
-        if node.arg == "feed":
-            self.removed += 1
-            return None
-        return self.generic_visit(node)
-
-    def visit_If(self, node: ast.If) -> ast.AST | None:
-        if ast.unparse(node.test) in {
-            "feed is not None and (not isinstance(feed, str) or not feed)",
-            "manifest.feed is None",
-            "feed is not None",
-        }:
-            self.removed += 1
-            return None
-        return self.generic_visit(node)
-
-    def visit_Assign(self, node: ast.Assign) -> ast.AST | None:
-        if (
-            len(node.targets) == 1
-            and isinstance(node.targets[0], ast.Name)
-            and node.targets[0].id == "feed"
-        ):
-            self.removed += 1
-            return None
-        return self.generic_visit(node)
-
-    def visit_Call(self, node: ast.Call) -> ast.AST:
-        visited = self.generic_visit(node)
-        assert isinstance(visited, ast.Call)
-        node = visited
-        name = (
-            node.func.id
-            if isinstance(node.func, ast.Name)
-            else node.func.attr
-            if isinstance(node.func, ast.Attribute)
-            else None
+def _require_isolated_python() -> _RuntimeLayoutEvidence:
+    loader_environment = {
+        name
+        for name, value in os.environ.items()
+        if value
+        and (
+            name in _LOADER_ENVIRONMENT_NAMES
+            or name.startswith("DYLD_")
+            and (name.endswith("_PATH") or name == "DYLD_INSERT_LIBRARIES")
         )
-        if name == "_lineage_parent" and len(node.args) == 7:
-            node.args.pop(6)
-            self.removed += 1
-        elif name == "_version_key" and len(node.args) == 14:
-            node.args.pop(11)
-            self.removed += 1
-        return node
-
-
-def _normalized_datasets(source: bytes) -> bytes:
-    tree = ast.parse(source.decode("utf-8", errors="strict"), filename="datasets.py")
-    transformer = _DatasetFeedReconciliation()
-    transformed = transformer.visit(tree)
-    assert isinstance(transformed, ast.Module)
-    remaining = [
-        node for node in ast.walk(transformed) if isinstance(node, ast.Name) and node.id == "feed"
-    ]
-    if remaining or transformer.removed not in {0, 13}:
-        raise ValueError("dataset feed reconciliation differs from PR #114")
-    return _ast_bytes(transformed)
-
-
-def _selected_ast_node(tree: ast.Module, container: str | None, name: str) -> ast.AST:
-    nodes: Sequence[ast.AST] = tree.body
-    if container is not None:
-        classes = [
-            node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == container
-        ]
-        if len(classes) != 1:
-            raise ValueError("surface class is missing or ambiguous")
-        nodes = classes[0].body
-    matches = [
-        node
-        for node in nodes
-        if isinstance(node, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef)
-        and node.name == name
-    ]
-    if len(matches) != 1:
-        raise ValueError(f"surface definition is missing or ambiguous: {name}")
-    return matches[0]
-
-
-def _require_isolated_python() -> None:
+    }
     if (
         not sys.flags.isolated
         or not sys.flags.ignore_environment
         or not sys.flags.no_user_site
+        or not sys.flags.no_site
         or not sys.flags.safe_path
         or not sys.dont_write_bytecode
-        or os.environ.get("PYTHONPATH")
+        or sys.version_info[:2] != (3, 12)
+        or loader_environment
+        or {"site", "sitecustomize", "usercustomize", "_virtualenv"} & sys.modules.keys()
     ):
-        raise ValueError("Campaign V1 requires isolated Python with bytecode disabled")
+        raise ValueError(
+            "Campaign V1 requires startup-hook-free isolated Python with bytecode disabled"
+        )
+    meta_path = _import_hook_identity(sys.meta_path)
+    path_hooks = _import_hook_identity(sys.path_hooks)
+    if meta_path != _EXPECTED_META_PATH or path_hooks != _DEFAULT_PATH_HOOKS:
+        raise ValueError("Campaign V1 Python import hooks differ from their defaults")
+    _require_meta_path_state()
+    if os.name != "posix" or not Path(sys.executable).is_absolute():
+        raise ValueError("Campaign V1 requires an absolute POSIX virtual-environment interpreter")
+    executable = Path(sys.executable)
+    runtime_root = executable.parent.parent
+    if runtime_root.resolve(strict=True) != runtime_root or executable.parent.name != "bin":
+        raise ValueError("Campaign V1 virtual-environment path is invalid")
+    executable_chain, resolved_executable = _executable_chain(executable)
+    base_prefix = Path(sys.base_prefix).resolve(strict=True)
+    if Path(sys.base_prefix) != base_prefix or Path(sys.prefix).resolve(strict=True) != base_prefix:
+        raise ValueError("Campaign V1 base Python identity is invalid")
+    version = f"python{sys.version_info.major}.{sys.version_info.minor}"
+    site_packages = runtime_root / "lib" / version / "site-packages"
+    if site_packages.is_symlink() or not site_packages.is_dir():
+        raise ValueError("Campaign V1 runtime site-packages path is invalid")
+    site_packages = site_packages.resolve(strict=True)
+    base_library = base_prefix / sys.platlibdir
+    observed_sys_path = tuple(sys.path)
+    if (
+        len(observed_sys_path) != 4
+        or observed_sys_path[0]
+        != str(base_library / f"python{sys.version_info.major}{sys.version_info.minor}.zip")
+        or Path(observed_sys_path[1]).resolve(strict=True) != base_library / version
+        or Path(observed_sys_path[2]).resolve(strict=True) != base_library / version / "lib-dynload"
+        or observed_sys_path[3] != str(site_packages)
+    ):
+        raise ValueError("Campaign V1 Python import path differs from its fixed bootstrap")
+    original = tuple(sys.orig_argv)
+    if (
+        len(original) < 7
+        or original[1:6] != ("-I", "-B", "-S", "-c", INTRADAY_RUNTIME_BOOTSTRAP)
+        or original[6] != str(site_packages)
+        or sys.argv[0] != "-c"
+    ):
+        raise ValueError("Campaign V1 Python bootstrap command differs")
+    config_path = runtime_root / "pyvenv.cfg"
+    if config_path.is_symlink() or not config_path.is_file():
+        raise ValueError("Campaign V1 pyvenv.cfg is invalid")
+    config_raw = config_path.read_bytes()
+    config = _parse_pyvenv_config(config_raw)
+    _require_standard_venv_executable(config, resolved_executable, runtime_root, base_prefix)
     _require_project_no_bytecode()
+    base_fingerprint, base_count, base_files = _tree_identity(
+        base_prefix, allow_internal_symlinks=True
+    )
+    return _RuntimeLayoutEvidence(
+        runtime_root=runtime_root,
+        pyvenv_config_sha256=_sha256(config_raw),
+        python_executable=executable,
+        python_executable_chain=executable_chain,
+        resolved_executable=resolved_executable,
+        base_prefix=base_prefix,
+        base_runtime_fingerprint=base_fingerprint,
+        base_runtime_entry_count=base_count,
+        base_runtime_files=base_files,
+        site_packages=site_packages,
+        sys_path=observed_sys_path,
+        meta_path=meta_path,
+        path_hooks=path_hooks,
+    )
+
+
+def _import_hook_identity(hooks: object) -> tuple[tuple[str, str], ...]:
+    if not isinstance(hooks, list):
+        raise ValueError("Python import hook collection is invalid")
+    return tuple(
+        (
+            str(getattr(hook, "__module__", type(hook).__module__)),
+            str(getattr(hook, "__qualname__", type(hook).__qualname__)),
+        )
+        for hook in hooks
+    )
+
+
+def _require_meta_path_state() -> None:
+    for hook in sys.meta_path:
+        identity = (
+            str(getattr(hook, "__module__", type(hook).__module__)),
+            str(getattr(hook, "__qualname__", type(hook).__qualname__)),
+        )
+        if identity != ("six", "_SixMetaPathImporter"):
+            continue
+        attributes = vars(hook)
+        if set(attributes) != {"known_modules", "name"} or attributes["name"] != "six":
+            raise ValueError("Campaign V1 six import hook state is invalid")
+        known_modules = attributes["known_modules"]
+        if not isinstance(known_modules, dict):
+            raise ValueError("Campaign V1 six import hook module map is invalid")
+        for name, value in sorted(known_modules.items()):
+            if not isinstance(name, str):
+                raise ValueError("Campaign V1 six import hook module name is invalid")
+            value_type = (type(value).__module__, type(value).__qualname__)
+            state = vars(value)
+            if isinstance(value, types.ModuleType):
+                if not isinstance(value.__name__, str):
+                    raise ValueError("Campaign V1 six import hook module is invalid")
+                _module_spec_identity(value)
+            elif value_type == ("six", "MovedModule") and set(state).issubset(
+                {"__name__", "__spec__", "mod", "name"}
+            ):
+                if not all(
+                    item is None or isinstance(item, str)
+                    for item in (state.get("name"), state.get("mod"))
+                ):
+                    raise ValueError("Campaign V1 six import hook target is invalid")
+                _module_spec_identity(value)
+            else:
+                raise ValueError("Campaign V1 six import hook target is invalid")
+
+
+def _module_spec_identity(value: object) -> tuple[object, ...] | None:
+    spec = vars(value).get("__spec__")
+    if spec is None:
+        return None
+    loader = getattr(spec, "loader", None)
+    return (
+        getattr(spec, "name", None),
+        getattr(spec, "origin", None),
+        None if loader is None else (type(loader).__module__, type(loader).__qualname__),
+    )
+
+
+def _executable_chain(path: Path) -> tuple[tuple[tuple[str, str, str], ...], Path]:
+    records: list[tuple[str, str, str]] = []
+    seen: set[Path] = set()
+    current = path
+    for _ in range(40):
+        current = Path(os.path.abspath(current))
+        if current in seen:
+            raise ValueError("Campaign V1 Python executable symlink chain loops")
+        seen.add(current)
+        status = current.lstat()
+        if stat.S_ISLNK(status.st_mode):
+            target = os.readlink(current)
+            records.append((str(current), "symlink", target))
+            current = current.parent / target if not Path(target).is_absolute() else Path(target)
+            continue
+        if not stat.S_ISREG(status.st_mode):
+            raise ValueError("Campaign V1 Python executable is not a regular file")
+        records.append((str(current), "file", _sha256(current.read_bytes())))
+        return tuple(records), current.resolve(strict=True)
+    raise ValueError("Campaign V1 Python executable symlink chain is too deep")
+
+
+def _parse_pyvenv_config(raw: bytes) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for line in raw.decode("utf-8", errors="strict").splitlines():
+        key, separator, value = line.partition("=")
+        key = key.strip().lower()
+        if not separator or not key or key in result:
+            raise ValueError("Campaign V1 pyvenv.cfg fields are invalid")
+        result[key] = value.strip()
+    return result
+
+
+def _require_standard_venv_executable(
+    config: Mapping[str, str], resolved_executable: Path, runtime_root: Path, base_prefix: Path
+) -> None:
+    configured_executable = config.get("executable")
+    configured_home = config.get("home")
+    base_executable = (
+        Path(configured_executable).resolve(strict=True) if configured_executable else None
+    )
+    base_home = Path(configured_home).resolve(strict=True) if configured_home else None
+    if (
+        config.get("include-system-site-packages") != "false"
+        or config.get("version") != platform.python_version()
+        or base_executable is None
+        or base_home is None
+        or base_executable.parent != base_home
+        or not base_executable.is_relative_to(base_prefix)
+        or (
+            resolved_executable != base_executable
+            and (
+                not resolved_executable.is_relative_to(runtime_root)
+                or resolved_executable.read_bytes() != base_executable.read_bytes()
+            )
+        )
+    ):
+        raise ValueError("Campaign V1 pyvenv.cfg differs from a closed standard-library venv")
+
+
+def _tree_identity(
+    root: Path, *, allow_internal_symlinks: bool
+) -> tuple[str, int, frozenset[Path]]:
+    root = root.resolve(strict=True)
+    records: list[tuple[object, ...]] = []
+    regular_files: set[Path] = set()
+    paths = (root, *sorted(root.rglob("*"), key=lambda path: path.relative_to(root).as_posix()))
+    for path in paths:
+        relative = "." if path == root else path.relative_to(root).as_posix()
+        status = path.lstat()
+        mode = stat.S_IMODE(status.st_mode)
+        if stat.S_ISDIR(status.st_mode):
+            records.append((relative, "directory", mode))
+        elif stat.S_ISLNK(status.st_mode):
+            target = os.readlink(path)
+            resolved = path.resolve(strict=True)
+            if not allow_internal_symlinks or not resolved.is_relative_to(root):
+                raise ValueError("runtime tree contains a prohibited symbolic link")
+            records.append((relative, "symlink", mode, target))
+        elif stat.S_ISREG(status.st_mode):
+            contents = path.read_bytes()
+            after = path.lstat()
+            if (
+                status.st_dev,
+                status.st_ino,
+                status.st_mode,
+                status.st_size,
+                status.st_mtime_ns,
+            ) != (
+                after.st_dev,
+                after.st_ino,
+                after.st_mode,
+                after.st_size,
+                after.st_mtime_ns,
+            ):
+                raise ValueError("runtime tree changed during verification")
+            records.append((relative, "file", mode, len(contents), _sha256(contents)))
+            regular_files.add(path.resolve(strict=True))
+        else:
+            raise ValueError("runtime tree contains a special file")
+    return fingerprint(tuple(records)), len(records), frozenset(regular_files)
 
 
 def _environment_identity(
@@ -656,7 +805,7 @@ def _environment_identity(
 ) -> IntradayRuntimeEnvironmentIdentity:
     expected = _locked_runtime_artifacts(lock_bytes)
     wheels = _dependency_wheels(dependency_wheelhouse, expected)
-    _require_isolated_python()
+    runtime = _require_isolated_python()
     installed_names = {
         _canonical_distribution_name(distribution.metadata["Name"])
         for distribution in metadata.distributions()
@@ -672,7 +821,7 @@ def _environment_identity(
             raise ValueError(f"locked runtime distribution differs: {name}")
         wheel_path, wheel_sha256 = wheels[name]
         file_fingerprint, wheel_record_sha256, files = _distribution_files(
-            candidates[0], wheel_path
+            candidates[0], wheel_path, runtime_root=runtime.runtime_root
         )
         verified_files.update(files)
         distributions.append(
@@ -685,8 +834,18 @@ def _environment_identity(
                 file_fingerprint,
             )
         )
-    _require_loaded_dependency_files(set(expected), verified_files)
-    executable = Path(sys.executable).resolve(strict=True)
+    project_distributions = tuple(metadata.distributions(name="systematic-trading-lab"))
+    if len(project_distributions) != 1:
+        raise ValueError("installed project distribution is ambiguous")
+    verified_files.update(_distribution_owned_files(project_distributions[0], runtime.runtime_root))
+    site_fingerprint, site_count, site_files = _site_packages_identity(
+        runtime.site_packages, verified_files
+    )
+    _require_loaded_module_files(
+        runtime.base_runtime_files | site_files,
+        runtime.base_prefix,
+        runtime.site_packages,
+    )
     timezone_source, timezone_sha256 = _timezone_identity()
     context = getcontext()
     decimal_context = tuple(
@@ -711,17 +870,88 @@ def _environment_identity(
         raise ValueError("Python cache tag is unavailable")
     return IntradayRuntimeEnvironmentIdentity(
         uv_lock_sha256=_sha256(lock_bytes),
-        python_executable_sha256=_sha256(executable.read_bytes()),
+        runtime_root=str(runtime.runtime_root),
+        pyvenv_config_sha256=runtime.pyvenv_config_sha256,
+        python_executable=str(runtime.python_executable),
+        python_executable_chain=runtime.python_executable_chain,
+        python_executable_sha256=_sha256(runtime.resolved_executable.read_bytes()),
+        base_prefix=str(runtime.base_prefix),
+        base_runtime_fingerprint=runtime.base_runtime_fingerprint,
+        base_runtime_entry_count=runtime.base_runtime_entry_count,
+        site_packages_path=str(runtime.site_packages),
+        site_packages_fingerprint=site_fingerprint,
+        site_packages_entry_count=site_count,
+        sys_path=runtime.sys_path,
         python_implementation=platform.python_implementation(),
         python_version=platform.python_version(),
         python_cache_tag=cache_tag,
         python_flags=repr(sys.flags),
         platform=platform.platform(),
+        meta_path=runtime.meta_path,
+        path_hooks=runtime.path_hooks,
         decimal_context=decimal_context,
         timezone_source=timezone_source,
         timezone_sha256=timezone_sha256,
         distributions=tuple(sorted(distributions)),
     )
+
+
+def _distribution_owned_files(distribution: metadata.Distribution, runtime_root: Path) -> set[Path]:
+    files = distribution.files
+    if not files:
+        raise ValueError("runtime distribution has no installed file set")
+    result: set[Path] = set()
+    for item in files:
+        path = Path(str(distribution.locate_file(item)))
+        if path.is_symlink():
+            raise ValueError("runtime distribution contains a symbolic link")
+        path = path.resolve(strict=True)
+        if not path.is_file() or not path.is_relative_to(runtime_root):
+            raise ValueError("runtime distribution file escapes its environment")
+        result.add(path)
+    return result
+
+
+def _site_packages_identity(
+    site_packages: Path, verified_files: set[Path]
+) -> tuple[str, int, frozenset[Path]]:
+    fingerprint_value, entry_count, files = _tree_identity(
+        site_packages, allow_internal_symlinks=False
+    )
+    for path in files:
+        relative = path.relative_to(site_packages)
+        if (
+            path.suffix in {".pth", ".pyc"}
+            or "__pycache__" in relative.parts
+            or path.name in {"sitecustomize.py", "usercustomize.py"}
+        ):
+            raise ValueError("runtime site-packages contains a prohibited startup or bytecode file")
+    expected = frozenset(path for path in verified_files if path.is_relative_to(site_packages))
+    if files != expected:
+        raise ValueError("runtime site-packages contains an unowned or missing file")
+    return fingerprint_value, entry_count, files
+
+
+def _require_loaded_module_files(
+    allowed_files: frozenset[Path], base_prefix: Path, site_packages: Path
+) -> None:
+    for _name, module in sorted(sys.modules.items()):
+        if module is None:
+            continue
+        module_file = getattr(module, "__file__", None)
+        spec = getattr(module, "__spec__", None)
+        origin = getattr(spec, "origin", None)
+        if module_file is None:
+            if origin not in {None, "built-in", "frozen"}:
+                raise ValueError("loaded runtime module has no verifiable file identity")
+            continue
+        if not isinstance(module_file, str):
+            raise ValueError("loaded runtime module file identity is invalid")
+        path = Path(module_file).resolve(strict=True)
+        if path not in allowed_files or not (
+            path.is_relative_to(base_prefix) or path.is_relative_to(site_packages)
+        ):
+            raise ValueError("loaded runtime module is outside the verified runtime trees")
 
 
 def _require_project_no_bytecode() -> None:
@@ -866,13 +1096,14 @@ def _wheel_name_and_version(contents: bytes) -> tuple[str, str]:
 
 
 def _distribution_files(
-    distribution: metadata.Distribution, wheel: Path
+    distribution: metadata.Distribution, wheel: Path, *, runtime_root: Path | None = None
 ) -> tuple[str, str, set[Path]]:
     files = distribution.files
     if not files:
         raise ValueError("runtime distribution has no RECORD file set")
     root = Path(str(distribution.locate_file(""))).resolve(strict=True)
-    if not root.is_relative_to(Path(sys.prefix).resolve(strict=True)):
+    environment_root = (runtime_root or Path(sys.prefix)).resolve(strict=True)
+    if not root.is_relative_to(environment_root):
         raise ValueError("runtime distribution escapes its environment")
     with ZipFile(wheel) as archive:
         wheel_names = _wheel_file_names(archive)
@@ -917,7 +1148,6 @@ def _distribution_files(
     records: list[tuple[str, str, int]] = []
     resolved_files: set[Path] = set()
     package_roots: set[Path] = set()
-    environment_root = Path(sys.prefix).resolve(strict=True)
     scripts_root = (environment_root / "bin").resolve(strict=True)
     for item in files:
         located = Path(str(distribution.locate_file(item)))
@@ -1019,22 +1249,6 @@ def _canonical_distribution_name(name: str) -> str:
     return re.sub(r"[-_.]+", "-", name).lower()
 
 
-def _require_loaded_dependency_files(names: set[str], verified_files: set[Path]) -> None:
-    packages = metadata.packages_distributions()
-    for module_name, module in sys.modules.items():
-        if module is None:
-            continue
-        providers = packages.get(module_name.partition(".")[0], [])
-        if not names.intersection(_canonical_distribution_name(name) for name in providers):
-            continue
-        module_file = getattr(module, "__file__", None)
-        if not isinstance(module_file, str):
-            raise ValueError("loaded runtime dependency has no file identity")
-        path = Path(module_file).resolve(strict=True)
-        if path.suffix == ".pyc" or path not in verified_files:
-            raise ValueError("loaded runtime dependency is outside its verified RECORD")
-
-
 def _timezone_identity() -> tuple[str, str]:
     relative = Path("America/New_York")
     for directory in TZPATH:
@@ -1056,15 +1270,3 @@ def _default_decimal_context() -> tuple[tuple[str, object], ...]:
         ("rounding", "ROUND_HALF_EVEN"),
         ("traps", ("DivisionByZero", "InvalidOperation", "Overflow")),
     )
-
-
-def _ast_bytes(node: ast.AST) -> bytes:
-    return ast.dump(node, annotate_fields=True, include_attributes=False).encode("utf-8")
-
-
-def _sha256(contents: bytes) -> str:
-    return hashlib.sha256(contents).hexdigest()
-
-
-def _lower_hex(value: str, length: int) -> bool:
-    return len(value) == length and all(character in "0123456789abcdef" for character in value)

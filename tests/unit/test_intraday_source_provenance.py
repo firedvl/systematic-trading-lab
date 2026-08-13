@@ -5,7 +5,10 @@ import csv
 import hashlib
 import io
 import json
+import os
+import subprocess
 import sys
+import types
 from datetime import UTC, datetime
 from importlib import metadata
 from pathlib import Path
@@ -24,7 +27,11 @@ from systematic_trading_lab.intraday_source_provenance import (
     _locked_runtime_versions,
     _surface_comparison,
 )
-from systematic_trading_lab.runtime_build import InstalledRuntimeIdentity, RuntimeBuildIdentity
+from systematic_trading_lab.runtime_build import (
+    AttestationVerifierIdentity,
+    InstalledRuntimeIdentity,
+    RuntimeBuildIdentity,
+)
 
 NOW = datetime(2026, 8, 13, tzinfo=UTC)
 
@@ -36,18 +43,35 @@ def _wheel(tmp_path: Path, replacements: dict[str, bytes] | None = None) -> Path
         for name in provenance._surface_module_paths():
             contents = replacements.get(name, Path("src/systematic_trading_lab", name).read_bytes())
             archive.writestr(f"systematic_trading_lab/{name}", contents)
+        archive.writestr(
+            "systematic_trading_lab/intraday_campaign_v1_surface.json",
+            provenance._SURFACE_MANIFEST_RAW,
+        )
     return wheel
 
 
 def _environment() -> IntradayRuntimeEnvironmentIdentity:
     return IntradayRuntimeEnvironmentIdentity(
         uv_lock_sha256=INTRADAY_FOUNDATION_LOCK_SHA256,
+        runtime_root="/runtime",
+        pyvenv_config_sha256="0" * 64,
+        python_executable="/runtime/bin/python",
+        python_executable_chain=(("/runtime/bin/python", "file", "1" * 64),),
         python_executable_sha256="1" * 64,
+        base_prefix="/base-python",
+        base_runtime_fingerprint="6" * 64,
+        base_runtime_entry_count=1,
+        site_packages_path="/runtime/lib/python3.12/site-packages",
+        site_packages_fingerprint="7" * 64,
+        site_packages_entry_count=1,
+        sys_path=("/base-python/lib/python3.12",),
         python_implementation="CPython",
         python_version="3.12.13",
         python_cache_tag="cpython-312",
         python_flags="sys.flags()",
         platform="test-platform",
+        meta_path=provenance._EXPECTED_META_PATH,
+        path_hooks=provenance._DEFAULT_PATH_HOOKS,
         decimal_context=provenance._default_decimal_context(),
         timezone_source="tzdata:America/New_York",
         timezone_sha256="2" * 64,
@@ -69,9 +93,25 @@ def test_current_build_surface_exactly_matches_reviewed_foundation(tmp_path: Pat
 
     assert comparison.equivalent
     assert comparison.mismatches == ()
-    assert comparison.foundation_component_hashes == comparison.observed_component_hashes
-    assert comparison.foundation_surface_fingerprint == (
-        "20a5ea0da6bcc4b9284c153a30e5ebe4eb0ade9c3dda6547eb0b6c3623f4713c"
+    assert comparison.reviewed_component_hashes == comparison.observed_component_hashes
+    assert comparison.reviewed_surface_fingerprint
+    assert comparison.surface_manifest_fingerprint
+
+
+def test_surface_manifest_preserves_exact_reviewed_pr_114_deltas() -> None:
+    components = {str(item["path"]): item for item in provenance._SURFACE_COMPONENTS}
+
+    assert components["systematic_trading_lab/datasets.py"]["patch_id"] == (
+        "3a339ab7866a22a2e200aee617395d9cc05e45c9"
+    )
+    assert components["systematic_trading_lab/datasets.py"]["diff_sha256"] == (
+        "4ac13c3d58d675544a11b4bb00ea9d52996e53b1dc6e84c21658fc0485ec7f92"
+    )
+    assert components["systematic_trading_lab/domain.py"]["patch_id"] == (
+        "952fc104c15c25260b0e29488df7ab61ae4b9a50"
+    )
+    assert components["systematic_trading_lab/domain.py"]["diff_sha256"] == (
+        "c3ded022ed3c9a7a8841c09c8d8c32dac167227c4e4bd084b0ef0605b564a65d"
     )
 
 
@@ -88,37 +128,37 @@ def test_current_build_surface_exactly_matches_reviewed_foundation(tmp_path: Pat
             "datasets.py",
             b"if requested.start < actual.start or requested.end > actual.end:",
             b"if False:",
-            "systematic_trading_lab/datasets.py:feed-reconciliation-v1",
+            "systematic_trading_lab/datasets.py",
         ),
         (
             "experiment_runner.py",
             b"spec.execution_delay_bars,",
             b"1,",
-            "experiment_runner.py:_intraday_computation",
+            "systematic_trading_lab/experiment_runner.py",
         ),
         (
             "experiment_runner.py",
             b"return result, report, bars",
             b'return result, {**report, "metrics": {}}, bars',
-            "experiment_runner.py:_intraday_computation",
+            "systematic_trading_lab/experiment_runner.py",
         ),
         (
             "experiment_runner.py",
             b"def _intraday_computation(\n",
             b"@staticmethod\ndef _intraday_computation(\n",
-            "experiment_runner.py:_intraday_computation",
+            "systematic_trading_lab/experiment_runner.py",
         ),
         (
             "experiment_runner.py",
             b'initial_cash != Decimal("100000")',
             b'initial_cash != Decimal("1")',
-            "experiment_runner.py:_campaign_v1_execution_inputs",
+            "systematic_trading_lab/experiment_runner.py",
         ),
         (
             "experiment_runner.py",
             b"_intraday_computation(datasets, spec, initial_cash, selected_costs)",
             b'_intraday_computation(datasets, spec, Decimal("1"), selected_costs)',
-            "experiment_runner.py:run_cataloged_intraday_experiment",
+            "systematic_trading_lab/experiment_runner.py",
         ),
     ],
 )
@@ -142,8 +182,61 @@ def test_surface_requires_every_reviewed_wheel_module(tmp_path: Path) -> None:
             if name != "systematic_trading_lab/validation.py":
                 output.writestr(name, source.read(name))
 
-    with pytest.raises(KeyError):
-        _surface_comparison(missing)
+    comparison = _surface_comparison(missing)
+
+    assert not comparison.equivalent
+    assert "missing:systematic_trading_lab/validation.py" in comparison.mismatches
+
+
+@pytest.mark.parametrize(
+    ("path", "mutation"),
+    [
+        (
+            "experiment_runner.py",
+            b"\nrun_cataloged_intraday_experiment = lambda *args, **kwargs: None\n",
+        ),
+        (
+            "experiments.py",
+            b"\nExperimentRegistry.get_planned_intraday_spec = lambda self, value: value\n",
+        ),
+        (
+            "datasets.py",
+            b"\nDatasetService.load_bars_range = lambda *args, **kwargs: ()\n",
+        ),
+    ],
+)
+def test_surface_rejects_post_definition_and_dataset_rebinding(
+    tmp_path: Path, path: str, mutation: bytes
+) -> None:
+    source = Path("src/systematic_trading_lab", path).read_bytes()
+
+    comparison = _surface_comparison(_wheel(tmp_path, {path: source + mutation}))
+
+    assert not comparison.equivalent
+    assert f"systematic_trading_lab/{path}" in comparison.mismatches
+
+
+def test_surface_rejects_verifier_mutation_and_extra_importable_module(tmp_path: Path) -> None:
+    source = Path("src/systematic_trading_lab/intraday_source_provenance.py").read_bytes()
+    changed = _surface_comparison(
+        _wheel(
+            tmp_path,
+            {"intraday_source_provenance.py": source + b"\nVERIFIER_REBOUND = True\n"},
+        )
+    )
+    assert not changed.equivalent
+    assert "systematic_trading_lab/intraday_source_provenance.py" in changed.mismatches
+
+    wheel = _wheel(tmp_path)
+    extra = tmp_path / "extra.whl"
+    with ZipFile(wheel) as source_wheel, ZipFile(extra, "w") as output:
+        for name in source_wheel.namelist():
+            output.writestr(name, source_wheel.read(name))
+        output.writestr("systematic_trading_lab/rogue.py", "VALUE = 1\n")
+
+    comparison = _surface_comparison(extra)
+    assert not comparison.equivalent
+    assert "extra:systematic_trading_lab/rogue.py" in comparison.mismatches
 
 
 def test_lockfile_closure_excludes_dev_tools_and_pins_runtime_versions() -> None:
@@ -192,8 +285,144 @@ def test_dependency_wheelhouse_rejects_a_rebuilt_wheel(tmp_path: Path) -> None:
 
 
 def test_campaign_runtime_requires_isolated_bytecode_disabled_python() -> None:
-    with pytest.raises(ValueError, match="isolated Python with bytecode disabled"):
+    with pytest.raises(ValueError, match="startup-hook-free isolated Python"):
         provenance._require_isolated_python()
+
+
+def test_runtime_tree_identity_changes_with_bytes_and_rejects_escaping_symlink(
+    tmp_path: Path,
+) -> None:
+    runtime = tmp_path / "base"
+    runtime.mkdir()
+    library = runtime / "stdlib.py"
+    library.write_text("VALUE = 1\n", encoding="utf-8")
+
+    first, first_count, first_files = provenance._tree_identity(
+        runtime, allow_internal_symlinks=True
+    )
+    library.write_text("VALUE = 2\n", encoding="utf-8")
+    second, second_count, second_files = provenance._tree_identity(
+        runtime, allow_internal_symlinks=True
+    )
+
+    assert first != second
+    assert first_count == second_count == 2
+    assert first_files == second_files == frozenset({library.resolve()})
+
+    outside = tmp_path / "outside.py"
+    outside.write_text("VALUE = 3\n", encoding="utf-8")
+    os.symlink(outside, runtime / "escape.py")
+    with pytest.raises(ValueError, match="prohibited symbolic link"):
+        provenance._tree_identity(runtime, allow_internal_symlinks=True)
+
+
+def test_standard_library_copied_venv_executable_is_accepted_and_mutations_fail(
+    tmp_path: Path,
+) -> None:
+    runtime = tmp_path / "runtime"
+    subprocess.run(
+        [sys.executable, "-m", "venv", "--copies", "--without-pip", str(runtime)],
+        check=True,
+    )
+    executable = runtime / "bin" / f"python{sys.version_info.major}.{sys.version_info.minor}"
+    config = provenance._parse_pyvenv_config((runtime / "pyvenv.cfg").read_bytes())
+
+    provenance._require_standard_venv_executable(
+        config,
+        executable.resolve(strict=True),
+        runtime.resolve(strict=True),
+        Path(sys.base_prefix).resolve(strict=True),
+    )
+
+    executable.write_bytes(executable.read_bytes() + b"changed")
+    with pytest.raises(ValueError, match="closed standard-library venv"):
+        provenance._require_standard_venv_executable(
+            config,
+            executable.resolve(strict=True),
+            runtime.resolve(strict=True),
+            Path(sys.base_prefix).resolve(strict=True),
+        )
+
+    configured_executable = Path(config["executable"]).resolve(strict=True)
+    external = tmp_path / "external-python"
+    external.write_bytes(configured_executable.read_bytes())
+    with pytest.raises(ValueError, match="closed standard-library venv"):
+        provenance._require_standard_venv_executable(
+            config,
+            external.resolve(strict=True),
+            runtime.resolve(strict=True),
+            Path(sys.base_prefix).resolve(strict=True),
+        )
+
+
+def test_loaded_module_inventory_validates_origins_without_becoming_runtime_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    base = tmp_path / "base"
+    site_packages = tmp_path / "site-packages"
+    base.mkdir()
+    site_packages.mkdir()
+    first = base / "first.py"
+    second = site_packages / "second.py"
+    first.write_bytes(b"FIRST = True\n")
+    second.write_bytes(b"SECOND = True\n")
+    first_module = types.ModuleType("first")
+    first_module.__file__ = str(first)
+    second_module = types.ModuleType("second")
+    second_module.__file__ = str(second)
+    monkeypatch.setattr(sys, "modules", {"first": first_module})
+
+    provenance._require_loaded_module_files(
+        frozenset({first.resolve(), second.resolve()}), base, site_packages
+    )
+    sys.modules["second"] = second_module
+    provenance._require_loaded_module_files(
+        frozenset({first.resolve(), second.resolve()}), base, site_packages
+    )
+
+    rogue = tmp_path / "rogue.py"
+    rogue.write_bytes(b"ROGUE = True\n")
+    second_module.__file__ = str(rogue)
+    with pytest.raises(ValueError, match="outside the verified runtime trees"):
+        provenance._require_loaded_module_files(
+            frozenset({first.resolve(), second.resolve()}), base, site_packages
+        )
+
+
+@pytest.mark.parametrize(
+    ("name", "owned", "message"),
+    [
+        ("_virtualenv.pth", True, "prohibited startup"),
+        ("_virtualenv.py", False, "unowned or missing"),
+        ("sitecustomize.py", True, "prohibited startup"),
+        ("usercustomize.py", True, "prohibited startup"),
+        ("cached.pyc", True, "prohibited startup"),
+        ("rogue.py", False, "unowned or missing"),
+        ("rogue.so", False, "unowned or missing"),
+    ],
+)
+def test_site_packages_rejects_startup_and_unowned_files(
+    tmp_path: Path, name: str, owned: bool, message: str
+) -> None:
+    site_packages = tmp_path / "site-packages"
+    site_packages.mkdir()
+    injected = site_packages / name
+    injected.write_bytes(b"injected")
+    expected = {injected.resolve()} if owned else set()
+
+    with pytest.raises(ValueError, match=message):
+        provenance._site_packages_identity(site_packages, expected)
+
+
+def test_site_packages_rejects_symlinks(tmp_path: Path) -> None:
+    site_packages = tmp_path / "site-packages"
+    site_packages.mkdir()
+    target = site_packages / "target.py"
+    target.write_text("VALUE = 1\n", encoding="utf-8")
+    os.symlink(target.name, site_packages / "alias.py")
+
+    with pytest.raises(ValueError, match="prohibited symbolic link"):
+        provenance._site_packages_identity(site_packages, {target.resolve()})
 
 
 def test_distribution_identity_rejects_same_version_file_tamper(
@@ -275,6 +504,7 @@ def test_assessment_uses_attested_build_and_installed_runtime_without_timestamps
         source_repository="firedvl/systematic-trading-lab",
         signer_workflow=".github/workflows/build-provenance.yml",
         verified_at=NOW,
+        attestation_verifier=AttestationVerifierIdentity(path="/usr/local/bin/gh", sha256="f" * 64),
     )
     installed = InstalledRuntimeIdentity(
         build_identity_fingerprint=build.identity_fingerprint,
@@ -312,6 +542,7 @@ def test_assessment_uses_attested_build_and_installed_runtime_without_timestamps
         package_version="0.1.0",
         source_repository="firedvl/systematic-trading-lab",
         signer_workflow=".github/workflows/build-provenance.yml",
+        attestation_verifier=AttestationVerifierIdentity(path="/usr/local/bin/gh", sha256="f" * 64),
         distribution_record_sha256="d" * 64,
         source_files_fingerprint="e" * 64,
     )
@@ -348,6 +579,49 @@ def test_assessment_rejects_changed_lock_before_attestation(
             verified_at=NOW,
         )
     assert not called
+
+
+def test_assessment_retains_attestation_verifier_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    wheel = _wheel(tmp_path)
+    lockfile = tmp_path / "uv.lock"
+    lockfile.write_bytes(Path("uv.lock").read_bytes())
+    manifest = tmp_path / "runtime-build-manifest.json"
+    manifest.write_bytes(b"manifest")
+    wheelhouse = tmp_path / "dependency-wheelhouse"
+    wheelhouse.mkdir()
+    (wheelhouse / "dependency.whl").write_bytes(b"dependency")
+    verifier = AttestationVerifierIdentity(path="/reviewed/bin/gh", sha256="f" * 64)
+    build = RuntimeBuildIdentity(
+        source_commit="a" * 40,
+        wheel_sha256="b" * 64,
+        manifest_sha256="c" * 64,
+        package_name="systematic-trading-lab",
+        package_version="0.1.0",
+        source_repository="firedvl/systematic-trading-lab",
+        signer_workflow=".github/workflows/build-provenance.yml",
+        verified_at=NOW,
+        attestation_verifier=verifier,
+    )
+    installed = InstalledRuntimeIdentity(
+        build_identity_fingerprint=build.identity_fingerprint,
+        source_commit=build.source_commit,
+        wheel_sha256=build.wheel_sha256,
+        distribution_record_sha256="d" * 64,
+        source_files_fingerprint="e" * 64,
+        verified_at=NOW,
+    )
+    monkeypatch.setattr(provenance, "verify_attested_build", lambda *args, **kwargs: build)
+    monkeypatch.setattr(provenance, "verify_installed_runtime", lambda *args, **kwargs: installed)
+    monkeypatch.setattr(provenance, "_environment_identity", lambda *_: _environment())
+
+    assessment = provenance.assess_intraday_execution_source(
+        wheel, manifest, lockfile, wheelhouse, verified_at=NOW
+    )
+
+    assert assessment.build_identity.attestation_verifier == verifier
+    assert assessment.surface_comparison.equivalent
 
 
 def test_source_bound_report_preserves_sealed_provenance_and_changes_fingerprint() -> None:

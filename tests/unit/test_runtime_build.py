@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import subprocess
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from zipfile import ZipFile
@@ -13,15 +14,26 @@ from zipfile import ZipFile
 import pytest
 
 from systematic_trading_lab.runtime_build import (
+    AttestationVerifierIdentity,
     RuntimeBuildAttestationIndeterminateError,
     RuntimeBuildIdentity,
     RuntimeBuildVerificationError,
+    _attestation_verifier_identity,
+    _resolve_attestation_verifier,
     _verify_attested_build,
     _verify_github_attestation,
     _verify_installed_runtime,
 )
 
 NOW = datetime(2026, 8, 4, tzinfo=UTC)
+
+
+def _fake_gh(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    executable = (tmp_path / "gh").resolve()
+    executable.write_bytes(b"reviewed gh executable")
+    executable.chmod(0o555)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    return executable
 
 
 def _artifacts(tmp_path: Path) -> tuple[Path, Path]:
@@ -93,6 +105,10 @@ def _installed_runtime(
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(contents)
     dist_info = root / "systematic_trading_lab-0.1.0.dist-info"
+    installer = dist_info / "INSTALLER"
+    installer.write_bytes(b"pip\n")
+    requested = dist_info / "REQUESTED"
+    requested.write_bytes(b"")
     direct_url = dist_info / "direct_url.json"
     direct_url.write_text(
         json.dumps(
@@ -106,8 +122,13 @@ def _installed_runtime(
         ),
         encoding="utf-8",
     )
+    script = root.parent / "bin/trading-lab"
+    script.parent.mkdir()
+    script.write_bytes(b"generated launcher")
     installed_rows = list(csv.reader(io.StringIO(files[record_name].decode())))
-    installed_rows.append(["../../Scripts/trading-lab.exe", *_record(b"generated launcher")])
+    installed_rows.append(["../bin/trading-lab", *_record(script.read_bytes())])
+    installed_rows.append([f"{dist_info.name}/INSTALLER", *_record(installer.read_bytes())])
+    installed_rows.append([f"{dist_info.name}/REQUESTED", *_record(requested.read_bytes())])
     installed_rows.append([f"{dist_info.name}/direct_url.json", *_record(direct_url.read_bytes())])
     installed_output = io.StringIO()
     csv.writer(installed_output, lineterminator="\n").writerows(installed_rows)
@@ -217,6 +238,7 @@ def test_github_attestation_uses_fixed_authority(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     artifact = tmp_path / "artifact.whl"
+    executable = _fake_gh(tmp_path, monkeypatch)
     calls: list[tuple[list[str], dict[str, object]]] = []
     monkeypatch.setenv("APCA_API_SECRET_KEY", "must-not-reach-gh")
     monkeypatch.setenv("TRADING_LAB_PAPER_ACTIVATION_ID", "must-not-reach-gh")
@@ -230,7 +252,10 @@ def test_github_attestation_uses_fixed_authority(
         return subprocess.CompletedProcess(command, 0)
 
     monkeypatch.setattr(subprocess, "run", run)
-    _verify_github_attestation(artifact, "a" * 40)
+    identity = _verify_github_attestation(artifact, "a" * 40)
+    assert identity == AttestationVerifierIdentity(
+        path=str(executable), sha256=hashlib.sha256(executable.read_bytes()).hexdigest()
+    )
     subprocess_environment = calls[0][1].pop("env")
     assert isinstance(subprocess_environment, dict)
     assert subprocess_environment["GH_TOKEN"] == "test-github-token"
@@ -242,7 +267,7 @@ def test_github_attestation_uses_fixed_authority(
     assert calls == [
         (
             [
-                "gh",
+                str(executable),
                 "attestation",
                 "verify",
                 str(artifact),
@@ -267,6 +292,7 @@ def test_github_attestation_timeout_is_indeterminate(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     artifact = tmp_path / "artifact.whl"
+    _fake_gh(tmp_path, monkeypatch)
 
     def timeout(*args: object, **kwargs: object) -> None:
         raise subprocess.TimeoutExpired("gh", 30)
@@ -287,6 +313,7 @@ def test_github_attestation_transport_exit_is_indeterminate(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, stderr: str
 ) -> None:
     artifact = tmp_path / "artifact.whl"
+    _fake_gh(tmp_path, monkeypatch)
 
     def fail(*args: object, **kwargs: object) -> None:
         raise subprocess.CalledProcessError(1, "gh", stderr=stderr)
@@ -309,6 +336,7 @@ def test_github_attestation_local_or_auth_failure_is_permanent(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error: BaseException
 ) -> None:
     artifact = tmp_path / "artifact.whl"
+    _fake_gh(tmp_path, monkeypatch)
 
     def fail(*args: object, **kwargs: object) -> None:
         raise error
@@ -317,6 +345,45 @@ def test_github_attestation_local_or_auth_failure_is_permanent(
     with pytest.raises(RuntimeBuildVerificationError, match="attestation failed") as captured:
         _verify_github_attestation(artifact, "a" * 40)
     assert not isinstance(captured.value, RuntimeBuildAttestationIndeterminateError)
+
+
+def test_github_attestation_binds_path_and_rejects_mid_call_mutation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    artifact = tmp_path / "artifact.whl"
+    first_directory = tmp_path / "first"
+    first_directory.mkdir()
+    _fake_gh(first_directory, monkeypatch)
+    first_identity = _resolve_attestation_verifier()
+    second_directory = tmp_path / "second"
+    second_directory.mkdir()
+    second = _fake_gh(second_directory, monkeypatch)
+    assert _resolve_attestation_verifier() != first_identity
+
+    def mutate(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        second.chmod(0o755)
+        second.write_bytes(b"changed verifier")
+        second.chmod(0o555)
+        return subprocess.CompletedProcess([], 0)
+
+    monkeypatch.setattr(subprocess, "run", mutate)
+    with pytest.raises(RuntimeBuildVerificationError, match="attestation failed"):
+        _verify_github_attestation(artifact, "a" * 40)
+
+
+def test_attestation_verifier_rejects_noncanonical_and_nonregular_paths(tmp_path: Path) -> None:
+    missing = (tmp_path / "missing").resolve()
+    target = tmp_path / "target"
+    target.write_bytes(b"target")
+    target.chmod(0o555)
+    symlink = tmp_path / "symlink"
+    symlink.symlink_to(target)
+    directory = tmp_path / "directory"
+    directory.mkdir()
+
+    for path in (missing, symlink, directory):
+        with pytest.raises((OSError, ValueError)):
+            _attestation_verifier_identity(path)
 
 
 def test_attested_build_preserves_indeterminate_attestation_failure(tmp_path: Path) -> None:
@@ -434,5 +501,57 @@ def test_installed_runtime_rejects_source_tamper_and_extra_source(tmp_path: Path
             root=root,
             module_file=module_file,
             loaded_files=(module_file, foreign),
+            verified_at=NOW,
+        )
+
+
+def test_installed_runtime_rejects_extra_record_owned_file(tmp_path: Path) -> None:
+    build, wheel, root, module_file, _ = _installed_runtime(tmp_path)
+    injected = root / "injected.py"
+    injected.write_bytes(b"INJECTED = True\n")
+    record = root / "systematic_trading_lab-0.1.0.dist-info/RECORD"
+    rows = list(csv.reader(io.StringIO(record.read_text(encoding="utf-8"))))
+    rows.append(["injected.py", *_record(injected.read_bytes())])
+    output = io.StringIO()
+    csv.writer(output, lineterminator="\n").writerows(rows)
+    record.write_text(output.getvalue(), encoding="utf-8")
+
+    with pytest.raises(RuntimeBuildVerificationError, match="verification failed"):
+        _verify_installed_runtime(
+            build,
+            wheel,
+            root=root,
+            module_file=module_file,
+            verified_at=NOW,
+        )
+
+
+def test_installed_runtime_rejects_wheel_owned_top_level_file(tmp_path: Path) -> None:
+    build, wheel, root, module_file, _ = _installed_runtime(tmp_path)
+    record_name = "systematic_trading_lab-0.1.0.dist-info/RECORD"
+    with ZipFile(wheel) as archive:
+        files = {
+            name: archive.read(name)
+            for name in archive.namelist()
+            if not name.endswith("/") and name != record_name
+        }
+    files["injected.py"] = b"INJECTED = True\n"
+    output = io.StringIO()
+    writer = csv.writer(output, lineterminator="\n")
+    for name, contents in files.items():
+        writer.writerow((name, *_record(contents)))
+    writer.writerow((record_name, "", ""))
+    files[record_name] = output.getvalue().encode()
+    with ZipFile(wheel, "w") as archive:
+        for name, contents in files.items():
+            archive.writestr(name, contents)
+    build = replace(build, wheel_sha256=hashlib.sha256(wheel.read_bytes()).hexdigest())
+
+    with pytest.raises(RuntimeBuildVerificationError, match="verification failed"):
+        _verify_installed_runtime(
+            build,
+            wheel,
+            root=root,
+            module_file=module_file,
             verified_at=NOW,
         )

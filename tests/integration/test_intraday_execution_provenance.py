@@ -34,19 +34,21 @@ from systematic_trading_lab.intraday_source_provenance import (
     IntradayRuntimeEnvironmentIdentity,
 )
 from systematic_trading_lab.providers import IntradayFixtureProvider
+from systematic_trading_lab.runtime_build import AttestationVerifierIdentity
 from systematic_trading_lab.storage import StorageLayout
 
 
 def _assessment(
     commit: str = "a" * 40, environment_marker: str = "1"
 ) -> IntradayExecutionSourceAssessment:
-    components = provenance._FOUNDATION_COMPONENT_HASHES
+    components = provenance._REVIEWED_COMPONENT_HASHES
     surface = IntradayExecutionSurfaceComparison(
         foundation_commit=INTRADAY_FOUNDATION_COMMIT,
-        definition_fingerprint=fingerprint(provenance._SURFACE_DEFINITION),
-        foundation_surface_fingerprint=fingerprint(components),
+        surface_manifest_sha256=provenance._sha256(provenance._SURFACE_MANIFEST_RAW),
+        surface_manifest_fingerprint=fingerprint(provenance._SURFACE_DEFINITION),
+        reviewed_surface_fingerprint=fingerprint(components),
         observed_surface_fingerprint=fingerprint(components),
-        foundation_component_hashes=components,
+        reviewed_component_hashes=components,
         observed_component_hashes=components,
         mismatches=(),
         equivalent=True,
@@ -62,17 +64,33 @@ def _assessment(
             package_version="0.1.0",
             source_repository="firedvl/systematic-trading-lab",
             signer_workflow=".github/workflows/build-provenance.yml",
+            attestation_verifier=AttestationVerifierIdentity(
+                path="/usr/local/bin/gh", sha256="f" * 64
+            ),
             distribution_record_sha256="d" * 64,
             source_files_fingerprint="e" * 64,
         ),
         environment_identity=IntradayRuntimeEnvironmentIdentity(
             uv_lock_sha256=INTRADAY_FOUNDATION_LOCK_SHA256,
+            runtime_root="/runtime",
+            pyvenv_config_sha256="0" * 64,
+            python_executable="/runtime/bin/python",
+            python_executable_chain=(("/runtime/bin/python", "file", environment_marker * 64),),
             python_executable_sha256=environment_marker * 64,
+            base_prefix="/base-python",
+            base_runtime_fingerprint="6" * 64,
+            base_runtime_entry_count=1,
+            site_packages_path="/runtime/lib/python3.12/site-packages",
+            site_packages_fingerprint="7" * 64,
+            site_packages_entry_count=1,
+            sys_path=("/base-python/lib/python3.12",),
             python_implementation="CPython",
             python_version="3.12.13",
             python_cache_tag="cpython-312",
             python_flags="sys.flags()",
             platform="test-platform",
+            meta_path=provenance._EXPECTED_META_PATH,
+            path_hooks=provenance._DEFAULT_PATH_HOOKS,
             decimal_context=provenance._default_decimal_context(),
             timezone_source="tzdata:America/New_York",
             timezone_sha256="2" * 64,
@@ -93,15 +111,16 @@ def _assessment(
 
 def _mismatched_assessment() -> IntradayExecutionSourceAssessment:
     assessment = _assessment()
-    observed = list(provenance._FOUNDATION_COMPONENT_HASHES)
+    observed = list(provenance._REVIEWED_COMPONENT_HASHES)
     component, _ = observed[0]
     observed[0] = (component, "0" * 64)
     surface = IntradayExecutionSurfaceComparison(
         foundation_commit=INTRADAY_FOUNDATION_COMMIT,
-        definition_fingerprint=fingerprint(provenance._SURFACE_DEFINITION),
-        foundation_surface_fingerprint=fingerprint(provenance._FOUNDATION_COMPONENT_HASHES),
+        surface_manifest_sha256=provenance._sha256(provenance._SURFACE_MANIFEST_RAW),
+        surface_manifest_fingerprint=fingerprint(provenance._SURFACE_DEFINITION),
+        reviewed_surface_fingerprint=fingerprint(provenance._REVIEWED_COMPONENT_HASHES),
         observed_surface_fingerprint=fingerprint(tuple(observed)),
-        foundation_component_hashes=provenance._FOUNDATION_COMPONENT_HASHES,
+        reviewed_component_hashes=provenance._REVIEWED_COMPONENT_HASHES,
         observed_component_hashes=tuple(observed),
         mismatches=(component,),
         equivalent=False,
@@ -500,6 +519,19 @@ def test_matching_build_runs_and_report_binds_foundation_and_actual_execution(
     assert source["review"]["execution_commit"] == "a" * 40
     assert source["binding"]["execution_commit"] == "a" * 40
     _registered_report(registry, spec.experiment_id)
+
+    source["binding"]["execution_commit"] = "b" * 40
+    unsigned = dict(report)
+    unsigned.pop("report_fingerprint")
+    report["report_fingerprint"] = fingerprint(unsigned)
+    report_path.write_text(canonical_json(report) + "\n", encoding="utf-8")
+    with sqlite3.connect(registry.path) as connection:
+        connection.execute(
+            "UPDATE experiments SET artifact_hashes_json = ? WHERE experiment_id = ?",
+            (canonical_json([report["report_fingerprint"]]), spec.experiment_id),
+        )
+    with pytest.raises(ValueError, match="execution source provenance differs"):
+        _registered_report(registry, spec.experiment_id)
 
     report.pop("execution_source_provenance")
     unsigned = dict(report)

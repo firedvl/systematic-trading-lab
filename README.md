@@ -133,19 +133,25 @@ The repository also contains a predeclared strategic-allocation candidate whose 
 
 The intraday workflow adds fixed cash, previous-bar-momentum, and 12-bar moving-average-trend engineering baselines for SPY and QQQ. Controlled runs use exact catalog ranges, flat-at-close sessions, completed-bar decisions, deterministic next-bar-open fills, and frozen cost and delay stress variants. The research-only qualification path cannot authorize holdout access, paper execution, or broker writes. See [`docs/intraday-research.md`](docs/intraday-research.md).
 
-Campaign V1 preregisters 60 exact training and validation candidates, including their periods, strategies, costs, delays, policy identity, and ordinals. Inspecting the plan creates no runtime state. All four immutable period datasets must pass full validation before all 60 reservations bind atomically. The sealed M5B reference remains unchanged and is not runtime provenance. A separate immutable review binds the actual main-only attested wheel, installed project package, locked dependency wheels and files, isolated Python runtime, and reviewed computation surface. Candidate execution stays blocked until that assessment fingerprint is explicitly reviewed and recorded while every candidate is pending. No review has been recorded and no Campaign V1 candidate has run. See [`docs/research-campaigns/intraday-campaign-v1.md`](docs/research-campaigns/intraday-campaign-v1.md).
+Campaign V1 preregisters 60 exact training and validation candidates, including their periods, strategies, costs, delays, policy identity, and ordinals. Inspecting the plan creates no runtime state. All four immutable period datasets must pass full validation before all 60 reservations bind atomically. The sealed M5B reference remains unchanged and is not runtime provenance. A separate immutable review binds the actual main-only attested wheel, canonical GitHub CLI path and bytes used for verification, installed project package, locked dependency wheels and files, isolated Python runtime, and the complete 48-module application-package source surface. The wheel-bound surface manifest classifies every module as foundation-exact, an exact reviewed delta, or a reviewed new file; added, missing, or changed modules fail and require Campaign V2. Candidate execution stays blocked until a human reviews the full main-attested source commit, wheel, verifier identity, and matching assessment fingerprint while every candidate is pending. No review has been recorded and no Campaign V1 candidate has run. See [`docs/research-campaigns/intraday-campaign-v1.md`](docs/research-campaigns/intraday-campaign-v1.md).
 
-Run provenance commands from the clean wheel-installed runtime with isolated Python and bytecode disabled:
+Build the clean runtime with CPython 3.12's standard-library venv, not `uv venv`. Prepare the locked dependency wheelhouse, create the runtime, and install the ten dependencies and `APPLICATION.whl` with the exact commands in [the Campaign V1 execution-source runbook](docs/research-campaigns/intraday-campaign-v1.md#execution-source-review). Once prepared, use absolute canonical paths and the fixed bootstrap for every provenance command:
 
 ```console
-python -I -B -m systematic_trading_lab.cli experiment assess-intraday-source \
+CAMPAIGN_RUNTIME=/absolute/canonical/runtime
+CAMPAIGN_SITE_PACKAGES=/absolute/canonical/runtime/lib/python3.12/site-packages
+CAMPAIGN_BOOTSTRAP='import runpy,sys; sys.path.append(sys.argv.pop(1)); runpy.run_module("systematic_trading_lab.cli", run_name="__main__")'
+
+"$CAMPAIGN_RUNTIME/bin/python" -I -B -S -c "$CAMPAIGN_BOOTSTRAP" "$CAMPAIGN_SITE_PACKAGES" \
+  experiment assess-intraday-source \
   --campaign intraday-research-v1 \
   --wheel APPLICATION.whl \
   --build-manifest runtime-build-manifest.json \
   --lockfile uv.lock \
   --dependency-wheelhouse DEPENDENCY_WHEELHOUSE
 
-python -I -B -m systematic_trading_lab.cli experiment record-intraday-source REVIEW_ID \
+"$CAMPAIGN_RUNTIME/bin/python" -I -B -S -c "$CAMPAIGN_BOOTSTRAP" "$CAMPAIGN_SITE_PACKAGES" \
+  experiment record-intraday-source REVIEW_ID \
   --campaign intraday-research-v1 \
   --wheel APPLICATION.whl \
   --build-manifest runtime-build-manifest.json \
