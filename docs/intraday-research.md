@@ -104,10 +104,37 @@ The CLI requires an explicit policy path and verifies its content against the co
 
 Campaign V1 was preregistered and its source review was recorded, but its first real Training acquisition exposed the extended-hours filtering defect before dataset publication. Dataset validation rejected 2,758 out-of-session records with no missing intervals and no duplicates. No candidate ran and no strategy result was observed. V1's sealed plan, stored review, runtime state, and quarantine evidence remain unchanged and readable. New V1 sealing, dataset binding, source review, and execution are blocked.
 
-Campaign V2 carries forward the same 60-candidate matrix under plan fingerprint `52db8a27fa4ff86865ab69b6bd7456899329ef3b861a582e59ab32904c03c122`. `experiment plan-intraday` creates all pending reservations atomically. `experiment bind-intraday-datasets` takes the four explicit dataset IDs, fully validates every immutable artifact, checks the concrete `alpaca-historical-v2` adapter, IEX feed, exact period, and reviewed universe, then binds all 60 specs atomically. Failed preflight or binding leaves every reservation pending and unbound.
+Campaign V2 carried forward the same 60-candidate matrix under plan fingerprint `52db8a27fa4ff86865ab69b6bd7456899329ef3b861a582e59ab32904c03c122`. Its planner created all reservations atomically, and its dataset binder fully validated four immutable artifacts before binding all 60 specs. V2 completed 60/60 candidates and failed 12/12 base research qualification groups.
 
-V2 preserves the separate execution-source review. The assessment verifies the main-only GitHub-attested application wheel and exact non-editable install, binds the canonical trusted `gh` path and SHA-256, verifies the fixed `uv.lock` plus exact dependency wheel and installed-file closure, and requires the isolated CPython 3.12 `-I -B -S` runtime. The wheel-bound `intraday_campaign_v2_surface.json` manifest covers all 49 current application-package Python modules by exact hash, including the corrected provider. Added, missing, or changed modules fail. The inert manifest cannot prove itself, so a human must review the full main-attested source commit and wheel, verifier identity, and assessment fingerprint. The runner fixes initial cash at `100000`, derives costs from the stored spec, binds a fresh matching assessment atomically with each claim, and reassesses before report publication. The existing review and binding tables support V2 without a migration. See [the V1 disposition](research-campaigns/intraday-campaign-v1.md) and [the V2 runbook](research-campaigns/intraday-campaign-v2.md).
+V2 used a separate execution-source review. The assessment verified the main-only GitHub-attested application wheel and exact non-editable install, bound the canonical trusted `gh` path and SHA-256, verified the fixed `uv.lock` plus exact dependency wheel and installed-file closure, and required the isolated CPython 3.12 `-I -B -S` runtime. The immutable wheel-bound `intraday_campaign_v2_surface.json` manifest covers the 49 application-package Python modules in the reviewed V2 source by exact hash, including the corrected provider. The runner fixed initial cash at `100000`, derived costs from the stored spec, bound a fresh matching assessment to each claim, and reassessed before report publication. See [the V1 disposition](research-campaigns/intraday-campaign-v1.md), [the V2 historical runbook](research-campaigns/intraday-campaign-v2.md), and [the V2 postmortem](research-campaigns/intraday-campaign-v2-postmortem.md).
+
+## Campaign V2 closeout and V3 development
+
+Campaign V2 completed all 60 controlled candidates and failed all 12 base research qualification
+groups. It remains closed immutable failed evidence. No intraday holdout was accessed or authorized,
+and no paper, broker-write, or live authority exists. The confirmed postmortem mechanism is repeated
+exact-weight scheduling: unchanged 0.5 targets caused drift-driven rebalances, while longer pending
+orders suppressed later target applications and confounded the delay stress. See
+[the V2 postmortem](research-campaigns/intraday-campaign-v2-postmortem.md).
+
+The development-only V3 foundation adds separate `intraday-experiment-v2`,
+`intraday-backtest-report-v2`, `state-transition-delayed-fifo-v1`, and
+`XNYS-regular-session-state-transition-flat-v2` contracts. It includes fixed event-driven 12-bar MA,
+six-bar momentum, and six-bar opening-range breakout strategies. It also emits a fingerprinted paired
+realistic/zero-cost diagnostic. The v1 thresholds are unchanged; no V3 qualification binding is
+active, and zero-cost results cannot enter qualification.
+
+The V3 campaign file is an unsealable 60-candidate draft. Its Training and Validation A/B/C dates are
+unset. All dates from 2025-07-01 through 2026-06-30 are declared exposed; a validator rejects known
+overlap but does not certify freshness. See
+[the V3 draft](research-campaigns/intraday-campaign-v3-draft.md).
 
 ## Deferred work
 
-M5B does not run broad parameter search, autonomous strategy generation, opening-range breakout, protected intraday holdout evaluation, paper execution, options, shorting, leverage, extended hours, tick replay, or market-microstructure simulation. Campaign V2 still needs merge to `main`, a main-attested wheel, a clean non-writable runtime, explicit human source and assessment review, independent read-only historical credentials, and four exact validated and bound datasets before its first candidate. A later review must approve any holdout policy and separately build M5C market-data, risk, order, reconciliation, operational, and authority controls.
+M5B does not run broad parameter search, autonomous strategy generation, protected intraday holdout
+evaluation, paper execution, options, shorting, leverage, extended hours, tick replay, or
+market-microstructure simulation. V3 still needs independently reviewed period selection, a reviewed
+qualification/report binding, merged and source-reviewed whole-package provenance, independently
+acquired validated datasets, atomic binding, and preregistration before any candidate. A later review
+must approve any holdout policy and separately build M5C market-data, risk, order, reconciliation,
+operational, and authority controls.

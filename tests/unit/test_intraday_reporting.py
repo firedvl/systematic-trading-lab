@@ -54,6 +54,27 @@ def test_intraday_baseline_reports_are_deterministic_and_immutable(tmp_path: Pat
         write_intraday_report(output, _provenance(), first, bars)
 
 
+def test_v1_v2_execution_and_report_golden_fingerprints_remain_unchanged() -> None:
+    bars = _bars()
+    result = intraday_strategy_result(
+        "intraday-previous-bar-momentum",
+        bars,
+        Decimal("1000"),
+        _costs(),
+        Timeframe.FIVE_MINUTES,
+        fill_delay_bars=1,
+        parameters={"lookback": 1},
+    )
+    report = build_intraday_report(_provenance(), result, bars)
+
+    assert result.artifact_fingerprint == (
+        "a281ebbc964c663c31d27a826747ded15f37f7d50eeedb8dc849d87f726c5c36"
+    )
+    assert report["report_fingerprint"] == (
+        "7b5972c9928e6ac1bfe6f6079248cb679cf06bc1374a1667722f676ac527a4df"
+    )
+
+
 def test_cash_report_is_deterministic_for_zero_trades() -> None:
     bars = _bars()
     result = intraday_strategy_result(
