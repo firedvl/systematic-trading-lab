@@ -53,7 +53,7 @@ The project currently integrates with Alpaca for market data and paper-account w
 - Strict preregistered training plans that prevent run-time parameter or date overrides.
 - Qualification evidence derived from controlled runs rather than caller-entered metrics.
 - One-time, authorization-gated holdout evaluation.
-- Isolated intraday research foundations for future campaigns.
+- Research-only `1m` and `5m` SPY/QQQ data, replay, exact-range experiments, qualification evidence, and a preregistered intraday campaign.
 
 ### Paper execution and operations
 
@@ -91,6 +91,7 @@ Check the local environment and import the committed synthetic fixture:
 ```console
 uv run trading-lab doctor
 uv run trading-lab data import-fixture
+uv run trading-lab data import-intraday-fixture --timeframe 5m
 uv run trading-lab data describe
 ```
 
@@ -119,6 +120,7 @@ Example commands:
 uv run trading-lab experiment create-campaign baseline-v1 --name "Baseline campaign" --budget 20
 uv run trading-lab experiment plan-training --spec PLAN.json
 uv run trading-lab experiment run-planned candidate-1
+uv run trading-lab experiment inspect-intraday-plan --spec config/research/intraday-campaign-v1.json
 uv run trading-lab experiment compare candidate-1 candidate-2
 uv run trading-lab experiment evaluate-qualification \
   --evidence-manifest config/research/qualification-evidence-v3.json \
@@ -128,6 +130,10 @@ uv run trading-lab experiment evaluate-qualification \
 The baseline suite includes cash, buy-and-hold, fixed-weight allocation, moving-average trend, time-series momentum, moving-average mean reversion, and volatility-targeted exposure. Baselines are system checks, not claims of profitability.
 
 The repository also contains a predeclared strategic-allocation candidate whose controlled validation evidence passed the project's approved gates. That historical result is research evidence only; it does not promise future returns or by itself authorize broker writes.
+
+The intraday workflow adds fixed cash, previous-bar-momentum, and 12-bar moving-average-trend engineering baselines for SPY and QQQ. Controlled runs use exact catalog ranges, flat-at-close sessions, completed-bar decisions, deterministic next-bar-open fills, and frozen cost and delay stress variants. The research-only qualification path cannot authorize holdout access, paper execution, or broker writes. See [`docs/intraday-research.md`](docs/intraday-research.md).
+
+Campaign V1 preregisters 60 exact training and validation candidates, including their periods, strategies, costs, delays, policy identity, and ordinals. Inspecting the plan creates no runtime state. All four immutable period datasets must pass full validation before all 60 reservations bind atomically. Candidate execution remains blocked until the actual execution source is separately reviewed and recorded; the sealed M5B reference is not runtime provenance. See [`docs/research-campaigns/intraday-campaign-v1.md`](docs/research-campaigns/intraday-campaign-v1.md).
 
 ## Paper workflow
 
@@ -171,6 +177,7 @@ uv run mypy src tests
 uv run pytest
 uv run python scripts/check_secrets.py
 bash -n scripts/*.sh
+uv build
 ```
 
 Contributions are welcome. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md). Changes to protected controls, execution authority, risk semantics, evidence schemas, migrations, or security boundaries require especially careful tests and documentation.

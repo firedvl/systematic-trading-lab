@@ -9,16 +9,22 @@ from decimal import Decimal
 from pathlib import Path
 
 from .backtesting import BacktestResult, CostModel
-from .datasets import DatasetService
-from .domain import OHLCVBar, TimestampRange
+from .datasets import DatasetService, DatasetValidationError
+from .domain import OHLCVBar, Timeframe, TimestampRange
 from .experiments import (
     ExperimentError,
     ExperimentRegistry,
     ExperimentSpec,
     ExperimentSplit,
     HoldoutAccessError,
+    IntradayExperimentSpec,
 )
-from .fingerprints import fingerprint
+from .fingerprints import canonicalize, fingerprint
+from .intraday_reporting import (
+    build_intraday_report,
+    intraday_strategy_result,
+    write_intraday_report,
+)
 from .reporting import build_report, strategy_result, summarize, write_report
 
 
@@ -171,6 +177,7 @@ def run_cataloged_experiment(
         registry.claim(spec.experiment_id)
     try:
         _validate_execution_models(spec, selected_costs, fill_delay_bars)
+        _require_daily_dataset(datasets, spec.dataset_id)
         bars = datasets.load_bars_range(
             spec.dataset_id,
             TimestampRange(spec.start_timestamp, spec.end_timestamp),
@@ -194,6 +201,89 @@ def run_cataloged_experiment(
         raise
 
 
+def run_cataloged_intraday_experiment(
+    registry: ExperimentRegistry,
+    datasets: DatasetService,
+    spec: IntradayExperimentSpec,
+    output_directory: Path,
+    initial_cash: Decimal = Decimal("100000"),
+    cost_model: CostModel | None = None,
+    *,
+    pre_registered: bool = False,
+) -> BacktestResult:
+    """Run one training or validation candidate under the M5B contract."""
+
+    if pre_registered and spec.campaign_id == "intraday-research-v1":
+        raise ExperimentError(
+            "Campaign V1 execution is blocked until the actual execution source "
+            "is separately reviewed and recorded"
+        )
+    selected_costs = cost_model or CostModel()
+    if pre_registered:
+        if registry.get_planned_intraday_spec(spec.experiment_id) != spec:
+            raise ExperimentError("stored planned intraday experiment differs")
+        registry._claim_planned_intraday(spec)
+    else:
+        registry.create_experiment(spec)
+        registry.claim(spec.experiment_id)
+    try:
+        if pre_registered and not datasets.validate(spec.dataset_id)["valid"]:
+            raise DatasetValidationError("dataset integrity validation failed")
+        manifest = datasets.describe(spec.dataset_id)
+        _validate_intraday_models(spec, selected_costs, manifest)
+        bars = datasets.load_bars_range(
+            spec.dataset_id,
+            TimestampRange(spec.start_timestamp, spec.end_timestamp),
+            expected_fingerprint=spec.dataset_fingerprint,
+            expected_universe_id=spec.universe_id,
+            expected_universe_fingerprint=spec.universe_fingerprint,
+        )
+        registry.heartbeat(spec.experiment_id)
+        result = intraday_strategy_result(
+            spec.strategy_id,
+            bars,
+            initial_cash,
+            selected_costs,
+            Timeframe(spec.timeframe),
+            spec.execution_delay_bars,
+            spec.parameters,
+        )
+        if (result.strategy_id, result.strategy_version) != (
+            spec.strategy_id,
+            spec.strategy_version,
+        ):
+            raise ExperimentError("intraday strategy identity does not match the experiment")
+        provenance = canonicalize(spec)
+        assert isinstance(provenance, dict)
+        report = build_intraday_report(provenance, result, bars)
+        report_path = output_directory / f"{spec.configuration_fingerprint}.json"
+        write_intraday_report(report_path, provenance, result, bars)
+        metrics = report.get("metrics")
+        if not isinstance(metrics, Mapping):
+            raise ExperimentError("intraday report metrics are malformed")
+        report_fingerprint = report.get("report_fingerprint")
+        if not isinstance(report_fingerprint, str):
+            raise ExperimentError("intraday report fingerprint is missing")
+        if pre_registered:
+            registry._complete_planned_intraday(
+                spec,
+                metrics,
+                [str(report_path)],
+                [report_fingerprint],
+            )
+        else:
+            registry._complete_controlled(
+                spec.experiment_id,
+                metrics,
+                [str(report_path)],
+                [report_fingerprint],
+            )
+        return result
+    except Exception as error:
+        registry.fail(spec.experiment_id, f"{type(error).__name__}: {error}")
+        raise
+
+
 def run_holdout_experiment(
     registry: ExperimentRegistry,
     datasets: DatasetService,
@@ -212,6 +302,7 @@ def run_holdout_experiment(
     registry.create_experiment(spec, holdout_authorization_id=authorization_id)
     try:
         registry.claim(spec.experiment_id)
+        _require_daily_dataset(datasets, spec.dataset_id)
         bars = datasets.load_bars_range(
             spec.dataset_id,
             TimestampRange(spec.start_timestamp, spec.end_timestamp),
@@ -280,19 +371,22 @@ def comparison_report(
             raise HoldoutAccessError("ordinary comparison reports exclude holdout experiments")
         spec = record["spec_json"]
         assert isinstance(spec, Mapping)
-        candidates.append(
-            {
-                "experiment_id": experiment_id,
-                "parent_candidate": spec.get("parent_candidate"),
-                "strategy_id": spec["strategy_id"],
-                "cost_model_version": spec["cost_model_version"],
-                "execution_model_version": spec["execution_model_version"],
-                "split": record["split"],
-                "status": record["status"],
-                "failure_info": record["failure_info"],
-                "metrics": record["metrics_json"],
-            }
-        )
+        candidate: dict[str, object] = {
+            "experiment_id": experiment_id,
+            "parent_candidate": spec.get("parent_candidate"),
+            "strategy_id": spec["strategy_id"],
+            "cost_model_version": spec["cost_model_version"],
+            "execution_model_version": spec["execution_model_version"],
+            "split": record["split"],
+            "status": record["status"],
+            "failure_info": record["failure_info"],
+            "metrics": record["metrics_json"],
+        }
+        if spec.get("schema_version") == "intraday-experiment-v1":
+            candidate["intraday_contract"] = spec
+            candidate["artifact_locations"] = record["artifact_locations_json"]
+            candidate["artifact_fingerprints"] = record["artifact_hashes_json"]
+        candidates.append(candidate)
     payload: dict[str, object] = {
         "schema_version": "candidate-comparison-v1",
         "candidates": candidates,
@@ -307,6 +401,11 @@ def execution_model_version(fill_delay_bars: int) -> str:
     return "next-bar-v1" if fill_delay_bars == 1 else f"delayed-{fill_delay_bars}-bars-v1"
 
 
+def _require_daily_dataset(datasets: DatasetService, dataset_id: str) -> None:
+    if datasets.describe(dataset_id).get("timeframe") != Timeframe.DAILY.value:
+        raise ExperimentError("existing experiment runners accept daily datasets only")
+
+
 def _validate_execution_models(
     spec: ExperimentSpec, cost_model: CostModel, fill_delay_bars: int
 ) -> None:
@@ -314,6 +413,36 @@ def _validate_execution_models(
         raise ExperimentError("experiment cost model does not match the runner")
     if spec.execution_model_version != execution_model_version(fill_delay_bars):
         raise ExperimentError("experiment execution model does not match the runner")
+
+
+def _validate_intraday_models(
+    spec: IntradayExperimentSpec,
+    cost_model: CostModel,
+    manifest: Mapping[str, object],
+) -> None:
+    if manifest.get("timeframe") != spec.timeframe:
+        raise ExperimentError("intraday experiment timeframe does not match its dataset")
+    if manifest.get("calendar_policy") != "XNYS-regular-session-bars-v1":
+        raise ExperimentError("intraday experiment requires the XNYS regular-session dataset")
+    if manifest.get("timestamp_policy") != spec.bar_timestamp_semantics_version:
+        raise ExperimentError("intraday bar timestamp semantics do not match the dataset")
+    required = {
+        "session_policy_version": "XNYS-regular-session-flat-v1",
+        "bar_timestamp_semantics_version": "bar-open-utc-v1",
+        "session_return_policy_version": "XNYS-session-close-equity-v1",
+        "benchmark_policy_version": "cash-and-continuous-underlying-v1",
+        "execution_model_version": "deterministic-next-bar-open-v1",
+        "earliest_fill_semantics": "completed-bar-next-bar-open-v1",
+    }
+    for field, expected in required.items():
+        if getattr(spec, field) != expected:
+            raise ExperimentError(f"unsupported intraday {field.replace('_', ' ')}")
+    if (
+        spec.cost_model_version != cost_model.version
+        or spec.slippage_bps != cost_model.slippage_bps
+        or spec.commission_bps != cost_model.commission_bps
+    ):
+        raise ExperimentError("intraday experiment cost configuration does not match the runner")
 
 
 def _complete_research_run(

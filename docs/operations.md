@@ -109,8 +109,8 @@ virtual environment:
 └── verified-venv/bin/trading-lab
 ```
 
-Set the fixed paths. Replace only `FULL_COMMIT` and `CAMPAIGN_ID`; use a short test campaign for the
-recovery drill below, not the final 168-hour campaign.
+Set the fixed paths. Replace only `FULL_COMMIT` and `CAMPAIGN_ID`; use a new short test campaign for
+the optional recovery drill below.
 
 ```console
 REPOSITORY=/opt/systematic-trading-lab
@@ -315,9 +315,9 @@ Detach with `Ctrl-A`, then `D`. Do not run Screen while the systemd unit is acti
 
 ### Short reboot recovery drill
 
-Run this bounded drill only after the branch has merged and a new `main` artifact has passed runtime
-verification. Use a new one-hour campaign and the intended 600-second interval. Do not reuse or edit
-Week 1 evidence, and do not use the final campaign ID.
+Run this bounded drill only with a reviewed `main` artifact that has passed runtime verification. Use
+a new one-hour campaign and the intended 600-second interval. Do not reuse or edit retained campaign
+evidence.
 
 1. Set `CAMPAIGN_ID=paper-reboot-drill-YYYYMMDDHHMM`, rerun the `check` command above, and stop every
    other observer.
@@ -379,8 +379,7 @@ Week 1 evidence, and do not use the final campaign ID.
 The drill passes only if boot enablement was present before reboot, the unit starts in the new boot,
 the same campaign and store resume, exactly one observer holds the lock, a later sample exists, the
 measured gap is no more than 900 seconds, continuity and the final campaign pass, and no activation or
-broker-write authority exists. Any failed item fails the drill. Preserve the failure and do not start
-the final campaign.
+broker-write authority exists. Any failed item fails the drill. Preserve the failure.
 
 ### Disable, uninstall, and cleanup
 

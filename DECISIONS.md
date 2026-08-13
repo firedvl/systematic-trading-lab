@@ -528,6 +528,48 @@
 - Consequences: SSH disconnects do not stop sampling, but a VPS reboot does. Migration must stop the old writer before copying SQLite. Cleanup defaults to a preview and deletes only validated project-local data unless the operator also requests repository deletion. External broker, GitHub, backup, audit, and shell records remain outside its scope.
 - Revisit when: automatic reboot recovery or remote state requires a reviewed service manager and monitoring design.
 
+## 2026-08-07 — Intraday bars use XNYS bar-open timestamps
+
+- Decision: support `1m` and `5m` immutable bars whose UTC timestamps label bar opens, with expected intervals derived from each actual XNYS regular-session open and close.
+- Context: daily session dates could not represent multiple bars per session or prove holiday and early-close completeness.
+- Consequences: dataset identity binds `bar-open-utc-v1` and `XNYS-regular-session-bars-v1`. Missing, duplicate, non-increasing, malformed, or out-of-session records reject the dataset and remain evidence. Daily labels and validation remain unchanged.
+- Revisit when: quotes, trades, extended hours, partial bars, another venue, or a provider convention requires another versioned schedule.
+
+## 2026-08-07 — Intraday replay observes completed bars before next-bar fills
+
+- Decision: reuse the existing simulator with an explicit timeframe. An intraday bar becomes observable at open plus duration; decisions and order creation use that time, and fills use the next eligible same-symbol bar open after the configured whole-bar delay.
+- Context: treating a provider bar-open label as the decision time would allow its completed high, low, close, and volume to influence the past.
+- Consequences: contiguous next-bar fills may share the bar-close decision timestamp but never precede it. Daily behavior remains unchanged. Intraday diagnostics aggregate equity at each New York session end, while experiments, qualification, holdouts, paper execution, and broker authority remain daily-only.
+- Revisit when: quote-based spread, latency, partial-fill, impact, or intraday qualification models receive separate review.
+
+## 2026-08-08 — Day-trading replay flattens at the final eligible bar open
+
+- Decision: add the explicit `XNYS-regular-session-flat-v1` policy. It limits delayed fills to one New York session, creates a zero-weight intent early enough to fill at the final validated bar open, rejects unsafe late entries, and fails if exposure or a pending order survives the session.
+- Context: the generic intraday replay could carry a position or delayed order through a normal or early close. A close-price liquidation decided after the close would introduce lookahead.
+- Consequences: flat-at-close decisions use only completed bars and respect the configured whole-bar delay. The last regular-session bar may mark the already-flat portfolio but cannot create another eligible fill. Daily replay and intraday diagnostics without the day-trading policy remain unchanged. Intraday experiment and qualification paths remain blocked.
+- Revisit when: a reviewed auction, market-on-close, quote-latency, partial-fill, or halt model can replace the final-bar-open approximation.
+
+## 2026-08-08 — Intraday research uses separate versioned evidence contracts
+
+- Decision: store `intraday-experiment-v1` in the shared lifecycle registry, run only cataloged training or validation ranges, and emit `intraday-backtest-report-v1` plus research-only `intraday-qualification-evidence-v1`.
+- Context: daily lifecycle and catalog primitives are reusable, but daily report, qualification, and holdout contracts do not bind timeframe, bar-open observability, flat-at-close policy, raw cost values, whole-bar delay, or intraday benchmarks.
+- Consequences: existing daily records and interfaces remain unchanged. Intraday candidates bind a fixed campaign budget and ordinal, preserve failures, report zero-trade results, and expose sample, holding, exposure, cost, benchmark, concentration, session, cost-stress, and delay-stress evidence. The intraday evaluator cannot authorize holdout access, paper execution, broker writes, or promotion.
+- Revisit when: production-scale sealed intraday campaign plans, a separately reviewed protected holdout, opening-range behavior, or M5C paper controls receive approval.
+
+## 2026-08-08 — Initial intraday strategies remain fixed engineering baselines
+
+- Decision: begin with cash, one-bar directional momentum, and a 12-bar moving-average trend over complete SPY/QQQ slices. Allocate at most one-half to each symbol, stay long-only and unlevered, and enforce `XNYS-regular-session-flat-v1`.
+- Context: M5B needs deterministic system checks without broad search or claims of profitability.
+- Consequences: the CLI exposes no strategy parameter override. Opening-range breakout, parameter optimization, shorting, leverage, extended hours, options, and autonomous generation remain deferred. Validation variants may change only preregistered costs, delay, or parameter-neighbor evidence and must retain parent lineage.
+- Revisit when: reviewed campaign plans define bounded parameter neighborhoods or another fixed baseline adds enough evidence to justify its complexity.
+
+## 2026-08-08 — The first intraday campaign reserves every base and stress run
+
+- Decision: preregister `intraday-research-v1` with SPY/QQQ `5m` data, one six-month training window, three following two-month validation windows, the three fixed M5B baselines, and five candidates per strategy-period pair: base, increased cost, harsher cost, `+1` bar, and `+2` bars.
+- Context: the first historical campaign must test chronological validation and research evidence without adding candidates or changing assumptions after results appear.
+- Consequences: the strict plan fingerprint reserves all 60 ordinals, uses 5/1, 10/2, and 20/5 slippage/commission basis points with one/two/three-bar delays, and rejects parameter neighbors or any holdout, paper, broker-write, or live authority. No real run can start until independent read-only credentials produce four valid sealed datasets. A deterministic fixture proof remains ignored and is not campaign evidence.
+- Revisit when: independent historical credentials are available, a data defect blocks the frozen windows, or a software defect requires a separately versioned campaign.
+
 ## 2026-08-12 — Final observation status preserves historical failures
 
 - Decision: derive current health, completion, continuity, and final campaign result separately from immutable observations. A completed campaign passes only when its latest state is healthy and fresh, no completed sample gap exceeds the configured maximum, and no drift occurred.
@@ -541,3 +583,24 @@
 - Context: GNU Screen survives SSH disconnects but not a host reboot. Week 1 proved that manual restart can breach the 900-second continuity limit. The old VPS store is root-owned, while the service must be unprivileged. GitHub CLI exposes one generic failure exit for remote attestation transport, absence, and rejection, so the caller cannot safely infer a permanent remote verdict from that code. A finite systemd start limit can permanently stop automatic retries after several transient failures; expiry of its interval does not restart the unit.
 - Consequences: local configuration, authentication, provenance, integrity, journal, and lock failures exit 2 and do not restart. A timeout or explicitly recognized DNS, connection, rate-limit, or server-availability attestation error exits 75 without observing. systemd waits at least 60 seconds and retries without a finite start-count limit, so repeated transient failures cannot latch the service off and recovery can still be recorded after continuity has failed. Missing attestations, policy/signature rejections, and unrecognized failures remain exit 2. No retry grants authority. Startup still requires live GitHub access. The service blanks paper-write opt-in, loads credentials only from a private repository `.env`, logs to journald, and exits after either final campaign result. Migration preserves database and sidecar bytes, refuses active observers, never recursively changes ownership, and leaves Week 1 archives untouched. A 600-second interval leaves limited reboot tolerance; sufficiently long host, network, DNS, broker, or provenance-verification outages still fail continuity.
 - Revisit when: the bounded VPS recovery drill exposes a missing boot dependency or the observation store moves off-host.
+
+## 2026-08-12 — Close M5 with an explicit sustained-duration waiver
+
+- Decision: accept the shorter passing reboot/recovery validation and the healthy portion of the stopped follow-up campaign, and waive the remaining unobserved part of the 168-hour requirement for the current M5 operational closeout.
+- Context: Week 1 preserved a failed continuity gate. The later shorter validation passed, and the longer follow-up remained healthy until it was intentionally stopped before 168 hours.
+- Consequences: M5 operational work closes without rewriting Week 1 evidence or claiming that the full 168 hours passed. The unobserved duration remains an explicit evidence gap. The waiver grants no paper activation, broker-write, live, research-qualification, or strategy-promotion authority, and the restart-safe supervision controls remain available.
+- Revisit when: a later paper-operation decision depends on full-duration sustained evidence or new operational evidence invalidates the shorter validation.
+
+## 2026-08-13 — Campaign V1 binds one complete dataset set before execution
+
+- Decision: record the Alpaca adapter and IEX feed in dataset identity, require the reviewed SPY/QQQ `5m` universe, fully validate all four frozen period datasets, and bind all 60 Campaign V1 reservations in one transaction. Keep the sealed `base_code_commit` as the reviewed M5B foundation reference and block Campaign V1 execution until the actual checkout or build identity is separately reviewed and recorded.
+- Context: per-candidate binding allowed a run before the other three period datasets existed, the plan's provider label did not match the concrete manifest adapter name, manifests omitted the selected feed, mutable universe configuration could change later binding, and reports could present the old reviewed commit without proving which reconciled code executed them.
+- Consequences: missing, corrupt, substituted, repeated, partial, or changed binding fails before a candidate is claimed and cannot burn one ordinal. The sealed plan, costs, delays, dates, parameters, ordinals, policy fingerprint, authority flags, and foundation reference remain unchanged. If the execution source differs materially from the reviewed computational surface, a new campaign version is required.
+- Revisit when: a reviewed execution-source provenance contract can identify the running source without rewriting sealed Campaign V1 fields.
+
+## 2026-08-13 — Zero scheduled early closes satisfy complete coverage
+
+- Decision: interpret `early_close_coverage` as complete when a fully validated XNYS period reports any nonnegative integral scheduled-early-close count, including zero.
+- Context: Validation A, B, and C contain no scheduled early closes, while the reviewed policy rationale requires complete coverage for any reported early-close sessions. Requiring a positive count would make all nine validation base candidates fail regardless of data completeness.
+- Consequences: zero is a vacuous coverage pass only after calendar and dataset validation. Missing, malformed, fractional, or negative counts fail. The policy file, threshold, fingerprint, periods, and candidate identities remain unchanged.
+- Revisit when: a later policy version records expected and observed early-close sessions as separate metrics.

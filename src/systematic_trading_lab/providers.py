@@ -11,11 +11,13 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from .calendar import expected_bar_timestamps
 from .domain import AdjustmentPolicy, Symbol, Timeframe, TimestampRange
 
 
 class MarketDataProvider(Protocol):
     name: str
+    feed: str | None
     retrieval_timestamp: datetime
     adjustment_policy: AdjustmentPolicy
 
@@ -25,12 +27,14 @@ class MarketDataProvider(Protocol):
 
 
 HttpTransport = Callable[[Request], bytes]
+ALPACA_HISTORICAL_PROVIDER_NAME = "alpaca-historical-v2"
 
 
 class AlpacaHistoricalProvider:
     """Read-only adapter for Alpaca's historical stock-bars endpoint."""
 
-    name = "alpaca-historical-v2"
+    name = ALPACA_HISTORICAL_PROVIDER_NAME
+    feed: str | None = "iex"
     adjustment_policy = AdjustmentPolicy.PROVIDER_ADJUSTED_ALL
 
     def __init__(
@@ -55,19 +59,31 @@ class AlpacaHistoricalProvider:
     def fetch(
         self, symbols: Sequence[Symbol], timeframe: Timeframe, requested: TimestampRange
     ) -> Sequence[dict[str, Any]]:
-        if timeframe is not Timeframe.DAILY:
-            raise ValueError("Alpaca adapter currently supports daily bars only")
+        alpaca_timeframe = {
+            Timeframe.DAILY: "1Day",
+            Timeframe.ONE_MINUTE: "1Min",
+            Timeframe.FIVE_MINUTES: "5Min",
+        }.get(timeframe)
+        if alpaca_timeframe is None:
+            raise ValueError("Alpaca adapter supports only 1d, 1m, and 5m bars")
         if not symbols:
             raise ValueError("at least one symbol is required")
+        if timeframe is Timeframe.DAILY:
+            exclusive_end = requested.end + timedelta(days=1)
+        else:
+            expected = expected_bar_timestamps(requested.start, requested.end, timeframe)
+            if not expected:
+                raise ValueError("intraday request contains no XNYS regular-session bar opens")
+            exclusive_end = expected[-1] + timeframe.duration
         params = {
             "symbols": ",".join(symbol.value for symbol in symbols),
-            "timeframe": "1Day",
+            "timeframe": alpaca_timeframe,
             "start": requested.start.isoformat().replace("+00:00", "Z"),
-            # Alpaca's end boundary is exclusive. Extend it by one day so the
-            # repository's inclusive daily TimestampRange retains its final session.
-            "end": (requested.end + timedelta(days=1)).isoformat().replace("+00:00", "Z"),
+            # Alpaca's end boundary is exclusive. Extend it by one interval so the
+            # repository's inclusive bar-open range retains its final interval.
+            "end": exclusive_end.isoformat().replace("+00:00", "Z"),
             "adjustment": "all",
-            "feed": "iex",
+            "feed": self.feed,
             "sort": "asc",
         }
         headers = {"APCA-API-KEY-ID": self.api_key, "APCA-API-SECRET-KEY": self.secret_key}
@@ -90,7 +106,7 @@ class AlpacaHistoricalProvider:
                 for bar in bars:
                     if not isinstance(bar, dict):
                         raise RuntimeError("Alpaca historical data response has an invalid bar")
-                    records.append(_alpaca_bar_record(symbol, bar))
+                    records.append(_alpaca_bar_record(symbol, bar, timeframe))
             token_value = payload.get("next_page_token")
             token = token_value if isinstance(token_value, str) and token_value else None
             if token is None:
@@ -100,6 +116,7 @@ class AlpacaHistoricalProvider:
 
 class FixtureProvider:
     name = "deterministic-fixture-v1"
+    feed: str | None = None
     retrieval_timestamp = datetime(2025, 1, 10, tzinfo=UTC)
     adjustment_policy = AdjustmentPolicy.SYNTHETIC_NO_ACTIONS
 
@@ -132,12 +149,49 @@ class FixtureProvider:
         return records
 
 
-def _alpaca_bar_record(symbol: str, bar: dict[str, Any]) -> dict[str, Any]:
+class IntradayFixtureProvider:
+    """Deterministic SPY/QQQ regular-session bars for offline intraday checks."""
+
+    name = "deterministic-intraday-fixture-v1"
+    feed: str | None = None
+    retrieval_timestamp = datetime(2025, 11, 29, tzinfo=UTC)
+    adjustment_policy = AdjustmentPolicy.SYNTHETIC_NO_ACTIONS
+
+    def fetch(
+        self, symbols: Sequence[Symbol], timeframe: Timeframe, requested: TimestampRange
+    ) -> Sequence[dict[str, Any]]:
+        if not timeframe.is_supported_intraday:
+            raise ValueError("intraday fixture supports only 1m and 5m bars")
+        timestamps = expected_bar_timestamps(requested.start, requested.end, timeframe)
+        records: list[dict[str, Any]] = []
+        for symbol_index, symbol in enumerate(symbols):
+            base = Decimal(500 + symbol_index * 100)
+            for sequence, timestamp in enumerate(timestamps):
+                opening = base + Decimal(sequence) / Decimal("100")
+                records.append(
+                    {
+                        "symbol": symbol.value,
+                        "timestamp": timestamp.isoformat().replace("+00:00", "Z"),
+                        "open": str(opening),
+                        "high": str(opening + Decimal("0.10")),
+                        "low": str(opening - Decimal("0.10")),
+                        "close": str(opening + Decimal("0.02")),
+                        "volume": 10_000 + symbol_index * 1_000 + sequence,
+                    }
+                )
+        return records
+
+
+def _alpaca_bar_record(symbol: str, bar: dict[str, Any], timeframe: Timeframe) -> dict[str, Any]:
     required = {"t", "o", "h", "l", "c", "v"}
     if required - bar.keys():
         raise RuntimeError(f"Alpaca bar for {symbol} is missing required fields")
     timestamp = datetime.fromisoformat(str(bar["t"]).replace("Z", "+00:00"))
-    timestamp = datetime(timestamp.year, timestamp.month, timestamp.day, tzinfo=UTC)
+    if timestamp.tzinfo is None:
+        raise RuntimeError(f"Alpaca bar for {symbol} has a timezone-naive timestamp")
+    timestamp = timestamp.astimezone(UTC)
+    if timeframe is Timeframe.DAILY:
+        timestamp = datetime(timestamp.year, timestamp.month, timestamp.day, tzinfo=UTC)
     return {
         "symbol": symbol,
         "timestamp": timestamp.isoformat().replace("+00:00", "Z"),

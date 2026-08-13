@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import StrEnum
 from typing import Any
@@ -27,6 +27,22 @@ class Symbol:
 class Timeframe(StrEnum):
     DAILY = "1d"
     HOURLY = "1h"
+    ONE_MINUTE = "1m"
+    FIVE_MINUTES = "5m"
+
+    @property
+    def duration(self) -> timedelta:
+        try:
+            return {
+                Timeframe.ONE_MINUTE: timedelta(minutes=1),
+                Timeframe.FIVE_MINUTES: timedelta(minutes=5),
+            }[self]
+        except KeyError as error:
+            raise ValueError(f"timeframe has no supported intraday duration: {self}") from error
+
+    @property
+    def is_supported_intraday(self) -> bool:
+        return self in (Timeframe.ONE_MINUTE, Timeframe.FIVE_MINUTES)
 
 
 class TradingMode(StrEnum):
@@ -130,9 +146,11 @@ class DatasetManifest:
     schema_version: str
     adjustment_policy: str
     calendar_policy: str
+    timestamp_policy: str | None
     universe_id: str
     universe_fingerprint: str
     validation: ValidationResult
+    feed: str | None = None
     parent_dataset_id: str | None = None
 
     def __post_init__(self) -> None:

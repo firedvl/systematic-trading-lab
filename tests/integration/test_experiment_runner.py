@@ -1,3 +1,5 @@
+import json
+import sqlite3
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -7,13 +9,24 @@ from typing import cast
 import pytest
 
 from systematic_trading_lab.backtesting import CostModel
-from systematic_trading_lab.datasets import DatasetService, fixture_request, fixture_symbols
+from systematic_trading_lab.campaign_specs import (
+    build_planned_intraday_experiments,
+    load_intraday_research_campaign_plan,
+)
+from systematic_trading_lab.datasets import (
+    DatasetService,
+    fixture_request,
+    fixture_symbols,
+    intraday_fixture_request,
+    intraday_fixture_symbols,
+)
 from systematic_trading_lab.domain import OHLCVBar, Symbol, Timeframe, TimestampRange
 from systematic_trading_lab.experiment_runner import (
     SensitivityVariant,
     WalkForwardSplit,
     comparison_report,
     run_cataloged_experiment,
+    run_cataloged_intraday_experiment,
     run_experiment,
     run_holdout_experiment,
     run_sensitivity,
@@ -21,15 +34,21 @@ from systematic_trading_lab.experiment_runner import (
     walk_forward_specs,
 )
 from systematic_trading_lab.experiments import (
+    ExperimentError,
     ExperimentRegistry,
     ExperimentSpec,
     ExperimentSplit,
     HoldoutAccessError,
+    IntradayExperimentSpec,
 )
 from systematic_trading_lab.fingerprints import fingerprint
-from systematic_trading_lab.providers import FixtureProvider
+from systematic_trading_lab.intraday_qualification import (
+    evaluate_registered_intraday_qualification,
+    load_intraday_qualification_policy,
+)
+from systematic_trading_lab.providers import FixtureProvider, IntradayFixtureProvider
 from systematic_trading_lab.storage import StorageLayout
-from systematic_trading_lab.universe import load_research_universe
+from systematic_trading_lab.universe import load_intraday_universe, load_research_universe
 
 
 def bars() -> tuple[OHLCVBar, ...]:
@@ -222,6 +241,276 @@ def test_runner_records_completion_failure_and_blocks_holdout(tmp_path: Path) ->
             replace(spec(source, "cataloged-holdout"), split=ExperimentSplit.HOLDOUT),
             tmp_path / "reports",
         )
+
+
+def test_cataloged_experiment_runner_rejects_intraday_dataset(tmp_path: Path) -> None:
+    timeframe = Timeframe.FIVE_MINUTES
+    requested = intraday_fixture_request(timeframe)
+    universe = load_intraday_universe(timeframe)
+    datasets = DatasetService(StorageLayout(tmp_path / "data"))
+    imported = datasets.import_from(
+        IntradayFixtureProvider(),
+        intraday_fixture_symbols(),
+        timeframe,
+        requested,
+        universe,
+    )
+    registry = ExperimentRegistry(tmp_path / "experiments.sqlite3")
+    registry.create_campaign("intraday-campaign", "Must remain daily-only", 1)
+    intraday_spec = ExperimentSpec(
+        experiment_id="intraday-candidate",
+        campaign_id="intraday-campaign",
+        strategy_id="buy-and-hold",
+        strategy_version="1",
+        strategy_family="baseline",
+        code_commit="abc123",
+        dataset_id=imported.dataset_id,
+        dataset_fingerprint=imported.fingerprint,
+        universe_id=universe.universe_id,
+        universe_fingerprint=universe.universe_fingerprint,
+        parameters={},
+        cost_model_version="conservative-bps-v1",
+        execution_model_version="next-bar-v1",
+        split=ExperimentSplit.VALIDATION,
+        start_timestamp=requested.start,
+        end_timestamp=requested.end,
+        random_seed=0,
+        creation_reason="prove daily runner isolation",
+    )
+
+    with pytest.raises(ExperimentError, match="daily datasets only"):
+        run_cataloged_experiment(registry, datasets, intraday_spec, tmp_path / "reports")
+
+    assert registry.get(intraday_spec.experiment_id)["status"] == "failed"
+
+
+def test_cataloged_intraday_runner_records_deterministic_zero_trade_report_and_failures(
+    tmp_path: Path,
+) -> None:
+    timeframe = Timeframe.FIVE_MINUTES
+    requested = intraday_fixture_request(timeframe)
+    universe = load_intraday_universe(timeframe)
+    layout = StorageLayout(tmp_path / "data")
+    datasets = DatasetService(layout)
+    imported = datasets.import_from(
+        IntradayFixtureProvider(),
+        intraday_fixture_symbols(),
+        timeframe,
+        requested,
+        universe,
+    )
+    registry = ExperimentRegistry(layout.experiments)
+    registry.create_campaign("m5b", "M5B fixed baselines", 2)
+    base = IntradayExperimentSpec(
+        experiment_id="m5b-cash",
+        campaign_id="m5b",
+        search_budget=2,
+        candidate_ordinal=1,
+        strategy_id="intraday-cash",
+        strategy_version="1",
+        strategy_family="intraday-cash-baseline",
+        code_commit="abc123",
+        dataset_id=imported.dataset_id,
+        dataset_fingerprint=imported.fingerprint,
+        universe_id=universe.universe_id,
+        universe_fingerprint=universe.universe_fingerprint,
+        parameters={},
+        timeframe=timeframe.value,
+        session_policy_version="XNYS-regular-session-flat-v1",
+        bar_timestamp_semantics_version="bar-open-utc-v1",
+        session_return_policy_version="XNYS-session-close-equity-v1",
+        benchmark_policy_version="cash-and-continuous-underlying-v1",
+        cost_model_version="conservative-bps-v1",
+        slippage_bps=Decimal("5"),
+        commission_bps=Decimal("1"),
+        execution_model_version="deterministic-next-bar-open-v1",
+        earliest_fill_semantics="completed-bar-next-bar-open-v1",
+        execution_delay_bars=1,
+        split=ExperimentSplit.TRAINING,
+        start_timestamp=requested.start,
+        end_timestamp=requested.end,
+        random_seed=0,
+        creation_reason="fixed cash baseline",
+    )
+
+    result = run_cataloged_intraday_experiment(registry, datasets, base, layout.reports)
+    record = registry.get(base.experiment_id)
+    stored_metrics = cast(dict[str, object], record["metrics_json"])
+    report_path = Path(cast(list[str], record["artifact_locations_json"])[0])
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+
+    assert result.trades == ()
+    assert record["status"] == "completed"
+    assert record["execution_provenance"] == "controlled-run"
+    assert stored_metrics["fill_count"] == 0
+    assert report["schema_version"] == "intraday-backtest-report-v1"
+    assert report["provenance"]["timeframe"] == "5m"
+    assert report["provenance"]["execution_delay_bars"] == 1
+    assert report["configured_fill_delay_bars"] == 1
+    assert report["report_fingerprint"] == cast(list[str], record["artifact_hashes_json"])[0]
+    assert not layout.execution.exists()
+
+    broken = replace(
+        base,
+        experiment_id="m5b-broken",
+        candidate_ordinal=2,
+        execution_model_version="unsupported-execution-v9",
+    )
+    with pytest.raises(ExperimentError, match="unsupported intraday execution model"):
+        run_cataloged_intraday_experiment(registry, datasets, broken, layout.reports)
+    failed = registry.get(broken.experiment_id)
+    assert failed["status"] == "failed"
+    assert "unsupported intraday execution model" in str(failed["failure_info"])
+    assert not layout.execution.exists()
+
+    evidence = evaluate_registered_intraday_qualification(
+        registry,
+        load_intraday_qualification_policy(
+            Path("config/research/intraday-qualification-policy-v1.json")
+        ),
+        base.experiment_id,
+        {},
+        {},
+    )
+    campaign_sources = cast(list[dict[str, object]], evidence["campaign_sources"])
+    search_accounting = cast(dict[str, object], evidence["search_accounting"])
+    assert evidence["evidence_binding"] == "controlled-registry"
+    assert evidence["state"] == "research-gates-failed"
+    assert search_accounting["search_budget_accounted"] is True
+    assert any(
+        source["experiment_id"] == broken.experiment_id and source["status"] == "failed"
+        for source in campaign_sources
+    )
+
+    failed_stress_evidence = evaluate_registered_intraday_qualification(
+        registry,
+        load_intraday_qualification_policy(
+            Path("config/research/intraday-qualification-policy-v1.json")
+        ),
+        base.experiment_id,
+        {"increased-cost": broken.experiment_id},
+        {},
+    )
+    failed_stress_source = next(
+        source
+        for source in cast(list[dict[str, object]], failed_stress_evidence["sources"])
+        if source["role"] == "higher-cost" and source["name"] == "increased-cost"
+    )
+    assert failed_stress_source["status"] == "failed"
+    assert failed_stress_evidence["state"] == "research-gates-failed"
+
+    reviewed_policy = load_intraday_qualification_policy(
+        Path("config/research/intraday-qualification-policy-v1.json")
+    )
+    with pytest.raises(ValueError, match="differs from the committed reviewed policy"):
+        evaluate_registered_intraday_qualification(
+            registry,
+            replace(reviewed_policy, fingerprint="unreviewed"),
+            base.experiment_id,
+            {},
+            {},
+        )
+
+    daily = datasets.import_from(
+        FixtureProvider(),
+        fixture_symbols(),
+        Timeframe.DAILY,
+        fixture_request(),
+        load_research_universe(),
+    )
+    daily_manifest = datasets.describe(daily.dataset_id)
+    registry.create_campaign("m5b-daily-block", "Reject daily data", 1)
+    wrong_timeframe = replace(
+        base,
+        experiment_id="m5b-daily-data",
+        campaign_id="m5b-daily-block",
+        search_budget=1,
+        candidate_ordinal=1,
+        dataset_id=daily.dataset_id,
+        dataset_fingerprint=daily.fingerprint,
+        universe_id=cast(str, daily_manifest["universe_id"]),
+        universe_fingerprint=cast(str, daily_manifest["universe_fingerprint"]),
+    )
+    with pytest.raises(ExperimentError, match="timeframe does not match"):
+        run_cataloged_intraday_experiment(registry, datasets, wrong_timeframe, layout.reports)
+    assert registry.get(wrong_timeframe.experiment_id)["status"] == "failed"
+
+
+def test_planned_intraday_binding_is_atomic_and_campaign_execution_stays_blocked(
+    tmp_path: Path,
+) -> None:
+    layout = StorageLayout(tmp_path)
+    registry = ExperimentRegistry(layout.experiments)
+    datasets = DatasetService(layout)
+    plan = load_intraday_research_campaign_plan(Path("config/research/intraday-campaign-v1.json"))
+    registry.create_planned_intraday_campaign(plan.payload)
+    manifests: dict[str, dict[str, object]] = {}
+    for period in plan.periods:
+        start = period.start_timestamp.isoformat().replace("+00:00", "Z")
+        end = period.end_timestamp.isoformat().replace("+00:00", "Z")
+        manifests[period.role] = {
+            "identity": {
+                "dataset_id": f"planned-{period.role}",
+                "fingerprint": f"fingerprint-{period.role}",
+            },
+            "provider": "alpaca-historical-v2",
+            "feed": "iex",
+            "timeframe": "5m",
+            "adjustment_policy": "provider-adjusted-all-v1",
+            "calendar_policy": "XNYS-regular-session-bars-v1",
+            "timestamp_policy": "bar-open-utc-v1",
+            "requested_range": {"start": start, "end": end},
+            "actual_range": {"start": start, "end": end},
+            "symbols": [{"value": "SPY"}, {"value": "QQQ"}],
+            "universe_id": "liquid-etfs-intraday-5m-v1",
+            "universe_fingerprint": (
+                "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9"
+            ),
+        }
+    planned_specs = build_planned_intraday_experiments(plan, manifests)
+    specs_by_id = {planned.experiment_id: planned for planned in planned_specs}
+    with sqlite3.connect(layout.experiments) as connection:
+        connection.execute(
+            """
+            CREATE TRIGGER reject_final_intraday_binding
+            BEFORE UPDATE OF spec_json ON experiments
+            WHEN OLD.experiment_id =
+                'intraday-research-v1-moving-average-trend-validation-c-plus-2-bars'
+            BEGIN SELECT RAISE(ABORT, 'forced atomic binding failure'); END
+            """
+        )
+    with pytest.raises(sqlite3.IntegrityError, match="forced atomic binding failure"):
+        registry.bind_planned_intraday_experiments(planned_specs)
+    assert {
+        record["spec_json"]["schema_version"]
+        for record in registry.list(plan.campaign_id)
+        if isinstance(record["spec_json"], dict)
+    } == {"intraday-candidate-reservation-v1"}
+    with sqlite3.connect(layout.experiments) as connection:
+        connection.execute("DROP TRIGGER reject_final_intraday_binding")
+    registry.bind_planned_intraday_experiments(planned_specs)
+    spec = specs_by_id["intraday-research-v1-cash-training-base"]
+    assert {
+        record["spec_json"]["schema_version"]
+        for record in registry.list(plan.campaign_id)
+        if isinstance(record["spec_json"], dict)
+    } == {"intraday-experiment-v1"}
+    with pytest.raises(ExperimentError, match="stored intraday reservations differ"):
+        registry.bind_planned_intraday_experiments(planned_specs)
+    with pytest.raises(ExperimentError, match="actual execution source"):
+        run_cataloged_intraday_experiment(
+            registry,
+            datasets,
+            spec,
+            layout.reports,
+            cost_model=CostModel(
+                spec.cost_model_version,
+                spec.slippage_bps,
+                spec.commission_bps,
+            ),
+            pre_registered=True,
+        )
+    assert registry.get(spec.experiment_id)["status"] == "pending"
 
 
 def test_holdout_runner_consumes_authorization_before_exact_range_read(

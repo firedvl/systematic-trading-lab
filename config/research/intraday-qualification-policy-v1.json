@@ -1,0 +1,30 @@
+{
+  "schema_version": "intraday-qualification-policy-v1",
+  "id": "intraday-qualification-policy-v1",
+  "status": "reviewed-research-parameters",
+  "purpose": "Initial reviewed engineering and research parameters for intraday replay diagnostics. Passing them is not financial validation, a profitability claim, or authority for holdout, paper, or live trading.",
+  "required_cost_stress_names": ["increased-cost", "harsher-cost"],
+  "required_delay_stress_names": ["plus-1-bar", "plus-2-bars"],
+  "gates": [
+    {"name": "controlled registry evidence", "metric": "registry_evidence_bound", "comparison": "==", "threshold": "1", "rationale": "Qualification evidence must match completed controlled-run registry records and stored report artifacts."},
+    {"name": "fixed search budget accounted", "metric": "search_budget_accounted", "comparison": "==", "threshold": "1", "rationale": "Every reserved candidate ordinal and status in the fixed campaign budget must remain visible."},
+    {"name": "base result completed", "metric": "base_report_completed", "comparison": "==", "threshold": "1", "rationale": "A missing, failed, or rejected base replay is visible evidence and cannot pass."},
+    {"name": "minimum completed round trips", "metric": "completed_round_trips", "comparison": ">=", "threshold": "20", "rationale": "Initial activity floor for a reviewed replay sample."},
+    {"name": "minimum sessions", "metric": "session_count", "comparison": ">=", "threshold": "20", "rationale": "Initial session-coverage floor."},
+    {"name": "minimum active sessions", "metric": "active_session_count", "comparison": ">=", "threshold": "5", "rationale": "Require activity across multiple sessions."},
+    {"name": "minimum active session percentage", "metric": "active_session_percentage", "comparison": ">=", "threshold": "0.25", "rationale": "Avoid interpreting a nearly inactive replay as representative."},
+    {"name": "maximum drawdown", "metric": "max_drawdown", "comparison": "<=", "threshold": "0.20", "rationale": "Initial engineering drawdown bound; not a return forecast."},
+    {"name": "maximum best trade concentration", "metric": "best_trade_profit_share", "comparison": "<=", "threshold": "0.50", "rationale": "Make dependence on one positive trade visible."},
+    {"name": "maximum best session concentration", "metric": "best_session_profit_share", "comparison": "<=", "threshold": "0.50", "rationale": "Make dependence on one positive session visible."},
+    {"name": "maximum best N trades concentration", "metric": "best_n_trades_profit_share", "comparison": "<=", "threshold": "0.50", "rationale": "Make dependence on a small set of positive trades visible."},
+    {"name": "maximum symbol concentration", "metric": "symbol_profit_concentration", "comparison": "<=", "threshold": "0.75", "rationale": "Initial two-symbol concentration bound; not a universal diversification standard."},
+    {"name": "no overnight positions", "metric": "no_overnight_positions", "comparison": "==", "threshold": "1", "rationale": "Intraday replay must remain flat across sessions."},
+    {"name": "no outside session trades", "metric": "no_outside_session_trades", "comparison": "==", "threshold": "1", "rationale": "Trades must remain inside the declared regular session."},
+    {"name": "early close coverage", "metric": "early_close_coverage", "comparison": ">=", "threshold": "1", "rationale": "Require complete coverage for any reported early-close sessions."},
+    {"name": "configuration identity", "metric": "configuration_identity", "comparison": "==", "threshold": "1", "rationale": "Bind all evidence to the reviewed intraday configuration."},
+    {"name": "cost stress completed", "metric": "cost_stress_completed", "comparison": "==", "threshold": "1", "rationale": "Required higher-cost replay evidence must complete."},
+    {"name": "cost stress retention", "metric": "cost_stress_return_retention", "comparison": ">=", "threshold": "0.20", "rationale": "Flag a positive base whose return largely disappears under the required higher costs."},
+    {"name": "delay stress completed", "metric": "delay_stress_completed", "comparison": "==", "threshold": "1", "rationale": "Required whole-bar-delay replay evidence must complete."},
+    {"name": "delay stress retention", "metric": "delay_stress_return_retention", "comparison": ">=", "threshold": "0.20", "rationale": "Flag a positive base whose return largely disappears under the required whole-bar delays."}
+  ]
+}
