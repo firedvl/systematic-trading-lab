@@ -1,0 +1,119 @@
+{
+  "schema_version": "intraday-known-exposures-v1",
+  "audit_scope": "Repository-visible intraday, daily, protected-holdout, and paper-account evidence across current source, Git history, and GitHub issue and pull-request discussion at the audited foundation commit; no market data was fetched and ignored runtime stores were not inspected.",
+  "audited_foundation_commit": "d03be5eaa1e5d2d360424a6c0d06c1ce0bc6a723",
+  "universal_freshness_limit": "Software can reject known overlap but cannot prove universal freshness across ignored local state, CI artifacts, discussions, other clones, provider dashboards, or human memory.",
+  "entries": [
+    {
+      "id": "daily-alpaca-baselines-2020-07-27-through-2026-07-31",
+      "source": "docs/research-campaigns/alpaca-baselines-20260802-v2.md",
+      "start": "2020-07-27",
+      "end": "2026-07-31",
+      "symbols": ["SPY", "QQQ", "IWM", "TLT", "GLD"],
+      "timeframe": "1d",
+      "class": "real-market-data-acquired-no-result",
+      "disqualifies_v3_validation": true,
+      "evidence_rationale": "The validated real daily dataset was acquired for this full envelope. This entry records acquisition separately from observed daily strategy results."
+    },
+    {
+      "id": "daily-research-results-2020-07-27-through-2025-12-31",
+      "source": "docs/research-campaigns/alpaca-baselines-20260802-v2.md and later daily campaign documents",
+      "start": "2020-07-27",
+      "end": "2025-12-31",
+      "symbols": ["SPY", "QQQ", "IWM", "TLT", "GLD"],
+      "timeframe": "1d",
+      "class": "real-market-result-observed",
+      "disqualifies_v3_validation": true,
+      "evidence_rationale": "Committed training and validation documents report real daily strategy results across the 2020-2025 research spans. The envelope is conservative because individual campaigns used narrower folds within it."
+    },
+    {
+      "id": "strategic-allocation-protected-holdout-2026",
+      "source": "CURRENT_STATE.md and DECISIONS.md history for the strategic-allocation holdout",
+      "start": "2026-01-02",
+      "end": "2026-07-31",
+      "symbols": ["SPY", "QQQ", "IWM", "TLT", "GLD"],
+      "timeframe": "1d",
+      "class": "real-market-result-observed",
+      "disqualifies_v3_validation": true,
+      "evidence_rationale": "The protected 2026 strategic-allocation holdout was completed and later reviewed. Its exact subrange is not recoverable from committed evidence, so the full acquired 2026 dataset segment is conservatively treated as observed."
+    },
+    {
+      "id": "intraday-v1-training-acquisition",
+      "source": "docs/research-campaigns/intraday-campaign-v1.md",
+      "start": "2025-07-01",
+      "end": "2025-12-31",
+      "symbols": ["SPY", "QQQ"],
+      "timeframe": "5m",
+      "class": "real-market-data-acquired-no-result",
+      "disqualifies_v3_validation": true,
+      "evidence_rationale": "V1 acquired real 5m training data before import rejection. No candidate or result was published, but acquisition is disqualifying."
+    },
+    {
+      "id": "intraday-v2-real-market-results",
+      "source": "docs/research-campaigns/intraday-campaign-v2-postmortem.md",
+      "start": "2025-07-01",
+      "end": "2026-06-30",
+      "symbols": ["SPY", "QQQ"],
+      "timeframe": "5m",
+      "class": "real-market-result-observed",
+      "disqualifies_v3_validation": true,
+      "evidence_rationale": "V2 ran 60 candidates against this real-market window; results were observed and are disqualifying."
+    },
+    {
+      "id": "paper-account-observations-2026-08-04-through-2026-08-11",
+      "source": "CURRENT_STATE.md history and docs/operations.md Week 1 closeout",
+      "start": "2026-08-04",
+      "end": "2026-08-11",
+      "symbols": ["SPY", "QQQ", "IWM", "GLD"],
+      "timeframe": "paper-account-observation",
+      "class": "real-market-data-acquired-no-result",
+      "disqualifies_v3_validation": true,
+      "evidence_rationale": "Committed history records actual paper holdings, account state, fills, and a campaign ending 2026-08-11 with 1,008 healthy broker-account observations. This is not a V3 strategy result, but the real account and market-linked evidence is conservatively disqualifying."
+    },
+    {
+      "id": "intraday-deterministic-fixtures",
+      "source": "tests/unit/test_intraday_v3.py",
+      "start": "2025-11-26",
+      "end": "2026-01-05",
+      "symbols": ["SPY", "QQQ"],
+      "timeframe": "5m",
+      "class": "synthetic-fixture",
+      "disqualifies_v3_validation": false,
+      "evidence_rationale": "Fixture dates include 2025-11-26, 2025-11-28, and synthetic 2026-01-05. They are synthetic and do not independently disqualify validation."
+    },
+    {
+      "id": "intraday-doc-and-v3-unit-date-references",
+      "source": "docs/intraday-research.md and tests/unit/test_intraday_v3.py",
+      "start": "2025-01-02",
+      "end": "2026-08-07",
+      "symbols": ["SPY", "QQQ"],
+      "timeframe": "5m",
+      "class": "date-only-reference",
+      "disqualifies_v3_validation": false,
+      "evidence_rationale": "Documentation examples from 2025-01-02 through 2025-03-31 and V3 July/August 2026 unit-test examples are date references, not proof of data, results, or freshness."
+    },
+    {
+      "id": "unknown-dated-iex-quote-runtime-evidence",
+      "source": "ignored execution state and external provider records for production IEX quote reads",
+      "start": null,
+      "end": null,
+      "symbols": ["SPY", "QQQ", "IWM", "TLT", "GLD"],
+      "timeframe": "quote",
+      "class": "unknown-or-external",
+      "disqualifies_v3_validation": false,
+      "evidence_rationale": "Source and policy prove IEX quote-read capability, but committed evidence does not establish the complete dated set of executed quote reads. This remains unresolved and cannot certify freshness."
+    },
+    {
+      "id": "unknown-local-and-external-state",
+      "source": "ignored local state, CI artifacts, unavailable or later issue and PR discussion, other clones, provider dashboards, and human memory",
+      "start": null,
+      "end": null,
+      "symbols": [],
+      "timeframe": "unknown",
+      "class": "unknown-or-external",
+      "disqualifies_v3_validation": false,
+      "evidence_rationale": "These sources fall outside the audited repository and accessible discussion evidence. Their ranges are unknown and must remain unresolved rather than silently fresh."
+    }
+  ],
+  "inventory_fingerprint": "0666996faabb50abce0b8959c49980e36a655ea290618bc1463342d2ab5122f9"
+}

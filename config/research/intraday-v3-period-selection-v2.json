@@ -1,0 +1,101 @@
+{
+  "schema_version": "intraday-v3-period-selection-v2",
+  "selection_date": "2026-08-13",
+  "inventory_fingerprint": "0666996faabb50abce0b8959c49980e36a655ea290618bc1463342d2ab5122f9",
+  "freshness_contract": {
+    "universal_freshness_proven": false,
+    "prospective_market_data_freshness": false,
+    "prospective_market_data_freshness_eligible": true,
+    "basis": "main-attested-design-before-first-market-bar-v1",
+    "selection_date_is_authoritative": false,
+    "trusted_cutoff_source": "verified-main-seal-tlog-timestamp",
+    "known_dated_overlap_absent": true,
+    "immutable_design_required_before_selected_period_data_observation": true,
+    "future_data_acquisition_may_change_design": false,
+    "trusted_main_attestation_required_before_runtime_sealing": true
+  },
+  "periods": [
+    {
+      "role": "training",
+      "start": "2025-07-01",
+      "end": "2026-06-30",
+      "start_timestamp": "2025-07-01T13:30:00Z",
+      "end_timestamp": "2026-06-30T19:55:00Z",
+      "symbols": [
+        "SPY",
+        "QQQ"
+      ],
+      "timeframe": "5m",
+      "session_count": 251,
+      "per_symbol_bar_opens": 19470,
+      "two_symbol_bar_opens": 38940,
+      "approved_for_v3_validation": false,
+      "prospective_freshness_eligible": false,
+      "exposed_training": true,
+      "review_status": "explicitly-exposed-training-only",
+      "selection_rationale": "Reuse the fully exposed V2 window for training only. Its 251 sessions exceed the 20-session coverage floor without claiming validation freshness."
+    },
+    {
+      "role": "validation-a",
+      "start": "2026-10-01",
+      "end": "2026-12-03",
+      "start_timestamp": "2026-10-01T13:30:00Z",
+      "end_timestamp": "2026-12-03T20:55:00Z",
+      "symbols": [
+        "SPY",
+        "QQQ"
+      ],
+      "timeframe": "5m",
+      "session_count": 45,
+      "per_symbol_bar_opens": 3474,
+      "two_symbol_bar_opens": 6948,
+      "approved_for_v3_validation": false,
+      "prospective_freshness_eligible": true,
+      "exposed_training": false,
+      "review_status": "prospective-freshness-eligible-awaiting-pre-bar-main-attestation",
+      "selection_rationale": "Start on the first XNYS session of October, leaving about seven weeks for review, merge, and main attestation. No bars or returns from the period existed or were inspected when selected."
+    },
+    {
+      "role": "validation-b",
+      "start": "2026-12-04",
+      "end": "2027-02-09",
+      "start_timestamp": "2026-12-04T14:30:00Z",
+      "end_timestamp": "2027-02-09T20:55:00Z",
+      "symbols": [
+        "SPY",
+        "QQQ"
+      ],
+      "timeframe": "5m",
+      "session_count": 45,
+      "per_symbol_bar_opens": 3474,
+      "two_symbol_bar_opens": 6948,
+      "approved_for_v3_validation": false,
+      "prospective_freshness_eligible": true,
+      "exposed_training": false,
+      "review_status": "prospective-freshness-eligible-awaiting-pre-bar-main-attestation",
+      "selection_rationale": "Use the next 45 XNYS sessions after Validation A. No bars or returns from the period existed or were inspected when selected."
+    },
+    {
+      "role": "validation-c",
+      "start": "2027-02-10",
+      "end": "2027-04-15",
+      "start_timestamp": "2027-02-10T14:30:00Z",
+      "end_timestamp": "2027-04-15T19:55:00Z",
+      "symbols": [
+        "SPY",
+        "QQQ"
+      ],
+      "timeframe": "5m",
+      "session_count": 45,
+      "per_symbol_bar_opens": 3510,
+      "two_symbol_bar_opens": 7020,
+      "approved_for_v3_validation": false,
+      "prospective_freshness_eligible": true,
+      "exposed_training": false,
+      "review_status": "prospective-freshness-eligible-awaiting-pre-bar-main-attestation",
+      "selection_rationale": "Use the next 45 XNYS sessions after Validation B. No bars or returns from the period existed or were inspected when selected."
+    }
+  ],
+  "status": "prospective-freshness-eligible-awaiting-pre-bar-main-attestation",
+  "selection_fingerprint": "c2718c3871bb95e22d4647e119f6bfb54cd51ec7b1b2cc472cfa1a7dfbcfc5d0"
+}

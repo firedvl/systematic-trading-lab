@@ -1,0 +1,73 @@
+{
+    "schema_version": "intraday-v3-qualification-binding-v1",
+    "id": "intraday-v3-qualification-binding-v1",
+    "status": "reviewed-research-binding",
+    "purpose": "Bind unchanged intraday research gates to V3 realistic-cost reports. Passing is not financial validation or authority for holdout, paper, broker, or live trading.",
+    "threshold_policy_id": "intraday-qualification-policy-v1",
+    "threshold_policy_fingerprint": "42481069d9d0295d40ff1ccc6c956632d852f58522040d01024d7798172fe127",
+    "campaign_id": "intraday-research-v3",
+    "experiment_schema": "intraday-experiment-v2",
+    "report_schema": "intraday-backtest-report-v2",
+    "evidence_schema": "intraday-v3-qualification-evidence-v1",
+    "metric_source": "realistic.metrics",
+    "zero_cost_is_diagnostic_only": true,
+    "required_variants": {
+        "base": {
+            "cost_model_version": "conservative-bps-v1",
+            "slippage_bps": "5",
+            "commission_bps": "1",
+            "execution_delay_bars": 1
+        },
+        "increased-cost": {
+            "cost_model_version": "intraday-increased-cost-bps-v1",
+            "slippage_bps": "10",
+            "commission_bps": "2",
+            "execution_delay_bars": 1
+        },
+        "harsher-cost": {
+            "cost_model_version": "intraday-harsher-cost-bps-v1",
+            "slippage_bps": "20",
+            "commission_bps": "5",
+            "execution_delay_bars": 1
+        },
+        "plus-1-bar": {
+            "cost_model_version": "conservative-bps-v1",
+            "slippage_bps": "5",
+            "commission_bps": "1",
+            "execution_delay_bars": 2
+        },
+        "plus-2-bars": {
+            "cost_model_version": "conservative-bps-v1",
+            "slippage_bps": "5",
+            "commission_bps": "1",
+            "execution_delay_bars": 3
+        }
+    },
+    "execution_contract": {
+        "model": "state-transition-delayed-fifo-v1",
+        "earliest_fill_semantics": "completed-bar-nth-later-open-v1",
+        "queue_policy": "fifo-no-supersession-session-close-override-v1",
+        "session_policy": "XNYS-regular-session-state-transition-flat-v2",
+        "periodic_rebalance_policy": "none-v1",
+        "diagnostic_policy": "paired-exact-zero-cost-counterfactual-v1"
+    },
+    "fixed_candidate_count": 60,
+    "required_report_integrity_fingerprints": [
+        "configuration_provenance_fingerprint",
+        "input_bars_fingerprint",
+        "realistic_result_artifact_fingerprint",
+        "zero_cost_result_artifact_fingerprint",
+        "diagnostic_replay_fingerprint",
+        "semantic_trace_fingerprint",
+        "evidence_integrity_fingerprint",
+        "report_fingerprint"
+    ],
+    "authorities": {
+        "research_qualification": false,
+        "protected_holdout": false,
+        "paper_execution": false,
+        "broker_writes": false,
+        "live_execution": false
+    },
+    "binding_fingerprint": "11ce501cafc2ad0078d5750e185470dccbbf17a8b01b4ecfd95159c615b45cc3"
+}

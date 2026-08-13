@@ -55,5 +55,9 @@ overnight positions remain mandatory.
 
 V3 pairs the realistic replay with an exact zero-cost replay under the same state-decision trace,
 delay, and close policy. `intraday-backtest-report-v2` fingerprints both but marks the result as a
-non-authoritative diagnostic. The existing V1 qualification evaluator rejects it. See
-[the V3 draft](research-campaigns/intraday-campaign-v3-draft.md).
+non-authoritative diagnostic. The existing V1 qualification evaluator rejects it. The separate V3
+binding requires the exact report pair but exposes only `realistic.metrics` to unchanged research
+gates; zero-cost evidence cannot substitute for return or create authority. No V3 plan is sealed, no
+controlled report exists, and no V3 execution path invokes that binding. The caller-configured V1
+runner emits only V1 specifications and reports, which cannot become V3 evidence. See [the V3
+draft](research-campaigns/intraday-campaign-v3-draft.md).

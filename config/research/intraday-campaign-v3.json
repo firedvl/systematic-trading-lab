@@ -1,0 +1,341 @@
+{
+  "schema_version": "intraday-research-campaign-plan-v2",
+  "campaign_id": "intraday-research-v3",
+  "name": "Prospectively sealed V3 intraday research campaign",
+  "status": "preregistered",
+  "purpose": "Preregister one fixed research-only V3 matrix whose validation periods remain ineligible for execution until the verified pre-bar main seal establishes prospective freshness. This is not financial validation, a profitability claim, or authority for holdout, paper, broker, or live trading.",
+  "source_foundation_commit": "d03be5eaa1e5d2d360424a6c0d06c1ce0bc6a723",
+  "search_budget": 60,
+  "data_contract": {
+    "provider": "alpaca",
+    "feed": "iex",
+    "adjustment": "all",
+    "timeframe": "5m",
+    "symbols": [
+      "SPY",
+      "QQQ"
+    ],
+    "universe_id": "liquid-etfs-intraday-5m-v1",
+    "universe_fingerprint": "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9"
+  },
+  "execution_contract": {
+    "experiment_schema": "intraday-experiment-v2",
+    "report_schema": "intraday-backtest-report-v2",
+    "execution_model": "state-transition-delayed-fifo-v1",
+    "earliest_fill_semantics": "completed-bar-nth-later-open-v1",
+    "queue_policy": "fifo-no-supersession-session-close-override-v1",
+    "session_policy": "XNYS-regular-session-state-transition-flat-v2",
+    "bar_timestamp_semantics": "bar-open-utc-v1",
+    "session_return_policy": "XNYS-session-close-equity-v1",
+    "benchmark_policy": "cash-and-continuous-underlying-v1",
+    "periodic_rebalance_policy": "none-v1",
+    "diagnostic_policy": "paired-exact-zero-cost-counterfactual-v1",
+    "authority_policy": "research-diagnostic-no-authority-v1",
+    "initial_cash": "100000",
+    "random_seed": 0
+  },
+  "prospective_freshness": {
+    "inventory_fingerprint": "0666996faabb50abce0b8959c49980e36a655ea290618bc1463342d2ab5122f9",
+    "period_selection_fingerprint": "c2718c3871bb95e22d4647e119f6bfb54cd51ec7b1b2cc472cfa1a7dfbcfc5d0",
+    "universal_freshness_proven": false,
+    "prospective_market_data_freshness": false,
+    "prospective_market_data_freshness_eligible": true,
+    "basis": "main-attested-design-before-first-market-bar-v1",
+    "selection_date_is_authoritative": false,
+    "trusted_cutoff_source": "verified-main-seal-tlog-timestamp"
+  },
+  "trusted_time_policy": {
+    "seal_schema": "intraday-v3-preregistration-seal-v1",
+    "source_ref": "refs/heads/main",
+    "signer_workflow": ".github/workflows/build-provenance.yml",
+    "first_validation_bar": "2026-10-01T13:30:00Z",
+    "effective_selection_cutoff": "verified-sigstore-tlog-timestamp",
+    "seal_required_before_runtime_campaign_creation": true
+  },
+  "qualification_binding": {
+    "id": "intraday-v3-qualification-binding-v1",
+    "fingerprint": "11ce501cafc2ad0078d5750e185470dccbbf17a8b01b4ecfd95159c615b45cc3",
+    "metric_source": "realistic.metrics"
+  },
+  "periods": [
+    {
+      "role": "training",
+      "split": "training",
+      "new_york_session_start": "2025-07-01",
+      "new_york_session_end": "2026-06-30",
+      "start_timestamp": "2025-07-01T13:30:00Z",
+      "end_timestamp": "2026-06-30T19:55:00Z",
+      "session_count": 251,
+      "per_symbol_bar_opens": 19470
+    },
+    {
+      "role": "validation-a",
+      "split": "validation",
+      "new_york_session_start": "2026-10-01",
+      "new_york_session_end": "2026-12-03",
+      "start_timestamp": "2026-10-01T13:30:00Z",
+      "end_timestamp": "2026-12-03T20:55:00Z",
+      "session_count": 45,
+      "per_symbol_bar_opens": 3474
+    },
+    {
+      "role": "validation-b",
+      "split": "validation",
+      "new_york_session_start": "2026-12-04",
+      "new_york_session_end": "2027-02-09",
+      "start_timestamp": "2026-12-04T14:30:00Z",
+      "end_timestamp": "2027-02-09T20:55:00Z",
+      "session_count": 45,
+      "per_symbol_bar_opens": 3474
+    },
+    {
+      "role": "validation-c",
+      "split": "validation",
+      "new_york_session_start": "2027-02-10",
+      "new_york_session_end": "2027-04-15",
+      "start_timestamp": "2027-02-10T14:30:00Z",
+      "end_timestamp": "2027-04-15T19:55:00Z",
+      "session_count": 45,
+      "per_symbol_bar_opens": 3510
+    }
+  ],
+  "strategies": [
+    {
+      "strategy_id": "intraday-event-driven-ma-trend",
+      "strategy_version": "1",
+      "strategy_family": "intraday-trend",
+      "parameters": {
+        "window": 12
+      }
+    },
+    {
+      "strategy_id": "intraday-30-minute-momentum",
+      "strategy_version": "1",
+      "strategy_family": "intraday-directional-momentum",
+      "parameters": {
+        "lookback": 6
+      }
+    },
+    {
+      "strategy_id": "intraday-30-minute-opening-range-breakout",
+      "strategy_version": "1",
+      "strategy_family": "intraday-opening-range-breakout",
+      "parameters": {
+        "opening_range_bars": 6
+      }
+    }
+  ],
+  "variants": [
+    {
+      "role": "base",
+      "cost_model_version": "conservative-bps-v1",
+      "slippage_bps": "5",
+      "commission_bps": "1",
+      "execution_delay_bars": 1
+    },
+    {
+      "role": "increased-cost",
+      "cost_model_version": "intraday-increased-cost-bps-v1",
+      "slippage_bps": "10",
+      "commission_bps": "2",
+      "execution_delay_bars": 1
+    },
+    {
+      "role": "harsher-cost",
+      "cost_model_version": "intraday-harsher-cost-bps-v1",
+      "slippage_bps": "20",
+      "commission_bps": "5",
+      "execution_delay_bars": 1
+    },
+    {
+      "role": "plus-1-bar",
+      "cost_model_version": "conservative-bps-v1",
+      "slippage_bps": "5",
+      "commission_bps": "1",
+      "execution_delay_bars": 2
+    },
+    {
+      "role": "plus-2-bars",
+      "cost_model_version": "conservative-bps-v1",
+      "slippage_bps": "5",
+      "commission_bps": "1",
+      "execution_delay_bars": 3
+    }
+  ],
+  "qualification_groups": [
+    {
+      "strategy_id": "intraday-event-driven-ma-trend",
+      "period_role": "training",
+      "roles": {
+        "base": "intraday-research-v3-event-driven-ma-trend-training-base",
+        "increased-cost": "intraday-research-v3-event-driven-ma-trend-training-increased-cost",
+        "harsher-cost": "intraday-research-v3-event-driven-ma-trend-training-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-event-driven-ma-trend-training-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-event-driven-ma-trend-training-plus-2-bars"
+      }
+    },
+    {
+      "strategy_id": "intraday-event-driven-ma-trend",
+      "period_role": "validation-a",
+      "roles": {
+        "base": "intraday-research-v3-event-driven-ma-trend-validation-a-base",
+        "increased-cost": "intraday-research-v3-event-driven-ma-trend-validation-a-increased-cost",
+        "harsher-cost": "intraday-research-v3-event-driven-ma-trend-validation-a-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-event-driven-ma-trend-validation-a-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-event-driven-ma-trend-validation-a-plus-2-bars"
+      }
+    },
+    {
+      "strategy_id": "intraday-event-driven-ma-trend",
+      "period_role": "validation-b",
+      "roles": {
+        "base": "intraday-research-v3-event-driven-ma-trend-validation-b-base",
+        "increased-cost": "intraday-research-v3-event-driven-ma-trend-validation-b-increased-cost",
+        "harsher-cost": "intraday-research-v3-event-driven-ma-trend-validation-b-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-event-driven-ma-trend-validation-b-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-event-driven-ma-trend-validation-b-plus-2-bars"
+      }
+    },
+    {
+      "strategy_id": "intraday-event-driven-ma-trend",
+      "period_role": "validation-c",
+      "roles": {
+        "base": "intraday-research-v3-event-driven-ma-trend-validation-c-base",
+        "increased-cost": "intraday-research-v3-event-driven-ma-trend-validation-c-increased-cost",
+        "harsher-cost": "intraday-research-v3-event-driven-ma-trend-validation-c-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-event-driven-ma-trend-validation-c-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-event-driven-ma-trend-validation-c-plus-2-bars"
+      }
+    },
+    {
+      "strategy_id": "intraday-30-minute-momentum",
+      "period_role": "training",
+      "roles": {
+        "base": "intraday-research-v3-30-minute-momentum-training-base",
+        "increased-cost": "intraday-research-v3-30-minute-momentum-training-increased-cost",
+        "harsher-cost": "intraday-research-v3-30-minute-momentum-training-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-30-minute-momentum-training-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-30-minute-momentum-training-plus-2-bars"
+      }
+    },
+    {
+      "strategy_id": "intraday-30-minute-momentum",
+      "period_role": "validation-a",
+      "roles": {
+        "base": "intraday-research-v3-30-minute-momentum-validation-a-base",
+        "increased-cost": "intraday-research-v3-30-minute-momentum-validation-a-increased-cost",
+        "harsher-cost": "intraday-research-v3-30-minute-momentum-validation-a-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-30-minute-momentum-validation-a-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-30-minute-momentum-validation-a-plus-2-bars"
+      }
+    },
+    {
+      "strategy_id": "intraday-30-minute-momentum",
+      "period_role": "validation-b",
+      "roles": {
+        "base": "intraday-research-v3-30-minute-momentum-validation-b-base",
+        "increased-cost": "intraday-research-v3-30-minute-momentum-validation-b-increased-cost",
+        "harsher-cost": "intraday-research-v3-30-minute-momentum-validation-b-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-30-minute-momentum-validation-b-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-30-minute-momentum-validation-b-plus-2-bars"
+      }
+    },
+    {
+      "strategy_id": "intraday-30-minute-momentum",
+      "period_role": "validation-c",
+      "roles": {
+        "base": "intraday-research-v3-30-minute-momentum-validation-c-base",
+        "increased-cost": "intraday-research-v3-30-minute-momentum-validation-c-increased-cost",
+        "harsher-cost": "intraday-research-v3-30-minute-momentum-validation-c-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-30-minute-momentum-validation-c-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-30-minute-momentum-validation-c-plus-2-bars"
+      }
+    },
+    {
+      "strategy_id": "intraday-30-minute-opening-range-breakout",
+      "period_role": "training",
+      "roles": {
+        "base": "intraday-research-v3-30-minute-opening-range-breakout-training-base",
+        "increased-cost": "intraday-research-v3-30-minute-opening-range-breakout-training-increased-cost",
+        "harsher-cost": "intraday-research-v3-30-minute-opening-range-breakout-training-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-30-minute-opening-range-breakout-training-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-30-minute-opening-range-breakout-training-plus-2-bars"
+      }
+    },
+    {
+      "strategy_id": "intraday-30-minute-opening-range-breakout",
+      "period_role": "validation-a",
+      "roles": {
+        "base": "intraday-research-v3-30-minute-opening-range-breakout-validation-a-base",
+        "increased-cost": "intraday-research-v3-30-minute-opening-range-breakout-validation-a-increased-cost",
+        "harsher-cost": "intraday-research-v3-30-minute-opening-range-breakout-validation-a-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-30-minute-opening-range-breakout-validation-a-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-30-minute-opening-range-breakout-validation-a-plus-2-bars"
+      }
+    },
+    {
+      "strategy_id": "intraday-30-minute-opening-range-breakout",
+      "period_role": "validation-b",
+      "roles": {
+        "base": "intraday-research-v3-30-minute-opening-range-breakout-validation-b-base",
+        "increased-cost": "intraday-research-v3-30-minute-opening-range-breakout-validation-b-increased-cost",
+        "harsher-cost": "intraday-research-v3-30-minute-opening-range-breakout-validation-b-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-30-minute-opening-range-breakout-validation-b-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-30-minute-opening-range-breakout-validation-b-plus-2-bars"
+      }
+    },
+    {
+      "strategy_id": "intraday-30-minute-opening-range-breakout",
+      "period_role": "validation-c",
+      "roles": {
+        "base": "intraday-research-v3-30-minute-opening-range-breakout-validation-c-base",
+        "increased-cost": "intraday-research-v3-30-minute-opening-range-breakout-validation-c-increased-cost",
+        "harsher-cost": "intraday-research-v3-30-minute-opening-range-breakout-validation-c-harsher-cost",
+        "plus-1-bar": "intraday-research-v3-30-minute-opening-range-breakout-validation-c-plus-1-bar",
+        "plus-2-bars": "intraday-research-v3-30-minute-opening-range-breakout-validation-c-plus-2-bars"
+      }
+    }
+  ],
+  "parameter_neighbors": [],
+  "cash_sanity_test": {
+    "strategy_id": "intraday-cash",
+    "budgeted": false,
+    "authority": "software-sanity-only"
+  },
+  "dataset_binding": {
+    "required_roles": [
+      "training",
+      "validation-a",
+      "validation-b",
+      "validation-c"
+    ],
+    "all_roles_required_before_candidate_1": true,
+    "atomic": true,
+    "requires_normalized_and_raw_integrity": true,
+    "creates_execution_source_binding": false,
+    "creates_authority": false
+  },
+  "source_provenance": {
+    "surface_scope": "whole-application-package-exact-bytes-v1",
+    "source_commit_must_equal_attested_seal_commit": true,
+    "main_attested_artifacts_required": true,
+    "human_review_required": true,
+    "immutable_campaign_review_required": true,
+    "per_candidate_binding_required": true,
+    "reverify_before_compute": true,
+    "reverify_before_report_publication": true
+  },
+  "change_control": {
+    "after_trusted_seal": "new-campaign-version-required",
+    "after_first_observed_v3_result": "new-campaign-version-required",
+    "future_data_acquisition_may_change_design": false
+  },
+  "authorities": {
+    "research_qualification": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "plan_fingerprint": "5e81cf8f0db1143f293a0f93900f1e797718443a559c1caaaa2e986851d5241a"
+}
