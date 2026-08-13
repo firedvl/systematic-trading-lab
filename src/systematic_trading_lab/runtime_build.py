@@ -279,7 +279,7 @@ def _verify_attested_build(
     manifest: Path,
     *,
     verified_at: datetime,
-    attest: Callable[[Path], None],
+    attest: Callable[[Path, str], None],
 ) -> RuntimeBuildIdentity:
     try:
         _utc(verified_at)
@@ -312,8 +312,8 @@ def _verify_attested_build(
             snapshot_manifest = Path(directory, manifest.name)
             snapshot_wheel.write_bytes(wheel_bytes)
             snapshot_manifest.write_bytes(raw)
-            attest(snapshot_wheel)
-            attest(snapshot_manifest)
+            attest(snapshot_wheel, source_commit)
+            attest(snapshot_manifest, source_commit)
         return RuntimeBuildIdentity(
             source_commit=source_commit,
             wheel_sha256=wheel_sha256,
@@ -328,7 +328,8 @@ def _verify_attested_build(
         raise RuntimeBuildVerificationError("runtime build verification failed") from error
 
 
-def _verify_github_attestation(path: Path) -> None:
+def _verify_github_attestation(path: Path, source_commit: str) -> None:
+    _git_sha(source_commit)
     try:
         subprocess.run(
             [
@@ -342,6 +343,10 @@ def _verify_github_attestation(path: Path) -> None:
                 "github.com",
                 "--signer-workflow",
                 f"{SOURCE_REPOSITORY}/{SIGNER_WORKFLOW}",
+                "--source-ref",
+                "refs/heads/main",
+                "--source-digest",
+                source_commit,
                 "--deny-self-hosted-runners",
             ],
             check=True,

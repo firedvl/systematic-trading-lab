@@ -1,6 +1,6 @@
 # Intraday research campaign v1 preregistration
 
-Status: preregistered; no real candidate has run. The four-dataset binding step is available, but Campaign V1 execution remains blocked until the actual execution source is separately reviewed and recorded.
+Status: preregistered; no real candidate has run. Dataset acquisition and four-dataset binding are available. Candidate execution remains blocked until the final merged-main build and runtime are explicitly reviewed and recorded.
 
 Campaign ID: `intraday-research-v1`
 
@@ -10,7 +10,7 @@ Plan fingerprint: `ce81be36d02cc15f421390bf3d3787714bb0b025797ccfb8de2c1d1236052
 
 Reviewed M5B foundation reference: `b1774f547da2976348430b820faf2ebdacdf46af`
 
-The sealed foundation reference identifies the code reviewed when Campaign V1 was registered. It is not proof of the checkout or build that would execute a candidate. The sealed value must not be replaced during reconciliation.
+The sealed foundation reference identifies the code reviewed when Campaign V1 was registered. It is not proof of the checkout or build that would execute a candidate. The sealed value is unchanged and must not be replaced during reconciliation. Execution-source evidence is stored separately.
 
 The plan tests the M5B data, replay, registry, report, stress, and research-gate path. It does not search for a profitable strategy. A passing assessment would remain research evidence only.
 
@@ -94,7 +94,100 @@ uv run trading-lab experiment bind-intraday-datasets \
 
 The command verifies provider adapter, IEX feed, timeframe, adjustment, XNYS and timestamp policies, symbols, requested and actual ranges, dataset identity, and the reviewed universe identity. It derives strategy, split, costs, delay, parent, reviewed foundation reference, reason, and ordinal from the stored plan. Missing, invalid, duplicated, substituted, partially bound, or previously bound state fails before any registry mutation; all 60 reservations remain pending and unbound if the transaction fails.
 
-`experiment run-planned-intraday CANDIDATE_ID` accepts no dataset or parameter override and loads the already-bound spec. Campaign V1 currently rejects this operation before it claims a candidate or reads market data. A separate reviewed change must record the actual checkout or build identity and confirm that its intraday computational surface matches the reviewed foundation. If it does not, register a new campaign version. Do not change `base_code_commit` to bridge this provenance gap.
+## Execution-source review
+
+Campaign V1 uses the existing main-only GitHub build attestation as the application-code trust anchor. The assessment snapshots the supplied artifacts and verifies:
+
+- the application wheel and manifest GitHub attestations come from `firedvl/systematic-trading-lab` and `.github/workflows/build-provenance.yml`;
+- the manifest names the exact wheel SHA-256, package, version, and actual source commit;
+- the running project package is one non-editable install from that wheel, every wheel-owned installed file is byte-identical, the package tree has no extra importable files, and loaded project modules resolve inside it;
+- `uv.lock` has the fixed foundation SHA-256 `d6d60aa5d93644dd3bf932ef84f6793bab6d33992659ed48e968850c6673c00d`;
+- the dependency wheelhouse contains exactly one wheel for each of the ten non-development runtime dependencies and no other artifact;
+- each dependency wheel's filename, size, version, and SHA-256 match a wheel listed in that lockfile; its paths and `RECORD` are safe and complete; and its installed package, native library, metadata, and data files match the wheel bytes;
+- no unexpected distribution, dependency package file, symlink, cached bytecode, `PYTHONPATH`, user-site path, or non-isolated Python startup is present;
+- the Python executable hash, implementation, version, cache tag, flags, platform, decimal context, and `America/New_York` timezone bytes match the recorded runtime identity; and
+- the candidate computation core and return value flow, Campaign V1 invocation wrapper, stored-spec parser, catalog and dataset validation, Parquet range reader, XNYS calendar, simulator, strategies, report construction, fingerprints, and storage code match the reviewed component hashes. The only foundation normalization is the exact reviewed PR #114 dataset-feed identity addition.
+
+Any missing, extra, malformed, substituted, changed, or ambiguous input fails the assessment. A computation-surface mismatch is not reviewable under Campaign V1 and requires a new campaign version.
+
+Prepare the dependency wheelhouse on the target Python 3.12 platform from the fixed lockfile. The wheelhouse is untrusted input; the assessment accepts only the lock-listed bytes:
+
+```console
+uv export --frozen --no-dev --no-emit-project \
+  --format requirements.txt \
+  --output-file runtime-requirements.txt
+uvx --python 3.12 --from pip pip download \
+  --only-binary=:all: \
+  --require-hashes \
+  --no-deps \
+  --requirement runtime-requirements.txt \
+  --destination-directory DEPENDENCY_WHEELHOUSE
+```
+
+Install the final main-only attested application wheel and those dependencies in a clean environment:
+
+```console
+uv venv --python 3.12 RUNTIME
+uv pip install \
+  --python RUNTIME/bin/python \
+  --no-index \
+  --find-links DEPENDENCY_WHEELHOUSE \
+  --requirement runtime-requirements.txt
+uvx --from pip pip \
+  --python RUNTIME/bin/python \
+  --isolated install \
+  --no-index \
+  --no-deps \
+  --no-compile \
+  APPLICATION.whl
+```
+
+The application install must retain pip's wheel SHA-256 origin record and must not compile bytecode; the verifier rejects an empty archive digest or any cached bytecode.
+
+Run every provenance and candidate command through that interpreter with isolated mode and bytecode disabled. The runtime may contain only the application and the ten locked runtime dependencies.
+
+Inspect the evidence without changing the registry:
+
+```console
+RUNTIME/bin/python -I -B -m systematic_trading_lab.cli \
+  experiment assess-intraday-source \
+  --campaign intraday-research-v1 \
+  --wheel APPLICATION.whl \
+  --build-manifest runtime-build-manifest.json \
+  --lockfile uv.lock \
+  --dependency-wheelhouse DEPENDENCY_WHEELHOUSE
+```
+
+After an explicit review of the output, record that exact assessment fingerprint. This operation requires the sealed plan and all 60 candidates in `pending` state. It creates one immutable campaign review and grants no execution or broker authority by itself:
+
+```console
+RUNTIME/bin/python -I -B -m systematic_trading_lab.cli \
+  experiment record-intraday-source campaign-v1-source-review \
+  --campaign intraday-research-v1 \
+  --wheel APPLICATION.whl \
+  --build-manifest runtime-build-manifest.json \
+  --lockfile uv.lock \
+  --dependency-wheelhouse DEPENDENCY_WHEELHOUSE \
+  --assessment-fingerprint REVIEWED_ASSESSMENT_FINGERPRINT \
+  --reviewer REVIEWER \
+  --reason "reviewed Campaign V1 execution build"
+```
+
+`experiment run-planned-intraday CANDIDATE_ID` accepts no dataset, strategy, parameter, capital, cost, delay, window, or authority override. It requires the concrete registry and dataset service to share one storage root with the report directory, uses the foundation's `100000` initial cash, constructs the exact cost model from the stored sealed spec, and reassesses the supplied build and runtime internally. In one immediate transaction it verifies the immutable review, inserts an immutable per-candidate source binding, and changes that candidate from `pending` to `running`. A mismatch rolls back both the binding and claim before market-data access. After computation it reassesses the runtime before publishing the source-bound report. Qualification requires the report review and binding evidence to match the registry.
+
+```console
+RUNTIME/bin/python -I -B -m systematic_trading_lab.cli \
+  experiment run-planned-intraday CANDIDATE_ID \
+  --source-review campaign-v1-source-review \
+  --wheel APPLICATION.whl \
+  --build-manifest runtime-build-manifest.json \
+  --lockfile uv.lock \
+  --dependency-wheelhouse DEPENDENCY_WHEELHOUSE
+```
+
+No source review exists yet because the final merged-main artifact does not exist. Do not run this command until that review, independent read-only historical credentials, and all four validated dataset bindings exist. Do not change `base_code_commit` to bridge a provenance gap.
+
+The verifier assumes the host kernel, Python process, GitHub attestation service, and SHA-256 remain trustworthy. Snapshots, pre-claim verification, and pre-publication verification detect persistent artifact or installed-file changes. They do not protect against a privileged hostile process that changes memory or files transiently and restores them between checks, or wholesale replacement of the local SQLite database. Keep the installed runtime and artifacts non-writable by the execution account and run one candidate in a fresh single-purpose process.
 
 After the first observed strategy result, any change requires a new campaign version. A software defect invalidates the affected campaign version; it must not be silently rerun under the same identity.
 

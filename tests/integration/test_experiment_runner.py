@@ -497,17 +497,12 @@ def test_planned_intraday_binding_is_atomic_and_campaign_execution_stays_blocked
     } == {"intraday-experiment-v1"}
     with pytest.raises(ExperimentError, match="stored intraday reservations differ"):
         registry.bind_planned_intraday_experiments(planned_specs)
-    with pytest.raises(ExperimentError, match="actual execution source"):
+    with pytest.raises(ExperimentError, match="reviewed execution build"):
         run_cataloged_intraday_experiment(
             registry,
             datasets,
             spec,
             layout.reports,
-            cost_model=CostModel(
-                spec.cost_model_version,
-                spec.slippage_bps,
-                spec.commission_bps,
-            ),
             pre_registered=True,
         )
     assert registry.get(spec.experiment_id)["status"] == "pending"

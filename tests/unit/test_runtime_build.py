@@ -127,14 +127,17 @@ def _update_direct_url_record(root: Path, direct_url: Path) -> None:
 
 def test_attested_build_binds_exact_wheel_manifest_and_authority(tmp_path: Path) -> None:
     wheel, manifest = _artifacts(tmp_path)
-    calls: list[Path] = []
+    calls: list[tuple[Path, str]] = []
     identity = _verify_attested_build(
         wheel,
         manifest,
         verified_at=NOW,
-        attest=calls.append,
+        attest=lambda path, source_commit: calls.append((path, source_commit)),
     )
-    assert [path.name for path in calls] == [wheel.name, manifest.name]
+    assert [(path.name, commit) for path, commit in calls] == [
+        (wheel.name, "a" * 40),
+        (manifest.name, "a" * 40),
+    ]
     assert identity.source_commit == "a" * 40
     assert identity.wheel_sha256 == hashlib.sha256(wheel.read_bytes()).hexdigest()
     assert identity.manifest_sha256 == hashlib.sha256(manifest.read_bytes()).hexdigest()
@@ -144,13 +147,13 @@ def test_attested_build_binds_exact_wheel_manifest_and_authority(tmp_path: Path)
 def test_attested_build_rejects_tamper_before_attestation(tmp_path: Path) -> None:
     wheel, manifest = _artifacts(tmp_path)
     wheel.write_bytes(b"changed wheel")
-    calls: list[Path] = []
+    calls: list[tuple[Path, str]] = []
     with pytest.raises(RuntimeBuildVerificationError, match="verification failed") as captured:
         _verify_attested_build(
             wheel,
             manifest,
             verified_at=NOW,
-            attest=calls.append,
+            attest=lambda path, source_commit: calls.append((path, source_commit)),
         )
     assert not isinstance(captured.value, RuntimeBuildAttestationIndeterminateError)
     assert not calls
@@ -164,11 +167,11 @@ def test_attested_build_rejects_wrong_authority_and_attestation_failure(
     value["source_repository"] = "other/repository"
     manifest.write_text(json.dumps(value), encoding="utf-8")
     with pytest.raises(RuntimeBuildVerificationError, match="verification failed"):
-        _verify_attested_build(wheel, manifest, verified_at=NOW, attest=lambda _: None)
+        _verify_attested_build(wheel, manifest, verified_at=NOW, attest=lambda _path, _sha: None)
 
     _, manifest = _artifacts(tmp_path)
 
-    def fail(_path: Path) -> None:
+    def fail(_path: Path, _source_commit: str) -> None:
         raise RuntimeBuildVerificationError("runtime build attestation failed")
 
     with pytest.raises(RuntimeBuildVerificationError, match="attestation failed"):
@@ -181,7 +184,8 @@ def test_attested_build_uses_immutable_snapshots_and_rejects_bad_inputs(
     wheel, manifest = _artifacts(tmp_path)
     snapshots: list[bytes] = []
 
-    def mutate_sources(snapshot: Path) -> None:
+    def mutate_sources(snapshot: Path, source_commit: str) -> None:
+        assert source_commit == "a" * 40
         snapshots.append(snapshot.read_bytes())
         wheel.write_bytes(b"changed after snapshot")
         manifest.write_text("{}", encoding="utf-8")
@@ -196,7 +200,7 @@ def test_attested_build_uses_immutable_snapshots_and_rejects_bad_inputs(
             wheel,
             manifest,
             verified_at=datetime(2026, 8, 4),
-            attest=lambda _: None,
+            attest=lambda _path, _sha: None,
         )
     manifest.write_text(
         manifest.read_text(encoding="utf-8").replace(
@@ -206,7 +210,7 @@ def test_attested_build_uses_immutable_snapshots_and_rejects_bad_inputs(
         encoding="utf-8",
     )
     with pytest.raises(RuntimeBuildVerificationError, match="verification failed"):
-        _verify_attested_build(wheel, manifest, verified_at=NOW, attest=lambda _: None)
+        _verify_attested_build(wheel, manifest, verified_at=NOW, attest=lambda _path, _sha: None)
 
 
 def test_github_attestation_uses_fixed_authority(
@@ -226,7 +230,7 @@ def test_github_attestation_uses_fixed_authority(
         return subprocess.CompletedProcess(command, 0)
 
     monkeypatch.setattr(subprocess, "run", run)
-    _verify_github_attestation(artifact)
+    _verify_github_attestation(artifact, "a" * 40)
     subprocess_environment = calls[0][1].pop("env")
     assert isinstance(subprocess_environment, dict)
     assert subprocess_environment["GH_TOKEN"] == "test-github-token"
@@ -248,6 +252,10 @@ def test_github_attestation_uses_fixed_authority(
                 "github.com",
                 "--signer-workflow",
                 "firedvl/systematic-trading-lab/.github/workflows/build-provenance.yml",
+                "--source-ref",
+                "refs/heads/main",
+                "--source-digest",
+                "a" * 40,
                 "--deny-self-hosted-runners",
             ],
             {"check": True, "capture_output": True, "text": True, "timeout": 30},
@@ -265,7 +273,7 @@ def test_github_attestation_timeout_is_indeterminate(
 
     monkeypatch.setattr(subprocess, "run", timeout)
     with pytest.raises(RuntimeBuildAttestationIndeterminateError, match="indeterminate"):
-        _verify_github_attestation(artifact)
+        _verify_github_attestation(artifact, "a" * 40)
 
 
 @pytest.mark.parametrize(
@@ -285,7 +293,7 @@ def test_github_attestation_transport_exit_is_indeterminate(
 
     monkeypatch.setattr(subprocess, "run", fail)
     with pytest.raises(RuntimeBuildAttestationIndeterminateError, match="indeterminate"):
-        _verify_github_attestation(artifact)
+        _verify_github_attestation(artifact, "a" * 40)
 
 
 @pytest.mark.parametrize(
@@ -307,14 +315,14 @@ def test_github_attestation_local_or_auth_failure_is_permanent(
 
     monkeypatch.setattr(subprocess, "run", fail)
     with pytest.raises(RuntimeBuildVerificationError, match="attestation failed") as captured:
-        _verify_github_attestation(artifact)
+        _verify_github_attestation(artifact, "a" * 40)
     assert not isinstance(captured.value, RuntimeBuildAttestationIndeterminateError)
 
 
 def test_attested_build_preserves_indeterminate_attestation_failure(tmp_path: Path) -> None:
     wheel, manifest = _artifacts(tmp_path)
 
-    def fail(_path: Path) -> None:
+    def fail(_path: Path, _source_commit: str) -> None:
         raise RuntimeBuildAttestationIndeterminateError("indeterminate")
 
     with pytest.raises(RuntimeBuildAttestationIndeterminateError):

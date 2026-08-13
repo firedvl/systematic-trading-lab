@@ -133,7 +133,28 @@ The repository also contains a predeclared strategic-allocation candidate whose 
 
 The intraday workflow adds fixed cash, previous-bar-momentum, and 12-bar moving-average-trend engineering baselines for SPY and QQQ. Controlled runs use exact catalog ranges, flat-at-close sessions, completed-bar decisions, deterministic next-bar-open fills, and frozen cost and delay stress variants. The research-only qualification path cannot authorize holdout access, paper execution, or broker writes. See [`docs/intraday-research.md`](docs/intraday-research.md).
 
-Campaign V1 preregisters 60 exact training and validation candidates, including their periods, strategies, costs, delays, policy identity, and ordinals. Inspecting the plan creates no runtime state. All four immutable period datasets must pass full validation before all 60 reservations bind atomically. Candidate execution remains blocked until the actual execution source is separately reviewed and recorded; the sealed M5B reference is not runtime provenance. See [`docs/research-campaigns/intraday-campaign-v1.md`](docs/research-campaigns/intraday-campaign-v1.md).
+Campaign V1 preregisters 60 exact training and validation candidates, including their periods, strategies, costs, delays, policy identity, and ordinals. Inspecting the plan creates no runtime state. All four immutable period datasets must pass full validation before all 60 reservations bind atomically. The sealed M5B reference remains unchanged and is not runtime provenance. A separate immutable review binds the actual main-only attested wheel, installed project package, locked dependency wheels and files, isolated Python runtime, and reviewed computation surface. Candidate execution stays blocked until that assessment fingerprint is explicitly reviewed and recorded while every candidate is pending. No review has been recorded and no Campaign V1 candidate has run. See [`docs/research-campaigns/intraday-campaign-v1.md`](docs/research-campaigns/intraday-campaign-v1.md).
+
+Run provenance commands from the clean wheel-installed runtime with isolated Python and bytecode disabled:
+
+```console
+python -I -B -m systematic_trading_lab.cli experiment assess-intraday-source \
+  --campaign intraday-research-v1 \
+  --wheel APPLICATION.whl \
+  --build-manifest runtime-build-manifest.json \
+  --lockfile uv.lock \
+  --dependency-wheelhouse DEPENDENCY_WHEELHOUSE
+
+python -I -B -m systematic_trading_lab.cli experiment record-intraday-source REVIEW_ID \
+  --campaign intraday-research-v1 \
+  --wheel APPLICATION.whl \
+  --build-manifest runtime-build-manifest.json \
+  --lockfile uv.lock \
+  --dependency-wheelhouse DEPENDENCY_WHEELHOUSE \
+  --assessment-fingerprint REVIEWED_ASSESSMENT_FINGERPRINT \
+  --reviewer REVIEWER \
+  --reason "reviewed Campaign V1 execution build"
+```
 
 ## Paper workflow
 
