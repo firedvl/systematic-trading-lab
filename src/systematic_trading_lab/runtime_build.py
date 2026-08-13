@@ -7,6 +7,7 @@ import csv
 import hashlib
 import io
 import json
+import os
 import shutil
 import stat
 import subprocess
@@ -408,9 +409,13 @@ def _resolve_attestation_verifier() -> AttestationVerifierIdentity:
 def _attestation_verifier_identity(path: Path) -> AttestationVerifierIdentity:
     if not path.is_absolute() or path.resolve(strict=True) != path:
         raise ValueError("attestation verifier path is not canonical")
+    if path.name != "gh":
+        raise ValueError("attestation verifier executable name is invalid")
     before = path.lstat()
     if not stat.S_ISREG(before.st_mode) or not before.st_mode & 0o111:
         raise ValueError("attestation verifier is not an executable regular file")
+    if any(_process_can_replace(candidate) for candidate in (path, *path.parents)):
+        raise ValueError("attestation verifier install path is replaceable")
     contents = path.read_bytes()
     after = path.lstat()
     if (
@@ -428,6 +433,16 @@ def _attestation_verifier_identity(path: Path) -> AttestationVerifierIdentity:
     ):
         raise ValueError("attestation verifier changed while it was read")
     return AttestationVerifierIdentity(path=str(path), sha256=hashlib.sha256(contents).hexdigest())
+
+
+def _process_can_replace(path: Path) -> bool:
+    if (
+        os.name != "posix"
+        or os.access not in os.supports_effective_ids
+        or os.getuid() != os.geteuid()
+    ):
+        return True
+    return path.lstat().st_uid == os.geteuid() or os.access(path, os.W_OK, effective_ids=True)
 
 
 def _verify_github_attestation(

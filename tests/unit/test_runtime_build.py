@@ -13,6 +13,7 @@ from zipfile import ZipFile
 
 import pytest
 
+import systematic_trading_lab.runtime_build as runtime_build
 from systematic_trading_lab.runtime_build import (
     AttestationVerifierIdentity,
     RuntimeBuildAttestationIndeterminateError,
@@ -33,6 +34,7 @@ def _fake_gh(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     executable.write_bytes(b"reviewed gh executable")
     executable.chmod(0o555)
     monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.setattr(runtime_build, "_process_can_replace", lambda _: False)
     return executable
 
 
@@ -384,6 +386,45 @@ def test_attestation_verifier_rejects_noncanonical_and_nonregular_paths(tmp_path
     for path in (missing, symlink, directory):
         with pytest.raises((OSError, ValueError)):
             _attestation_verifier_identity(path)
+
+
+def test_attestation_verifier_rejects_writable_install_path(tmp_path: Path) -> None:
+    executable = (tmp_path / "gh").resolve()
+    executable.write_bytes(b"stable malicious verifier")
+    executable.chmod(0o555)
+
+    with pytest.raises(ValueError, match="install path is replaceable"):
+        _attestation_verifier_identity(executable)
+
+
+def test_attestation_verifier_checks_parent_install_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    executable = (tmp_path / "gh").resolve()
+    executable.write_bytes(b"reviewed verifier")
+    executable.chmod(0o555)
+    checked: list[Path] = []
+
+    def replaceable(path: Path) -> bool:
+        checked.append(path)
+        return path == executable.parent
+
+    monkeypatch.setattr(runtime_build, "_process_can_replace", replaceable)
+    with pytest.raises(ValueError, match="install path is replaceable"):
+        _attestation_verifier_identity(executable)
+    assert checked == [executable, executable.parent]
+
+
+def test_attestation_verifier_rejects_wrong_executable_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    executable = (tmp_path / "true").resolve()
+    executable.write_bytes(b"always succeeds")
+    executable.chmod(0o555)
+    monkeypatch.setattr(runtime_build, "_process_can_replace", lambda _: False)
+
+    with pytest.raises(ValueError, match="executable name is invalid"):
+        _attestation_verifier_identity(executable)
 
 
 def test_attested_build_preserves_indeterminate_attestation_failure(tmp_path: Path) -> None:

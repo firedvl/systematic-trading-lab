@@ -322,11 +322,11 @@
     },
     {
       "classification": "reviewed-delta",
-      "diff_sha256": "91f8030f3d43772e8b98026208366dd2053926cfc6381a3594c4f9605079a259",
+      "diff_sha256": "a205eae8c2c278ea2e751f2ace20422e37fff9000e9d724eb3e846ac635024c7",
       "foundation_sha256": "d2d0e1291209de62517e955ce128dead5d34ec55df89cf2989aea950b4f95705",
-      "patch_id": "c778e943a421cfda33c7d410f64d7fe56e72aa76",
+      "patch_id": "853df7eb68ad81e63f3186504f0ae0eb9c5dc098",
       "path": "systematic_trading_lab/runtime_build.py",
-      "sha256": "a56237d6101eaadff1cc557fcb8fdf56f683ee0bb1b83e5fb45465818302d0e0"
+      "sha256": "499d32fe1ee9cdf034a84b7c495deaec50f0d98c6b25dac93de95fbe3c20ad0f"
     },
     {
       "classification": "foundation-exact",
