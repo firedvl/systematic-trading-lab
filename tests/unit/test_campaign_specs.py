@@ -5,11 +5,16 @@ from pathlib import Path
 import pytest
 
 from systematic_trading_lab.campaign_specs import (
+    REVIEWED_INTRADAY_UNIVERSE_FINGERPRINT,
+    REVIEWED_INTRADAY_UNIVERSE_ID,
     build_planned_intraday_experiment,
+    build_planned_intraday_experiments,
     load_intraday_research_campaign_plan,
     load_training_campaign_plan,
     parse_intraday_research_campaign_plan,
 )
+from systematic_trading_lab.domain import Timeframe
+from systematic_trading_lab.universe import load_intraday_universe
 
 INTRADAY_PLAN = Path("config/research/intraday-campaign-v1.json")
 
@@ -138,6 +143,9 @@ def test_intraday_campaign_v1_reserves_the_complete_fixed_matrix() -> None:
         first.plan_fingerprint == "ce81be36d02cc15f421390bf3d3787714bb0b025797ccfb8de2c1d1236052c1a"
     )
     assert first.base_code_commit == "b1774f547da2976348430b820faf2ebdacdf46af"
+    universe = load_intraday_universe(Timeframe.FIVE_MINUTES)
+    assert universe.universe_id == REVIEWED_INTRADAY_UNIVERSE_ID
+    assert universe.universe_fingerprint == REVIEWED_INTRADAY_UNIVERSE_FINGERPRINT
     assert len(first.candidates) == first.search_budget == 60
     assert [candidate.candidate_ordinal for candidate in first.candidates] == list(range(1, 61))
     assert [period.role for period in first.periods] == [
@@ -167,7 +175,8 @@ def test_intraday_campaign_v1_binds_only_the_exact_planned_dataset() -> None:
     plan = load_intraday_research_campaign_plan(INTRADAY_PLAN)
     manifest: dict[str, object] = {
         "identity": {"dataset_id": "dataset-1", "fingerprint": "dataset-fingerprint-1"},
-        "provider": "alpaca",
+        "provider": "alpaca-historical-v2",
+        "feed": "iex",
         "timeframe": "5m",
         "adjustment_policy": "provider-adjusted-all-v1",
         "calendar_policy": "XNYS-regular-session-bars-v1",
@@ -207,6 +216,50 @@ def test_intraday_campaign_v1_binds_only_the_exact_planned_dataset() -> None:
             "intraday-research-v1-cash-training-base",
             changed,
         )
+
+    changed_feed = copy.deepcopy(manifest)
+    changed_feed["feed"] = "sip"
+    with pytest.raises(ValueError, match="does not match the planned intraday period"):
+        build_planned_intraday_experiment(
+            plan,
+            "intraday-research-v1-cash-training-base",
+            changed_feed,
+        )
+
+
+def test_intraday_campaign_requires_one_dataset_per_period() -> None:
+    plan = load_intraday_research_campaign_plan(INTRADAY_PLAN)
+    manifests: dict[str, dict[str, object]] = {}
+    for index, period in enumerate(plan.periods):
+        start = period.start_timestamp.isoformat().replace("+00:00", "Z")
+        end = period.end_timestamp.isoformat().replace("+00:00", "Z")
+        manifests[period.role] = {
+            "identity": {
+                "dataset_id": f"dataset-{index}",
+                "fingerprint": f"fingerprint-{index}",
+            },
+            "provider": "alpaca-historical-v2",
+            "feed": "iex",
+            "timeframe": "5m",
+            "adjustment_policy": "provider-adjusted-all-v1",
+            "calendar_policy": "XNYS-regular-session-bars-v1",
+            "timestamp_policy": "bar-open-utc-v1",
+            "requested_range": {"start": start, "end": end},
+            "actual_range": {"start": start, "end": end},
+            "symbols": [{"value": "SPY"}, {"value": "QQQ"}],
+            "universe_id": REVIEWED_INTRADAY_UNIVERSE_ID,
+            "universe_fingerprint": REVIEWED_INTRADAY_UNIVERSE_FINGERPRINT,
+        }
+
+    specs = build_planned_intraday_experiments(plan, manifests)
+    assert len(specs) == 60
+    assert {spec.dataset_id for spec in specs} == {
+        f"dataset-{index}" for index in range(len(plan.periods))
+    }
+    missing = dict(manifests)
+    missing.pop("validation-c")
+    with pytest.raises(ValueError, match="dataset roles differ"):
+        build_planned_intraday_experiments(plan, missing)
 
 
 @pytest.mark.parametrize(

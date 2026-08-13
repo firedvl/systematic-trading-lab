@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -178,6 +178,8 @@ ExperimentContract = ExperimentSpec | IntradayExperimentSpec
 
 
 class ExperimentRegistry:
+    _RESERVED_CAMPAIGN_IDS = frozenset({"intraday-research-v1"})
+
     def __init__(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         self.path = path
@@ -275,6 +277,8 @@ class ExperimentRegistry:
     def create_campaign(self, campaign_id: str, name: str, search_budget: int) -> dict[str, object]:
         if not campaign_id or not name or search_budget < 1:
             raise ValueError("campaign ID, name, and positive search budget are required")
+        if campaign_id in self._RESERVED_CAMPAIGN_IDS:
+            raise ExperimentError(f"campaign ID is reserved for a sealed plan: {campaign_id}")
         created_at = _now()
         with self._connect() as connection:
             try:
@@ -452,62 +456,73 @@ class ExperimentRegistry:
             raise ExperimentError("sealed daily plan contains an intraday experiment")
         return parsed
 
-    def bind_planned_intraday_experiment(self, spec: IntradayExperimentSpec) -> None:
+    def bind_planned_intraday_experiments(self, specs: Sequence[IntradayExperimentSpec]) -> None:
         from .campaign_specs import parse_intraday_research_campaign_plan
 
-        stored_plan = self.get_campaign_plan(spec.campaign_id)
+        campaign_ids = {spec.campaign_id for spec in specs}
+        if len(campaign_ids) != 1:
+            raise ExperimentError("intraday dataset binding requires one sealed campaign")
+        campaign_id = next(iter(campaign_ids))
+        stored_plan = self.get_campaign_plan(campaign_id)
         plan_json = stored_plan["plan_json"]
         assert isinstance(plan_json, Mapping)
         plan = parse_intraday_research_campaign_plan(plan_json)
         if stored_plan["plan_fingerprint"] != plan.plan_fingerprint:
             raise ExperimentError("stored intraday campaign plan fingerprint differs")
-        _validate_planned_intraday_spec(plan, spec)
-        reservation = next(
-            candidate
-            for candidate in plan.candidates
-            if candidate.experiment_id == spec.experiment_id
-        )
-        expected_reservation = canonicalize(_planned_intraday_reservation(plan, reservation))
+        expected_ids = {candidate.experiment_id for candidate in plan.candidates}
+        specs_by_id = {spec.experiment_id: spec for spec in specs}
+        if len(specs) != plan.search_budget or set(specs_by_id) != expected_ids:
+            raise ExperimentError("intraday dataset binding must include every sealed reservation")
+        for spec in specs:
+            _validate_planned_intraday_spec(plan, spec)
         with self._connect() as connection:
             campaign = connection.execute(
                 "SELECT status, search_budget FROM campaigns WHERE campaign_id = ?",
-                (spec.campaign_id,),
+                (campaign_id,),
             ).fetchone()
             if campaign != ("sealed", plan.search_budget):
                 raise ExperimentError("sealed intraday campaign differs from its plan")
-            row = connection.execute(
+            rows = connection.execute(
                 """
-                SELECT spec_json, status, campaign_plan_fingerprint
-                FROM experiments WHERE experiment_id = ? AND campaign_id = ?
+                SELECT experiment_id, spec_json, status, campaign_plan_fingerprint
+                FROM experiments WHERE campaign_id = ?
                 """,
-                (spec.experiment_id, spec.campaign_id),
-            ).fetchone()
-            if row is None:
-                raise ExperimentError(
-                    f"planned intraday reservation not found: {spec.experiment_id}"
+                (campaign_id,),
+            ).fetchall()
+            rows_by_id = {str(row[0]): row for row in rows}
+            if set(rows_by_id) != expected_ids:
+                raise ExperimentError("stored intraday reservations differ from the sealed plan")
+            for reservation in plan.candidates:
+                row = rows_by_id[reservation.experiment_id]
+                expected_reservation = canonicalize(
+                    _planned_intraday_reservation(plan, reservation)
                 )
-            if (
-                canonicalize(json.loads(str(row[0]))) != expected_reservation
-                or row[1] != ExperimentStatus.PENDING.value
-                or row[2] != plan.plan_fingerprint
-            ):
-                raise ExperimentError("stored intraday reservation differs from the sealed plan")
-            cursor = connection.execute(
-                """
-                UPDATE experiments SET spec_json = ?
-                WHERE experiment_id = ? AND campaign_id = ? AND status = ?
-                  AND campaign_plan_fingerprint = ?
-                """,
-                (
-                    canonical_json(spec),
-                    spec.experiment_id,
-                    spec.campaign_id,
-                    ExperimentStatus.PENDING.value,
-                    plan.plan_fingerprint,
-                ),
-            )
-            if cursor.rowcount != 1:
-                raise ExperimentError("planned intraday reservation could not be bound")
+                if (
+                    canonicalize(json.loads(str(row[1]))) != expected_reservation
+                    or row[2] != ExperimentStatus.PENDING.value
+                    or row[3] != plan.plan_fingerprint
+                ):
+                    raise ExperimentError(
+                        "stored intraday reservations differ from the sealed plan"
+                    )
+            for reservation in plan.candidates:
+                spec = specs_by_id[reservation.experiment_id]
+                cursor = connection.execute(
+                    """
+                    UPDATE experiments SET spec_json = ?
+                    WHERE experiment_id = ? AND campaign_id = ? AND status = ?
+                      AND campaign_plan_fingerprint = ?
+                    """,
+                    (
+                        canonical_json(spec),
+                        spec.experiment_id,
+                        campaign_id,
+                        ExperimentStatus.PENDING.value,
+                        plan.plan_fingerprint,
+                    ),
+                )
+                if cursor.rowcount != 1:
+                    raise ExperimentError("planned intraday datasets could not be bound")
 
     def get_planned_intraday_spec(self, experiment_id: str) -> IntradayExperimentSpec:
         record = self.get(experiment_id)

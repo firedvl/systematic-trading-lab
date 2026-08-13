@@ -150,6 +150,7 @@ class DatasetManifest:
     universe_id: str
     universe_fingerprint: str
     validation: ValidationResult
+    feed: str | None = None
     parent_dataset_id: str | None = None
 
     def __post_init__(self) -> None:

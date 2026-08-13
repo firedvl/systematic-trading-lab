@@ -1,6 +1,6 @@
 # Intraday data foundation
 
-This branch adds offline, research-only `1m` and `5m` OHLCV support for U.S. equities and ETFs. The deterministic fixture covers SPY and QQQ across a normal XNYS session, a holiday, and an early-close session. Daily data support remains unchanged. Quotes, trades, extended hours, options, broker execution, and intraday qualification remain out of scope.
+The repository supports offline, research-only `1m` and `5m` OHLCV for U.S. equities and ETFs. The deterministic fixture covers SPY and QQQ across a normal XNYS session, a holiday, and an early-close session. Daily data support remains unchanged. Quotes, trades, extended hours, options, protected intraday holdout access, and broker execution remain out of scope.
 
 ## Architecture assessment
 
@@ -29,12 +29,12 @@ For each expected symbol, validation derives every bar open from the actual XNYS
 
 Missing intervals, duplicate timestamps, non-increasing per-symbol records, bars outside the requested regular-session grid, malformed OHLC, and invalid volume fail the import. Evidence records the exact missing or invalid interval; no price is fabricated. Rejected imports write quarantine evidence and publish no dataset. Exact valid re-imports return the same content-addressed dataset and fingerprint.
 
-The manifest and dataset ID bind the timeframe, `bar-open-utc-v1` timestamp policy, `XNYS-regular-session-bars-v1` calendar policy, provider, requested and actual range, adjustment policy, universe provenance, raw evidence, and normalized Parquet fingerprint.
+The manifest and dataset ID bind the timeframe, `bar-open-utc-v1` timestamp policy, `XNYS-regular-session-bars-v1` calendar policy, concrete provider adapter, provider feed when present, requested and actual range, adjustment policy, universe provenance, raw evidence, and normalized Parquet fingerprint.
 
 ## Acquisition boundary
 
-`AlpacaHistoricalProvider` remains a GET-only historical stock-bars adapter. It maps `1m` to `1Min` and `5m` to `5Min`, preserves provider bar-open timestamps in UTC, requests provider-adjusted IEX data, handles pagination, and sets Alpaca's exclusive end to one duration after the last expected bar open. It has no submit or cancel method.
+`AlpacaHistoricalProvider` remains a GET-only historical stock-bars adapter. Manifests identify it as `alpaca-historical-v2` and record feed `iex`. It maps `1m` to `1Min` and `5m` to `5Min`, preserves provider bar-open timestamps in UTC, requests provider-adjusted IEX data, handles pagination, and sets Alpaca's exclusive end to one duration after the last expected bar open. It has no submit or cancel method.
 
-No credentials were copied into this worktree. `IntradayFixtureProvider` supplies deterministic offline evidence when credentials or network access are absent.
+Provider credentials must remain outside the repository. `IntradayFixtureProvider` supplies deterministic offline evidence when credentials or network access are absent.
 
 Committed `liquid-etfs-intraday-1m-v1` and `liquid-etfs-intraday-5m-v1` universe definitions bind issuer-sourced SPY and QQQ membership to each timeframe. Import deterministic evidence with `trading-lab data import-intraday-fixture --timeframe 1m|5m`. Read-only Alpaca imports use the same timeframe flag and require exact inclusive UTC bar-open bounds.

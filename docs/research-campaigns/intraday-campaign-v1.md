@@ -1,6 +1,6 @@
 # Intraday research campaign v1 preregistration
 
-Status: preregistered; real-data execution blocked because this isolated worktree has no independently available Alpaca historical credentials.
+Status: preregistered; no real candidate has run. The four-dataset binding step is available, but Campaign V1 execution remains blocked until the actual execution source is separately reviewed and recorded.
 
 Campaign ID: `intraday-research-v1`
 
@@ -8,7 +8,9 @@ Plan: `config/research/intraday-campaign-v1.json`
 
 Plan fingerprint: `ce81be36d02cc15f421390bf3d3787714bb0b025797ccfb8de2c1d1236052c1a`
 
-Reviewed M5B base: `b1774f547da2976348430b820faf2ebdacdf46af`
+Reviewed M5B foundation reference: `b1774f547da2976348430b820faf2ebdacdf46af`
+
+The sealed foundation reference identifies the code reviewed when Campaign V1 was registered. It is not proof of the checkout or build that would execute a candidate. The sealed value must not be replaced during reconciliation.
 
 The plan tests the M5B data, replay, registry, report, stress, and research-gate path. It does not search for a profitable strategy. A passing assessment would remain research evidence only.
 
@@ -24,6 +26,8 @@ The provider request is read-only Alpaca IEX, adjusted for all provider-supporte
 | Validation C | 2026-05-01 through 2026-06-30 | 2026-05-01T13:30:00Z through 2026-06-30T19:55:00Z | 41 | 3,198 | 0 |
 
 These windows cover about six training months followed by three contiguous two-month validation windows. The dates were chosen before strategy results. Data after 2026-06-30 is outside this campaign. This exclusion does not create or designate a protected holdout.
+
+A period with zero scheduled XNYS early closes satisfies early-close coverage only after full calendar validation proves that zero is the complete expected count. A missing, malformed, fractional, or negative count fails the gate.
 
 Any missing interval, duplicate, invalid OHLCV record, out-of-session bar, unexpected symbol, range mismatch, or failed dataset validation remains evidence and stops the affected candidate. The campaign does not repair or fabricate bars.
 
@@ -75,18 +79,25 @@ Seal all 60 reservations atomically in the official registry before data binding
 uv run trading-lab experiment plan-intraday --spec config/research/intraday-campaign-v1.json
 ```
 
-The sealed campaign rejects arbitrary `run-intraday` candidates. After one planned period dataset seals and validates, run a reservation with only its stored candidate ID, campaign ID, and exact dataset ID:
+The sealed campaign rejects arbitrary `run-intraday` candidates. Import the four exact period datasets with the read-only Alpaca historical adapter. The plan names provider `alpaca`; the immutable manifests record the concrete adapter `alpaca-historical-v2`, feed `iex`, and the reviewed `liquid-etfs-intraday-5m-v1` universe identity.
+
+Fully validate all four datasets, derive all 60 specs, and bind every reservation in one transaction:
 
 ```console
-uv run trading-lab experiment run-planned-intraday CANDIDATE_ID \
+uv run trading-lab experiment bind-intraday-datasets \
   --campaign intraday-research-v1 \
-  --dataset DATASET_ID
+  --training TRAINING_DATASET_ID \
+  --validation-a VALIDATION_A_DATASET_ID \
+  --validation-b VALIDATION_B_DATASET_ID \
+  --validation-c VALIDATION_C_DATASET_ID
 ```
 
-The command verifies provider, timeframe, adjustment, XNYS and timestamp policies, symbols, requested range, actual range, dataset identity, and universe provenance. It derives the strategy, split, costs, delay, parent, code revision, reason, and ordinal from the stored plan. A mismatch fails before dataset binding or data loading and leaves the reserved candidate as failed evidence.
+The command verifies provider adapter, IEX feed, timeframe, adjustment, XNYS and timestamp policies, symbols, requested and actual ranges, dataset identity, and the reviewed universe identity. It derives strategy, split, costs, delay, parent, reviewed foundation reference, reason, and ordinal from the stored plan. Missing, invalid, duplicated, substituted, partially bound, or previously bound state fails before any registry mutation; all 60 reservations remain pending and unbound if the transaction fails.
+
+`experiment run-planned-intraday CANDIDATE_ID` accepts no dataset or parameter override and loads the already-bound spec. Campaign V1 currently rejects this operation before it claims a candidate or reads market data. A separate reviewed change must record the actual checkout or build identity and confirm that its intraday computational surface matches the reviewed foundation. If it does not, register a new campaign version. Do not change `base_code_commit` to bridge this provenance gap.
 
 After the first observed strategy result, any change requires a new campaign version. A software defect invalidates the affected campaign version; it must not be silently rerun under the same identity.
 
-The 60 reservations are sealed in this worktree's isolated registry. Real execution may begin only after this isolated process receives independent historical credentials and all four datasets seal and validate. The active daily M5 runtime, its state, credentials, authorization, and activation remain outside scope.
+Keep the research registry, credentials, and data separate from daily paper runtime state. Dataset acquisition requires independent read-only historical credentials. The daily paper runtime, its authorization, activation, and broker-write controls remain outside scope.
 
 No protected intraday holdout exists. This plan cannot create, authorize, inspect, or reveal one. It also grants no paper, broker-write, or live authority.

@@ -1,0 +1,26 @@
+name: Research correctness issue
+description: Report possible lookahead, provenance, qualification, or reproducibility problems
+title: "[research] "
+labels: []
+body:
+  - type: textarea
+    id: concern
+    attributes:
+      label: Concern
+      description: Describe the suspected correctness or reproducibility problem.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Provide deterministic fixture inputs, experiment IDs, report fingerprints, or other safe evidence where available.
+  - type: textarea
+    id: impact
+    attributes:
+      label: Possible impact
+      description: Could this affect data boundaries, experiment identity, qualification, holdout access, or reported metrics?
+  - type: markdown
+    attributes:
+      value: |
+        Do not include private datasets, credentials, account data, or sensitive broker responses.

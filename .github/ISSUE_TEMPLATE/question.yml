@@ -1,0 +1,21 @@
+name: Usage question
+description: Ask about documented research or development workflows
+title: "[question] "
+labels: []
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What are you trying to understand or accomplish?
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you checked
+      description: Relevant README/docs sections, commands, or experiments already tried.
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, private account data, or sensitive broker responses. This repository does not provide financial advice or real-money trading support.

@@ -31,11 +31,24 @@ the outer runtime gate and cannot override transaction-bound authority.
 Start a bounded read-only campaign with `trading-lab paper start-observation CAMPAIGN_ID`. Set its
 maximum gap to the planned sampling interval plus measured scheduler tolerance and set an explicit
 duration. Run `record-observation` on that schedule and `assess-observation` after interruptions.
-The command exits nonzero for current drift, read failure, or staleness. Failure records contain no
-broker response text. A later healthy sample restores current health but does not erase historical
-failure or drift counts. Campaign completion remains stale unless a final sample falls within the
-configured gap of the end time. These records grant no activation, risk, settlement, emergency, or
-broker authority.
+`healthy_now` describes only the latest sample and staleness. `continuity_held` compares the largest
+completed sample gap with the immutable configured maximum. `campaign_passed` remains null until the
+campaign ends, then requires current health, continuity, and no historical drift. A recovered read
+failure remains in `failure_count` but does not alone fail the campaign. `campaign_reasons` records
+final blockers. A completed failed campaign exits nonzero even when `healthy_now` is true. Campaign
+completion remains stale unless a final sample falls within the configured gap of the end time.
+Failure records contain no broker response text. These records grant no activation, risk,
+settlement, emergency, or broker authority.
+
+### Week 1 closeout
+
+Campaign `paper-week-1-vps-20260804` completed with 1008 healthy samples, no position drift, and one
+isolated read failure that recovered at the next 10-minute sample. Its final state was healthy. The
+largest observed gap was approximately 1030.755 seconds, reported as 1031 seconds. It exceeded the
+fixed 900-second limit, so continuity and the final campaign result failed. VPS logs show two orderly
+whole-host reboots during that gap. The cause
+distinguishes the event from an unexplained application stall but does not turn the failed limit into
+a pass. The preserved database remains the evidence source; do not edit or replace its observations.
 
 Record action-plan equivalence with `paper record-equivalence`. Supply one replay plan, one shadow
 plan, and every paper intent key for the decision. Replay and shadow files use this strict shape:
@@ -62,26 +75,325 @@ directory so the ignored `.env` loads, starts missed work when the computer beco
 from sleep, and expires at the campaign end. It cannot run while the computer is powered off; any
 resulting gap remains evidence. The one-shot command and database remain authoritative, not the task.
 
-### Linux VPS with GNU screen
+### Linux VPS configuration
 
-Stop or disable every other observation runner before moving `execution.sqlite3`; SQLite has one
-writer and must not be synchronized between machines. On a Linux VPS with `screen` and `flock`, run:
+The Week 1 archive remains immutable and out of scope. Upgrade only the VPS working store. The
+migration changes ownership metadata in place; it does not copy, replace, or edit SQLite contents.
+It hashes the database and every present `-wal`, `-shm`, or `-journal` sidecar before and after the
+change. It creates or reuses both observation lock files, holds both locks, refuses active root or
+service-user Screen sessions and the systemd unit, and checks `/proc` for another process with the
+database or a sidecar open.
 
-```console
-chmod +x scripts/paper_observation_screen.sh scripts/cleanup_vps.sh
-./scripts/paper_observation_screen.sh start CAMPAIGN_ID /opt/systematic-trading-lab/.trading-lab/runtime-builds/FULL_COMMIT/verified-venv/bin/trading-lab 600
-./scripts/paper_observation_screen.sh status
-screen -r systematic-trading-lab-observation
+Only these paths can become `trading-lab:trading-lab` mode `0600`:
+
+- `/opt/systematic-trading-lab/.env`;
+- `.trading-lab/execution.sqlite3` and present `execution.sqlite3-wal`,
+  `execution.sqlite3-shm`, or `execution.sqlite3-journal` files;
+- `.trading-lab/paper-observation-screen.lock` and `.trading-lab/paper-observation.lock`.
+
+The `.trading-lab` directory becomes `root:trading-lab` mode `1770`. Its sticky bit lets the service
+create SQLite journals and locks without letting it replace the root-owned `runtime-builds` entry.
+The repository, `.git`, risk configuration, `runtime-builds`, build directory, wheel, manifest, and
+verified environment remain root-owned and non-writable by the service user. The migration refuses
+unsafe links, multiple hard links, a writable repository root, or any protected runtime path that is
+not root-owned and non-group/world-writable. It never uses recursive `chown`.
+
+Use one dedicated, unprivileged service account. The repository and exact attested runtime must
+already exist under `/opt/systematic-trading-lab`. Put the wheel and manifest beside the verified
+virtual environment:
+
+```text
+/opt/systematic-trading-lab/.trading-lab/runtime-builds/FULL_COMMIT/
+├── runtime-build-manifest.json
+├── systematic_trading_lab-0.1.0-py3-none-any.whl
+└── verified-venv/bin/trading-lab
 ```
 
-Detach with `Ctrl-A`, then `D`. Stop the loop with
-`./scripts/paper_observation_screen.sh stop`. The loop runs one read-only sample every 600 seconds,
-uses the repository working directory so `.env` loads, rejects a second local loop, stops when the
-campaign reports completion, and exits on configuration or journal-integrity errors. It continues
-after recorded drift or read failure so recovery remains visible. A `screen` session survives SSH
-disconnects but not a VPS reboot; relaunch it after a reboot.
+Set the fixed paths. Replace only `FULL_COMMIT` and `CAMPAIGN_ID`; use a new short test campaign for
+the optional recovery drill below.
 
-Cleanup is dry-run-first:
+```console
+REPOSITORY=/opt/systematic-trading-lab
+TRADING_HOME=/opt/systematic-trading-lab/.trading-lab
+BUILD_COMMIT=FULL_COMMIT
+BUILD_DIRECTORY=$REPOSITORY/.trading-lab/runtime-builds/$BUILD_COMMIT
+RUNTIME=$BUILD_DIRECTORY/verified-venv/bin/trading-lab
+WHEEL=$BUILD_DIRECTORY/systematic_trading_lab-0.1.0-py3-none-any.whl
+MANIFEST=$BUILD_DIRECTORY/runtime-build-manifest.json
+CAMPAIGN_ID=CAMPAIGN_ID
+SERVICE_USER=trading-lab
+SERVICE_GROUP=trading-lab
+SERVICE_HOME=/var/lib/systematic-trading-lab
+GH_CONFIG_DIR=$SERVICE_HOME/.config/gh
+GH_CACHE_DIR=$SERVICE_HOME/.cache/gh
+```
+
+From the first SSH login, stop the old root runner, prepare the fixed service home, and migrate the
+working store before installation. `migrate-state` is safe to repeat after a completed migration. If
+the pre-migration `check-state` reports root-owned files, that is the expected upgrade blocker. Any
+active process, lock, unsafe path, or protected-runtime error must be resolved rather than bypassed.
+
+```console
+ssh VPS_USER@VPS_HOST
+cd /opt/systematic-trading-lab
+REPOSITORY=/opt/systematic-trading-lab
+TRADING_HOME=$REPOSITORY/.trading-lab
+BUILD_COMMIT=FULL_COMMIT
+BUILD_DIRECTORY=$TRADING_HOME/runtime-builds/$BUILD_COMMIT
+RUNTIME=$BUILD_DIRECTORY/verified-venv/bin/trading-lab
+WHEEL=$BUILD_DIRECTORY/systematic_trading_lab-0.1.0-py3-none-any.whl
+MANIFEST=$BUILD_DIRECTORY/runtime-build-manifest.json
+CAMPAIGN_ID=CAMPAIGN_ID
+SERVICE_USER=trading-lab
+SERVICE_GROUP=trading-lab
+SERVICE_HOME=/var/lib/systematic-trading-lab
+GH_CONFIG_DIR=$SERVICE_HOME/.config/gh
+GH_CACHE_DIR=$SERVICE_HOME/.cache/gh
+
+if ! id "$SERVICE_USER" >/dev/null 2>&1; then
+  sudo useradd --system --user-group --create-home --home-dir "$SERVICE_HOME" --shell /usr/sbin/nologin "$SERVICE_USER"
+fi
+sudo install -d -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0700 \
+  "$SERVICE_HOME" "$SERVICE_HOME/.config" "$GH_CONFIG_DIR" \
+  "$SERVICE_HOME/.cache" "$GH_CACHE_DIR"
+sudo chown root:root "$REPOSITORY"
+sudo chmod 0755 "$REPOSITORY"
+
+sudo "$REPOSITORY/scripts/paper_observation_systemd.sh" uninstall
+if command -v screen >/dev/null; then
+  sudo "$REPOSITORY/scripts/paper_observation_screen.sh" stop
+  sudo -u "$SERVICE_USER" env HOME="$SERVICE_HOME" \
+    "$REPOSITORY/scripts/paper_observation_screen.sh" stop
+fi
+! sudo systemctl is-active --quiet systematic-trading-lab-paper-observation.service
+! sudo pgrep -af '[t]rading-lab paper (start-observation|record-observation|supervise-observation)'
+
+if sudo test ! -e "$REPOSITORY/.env"; then
+  sudo install -o root -g root -m 0600 /dev/null "$REPOSITORY/.env"
+fi
+sudoedit "$REPOSITORY/.env"
+# Expected to report the old root-owned mutable files before the first migration.
+sudo "$REPOSITORY/scripts/paper_observation_systemd.sh" check-state \
+  "$TRADING_HOME" "$SERVICE_USER" "$SERVICE_GROUP"
+sudo "$REPOSITORY/scripts/paper_observation_systemd.sh" migrate-state \
+  "$TRADING_HOME" "$SERVICE_USER" "$SERVICE_GROUP"
+sudo "$REPOSITORY/scripts/paper_observation_systemd.sh" check-state \
+  "$TRADING_HOME" "$SERVICE_USER" "$SERVICE_GROUP"
+```
+
+Verify exact owners, modes, store access, and effective runtime protection. Both store access tests
+must pass, the read-only SQLite check must print `ok`, and every protected-runtime write test must
+remain false.
+
+```console
+sudo stat -c '%U:%G %a %n' "$TRADING_HOME" "$REPOSITORY/.env" \
+  "$TRADING_HOME/execution.sqlite3" \
+  "$TRADING_HOME/paper-observation-screen.lock" \
+  "$TRADING_HOME/paper-observation.lock"
+sudo stat -c '%U:%G %a %n' "$TRADING_HOME/runtime-builds" "$BUILD_DIRECTORY" \
+  "$WHEEL" "$MANIFEST" "$RUNTIME"
+sudo -u "$SERVICE_USER" test -r "$TRADING_HOME/execution.sqlite3"
+sudo -u "$SERVICE_USER" test -w "$TRADING_HOME/execution.sqlite3"
+sudo -u "$SERVICE_USER" test -x "$RUNTIME"
+sudo -u "$SERVICE_USER" test -r "$WHEEL"
+sudo -u "$SERVICE_USER" test -r "$MANIFEST"
+sudo -u "$SERVICE_USER" env -i PATH=/usr/local/bin:/usr/bin:/bin \
+  DATABASE="$TRADING_HOME/execution.sqlite3" python3 -c \
+  'import os, sqlite3; from pathlib import Path; connection = sqlite3.connect(Path(os.environ["DATABASE"]).as_uri() + "?mode=ro", uri=True); assert connection.execute("PRAGMA quick_check").fetchone() == ("ok",); print("ok")'
+while IFS= read -r -d '' path; do
+  sudo -u "$SERVICE_USER" test ! -w "$path" || { echo "writable protected runtime: $path" >&2; exit 1; }
+done < <(sudo find "$BUILD_DIRECTORY" -print0)
+```
+
+Authenticate with the same fixed, secret-free lookup environment used by the unit. If the status
+command reports no login, run the login command once, then rerun status. Tokens stay in the private
+GitHub CLI configuration, never in the unit.
+
+```console
+if ! sudo -u "$SERVICE_USER" env -i HOME="$SERVICE_HOME" GH_CONFIG_DIR="$GH_CONFIG_DIR" \
+  XDG_CACHE_HOME="$SERVICE_HOME/.cache" GH_HOST=github.com GH_PROMPT_DISABLED=1 \
+  PATH=/usr/local/bin:/usr/bin:/bin gh auth status --hostname github.com; then
+  sudo -u "$SERVICE_USER" env -i HOME="$SERVICE_HOME" GH_CONFIG_DIR="$GH_CONFIG_DIR" \
+    XDG_CACHE_HOME="$SERVICE_HOME/.cache" GH_HOST=github.com \
+    PATH=/usr/local/bin:/usr/bin:/bin \
+    gh auth login --hostname github.com --git-protocol https --web
+fi
+sudo -u "$SERVICE_USER" env -i HOME="$SERVICE_HOME" GH_CONFIG_DIR="$GH_CONFIG_DIR" \
+  XDG_CACHE_HOME="$SERVICE_HOME/.cache" GH_HOST=github.com GH_PROMPT_DISABLED=1 \
+  PATH=/usr/local/bin:/usr/bin:/bin gh auth status --hostname github.com
+```
+
+The private `.env` must contain exactly `TRADING_LAB_MODE=paper`, the same absolute
+`TRADING_LAB_HOME` shown above, and nonempty `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY` values. The
+supervisor rejects missing, extra, malformed, symlinked, wrongly owned, or non-0600 configuration.
+It also rejects credential values inherited from another process. Do not add activation or paper
+code-commit entries. The generated unit contains no credentials and explicitly blanks both
+broker-write opt-in variables. The CLI reads the four allowed values from the repository `.env` after
+systemd sets the working directory.
+Runtime-verification `git` and `gh` subprocesses receive no broker credentials or write opt-in.
+Git ignores inherited `GIT_*` controls. Attestation verification uses explicit `github.com`, fixed
+`HOME`, `GH_CONFIG_DIR`, and cache paths. The unit clears every GitHub CLI token variable so the
+private `GH_CONFIG_DIR` is the only credential source; the unit contains no token.
+
+Check the exact runtime, manifest, wheel, installed distribution, configuration, interval, and
+write-disabled state before installation:
+
+```console
+cd "$REPOSITORY"
+sudo ./scripts/paper_observation_systemd.sh check "$CAMPAIGN_ID" "$RUNTIME" "$WHEEL" "$MANIFEST" "$TRADING_HOME" "$SERVICE_USER" "$SERVICE_GROUP" 600
+```
+
+This check requires the repository HEAD and tracked risk configuration to match the runtime build
+commit, verifies the GitHub attestations and every installed wheel-owned file, and checks the
+store-local lock. It makes no broker or database call. It never falls back to `uv run`, an editable
+install, or source-checkout code.
+
+### Boot-enabled systemd service
+
+Render the unit for review, then install and enable the same fixed unit at boot:
+
+```console
+sudo ./scripts/paper_observation_systemd.sh render "$CAMPAIGN_ID" "$RUNTIME" "$WHEEL" "$MANIFEST" "$TRADING_HOME" "$SERVICE_USER" "$SERVICE_GROUP" 600
+sudo ./scripts/paper_observation_systemd.sh install "$CAMPAIGN_ID" "$RUNTIME" "$WHEEL" "$MANIFEST" "$TRADING_HOME" "$SERVICE_USER" "$SERVICE_GROUP" 600
+sudo ./scripts/paper_observation_systemd.sh status
+sudo ./scripts/paper_observation_systemd.sh logs
+sudo systemctl show systematic-trading-lab-paper-observation.service -p MainPID -p ExecMainStatus -p NRestarts
+```
+
+The installer first repeats the ownership check. It then runs the same fail-closed preflight as the
+service, refuses an active Screen observer,
+checks the rendered unit with `systemd-analyze verify`, writes one root-owned unit, runs
+`daemon-reload`, and calls `enable --now`. `WantedBy=multi-user.target`
+starts it after later boots; `Wants=` and `After=network-online.target` place it after the host's
+configured online wait. Output and errors go to journald. The service uses a 600-second cycle and
+samples immediately on each start. A reboot just before the next scheduled sample leaves roughly 300
+seconds for boot and recovery before the fixed 900-second gap is breached. Software cannot guarantee
+that limit during a long provider outage, host outage, boot, DNS failure, or runtime-attestation
+failure. Startup still requires live GitHub attestation access; no cached proof lifecycle has been
+reviewed. A failed or indeterminate remote verdict never permits an observation.
+
+The service handles terminal states as follows:
+
+| Event | Result |
+|---|---|
+| Clean host reboot | systemd stops the process group, boot enablement starts it after network-online, and the loop samples immediately after preflight. |
+| Unexpected crash or signal | Restart after at least 60 seconds, with no finite start-count limit. |
+| Manual service restart | Release and reacquire the same store-local lock, reassess, then sample immediately if the campaign is active. |
+| Campaign already complete | Print the immutable assessment and exit 0 without another sample, whether the campaign passed or failed. |
+| Invalid runtime, campaign, interval, `.env`, home, store, or journal | Exit 2, remain visibly failed, and do not restart automatically. |
+| Missing `gh`, GitHub authentication failure, or local provenance/integrity mismatch | Exit 2, remain failed, and do not restart automatically. |
+| Timeout or recognized DNS, connection, rate-limit, or HTTP 5xx attestation failure | Exit 75 without observing, then retry after at least 60 seconds with no finite start-count limit. |
+| Lock already held | Exit 2 without a second observer; stop the old runner, then use `systemctl reset-failed` and `systemctl start`. |
+| Broker read failure or drift | Record the existing immutable result and continue so later recovery remains visible. |
+
+GitHub CLI does not expose separate stable exit codes for transport failure, a missing attestation,
+and a remote policy or signature rejection. Every exit remains fail-closed. The wrapper retries only
+a timeout or explicit transport, rate-limit, or server-availability error. Authentication, missing
+attestation, policy/signature rejection, and unrecognized failures exit 2. A retryable failure gets
+another attempt after at least 60 seconds. `StartLimitIntervalSec=0` disables systemd's finite
+start-count limiter, so repeated exit 75 results cannot permanently latch the service off. If an
+outage has already failed the 900-second continuity gate, verification and recovery attempts still
+continue; a retry never infers a valid attestation or permits an observation before verification.
+
+Use `trading-lab paper assess-observation CAMPAIGN_ID` for the authoritative final exit status. The
+supervisor's clean terminal exit means only that no more samples are due; it does not turn a failed
+campaign into a pass.
+
+### Optional GNU Screen launcher
+
+Screen remains available for manual diagnosis but is not boot-safe. It launches the same verified
+supervisor command and uses the same store-local lock:
+
+```console
+./scripts/paper_observation_screen.sh start "$CAMPAIGN_ID" "$RUNTIME" "$WHEEL" "$MANIFEST" "$TRADING_HOME" 600
+./scripts/paper_observation_screen.sh status
+screen -r systematic-trading-lab-observation
+./scripts/paper_observation_screen.sh stop
+```
+
+Detach with `Ctrl-A`, then `D`. Do not run Screen while the systemd unit is active.
+
+### Short reboot recovery drill
+
+Run this bounded drill only with a reviewed `main` artifact that has passed runtime verification. Use
+a new one-hour campaign and the intended 600-second interval. Do not reuse or edit retained campaign
+evidence.
+
+1. Set `CAMPAIGN_ID=paper-reboot-drill-YYYYMMDDHHMM`, rerun the `check` command above, and stop every
+   other observer.
+2. From `$REPOSITORY`, start the one-hour test campaign with the exact verified runtime:
+
+   ```console
+   sudo -u "$SERVICE_USER" env -i HOME=/var/lib/systematic-trading-lab PATH=/usr/local/bin:/usr/bin:/bin TRADING_LAB_MODE=paper TRADING_LAB_HOME="$TRADING_HOME" TRADING_LAB_PAPER_ACTIVATION_ID= TRADING_LAB_PAPER_CODE_COMMIT= "$RUNTIME" paper start-observation "$CAMPAIGN_ID" --risk-config "$REPOSITORY/config/risk/alpaca-paper-v1.json" --maximum-gap-seconds 900 --duration-hours 1
+   ```
+
+3. Run the `install` command above with that exact test campaign. Confirm `is-enabled`, `is-active`,
+   one nonzero `MainPID`, one matching process, and one held lock:
+
+   ```console
+   sudo systemctl is-enabled systematic-trading-lab-paper-observation.service
+   sudo systemctl is-active systematic-trading-lab-paper-observation.service
+   sudo systemctl show systematic-trading-lab-paper-observation.service -p MainPID -p NRestarts
+   sudo systemctl cat systematic-trading-lab-paper-observation.service
+   pgrep -a -f "$RUNTIME paper supervise-observation $CAMPAIGN_ID"
+   sudo lslocks --output COMMAND,PID,TYPE,PATH | grep -F "$TRADING_HOME/paper-observation.lock"
+   ```
+
+4. Record the execution-store identity and the latest pre-reboot assessment:
+
+   ```console
+   cat /proc/sys/kernel/random/boot_id
+   sudo stat -c '%d:%i' "$TRADING_HOME/execution.sqlite3"
+   sudo -u "$SERVICE_USER" env -u APCA_API_KEY_ID -u APCA_API_SECRET_KEY TRADING_LAB_MODE=paper TRADING_LAB_HOME="$TRADING_HOME" TRADING_LAB_PAPER_ACTIVATION_ID= TRADING_LAB_PAPER_CODE_COMMIT= "$RUNTIME" paper assess-observation "$CAMPAIGN_ID"
+   ```
+
+5. Reboot the intended VPS and reconnect:
+
+   ```console
+   sudo systemctl reboot
+   ```
+
+6. Re-run the fixed path assignments from the Linux VPS configuration section. Confirm boot-start
+   evidence, the same store identity, one process, and one lock. Follow the journal
+   until the first post-reboot observation appears:
+
+   ```console
+   cd "$REPOSITORY"
+   sudo systemctl is-enabled systematic-trading-lab-paper-observation.service
+   sudo systemctl is-active systematic-trading-lab-paper-observation.service
+   sudo journalctl -u systematic-trading-lab-paper-observation.service -b --no-pager
+   cat /proc/sys/kernel/random/boot_id
+   sudo stat -c '%d:%i' "$TRADING_HOME/execution.sqlite3"
+   pgrep -a -f "$RUNTIME paper supervise-observation $CAMPAIGN_ID"
+   sudo lslocks --output COMMAND,PID,TYPE,PATH | grep -F "$TRADING_HOME/paper-observation.lock"
+   ```
+
+7. Run the same `assess-observation` command after the new sample. Confirm the latest observation time
+   advanced, `maximum_observed_gap_seconds` is at most 900, `continuity_held` is true, and output still
+   reports `broker_writes_allowed: false`.
+8. Let the hour finish. Confirm the service becomes inactive after its clean terminal exit and the
+   final assessment reports `campaign_complete: true` and `campaign_passed: true`. Preserve the JSON,
+   `journalctl -u systematic-trading-lab-paper-observation.service` output, boot ID, store identity,
+   process/lock checks, and unit text together as drill evidence.
+
+The drill passes only if boot enablement was present before reboot, the unit starts in the new boot,
+the same campaign and store resume, exactly one observer holds the lock, a later sample exists, the
+measured gap is no more than 900 seconds, continuity and the final campaign pass, and no activation or
+broker-write authority exists. Any failed item fails the drill. Preserve the failure.
+
+### Disable, uninstall, and cleanup
+
+Remove supervision before retiring the VPS or installing a unit for another campaign:
+
+```console
+cd "$REPOSITORY"
+sudo ./scripts/paper_observation_systemd.sh uninstall
+sudo systemctl is-enabled systematic-trading-lab-paper-observation.service
+sudo test ! -e /etc/systemd/system/systematic-trading-lab-paper-observation.service
+```
+
+`is-enabled` must report disabled or not found. Cleanup refuses to run while the unit file exists or
+the service is active. After uninstalling, cleanup remains dry-run-first:
 
 ```console
 ./scripts/cleanup_vps.sh
@@ -89,8 +401,8 @@ Cleanup is dry-run-first:
 ./scripts/cleanup_vps.sh --execute --delete-repository
 ```
 
-The first executing form stops the named screen session and deletes only ignored credentials,
+The first executing form stops the named Screen session and deletes only ignored credentials,
 runtime state, virtual environments, build output, and Python caches inside the validated project.
 The last form deletes the validated repository too. Neither form erases broker or GitHub records,
-backups, SSH logs, system journals, or shell history. Revoke Alpaca keys separately when retiring the
-deployment.
+backups, system journals, shell history, or separately preserved drill evidence. Revoke Alpaca keys
+separately when retiring the deployment.

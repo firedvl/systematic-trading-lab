@@ -5,6 +5,7 @@ umask 077
 execute=false
 delete_repository=false
 session_name="${TRADING_LAB_SCREEN_NAME:-systematic-trading-lab-observation}"
+systemd_unit="systematic-trading-lab-paper-observation.service"
 script_path="$(realpath -- "${BASH_SOURCE[0]}")"
 repository="$(dirname -- "$(dirname -- "$script_path")")"
 
@@ -78,6 +79,12 @@ echo "not removed: broker or GitHub records, backups, SSH logs, system journals,
 
 $execute || { echo "dry run only; add --execute to proceed"; exit 0; }
 
+if [[ -e "/etc/systemd/system/$systemd_unit" ]] \
+  || { command -v systemctl >/dev/null && systemctl is-active --quiet "$systemd_unit"; }; then
+  echo "error: uninstall $systemd_unit before cleanup" >&2
+  exit 2
+fi
+
 if command -v screen >/dev/null && session_exists; then
   screen -S "$session_name" -X quit
   for _ in {1..10}; do
@@ -100,5 +107,7 @@ for target in "${runtime_targets[@]}"; do
 done
 find "$repository" -type d -name __pycache__ -prune -exec rm -rf -- {} +
 find "$repository" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
-command -v screen >/dev/null && screen -wipe >/dev/null 2>&1 || true
+if command -v screen >/dev/null; then
+  screen -wipe >/dev/null 2>&1 || true
+fi
 echo "removed project-local runtime data; source checkout retained: $repository"

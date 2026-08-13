@@ -569,3 +569,38 @@
 - Context: the first historical campaign must test chronological validation and research evidence without adding candidates or changing assumptions after results appear.
 - Consequences: the strict plan fingerprint reserves all 60 ordinals, uses 5/1, 10/2, and 20/5 slippage/commission basis points with one/two/three-bar delays, and rejects parameter neighbors or any holdout, paper, broker-write, or live authority. No real run can start until independent read-only credentials produce four valid sealed datasets. A deterministic fixture proof remains ignored and is not campaign evidence.
 - Revisit when: independent historical credentials are available, a data defect blocks the frozen windows, or a software defect requires a separately versioned campaign.
+
+## 2026-08-12 — Final observation status preserves historical failures
+
+- Decision: derive current health, completion, continuity, and final campaign result separately from immutable observations. A completed campaign passes only when its latest state is healthy and fresh, no completed sample gap exceeds the configured maximum, and no drift occurred.
+- Context: Week 1 ended healthy after 1008 healthy samples and one recovered read failure, but two VPS reboots created a real gap of approximately 1030.755 seconds, reported as 1031 seconds, against the fixed 900-second limit. The old assessor exposed the gap but based its exit code only on current health.
+- Consequences: a recovered read failure remains counted but does not alone fail the campaign because scheduled failure and recovery are M5 evidence. Historical drift and excess gaps remain final blockers after recovery. Existing databases need no migration or evidence change, and assessment grants no broker authority.
+- Revisit when: a separately reviewed policy defines tolerated failure budgets or restart-safe supervision.
+
+## 2026-08-12 — systemd supervises one verified read-only observation loop
+
+- Decision: use one boot-enabled systemd service to run the packaged paper-observation supervisor from an exact project-local attested runtime. Pin the campaign, runtime artifacts, home, interval, GitHub host, and GitHub CLI directories in a generated unit; hold both current and legacy locks beside the execution store; keep Screen as an optional launcher for the same command. Migrate an old root-run deployment by changing ownership only on `.env`, the execution database and present SQLite sidecars, and both locks. Keep the project-local state parent root-owned and sticky and every runtime-build path root-owned and non-writable by the service.
+- Context: GNU Screen survives SSH disconnects but not a host reboot. Week 1 proved that manual restart can breach the 900-second continuity limit. The old VPS store is root-owned, while the service must be unprivileged. GitHub CLI exposes one generic failure exit for remote attestation transport, absence, and rejection, so the caller cannot safely infer a permanent remote verdict from that code. A finite systemd start limit can permanently stop automatic retries after several transient failures; expiry of its interval does not restart the unit.
+- Consequences: local configuration, authentication, provenance, integrity, journal, and lock failures exit 2 and do not restart. A timeout or explicitly recognized DNS, connection, rate-limit, or server-availability attestation error exits 75 without observing. systemd waits at least 60 seconds and retries without a finite start-count limit, so repeated transient failures cannot latch the service off and recovery can still be recorded after continuity has failed. Missing attestations, policy/signature rejections, and unrecognized failures remain exit 2. No retry grants authority. Startup still requires live GitHub access. The service blanks paper-write opt-in, loads credentials only from a private repository `.env`, logs to journald, and exits after either final campaign result. Migration preserves database and sidecar bytes, refuses active observers, never recursively changes ownership, and leaves Week 1 archives untouched. A 600-second interval leaves limited reboot tolerance; sufficiently long host, network, DNS, broker, or provenance-verification outages still fail continuity.
+- Revisit when: the bounded VPS recovery drill exposes a missing boot dependency or the observation store moves off-host.
+
+## 2026-08-12 — Close M5 with an explicit sustained-duration waiver
+
+- Decision: accept the shorter passing reboot/recovery validation and the healthy portion of the stopped follow-up campaign, and waive the remaining unobserved part of the 168-hour requirement for the current M5 operational closeout.
+- Context: Week 1 preserved a failed continuity gate. The later shorter validation passed, and the longer follow-up remained healthy until it was intentionally stopped before 168 hours.
+- Consequences: M5 operational work closes without rewriting Week 1 evidence or claiming that the full 168 hours passed. The unobserved duration remains an explicit evidence gap. The waiver grants no paper activation, broker-write, live, research-qualification, or strategy-promotion authority, and the restart-safe supervision controls remain available.
+- Revisit when: a later paper-operation decision depends on full-duration sustained evidence or new operational evidence invalidates the shorter validation.
+
+## 2026-08-13 — Campaign V1 binds one complete dataset set before execution
+
+- Decision: record the Alpaca adapter and IEX feed in dataset identity, require the reviewed SPY/QQQ `5m` universe, fully validate all four frozen period datasets, and bind all 60 Campaign V1 reservations in one transaction. Keep the sealed `base_code_commit` as the reviewed M5B foundation reference and block Campaign V1 execution until the actual checkout or build identity is separately reviewed and recorded.
+- Context: per-candidate binding allowed a run before the other three period datasets existed, the plan's provider label did not match the concrete manifest adapter name, manifests omitted the selected feed, mutable universe configuration could change later binding, and reports could present the old reviewed commit without proving which reconciled code executed them.
+- Consequences: missing, corrupt, substituted, repeated, partial, or changed binding fails before a candidate is claimed and cannot burn one ordinal. The sealed plan, costs, delays, dates, parameters, ordinals, policy fingerprint, authority flags, and foundation reference remain unchanged. If the execution source differs materially from the reviewed computational surface, a new campaign version is required.
+- Revisit when: a reviewed execution-source provenance contract can identify the running source without rewriting sealed Campaign V1 fields.
+
+## 2026-08-13 — Zero scheduled early closes satisfy complete coverage
+
+- Decision: interpret `early_close_coverage` as complete when a fully validated XNYS period reports any nonnegative integral scheduled-early-close count, including zero.
+- Context: Validation A, B, and C contain no scheduled early closes, while the reviewed policy rationale requires complete coverage for any reported early-close sessions. Requiring a positive count would make all nine validation base candidates fail regardless of data completeness.
+- Consequences: zero is a vacuous coverage pass only after calendar and dataset validation. Missing, malformed, fractional, or negative counts fail. The policy file, threshold, fingerprint, periods, and candidate identities remain unchanged.
+- Revisit when: a later policy version records expected and observed early-close sessions as separate metrics.

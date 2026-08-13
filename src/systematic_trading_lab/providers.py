@@ -17,6 +17,7 @@ from .domain import AdjustmentPolicy, Symbol, Timeframe, TimestampRange
 
 class MarketDataProvider(Protocol):
     name: str
+    feed: str | None
     retrieval_timestamp: datetime
     adjustment_policy: AdjustmentPolicy
 
@@ -26,12 +27,14 @@ class MarketDataProvider(Protocol):
 
 
 HttpTransport = Callable[[Request], bytes]
+ALPACA_HISTORICAL_PROVIDER_NAME = "alpaca-historical-v2"
 
 
 class AlpacaHistoricalProvider:
     """Read-only adapter for Alpaca's historical stock-bars endpoint."""
 
-    name = "alpaca-historical-v2"
+    name = ALPACA_HISTORICAL_PROVIDER_NAME
+    feed: str | None = "iex"
     adjustment_policy = AdjustmentPolicy.PROVIDER_ADJUSTED_ALL
 
     def __init__(
@@ -80,7 +83,7 @@ class AlpacaHistoricalProvider:
             # repository's inclusive bar-open range retains its final interval.
             "end": exclusive_end.isoformat().replace("+00:00", "Z"),
             "adjustment": "all",
-            "feed": "iex",
+            "feed": self.feed,
             "sort": "asc",
         }
         headers = {"APCA-API-KEY-ID": self.api_key, "APCA-API-SECRET-KEY": self.secret_key}
@@ -113,6 +116,7 @@ class AlpacaHistoricalProvider:
 
 class FixtureProvider:
     name = "deterministic-fixture-v1"
+    feed: str | None = None
     retrieval_timestamp = datetime(2025, 1, 10, tzinfo=UTC)
     adjustment_policy = AdjustmentPolicy.SYNTHETIC_NO_ACTIONS
 
@@ -149,6 +153,7 @@ class IntradayFixtureProvider:
     """Deterministic SPY/QQQ regular-session bars for offline intraday checks."""
 
     name = "deterministic-intraday-fixture-v1"
+    feed: str | None = None
     retrieval_timestamp = datetime(2025, 11, 29, tzinfo=UTC)
     adjustment_policy = AdjustmentPolicy.SYNTHETIC_NO_ACTIONS
 

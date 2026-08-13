@@ -13,6 +13,7 @@ from zipfile import ZipFile
 import pytest
 
 from systematic_trading_lab.runtime_build import (
+    RuntimeBuildAttestationIndeterminateError,
     RuntimeBuildIdentity,
     RuntimeBuildVerificationError,
     _verify_attested_build,
@@ -144,13 +145,14 @@ def test_attested_build_rejects_tamper_before_attestation(tmp_path: Path) -> Non
     wheel, manifest = _artifacts(tmp_path)
     wheel.write_bytes(b"changed wheel")
     calls: list[Path] = []
-    with pytest.raises(RuntimeBuildVerificationError, match="verification failed"):
+    with pytest.raises(RuntimeBuildVerificationError, match="verification failed") as captured:
         _verify_attested_build(
             wheel,
             manifest,
             verified_at=NOW,
             attest=calls.append,
         )
+    assert not isinstance(captured.value, RuntimeBuildAttestationIndeterminateError)
     assert not calls
 
 
@@ -212,6 +214,12 @@ def test_github_attestation_uses_fixed_authority(
 ) -> None:
     artifact = tmp_path / "artifact.whl"
     calls: list[tuple[list[str], dict[str, object]]] = []
+    monkeypatch.setenv("APCA_API_SECRET_KEY", "must-not-reach-gh")
+    monkeypatch.setenv("TRADING_LAB_PAPER_ACTIVATION_ID", "must-not-reach-gh")
+    monkeypatch.setenv("GH_TOKEN", "test-github-token")
+    monkeypatch.setenv("GH_CONFIG_DIR", "/fixed/gh-config")
+    monkeypatch.setenv("GH_HOST", "untrusted.example")
+    monkeypatch.setenv("GIT_WORK_TREE", "/untrusted/worktree")
 
     def run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
         calls.append((command, kwargs))
@@ -219,6 +227,14 @@ def test_github_attestation_uses_fixed_authority(
 
     monkeypatch.setattr(subprocess, "run", run)
     _verify_github_attestation(artifact)
+    subprocess_environment = calls[0][1].pop("env")
+    assert isinstance(subprocess_environment, dict)
+    assert subprocess_environment["GH_TOKEN"] == "test-github-token"
+    assert subprocess_environment["GH_CONFIG_DIR"] == "/fixed/gh-config"
+    assert "GH_HOST" not in subprocess_environment
+    assert "GIT_WORK_TREE" not in subprocess_environment
+    assert "APCA_API_SECRET_KEY" not in subprocess_environment
+    assert "TRADING_LAB_PAPER_ACTIVATION_ID" not in subprocess_environment
     assert calls == [
         (
             [
@@ -228,6 +244,8 @@ def test_github_attestation_uses_fixed_authority(
                 str(artifact),
                 "--repo",
                 "firedvl/systematic-trading-lab",
+                "--hostname",
+                "github.com",
                 "--signer-workflow",
                 "firedvl/systematic-trading-lab/.github/workflows/build-provenance.yml",
                 "--deny-self-hosted-runners",
@@ -235,6 +253,72 @@ def test_github_attestation_uses_fixed_authority(
             {"check": True, "capture_output": True, "text": True, "timeout": 30},
         )
     ]
+
+
+def test_github_attestation_timeout_is_indeterminate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    artifact = tmp_path / "artifact.whl"
+
+    def timeout(*args: object, **kwargs: object) -> None:
+        raise subprocess.TimeoutExpired("gh", 30)
+
+    monkeypatch.setattr(subprocess, "run", timeout)
+    with pytest.raises(RuntimeBuildAttestationIndeterminateError, match="indeterminate"):
+        _verify_github_attestation(artifact)
+
+
+@pytest.mark.parametrize(
+    "stderr",
+    [
+        "dial tcp: temporary failure in name resolution",
+        "HTTP 503: Service Unavailable",
+    ],
+)
+def test_github_attestation_transport_exit_is_indeterminate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, stderr: str
+) -> None:
+    artifact = tmp_path / "artifact.whl"
+
+    def fail(*args: object, **kwargs: object) -> None:
+        raise subprocess.CalledProcessError(1, "gh", stderr=stderr)
+
+    monkeypatch.setattr(subprocess, "run", fail)
+    with pytest.raises(RuntimeBuildAttestationIndeterminateError, match="indeterminate"):
+        _verify_github_attestation(artifact)
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        FileNotFoundError("gh"),
+        subprocess.CalledProcessError(1, "gh", stderr="HTTP 401: Bad credentials"),
+        subprocess.CalledProcessError(1, "gh", stderr="policy verification failed"),
+        subprocess.CalledProcessError(4, "gh"),
+    ],
+)
+def test_github_attestation_local_or_auth_failure_is_permanent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error: BaseException
+) -> None:
+    artifact = tmp_path / "artifact.whl"
+
+    def fail(*args: object, **kwargs: object) -> None:
+        raise error
+
+    monkeypatch.setattr(subprocess, "run", fail)
+    with pytest.raises(RuntimeBuildVerificationError, match="attestation failed") as captured:
+        _verify_github_attestation(artifact)
+    assert not isinstance(captured.value, RuntimeBuildAttestationIndeterminateError)
+
+
+def test_attested_build_preserves_indeterminate_attestation_failure(tmp_path: Path) -> None:
+    wheel, manifest = _artifacts(tmp_path)
+
+    def fail(_path: Path) -> None:
+        raise RuntimeBuildAttestationIndeterminateError("indeterminate")
+
+    with pytest.raises(RuntimeBuildAttestationIndeterminateError):
+        _verify_attested_build(wheel, manifest, verified_at=NOW, attest=fail)
 
 
 def test_installed_runtime_binds_loaded_sources_and_wheel_origin(tmp_path: Path) -> None:

@@ -1,13 +1,16 @@
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 
 import pytest
 
+from systematic_trading_lab.campaign_specs import load_intraday_research_campaign_plan
 from systematic_trading_lab.cli import parser, run
 from systematic_trading_lab.config import Settings
 from systematic_trading_lab.datasets import (
     DatasetService,
+    DatasetValidationError,
     fixture_request,
     fixture_symbols,
     intraday_fixture_request,
@@ -18,6 +21,34 @@ from systematic_trading_lab.experiments import ExperimentError, ExperimentRegist
 from systematic_trading_lab.providers import FixtureProvider, IntradayFixtureProvider
 from systematic_trading_lab.storage import StorageLayout
 from systematic_trading_lab.universe import load_intraday_universe, load_research_universe
+
+
+def planned_intraday_manifests() -> dict[str, dict[str, object]]:
+    plan = load_intraday_research_campaign_plan(Path("config/research/intraday-campaign-v1.json"))
+    manifests: dict[str, dict[str, object]] = {}
+    for period in plan.periods:
+        start = period.start_timestamp.isoformat().replace("+00:00", "Z")
+        end = period.end_timestamp.isoformat().replace("+00:00", "Z")
+        manifests[period.role] = {
+            "identity": {
+                "dataset_id": f"sealed-{period.role}",
+                "fingerprint": f"fingerprint-{period.role}",
+            },
+            "provider": "alpaca-historical-v2",
+            "feed": "iex",
+            "timeframe": "5m",
+            "adjustment_policy": "provider-adjusted-all-v1",
+            "calendar_policy": "XNYS-regular-session-bars-v1",
+            "timestamp_policy": "bar-open-utc-v1",
+            "requested_range": {"start": start, "end": end},
+            "actual_range": {"start": start, "end": end},
+            "symbols": [{"value": "SPY"}, {"value": "QQQ"}],
+            "universe_id": "liquid-etfs-intraday-5m-v1",
+            "universe_fingerprint": (
+                "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9"
+            ),
+        }
+    return manifests
 
 
 def test_cli_inspects_intraday_plan_without_creating_runtime_state(
@@ -114,7 +145,14 @@ def test_cli_seals_intraday_plan_and_blocks_arbitrary_campaign_runs(
     assert len(registry.list("intraday-research-v1")) == 60
 
 
-def test_cli_derives_planned_intraday_candidate_before_execution(
+def test_campaign_v1_id_cannot_bypass_the_sealed_plan(tmp_path: Path) -> None:
+    registry = ExperimentRegistry(StorageLayout(tmp_path).experiments)
+
+    with pytest.raises(ExperimentError, match="reserved for a sealed plan"):
+        registry.create_campaign("intraday-research-v1", "Bypass", 1)
+
+
+def test_cli_validates_and_atomically_binds_planned_intraday_datasets(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
@@ -135,69 +173,96 @@ def test_cli_derives_planned_intraday_candidate_before_execution(
         == 0
     )
     capsys.readouterr()
-    manifest = {
-        "identity": {"dataset_id": "sealed-training", "fingerprint": "dataset-fingerprint"},
-        "provider": "alpaca",
-        "timeframe": "5m",
-        "adjustment_policy": "provider-adjusted-all-v1",
-        "calendar_policy": "XNYS-regular-session-bars-v1",
-        "timestamp_policy": "bar-open-utc-v1",
-        "requested_range": {
-            "start": "2025-07-01T13:30:00Z",
-            "end": "2025-12-31T20:55:00Z",
-        },
-        "actual_range": {
-            "start": "2025-07-01T13:30:00Z",
-            "end": "2025-12-31T20:55:00Z",
-        },
-        "symbols": [{"value": "SPY"}, {"value": "QQQ"}],
-        "universe_id": "liquid-etfs-intraday-5m-v1",
-        "universe_fingerprint": "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9",
-    }
-    monkeypatch.setattr(DatasetService, "validate", lambda self, dataset_id: {"valid": True})
-    monkeypatch.setattr(DatasetService, "describe", lambda self, dataset_id: manifest)
-    executed: list[object] = []
-    monkeypatch.setattr(
-        "systematic_trading_lab.cli.run_cataloged_intraday_experiment",
-        lambda registry, service, spec, reports, **kwargs: executed.append(spec),
-    )
+    manifests = planned_intraday_manifests()
+    validated: list[str] = []
 
+    def validate(self: DatasetService, dataset_id: str) -> dict[str, object]:
+        validated.append(dataset_id)
+        return {"valid": True}
+
+    def describe(self: DatasetService, dataset_id: str) -> dict[str, object]:
+        for manifest in manifests.values():
+            identity = manifest["identity"]
+            assert isinstance(identity, dict)
+            if identity["dataset_id"] == dataset_id:
+                return manifest
+        raise KeyError(dataset_id)
+
+    monkeypatch.setattr(
+        DatasetService,
+        "validate",
+        validate,
+    )
+    monkeypatch.setattr(DatasetService, "describe", describe)
     arguments = parser().parse_args(
         [
             "experiment",
-            "run-planned-intraday",
-            "intraday-research-v1-previous-bar-momentum-training-harsher-cost",
+            "bind-intraday-datasets",
             "--campaign",
             "intraday-research-v1",
-            "--dataset",
+            "--training",
             "sealed-training",
+            "--validation-a",
+            "sealed-validation-a",
+            "--validation-b",
+            "sealed-validation-b",
+            "--validation-c",
+            "sealed-validation-c",
         ]
     )
 
     assert run(arguments, settings) == 0
-    record = json.loads(capsys.readouterr().out)
-    assert record["status"] == "pending"
-    assert record["campaign_plan_fingerprint"] == (
+    result = json.loads(capsys.readouterr().out)
+    assert result["bound_candidates"] == 60
+    assert result["plan_fingerprint"] == (
         "ce81be36d02cc15f421390bf3d3787714bb0b025797ccfb8de2c1d1236052c1a"
     )
-    assert record["spec_json"]["candidate_ordinal"] == 23
-    assert record["spec_json"]["slippage_bps"] == "20"
-    assert record["spec_json"]["commission_bps"] == "5"
-    assert record["spec_json"]["execution_delay_bars"] == 1
-    assert record["spec_json"]["parent_candidate"].endswith("training-base")
-    assert len(executed) == 1
+    registry = ExperimentRegistry(StorageLayout(tmp_path).experiments)
+    records = registry.list("intraday-research-v1")
+    assert len(records) == 60
+    assert {record["status"] for record in records} == {"pending"}
+    assert {
+        record["spec_json"]["schema_version"]
+        for record in records
+        if isinstance(record["spec_json"], dict)
+    } == {"intraday-experiment-v1"}
+    record = registry.get("intraday-research-v1-previous-bar-momentum-training-harsher-cost")
+    spec_json = cast(dict[str, object], record["spec_json"])
+    assert spec_json["candidate_ordinal"] == 23
+    assert spec_json["slippage_bps"] == "20"
+    assert spec_json["commission_bps"] == "5"
+    assert spec_json["execution_delay_bars"] == 1
+    assert str(spec_json["parent_candidate"]).endswith("training-base")
+    assert validated == [
+        "sealed-training",
+        "sealed-validation-a",
+        "sealed-validation-b",
+        "sealed-validation-c",
+    ]
 
-    with pytest.raises(ExperimentError, match="stored intraday reservation differs"):
+    with pytest.raises(ExperimentError, match="stored intraday reservations differ"):
         run(arguments, settings)
-    retry_record = ExperimentRegistry(StorageLayout(tmp_path).experiments).get(
-        "intraday-research-v1-previous-bar-momentum-training-harsher-cost"
+    assert all(
+        record["spec_json"]["schema_version"] == "intraday-experiment-v1"
+        for record in registry.list("intraday-research-v1")
+        if isinstance(record["spec_json"], dict)
     )
-    assert retry_record["status"] == "pending"
-    assert retry_record["failure_info"] is None
-    assert len(executed) == 1
+
+    with pytest.raises(ExperimentError, match="actual execution source"):
+        run(
+            parser().parse_args(
+                [
+                    "experiment",
+                    "run-planned-intraday",
+                    "intraday-research-v1-cash-training-base",
+                ]
+            ),
+            settings,
+        )
+    assert registry.get("intraday-research-v1-cash-training-base")["status"] == "pending"
 
 
-def test_cli_retains_failed_planned_intraday_dataset_binding(
+def test_cli_invalid_intraday_dataset_preflight_leaves_every_reservation_pending(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -216,35 +281,57 @@ def test_cli_retains_failed_planned_intraday_dataset_binding(
         )
         == 0
     )
+    validated: list[str] = []
+
+    def validate(self: DatasetService, dataset_id: str) -> dict[str, object]:
+        validated.append(dataset_id)
+        return {"valid": dataset_id != "sealed-validation-c"}
+
+    monkeypatch.setattr(
+        DatasetService,
+        "validate",
+        validate,
+    )
     monkeypatch.setattr(
         DatasetService,
         "describe",
-        lambda self, dataset_id: (_ for _ in ()).throw(KeyError("dataset not found")),
+        lambda *args, **kwargs: pytest.fail("invalid dataset preflight described a manifest"),
     )
-    experiment_id = "intraday-research-v1-cash-training-base"
 
-    with pytest.raises(KeyError, match="dataset not found"):
+    with pytest.raises(DatasetValidationError, match="integrity validation failed: validation-c"):
         run(
             parser().parse_args(
                 [
                     "experiment",
-                    "run-planned-intraday",
-                    experiment_id,
+                    "bind-intraday-datasets",
                     "--campaign",
                     "intraday-research-v1",
-                    "--dataset",
-                    "missing-dataset",
+                    "--training",
+                    "sealed-training",
+                    "--validation-a",
+                    "sealed-validation-a",
+                    "--validation-b",
+                    "sealed-validation-b",
+                    "--validation-c",
+                    "sealed-validation-c",
                 ]
             ),
             settings,
         )
 
-    record = ExperimentRegistry(StorageLayout(tmp_path).experiments).get(experiment_id)
-    assert record["status"] == "failed"
-    assert record["failure_info"] == "KeyError: 'dataset not found'"
-    reservation_spec = record["spec_json"]
-    assert isinstance(reservation_spec, dict)
-    assert reservation_spec["schema_version"] == "intraday-candidate-reservation-v1"
+    assert validated == [
+        "sealed-training",
+        "sealed-validation-a",
+        "sealed-validation-b",
+        "sealed-validation-c",
+    ]
+    records = ExperimentRegistry(StorageLayout(tmp_path).experiments).list("intraday-research-v1")
+    assert {record["status"] for record in records} == {"pending"}
+    assert {
+        record["spec_json"]["schema_version"]
+        for record in records
+        if isinstance(record["spec_json"], dict)
+    } == {"intraday-candidate-reservation-v1"}
 
 
 def test_fixture_all_reports_every_bootstrap_baseline(

@@ -507,7 +507,9 @@ def _metrics(
         ),
         "no_overnight_positions": _zero_count(base_metrics, "overnight_position_count"),
         "no_outside_session_trades": _zero_count(base_metrics, "outside_session_fill_count"),
-        "early_close_coverage": _positive_count(base_metrics, "early_close_session_count"),
+        "early_close_coverage": _nonnegative_count_coverage(
+            base_metrics, "early_close_session_count"
+        ),
     }
     values.update(
         _stress_metrics(
@@ -765,9 +767,11 @@ def _zero_count(metrics: Mapping[str, object], name: str) -> Decimal | None:
     return Decimal(value == 0) if value is not None else None
 
 
-def _positive_count(metrics: Mapping[str, object], name: str) -> Decimal | None:
+def _nonnegative_count_coverage(metrics: Mapping[str, object], name: str) -> Decimal | None:
     value = _number(metrics, name)
-    return Decimal(value > 0) if value is not None else None
+    if value is None:
+        return None
+    return Decimal(value >= 0 and value == value.to_integral_value())
 
 
 def _object(value: object, context: str) -> dict[str, object]:

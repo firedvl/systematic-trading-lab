@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sqlite3
 import sys
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, timedelta
@@ -15,7 +16,7 @@ from . import __version__
 from .alpaca_paper import AlpacaPaperReader
 from .backtesting import CostModel
 from .campaign_specs import (
-    build_planned_intraday_experiment,
+    build_planned_intraday_experiments,
     load_intraday_research_campaign_plan,
     load_training_campaign_plan,
     parse_intraday_research_campaign_plan,
@@ -30,6 +31,7 @@ from .datasets import (
     intraday_fixture_symbols,
 )
 from .domain import OHLCVBar, Timeframe, TimestampRange, TradingMode
+from .execution import JournalIntegrityError
 from .experiment_runner import (
     comparison_report,
     execution_model_version,
@@ -59,6 +61,12 @@ from .paper_observation import (
     record_production_observation,
 )
 from .paper_startup import assess_paper_startup, initialize_paper_storage
+from .paper_supervision import (
+    observation_supervisor_lock,
+    run_observation_loop,
+    validate_observation_supervision,
+    verify_observation_runtime,
+)
 from .providers import AlpacaHistoricalProvider, FixtureProvider, IntradayFixtureProvider
 from .qualification import load_qualification_proposal, review_holdout
 from .qualification_evidence import (
@@ -71,6 +79,7 @@ from .reconciliation import ReconciliationStore
 from .reporting import benchmark_suite, build_report, report_json, strategy_result, write_report
 from .risk import load_risk_limits
 from .runtime_build import (
+    RuntimeBuildAttestationIndeterminateError,
     RuntimeBuildVerificationError,
     verify_attested_build,
     verify_installed_runtime,
@@ -150,6 +159,19 @@ def parser() -> argparse.ArgumentParser:
         "assess-observation", help="assess paper observation continuity and drift"
     )
     observation_status.add_argument("campaign_id")
+    observation_supervisor = paper.add_parser(
+        "supervise-observation", help="run one restart-safe broker-read-only observation loop"
+    )
+    observation_supervisor.add_argument("campaign_id")
+    observation_supervisor.add_argument("--runtime", type=Path, required=True)
+    observation_supervisor.add_argument("--wheel", type=Path, required=True)
+    observation_supervisor.add_argument("--manifest", type=Path, required=True)
+    observation_supervisor.add_argument("--repository", type=Path, required=True)
+    observation_supervisor.add_argument(
+        "--risk-config", type=Path, default=Path("config/risk/alpaca-paper-v1.json")
+    )
+    observation_supervisor.add_argument("--interval-seconds", type=int, default=600)
+    observation_supervisor.add_argument("--check", action="store_true")
     equivalence = paper.add_parser(
         "record-equivalence", help="record one replay, shadow, and paper action comparison"
     )
@@ -265,13 +287,20 @@ def parser() -> argparse.ArgumentParser:
         help="atomically seal all reservations in an intraday research plan",
     )
     plan_intraday.add_argument("--spec", type=Path, required=True)
+    bind_intraday = experiment_commands.add_parser(
+        "bind-intraday-datasets",
+        help="validate and atomically bind all four datasets to a sealed intraday plan",
+    )
+    bind_intraday.add_argument("--campaign", required=True)
+    bind_intraday.add_argument("--training", required=True)
+    bind_intraday.add_argument("--validation-a", required=True)
+    bind_intraday.add_argument("--validation-b", required=True)
+    bind_intraday.add_argument("--validation-c", required=True)
     planned_intraday_run = experiment_commands.add_parser(
         "run-planned-intraday",
-        help="run one candidate derived from a sealed intraday plan",
+        help="run one dataset-bound candidate from a sealed intraday plan",
     )
     planned_intraday_run.add_argument("experiment_id")
-    planned_intraday_run.add_argument("--campaign", required=True)
-    planned_intraday_run.add_argument("--dataset", required=True)
     inspect_intraday_plan = experiment_commands.add_parser(
         "inspect-intraday-plan",
         help="validate and fingerprint an intraday research preregistration",
@@ -334,13 +363,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         load_dotenv()
         settings = load_settings()
         return run(arguments, settings)
+    except RuntimeBuildAttestationIndeterminateError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return os.EX_TEMPFAIL
     except (
         ConfigurationError,
         DatasetValidationError,
         ExperimentError,
+        JournalIntegrityError,
         KeyError,
         OSError,
         RuntimeBuildVerificationError,
+        sqlite3.DatabaseError,
         ValueError,
     ) as error:
         print(f"error: {error}", file=sys.stderr)
@@ -363,16 +397,19 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             )
             return 0
         if arguments.paper_command == "start-observation":
-            limits = load_risk_limits(arguments.risk_config)
-            reader = _paper_observation_reader(settings, limits.account_id, limits.allowed_symbols)
-            snapshot = reader.record_portfolio(ReconciliationStore(layout.execution))
-            store = PaperObservationStore(layout.execution)
-            campaign = store.start(
-                campaign_id=arguments.campaign_id,
-                baseline_snapshot_id=snapshot.snapshot_id,
-                maximum_gap_seconds=arguments.maximum_gap_seconds,
-                duration=timedelta(hours=arguments.duration_hours),
-            )
+            with observation_supervisor_lock(settings.home):
+                limits = load_risk_limits(arguments.risk_config)
+                reader = _paper_observation_reader(
+                    settings, limits.account_id, limits.allowed_symbols
+                )
+                snapshot = reader.record_portfolio(ReconciliationStore(layout.execution))
+                store = PaperObservationStore(layout.execution)
+                campaign = store.start(
+                    campaign_id=arguments.campaign_id,
+                    baseline_snapshot_id=snapshot.snapshot_id,
+                    maximum_gap_seconds=arguments.maximum_gap_seconds,
+                    duration=timedelta(hours=arguments.duration_hours),
+                )
             _print(
                 {
                     "campaign_id": campaign.campaign_id,
@@ -389,22 +426,75 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             )
             return 0
         if arguments.paper_command == "record-observation":
-            limits = load_risk_limits(arguments.risk_config)
-            store = PaperObservationStore(layout.execution)
-            observation = record_production_observation(
-                store,
-                _paper_observation_reader(settings, limits.account_id, limits.allowed_symbols),
-                campaign_id=arguments.campaign_id,
-            )
-            status = store.assess(arguments.campaign_id, assessed_at=datetime.now(UTC))
+            with observation_supervisor_lock(settings.home):
+                limits = load_risk_limits(arguments.risk_config)
+                store = PaperObservationStore(layout.execution)
+                observation = record_production_observation(
+                    store,
+                    _paper_observation_reader(settings, limits.account_id, limits.allowed_symbols),
+                    campaign_id=arguments.campaign_id,
+                )
+                status = store.assess(arguments.campaign_id, assessed_at=datetime.now(UTC))
             _print(_paper_observation_result(observation, status))
-            return 0 if status.healthy_now else 1
+            return 0 if status.healthy_now and status.campaign_passed is not False else 1
         if arguments.paper_command == "assess-observation":
             status = PaperObservationStore(layout.execution).assess(
                 arguments.campaign_id, assessed_at=datetime.now(UTC)
             )
             _print(_paper_observation_result(None, status))
-            return 0 if status.healthy_now else 1
+            return 0 if status.healthy_now and status.campaign_passed is not False else 1
+        if arguments.paper_command == "supervise-observation":
+            build_commit = validate_observation_supervision(
+                settings,
+                campaign_id=arguments.campaign_id,
+                interval_seconds=arguments.interval_seconds,
+                repository=arguments.repository,
+                runtime=arguments.runtime,
+                wheel=arguments.wheel,
+                manifest=arguments.manifest,
+                risk_config=arguments.risk_config,
+            )
+            supervisor_identity = verify_observation_runtime(
+                arguments.wheel, arguments.manifest, expected_commit=build_commit
+            )
+            limits = load_risk_limits(arguments.risk_config)
+            reader = _paper_observation_reader(settings, limits.account_id, limits.allowed_symbols)
+            if arguments.check:
+                with observation_supervisor_lock(settings.home):
+                    _print(
+                        {
+                            "campaign_id": arguments.campaign_id,
+                            "interval_seconds": arguments.interval_seconds,
+                            "runtime_source_commit": supervisor_identity.source_commit,
+                            "runtime_identity_fingerprint": (
+                                supervisor_identity.identity_fingerprint
+                            ),
+                            "broker_writes_allowed": False,
+                        }
+                    )
+                return 0
+            with observation_supervisor_lock(settings.home):
+                store = PaperObservationStore(layout.execution)
+
+                def assess() -> PaperObservationStatus:
+                    return store.assess(arguments.campaign_id, assessed_at=datetime.now(UTC))
+
+                def record_sample() -> tuple[PaperObservation, PaperObservationStatus]:
+                    observation = record_production_observation(
+                        store, reader, campaign_id=arguments.campaign_id
+                    )
+                    return observation, assess()
+
+                status = run_observation_loop(
+                    interval_seconds=arguments.interval_seconds,
+                    assess=assess,
+                    record=record_sample,
+                    emit=lambda observation, status: _print(
+                        _paper_observation_result(observation, status)
+                    ),
+                )
+            print("campaign complete; observation supervisor exiting")
+            return 0
         if arguments.paper_command == "record-equivalence":
             record = PaperEquivalenceStore(layout.execution).record(
                 comparison_id=arguments.comparison_id,
@@ -492,7 +582,7 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         elif arguments.experiment_command == "plan-intraday":
             intraday_plan = load_intraday_research_campaign_plan(arguments.spec)
             _print(registry.create_planned_intraday_campaign(intraday_plan.payload))
-        elif arguments.experiment_command == "run-planned-intraday":
+        elif arguments.experiment_command == "bind-intraday-datasets":
             stored_plan = registry.get_campaign_plan(arguments.campaign)
             plan_json = stored_plan["plan_json"]
             if not isinstance(plan_json, Mapping):
@@ -500,22 +590,35 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             intraday_plan = parse_intraday_research_campaign_plan(plan_json)
             if stored_plan["plan_fingerprint"] != intraday_plan.plan_fingerprint:
                 raise ExperimentError("stored intraday campaign plan fingerprint differs")
-            try:
-                intraday_spec = build_planned_intraday_experiment(
-                    intraday_plan,
-                    arguments.experiment_id,
-                    service.describe(arguments.dataset),
+            dataset_ids = {
+                "training": arguments.training,
+                "validation-a": arguments.validation_a,
+                "validation-b": arguments.validation_b,
+                "validation-c": arguments.validation_c,
+            }
+            validations = {
+                role: service.validate(dataset_id) for role, dataset_id in dataset_ids.items()
+            }
+            invalid = [role for role, result in validations.items() if not result["valid"]]
+            if invalid:
+                raise DatasetValidationError(
+                    "planned intraday dataset integrity validation failed: " + ", ".join(invalid)
                 )
-                registry.bind_planned_intraday_experiment(intraday_spec)
-            except Exception as error:
-                _retain_failed_intraday_binding(
-                    registry,
-                    intraday_plan.campaign_id,
-                    intraday_plan.plan_fingerprint,
-                    arguments.experiment_id,
-                    error,
-                )
-                raise
+            manifests = {
+                role: service.describe(dataset_id) for role, dataset_id in dataset_ids.items()
+            }
+            specs = build_planned_intraday_experiments(intraday_plan, manifests)
+            registry.bind_planned_intraday_experiments(specs)
+            _print(
+                {
+                    "campaign_id": intraday_plan.campaign_id,
+                    "plan_fingerprint": intraday_plan.plan_fingerprint,
+                    "bound_candidates": len(specs),
+                    "dataset_ids": dataset_ids,
+                }
+            )
+        elif arguments.experiment_command == "run-planned-intraday":
+            intraday_spec = registry.get_planned_intraday_spec(arguments.experiment_id)
             run_cataloged_intraday_experiment(
                 registry,
                 service,
@@ -1005,30 +1108,6 @@ def _intraday_strategy_contract(name: str) -> tuple[str, str, dict[str, object]]
     return contracts[name]
 
 
-def _retain_failed_intraday_binding(
-    registry: ExperimentRegistry,
-    campaign_id: str,
-    plan_fingerprint: str,
-    experiment_id: str,
-    error: Exception,
-) -> None:
-    """Retain a failed dataset-binding attempt without touching another run."""
-
-    try:
-        record = registry.get(experiment_id)
-    except KeyError:
-        return
-    spec = record.get("spec_json")
-    if (
-        record.get("campaign_id") == campaign_id
-        and record.get("campaign_plan_fingerprint") == plan_fingerprint
-        and record.get("status") == "pending"
-        and isinstance(spec, Mapping)
-        and spec.get("schema_version") == "intraday-candidate-reservation-v1"
-    ):
-        registry.fail(experiment_id, f"{type(error).__name__}: {error}")
-
-
 def _print(value: object) -> None:
     print(json.dumps(value, indent=2, sort_keys=True))
 
@@ -1055,10 +1134,14 @@ def _paper_observation_result(
         "observation_status": (observation.status if observation is not None else None),
         "healthy_now": status.healthy_now,
         "campaign_complete": status.campaign_complete,
+        "continuity_held": status.continuity_held,
+        "campaign_passed": status.campaign_passed,
         "reasons": status.reasons,
+        "campaign_reasons": status.campaign_reasons,
         "success_count": status.success_count,
         "drift_count": status.drift_count,
         "failure_count": status.failure_count,
+        "maximum_gap_seconds": status.maximum_gap_seconds,
         "maximum_observed_gap_seconds": status.maximum_observed_gap_seconds,
         "latest_observed_at": status.latest_observed_at.isoformat().replace("+00:00", "Z"),
         "assessed_at": status.assessed_at.isoformat().replace("+00:00", "Z"),

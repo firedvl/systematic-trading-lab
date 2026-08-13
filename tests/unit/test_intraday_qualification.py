@@ -38,6 +38,7 @@ def _report(
     execution_model_version: str = "next-bar-v1",
     fill_delay_bars: int = 1,
     total_return: str = "0.10",
+    early_close_session_count: object = 1,
 ) -> dict[str, object]:
     report: dict[str, object] = {
         "schema_version": REPORT_SCHEMA,
@@ -88,7 +89,7 @@ def _report(
             "best_symbol_positive_profit_concentration": "0.50",
             "overnight_position_count": 0,
             "outside_session_fill_count": 0,
-            "early_close_session_count": 1,
+            "early_close_session_count": early_close_session_count,
             "fixed_search_budget": 5,
         },
     }
@@ -171,6 +172,33 @@ def test_passing_synthetic_metrics_remain_unbound_diagnostics() -> None:
     assert evidence["evidence_binding"] == "unbound-diagnostic"
     assert "holdout" not in evidence
     assert "paper" not in evidence
+
+
+def test_early_close_coverage_accepts_zero_but_rejects_invalid_counts() -> None:
+    base, costs, delays = _passing_inputs()
+    zero = _report(early_close_session_count=0)
+    zero_evidence = cast(dict[str, Any], _evaluate(zero, costs, delays))
+    zero_gate = next(
+        gate for gate in zero_evidence["gates"] if gate["metric"] == "early_close_coverage"
+    )
+    assert zero_gate["passed"]
+
+    for invalid in (-1, "0.5", None):
+        report = _report(early_close_session_count=invalid)
+        evidence = cast(dict[str, Any], _evaluate(report, costs, delays))
+        gate = next(gate for gate in evidence["gates"] if gate["metric"] == "early_close_coverage")
+        assert not gate["passed"]
+
+    metrics = cast(dict[str, object], base["metrics"])
+    metrics.pop("early_close_session_count")
+    base["report_fingerprint"] = fingerprint(
+        {key: value for key, value in base.items() if key != "report_fingerprint"}
+    )
+    missing_evidence = cast(dict[str, Any], _evaluate(base, costs, delays))
+    missing_gate = next(
+        gate for gate in missing_evidence["gates"] if gate["metric"] == "early_close_coverage"
+    )
+    assert not missing_gate["passed"]
 
 
 def test_missing_or_failed_required_stress_evidence_fails_visible_gates() -> None:

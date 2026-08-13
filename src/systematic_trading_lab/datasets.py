@@ -80,6 +80,9 @@ class DatasetService:
                 "unadjusted data requires reviewed corporate-action processing"
             )
         universe.require_full_coverage(tuple(symbols), timeframe, requested)
+        feed = getattr(provider, "feed", None)
+        if feed is not None and (not isinstance(feed, str) or not feed):
+            raise DatasetValidationError("provider feed must be a nonempty string when present")
         records = provider.fetch(symbols, timeframe, requested)
         validated = _validate_records(records, timeframe, requested, symbols)
         if not validated.result.valid:
@@ -114,6 +117,7 @@ class DatasetService:
             _timestamp_policy(timeframe),
             universe.universe_id,
             universe.universe_fingerprint,
+            feed,
             data_fingerprint,
             raw_fingerprint,
         )
@@ -130,7 +134,7 @@ class DatasetService:
                 existing.get("parent_dataset_id"),
             )
         parent_dataset_id = self._lineage_parent(
-            provider.name, symbols, timeframe, requested, adjustment_policy, universe
+            provider.name, symbols, timeframe, requested, adjustment_policy, universe, feed
         )
         identity = DatasetIdentity(dataset_id=dataset_id, fingerprint=data_fingerprint)
         actual = TimestampRange(
@@ -153,11 +157,14 @@ class DatasetService:
             universe_id=universe.universe_id,
             universe_fingerprint=universe.universe_fingerprint,
             validation=validated.result,
+            feed=feed,
             parent_dataset_id=parent_dataset_id,
         )
         manifest_data = canonicalize(manifest)
         if manifest.timestamp_policy is None:
             manifest_data.pop("timestamp_policy")
+        if manifest.feed is None:
+            manifest_data.pop("feed")
         raw_text = "".join(canonical_json(record) + "\n" for record in records)
         created = self.layout.publish(
             identity.dataset_id,
@@ -193,6 +200,7 @@ class DatasetService:
         requested: TimestampRange,
         adjustment_policy: AdjustmentPolicy,
         universe: UniverseDefinition,
+        feed: str | None,
     ) -> str | None:
         expected = {
             "provider": provider,
@@ -205,6 +213,7 @@ class DatasetService:
             "calendar_policy": _calendar_policy(timeframe),
             "universe_id": universe.universe_id,
             "universe_fingerprint": universe.universe_fingerprint,
+            "feed": feed,
         }
         if timeframe.is_supported_intraday:
             expected["timestamp_policy"] = _timestamp_policy(timeframe)
@@ -220,6 +229,7 @@ class DatasetService:
                 "calendar_policy": manifest.get("calendar_policy"),
                 "universe_id": manifest.get("universe_id"),
                 "universe_fingerprint": manifest.get("universe_fingerprint"),
+                "feed": manifest.get("feed"),
             }
             if timeframe.is_supported_intraday:
                 candidate["timestamp_policy"] = manifest.get("timestamp_policy")
@@ -438,6 +448,7 @@ def _version_key(
     timestamp_policy: str | None,
     universe_id: str,
     universe_fingerprint: str,
+    feed: str | None,
     data_fingerprint: str,
     raw_fingerprint: str,
 ) -> dict[str, object]:
@@ -455,6 +466,8 @@ def _version_key(
         "data_fingerprint": data_fingerprint,
         "raw_fingerprint": raw_fingerprint,
     }
+    if feed is not None:
+        key["feed"] = feed
     if timeframe.is_supported_intraday:
         key["timestamp_policy"] = timestamp_policy
     return key
@@ -501,6 +514,7 @@ def _manifest_static_identity_matches(manifest: dict[str, Any]) -> bool:
                 manifest.get("timestamp_policy"),
                 str(manifest["universe_id"]),
                 str(manifest["universe_fingerprint"]),
+                _optional_text(manifest.get("feed")),
                 str(manifest["identity"]["fingerprint"]),
                 str(manifest["raw_artifact_hashes"][0]),
             )
@@ -508,3 +522,11 @@ def _manifest_static_identity_matches(manifest: dict[str, Any]) -> bool:
         return bool(policy_matches and manifest["identity"]["dataset_id"] == expected_id)
     except (KeyError, TypeError, ValueError):
         return False
+
+
+def _optional_text(value: object) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value:
+        raise ValueError("optional manifest text is invalid")
+    return value

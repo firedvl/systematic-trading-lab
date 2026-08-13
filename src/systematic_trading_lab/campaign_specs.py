@@ -14,7 +14,7 @@ from .domain import Timeframe
 from .experiments import ExperimentSpec, ExperimentSplit, IntradayExperimentSpec
 from .fingerprints import fingerprint
 from .intraday_qualification import REVIEWED_POLICY_FINGERPRINT
-from .universe import load_intraday_universe
+from .providers import ALPACA_HISTORICAL_PROVIDER_NAME
 
 _ROOT_FIELDS = {
     "schema_version",
@@ -139,6 +139,10 @@ _INTRADAY_VARIANT_ROLES = (
 )
 REVIEWED_INTRADAY_CAMPAIGN_V1_FINGERPRINT = (
     "ce81be36d02cc15f421390bf3d3787714bb0b025797ccfb8de2c1d1236052c1a"
+)
+REVIEWED_INTRADAY_UNIVERSE_ID = "liquid-etfs-intraday-5m-v1"
+REVIEWED_INTRADAY_UNIVERSE_FINGERPRINT = (
+    "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9"
 )
 
 
@@ -349,7 +353,6 @@ def parse_intraday_research_campaign_plan(raw: object) -> IntradayResearchCampai
         raise ValueError("intraday campaign authority boundary differs")
     if raw["change_control"] != "new-version-required-after-first-observed-result":
         raise ValueError("intraday campaign change control differs")
-
     periods = _intraday_periods(raw["periods"])
     strategies = _intraday_strategies(raw["strategies"])
     costs = _intraday_costs(raw["cost_models"])
@@ -394,40 +397,8 @@ def build_planned_intraday_experiment(
     if reservation is None:
         raise ValueError(f"intraday candidate is not reserved by the plan: {experiment_id}")
     period = next(period for period in plan.periods if period.role == reservation.period_role)
-    identity = manifest.get("identity")
-    requested = manifest.get("requested_range")
-    actual = manifest.get("actual_range")
-    symbols = manifest.get("symbols")
-    expected_universe = load_intraday_universe(Timeframe.FIVE_MINUTES)
-    if (
-        not isinstance(identity, Mapping)
-        or not isinstance(requested, Mapping)
-        or not isinstance(actual, Mapping)
-        or not isinstance(symbols, list)
-    ):
-        raise ValueError("planned intraday dataset manifest is malformed")
-    expected_range = {
-        "start": period.start_timestamp.isoformat().replace("+00:00", "Z"),
-        "end": period.end_timestamp.isoformat().replace("+00:00", "Z"),
-    }
-    if (
-        manifest.get("provider") != "alpaca"
-        or manifest.get("timeframe") != "5m"
-        or manifest.get("adjustment_policy") != "provider-adjusted-all-v1"
-        or manifest.get("calendar_policy") != "XNYS-regular-session-bars-v1"
-        or manifest.get("timestamp_policy") != "bar-open-utc-v1"
-        or requested != expected_range
-        or actual != expected_range
-        or symbols != [{"value": "SPY"}, {"value": "QQQ"}]
-        or manifest.get("universe_id") != expected_universe.universe_id
-        or manifest.get("universe_fingerprint") != expected_universe.universe_fingerprint
-    ):
-        raise ValueError("dataset does not match the planned intraday period")
-    dataset_id = _text(identity.get("dataset_id"), "planned intraday dataset ID")
-    dataset_fingerprint = _text(identity.get("fingerprint"), "planned intraday dataset fingerprint")
-    universe_id = _text(manifest.get("universe_id"), "planned intraday universe ID")
-    universe_fingerprint = _text(
-        manifest.get("universe_fingerprint"), "planned intraday universe fingerprint"
+    dataset_id, dataset_fingerprint, universe_id, universe_fingerprint = (
+        _planned_intraday_dataset_identity(period, manifest)
     )
     return IntradayExperimentSpec(
         experiment_id=reservation.experiment_id,
@@ -464,6 +435,67 @@ def build_planned_intraday_experiment(
         ),
         parent_candidate=reservation.parent_candidate,
     )
+
+
+def build_planned_intraday_experiments(
+    plan: IntradayResearchCampaignPlan,
+    manifests: Mapping[str, Mapping[str, object]],
+) -> tuple[IntradayExperimentSpec, ...]:
+    """Bind all reservations to one exact dataset per frozen period before any run."""
+
+    expected_roles = {period.role for period in plan.periods}
+    if set(manifests) != expected_roles:
+        raise ValueError("intraday campaign dataset roles differ from the sealed periods")
+    return tuple(
+        build_planned_intraday_experiment(
+            plan,
+            candidate.experiment_id,
+            manifests[candidate.period_role],
+        )
+        for candidate in plan.candidates
+    )
+
+
+def _planned_intraday_dataset_identity(
+    period: IntradayPeriod,
+    manifest: Mapping[str, object],
+) -> tuple[str, str, str, str]:
+    identity = manifest.get("identity")
+    requested = manifest.get("requested_range")
+    actual = manifest.get("actual_range")
+    symbols = manifest.get("symbols")
+    if (
+        not isinstance(identity, Mapping)
+        or not isinstance(requested, Mapping)
+        or not isinstance(actual, Mapping)
+        or not isinstance(symbols, list)
+    ):
+        raise ValueError("planned intraday dataset manifest is malformed")
+    expected_range = {
+        "start": period.start_timestamp.isoformat().replace("+00:00", "Z"),
+        "end": period.end_timestamp.isoformat().replace("+00:00", "Z"),
+    }
+    if (
+        manifest.get("provider") != ALPACA_HISTORICAL_PROVIDER_NAME
+        or manifest.get("feed") != "iex"
+        or manifest.get("timeframe") != "5m"
+        or manifest.get("adjustment_policy") != "provider-adjusted-all-v1"
+        or manifest.get("calendar_policy") != "XNYS-regular-session-bars-v1"
+        or manifest.get("timestamp_policy") != "bar-open-utc-v1"
+        or requested != expected_range
+        or actual != expected_range
+        or symbols != [{"value": "SPY"}, {"value": "QQQ"}]
+        or manifest.get("universe_id") != REVIEWED_INTRADAY_UNIVERSE_ID
+        or manifest.get("universe_fingerprint") != REVIEWED_INTRADAY_UNIVERSE_FINGERPRINT
+    ):
+        raise ValueError("dataset does not match the planned intraday period")
+    dataset_id = _text(identity.get("dataset_id"), "planned intraday dataset ID")
+    dataset_fingerprint = _text(identity.get("fingerprint"), "planned intraday dataset fingerprint")
+    universe_id = _text(manifest.get("universe_id"), "planned intraday universe ID")
+    universe_fingerprint = _text(
+        manifest.get("universe_fingerprint"), "planned intraday universe fingerprint"
+    )
+    return dataset_id, dataset_fingerprint, universe_id, universe_fingerprint
 
 
 def _intraday_periods(value: object) -> tuple[IntradayPeriod, ...]:

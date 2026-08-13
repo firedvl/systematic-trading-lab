@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a scoped improvement to the research or developer workflow
+title: "[feature] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the problem before the proposed solution. Changes to protected execution, risk, provenance, or holdout boundaries need an explicit safety rationale.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What limitation or workflow problem are you trying to solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What behavior or interface would you add or change?
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Boundaries and risks
+      description: Does this affect data provenance, qualification/holdout logic, paper execution, risk controls, migrations, or runtime provenance?
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification idea
+      description: How could the change be tested using deterministic fixtures or other safe evidence?

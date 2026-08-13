@@ -197,6 +197,33 @@ def test_universe_revision_creates_a_separate_dataset_lineage(tmp_path: Path) ->
     assert revised.parent_dataset_id is None
 
 
+def test_provider_feed_is_bound_into_dataset_identity(tmp_path: Path) -> None:
+    class IexFixture(FixtureProvider):
+        feed: str | None = "iex"
+
+    class SipFixture(FixtureProvider):
+        feed: str | None = "sip"
+
+    service = DatasetService(StorageLayout(tmp_path))
+    without_feed = service.import_from(
+        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
+    )
+    iex = service.import_from(
+        IexFixture(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
+    )
+    sip = service.import_from(
+        SipFixture(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
+    )
+
+    assert len({without_feed.dataset_id, iex.dataset_id, sip.dataset_id}) == 3
+    assert "feed" not in service.describe(without_feed.dataset_id)
+    assert service.describe(iex.dataset_id)["feed"] == "iex"
+    assert service.describe(sip.dataset_id)["feed"] == "sip"
+    assert without_feed.parent_dataset_id is None
+    assert iex.parent_dataset_id is None
+    assert sip.parent_dataset_id is None
+
+
 def test_unadjusted_data_is_rejected_without_a_corporate_action_processor(tmp_path: Path) -> None:
     class UnadjustedFixture(FixtureProvider):
         adjustment_policy = AdjustmentPolicy.UNADJUSTED

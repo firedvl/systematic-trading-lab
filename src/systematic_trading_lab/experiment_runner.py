@@ -213,6 +213,11 @@ def run_cataloged_intraday_experiment(
 ) -> BacktestResult:
     """Run one training or validation candidate under the M5B contract."""
 
+    if pre_registered and spec.campaign_id == "intraday-research-v1":
+        raise ExperimentError(
+            "Campaign V1 execution is blocked until the actual execution source "
+            "is separately reviewed and recorded"
+        )
     selected_costs = cost_model or CostModel()
     if pre_registered:
         if registry.get_planned_intraday_spec(spec.experiment_id) != spec:

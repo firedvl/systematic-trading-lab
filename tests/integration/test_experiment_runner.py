@@ -1,4 +1,5 @@
 import json
+import sqlite3
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -9,12 +10,11 @@ import pytest
 
 from systematic_trading_lab.backtesting import CostModel
 from systematic_trading_lab.campaign_specs import (
-    build_planned_intraday_experiment,
+    build_planned_intraday_experiments,
     load_intraday_research_campaign_plan,
 )
 from systematic_trading_lab.datasets import (
     DatasetService,
-    DatasetValidationError,
     fixture_request,
     fixture_symbols,
     intraday_fixture_request,
@@ -436,74 +436,72 @@ def test_cataloged_intraday_runner_records_deterministic_zero_trade_report_and_f
     assert registry.get(wrong_timeframe.experiment_id)["status"] == "failed"
 
 
-def test_planned_intraday_runner_completes_only_the_stored_spec(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_planned_intraday_binding_is_atomic_and_campaign_execution_stays_blocked(
+    tmp_path: Path,
 ) -> None:
     layout = StorageLayout(tmp_path)
     registry = ExperimentRegistry(layout.experiments)
     datasets = DatasetService(layout)
     plan = load_intraday_research_campaign_plan(Path("config/research/intraday-campaign-v1.json"))
     registry.create_planned_intraday_campaign(plan.payload)
-    manifest: dict[str, object] = {
-        "identity": {"dataset_id": "planned-dataset", "fingerprint": "dataset-fingerprint"},
-        "provider": "alpaca",
-        "timeframe": "5m",
-        "adjustment_policy": "provider-adjusted-all-v1",
-        "calendar_policy": "XNYS-regular-session-bars-v1",
-        "timestamp_policy": "bar-open-utc-v1",
-        "requested_range": {
-            "start": "2025-07-01T13:30:00Z",
-            "end": "2025-12-31T20:55:00Z",
-        },
-        "actual_range": {
-            "start": "2025-07-01T13:30:00Z",
-            "end": "2025-12-31T20:55:00Z",
-        },
-        "symbols": [{"value": "SPY"}, {"value": "QQQ"}],
-        "universe_id": "liquid-etfs-intraday-5m-v1",
-        "universe_fingerprint": "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9",
-    }
-    spec = build_planned_intraday_experiment(
-        plan,
-        "intraday-research-v1-cash-training-base",
-        manifest,
-    )
-    registry.bind_planned_intraday_experiment(spec)
-    fixture_request_value = intraday_fixture_request(Timeframe.FIVE_MINUTES)
-    bars = tuple(
-        OHLCVBar.from_record(record)
-        for record in IntradayFixtureProvider().fetch(
-            intraday_fixture_symbols(),
-            Timeframe.FIVE_MINUTES,
-            fixture_request_value,
+    manifests: dict[str, dict[str, object]] = {}
+    for period in plan.periods:
+        start = period.start_timestamp.isoformat().replace("+00:00", "Z")
+        end = period.end_timestamp.isoformat().replace("+00:00", "Z")
+        manifests[period.role] = {
+            "identity": {
+                "dataset_id": f"planned-{period.role}",
+                "fingerprint": f"fingerprint-{period.role}",
+            },
+            "provider": "alpaca-historical-v2",
+            "feed": "iex",
+            "timeframe": "5m",
+            "adjustment_policy": "provider-adjusted-all-v1",
+            "calendar_policy": "XNYS-regular-session-bars-v1",
+            "timestamp_policy": "bar-open-utc-v1",
+            "requested_range": {"start": start, "end": end},
+            "actual_range": {"start": start, "end": end},
+            "symbols": [{"value": "SPY"}, {"value": "QQQ"}],
+            "universe_id": "liquid-etfs-intraday-5m-v1",
+            "universe_fingerprint": (
+                "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9"
+            ),
+        }
+    planned_specs = build_planned_intraday_experiments(plan, manifests)
+    specs_by_id = {planned.experiment_id: planned for planned in planned_specs}
+    with sqlite3.connect(layout.experiments) as connection:
+        connection.execute(
+            """
+            CREATE TRIGGER reject_final_intraday_binding
+            BEFORE UPDATE OF spec_json ON experiments
+            WHEN OLD.experiment_id =
+                'intraday-research-v1-moving-average-trend-validation-c-plus-2-bars'
+            BEGIN SELECT RAISE(ABORT, 'forced atomic binding failure'); END
+            """
         )
-    )
-    monkeypatch.setattr(datasets, "describe", lambda dataset_id: manifest)
-    monkeypatch.setattr(datasets, "load_bars_range", lambda *args, **kwargs: bars)
-    monkeypatch.setattr(datasets, "validate", lambda dataset_id: {"valid": True})
-
-    run_cataloged_intraday_experiment(
-        registry,
-        datasets,
-        spec,
-        layout.reports,
-        cost_model=CostModel(
-            spec.cost_model_version,
-            spec.slippage_bps,
-            spec.commission_bps,
-        ),
-        pre_registered=True,
-    )
-
-    record = registry.get(spec.experiment_id)
-    assert record["status"] == "completed"
-    assert record["execution_provenance"] == "controlled-run"
-    assert record["campaign_plan_fingerprint"] == plan.plan_fingerprint
-    with pytest.raises(ExperimentError, match="stored planned intraday experiment differs"):
+    with pytest.raises(sqlite3.IntegrityError, match="forced atomic binding failure"):
+        registry.bind_planned_intraday_experiments(planned_specs)
+    assert {
+        record["spec_json"]["schema_version"]
+        for record in registry.list(plan.campaign_id)
+        if isinstance(record["spec_json"], dict)
+    } == {"intraday-candidate-reservation-v1"}
+    with sqlite3.connect(layout.experiments) as connection:
+        connection.execute("DROP TRIGGER reject_final_intraday_binding")
+    registry.bind_planned_intraday_experiments(planned_specs)
+    spec = specs_by_id["intraday-research-v1-cash-training-base"]
+    assert {
+        record["spec_json"]["schema_version"]
+        for record in registry.list(plan.campaign_id)
+        if isinstance(record["spec_json"], dict)
+    } == {"intraday-experiment-v1"}
+    with pytest.raises(ExperimentError, match="stored intraday reservations differ"):
+        registry.bind_planned_intraday_experiments(planned_specs)
+    with pytest.raises(ExperimentError, match="actual execution source"):
         run_cataloged_intraday_experiment(
             registry,
             datasets,
-            replace(spec, creation_reason="changed"),
+            spec,
             layout.reports,
             cost_model=CostModel(
                 spec.cost_model_version,
@@ -512,58 +510,7 @@ def test_planned_intraday_runner_completes_only_the_stored_spec(
             ),
             pre_registered=True,
         )
-
-    failed_spec = build_planned_intraday_experiment(
-        plan,
-        "intraday-research-v1-cash-training-increased-cost",
-        manifest,
-    )
-    registry.bind_planned_intraday_experiment(failed_spec)
-
-    def fail_range_load(*args: object, **kwargs: object) -> tuple[OHLCVBar, ...]:
-        raise ValueError("planned fixture load failed")
-
-    monkeypatch.setattr(datasets, "load_bars_range", fail_range_load)
-    with pytest.raises(ValueError, match="planned fixture load failed"):
-        run_cataloged_intraday_experiment(
-            registry,
-            datasets,
-            failed_spec,
-            layout.reports,
-            cost_model=CostModel(
-                failed_spec.cost_model_version,
-                failed_spec.slippage_bps,
-                failed_spec.commission_bps,
-            ),
-            pre_registered=True,
-        )
-    failed = registry.get(failed_spec.experiment_id)
-    assert failed["status"] == "failed"
-    assert failed["campaign_plan_fingerprint"] == plan.plan_fingerprint
-
-    invalid_dataset_spec = build_planned_intraday_experiment(
-        plan,
-        "intraday-research-v1-cash-training-harsher-cost",
-        manifest,
-    )
-    registry.bind_planned_intraday_experiment(invalid_dataset_spec)
-    monkeypatch.setattr(datasets, "validate", lambda dataset_id: {"valid": False})
-    with pytest.raises(DatasetValidationError, match="dataset integrity validation failed"):
-        run_cataloged_intraday_experiment(
-            registry,
-            datasets,
-            invalid_dataset_spec,
-            layout.reports,
-            cost_model=CostModel(
-                invalid_dataset_spec.cost_model_version,
-                invalid_dataset_spec.slippage_bps,
-                invalid_dataset_spec.commission_bps,
-            ),
-            pre_registered=True,
-        )
-    invalid_dataset = registry.get(invalid_dataset_spec.experiment_id)
-    assert invalid_dataset["status"] == "failed"
-    assert invalid_dataset["campaign_plan_fingerprint"] == plan.plan_fingerprint
+    assert registry.get(spec.experiment_id)["status"] == "pending"
 
 
 def test_holdout_runner_consumes_authorization_before_exact_range_read(
