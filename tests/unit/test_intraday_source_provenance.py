@@ -19,8 +19,12 @@ import pytest
 
 import systematic_trading_lab.intraday_source_provenance as provenance
 from systematic_trading_lab.fingerprints import canonicalize, fingerprint
-from systematic_trading_lab.intraday_source_provenance import (
+from systematic_trading_lab.intraday_campaigns import (
+    INTRADAY_CAMPAIGN_V1_ID,
+    INTRADAY_CAMPAIGN_V2_ID,
     INTRADAY_FOUNDATION_LOCK_SHA256,
+)
+from systematic_trading_lab.intraday_source_provenance import (
     IntradayExecutionBuildIdentity,
     IntradayExecutionSourceProvenanceError,
     IntradayRuntimeEnvironmentIdentity,
@@ -34,19 +38,27 @@ from systematic_trading_lab.runtime_build import (
 )
 
 NOW = datetime(2026, 8, 13, tzinfo=UTC)
+CAMPAIGN_V2_SURFACE = provenance._load_reviewed_surface_manifest(INTRADAY_CAMPAIGN_V2_ID)
 
 
-def _wheel(tmp_path: Path, replacements: dict[str, bytes] | None = None) -> Path:
+def _wheel(
+    tmp_path: Path,
+    replacements: dict[str, bytes] | None = None,
+    *,
+    campaign_id: str = INTRADAY_CAMPAIGN_V2_ID,
+) -> Path:
     wheel = tmp_path / "systematic_trading_lab-0.1.0-py3-none-any.whl"
     replacements = replacements or {}
     with ZipFile(wheel, "w") as archive:
-        for name in provenance._surface_module_paths():
+        for name in provenance._surface_module_paths(campaign_id):
             contents = replacements.get(name, Path("src/systematic_trading_lab", name).read_bytes())
             archive.writestr(f"systematic_trading_lab/{name}", contents)
-        archive.writestr(
-            "systematic_trading_lab/intraday_campaign_v1_surface.json",
-            provenance._SURFACE_MANIFEST_RAW,
-        )
+        for manifest_campaign_id in (INTRADAY_CAMPAIGN_V1_ID, INTRADAY_CAMPAIGN_V2_ID):
+            surface = provenance._load_reviewed_surface_manifest(manifest_campaign_id)
+            archive.writestr(
+                f"systematic_trading_lab/{surface.contract.surface_manifest_name}",
+                surface.raw,
+            )
     return wheel
 
 
@@ -88,14 +100,35 @@ def _environment() -> IntradayRuntimeEnvironmentIdentity:
     )
 
 
-def test_current_build_surface_exactly_matches_reviewed_foundation(tmp_path: Path) -> None:
-    comparison = _surface_comparison(_wheel(tmp_path))
+def test_current_build_surface_exactly_matches_campaign_v2(tmp_path: Path) -> None:
+    comparison = _surface_comparison(_wheel(tmp_path), INTRADAY_CAMPAIGN_V2_ID)
 
     assert comparison.equivalent
     assert comparison.mismatches == ()
     assert comparison.reviewed_component_hashes == comparison.observed_component_hashes
     assert comparison.reviewed_surface_fingerprint
     assert comparison.surface_manifest_fingerprint
+
+
+def test_campaign_v2_manifest_covers_every_current_python_module() -> None:
+    root = Path("src/systematic_trading_lab")
+    observed = tuple(
+        (
+            path.relative_to("src").as_posix(),
+            hashlib.sha256(path.read_bytes()).hexdigest(),
+        )
+        for path in sorted(root.rglob("*.py"), key=lambda item: item.relative_to("src").as_posix())
+    )
+
+    assert CAMPAIGN_V2_SURFACE.hashes == observed
+
+
+def test_current_build_cannot_execute_campaign_v1(tmp_path: Path) -> None:
+    comparison = _surface_comparison(_wheel(tmp_path), INTRADAY_CAMPAIGN_V1_ID)
+
+    assert not comparison.equivalent
+    assert "extra:systematic_trading_lab/intraday_campaigns.py" in comparison.mismatches
+    assert "systematic_trading_lab/providers.py" in comparison.mismatches
 
 
 def test_surface_manifest_preserves_exact_reviewed_pr_114_deltas() -> None:
@@ -129,6 +162,12 @@ def test_surface_manifest_preserves_exact_reviewed_pr_114_deltas() -> None:
             b"if requested.start < actual.start or requested.end > actual.end:",
             b"if False:",
             "systematic_trading_lab/datasets.py",
+        ),
+        (
+            "providers.py",
+            b'or record["timestamp"] in expected_timestamps',
+            b"or True",
+            "systematic_trading_lab/providers.py",
         ),
         (
             "experiment_runner.py",
@@ -168,7 +207,9 @@ def test_surface_rejects_changes_across_the_execution_path(
     source = Path("src/systematic_trading_lab", path).read_bytes()
     assert old in source
 
-    comparison = _surface_comparison(_wheel(tmp_path, {path: source.replace(old, new, 1)}))
+    comparison = _surface_comparison(
+        _wheel(tmp_path, {path: source.replace(old, new, 1)}), INTRADAY_CAMPAIGN_V2_ID
+    )
 
     assert not comparison.equivalent
     assert component in comparison.mismatches
@@ -182,7 +223,7 @@ def test_surface_requires_every_reviewed_wheel_module(tmp_path: Path) -> None:
             if name != "systematic_trading_lab/validation.py":
                 output.writestr(name, source.read(name))
 
-    comparison = _surface_comparison(missing)
+    comparison = _surface_comparison(missing, INTRADAY_CAMPAIGN_V2_ID)
 
     assert not comparison.equivalent
     assert "missing:systematic_trading_lab/validation.py" in comparison.mismatches
@@ -210,7 +251,9 @@ def test_surface_rejects_post_definition_and_dataset_rebinding(
 ) -> None:
     source = Path("src/systematic_trading_lab", path).read_bytes()
 
-    comparison = _surface_comparison(_wheel(tmp_path, {path: source + mutation}))
+    comparison = _surface_comparison(
+        _wheel(tmp_path, {path: source + mutation}), INTRADAY_CAMPAIGN_V2_ID
+    )
 
     assert not comparison.equivalent
     assert f"systematic_trading_lab/{path}" in comparison.mismatches
@@ -222,7 +265,8 @@ def test_surface_rejects_verifier_mutation_and_extra_importable_module(tmp_path:
         _wheel(
             tmp_path,
             {"intraday_source_provenance.py": source + b"\nVERIFIER_REBOUND = True\n"},
-        )
+        ),
+        INTRADAY_CAMPAIGN_V2_ID,
     )
     assert not changed.equivalent
     assert "systematic_trading_lab/intraday_source_provenance.py" in changed.mismatches
@@ -234,7 +278,7 @@ def test_surface_rejects_verifier_mutation_and_extra_importable_module(tmp_path:
             output.writestr(name, source_wheel.read(name))
         output.writestr("systematic_trading_lab/rogue.py", "VALUE = 1\n")
 
-    comparison = _surface_comparison(extra)
+    comparison = _surface_comparison(extra, INTRADAY_CAMPAIGN_V2_ID)
     assert not comparison.equivalent
     assert "extra:systematic_trading_lab/rogue.py" in comparison.mismatches
 
@@ -529,7 +573,12 @@ def test_assessment_uses_attested_build_and_installed_runtime_without_timestamps
     monkeypatch.setattr(provenance, "_environment_identity", lambda *_: _environment())
 
     assessment = provenance.assess_intraday_execution_source(
-        wheel, manifest, lockfile, wheelhouse, verified_at=NOW
+        wheel,
+        manifest,
+        lockfile,
+        wheelhouse,
+        campaign_id=INTRADAY_CAMPAIGN_V2_ID,
+        verified_at=NOW,
     )
 
     assert calls == [("build", NOW), ("installed", NOW)]
@@ -576,6 +625,7 @@ def test_assessment_rejects_changed_lock_before_attestation(
             manifest,
             lockfile,
             wheelhouse,
+            campaign_id=INTRADAY_CAMPAIGN_V2_ID,
             verified_at=NOW,
         )
     assert not called
@@ -617,7 +667,12 @@ def test_assessment_retains_attestation_verifier_identity(
     monkeypatch.setattr(provenance, "_environment_identity", lambda *_: _environment())
 
     assessment = provenance.assess_intraday_execution_source(
-        wheel, manifest, lockfile, wheelhouse, verified_at=NOW
+        wheel,
+        manifest,
+        lockfile,
+        wheelhouse,
+        campaign_id=INTRADAY_CAMPAIGN_V2_ID,
+        verified_at=NOW,
     )
 
     assert assessment.build_identity.attestation_verifier == verifier

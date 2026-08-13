@@ -21,6 +21,7 @@ from .experiments import (
     IntradayExperimentSpec,
 )
 from .fingerprints import canonicalize, fingerprint
+from .intraday_campaigns import get_intraday_campaign_contract
 from .intraday_reporting import (
     build_intraday_report,
     intraday_strategy_result,
@@ -224,7 +225,7 @@ def run_cataloged_intraday_experiment(
     """Run one training or validation candidate under the M5B contract."""
 
     selected_costs = (
-        _campaign_v1_execution_inputs(
+        _planned_intraday_execution_inputs(
             registry,
             datasets,
             spec,
@@ -232,7 +233,7 @@ def run_cataloged_intraday_experiment(
             initial_cash,
             cost_model,
         )
-        if pre_registered and spec.campaign_id == "intraday-research-v1"
+        if pre_registered
         else cost_model or CostModel()
     )
     source_binding: dict[str, object] | None = None
@@ -342,7 +343,7 @@ def _intraday_computation(
     return result, report, bars
 
 
-def _campaign_v1_execution_inputs(
+def _planned_intraday_execution_inputs(
     registry: ExperimentRegistry,
     datasets: DatasetService,
     spec: IntradayExperimentSpec,
@@ -350,25 +351,30 @@ def _campaign_v1_execution_inputs(
     initial_cash: Decimal,
     cost_model: CostModel | None,
 ) -> CostModel:
-    """Derive Campaign V1 inputs from its stored spec and one storage root."""
+    """Derive source-reviewed campaign inputs from its stored spec and one storage root."""
 
+    contract = get_intraday_campaign_contract(spec.campaign_id)
+    if not contract.execution_enabled:
+        raise ExperimentError("Campaign V1 is aborted and remains read-only evidence")
     if (
         type(registry) is not ExperimentRegistry
         or type(datasets) is not DatasetService
         or type(datasets.catalog) is not DatasetCatalog
     ):
-        raise ExperimentError("Campaign V1 requires the concrete registry and dataset service")
+        raise ExperimentError("planned intraday execution requires concrete storage services")
     if type(initial_cash) is not Decimal or initial_cash != Decimal("100000"):
-        raise ExperimentError("Campaign V1 initial cash differs from its reviewed foundation")
+        raise ExperimentError("planned intraday initial cash differs from its reviewed foundation")
     if cost_model is not None:
-        raise ExperimentError("Campaign V1 costs are derived from its sealed stored spec")
+        raise ExperimentError("planned intraday costs come from its sealed stored spec")
     layout = datasets.layout
     if (
         registry.path.resolve() != layout.experiments.resolve()
         or datasets.catalog.path.resolve() != layout.catalog.resolve()
         or output_directory.resolve() != layout.reports.resolve()
     ):
-        raise ExperimentError("Campaign V1 registry, datasets, and reports must share one root")
+        raise ExperimentError(
+            "planned intraday registry, datasets, and reports must share one root"
+        )
     return CostModel(
         spec.cost_model_version,
         spec.slippage_bps,

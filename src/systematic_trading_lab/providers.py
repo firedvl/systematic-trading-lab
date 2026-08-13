@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Any, Protocol, cast
+from typing import Any, Protocol, cast, overload
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from .calendar import expected_bar_timestamps
-from .domain import AdjustmentPolicy, Symbol, Timeframe, TimestampRange
+from .domain import AdjustmentPolicy, OHLCVBar, Symbol, Timeframe, TimestampRange
 
 
 class MarketDataProvider(Protocol):
@@ -28,6 +29,26 @@ class MarketDataProvider(Protocol):
 
 HttpTransport = Callable[[Request], bytes]
 ALPACA_HISTORICAL_PROVIDER_NAME = "alpaca-historical-v2"
+
+
+@dataclass(frozen=True)
+class ProviderRecords(Sequence[dict[str, Any]]):
+    """Requested records plus every mapped record retained as acquisition evidence."""
+
+    records: tuple[dict[str, Any], ...]
+    raw_records: tuple[dict[str, Any], ...]
+
+    def __len__(self) -> int:
+        return len(self.records)
+
+    @overload
+    def __getitem__(self, index: int) -> dict[str, Any]: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> tuple[dict[str, Any], ...]: ...
+
+    def __getitem__(self, index: int | slice) -> dict[str, Any] | tuple[dict[str, Any], ...]:
+        return self.records[index]
 
 
 class AlpacaHistoricalProvider:
@@ -70,11 +91,15 @@ class AlpacaHistoricalProvider:
             raise ValueError("at least one symbol is required")
         if timeframe is Timeframe.DAILY:
             exclusive_end = requested.end + timedelta(days=1)
+            expected_timestamps: set[str] | None = None
         else:
             expected = expected_bar_timestamps(requested.start, requested.end, timeframe)
             if not expected:
                 raise ValueError("intraday request contains no XNYS regular-session bar opens")
             exclusive_end = expected[-1] + timeframe.duration
+            expected_timestamps = {
+                timestamp.isoformat().replace("+00:00", "Z") for timestamp in expected
+            }
         params = {
             "symbols": ",".join(symbol.value for symbol in symbols),
             "timeframe": alpaca_timeframe,
@@ -88,6 +113,8 @@ class AlpacaHistoricalProvider:
         }
         headers = {"APCA-API-KEY-ID": self.api_key, "APCA-API-SECRET-KEY": self.secret_key}
         records: list[dict[str, Any]] = []
+        raw_records: list[dict[str, Any]] = []
+        requested_symbols = {symbol.value for symbol in symbols}
         token: str | None = None
         for _ in range(self.max_pages):
             query = dict(params)
@@ -106,11 +133,23 @@ class AlpacaHistoricalProvider:
                 for bar in bars:
                     if not isinstance(bar, dict):
                         raise RuntimeError("Alpaca historical data response has an invalid bar")
-                    records.append(_alpaca_bar_record(symbol, bar, timeframe))
+                    record = _alpaca_bar_record(symbol, bar, timeframe)
+                    raw_records.append(record)
+                    try:
+                        OHLCVBar.from_record(record)
+                    except (ArithmeticError, TypeError, ValueError):
+                        records.append(record)
+                        continue
+                    if (
+                        expected_timestamps is None
+                        or symbol not in requested_symbols
+                        or record["timestamp"] in expected_timestamps
+                    ):
+                        records.append(record)
             token_value = payload.get("next_page_token")
             token = token_value if isinstance(token_value, str) and token_value else None
             if token is None:
-                return records
+                return ProviderRecords(tuple(records), tuple(raw_records))
         raise RuntimeError("Alpaca historical data exceeded the configured page limit")
 
 

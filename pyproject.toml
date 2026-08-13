@@ -28,7 +28,7 @@ dev = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-systematic_trading_lab = ["intraday_campaign_v1_surface.json"]
+systematic_trading_lab = ["intraday_campaign_v1_surface.json", "intraday_campaign_v2_surface.json"]
 
 [tool.ruff]
 line-length = 100

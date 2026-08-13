@@ -21,7 +21,7 @@ from .domain import (
 )
 from .fingerprints import canonical_json, canonicalize, fingerprint
 from .parquet import from_parquet, from_parquet_range, to_parquet
-from .providers import MarketDataProvider
+from .providers import MarketDataProvider, ProviderRecords
 from .storage import StorageLayout
 from .universe import UniverseDefinition
 from .validation import ValidatedBars, validate_records
@@ -83,7 +83,9 @@ class DatasetService:
         feed = getattr(provider, "feed", None)
         if feed is not None and (not isinstance(feed, str) or not feed):
             raise DatasetValidationError("provider feed must be a nonempty string when present")
-        records = provider.fetch(symbols, timeframe, requested)
+        fetched = provider.fetch(symbols, timeframe, requested)
+        records = tuple(fetched)
+        raw_records = fetched.raw_records if isinstance(fetched, ProviderRecords) else records
         validated = _validate_records(records, timeframe, requested, symbols)
         if not validated.result.valid:
             evidence = {
@@ -92,6 +94,9 @@ class DatasetService:
                 "validation": validated.result,
                 "records": validated.quarantined,
             }
+            if isinstance(fetched, ProviderRecords):
+                evidence["acquisition_raw_records"] = raw_records
+                evidence["acquisition_raw_fingerprint"] = fingerprint(raw_records)
             evidence_id = fingerprint(evidence)
             self.layout.write_quarantine(evidence_id, canonical_json(evidence) + "\n")
             raise DatasetValidationError(
@@ -104,7 +109,7 @@ class DatasetService:
         ordered = tuple(sorted(validated.bars, key=lambda bar: (bar.symbol.value, bar.timestamp)))
         bar_records = tuple(bar.to_record() for bar in ordered)
         data_fingerprint = fingerprint(bar_records)
-        raw_fingerprint = fingerprint(records)
+        raw_fingerprint = fingerprint(raw_records)
         version_key = _version_key(
             provider.name,
             symbols,
@@ -165,7 +170,7 @@ class DatasetService:
             manifest_data.pop("timestamp_policy")
         if manifest.feed is None:
             manifest_data.pop("feed")
-        raw_text = "".join(canonical_json(record) + "\n" for record in records)
+        raw_text = "".join(canonical_json(record) + "\n" for record in raw_records)
         created = self.layout.publish(
             identity.dataset_id,
             {

@@ -1,4 +1,4 @@
-"""Attested execution-build provenance for Intraday Campaign V1."""
+"""Attested execution-build provenance for closed intraday campaigns."""
 
 from __future__ import annotations
 
@@ -29,20 +29,25 @@ from zipfile import BadZipFile, ZipFile
 from zoneinfo import TZPATH
 
 from .fingerprints import canonical_json, canonicalize, fingerprint
+from .intraday_campaigns import (
+    INTRADAY_CAMPAIGN_CONTRACTS,
+    INTRADAY_CAMPAIGN_V1_ID,
+    INTRADAY_FOUNDATION_LOCK_SHA256,
+    IntradayCampaignContract,
+    get_intraday_campaign_contract,
+)
 from .runtime_build import (
     AttestationVerifierIdentity,
     verify_attested_build,
     verify_installed_runtime,
 )
 
-INTRADAY_CAMPAIGN_ID = "intraday-research-v1"
+INTRADAY_CAMPAIGN_ID = INTRADAY_CAMPAIGN_V1_ID
 INTRADAY_PLAN_FINGERPRINT = "ce81be36d02cc15f421390bf3d3787714bb0b025797ccfb8de2c1d1236052c1a"
 INTRADAY_FOUNDATION_COMMIT = "b1774f547da2976348430b820faf2ebdacdf46af"
-INTRADAY_FOUNDATION_LOCK_SHA256 = "d6d60aa5d93644dd3bf932ef84f6793bab6d33992659ed48e968850c6673c00d"
 _GIT_SHA = 40
 _SHA256 = 64
 _PACKAGE_PREFIX = "systematic_trading_lab/"
-_SURFACE_MANIFEST_NAME = "intraday_campaign_v1_surface.json"
 INTRADAY_RUNTIME_BOOTSTRAP = (
     "import runpy,sys; sys.path.append(sys.argv.pop(1)); "
     'runpy.run_module("systematic_trading_lab.cli", run_name="__main__")'
@@ -77,45 +82,60 @@ def _lower_hex(value: str, length: int) -> bool:
     return len(value) == length and all(character in "0123456789abcdef" for character in value)
 
 
-def _load_reviewed_surface_manifest() -> tuple[
-    bytes, tuple[Mapping[str, object], ...], tuple[tuple[str, str], ...]
-]:
-    raw = Path(__file__).with_name(_SURFACE_MANIFEST_NAME).read_bytes()
+@dataclass(frozen=True)
+class _ReviewedSurface:
+    contract: IntradayCampaignContract
+    raw: bytes
+    components: tuple[Mapping[str, object], ...]
+    hashes: tuple[tuple[str, str], ...]
+    definition: Mapping[str, object]
+
+
+def _load_reviewed_surface_manifest(campaign_id: str) -> _ReviewedSurface:
+    contract = get_intraday_campaign_contract(campaign_id)
+    raw = Path(__file__).with_name(contract.surface_manifest_name).read_bytes()
     value = json.loads(raw)
-    if not isinstance(value, Mapping) or set(value) != {
+    legacy = campaign_id == INTRADAY_CAMPAIGN_V1_ID
+    fields = {
         "components",
         "foundation_commit",
         "lock_sha256",
         "schema_version",
-    }:
-        raise RuntimeError("Campaign V1 surface manifest is invalid")
+    }
+    if not legacy:
+        fields |= {"campaign_id", "plan_fingerprint"}
+    if not isinstance(value, Mapping) or set(value) != fields:
+        raise RuntimeError("intraday campaign surface manifest is invalid")
     components = value["components"]
     if (
-        value["schema_version"] != "intraday-campaign-v1-surface-manifest-v1"
-        or value["foundation_commit"] != INTRADAY_FOUNDATION_COMMIT
-        or value["lock_sha256"] != INTRADAY_FOUNDATION_LOCK_SHA256
+        value["schema_version"] != contract.surface_manifest_schema
+        or value["foundation_commit"] != contract.foundation_commit
+        or value["lock_sha256"] != contract.lock_sha256
+        or (not legacy and value["campaign_id"] != contract.campaign_id)
+        or (not legacy and value["plan_fingerprint"] != contract.plan_fingerprint)
         or not isinstance(components, list)
         or not components
     ):
-        raise RuntimeError("Campaign V1 surface manifest identity differs")
+        raise RuntimeError("intraday campaign surface manifest identity differs")
     records: list[Mapping[str, object]] = []
     hashes: list[tuple[str, str]] = []
     for component in components:
-        if not isinstance(component, Mapping) or set(component) != {
-            "classification",
-            "diff_sha256",
-            "foundation_sha256",
-            "patch_id",
-            "path",
-            "sha256",
-        }:
-            raise RuntimeError("Campaign V1 surface component is invalid")
+        component_fields = (
+            {
+                "classification",
+                "diff_sha256",
+                "foundation_sha256",
+                "patch_id",
+                "path",
+                "sha256",
+            }
+            if legacy
+            else {"path", "sha256"}
+        )
+        if not isinstance(component, Mapping) or set(component) != component_fields:
+            raise RuntimeError("intraday campaign surface component is invalid")
         path = component["path"]
         digest = component["sha256"]
-        foundation_digest = component["foundation_sha256"]
-        classification = component["classification"]
-        patch_id = component["patch_id"]
-        diff_sha256 = component["diff_sha256"]
         if (
             not isinstance(path, str)
             or not path.startswith(_PACKAGE_PREFIX)
@@ -124,40 +144,51 @@ def _load_reviewed_surface_manifest() -> tuple[
             or ".." in PurePosixPath(path).parts
             or not isinstance(digest, str)
             or not _lower_hex(digest, _SHA256)
-            or classification not in {"foundation-exact", "reviewed-delta", "reviewed-new-file"}
         ):
-            raise RuntimeError("Campaign V1 surface component identity is invalid")
-        if classification == "foundation-exact":
-            valid_classification = (
-                foundation_digest == digest and patch_id is None and diff_sha256 is None
-            )
-        else:
-            valid_classification = (
-                (foundation_digest is None or _lower_hex(str(foundation_digest), _SHA256))
-                and isinstance(patch_id, str)
-                and _lower_hex(patch_id, _GIT_SHA)
-                and isinstance(diff_sha256, str)
-                and _lower_hex(diff_sha256, _SHA256)
-                and (classification != "reviewed-new-file" or foundation_digest is None)
-            )
-        if not valid_classification:
-            raise RuntimeError("Campaign V1 surface delta identity is invalid")
+            raise RuntimeError("intraday campaign surface component identity is invalid")
+        if legacy:
+            foundation_digest = component["foundation_sha256"]
+            classification = component["classification"]
+            patch_id = component["patch_id"]
+            diff_sha256 = component["diff_sha256"]
+            if classification == "foundation-exact":
+                valid_classification = (
+                    foundation_digest == digest and patch_id is None and diff_sha256 is None
+                )
+            else:
+                valid_classification = (
+                    classification in {"reviewed-delta", "reviewed-new-file"}
+                    and (foundation_digest is None or _lower_hex(str(foundation_digest), _SHA256))
+                    and isinstance(patch_id, str)
+                    and _lower_hex(patch_id, _GIT_SHA)
+                    and isinstance(diff_sha256, str)
+                    and _lower_hex(diff_sha256, _SHA256)
+                    and (classification != "reviewed-new-file" or foundation_digest is None)
+                )
+            if not valid_classification:
+                raise RuntimeError("Campaign V1 surface delta identity is invalid")
         records.append(dict(component))
         hashes.append((path, digest))
     if tuple(path for path, _ in hashes) != tuple(sorted({path for path, _ in hashes})):
-        raise RuntimeError("Campaign V1 surface component paths are invalid")
-    return raw, tuple(records), tuple(hashes)
+        raise RuntimeError("intraday campaign surface component paths are invalid")
+    definition = {
+        "schema_version": (
+            "intraday-campaign-v1-whole-package-surface-v1"
+            if legacy
+            else "intraday-campaign-v2-whole-package-surface-v1"
+        ),
+        "surface_manifest_sha256": _sha256(raw),
+        "components": tuple(records),
+        "lock_sha256": contract.lock_sha256,
+    }
+    return _ReviewedSurface(contract, raw, tuple(records), tuple(hashes), definition)
 
 
-_SURFACE_MANIFEST_RAW, _SURFACE_COMPONENTS, _REVIEWED_COMPONENT_HASHES = (
-    _load_reviewed_surface_manifest()
-)
-_SURFACE_DEFINITION = {
-    "schema_version": "intraday-campaign-v1-whole-package-surface-v1",
-    "surface_manifest_sha256": _sha256(_SURFACE_MANIFEST_RAW),
-    "components": _SURFACE_COMPONENTS,
-    "lock_sha256": INTRADAY_FOUNDATION_LOCK_SHA256,
-}
+_V1_SURFACE = _load_reviewed_surface_manifest(INTRADAY_CAMPAIGN_ID)
+_SURFACE_MANIFEST_RAW = _V1_SURFACE.raw
+_SURFACE_COMPONENTS = _V1_SURFACE.components
+_REVIEWED_COMPONENT_HASHES = _V1_SURFACE.hashes
+_SURFACE_DEFINITION = _V1_SURFACE.definition
 
 
 class IntradayExecutionSourceProvenanceError(RuntimeError):
@@ -284,7 +315,7 @@ class IntradayRuntimeEnvironmentIdentity:
 
 @dataclass(frozen=True)
 class IntradayExecutionSurfaceComparison:
-    """Exact comparison to the reviewed whole-package Campaign V1 surface."""
+    """Exact comparison to one reviewed whole-package campaign surface."""
 
     foundation_commit: str
     surface_manifest_sha256: str
@@ -297,14 +328,14 @@ class IntradayExecutionSurfaceComparison:
     equivalent: bool
 
     def __post_init__(self) -> None:
+        surface = _surface_for_identity(self.foundation_commit, self.surface_manifest_sha256)
         if (
-            self.foundation_commit != INTRADAY_FOUNDATION_COMMIT
-            or self.surface_manifest_sha256 != _sha256(_SURFACE_MANIFEST_RAW)
-            or self.surface_manifest_fingerprint != fingerprint(_SURFACE_DEFINITION)
-            or self.reviewed_component_hashes != _REVIEWED_COMPONENT_HASHES
-            or self.reviewed_surface_fingerprint != fingerprint(_REVIEWED_COMPONENT_HASHES)
+            self.surface_manifest_fingerprint != fingerprint(surface.definition)
+            or self.reviewed_component_hashes != surface.hashes
+            or self.reviewed_surface_fingerprint != fingerprint(surface.hashes)
             or self.observed_surface_fingerprint != fingerprint(self.observed_component_hashes)
-            or self.mismatches != _surface_mismatches(self.observed_component_hashes)
+            or self.mismatches
+            != _component_mismatches(surface.hashes, self.observed_component_hashes)
             or self.equivalent != (not self.mismatches)
         ):
             raise ValueError("intraday execution surface comparison is inconsistent")
@@ -325,9 +356,10 @@ class IntradayExecutionSourceAssessment:
     surface_comparison: IntradayExecutionSurfaceComparison
 
     def __post_init__(self) -> None:
+        contract = get_intraday_campaign_contract(self.campaign_id)
         if (
-            self.campaign_id != INTRADAY_CAMPAIGN_ID
-            or self.plan_fingerprint != INTRADAY_PLAN_FINGERPRINT
+            self.plan_fingerprint != contract.plan_fingerprint
+            or self.surface_comparison.foundation_commit != contract.foundation_commit
         ):
             raise ValueError("intraday execution source assessment is for another campaign")
 
@@ -342,10 +374,12 @@ def assess_intraday_execution_source(
     lockfile: Path,
     dependency_wheelhouse: Path,
     *,
+    campaign_id: str = INTRADAY_CAMPAIGN_ID,
     verified_at: datetime | None = None,
 ) -> IntradayExecutionSourceAssessment:
     """Verify the attested installed build, locked environment, and M5B surface."""
 
+    contract = get_intraday_campaign_contract(campaign_id)
     timestamp = verified_at or datetime.now(UTC)
     try:
         with tempfile.TemporaryDirectory() as directory:
@@ -357,8 +391,8 @@ def assess_intraday_execution_source(
                 dependency_wheelhouse, snapshot_root / "dependencies"
             )
             lock_bytes = snapshot_lockfile.read_bytes()
-            if _sha256(lock_bytes) != INTRADAY_FOUNDATION_LOCK_SHA256:
-                raise ValueError("Campaign V1 lockfile differs from its foundation")
+            if _sha256(lock_bytes) != contract.lock_sha256:
+                raise ValueError("intraday campaign lockfile differs from its foundation")
             build = verify_attested_build(snapshot_wheel, snapshot_manifest, verified_at=timestamp)
             if build.attestation_verifier is None:
                 raise ValueError("attested build lacks verifier identity")
@@ -376,11 +410,11 @@ def assess_intraday_execution_source(
                 source_files_fingerprint=installed.source_files_fingerprint,
             )
             return IntradayExecutionSourceAssessment(
-                campaign_id=INTRADAY_CAMPAIGN_ID,
-                plan_fingerprint=INTRADAY_PLAN_FINGERPRINT,
+                campaign_id=contract.campaign_id,
+                plan_fingerprint=contract.plan_fingerprint,
                 build_identity=stable_build,
                 environment_identity=_environment_identity(lock_bytes, snapshot_wheelhouse),
-                surface_comparison=_surface_comparison(snapshot_wheel),
+                surface_comparison=_surface_comparison(snapshot_wheel, campaign_id),
             )
     except IntradayExecutionSourceProvenanceError:
         raise
@@ -466,53 +500,88 @@ def write_intraday_execution_report(path: Path, report: Mapping[str, object]) ->
         temporary.unlink(missing_ok=True)
 
 
-def _surface_comparison(wheel: Path) -> IntradayExecutionSurfaceComparison:
-    observed = _wheel_surface_component_hashes(wheel)
-    mismatches = _surface_mismatches(observed)
+def _surface_for_identity(foundation_commit: str, surface_manifest_sha256: str) -> _ReviewedSurface:
+    for contract in INTRADAY_CAMPAIGN_CONTRACTS:
+        surface = _load_reviewed_surface_manifest(contract.campaign_id)
+        if (
+            surface.contract.foundation_commit == foundation_commit
+            and _sha256(surface.raw) == surface_manifest_sha256
+        ):
+            return surface
+    raise ValueError("intraday execution surface identity is unknown")
+
+
+def _surface_comparison(
+    wheel: Path, campaign_id: str = INTRADAY_CAMPAIGN_ID
+) -> IntradayExecutionSurfaceComparison:
+    surface = _load_reviewed_surface_manifest(campaign_id)
+    observed = _wheel_surface_component_hashes(wheel, campaign_id)
+    mismatches = _component_mismatches(surface.hashes, observed)
     return IntradayExecutionSurfaceComparison(
-        foundation_commit=INTRADAY_FOUNDATION_COMMIT,
-        surface_manifest_sha256=_sha256(_SURFACE_MANIFEST_RAW),
-        surface_manifest_fingerprint=fingerprint(_SURFACE_DEFINITION),
-        reviewed_surface_fingerprint=fingerprint(_REVIEWED_COMPONENT_HASHES),
+        foundation_commit=surface.contract.foundation_commit,
+        surface_manifest_sha256=_sha256(surface.raw),
+        surface_manifest_fingerprint=fingerprint(surface.definition),
+        reviewed_surface_fingerprint=fingerprint(surface.hashes),
         observed_surface_fingerprint=fingerprint(observed),
-        reviewed_component_hashes=_REVIEWED_COMPONENT_HASHES,
+        reviewed_component_hashes=surface.hashes,
         observed_component_hashes=observed,
         mismatches=mismatches,
         equivalent=not mismatches,
     )
 
 
-def _wheel_surface_component_hashes(wheel: Path) -> tuple[tuple[str, str], ...]:
+def _wheel_surface_component_hashes(
+    wheel: Path, campaign_id: str = INTRADAY_CAMPAIGN_ID
+) -> tuple[tuple[str, str], ...]:
+    surface = _load_reviewed_surface_manifest(campaign_id)
     with ZipFile(wheel) as archive:
         names = _wheel_file_names(archive)
         package_names = tuple(sorted(name for name in names if name.startswith(_PACKAGE_PREFIX)))
-        expected_names = tuple(
-            sorted((*_surface_component_paths(), f"{_PACKAGE_PREFIX}{_SURFACE_MANIFEST_NAME}"))
-        )
-        if package_names != expected_names:
+        selected_manifest = f"{_PACKAGE_PREFIX}{surface.contract.surface_manifest_name}"
+        known_manifests = {
+            f"{_PACKAGE_PREFIX}{contract.surface_manifest_name}"
+            for contract in INTRADAY_CAMPAIGN_CONTRACTS
+        }
+        component_paths = set(_surface_component_paths(campaign_id))
+        package_paths = set(package_names)
+        if selected_manifest not in package_paths:
+            raise ValueError("execution wheel lacks its reviewed surface manifest")
+        if package_paths - known_manifests != component_paths:
             return tuple(
                 sorted(
                     (name, _sha256(archive.read(name)))
                     for name in package_names
-                    if name != f"{_PACKAGE_PREFIX}{_SURFACE_MANIFEST_NAME}"
+                    if name not in known_manifests
                 )
             )
-        manifest_raw = archive.read(f"{_PACKAGE_PREFIX}{_SURFACE_MANIFEST_NAME}")
-        if manifest_raw != _SURFACE_MANIFEST_RAW:
+        manifest_raw = archive.read(selected_manifest)
+        if manifest_raw != surface.raw:
             raise ValueError("execution wheel surface manifest differs from its reviewed manifest")
-        return tuple((path, _sha256(archive.read(path))) for path in _surface_component_paths())
+        return tuple(
+            (path, _sha256(archive.read(path))) for path in _surface_component_paths(campaign_id)
+        )
 
 
-def _surface_module_paths() -> tuple[str, ...]:
-    return tuple(path.removeprefix(_PACKAGE_PREFIX) for path in _surface_component_paths())
+def _surface_module_paths(campaign_id: str = INTRADAY_CAMPAIGN_ID) -> tuple[str, ...]:
+    return tuple(
+        path.removeprefix(_PACKAGE_PREFIX) for path in _surface_component_paths(campaign_id)
+    )
 
 
-def _surface_component_paths() -> tuple[str, ...]:
-    return tuple(path for path, _ in _REVIEWED_COMPONENT_HASHES)
+def _surface_component_paths(campaign_id: str = INTRADAY_CAMPAIGN_ID) -> tuple[str, ...]:
+    return tuple(path for path, _ in _load_reviewed_surface_manifest(campaign_id).hashes)
 
 
-def _surface_mismatches(observed: tuple[tuple[str, str], ...]) -> tuple[str, ...]:
-    expected = dict(_REVIEWED_COMPONENT_HASHES)
+def _surface_mismatches(
+    observed: tuple[tuple[str, str], ...], campaign_id: str = INTRADAY_CAMPAIGN_ID
+) -> tuple[str, ...]:
+    return _component_mismatches(_load_reviewed_surface_manifest(campaign_id).hashes, observed)
+
+
+def _component_mismatches(
+    reviewed: tuple[tuple[str, str], ...], observed: tuple[tuple[str, str], ...]
+) -> tuple[str, ...]:
+    expected = dict(reviewed)
     actual = dict(observed)
     return tuple(
         sorted(
@@ -569,27 +638,29 @@ def _require_isolated_python() -> _RuntimeLayoutEvidence:
         or {"site", "sitecustomize", "usercustomize", "_virtualenv"} & sys.modules.keys()
     ):
         raise ValueError(
-            "Campaign V1 requires startup-hook-free isolated Python with bytecode disabled"
+            "intraday campaigns require startup-hook-free isolated Python with bytecode disabled"
         )
     meta_path = _import_hook_identity(sys.meta_path)
     path_hooks = _import_hook_identity(sys.path_hooks)
     if meta_path != _EXPECTED_META_PATH or path_hooks != _DEFAULT_PATH_HOOKS:
-        raise ValueError("Campaign V1 Python import hooks differ from their defaults")
+        raise ValueError("intraday campaign Python import hooks differ from their defaults")
     _require_meta_path_state()
     if os.name != "posix" or not Path(sys.executable).is_absolute():
-        raise ValueError("Campaign V1 requires an absolute POSIX virtual-environment interpreter")
+        raise ValueError(
+            "intraday campaigns require an absolute POSIX virtual-environment interpreter"
+        )
     executable = Path(sys.executable)
     runtime_root = executable.parent.parent
     if runtime_root.resolve(strict=True) != runtime_root or executable.parent.name != "bin":
-        raise ValueError("Campaign V1 virtual-environment path is invalid")
+        raise ValueError("intraday campaign virtual-environment path is invalid")
     executable_chain, resolved_executable = _executable_chain(executable)
     base_prefix = Path(sys.base_prefix).resolve(strict=True)
     if Path(sys.base_prefix) != base_prefix or Path(sys.prefix).resolve(strict=True) != base_prefix:
-        raise ValueError("Campaign V1 base Python identity is invalid")
+        raise ValueError("intraday campaign base Python identity is invalid")
     version = f"python{sys.version_info.major}.{sys.version_info.minor}"
     site_packages = runtime_root / "lib" / version / "site-packages"
     if site_packages.is_symlink() or not site_packages.is_dir():
-        raise ValueError("Campaign V1 runtime site-packages path is invalid")
+        raise ValueError("intraday campaign runtime site-packages path is invalid")
     site_packages = site_packages.resolve(strict=True)
     base_library = base_prefix / sys.platlibdir
     observed_sys_path = tuple(sys.path)
@@ -601,7 +672,7 @@ def _require_isolated_python() -> _RuntimeLayoutEvidence:
         or Path(observed_sys_path[2]).resolve(strict=True) != base_library / version / "lib-dynload"
         or observed_sys_path[3] != str(site_packages)
     ):
-        raise ValueError("Campaign V1 Python import path differs from its fixed bootstrap")
+        raise ValueError("intraday campaign Python import path differs from its fixed bootstrap")
     original = tuple(sys.orig_argv)
     if (
         len(original) < 7
@@ -609,10 +680,10 @@ def _require_isolated_python() -> _RuntimeLayoutEvidence:
         or original[6] != str(site_packages)
         or sys.argv[0] != "-c"
     ):
-        raise ValueError("Campaign V1 Python bootstrap command differs")
+        raise ValueError("intraday campaign Python bootstrap command differs")
     config_path = runtime_root / "pyvenv.cfg"
     if config_path.is_symlink() or not config_path.is_file():
-        raise ValueError("Campaign V1 pyvenv.cfg is invalid")
+        raise ValueError("intraday campaign pyvenv.cfg is invalid")
     config_raw = config_path.read_bytes()
     config = _parse_pyvenv_config(config_raw)
     _require_standard_venv_executable(config, resolved_executable, runtime_root, base_prefix)
@@ -659,18 +730,18 @@ def _require_meta_path_state() -> None:
             continue
         attributes = vars(hook)
         if set(attributes) != {"known_modules", "name"} or attributes["name"] != "six":
-            raise ValueError("Campaign V1 six import hook state is invalid")
+            raise ValueError("intraday campaign six import hook state is invalid")
         known_modules = attributes["known_modules"]
         if not isinstance(known_modules, dict):
-            raise ValueError("Campaign V1 six import hook module map is invalid")
+            raise ValueError("intraday campaign six import hook module map is invalid")
         for name, value in sorted(known_modules.items()):
             if not isinstance(name, str):
-                raise ValueError("Campaign V1 six import hook module name is invalid")
+                raise ValueError("intraday campaign six import hook module name is invalid")
             value_type = (type(value).__module__, type(value).__qualname__)
             state = vars(value)
             if isinstance(value, types.ModuleType):
                 if not isinstance(value.__name__, str):
-                    raise ValueError("Campaign V1 six import hook module is invalid")
+                    raise ValueError("intraday campaign six import hook module is invalid")
                 _module_spec_identity(value)
             elif value_type == ("six", "MovedModule") and set(state).issubset(
                 {"__name__", "__spec__", "mod", "name"}
@@ -679,10 +750,10 @@ def _require_meta_path_state() -> None:
                     item is None or isinstance(item, str)
                     for item in (state.get("name"), state.get("mod"))
                 ):
-                    raise ValueError("Campaign V1 six import hook target is invalid")
+                    raise ValueError("intraday campaign six import hook target is invalid")
                 _module_spec_identity(value)
             else:
-                raise ValueError("Campaign V1 six import hook target is invalid")
+                raise ValueError("intraday campaign six import hook target is invalid")
 
 
 def _module_spec_identity(value: object) -> tuple[object, ...] | None:
@@ -704,7 +775,7 @@ def _executable_chain(path: Path) -> tuple[tuple[tuple[str, str, str], ...], Pat
     for _ in range(40):
         current = Path(os.path.abspath(current))
         if current in seen:
-            raise ValueError("Campaign V1 Python executable symlink chain loops")
+            raise ValueError("intraday campaign Python executable symlink chain loops")
         seen.add(current)
         status = current.lstat()
         if stat.S_ISLNK(status.st_mode):
@@ -713,10 +784,10 @@ def _executable_chain(path: Path) -> tuple[tuple[tuple[str, str, str], ...], Pat
             current = current.parent / target if not Path(target).is_absolute() else Path(target)
             continue
         if not stat.S_ISREG(status.st_mode):
-            raise ValueError("Campaign V1 Python executable is not a regular file")
+            raise ValueError("intraday campaign Python executable is not a regular file")
         records.append((str(current), "file", _sha256(current.read_bytes())))
         return tuple(records), current.resolve(strict=True)
-    raise ValueError("Campaign V1 Python executable symlink chain is too deep")
+    raise ValueError("intraday campaign Python executable symlink chain is too deep")
 
 
 def _parse_pyvenv_config(raw: bytes) -> dict[str, str]:
@@ -725,7 +796,7 @@ def _parse_pyvenv_config(raw: bytes) -> dict[str, str]:
         key, separator, value = line.partition("=")
         key = key.strip().lower()
         if not separator or not key or key in result:
-            raise ValueError("Campaign V1 pyvenv.cfg fields are invalid")
+            raise ValueError("intraday campaign pyvenv.cfg fields are invalid")
         result[key] = value.strip()
     return result
 
@@ -754,7 +825,7 @@ def _require_standard_venv_executable(
             )
         )
     ):
-        raise ValueError("Campaign V1 pyvenv.cfg differs from a closed standard-library venv")
+        raise ValueError("intraday campaign pyvenv.cfg differs from a closed standard-library venv")
 
 
 def _tree_identity(
@@ -864,7 +935,7 @@ def _environment_identity(
         )
     )
     if decimal_context != _default_decimal_context():
-        raise ValueError("decimal context differs from the Campaign V1 foundation")
+        raise ValueError("decimal context differs from the intraday campaign foundation")
     cache_tag = sys.implementation.cache_tag
     if not isinstance(cache_tag, str) or not cache_tag:
         raise ValueError("Python cache tag is unavailable")

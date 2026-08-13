@@ -120,7 +120,7 @@ Example commands:
 uv run trading-lab experiment create-campaign baseline-v1 --name "Baseline campaign" --budget 20
 uv run trading-lab experiment plan-training --spec PLAN.json
 uv run trading-lab experiment run-planned candidate-1
-uv run trading-lab experiment inspect-intraday-plan --spec config/research/intraday-campaign-v1.json
+uv run trading-lab experiment inspect-intraday-plan --spec config/research/intraday-campaign-v2.json
 uv run trading-lab experiment compare candidate-1 candidate-2
 uv run trading-lab experiment evaluate-qualification \
   --evidence-manifest config/research/qualification-evidence-v3.json \
@@ -133,9 +133,11 @@ The repository also contains a predeclared strategic-allocation candidate whose 
 
 The intraday workflow adds fixed cash, previous-bar-momentum, and 12-bar moving-average-trend engineering baselines for SPY and QQQ. Controlled runs use exact catalog ranges, flat-at-close sessions, completed-bar decisions, deterministic next-bar-open fills, and frozen cost and delay stress variants. The research-only qualification path cannot authorize holdout access, paper execution, or broker writes. See [`docs/intraday-research.md`](docs/intraday-research.md).
 
-Campaign V1 preregisters 60 exact training and validation candidates, including their periods, strategies, costs, delays, policy identity, and ordinals. Inspecting the plan creates no runtime state. All four immutable period datasets must pass full validation before all 60 reservations bind atomically. The sealed M5B reference remains unchanged and is not runtime provenance. A separate immutable review binds the actual main-only attested wheel, canonical GitHub CLI path and bytes used for verification, installed project package, locked dependency wheels and files, isolated Python runtime, and the complete 48-module application-package source surface. The wheel-bound surface manifest classifies every module as foundation-exact, an exact reviewed delta, or a reviewed new file; added, missing, or changed modules fail and require Campaign V2. Candidate execution stays blocked until a human reviews the full main-attested source commit, wheel, verifier identity, and matching assessment fingerprint while every candidate is pending. No review has been recorded and no Campaign V1 candidate has run. See [`docs/research-campaigns/intraday-campaign-v1.md`](docs/research-campaigns/intraday-campaign-v1.md).
+Campaign V1 was preregistered and source-reviewed, but its first real Alpaca Training acquisition exposed an extended-hours filtering defect before dataset publication. No candidate ran and no strategy result was observed. Its sealed plan, source review, runtime state, and quarantine evidence remain unchanged and read-only.
 
-Build the clean runtime with CPython 3.12's standard-library venv, not `uv venv`. Prepare the locked dependency wheelhouse, create the runtime, and install the ten dependencies and `APPLICATION.whl` with the exact commands in [the Campaign V1 execution-source runbook](docs/research-campaigns/intraday-campaign-v1.md#execution-source-review). Once prepared, use absolute canonical paths and the fixed bootstrap for every provenance command:
+Campaign V2 carries forward the same 60-candidate research design under plan fingerprint `52db8a27fa4ff86865ab69b6bd7456899329ef3b861a582e59ab32904c03c122`. The Alpaca adapter now admits only exact expected XNYS bar opens to normalization while retaining all mapped transport extras in raw evidence. V2's exact 49-module source manifest includes that correction. All four immutable period datasets must pass full validation before all 60 reservations bind atomically. Candidate execution remains blocked until a human reviews the full main-attested source commit and wheel, verifier identity, isolated locked runtime, and assessment fingerprint. See [the V1 disposition](docs/research-campaigns/intraday-campaign-v1.md) and [the V2 runbook](docs/research-campaigns/intraday-campaign-v2.md).
+
+Build the clean runtime with CPython 3.12's standard-library venv, not `uv venv`. Prepare the locked dependency wheelhouse, create the runtime, and install the ten dependencies and `APPLICATION.whl` with the exact commands in [the Campaign V2 execution-source runbook](docs/research-campaigns/intraday-campaign-v2.md#execution-source-review). Once prepared, use absolute canonical paths and the fixed bootstrap for every provenance command:
 
 ```console
 CAMPAIGN_RUNTIME=/absolute/canonical/runtime
@@ -144,7 +146,7 @@ CAMPAIGN_BOOTSTRAP='import runpy,sys; sys.path.append(sys.argv.pop(1)); runpy.ru
 
 "$CAMPAIGN_RUNTIME/bin/python" -I -B -S -c "$CAMPAIGN_BOOTSTRAP" "$CAMPAIGN_SITE_PACKAGES" \
   experiment assess-intraday-source \
-  --campaign intraday-research-v1 \
+  --campaign intraday-research-v2 \
   --wheel APPLICATION.whl \
   --build-manifest runtime-build-manifest.json \
   --lockfile uv.lock \
@@ -152,14 +154,14 @@ CAMPAIGN_BOOTSTRAP='import runpy,sys; sys.path.append(sys.argv.pop(1)); runpy.ru
 
 "$CAMPAIGN_RUNTIME/bin/python" -I -B -S -c "$CAMPAIGN_BOOTSTRAP" "$CAMPAIGN_SITE_PACKAGES" \
   experiment record-intraday-source REVIEW_ID \
-  --campaign intraday-research-v1 \
+  --campaign intraday-research-v2 \
   --wheel APPLICATION.whl \
   --build-manifest runtime-build-manifest.json \
   --lockfile uv.lock \
   --dependency-wheelhouse DEPENDENCY_WHEELHOUSE \
   --assessment-fingerprint REVIEWED_ASSESSMENT_FINGERPRINT \
   --reviewer REVIEWER \
-  --reason "reviewed Campaign V1 execution build"
+  --reason "reviewed Campaign V2 execution build"
 ```
 
 ## Paper workflow
