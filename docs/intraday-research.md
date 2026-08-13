@@ -121,20 +121,35 @@ The development-only V3 foundation adds separate `intraday-experiment-v2`,
 `intraday-backtest-report-v2`, `state-transition-delayed-fifo-v1`, and
 `XNYS-regular-session-state-transition-flat-v2` contracts. It includes fixed event-driven 12-bar MA,
 six-bar momentum, and six-bar opening-range breakout strategies. It also emits a fingerprinted paired
-realistic/zero-cost diagnostic. The v1 thresholds are unchanged; no V3 qualification binding is
-active, and zero-cost results cannot enter qualification.
+realistic/zero-cost diagnostic. The V3-only qualification binding retains every v1 threshold, reads
+only `realistic.metrics`, requires exact five-role lineage and complete 60-candidate registry
+accounting, and keeps the zero-cost result diagnostic-only. It grants no authority and has no
+controlled V3 reports to assess.
 
-The V3 campaign file is an unsealable 60-candidate draft. Its Training and Validation A/B/C dates are
-unset. All dates from 2025-07-01 through 2026-06-30 are declared exposed; a validator rejects known
-overlap but does not certify freshness. See
-[the V3 draft](research-campaigns/intraday-campaign-v3-draft.md).
+The V3 campaign file remains an unsealable 60-candidate draft. A fingerprinted exposure audit
+proposes 2025-07-01 through 2026-06-30 as explicitly exposed Training and three forward validation
+blocks beginning 2026-08-14. They avoid repository-known dated exposure and exceed the policy's
+20-session floor, but ignored runtime state, provider records, other clones, and human exposure remain
+unresolved. Every validation approval is false, so the draft contract keeps its dates unset and no
+final plan fingerprint exists. See [the V3 draft](research-campaigns/intraday-campaign-v3-draft.md)
+and [exposure inventory](research-campaigns/intraday-exposure-inventory.md).
+
+The provenance workflow can produce a canonical exact-byte manifest for every application-package
+source file, the source commit, V3 foundation commit, and `uv.lock`. The non-authoritative V3
+preassessment can verify the post-merge attested wheel, build and surface manifests, same trusted
+`gh` identity, exact installed package, fixed lock, dependency wheels, and isolated runtime. It has
+no campaign, plan, review, binding, dataset, runner, or authority fields. A trusted V3 source identity
+still requires human review, immutable campaign source review, and per-candidate binding.
 
 ## Deferred work
 
 M5B does not run broad parameter search, autonomous strategy generation, protected intraday holdout
 evaluation, paper execution, options, shorting, leverage, extended hours, tick replay, or
-market-microstructure simulation. V3 still needs independently reviewed period selection, a reviewed
-qualification/report binding, merged and source-reviewed whole-package provenance, independently
-acquired validated datasets, atomic binding, and preregistration before any candidate. A later review
-must approve any holdout policy and separately build M5C market-data, risk, order, reconciliation,
-operational, and authority controls.
+market-microstructure simulation. V3 still needs external freshness attestation, a separately
+reviewed sealed plan, merged and source-reviewed whole-package provenance, independently acquired and
+validated datasets, exactly 60 pending reservations, atomic binding, and a controlled runner before
+any candidate. The future sealed contract must reserve the V3 namespace and expose only a stored-spec
+V3 runner. Caller-configured V1 runs remain separate V1 evidence and any use on candidate validation
+dates would invalidate the current freshness assumption. A later review must approve any holdout
+policy and separately build M5C market-data, risk, order, reconciliation, operational, and authority
+controls.

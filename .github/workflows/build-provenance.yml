@@ -17,6 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+      - run: >-
+          python scripts/write_intraday_surface_manifest.py
+          --package src/systematic_trading_lab
+          --source-commit "$GITHUB_SHA"
+          --lockfile uv.lock
+          --output dist/intraday-v3-whole-package-surface.json
       - run: uv build --wheel
       - run: >-
           python scripts/write_runtime_build_manifest.py
@@ -30,6 +36,7 @@ jobs:
           subject-path: |
             dist/*.whl
             dist/runtime-build-manifest.json
+            dist/intraday-v3-whole-package-surface.json
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -37,6 +44,7 @@ jobs:
           path: |
             dist/*.whl
             dist/runtime-build-manifest.json
+            dist/intraday-v3-whole-package-surface.json
           retention-days: 30
       - if: steps.attest.outcome != 'success'
         run: |

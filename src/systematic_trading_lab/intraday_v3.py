@@ -871,11 +871,19 @@ def build_v3_diagnostic_report(
         < time(16)
         for trade in realistic.trades
     )
-    metrics: dict[str, object] = {
-        "realistic_net_return": realistic.metrics.total_return,
-        "zero_cost_diagnostic_return": zero_cost.metrics.total_return,
+    round_trips, pnl_by_symbol = _v3_round_trips(realistic)
+    session_profits = _v3_session_profits(realistic)
+    traded_sessions = {
+        trade.fill_timestamp.astimezone(_NEW_YORK).date() for trade in realistic.trades
+    }
+    positive_trades = sorted((profit for profit in round_trips if profit > 0), reverse=True)
+    total_positive_trades = sum(positive_trades, _ZERO)
+    positive_symbol_profits = tuple(profit for profit in pnl_by_symbol.values() if profit > 0)
+    total_positive_symbol_profit = sum(positive_symbol_profits, _ZERO)
+    realistic_metrics: dict[str, object] = {
+        "total_return": realistic.metrics.total_return,
         "transaction_cost_drag": zero_cost.metrics.total_return - realistic.metrics.total_return,
-        "total_cost": realistic_cost,
+        "cost_paid_total": realistic_cost,
         "turnover": realistic.metrics.turnover,
         "turnover_per_session": _per_session(realistic.metrics.turnover, session_count),
         "fill_count": len(realistic.trades),
@@ -883,6 +891,22 @@ def build_v3_diagnostic_report(
         "completed_round_trip_count": completed_round_trips,
         "round_trips_per_session": _per_session(Decimal(completed_round_trips), session_count),
         "sessions_in_range": session_count,
+        "sessions_traded": len(traded_sessions),
+        "sessions_traded_percentage": _per_session(Decimal(len(traded_sessions)), session_count),
+        "best_trade_positive_profit_concentration": _v3_concentration(
+            positive_trades[:1], total_positive_trades
+        ),
+        "best_session_positive_profit_concentration": _v3_best_session_concentration(
+            session_profits
+        ),
+        "best_5_trades_positive_profit_concentration": _v3_concentration(
+            positive_trades[:5], total_positive_trades
+        ),
+        "best_symbol_positive_profit_concentration": (
+            max(positive_symbol_profits) / total_positive_symbol_profit
+            if total_positive_symbol_profit
+            else None
+        ),
         "desired_state_evaluation_count": len(realistic.decisions),
         "desired_state_change_count": realistic.desired_state_change_count,
         "executed_state_transition_count": realistic.executed_state_transition_count,
@@ -896,6 +920,7 @@ def build_v3_diagnostic_report(
         "no_op_transition_count": sum(item.status == "no-op" for item in realistic.transitions),
         "overnight_position_count": overnight_count,
         "outside_session_fill_count": outside_session_count,
+        "early_close_session_count": _v3_early_close_session_count(bars),
         "max_drawdown": realistic.metrics.max_drawdown,
     }
     unsigned: dict[str, object] = {
@@ -920,6 +945,7 @@ def build_v3_diagnostic_report(
             "cost_model_version": realistic.cost_model.version,
             "net_return": realistic.metrics.total_return,
             "cost_paid_total": realistic_cost,
+            "metrics": realistic_metrics,
         },
         "zero_cost_counterfactual": {
             "diagnostic_policy": V3_DIAGNOSTIC_POLICY,
@@ -935,13 +961,22 @@ def build_v3_diagnostic_report(
         ),
         "diagnostic_replay_fingerprint": replay.artifact_fingerprint,
         "semantic_trace_fingerprint": replay.semantic_trace_fingerprint,
-        "metrics": metrics,
         "authority": dict(_AUTHORITY_FLAGS),
         "qualification_metric_source": (
             "realistic-cost metrics only, and only after a separate reviewed V3 "
             "qualification contract"
         ),
     }
+    integrity = {
+        "configuration_provenance_fingerprint": unsigned["configuration_provenance_fingerprint"],
+        "input_bars_fingerprint": unsigned["input_bars_fingerprint"],
+        "realistic_result_artifact_fingerprint": realistic.artifact_fingerprint,
+        "zero_cost_result_artifact_fingerprint": zero_cost.artifact_fingerprint,
+        "semantic_trace_fingerprint": unsigned["semantic_trace_fingerprint"],
+        "diagnostic_replay_fingerprint": unsigned["diagnostic_replay_fingerprint"],
+        "execution_contract": unsigned["execution_contract"],
+    }
+    unsigned["evidence_integrity_fingerprint"] = fingerprint(integrity)
     return {**unsigned, "report_fingerprint": fingerprint(unsigned)}
 
 
@@ -997,6 +1032,62 @@ def _per_session(value: Decimal, session_count: int) -> Decimal:
     if session_count < 1:
         raise ValueError("V3 report requires at least one session")
     return value / Decimal(session_count)
+
+
+def _v3_round_trips(
+    result: V3BacktestResult,
+) -> tuple[tuple[Decimal, ...], Mapping[Symbol, Decimal]]:
+    entries: dict[Symbol, tuple[Decimal, Trade] | None] = {}
+    profits: list[Decimal] = []
+    by_symbol: dict[Symbol, Decimal] = {}
+    for trade in result.trades:
+        if trade.quantity > 0:
+            entries[trade.symbol] = (trade.quantity, trade)
+            continue
+        entry = entries.pop(trade.symbol, None)
+        if entry is None or entry[0] != abs(trade.quantity):
+            raise ValueError("V3 report trade sequence does not form exact round trips")
+        quantity, opened = entry
+        profit = quantity * (trade.fill_price - opened.fill_price) - (
+            opened.commission + trade.commission
+        )
+        profits.append(profit)
+        by_symbol[trade.symbol] = by_symbol.get(trade.symbol, _ZERO) + profit
+    if entries:
+        raise ValueError("V3 report contains an open round trip")
+    return tuple(profits), MappingProxyType(by_symbol)
+
+
+def _v3_session_profits(result: V3BacktestResult) -> tuple[Decimal, ...]:
+    end_equity: dict[date, Decimal] = {}
+    for point in result.equity_curve:
+        end_equity[_exchange_session_timestamp(point.timestamp)] = point.equity
+    prior = result.initial_cash
+    profits: list[Decimal] = []
+    for equity in end_equity.values():
+        profits.append(equity - prior)
+        prior = equity
+    return tuple(profits)
+
+
+def _v3_concentration(values: Sequence[Decimal], total: Decimal) -> Decimal | None:
+    return sum(values, _ZERO) / total if total else None
+
+
+def _v3_best_session_concentration(profits: Sequence[Decimal]) -> Decimal | None:
+    positive = tuple(profit for profit in profits if profit > 0)
+    return max(positive) / sum(positive, _ZERO) if positive else None
+
+
+def _v3_early_close_session_count(bars: Sequence[OHLCVBar]) -> int:
+    final_by_session: dict[date, time] = {}
+    for bar in bars:
+        local = bar.timestamp.astimezone(_NEW_YORK)
+        final_by_session[local.date()] = max(
+            local.time().replace(tzinfo=None),
+            final_by_session.get(local.date(), time.min),
+        )
+    return sum(final < time(15) for final in final_by_session.values())
 
 
 @dataclass(frozen=True)

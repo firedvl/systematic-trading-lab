@@ -128,7 +128,10 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         path: observed[path] for path, _ in CAMPAIGN_V2_SURFACE.hashes
     }
     assert set(observed) - dict(CAMPAIGN_V2_SURFACE.hashes).keys() == {
-        "systematic_trading_lab/intraday_v3.py"
+        "systematic_trading_lab/intraday_exposure.py",
+        "systematic_trading_lab/intraday_v3.py",
+        "systematic_trading_lab/intraday_v3_qualification.py",
+        "systematic_trading_lab/intraday_v3_source_provenance.py",
     }
 
 

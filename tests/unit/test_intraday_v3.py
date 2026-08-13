@@ -451,12 +451,15 @@ def test_zero_cost_diagnostic_is_deterministic_distinct_and_non_authoritative(
     assert typed_report["realistic"]["cost_paid_total"] > 0
     assert typed_report["zero_cost_counterfactual"]["cost_paid_total"] == 0
     assert typed_report["zero_cost_counterfactual"]["semantic_trace_matches_realistic"] is True
-    assert typed_report["metrics"]["transaction_cost_drag"] == (
+    assert typed_report["realistic"]["metrics"]["transaction_cost_drag"] == (
         typed_report["zero_cost_counterfactual"]["return"] - typed_report["realistic"]["net_return"]
     )
-    assert typed_report["metrics"]["periodic_rebalance_count"] == 0
-    assert typed_report["metrics"]["overnight_position_count"] == 0
-    assert typed_report["metrics"]["outside_session_fill_count"] == 0
+    assert typed_report["realistic"]["metrics"]["periodic_rebalance_count"] == 0
+    assert typed_report["realistic"]["metrics"]["overnight_position_count"] == 0
+    assert typed_report["realistic"]["metrics"]["outside_session_fill_count"] == 0
+    assert "metrics" not in typed_report["zero_cost_counterfactual"]
+    assert "metrics" not in typed_report
+    assert typed_report["evidence_integrity_fingerprint"]
     assert not any(typed_report["authority"].values())
     output = tmp_path / "v3-diagnostic.json"
     assert write_v3_diagnostic_report(output, spec, first, bars) == report
