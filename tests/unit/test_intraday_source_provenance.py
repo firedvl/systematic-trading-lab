@@ -100,7 +100,7 @@ def _environment() -> IntradayRuntimeEnvironmentIdentity:
     )
 
 
-def test_current_build_surface_exactly_matches_campaign_v2(tmp_path: Path) -> None:
+def test_reviewed_campaign_v2_surface_remains_reconstructable(tmp_path: Path) -> None:
     comparison = _surface_comparison(_wheel(tmp_path), INTRADAY_CAMPAIGN_V2_ID)
 
     assert comparison.equivalent
@@ -136,6 +136,12 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "systematic_trading_lab/intraday_v3_registry.py",
         "systematic_trading_lab/intraday_v3_runner.py",
         "systematic_trading_lab/intraday_v3_source_provenance.py",
+        "systematic_trading_lab/public_cli.py",
+        "systematic_trading_lab/rapid_data.py",
+        "systematic_trading_lab/rapid_research.py",
+        "systematic_trading_lab/rapid_store.py",
+        "systematic_trading_lab/rapid_strategies.py",
+        "systematic_trading_lab/strategy_registry.py",
     }
 
 

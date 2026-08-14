@@ -46,7 +46,10 @@ from systematic_trading_lab.intraday_qualification import (
     evaluate_registered_intraday_qualification,
     load_intraday_qualification_policy,
 )
+from systematic_trading_lab.parquet import to_parquet
 from systematic_trading_lab.providers import FixtureProvider, IntradayFixtureProvider
+from systematic_trading_lab.rapid_data import import_local_data, resolve_research_dataset
+from systematic_trading_lab.rapid_store import RapidResearchStore
 from systematic_trading_lab.storage import StorageLayout
 from systematic_trading_lab.universe import load_intraday_universe, load_research_universe
 
@@ -93,15 +96,19 @@ def spec(source: tuple[OHLCVBar, ...], experiment_id: str = "candidate") -> Expe
 def holdout_setup(
     tmp_path: Path,
 ) -> tuple[ExperimentRegistry, DatasetService, ExperimentSpec]:
-    datasets = DatasetService(StorageLayout(tmp_path / "data"))
+    layout = StorageLayout(tmp_path)
+    datasets = DatasetService(layout)
+    controlled_request = TimestampRange(
+        datetime(2025, 2, 3, tzinfo=UTC), datetime(2025, 2, 7, tzinfo=UTC)
+    )
     imported = datasets.import_from(
         FixtureProvider(),
         fixture_symbols(),
         Timeframe.DAILY,
-        fixture_request(),
+        controlled_request,
         load_research_universe(),
     )
-    registry = ExperimentRegistry(tmp_path / "experiments.sqlite3")
+    registry = ExperimentRegistry(layout.experiments)
     registry.create_campaign("holdout-campaign", "Controlled holdout", 1)
     qualification: dict[str, object] = {
         "experiment_id": "qualified-candidate",
@@ -130,8 +137,8 @@ def holdout_setup(
             "dataset_fingerprint": imported.fingerprint,
             "universe_id": load_research_universe().universe_id,
             "universe_fingerprint": load_research_universe().universe_fingerprint,
-            "validation_start": "2025-01-06T00:00:00Z",
-            "validation_end": "2025-01-07T00:00:00Z",
+            "validation_start": "2025-02-03T00:00:00Z",
+            "validation_end": "2025-02-04T00:00:00Z",
         },
         "source_experiment_ids": ["fixture-validation"],
         "metrics": {"total_return": "0.1"},
@@ -156,8 +163,8 @@ def holdout_setup(
         cost_model_version="conservative-bps-v1",
         execution_model_version="next-bar-v1",
         split=ExperimentSplit.HOLDOUT,
-        start_timestamp=datetime(2025, 1, 8, tzinfo=UTC),
-        end_timestamp=datetime(2025, 1, 10, tzinfo=UTC),
+        start_timestamp=datetime(2025, 2, 5, tzinfo=UTC),
+        end_timestamp=datetime(2025, 2, 7, tzinfo=UTC),
         random_seed=0,
         creation_reason="fixture-only controlled holdout",
         parent_candidate="qualified-candidate",
@@ -555,14 +562,175 @@ def test_holdout_runner_consumes_authorization_before_exact_range_read(
     assert revealed["metrics_json"] is not None
 
 
+def test_rapid_research_rejects_controlled_holdout_before_and_after_consumption(
+    tmp_path: Path,
+) -> None:
+    registry, _datasets, holdout = holdout_setup(tmp_path)
+    rapid = RapidResearchStore(tmp_path)
+    controlled_bytes = registry.path.read_bytes()
+
+    exposed = resolve_research_dataset(
+        tmp_path,
+        rapid,
+        holdout.dataset_id,
+        datetime(2025, 2, 3, tzinfo=UTC),
+        datetime(2025, 2, 4, tzinfo=UTC),
+    )
+    for requested_start, requested_end in (
+        (holdout.start_timestamp, holdout.end_timestamp),
+        (holdout.start_timestamp, None),
+        (None, holdout.end_timestamp),
+        (None, None),
+    ):
+        with pytest.raises(ValueError, match="protected controlled holdout"):
+            resolve_research_dataset(
+                tmp_path,
+                rapid,
+                holdout.dataset_id,
+                requested_start,
+                requested_end,
+            )
+
+    assert len(exposed.bars) == 10
+    assert (
+        registry.get_holdout_run_authorization("fixture-authorization")["consumed_by_experiment_id"]
+        is None
+    )
+    assert registry.path.read_bytes() == controlled_bytes
+
+    registry.create_experiment(holdout, "fixture-authorization")
+    with pytest.raises(ValueError, match="protected controlled holdout"):
+        resolve_research_dataset(
+            tmp_path,
+            rapid,
+            holdout.dataset_id,
+            holdout.start_timestamp,
+            holdout.end_timestamp,
+        )
+    assert (
+        registry.get_holdout_run_authorization("fixture-authorization")["consumed_by_experiment_id"]
+        == holdout.experiment_id
+    )
+
+
+def test_rapid_local_data_cannot_launder_a_controlled_holdout(tmp_path: Path) -> None:
+    registry, _datasets, holdout = holdout_setup(tmp_path)
+    rapid = RapidResearchStore(tmp_path)
+    controlled = StorageLayout(tmp_path).dataset(holdout.dataset_id) / "bars.parquet"
+    copied = tmp_path / "copied-bars.parquet"
+    copied.write_bytes(controlled.read_bytes())
+    controlled_registry = registry.path.read_bytes()
+
+    with pytest.raises(ValueError, match="controlled dataset artifacts cannot be imported"):
+        import_local_data(controlled, rapid)
+    with pytest.raises(ValueError, match="controlled dataset artifacts cannot be imported"):
+        import_local_data(controlled, RapidResearchStore(tmp_path / "other-state"))
+    with pytest.raises(ValueError, match="protected controlled holdout"):
+        import_local_data(copied, rapid)
+
+    exposed = resolve_research_dataset(
+        tmp_path,
+        rapid,
+        holdout.dataset_id,
+        datetime(2025, 2, 3, tzinfo=UTC),
+        datetime(2025, 2, 4, tzinfo=UTC),
+    )
+    exposed_path = tmp_path / "exposed-bars.parquet"
+    exposed_path.write_bytes(to_parquet(exposed.bars))
+    assert import_local_data(exposed_path, rapid)["data_origin"] == "user-supplied"
+
+    backup = tmp_path / "experiments-before-rapid-alias.sqlite3"
+    registry.path.rename(backup)
+    try:
+        legacy_alias = import_local_data(copied, rapid)
+    finally:
+        backup.rename(registry.path)
+    with pytest.raises(ValueError, match="protected controlled holdout"):
+        resolve_research_dataset(
+            tmp_path,
+            rapid,
+            str(legacy_alias["dataset_id"]),
+            holdout.start_timestamp,
+            holdout.end_timestamp,
+        )
+
+    assert (
+        registry.get_holdout_run_authorization("fixture-authorization")["consumed_by_experiment_id"]
+        is None
+    )
+    assert registry.path.read_bytes() == controlled_registry
+
+
+def test_rapid_research_fails_closed_on_an_inverted_stored_holdout_range(
+    tmp_path: Path,
+) -> None:
+    registry, _datasets, holdout = holdout_setup(tmp_path)
+    registry.create_experiment(holdout, "fixture-authorization")
+    with sqlite3.connect(registry.path) as connection:
+        row = connection.execute(
+            "SELECT spec_json FROM experiments WHERE experiment_id = ?",
+            (holdout.experiment_id,),
+        ).fetchone()
+        assert row is not None
+        stored = json.loads(str(row[0]))
+        stored["start_timestamp"], stored["end_timestamp"] = (
+            stored["end_timestamp"],
+            stored["start_timestamp"],
+        )
+        connection.execute(
+            "UPDATE experiments SET spec_json = ? WHERE experiment_id = ?",
+            (json.dumps(stored), holdout.experiment_id),
+        )
+
+    with pytest.raises(ValueError, match="controlled holdout registry is malformed"):
+        resolve_research_dataset(
+            tmp_path,
+            RapidResearchStore(tmp_path),
+            holdout.dataset_id,
+            datetime(2025, 2, 6, tzinfo=UTC),
+            datetime(2025, 2, 6, tzinfo=UTC),
+        )
+
+
+def test_rapid_research_fails_closed_on_an_inverted_authorization_range(
+    tmp_path: Path,
+) -> None:
+    registry, _datasets, holdout = holdout_setup(tmp_path)
+    with sqlite3.connect(registry.path) as connection:
+        row = connection.execute(
+            "SELECT candidate_spec_json FROM holdout_run_authorizations WHERE authorization_id = ?",
+            ("fixture-authorization",),
+        ).fetchone()
+        assert row is not None
+        stored = json.loads(str(row[0]))
+        stored["validation_start"], stored["validation_end"] = (
+            stored["validation_end"],
+            stored["validation_start"],
+        )
+        connection.execute(
+            "UPDATE holdout_run_authorizations SET candidate_spec_json = ? "
+            "WHERE authorization_id = ?",
+            (json.dumps(stored), "fixture-authorization"),
+        )
+
+    with pytest.raises(ValueError, match="controlled holdout registry is malformed"):
+        resolve_research_dataset(
+            tmp_path,
+            RapidResearchStore(tmp_path),
+            holdout.dataset_id,
+            datetime(2025, 2, 4, tzinfo=UTC),
+            datetime(2025, 2, 4, tzinfo=UTC),
+        )
+
+
 def test_holdout_range_failure_remains_failed_and_consumes_authorization(
     tmp_path: Path,
 ) -> None:
     registry, datasets, holdout = holdout_setup(tmp_path)
     outside_dataset = replace(
         holdout,
-        start_timestamp=datetime(2025, 1, 11, tzinfo=UTC),
-        end_timestamp=datetime(2025, 1, 12, tzinfo=UTC),
+        start_timestamp=datetime(2025, 2, 10, tzinfo=UTC),
+        end_timestamp=datetime(2025, 2, 11, tzinfo=UTC),
     )
 
     with pytest.raises(ValueError, match="exceeds the dataset range"):

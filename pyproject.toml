@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "systematic-trading-lab"
 version = "0.1.0"
-description = "Reproducible systematic trading research infrastructure"
+description = "ETF backtesting, walk-forward research, and guarded paper-trading tools"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "Apache-2.0"
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-trading-lab = "systematic_trading_lab.cli:main"
+trading-lab = "systematic_trading_lab.public_cli:main"
 
 [dependency-groups]
 dev = [
