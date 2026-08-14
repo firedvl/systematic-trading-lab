@@ -112,7 +112,7 @@ Guarded paper evaluation
 Live: unsupported
 ```
 
-Rapid Research is exploratory. It uses a separate SQLite database and artifact directory, never writes controlled campaign or execution registries, and cannot grant protected holdout, paper, broker-write, or live authority. V3 remains an advanced long-horizon benchmark with three reserved validation windows; it is unmaterialized pending the trusted main seal. Rapid Research rejects those windows.
+Rapid Research is exploratory. It uses a separate SQLite database and artifact directory, never writes controlled campaign or execution registries, and cannot grant protected holdout, paper, broker-write, or live authority. V3 is a separately sealed long-horizon forward-validation benchmark. Its exact main seal was attested before Validation A, and the sealed campaign has been materialized with 60 pending reservations. No selected V3 dataset or result has been observed. Rapid Research rejects those windows, so V3 does not block normal historical research.
 
 See [Rapid Research](docs/rapid-research.md) for backtests, sweeps, walk-forward defaults, metrics, stress tests, storage, and candidate export.
 

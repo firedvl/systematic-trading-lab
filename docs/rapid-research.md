@@ -149,7 +149,7 @@ Rapid runs reject any inclusive overlap with:
 - Validation B: 2026-12-04 through 2027-02-09;
 - Validation C: 2027-02-10 through 2027-04-15.
 
-There is no CLI or API override. V3 remains unmaterialized pending the trusted main seal. Do not acquire or inspect its selected periods for ordinary research while they remain eligible for prospective validation.
+There is no CLI or API override. V3's exact main seal was attested before Validation A, and the sealed campaign has been materialized with 60 pending reservations. No selected V3 dataset or result has been observed. V3 now waits for its future validation periods and does not block normal historical research. Do not acquire or inspect its selected periods through ordinary research.
 
 Catalog and local reads reject ranges reserved by an unused controlled-holdout authorization and ranges stored as controlled holdout experiments. Rapid checks the read-only controlled registry before protected bars. Local Rapid imports remain outside controlled evidence.
 

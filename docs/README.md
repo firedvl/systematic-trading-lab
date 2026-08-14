@@ -30,7 +30,7 @@ Start with the research path. Open the controlled campaign and paper documents o
 - [Threat model](threat-model.md) — protected assets, trust boundaries, and failure rules
 - [Campaign V1](research-campaigns/intraday-campaign-v1.md) — aborted immutable evidence
 - [Campaign V2](research-campaigns/intraday-campaign-v2-postmortem.md) — completed failed campaign and postmortem
-- [Campaign V3](research-campaigns/intraday-campaign-v3-draft.md) — future validation design awaiting its trusted seal
+- [Campaign V3](research-campaigns/intraday-campaign-v3-draft.md) — sealed forward-validation benchmark and remaining gates
 - [V3 exposure inventory](research-campaigns/intraday-exposure-inventory.md) — known exposure and freshness limits
 
 ## Development
