@@ -11,9 +11,12 @@ The candidate fingerprint is
 `1efe7aa4043fd6dcab7e34025e70b1a45c03a5d2ca6e15f520af3ef9a4742bf9`.
 Every authority field in the Rapid export remains false.
 
-The executable control path is implemented separately from this design. Its plan fingerprint remains
-unset until that control change merges: the plan must bind the final merged execution commit. Do not
-materialize the campaign or run a candidate from the development branch.
+The executable control path was merged and run from exact main
+`b7bf03786373ba92cf5e2741b744051dcff46833`. Campaign
+`rapid-002-rmm-40-40-10-controlled-v1` sealed plan fingerprint
+`dd1fe1a313ddd74b34405cb1d5d7d284157e3372180646f63862cebc0e8afd0e` and completed
+all 28 reservations once. Controlled qualification rejected the candidate. This result grants no
+independent-evaluation, holdout, paper, broker, live, or V3 authority.
 
 ## Frozen candidate
 
@@ -117,7 +120,7 @@ fingerprints remain unchanged. A manual summary cannot substitute for registry-b
 
 ## Executable sealing and running
 
-From a clean, fetched, fast-forwarded `main` after the control change merges, seal the plan once:
+The campaign was sealed once from a clean, fetched, fast-forwarded `main` with:
 
 ```console
 uv run trading-lab experiment plan-rapid-002 \
@@ -130,8 +133,22 @@ The command verifies the exact candidate bytes and fingerprint, full dataset int
 preserved source, strategy hash, manifest, and proposal before one transaction stores the plan and all
 28 pending reservations. It prints the executable plan fingerprint. Run a reservation only as
 `uv run trading-lab experiment run-planned EXPERIMENT_ID`; the command accepts no execution inputs.
-Completion or failure is terminal. Qualification requires all 28 records and the same stored plan
-fingerprint.
+Completion or failure is terminal. All reservations are now completed and must not be rerun.
+Qualification required all 28 records and the same stored plan fingerprint.
+
+## Controlled outcome
+
+- Evidence fingerprint:
+  `ea2ef03fd8385379442ca7e81ee512c1e8bd140ab4d6fafb2cf37ad156acaf0a`.
+- Qualification report fingerprint:
+  `352d105aba2a87abb19a8db06ae4fc87c3e7f45c629f75e296d36d4ebeb2adcc`.
+- State: `rejected`.
+- Fixed-weight benchmark wins: `0` of `3`; required at least `2` of `3`.
+- Maximum base-fold instrument profit concentration:
+  `0.5481303845862676475938417604`; cap `0.5`.
+- Remaining machine gates: `19` passed, including both Stress A/B return and retention gates.
+
+The independent range remains unopened. Do not retry, retune, reselect, or continue this promotion.
 
 ## Pass/fail gates
 
