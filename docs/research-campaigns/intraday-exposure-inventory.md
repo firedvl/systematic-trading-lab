@@ -66,21 +66,24 @@ qualification.
 
 Independent review found no dated overlap in Validation A/B/C. Universal freshness remains false
 because ignored runtime state, provider records, other clones, and human exposure cannot be fully
-known. The periods are eligible for the enforceable prospective property because no known dated
-exposure overlaps them and the exact inventory, selection, plan, and qualification binding can still
-be GitHub/main-attested before `2026-10-01T13:30:00Z`. Eligibility is not established freshness. The
-author-recorded selection date is descriptive, not a trusted cutoff. The selection artifact records
-`prospective_market_data_freshness: false` and `approved_for_v3_validation: false` for every
-validation block. Only a verified Sigstore transparency-log timestamp for the exact seal establishes
-the effective selection cutoff and both statuses later. Local time, commit timestamps, file mtimes,
-and caller-entered verification time do not. The seal paths use the strict inventory and selection
-parsers, so a known overlapping acquisition blocks sealing even after dependent fingerprints change.
+known. The exact inventory, selection, plan, and qualification binding were GitHub/main-attested with
+trusted Sigstore transparency-log cutoff `2026-08-13T21:52:05Z`, before Validation A's first bar at
+`2026-10-01T13:30:00Z`. The author-recorded selection date remains descriptive. The static selection
+artifact records `prospective_market_data_freshness: false` and `approved_for_v3_validation: false`
+for every validation block. The verified seal establishes the required prospective publication
+timing without mutating that artifact; it does not prove universal freshness or approve validation
+data. Local time, commit timestamps, file mtimes, and caller-entered verification time do not. The
+seal paths use the strict inventory and selection parsers, so a known overlapping acquisition blocks
+sealing even after dependent fingerprints change.
 
 The final plan fingerprint is
 `5e81cf8f0db1143f293a0f93900f1e797718443a559c1caaaa2e986851d5241a`.
-Committing it creates no runtime plan, reservation, dataset, or result. A missing, late, or
-substituted attestation blocks materialization. No V3 dataset has been acquired, no V3 candidate has
-run, no V3 result has been observed, and no V3 qualification has passed.
+Committing it alone created no runtime state. An operator later materialized the verified sealed
+campaign with one seal row, one plan row, and 60 pending reservations. Dataset bindings, bound specs,
+source reviews, source bindings, results, publications, and conflicts remain zero. The canonical
+sealed checkpoint SHA-256 is
+`ab42ef31e87e9c09b59aa417b33d6821e5e90eb05d7ada19e2a9dfed8001f6fb`. No V3 dataset has been
+acquired, no V3 candidate has run, no V3 result has been observed, and no V3 qualification has passed.
 
 All four datasets must validate and bind atomically before candidate 1. Validation C's final bar
 opens at `2027-04-15T19:55:00Z` and completes at `2027-04-15T20:00:00Z`. Candidate 1 cannot legally

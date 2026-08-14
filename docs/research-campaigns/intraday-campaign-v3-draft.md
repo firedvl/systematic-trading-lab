@@ -1,8 +1,12 @@
 # Intraday Campaign V3 preregistration
 
-Status: final static plan; not runtime-materialized, dataset-bound, source-reviewed, or executed.
+Status: exact main seal attested before Validation A; runtime materialized with 60 pending reservations; not dataset-bound, source-reviewed, or executed.
 
 Campaign ID: `intraday-research-v3`
+
+Main source commit: `b97a79921909e1e2f4fcfcd3e7a3d49f3720529c`. Trusted Sigstore
+transparency-log cutoff: `2026-08-13T21:52:05Z`. Canonical sealed checkpoint SHA-256:
+`ab42ef31e87e9c09b59aa417b33d6821e5e90eb05d7ada19e2a9dfed8001f6fb`.
 
 Final contract: `config/research/intraday-campaign-v3.json`, fingerprint
 `5e81cf8f0db1143f293a0f93900f1e797718443a559c1caaaa2e986851d5241a`.
@@ -92,8 +96,8 @@ session, fills and round trips per session, desired-state evaluations and change
 transitions, canceled/rejected/no-op transitions, and periodic rebalances. The zero-cost result is a
 diagnostic only. It cannot replace realistic-cost qualification evidence. Report construction
 rechecks the exact experiment timestamp range, full ordered-bar content fingerprint, both result
-fingerprints, and paired semantic-trace fingerprint before writing immutable evidence. A future
-controlled runner must also resolve the declared dataset and universe identities through the catalog.
+fingerprints, and paired semantic-trace fingerprint before writing immutable evidence. The controlled
+runner also resolves the declared dataset and universe identities through the catalog.
 
 `intraday-qualification-policy-v1` thresholds remain unchanged. The existing v1 evaluator rejects the
 V3 report schema. The separate V3 qualification binding accepts only exact
@@ -105,7 +109,7 @@ proposed. No controlled V3 report exists, so no V3 qualification has passed.
 
 ## Fixed candidate matrix
 
-The draft contains three active strategies, four roles, and five variants per strategy-role pair:
+The final plan contains three active strategies, four roles, and five variants per strategy-role pair:
 
 | Variant | Slippage bps | Commission bps | FIFO delay |
 | --- | ---: | ---: | ---: |
@@ -117,8 +121,8 @@ The draft contains three active strategies, four roles, and five variants per st
 
 The fixed design budget is `3 × 4 × 5 = 60`. Cash remains a non-budget software sanity test. The plan
 lists all 60 IDs and ordinals in strategy-major, period, then variant order. Each non-base role points
-to its matching strategy-period base. Runtime reservations do not exist until verified
-materialization.
+to its matching strategy-period base. Runtime reservations did not exist until verified
+materialization; all 60 reservations now exist and remain pending.
 
 ## Period selection
 
@@ -130,25 +134,27 @@ periods without reading prices or bars:
 | Role | Dates | First and last UTC bar opens | Sessions | Opens per symbol | Review state |
 | --- | --- | --- | ---: | ---: | --- |
 | Training | 2025-07-01–2026-06-30 | `2025-07-01T13:30:00Z`–`2026-06-30T19:55:00Z` | 251 | 19,470 | explicitly exposed training only |
-| Validation A | 2026-10-01–2026-12-03 | `2026-10-01T13:30:00Z`–`2026-12-03T20:55:00Z` | 45 | 3,474 | eligible; approval awaits pre-bar main seal |
-| Validation B | 2026-12-04–2027-02-09 | `2026-12-04T14:30:00Z`–`2027-02-09T20:55:00Z` | 45 | 3,474 | eligible; approval awaits pre-bar main seal |
-| Validation C | 2027-02-10–2027-04-15 | `2027-02-10T14:30:00Z`–`2027-04-15T19:55:00Z` | 45 | 3,510 | eligible; approval awaits pre-bar main seal |
+| Validation A | 2026-10-01–2026-12-03 | `2026-10-01T13:30:00Z`–`2026-12-03T20:55:00Z` | 45 | 3,474 | pre-bar main seal attested; data unobserved |
+| Validation B | 2026-12-04–2027-02-09 | `2026-12-04T14:30:00Z`–`2027-02-09T20:55:00Z` | 45 | 3,474 | pre-bar main seal attested; data unobserved |
+| Validation C | 2027-02-10–2027-04-15 | `2027-02-10T14:30:00Z`–`2027-04-15T19:55:00Z` | 45 | 3,510 | pre-bar main seal attested; data unobserved |
 
 Each validation block exceeds the 20-session coverage floor and is chronological and non-overlapping.
 The periods moved forward rather than rushing an August 14 cutoff. Selection used only the exposure
 inventory and XNYS calendar. Universal freshness remains unproved because unknown historical and
 external state remains unresolved. Independent review established eligibility for prospective
 market-data freshness: no known dated exposure overlaps the blocks, each began in the future at
-review, and no selected-period bars or results informed the design. The selection artifact keeps
-`prospective_market_data_freshness` and every validation approval false. Its `selection_date` is an
-author-recorded description, not a trusted cutoff. The verified Sigstore transparency-log timestamp
-for the exact GitHub/main seal is the only effective selection cutoff. It establishes the prospective
-property only when it precedes Validation A's first bar.
+review, and no selected-period bars or results informed the design. The static selection artifact
+keeps `prospective_market_data_freshness` and every validation approval false. Its `selection_date` is
+an author-recorded description, not a trusted cutoff. The verified Sigstore transparency-log cutoff
+for the exact GitHub/main seal is `2026-08-13T21:52:05Z`, before Validation A's first bar at
+`2026-10-01T13:30:00Z`. This establishes the sealed plan's required publication timing; it does not
+prove universal freshness or approve validation data.
 
 ## Source and dataset prerequisites
 
 The V2 49-module manifest stays byte-exact and excludes V3. On main, the build workflow creates and
-attests the V3 whole-package surface, wheel, runtime manifest, and preregistration seal. The seal
+attests the V3 whole-package surface, wheel, runtime manifest, and preregistration seal. The exact
+seal for main commit `b97a79921909e1e2f4fcfcd3e7a3d49f3720529c` passed that workflow. The seal
 binds the exact inventory, selection, final plan, qualification binding, source commit, foundation
 commit, first validation bar, and false authority set. Verification requires the exact repository,
 signer workflow, `refs/heads/main`, source commit, seal subject digest, protected `gh` identity, and a
@@ -182,13 +188,15 @@ failure; substituted completed bytes create immutable integrity-conflict evidenc
 rejects. Registered qualification derives the exact five-role group from the immutable registry plan
 and fingerprints evidence for all 60 terminal records.
 
+The reviewed change has merged to main, the exact pre-bar GitHub/Sigstore seal has been attested, and
+the sealed campaign has been materialized with 60 pending reservations. No selected dataset, source
+review, candidate run, or result exists.
+
 Remaining blockers before candidate 1:
 
-1. merge the reviewed change to main and obtain the pre-bar GitHub/Sigstore seal attestation;
-2. verify that seal, establish prospective freshness, and explicitly materialize the 60 reservations;
-3. wait for Validation C's final bar to complete at `2027-04-15T20:00:00Z`;
-4. independently acquire and validate all four datasets, then bind them atomically;
-5. pass the exact source/runtime preassessment and record the human campaign review;
-6. approve the later run under the unchanged no-authority boundary.
+1. wait for Validation C's final bar to complete at `2027-04-15T20:00:00Z`;
+2. independently acquire and validate all four datasets, then bind them atomically;
+3. pass the exact source/runtime preassessment and record the human campaign review;
+4. approve the later run under the unchanged no-authority boundary.
 
 Protected holdout policy and all paper, broker-write, and live controls remain absent.

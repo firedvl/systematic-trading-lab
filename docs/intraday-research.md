@@ -108,7 +108,7 @@ Campaign V2 carried forward the same 60-candidate matrix under plan fingerprint 
 
 V2 used a separate execution-source review. The assessment verified the main-only GitHub-attested application wheel and exact non-editable install, bound the canonical trusted `gh` path and SHA-256, verified the fixed `uv.lock` plus exact dependency wheel and installed-file closure, and required the isolated CPython 3.12 `-I -B -S` runtime. The immutable wheel-bound `intraday_campaign_v2_surface.json` manifest covers the 49 application-package Python modules in the reviewed V2 source by exact hash, including the corrected provider. The runner fixed initial cash at `100000`, derived costs from the stored spec, bound a fresh matching assessment to each claim, and reassessed before report publication. See [the V1 disposition](research-campaigns/intraday-campaign-v1.md), [the V2 historical runbook](research-campaigns/intraday-campaign-v2.md), and [the V2 postmortem](research-campaigns/intraday-campaign-v2-postmortem.md).
 
-## Campaign V2 closeout and V3 development
+## Campaign V2 closeout and V3 forward validation
 
 Campaign V2 completed all 60 controlled candidates and failed all 12 base research qualification
 groups. It remains closed immutable failed evidence. No intraday holdout was accessed or authorized,
@@ -117,7 +117,7 @@ exact-weight scheduling: unchanged 0.5 targets caused drift-driven rebalances, w
 orders suppressed later target applications and confounded the delay stress. See
 [the V2 postmortem](research-campaigns/intraday-campaign-v2-postmortem.md).
 
-The development-only V3 foundation adds separate `intraday-experiment-v2`,
+The V3 foundation adds separate `intraday-experiment-v2`,
 `intraday-backtest-report-v2`, `state-transition-delayed-fifo-v1`, and
 `XNYS-regular-session-state-transition-flat-v2` contracts. It includes fixed event-driven 12-bar MA,
 six-bar momentum, and six-bar opening-range breakout strategies. It also emits a fingerprinted paired
@@ -145,6 +145,11 @@ local clocks, the author-recorded selection date, and caller-entered timestamps 
 verified transparency-log timestamp is the sole effective selection cutoff. The artifact
 preassessment remains non-authoritative until a human records the campaign-bound review.
 
+The exact seal for main commit `b97a79921909e1e2f4fcfcd3e7a3d49f3720529c` was attested with
+trusted cutoff `2026-08-13T21:52:05Z`, before Validation A's first bar. This satisfies the sealed
+plan's publication-timing rule without proving universal freshness, approving validation data, or
+granting authority.
+
 The V3 registry owns only `intraday_v3_*` tables. Its materialization boundary verifies the attested
 seal and trusted timestamp before atomically storing the exact seal bytes, plan, and 60 pending
 reservations. Adding the plan file alone creates no state. Dataset binding resolves four IDs through
@@ -160,13 +165,15 @@ Registered qualification reads its five roles from the immutable stored plan. Ca
 before Validation C completes at `2027-04-15T20:00:00Z`, and then only after the four-dataset bind and
 source review.
 
+The sealed campaign has been materialized with all 60 reservations pending. No selected dataset is
+bound, no source review exists, and no candidate or result has been observed.
+
 ## Deferred work
 
 M5B does not run broad parameter search, autonomous strategy generation, protected intraday holdout
 evaluation, paper execution, options, shorting, leverage, extended hours, tick replay, or
-market-microstructure simulation. V3 still needs the post-merge pre-bar GitHub attestation, explicit
-runtime materialization, four independently acquired and validated datasets, a human source review,
-and the end of Validation C before any candidate. Caller-configured V1 runs remain separate V1
-evidence; using selected validation dates before the trusted seal would invalidate this campaign. A
-later review must approve any holdout policy and separately build M5C market-data, risk, order,
-reconciliation, operational, and authority controls.
+market-microstructure simulation. V3 now waits for the end of Validation C, four independently
+acquired and validated datasets, atomic dataset binding, and a human source review before any
+candidate. Caller-configured V1 runs remain separate V1 evidence, and ordinary research must not use
+the selected V3 windows. A later review must approve any holdout policy and separately build M5C
+market-data, risk, order, reconciliation, operational, and authority controls.
