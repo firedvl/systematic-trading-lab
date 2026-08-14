@@ -1197,6 +1197,15 @@ def test_paper_plan_cli_outputs_derived_planning_provenance(
     assert output["session_count"] == 2
     assert output["rebalance_due"] is False
     assert output["handoff_snapshot_id"] == state.snapshot.snapshot_id
+    assert output["handoff_snapshot_observed_at"] == (
+        max(
+            state.snapshot.account_observed_at,
+            state.snapshot.positions_observed_at,
+            state.snapshot.orders_observed_at,
+        )
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
     assert output["planning_snapshot_id"] == snapshot.snapshot_id
     assert output["planning_risk_input_evidence_id"] == risk_input.evidence_id
     assert len(output["planning_evidence_fingerprint"]) == 64

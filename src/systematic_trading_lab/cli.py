@@ -557,6 +557,7 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             limits = load_risk_limits(arguments.risk_config)
             continuation_store = PaperContinuationStore(layout.execution)
             handoff = continuation_store.get_handoff(arguments.authorization)
+            handoff_snapshot = continuation_store.get_handoff_snapshot(arguments.authorization)
             snapshot = _paper_observation_reader(
                 settings, limits.account_id, limits.allowed_symbols
             ).record_portfolio(ReconciliationStore(layout.execution))
@@ -595,6 +596,13 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                     "strategy_version": present_plan.strategy_version,
                     "handoff_snapshot_id": handoff.current_snapshot_id,
                     "handoff_snapshot_fingerprint": handoff.current_snapshot_fingerprint,
+                    "handoff_snapshot_observed_at": max(
+                        handoff_snapshot.account_observed_at,
+                        handoff_snapshot.positions_observed_at,
+                        handoff_snapshot.orders_observed_at,
+                    )
+                    .isoformat()
+                    .replace("+00:00", "Z"),
                     "handoff_completed_at": handoff.completed_at.isoformat().replace("+00:00", "Z"),
                     "planning_snapshot_id": snapshot.snapshot_id,
                     "planning_snapshot_fingerprint": snapshot.snapshot_fingerprint,

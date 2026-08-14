@@ -773,6 +773,18 @@ class PaperContinuationStore(AttestedRiskContextStore):
             raise KeyError(authorization_id)
         return handoff
 
+    def get_handoff_snapshot(self, authorization_id: str) -> PortfolioSnapshot:
+        with self._connect() as connection:
+            connection.execute("BEGIN")
+            self._verify_checkpoints(connection)
+            snapshots, _, _, _ = ReconciliationStore._verify_reconciliation(
+                cast(ReconciliationStore, self), connection
+            )
+            handoff = self._stored_handoff(connection, authorization_id)
+        if handoff is None or handoff.current_snapshot_id not in snapshots:
+            raise KeyError(authorization_id)
+        return snapshots[handoff.current_snapshot_id]
+
     def _stored_handoff(
         self, connection: sqlite3.Connection, authorization_id: str
     ) -> PaperContinuationHandoff | None:
