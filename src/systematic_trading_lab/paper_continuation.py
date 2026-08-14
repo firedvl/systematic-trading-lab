@@ -15,6 +15,7 @@ from .fingerprints import canonical_json, canonicalize, fingerprint
 from .paper_planning import PresentStateActionPlan, plan_strategic_allocation
 from .position_settlement import (
     _CONTINUATION_SETTLEMENT_MODE,
+    _PLANNING_SETTLEMENT_MODE,
     PositionSettlementEvidence,
     _terminal_orders_at,
 )
@@ -32,7 +33,11 @@ from .reconciliation import (
 )
 from .risk import RiskLimits
 from .risk_context import AttestedRiskContextStore
-from .strategy_equity import StrategyEquityCheckpoint
+from .strategy_equity import (
+    _CONTINUATION_CHECKPOINT_MODE,
+    _PLANNING_CHECKPOINT_MODE,
+    StrategyEquityCheckpoint,
+)
 
 
 class PaperContinuationStore(AttestedRiskContextStore):
@@ -393,10 +398,248 @@ class PaperContinuationStore(AttestedRiskContextStore):
                 raise
         return handoff
 
+    def record_planning_checkpoint(
+        self,
+        *,
+        authorization_id: str,
+        portfolio_snapshot_id: str,
+        risk_input_evidence_id: str,
+        limits: RiskLimits,
+        marked_at: datetime,
+    ) -> StrategyEquityCheckpoint:
+        """Bind fresh GET-only state to an immutable continuation handoff."""
+        _utc(marked_at)
+        with self._connect() as connection:
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                self._verify_connection(connection)
+                self._verify_reservations(connection)
+                self._verify_releases(connection)
+                self._verify_orders(connection)
+                checkpoints = self._verify_checkpoints(connection)
+                authorities = self._authorities(connection)
+                snapshots, attestations, _, reconciliations = (
+                    ReconciliationStore._verify_reconciliation(
+                        cast(ReconciliationStore, self), connection
+                    )
+                )
+                authorizations = self._verify_authorizations(connection)
+                handoff = self._stored_handoff(connection, authorization_id)
+                if handoff is None:
+                    raise HoldoutAccessError("paper planning requires a completed continuation")
+                try:
+                    authorization = authorizations[authorization_id]
+                    observed = snapshots[portfolio_snapshot_id]
+                    attestation = attestations[portfolio_snapshot_id]
+                    risk_input = authorities[2][risk_input_evidence_id]
+                    baseline = authorities[0][handoff.strategy_equity_baseline_id]
+                    handoff_checkpoint = checkpoints[handoff.strategy_equity_checkpoint_id]
+                    handoff_settlement = authorities[1][handoff.settlement_proof_id]
+                    handoff_reconciliation = reconciliations[handoff.reconciliation_evidence_id]
+                except KeyError as error:
+                    raise JournalIntegrityError(
+                        "paper planning authority or fresh evidence is missing"
+                    ) from error
+                matching = [
+                    item
+                    for item in checkpoints.values()
+                    if item.authorization_id == authorization_id
+                ]
+                if not matching:
+                    raise HoldoutAccessError("paper planning strategy equity is missing")
+                prior = matching[-1]
+                replay = next(
+                    (
+                        item
+                        for item in matching
+                        if item.risk_input_evidence_id == risk_input_evidence_id
+                    ),
+                    None,
+                )
+                if replay is not None:
+                    replay_settlement = authorities[1].get(replay.settlement_proof_id)
+                    if (
+                        replay.checkpoint_mode != _PLANNING_CHECKPOINT_MODE
+                        or replay.marked_at != marked_at
+                        or replay.authorization_id != authorization_id
+                        or replay.risk_configuration_fingerprint != limits.configuration_fingerprint
+                        or replay_settlement is None
+                        or replay_settlement.observed_snapshot_id != portfolio_snapshot_id
+                        or risk_input.portfolio_snapshot_id != portfolio_snapshot_id
+                    ):
+                        raise JournalIntegrityError(
+                            "risk input is bound to different paper planning evidence"
+                        )
+                    connection.commit()
+                    return replay
+                active_reservations = self._active_reservation_set(
+                    connection,
+                    account_id=authorization.account_id,
+                    at=marked_at,
+                )
+                execution_artifact = connection.execute(
+                    "SELECT 1 FROM capacity_reservations WHERE authorization_id = ? LIMIT 1",
+                    (authorization_id,),
+                ).fetchone()
+                nonterminal_order = connection.execute(
+                    "SELECT 1 FROM orders WHERE state NOT IN "
+                    "('filled', 'canceled', 'rejected') LIMIT 1"
+                ).fetchone()
+                emergency = self._verify_emergency(connection)
+                observation_times = (
+                    observed.account_observed_at,
+                    observed.positions_observed_at,
+                    observed.orders_observed_at,
+                    risk_input.clock.observed_at,
+                    *(quote.observed_at for quote in risk_input.quotes),
+                )
+                if (
+                    not isinstance(attestation, _PaperSnapshotAttestationV2)
+                    or authorization.account_id != limits.account_id
+                    or authorization.risk_configuration_fingerprint
+                    != limits.configuration_fingerprint
+                    or authorization.candidate_id != handoff.candidate_id
+                    or authorization.strategy_id != handoff.strategy_id
+                    or authorization.strategy_version != handoff.strategy_version
+                    or authorization.account_id != handoff.account_id
+                    or authorization.risk_configuration_fingerprint
+                    != handoff.risk_configuration_fingerprint
+                    or not authorization.authorized_at <= marked_at < authorization.expires_at
+                    or not limits.effective_at <= marked_at < limits.expires_at
+                    or portfolio_snapshot_id == handoff.current_snapshot_id
+                    or risk_input_evidence_id == handoff.current_risk_input_evidence_id
+                    or observed.source is not SnapshotSource.ALPACA_PAPER
+                    or observed.account_id != authorization.account_id
+                    or not observed.account_ready
+                    or bool(observed.open_orders)
+                    or observed.positions != handoff.positions
+                    or observed.cash != handoff.cash
+                    or not set(item.symbol for item in observed.positions).issubset(
+                        limits.allowed_symbols
+                    )
+                    or risk_input.authorization_id != authorization_id
+                    or risk_input.account_id != authorization.account_id
+                    or risk_input.risk_configuration_fingerprint != limits.configuration_fingerprint
+                    or risk_input.maximum_age_seconds != limits.max_snapshot_age_seconds
+                    or risk_input.portfolio_snapshot_id != observed.snapshot_id
+                    or risk_input.portfolio_snapshot_fingerprint != observed.snapshot_fingerprint
+                    or risk_input.portfolio_attestation_fingerprint
+                    != attestation.attestation_fingerprint
+                    or set(item.symbol for item in risk_input.quotes) != set(limits.allowed_symbols)
+                    or risk_input.completed_at > marked_at
+                    or any(
+                        observed_at <= handoff.completed_at
+                        or observed_at > marked_at
+                        or (marked_at - observed_at).total_seconds()
+                        > limits.max_snapshot_age_seconds
+                        for observed_at in observation_times
+                    )
+                    or handoff_checkpoint.checkpoint_fingerprint
+                    != handoff.strategy_equity_checkpoint_fingerprint
+                    or handoff_settlement.proof_fingerprint != handoff.settlement_proof_fingerprint
+                    or handoff_reconciliation.observed_snapshot_id != handoff.current_snapshot_id
+                    or not handoff_reconciliation.result.clean
+                    or handoff_reconciliation.unresolved_mutations != 0
+                    or prior.checkpoint_mode
+                    not in {
+                        _CONTINUATION_CHECKPOINT_MODE,
+                        _PLANNING_CHECKPOINT_MODE,
+                    }
+                    or prior.strategy_equity_baseline_id != handoff.strategy_equity_baseline_id
+                    or prior.authorization_id != authorization_id
+                    or prior.account_id != authorization.account_id
+                    or prior.strategy_id != authorization.strategy_id
+                    or prior.strategy_version != authorization.strategy_version
+                    or prior.risk_configuration_fingerprint != limits.configuration_fingerprint
+                    or prior.positions != handoff.positions
+                    or prior.advance_fingerprint != handoff_checkpoint.advance_fingerprint
+                    or prior.fill_event_ids != handoff_checkpoint.fill_event_ids
+                    or prior.allocated_capital != handoff.allocated_capital
+                    or prior.gross_buy_notional != handoff.gross_buy_notional
+                    or prior.gross_sell_notional != handoff.gross_sell_notional
+                    or prior.fill_cost_reserve != handoff.fill_cost_reserve
+                    or prior.strategy_cash != handoff.strategy_cash
+                    or prior.peak_equity < handoff.peak_equity
+                    or prior.marked_at >= marked_at
+                    or emergency.disabled
+                    or emergency.generation != handoff.emergency_generation
+                    or active_reservations.reservation_count
+                    or execution_artifact is not None
+                    or nonterminal_order is not None
+                ):
+                    raise HoldoutAccessError(
+                        "paper planning requires fresh unchanged continuation state with no "
+                        "unresolved mutation"
+                    )
+                next_sequence = int(
+                    connection.execute(
+                        "SELECT COALESCE(MAX(sequence), 0) + 1 FROM journal"
+                    ).fetchone()[0]
+                )
+                terminal_orders = _terminal_orders_at(
+                    connection,
+                    account_id=authorization.account_id,
+                    before_sequence=next_sequence,
+                )
+                if terminal_orders != handoff_settlement.terminal_orders:
+                    raise HoldoutAccessError(
+                        "paper planning terminal order lineage changed after handoff"
+                    )
+                settlement = PositionSettlementEvidence(
+                    proof_id=fingerprint(
+                        {
+                            "kind": _PLANNING_SETTLEMENT_MODE,
+                            "authorization_id": authorization_id,
+                            "handoff_fingerprint": handoff.handoff_fingerprint,
+                            "prior_checkpoint_fingerprint": prior.checkpoint_fingerprint,
+                            "portfolio_snapshot_fingerprint": observed.snapshot_fingerprint,
+                            "risk_input_evidence_id": risk_input.evidence_id,
+                            "marked_at": marked_at,
+                        }
+                    ),
+                    baseline_id=handoff.reconciliation_baseline_id,
+                    authorization_id=authorization_id,
+                    account_id=authorization.account_id,
+                    risk_configuration_fingerprint=limits.configuration_fingerprint,
+                    advance_fingerprint=prior.advance_fingerprint,
+                    observed_snapshot_id=observed.snapshot_id,
+                    observed_snapshot_fingerprint=observed.snapshot_fingerprint,
+                    attestation_fingerprint=attestation.attestation_fingerprint,
+                    terminal_orders=terminal_orders,
+                    emergency_generation=emergency.generation,
+                    settled_at=marked_at,
+                    settlement_mode=_PLANNING_SETTLEMENT_MODE,
+                    reconciliation_evidence_id=handoff.reconciliation_evidence_id,
+                )
+                checkpoint = self._derive_checkpoint(
+                    connection,
+                    baseline=baseline,
+                    settlement=settlement,
+                    risk_input=risk_input,
+                    fill_cost_bps=limits.strategy_fill_cost_bps,
+                    prior=prior,
+                    marked_at=marked_at,
+                    before_sequence=None,
+                )
+                self._insert_planning_checkpoint(
+                    connection,
+                    settlement=settlement,
+                    checkpoint=checkpoint,
+                )
+                connection.commit()
+            except sqlite3.IntegrityError as error:
+                connection.rollback()
+                raise JournalIntegrityError("paper planning evidence already exists") from error
+            except Exception:
+                connection.rollback()
+                raise
+        return checkpoint
+
     def plan_strategic_allocation(
         self,
         *,
         authorization_id: str,
+        planning_checkpoint_id: str,
         limits: RiskLimits,
         planned_at: datetime,
     ) -> PresentStateActionPlan:
@@ -404,7 +647,7 @@ class PaperContinuationStore(AttestedRiskContextStore):
         _utc(planned_at)
         with self._connect() as connection:
             connection.execute("BEGIN")
-            self._derive(
+            risk_context = self._derive(
                 connection,
                 authorization_id=authorization_id,
                 symbol=limits.allowed_symbols[0],
@@ -429,12 +672,21 @@ class PaperContinuationStore(AttestedRiskContextStore):
             ]
             if not matching:
                 raise HoldoutAccessError("paper planning strategy equity is missing")
-            checkpoint = matching[-1]
             try:
+                checkpoint = checkpoints[planning_checkpoint_id]
+                handoff_checkpoint = checkpoints[handoff.strategy_equity_checkpoint_id]
+                settlement = authorities[1][checkpoint.settlement_proof_id]
                 risk_input = authorities[2][checkpoint.risk_input_evidence_id]
                 snapshot = snapshots[risk_input.portfolio_snapshot_id]
             except KeyError as error:
                 raise JournalIntegrityError("paper planning present state is missing") from error
+            if any(
+                quote.observed_at > planned_at
+                or (planned_at - quote.observed_at).total_seconds()
+                > limits.max_snapshot_age_seconds
+                for quote in risk_input.quotes
+            ):
+                raise JournalIntegrityError("paper planning market evidence is stale or mismatched")
             latest_reconciliation_row = connection.execute(
                 "SELECT evidence_id FROM reconciliation_evidence "
                 "WHERE json_extract(evidence_json, '$.baseline_id') = ? "
@@ -450,13 +702,28 @@ class PaperContinuationStore(AttestedRiskContextStore):
                 "SELECT 1 FROM capacity_reservations WHERE authorization_id = ? LIMIT 1",
                 (authorization_id,),
             ).fetchone()
+            nonterminal_order = connection.execute(
+                "SELECT 1 FROM orders WHERE state NOT IN ('filled', 'canceled', 'rejected') LIMIT 1"
+            ).fetchone()
             if (
-                checkpoint.checkpoint_id != handoff.strategy_equity_checkpoint_id
+                matching[-1].checkpoint_id != planning_checkpoint_id
+                or checkpoint.authorization_id != authorization_id
+                or checkpoint.checkpoint_mode != _PLANNING_CHECKPOINT_MODE
+                or settlement.settlement_mode != _PLANNING_SETTLEMENT_MODE
+                or settlement.reconciliation_evidence_id != handoff.reconciliation_evidence_id
+                or settlement.observed_snapshot_id != snapshot.snapshot_id
+                or handoff_checkpoint.checkpoint_fingerprint
+                != handoff.strategy_equity_checkpoint_fingerprint
                 or latest_reconciliation is None
+                or latest_reconciliation.evidence_id != handoff.reconciliation_evidence_id
                 or not latest_reconciliation.result.clean
                 or latest_reconciliation.unresolved_mutations != 0
-                or latest_reconciliation.observed_snapshot_id != snapshot.snapshot_id
+                or latest_reconciliation.observed_snapshot_id != handoff.current_snapshot_id
+                or risk_context.context.open_order_count != 0
+                or risk_context.context.pending_order_count != 0
+                or risk_context.context.emergency_disabled
                 or execution_artifact is not None
+                or nonterminal_order is not None
             ):
                 raise HoldoutAccessError(
                     "paper planning requires unchanged clean continuation state"
@@ -489,7 +756,9 @@ class PaperContinuationStore(AttestedRiskContextStore):
                 handoff=handoff,
                 snapshot=snapshot,
                 risk_input=risk_input,
-                checkpoint=checkpoint,
+                handoff_checkpoint=handoff_checkpoint,
+                planning_settlement=settlement,
+                planning_checkpoint=checkpoint,
                 root_authorization=root_authorization,
                 root_risk_input=root_risk_input,
                 root_checkpoint=root_checkpoint,
@@ -503,6 +772,18 @@ class PaperContinuationStore(AttestedRiskContextStore):
         if handoff is None:
             raise KeyError(authorization_id)
         return handoff
+
+    def get_handoff_snapshot(self, authorization_id: str) -> PortfolioSnapshot:
+        with self._connect() as connection:
+            connection.execute("BEGIN")
+            self._verify_checkpoints(connection)
+            snapshots, _, _, _ = ReconciliationStore._verify_reconciliation(
+                cast(ReconciliationStore, self), connection
+            )
+            handoff = self._stored_handoff(connection, authorization_id)
+        if handoff is None or handoff.current_snapshot_id not in snapshots:
+            raise KeyError(authorization_id)
+        return snapshots[handoff.current_snapshot_id]
 
     def _stored_handoff(
         self, connection: sqlite3.Connection, authorization_id: str
@@ -637,6 +918,53 @@ class PaperContinuationStore(AttestedRiskContextStore):
                 handoff.authorization_id,
                 handoff.handoff_fingerprint,
                 canonical_json(handoff),
+                sequence,
+            ),
+        )
+
+    def _insert_planning_checkpoint(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        settlement: PositionSettlementEvidence,
+        checkpoint: StrategyEquityCheckpoint,
+    ) -> None:
+        sequence = self._append_event(
+            connection,
+            occurred_at=settlement.settled_at,
+            event_type="position-settlement-proved",
+            entity_type="position-settlement",
+            entity_id=settlement.proof_id,
+            payload=canonicalize(settlement),
+        )
+        connection.execute(
+            "INSERT INTO position_settlement_evidence VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                settlement.proof_id,
+                settlement.baseline_id,
+                settlement.advance_fingerprint,
+                settlement.observed_snapshot_id,
+                canonical_json(settlement),
+                sequence,
+            ),
+        )
+        sequence = self._append_event(
+            connection,
+            occurred_at=checkpoint.marked_at,
+            event_type="strategy-equity-checkpoint-recorded",
+            entity_type="strategy-equity-checkpoint",
+            entity_id=checkpoint.checkpoint_id,
+            payload=canonicalize(checkpoint),
+        )
+        connection.execute(
+            "INSERT INTO strategy_equity_checkpoints VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                checkpoint.checkpoint_id,
+                checkpoint.strategy_equity_baseline_id,
+                checkpoint.settlement_proof_id,
+                checkpoint.risk_input_evidence_id,
+                checkpoint.checkpoint_fingerprint,
+                canonical_json(checkpoint),
                 sequence,
             ),
         )

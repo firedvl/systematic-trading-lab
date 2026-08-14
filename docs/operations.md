@@ -115,7 +115,7 @@ The 2026-08-04 initial session established the flat strategy baseline and filled
    the non-flat expected snapshot, clean reconciliation, strategy-equity baseline, continuation
    settlement and checkpoint, and final handoff. Prior fills, strategy cash, positions, equity peak,
    and drawdown remain in the new lineage.
-4. Generate create-only replay and shadow files:
+4. Collect new planning evidence and generate create-only replay and shadow files:
 
    ```console
    trading-lab paper plan \
@@ -125,20 +125,34 @@ The 2026-08-04 initial session established the flat strategy baseline and filled
      --shadow-plan shadow-plan.json
    ```
 
-   The planner traces the continuation declarations to the root authorization's first fill-backed
-   strategy-equity checkpoint. It derives the root and current sessions from their attested NYSE
-   core clocks, counts the inclusive XNYS sessions, and derives a canonical market-state fingerprint
-   from the current attested snapshot, risk input, clock, quotes, account, handoff, and checkpoint.
-   Missing, stale, malformed, or non-session clock evidence stops planning. The output reports
-   `root_exchange_session`, `current_exchange_session`, `session_count`, `rebalance_due`,
-   `market_state_fingerprint`, and `source_state_fingerprint`; the operator supplies none of these
-   decision values.
+   `paper plan` performs only Alpaca GET requests for account, positions, open orders, current IEX
+   quotes, and the NYSE clock. It appends a new attested portfolio snapshot, risk-input bundle,
+   planning-state settlement, and bid-marked strategy-equity checkpoint. The immutable handoff is the
+   lineage anchor; its snapshot and risk input are never refreshed or replaced. The planning-state
+   comparison requires the same account, authorization, strategy, risk configuration, cash, and
+   settled positions, plus account readiness, no broker open order, no unresolved local mutation or
+   incompatible reservation, and the handoff's clear emergency generation. Account equity and buying
+   power may move with market prices and are retained as fresh account evidence rather than copied
+   into the handoff.
 
-   The planner reads only immutable local evidence. It calls no broker and grants no intent, risk,
-   activation, or broker authority. On a non-rebalance session it emits current quantities as a
-   valid no-op plan. For each quantity intent, copy the emitted `source_data_fingerprint` and
-   `configuration_fingerprint`; `source_state_fingerprint` identifies the current planning evidence
-   but does not replace the authorization-bound intent fingerprints.
+   The same 15-second policy applies to the new snapshot, quotes, clock, and planning mark. The age of
+   the historical handoff evidence does not block planning. The new checkpoint carries prior fills,
+   cost reserve, and strategy cash, marks positions at fresh bids, and uses the greater of inherited
+   peak equity and current strategy equity. It cannot create a flat baseline or reset drawdown.
+
+   The planner traces the continuation declarations to the root authorization's first fill-backed
+   checkpoint. It derives the root and current sessions from attested NYSE core clocks, counts the
+   inclusive XNYS sessions, and binds the handoff plus fresh planning evidence into the canonical
+   market-state and source-state fingerprints. Missing, stale, malformed, mismatched, or non-session
+   evidence stops planning. Output separates the handoff snapshot from the planning snapshot,
+   risk-input evidence, planning checkpoint, root/current sessions, session count, rebalance state,
+   targets, and deltas. The operator supplies none of those decision values.
+
+   The command makes no POST or DELETE request and grants no intent, risk, activation, or broker
+   authority. On a non-rebalance session it emits current quantities as a valid no-op plan. For each
+   quantity intent, copy the emitted `source_data_fingerprint` and `configuration_fingerprint`;
+   `source_state_fingerprint` identifies both immutable and fresh planning evidence but does not
+   replace the authorization-bound intent fingerprints.
 5. Record all quantity intents through the existing guarded path, then run
    `paper record-equivalence` and `paper assess-startup`. Stop for explicit user approval before any
    activation or paper mutation.

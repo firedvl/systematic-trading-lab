@@ -213,7 +213,7 @@ def parser() -> argparse.ArgumentParser:
     complete_continuation.add_argument("--operator", required=True)
     complete_continuation.add_argument("--reason", required=True)
     plan = paper.add_parser(
-        "plan", help="write deterministic broker-free replay and shadow action plans"
+        "plan", help="collect GET-only state and write deterministic replay and shadow plans"
     )
     plan.add_argument("--authorization", required=True)
     plan.add_argument("--risk-config", type=Path, default=Path("config/risk/alpaca-paper-v1.json"))
@@ -555,8 +555,31 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             return 0
         if arguments.paper_command == "plan":
             limits = load_risk_limits(arguments.risk_config)
-            present_plan = PaperContinuationStore(layout.execution).plan_strategic_allocation(
+            continuation_store = PaperContinuationStore(layout.execution)
+            handoff = continuation_store.get_handoff(arguments.authorization)
+            handoff_snapshot = continuation_store.get_handoff_snapshot(arguments.authorization)
+            snapshot = _paper_observation_reader(
+                settings, limits.account_id, limits.allowed_symbols
+            ).record_portfolio(ReconciliationStore(layout.execution))
+            risk_input = AlpacaRiskInputReader(
+                os.environ.get("APCA_API_KEY_ID", ""),
+                os.environ.get("APCA_API_SECRET_KEY", ""),
+                limits=limits,
+            ).record(
+                RiskInputEvidenceStore(layout.execution),
+                portfolio_snapshot_id=snapshot.snapshot_id,
                 authorization_id=arguments.authorization,
+            )
+            planning_checkpoint = continuation_store.record_planning_checkpoint(
+                authorization_id=arguments.authorization,
+                portfolio_snapshot_id=snapshot.snapshot_id,
+                risk_input_evidence_id=risk_input.evidence_id,
+                limits=limits,
+                marked_at=datetime.now(UTC),
+            )
+            present_plan = continuation_store.plan_strategic_allocation(
+                authorization_id=arguments.authorization,
+                planning_checkpoint_id=planning_checkpoint.checkpoint_id,
                 limits=limits,
                 planned_at=datetime.now(UTC),
             )
@@ -571,6 +594,40 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                     "candidate_id": present_plan.candidate_id,
                     "strategy_id": present_plan.strategy_id,
                     "strategy_version": present_plan.strategy_version,
+                    "handoff_snapshot_id": handoff.current_snapshot_id,
+                    "handoff_snapshot_fingerprint": handoff.current_snapshot_fingerprint,
+                    "handoff_snapshot_observed_at": max(
+                        handoff_snapshot.account_observed_at,
+                        handoff_snapshot.positions_observed_at,
+                        handoff_snapshot.orders_observed_at,
+                    )
+                    .isoformat()
+                    .replace("+00:00", "Z"),
+                    "handoff_completed_at": handoff.completed_at.isoformat().replace("+00:00", "Z"),
+                    "planning_snapshot_id": snapshot.snapshot_id,
+                    "planning_snapshot_fingerprint": snapshot.snapshot_fingerprint,
+                    "planning_snapshot_observed_at": max(
+                        snapshot.account_observed_at,
+                        snapshot.positions_observed_at,
+                        snapshot.orders_observed_at,
+                    )
+                    .isoformat()
+                    .replace("+00:00", "Z"),
+                    "planning_risk_input_evidence_id": risk_input.evidence_id,
+                    "planning_risk_input_completed_at": risk_input.completed_at.isoformat().replace(
+                        "+00:00", "Z"
+                    ),
+                    "planning_evidence_id": planning_checkpoint.settlement_proof_id,
+                    "planning_evidence_fingerprint": (
+                        planning_checkpoint.settlement_proof_fingerprint
+                    ),
+                    "planning_strategy_equity_checkpoint_id": (planning_checkpoint.checkpoint_id),
+                    "planning_strategy_equity_checkpoint_fingerprint": (
+                        planning_checkpoint.checkpoint_fingerprint
+                    ),
+                    "strategy_equity": str(planning_checkpoint.strategy_equity),
+                    "peak_equity": str(planning_checkpoint.peak_equity),
+                    "strategy_drawdown": str(planning_checkpoint.strategy_drawdown),
                     "root_exchange_session": present_plan.root_exchange_session,
                     "current_exchange_session": present_plan.current_exchange_session,
                     "session_count": present_plan.session_count,

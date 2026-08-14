@@ -80,6 +80,14 @@ current economics, then binds the proof into the atomic submitter claim. Paper m
 paper origin are mandatory. Submission still rejects weight intents. The planner converts approved
 long-only weights to whole-share quantity intents by flooring allocated capital times target weight
 at the current attested ask; fractional cash remains uninvested.
+Continuation planning no longer treats the handoff's market evidence as current. `paper plan`
+performs new GET-only account, position, open-order, quote, and clock reads, then appends a
+planning-state settlement and strategy-equity checkpoint before deriving targets. The settlement
+must match the immutable handoff's account, cash, settled positions, strategy, configuration,
+emergency generation, and mutation-free local state. The checkpoint links to the prior equity
+checkpoint, carries fill economics and strategy cash, and preserves the greater inherited or current
+equity peak. The 15-second limit applies to the new evidence and mark. The handoff remains immutable
+historical lineage. Neither the refresh nor the plan can construct the submit or cancel transport.
 The fake-only coordinator consumes a newly created preflight once. It accepts normalized broker
 evidence from an injected callable and records it through the existing broker-event authority. Any
 call or evidence failure moves the order to `submission-unknown`. Existing preflight evidence blocks

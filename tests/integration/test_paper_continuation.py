@@ -28,6 +28,7 @@ from systematic_trading_lab.paper_planning import plan_strategic_allocation, wri
 from systematic_trading_lab.paper_submission import PaperSubmissionPreflightStore
 from systematic_trading_lab.position_settlement import PositionSettlementStore
 from systematic_trading_lab.reconciliation import (
+    OpenOrderSnapshot,
     PaperContinuationHandoff,
     PortfolioSnapshot,
     PositionSnapshot,
@@ -80,6 +81,14 @@ class _ContinuationState:
     risk_input: RiskInputEvidence
 
 
+@dataclass(frozen=True)
+class _PlanningState:
+    snapshot: PortfolioSnapshot
+    risk_input: RiskInputEvidence
+    checkpoint: StrategyEquityCheckpoint
+    marked_at: datetime
+
+
 def _limits(now: datetime) -> RiskLimits:
     return RiskLimits(
         configuration_id="paper-continuation-test",
@@ -96,7 +105,7 @@ def _limits(now: datetime) -> RiskLimits:
         max_daily_loss=Decimal("100"),
         max_strategy_drawdown=Decimal("0.01"),
         max_price_deviation_bps=Decimal("25"),
-        max_snapshot_age_seconds=30,
+        max_snapshot_age_seconds=15,
         min_reconciliation_stability_seconds=5,
         reviewed_by="reviewer",
         review_reason="continuation test",
@@ -175,20 +184,23 @@ def _snapshot(
     observed_at: datetime,
     *,
     positions: tuple[PositionSnapshot, ...] = (),
+    open_orders: tuple[OpenOrderSnapshot, ...] = (),
     cash: Decimal = Decimal("100000"),
     equity: Decimal = Decimal("100000"),
     buying_power: Decimal = Decimal("100000"),
+    account_id: str = "paper-account",
+    account_ready: bool = True,
 ) -> PortfolioSnapshot:
     return PortfolioSnapshot(
         snapshot_id=snapshot_id,
         source=source,
-        account_id="paper-account",
+        account_id=account_id,
         cash=cash,
         equity=equity,
         buying_power=buying_power,
-        account_ready=True,
+        account_ready=account_ready,
         positions=positions,
-        open_orders=(),
+        open_orders=open_orders,
         account_observed_at=observed_at,
         positions_observed_at=observed_at,
         orders_observed_at=observed_at,
@@ -214,13 +226,14 @@ def _risk_input(
     attestation_fingerprint: str,
     limits: RiskLimits,
     observed_at: datetime,
+    spy_bid: str = "50",
     spy_ask: str = "100",
 ) -> RiskInputEvidence:
     prices = {
         "GLD": ("199", "200"),
         "IWM": ("99", "100"),
         "QQQ": ("499", "500"),
-        "SPY": ("50", spy_ask),
+        "SPY": (spy_bid, spy_ask),
     }
     quotes = tuple(
         LatestQuoteEvidence(
@@ -491,17 +504,496 @@ def _attestation_fingerprint(path: Path, snapshot_id: str) -> str:
     return str(attestations[snapshot_id].attestation_fingerprint)
 
 
+def _planning_inputs(
+    state: _ContinuationState,
+    *,
+    observed_at: datetime | None = None,
+    suffix: str = "current",
+    positions: tuple[PositionSnapshot, ...] | None = None,
+    open_orders: tuple[OpenOrderSnapshot, ...] = (),
+    cash: Decimal | None = None,
+    account_id: str = "paper-account",
+    account_ready: bool = True,
+    spy_bid: str = "50",
+    spy_ask: str = "100",
+) -> tuple[PortfolioSnapshot, RiskInputEvidence, datetime]:
+    observed_at = observed_at or state.handoff.completed_at + timedelta(
+        seconds=state.source.limits.max_snapshot_age_seconds + 5
+    )
+    snapshot = _attest(
+        ReconciliationStore(state.source.path),
+        _snapshot(
+            f"planning-{suffix}",
+            SnapshotSource.ALPACA_PAPER,
+            observed_at,
+            positions=state.handoff.positions if positions is None else positions,
+            open_orders=open_orders,
+            cash=state.handoff.cash if cash is None else cash,
+            equity=state.handoff.equity + Decimal("25"),
+            buying_power=state.handoff.buying_power + Decimal("25"),
+            account_id=account_id,
+            account_ready=account_ready,
+        ),
+    )
+    risk_input = _risk_input(
+        state.source.path,
+        snapshot=snapshot,
+        authorization_id=state.authorization.authorization_id,
+        attestation_fingerprint=_attestation_fingerprint(state.source.path, snapshot.snapshot_id),
+        limits=state.source.limits,
+        observed_at=observed_at,
+        spy_bid=spy_bid,
+        spy_ask=spy_ask,
+    )
+    marked_at = observed_at + timedelta(seconds=1)
+    return snapshot, risk_input, marked_at
+
+
+def _planning_state(
+    state: _ContinuationState,
+    *,
+    observed_at: datetime | None = None,
+    suffix: str = "current",
+    spy_bid: str = "50",
+    spy_ask: str = "100",
+) -> _PlanningState:
+    snapshot, risk_input, marked_at = _planning_inputs(
+        state,
+        observed_at=observed_at,
+        suffix=suffix,
+        spy_bid=spy_bid,
+        spy_ask=spy_ask,
+    )
+    checkpoint = PaperContinuationStore(state.source.path).record_planning_checkpoint(
+        authorization_id=state.authorization.authorization_id,
+        portfolio_snapshot_id=snapshot.snapshot_id,
+        risk_input_evidence_id=risk_input.evidence_id,
+        limits=state.source.limits,
+        marked_at=marked_at,
+    )
+    return _PlanningState(snapshot, risk_input, checkpoint, marked_at)
+
+
+def _record_planning_reservation(
+    state: _ContinuationState,
+    risk_input: RiskInputEvidence,
+    *,
+    reserved_at: datetime,
+    stage_order: bool,
+) -> None:
+    intent = ExecutionIntent(
+        idempotency_key="planning:reserved",
+        strategy_id=state.authorization.strategy_id,
+        strategy_version=state.authorization.strategy_version,
+        symbol="SPY",
+        decision_timestamp=reserved_at,
+        target_weight=None,
+        target_quantity=5,
+        reason="planning reservation blocker",
+        source_data_fingerprint=state.authorization.dataset_fingerprint,
+        configuration_fingerprint=state.authorization.parameters_fingerprint,
+        reference_price=Decimal("100"),
+        expires_at=reserved_at + timedelta(minutes=5),
+    )
+    store = RiskStore(state.source.path)
+    store.record_intent(intent, received_at=reserved_at)
+    quote = next(item for item in risk_input.quotes if item.symbol == "SPY")
+    context = RiskContext(
+        account_id=state.source.limits.account_id,
+        evaluated_at=reserved_at,
+        equity=Decimal("100025"),
+        cash=state.handoff.cash,
+        buying_power=state.handoff.buying_power,
+        current_gross_exposure=quote.ask_price * 4,
+        current_symbol_notional=quote.ask_price * 4,
+        current_symbol_quantity=4,
+        pending_buy_notional=Decimal(0),
+        pending_order_notional=Decimal(0),
+        active_reservation_set_fingerprint=fingerprint({"reservations": []}),
+        open_order_count=0,
+        pending_order_count=0,
+        orders_last_minute=0,
+        daily_pnl=Decimal(0),
+        strategy_drawdown=Decimal(0),
+        quote_bid_price=quote.bid_price,
+        quote_ask_price=quote.ask_price,
+        account_observed_at=reserved_at,
+        positions_observed_at=reserved_at,
+        orders_observed_at=reserved_at,
+        quote_observed_at=reserved_at,
+        clock_observed_at=reserved_at,
+        regular_session_open=True,
+        emergency_disabled=False,
+    )
+    receipt = store._record_risk_decision_with_context(
+        intent.idempotency_key,
+        state.authorization.authorization_id,
+        state.source.limits,
+        context,
+    )
+    assert receipt.approved
+    if stage_order:
+        delta = build_order_delta(
+            intent,
+            target_quantity=5,
+            current_quantity=4,
+            created_at=reserved_at,
+        )
+        assert delta is not None
+        OrderLifecycleStore(state.source.path).stage(
+            delta,
+            reservation_id=fingerprint({"decision_id": receipt.decision_id}),
+            staged_at=reserved_at,
+        )
+
+
+def test_old_handoff_with_fresh_planning_evidence_succeeds(tmp_path: Path) -> None:
+    state = _completed_continuation(tmp_path)
+    handoff_before = PaperContinuationStore(state.source.path).get_handoff(
+        state.authorization.authorization_id
+    )
+    planning = _planning_state(state)
+
+    plan = PaperContinuationStore(state.source.path).plan_strategic_allocation(
+        authorization_id=state.authorization.authorization_id,
+        planning_checkpoint_id=planning.checkpoint.checkpoint_id,
+        limits=state.source.limits,
+        planned_at=planning.marked_at,
+    )
+
+    assert planning.marked_at - state.risk_input.completed_at > timedelta(seconds=15)
+    assert planning.risk_input.evidence_id in plan.evidence_fingerprints
+    assert planning.checkpoint.settlement_proof_fingerprint in plan.evidence_fingerprints
+    assert planning.checkpoint.checkpoint_fingerprint in plan.evidence_fingerprints
+    assert (
+        PaperContinuationStore(state.source.path).get_handoff(state.authorization.authorization_id)
+        == handoff_before
+    )
+
+
+def test_fresh_planning_evidence_expires_after_fifteen_seconds(tmp_path: Path) -> None:
+    state = _completed_continuation(tmp_path)
+    planning = _planning_state(state)
+
+    with pytest.raises(JournalIntegrityError, match="stale or mismatched"):
+        PaperContinuationStore(state.source.path).plan_strategic_allocation(
+            authorization_id=state.authorization.authorization_id,
+            planning_checkpoint_id=planning.checkpoint.checkpoint_id,
+            limits=state.source.limits,
+            planned_at=planning.marked_at
+            + timedelta(seconds=state.source.limits.max_snapshot_age_seconds + 1),
+        )
+
+
+def test_every_planning_quote_remains_fresh_at_plan_time(tmp_path: Path) -> None:
+    state = _completed_continuation(tmp_path)
+    snapshot, risk_input, marked_at = _planning_inputs(state)
+    old_at = marked_at - timedelta(seconds=state.source.limits.max_snapshot_age_seconds)
+    stale_input = replace(
+        risk_input,
+        quotes=tuple(
+            replace(quote, provider_timestamp=old_at, observed_at=old_at)
+            if quote.symbol == "SPY"
+            else quote
+            for quote in risk_input.quotes
+        ),
+    )
+    RiskInputEvidenceStore(state.source.path)._record(
+        stale_input,
+        recorded_at=risk_input.completed_at,
+        capability=_CAPABILITY,
+    )
+    checkpoint = PaperContinuationStore(state.source.path).record_planning_checkpoint(
+        authorization_id=state.authorization.authorization_id,
+        portfolio_snapshot_id=snapshot.snapshot_id,
+        risk_input_evidence_id=stale_input.evidence_id,
+        limits=state.source.limits,
+        marked_at=marked_at,
+    )
+
+    with pytest.raises(JournalIntegrityError, match="market evidence is stale"):
+        PaperContinuationStore(state.source.path).plan_strategic_allocation(
+            authorization_id=state.authorization.authorization_id,
+            planning_checkpoint_id=checkpoint.checkpoint_id,
+            limits=state.source.limits,
+            planned_at=marked_at + timedelta(microseconds=1),
+        )
+
+
+def test_planning_handoff_is_immutable(tmp_path: Path) -> None:
+    state = _completed_continuation(tmp_path)
+    _planning_state(state)
+
+    with (
+        sqlite3.connect(state.source.path) as connection,
+        pytest.raises(sqlite3.IntegrityError, match="immutable"),
+    ):
+        connection.execute(
+            "UPDATE paper_continuation_handoffs SET handoff_json = '{}' WHERE authorization_id = ?",
+            (state.authorization.authorization_id,),
+        )
+
+
+def test_planning_rejects_fresh_account_mismatch(tmp_path: Path) -> None:
+    state = _completed_continuation(tmp_path)
+
+    with pytest.raises(JournalIntegrityError, match="portfolio authority"):
+        _planning_inputs(state, account_id="other-paper-account")
+
+
+@pytest.mark.parametrize(
+    ("positions", "open_orders", "account_ready", "cash"),
+    (
+        pytest.param((PositionSnapshot("SPY", 5),), (), True, None, id="position-drift"),
+        pytest.param(
+            (PositionSnapshot("SPY", 4),),
+            (
+                OpenOrderSnapshot(
+                    "external-order",
+                    "SPY",
+                    "buy",
+                    1,
+                    0,
+                    "market",
+                    None,
+                    "new",
+                ),
+            ),
+            True,
+            None,
+            id="open-order",
+        ),
+        pytest.param((PositionSnapshot("SPY", 4),), (), False, None, id="account-not-ready"),
+        pytest.param((PositionSnapshot("SPY", 4),), (), True, Decimal("99599"), id="cash-drift"),
+    ),
+)
+def test_planning_rejects_changed_present_state(
+    tmp_path: Path,
+    positions: tuple[PositionSnapshot, ...],
+    open_orders: tuple[OpenOrderSnapshot, ...],
+    account_ready: bool,
+    cash: Decimal | None,
+) -> None:
+    state = _completed_continuation(tmp_path)
+    snapshot, risk_input, marked_at = _planning_inputs(
+        state,
+        positions=positions,
+        open_orders=open_orders,
+        account_ready=account_ready,
+        cash=cash,
+    )
+
+    with pytest.raises(HoldoutAccessError, match="fresh unchanged continuation state"):
+        PaperContinuationStore(state.source.path).record_planning_checkpoint(
+            authorization_id=state.authorization.authorization_id,
+            portfolio_snapshot_id=snapshot.snapshot_id,
+            risk_input_evidence_id=risk_input.evidence_id,
+            limits=state.source.limits,
+            marked_at=marked_at,
+        )
+
+
+@pytest.mark.parametrize("mismatch", ("configuration", "authorization"))
+def test_planning_rejects_wrong_authority(tmp_path: Path, mismatch: str) -> None:
+    state = _completed_continuation(tmp_path)
+    snapshot, risk_input, marked_at = _planning_inputs(state)
+    limits = state.source.limits
+    authorization_id = state.authorization.authorization_id
+    if mismatch == "configuration":
+        limits = replace(limits, review_reason="changed planning limits")
+    else:
+        authorization_id = state.source.authorization.authorization_id
+
+    with pytest.raises(HoldoutAccessError):
+        PaperContinuationStore(state.source.path).record_planning_checkpoint(
+            authorization_id=authorization_id,
+            portfolio_snapshot_id=snapshot.snapshot_id,
+            risk_input_evidence_id=risk_input.evidence_id,
+            limits=limits,
+            marked_at=marked_at,
+        )
+
+
+@pytest.mark.parametrize("stage_order", (False, True), ids=("reservation", "mutation"))
+def test_planning_rejects_reservations_and_unresolved_mutations(
+    tmp_path: Path, stage_order: bool
+) -> None:
+    state = _completed_continuation(tmp_path)
+    snapshot, risk_input, marked_at = _planning_inputs(state)
+    _record_planning_reservation(
+        state,
+        risk_input,
+        reserved_at=marked_at,
+        stage_order=stage_order,
+    )
+
+    with pytest.raises(HoldoutAccessError, match="unresolved mutation"):
+        PaperContinuationStore(state.source.path).record_planning_checkpoint(
+            authorization_id=state.authorization.authorization_id,
+            portfolio_snapshot_id=snapshot.snapshot_id,
+            risk_input_evidence_id=risk_input.evidence_id,
+            limits=state.source.limits,
+            marked_at=marked_at,
+        )
+
+
+def test_later_reservation_does_not_rewrite_planning_history(tmp_path: Path) -> None:
+    state = _completed_continuation(tmp_path)
+    planning = _planning_state(state)
+    _record_planning_reservation(
+        state,
+        planning.risk_input,
+        reserved_at=planning.marked_at,
+        stage_order=False,
+    )
+
+    assert (
+        PaperContinuationStore(state.source.path).get_handoff(state.authorization.authorization_id)
+        == state.handoff
+    )
+
+
+def test_planning_rejects_emergency_disable(tmp_path: Path) -> None:
+    state = _completed_continuation(tmp_path)
+    dirty_at = state.handoff.completed_at + timedelta(seconds=1)
+    dirty = _attest(
+        ReconciliationStore(state.source.path),
+        _snapshot(
+            "planning-emergency-dirty",
+            SnapshotSource.ALPACA_PAPER,
+            dirty_at,
+            positions=state.handoff.positions,
+            cash=state.handoff.cash - Decimal("1"),
+            equity=state.handoff.equity,
+            buying_power=state.handoff.buying_power,
+        ),
+    )
+    ReconciliationStore(state.source.path).record_reconciliation(
+        baseline_id=state.handoff.reconciliation_baseline_id,
+        observed_snapshot_id=dirty.snapshot_id,
+        compared_at=dirty_at,
+        unresolved_mutations=0,
+    )
+    snapshot, risk_input, marked_at = _planning_inputs(
+        state,
+        observed_at=dirty_at + timedelta(seconds=1),
+    )
+
+    with pytest.raises(HoldoutAccessError, match="fresh unchanged continuation state"):
+        PaperContinuationStore(state.source.path).record_planning_checkpoint(
+            authorization_id=state.authorization.authorization_id,
+            portfolio_snapshot_id=snapshot.snapshot_id,
+            risk_input_evidence_id=risk_input.evidence_id,
+            limits=state.source.limits,
+            marked_at=marked_at,
+        )
+
+
+@pytest.mark.parametrize("market_evidence", ("quote", "clock"))
+def test_planning_rejects_stale_fresh_market_evidence(tmp_path: Path, market_evidence: str) -> None:
+    state = _completed_continuation(tmp_path)
+    snapshot, risk_input, marked_at = _planning_inputs(state)
+    stale_at = marked_at - timedelta(seconds=state.source.limits.max_snapshot_age_seconds + 1)
+    if market_evidence == "quote":
+        stale_input = replace(
+            risk_input,
+            quotes=(
+                replace(
+                    risk_input.quotes[0],
+                    provider_timestamp=stale_at,
+                    observed_at=stale_at,
+                ),
+                *risk_input.quotes[1:],
+            ),
+        )
+    else:
+        stale_input = replace(
+            risk_input,
+            clock=replace(
+                risk_input.clock,
+                provider_timestamp=stale_at,
+                observed_at=stale_at,
+            ),
+        )
+    RiskInputEvidenceStore(state.source.path)._record(
+        stale_input,
+        recorded_at=risk_input.completed_at,
+        capability=_CAPABILITY,
+    )
+
+    with pytest.raises(HoldoutAccessError, match="fresh unchanged continuation state"):
+        PaperContinuationStore(state.source.path).record_planning_checkpoint(
+            authorization_id=state.authorization.authorization_id,
+            portfolio_snapshot_id=snapshot.snapshot_id,
+            risk_input_evidence_id=stale_input.evidence_id,
+            limits=state.source.limits,
+            marked_at=marked_at,
+        )
+
+
+@pytest.mark.parametrize(
+    ("bid", "ask"),
+    (
+        pytest.param("0", "100", id="zero-bid"),
+        pytest.param("101", "100", id="crossed-quote"),
+    ),
+)
+def test_planning_quote_prices_must_be_valid(bid: str, ask: str) -> None:
+    observed_at = datetime(2026, 8, 3, 14, 0, tzinfo=UTC)
+
+    with pytest.raises(ValueError, match="quote prices are invalid"):
+        LatestQuoteEvidence(
+            "SPY",
+            Decimal(bid),
+            Decimal(ask),
+            10,
+            10,
+            observed_at,
+            observed_at,
+        )
+
+
+def test_planning_marks_preserve_peak_and_drawdown_lineage(tmp_path: Path) -> None:
+    state = _completed_continuation(tmp_path)
+    high = _planning_state(state, suffix="high", spy_bid="150", spy_ask="151")
+    low = _planning_state(
+        state,
+        observed_at=high.marked_at + timedelta(seconds=1),
+        suffix="low",
+        spy_bid="25",
+        spy_ask="100",
+    )
+
+    assert high.checkpoint.strategy_equity > state.handoff.peak_equity
+    assert high.checkpoint.peak_equity == high.checkpoint.strategy_equity
+    assert low.checkpoint.prior_checkpoint_fingerprint == high.checkpoint.checkpoint_fingerprint
+    assert (
+        low.checkpoint.strategy_cash == high.checkpoint.strategy_cash == state.handoff.strategy_cash
+    )
+    assert low.checkpoint.peak_equity == high.checkpoint.peak_equity
+    assert low.checkpoint.strategy_equity < low.checkpoint.peak_equity
+    assert (
+        low.checkpoint.strategy_drawdown
+        == (low.checkpoint.peak_equity - low.checkpoint.strategy_equity)
+        / low.checkpoint.peak_equity
+    )
+    assert low.checkpoint.checkpoint_mode == "continuation-planning-mark-v1"
+
+
 def test_continuation_preserves_lineage_and_plans_deterministically(tmp_path: Path) -> None:
     state = _completed_continuation(tmp_path)
     store = PaperContinuationStore(state.source.path)
-    plan_at = state.handoff.completed_at
+    planning = _planning_state(state)
+    plan_at = planning.marked_at
     first = store.plan_strategic_allocation(
         authorization_id=state.authorization.authorization_id,
+        planning_checkpoint_id=planning.checkpoint.checkpoint_id,
         limits=state.source.limits,
         planned_at=plan_at,
     )
     second = store.plan_strategic_allocation(
         authorization_id=state.authorization.authorization_id,
+        planning_checkpoint_id=planning.checkpoint.checkpoint_id,
         limits=state.source.limits,
         planned_at=plan_at,
     )
@@ -572,7 +1064,7 @@ def test_continuation_preserves_lineage_and_plans_deterministically(tmp_path: Pa
                 configuration_fingerprint=first.configuration_fingerprint,
                 reference_price=next(
                     quote.ask_price
-                    for quote in state.risk_input.quotes
+                    for quote in planning.risk_input.quotes
                     if quote.symbol == target.symbol
                 ),
                 expires_at=plan_at + timedelta(minutes=5),
@@ -613,6 +1105,9 @@ def test_continuation_preserves_lineage_and_plans_deterministically(tmp_path: Pa
     )
     assert not receipt.approved
     assert "strategy-drawdown-limit" in receipt.reasons
+    assert (
+        PaperContinuationStore(state.source.path).get_handoff(handoff.authorization_id) == handoff
+    )
 
     with (
         sqlite3.connect(state.source.path) as connection,
@@ -658,8 +1153,28 @@ def test_paper_plan_cli_outputs_derived_planning_provenance(
         tmp_path,
         continuation_at=datetime(2026, 8, 4, 14, 0, tzinfo=UTC),
     )
+    snapshot, risk_input, marked_at = _planning_inputs(state)
+    calls: list[str] = []
+
+    class Reader:
+        def record_portfolio(self, _: object) -> PortfolioSnapshot:
+            calls.append("portfolio-get")
+            return snapshot
+
+        def record(self, *_: object, **__: object) -> RiskInputEvidence:
+            calls.append("market-get")
+            return risk_input
+
+        def submit(self, *_: object, **__: object) -> None:
+            pytest.fail("paper plan cannot submit an order")
+
+        def cancel(self, *_: object, **__: object) -> None:
+            pytest.fail("paper plan cannot cancel an order")
+
     monkeypatch.setattr(cli, "load_risk_limits", lambda _: state.source.limits)
-    monkeypatch.setattr(cli, "datetime", _frozen_datetime(state.handoff.completed_at))
+    monkeypatch.setattr(cli, "_paper_observation_reader", lambda *_: Reader())
+    monkeypatch.setattr(cli, "AlpacaRiskInputReader", lambda *_args, **_kwargs: Reader())
+    monkeypatch.setattr(cli, "datetime", _frozen_datetime(marked_at))
     arguments = cli.parser().parse_args(
         [
             "paper",
@@ -675,12 +1190,26 @@ def test_paper_plan_cli_outputs_derived_planning_provenance(
 
     assert not hasattr(arguments, "session_count")
     assert not hasattr(arguments, "market_state_fingerprint")
-    assert cli.run(arguments, Settings(TradingMode.OFFLINE, tmp_path)) == 0
+    assert cli.run(arguments, Settings(TradingMode.PAPER, tmp_path)) == 0
     output = json.loads(capsys.readouterr().out)
     assert output["root_exchange_session"] == "2026-08-03"
     assert output["current_exchange_session"] == "2026-08-04"
     assert output["session_count"] == 2
     assert output["rebalance_due"] is False
+    assert output["handoff_snapshot_id"] == state.snapshot.snapshot_id
+    assert output["handoff_snapshot_observed_at"] == (
+        max(
+            state.snapshot.account_observed_at,
+            state.snapshot.positions_observed_at,
+            state.snapshot.orders_observed_at,
+        )
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
+    assert output["planning_snapshot_id"] == snapshot.snapshot_id
+    assert output["planning_risk_input_evidence_id"] == risk_input.evidence_id
+    assert len(output["planning_evidence_fingerprint"]) == 64
+    assert calls == ["portfolio-get", "market-get"]
     assert len(output["market_state_fingerprint"]) == 64
     assert output["authority"] == {
         "activation": False,
@@ -710,10 +1239,12 @@ def test_planner_counts_only_xnys_sessions(
     tmp_path: Path, root_at: datetime, continuation_at: datetime
 ) -> None:
     state = _completed_continuation(tmp_path, root_at=root_at, continuation_at=continuation_at)
+    planning = _planning_state(state)
     plan = PaperContinuationStore(state.source.path).plan_strategic_allocation(
         authorization_id=state.authorization.authorization_id,
+        planning_checkpoint_id=planning.checkpoint.checkpoint_id,
         limits=state.source.limits,
-        planned_at=state.handoff.completed_at,
+        planned_at=planning.marked_at,
     )
 
     assert plan.root_exchange_session == root_at.date().isoformat()
@@ -731,41 +1262,51 @@ def test_market_state_fingerprint_is_canonical_and_evidence_sensitive(
     first_home.mkdir()
     changed_home.mkdir()
     first = _completed_continuation(first_home)
-    changed = _completed_continuation(changed_home, current_spy_ask="101")
+    changed = _completed_continuation(changed_home)
+    first_planning = _planning_state(first, spy_ask="100")
+    changed_planning = _planning_state(changed, spy_ask="101")
     first_store = PaperContinuationStore(first.source.path)
     first_plan = first_store.plan_strategic_allocation(
         authorization_id=first.authorization.authorization_id,
+        planning_checkpoint_id=first_planning.checkpoint.checkpoint_id,
         limits=first.source.limits,
-        planned_at=first.handoff.completed_at,
+        planned_at=first_planning.marked_at,
     )
     repeated = first_store.plan_strategic_allocation(
         authorization_id=first.authorization.authorization_id,
+        planning_checkpoint_id=first_planning.checkpoint.checkpoint_id,
         limits=first.source.limits,
-        planned_at=first.handoff.completed_at,
+        planned_at=first_planning.marked_at,
     )
     changed_plan = PaperContinuationStore(changed.source.path).plan_strategic_allocation(
         authorization_id=changed.authorization.authorization_id,
+        planning_checkpoint_id=changed_planning.checkpoint.checkpoint_id,
         limits=changed.source.limits,
-        planned_at=changed.handoff.completed_at,
-    )
-    checkpoint = StrategyEquityStore(first.source.path).latest_checkpoint(
-        first.authorization.authorization_id
+        planned_at=changed_planning.marked_at,
     )
 
     assert first_plan.market_state_fingerprint == fingerprint(
         {
             "account_id": first.authorization.account_id,
-            "portfolio_snapshot_id": first.snapshot.snapshot_id,
-            "portfolio_snapshot_fingerprint": first.snapshot.snapshot_fingerprint,
+            "portfolio_snapshot_id": first_planning.snapshot.snapshot_id,
+            "portfolio_snapshot_fingerprint": first_planning.snapshot.snapshot_fingerprint,
             "portfolio_attestation_fingerprint": (
-                first.risk_input.portfolio_attestation_fingerprint
+                first_planning.risk_input.portfolio_attestation_fingerprint
             ),
-            "risk_input_evidence_id": first.risk_input.evidence_id,
-            "market_clock": first.risk_input.clock,
+            "risk_input_evidence_id": first_planning.risk_input.evidence_id,
+            "market_clock": first_planning.risk_input.clock,
             "exchange_session": first_plan.current_exchange_session,
-            "quotes": first.risk_input.quotes,
+            "quotes": first_planning.risk_input.quotes,
             "continuation_handoff_fingerprint": first.handoff.handoff_fingerprint,
-            "strategy_equity_checkpoint_fingerprint": checkpoint.checkpoint_fingerprint,
+            "handoff_strategy_equity_checkpoint_fingerprint": (
+                first.handoff.strategy_equity_checkpoint_fingerprint
+            ),
+            "planning_settlement_fingerprint": (
+                first_planning.checkpoint.settlement_proof_fingerprint
+            ),
+            "planning_strategy_equity_checkpoint_fingerprint": (
+                first_planning.checkpoint.checkpoint_fingerprint
+            ),
         }
     )
     assert repeated == first_plan
@@ -809,6 +1350,7 @@ def test_planner_rejects_unverifiable_market_clock(tmp_path: Path, mutation: str
 
 def test_root_session_lineage_tampering_fails_journal_verification(tmp_path: Path) -> None:
     state = _completed_continuation(tmp_path)
+    planning = _planning_state(state)
     with sqlite3.connect(state.source.path) as connection:
         connection.execute("DROP TRIGGER paper_continuation_declarations_no_update")
         connection.execute(
@@ -821,14 +1363,16 @@ def test_root_session_lineage_tampering_fails_journal_verification(tmp_path: Pat
         store = PaperContinuationStore(state.source.path)
         store.plan_strategic_allocation(
             authorization_id=state.authorization.authorization_id,
+            planning_checkpoint_id=planning.checkpoint.checkpoint_id,
             limits=state.source.limits,
-            planned_at=state.handoff.completed_at,
+            planned_at=planning.marked_at,
         )
 
 
 @pytest.mark.parametrize("mismatch", ["account", "configuration", "strategy"])
 def test_planner_rejects_authority_mismatch(tmp_path: Path, mismatch: str) -> None:
     state = _completed_continuation(tmp_path)
+    planning = _planning_state(state)
     limits = state.source.limits
     authorization = state.authorization
     if mismatch == "account":
@@ -838,17 +1382,22 @@ def test_planner_rejects_authority_mismatch(tmp_path: Path, mismatch: str) -> No
     else:
         authorization = replace(authorization, strategy_id="other-strategy")
 
-    checkpoint = StrategyEquityStore(state.source.path).latest_checkpoint(
-        state.authorization.authorization_id
-    )
+    store = PaperContinuationStore(state.source.path)
+    with store._connect() as connection:
+        checkpoints = store._verify_checkpoints(connection)
+        authorities = store._authorities(connection)
+    handoff_checkpoint = checkpoints[state.handoff.strategy_equity_checkpoint_id]
+    planning_settlement = authorities[1][planning.checkpoint.settlement_proof_id]
     with pytest.raises(ValueError, match="authority differs"):
         plan_strategic_allocation(
             authorization=authorization,
             limits=limits,
             handoff=state.handoff,
-            snapshot=state.snapshot,
-            risk_input=state.risk_input,
-            checkpoint=checkpoint,
+            snapshot=planning.snapshot,
+            risk_input=planning.risk_input,
+            handoff_checkpoint=handoff_checkpoint,
+            planning_settlement=planning_settlement,
+            planning_checkpoint=planning.checkpoint,
             root_authorization=state.source.authorization,
             root_risk_input=state.source.risk_input,
             root_checkpoint=state.source.checkpoint,
@@ -1107,10 +1656,12 @@ def test_continuation_chain_has_one_successor_and_preserves_lineage(tmp_path: Pa
         tmp_path,
         continuation_at=datetime(2026, 8, 4, 14, 0, tzinfo=UTC),
     )
+    first_planning = _planning_state(state)
     first_plan = PaperContinuationStore(state.source.path).plan_strategic_allocation(
         authorization_id=state.authorization.authorization_id,
+        planning_checkpoint_id=first_planning.checkpoint.checkpoint_id,
         limits=state.source.limits,
-        planned_at=state.handoff.completed_at,
+        planned_at=first_planning.marked_at,
     )
     store = ReconciliationStore(state.source.path)
     second_authorized_at = datetime(2026, 9, 1, 14, 0, tzinfo=UTC)
@@ -1165,10 +1716,19 @@ def test_continuation_chain_has_one_successor_and_preserves_lineage(tmp_path: Pa
         reason="clean chained continuation handoff",
         completed_at=snapshot_at + timedelta(seconds=1),
     )
+    second_state = _ContinuationState(
+        state.source,
+        authorization,
+        handoff,
+        snapshot,
+        risk_input,
+    )
+    second_planning = _planning_state(second_state, suffix="second")
     second_plan = PaperContinuationStore(state.source.path).plan_strategic_allocation(
         authorization_id=authorization.authorization_id,
+        planning_checkpoint_id=second_planning.checkpoint.checkpoint_id,
         limits=state.source.limits,
-        planned_at=handoff.completed_at,
+        planned_at=second_planning.marked_at,
     )
 
     assert first_plan.root_exchange_session == "2026-08-03"

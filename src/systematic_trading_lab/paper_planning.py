@@ -13,11 +13,16 @@ from .calendar import expected_sessions
 from .fingerprints import canonical_json, canonicalize, fingerprint
 from .orders import whole_share_target
 from .paper_equivalence import ActionPlan, ActionTarget
+from .position_settlement import _PLANNING_SETTLEMENT_MODE, PositionSettlementEvidence
 from .reconciliation import PaperContinuationHandoff, PortfolioSnapshot
 from .risk import PaperAuthorization, RiskLimits
 from .risk_inputs import RiskInputEvidence
 from .strategies import STRATEGIC_ALLOCATION_WEIGHTS
-from .strategy_equity import _FILL_CHECKPOINT_MODE, StrategyEquityCheckpoint
+from .strategy_equity import (
+    _FILL_CHECKPOINT_MODE,
+    _PLANNING_CHECKPOINT_MODE,
+    StrategyEquityCheckpoint,
+)
 
 _CANDIDATE_ID = "strategic-allocation-21"
 _STRATEGY_ID = "strategic-allocation-portfolio"
@@ -151,7 +156,9 @@ def plan_strategic_allocation(
     handoff: PaperContinuationHandoff,
     snapshot: PortfolioSnapshot,
     risk_input: RiskInputEvidence,
-    checkpoint: StrategyEquityCheckpoint,
+    handoff_checkpoint: StrategyEquityCheckpoint,
+    planning_settlement: PositionSettlementEvidence,
+    planning_checkpoint: StrategyEquityCheckpoint,
     root_authorization: PaperAuthorization,
     root_risk_input: RiskInputEvidence,
     root_checkpoint: StrategyEquityCheckpoint,
@@ -170,11 +177,38 @@ def plan_strategic_allocation(
         or set(limits.allowed_symbols) != set(positive_weights)
         or handoff.authorization_id != authorization.authorization_id
         or handoff.account_id != authorization.account_id
-        or handoff.strategy_equity_checkpoint_id != checkpoint.checkpoint_id
-        or handoff.strategy_equity_checkpoint_fingerprint != checkpoint.checkpoint_fingerprint
-        or checkpoint.authorization_id != authorization.authorization_id
-        or checkpoint.risk_configuration_fingerprint != limits.configuration_fingerprint
-        or checkpoint.positions != snapshot.positions
+        or handoff.strategy_equity_checkpoint_id != handoff_checkpoint.checkpoint_id
+        or handoff.strategy_equity_checkpoint_fingerprint
+        != handoff_checkpoint.checkpoint_fingerprint
+        or handoff_checkpoint.authorization_id != authorization.authorization_id
+        or handoff_checkpoint.risk_configuration_fingerprint != limits.configuration_fingerprint
+        or planning_settlement.settlement_mode != _PLANNING_SETTLEMENT_MODE
+        or planning_settlement.baseline_id != handoff.reconciliation_baseline_id
+        or planning_settlement.authorization_id != authorization.authorization_id
+        or planning_settlement.account_id != authorization.account_id
+        or planning_settlement.risk_configuration_fingerprint != limits.configuration_fingerprint
+        or planning_settlement.reconciliation_evidence_id != handoff.reconciliation_evidence_id
+        or planning_settlement.observed_snapshot_id != snapshot.snapshot_id
+        or planning_settlement.observed_snapshot_fingerprint != snapshot.snapshot_fingerprint
+        or planning_settlement.attestation_fingerprint
+        != risk_input.portfolio_attestation_fingerprint
+        or planning_checkpoint.checkpoint_mode != _PLANNING_CHECKPOINT_MODE
+        or planning_checkpoint.authorization_id != authorization.authorization_id
+        or planning_checkpoint.risk_configuration_fingerprint != limits.configuration_fingerprint
+        or planning_checkpoint.settlement_proof_id != planning_settlement.proof_id
+        or planning_checkpoint.settlement_proof_fingerprint != planning_settlement.proof_fingerprint
+        or planning_checkpoint.risk_input_evidence_id != risk_input.evidence_id
+        or planning_checkpoint.prior_checkpoint_fingerprint is None
+        or planning_checkpoint.positions != snapshot.positions
+        or planning_checkpoint.advance_fingerprint != handoff_checkpoint.advance_fingerprint
+        or planning_checkpoint.fill_event_ids != handoff_checkpoint.fill_event_ids
+        or planning_checkpoint.allocated_capital != handoff_checkpoint.allocated_capital
+        or planning_checkpoint.gross_buy_notional != handoff_checkpoint.gross_buy_notional
+        or planning_checkpoint.gross_sell_notional != handoff_checkpoint.gross_sell_notional
+        or planning_checkpoint.fill_cost_reserve != handoff_checkpoint.fill_cost_reserve
+        or planning_checkpoint.strategy_cash != handoff_checkpoint.strategy_cash
+        or planning_checkpoint.peak_equity < handoff_checkpoint.peak_equity
+        or planning_checkpoint.marked_at != planning_settlement.settled_at
         or risk_input.authorization_id != authorization.authorization_id
         or risk_input.portfolio_snapshot_id != snapshot.snapshot_id
         or risk_input.risk_configuration_fingerprint != limits.configuration_fingerprint
@@ -203,7 +237,7 @@ def plan_strategic_allocation(
         != root_authorization.risk_configuration_fingerprint
         or root_checkpoint.checkpoint_mode != _FILL_CHECKPOINT_MODE
         or not root_checkpoint.fill_event_ids
-        or not set(root_checkpoint.fill_event_ids).issubset(checkpoint.fill_event_ids)
+        or not set(root_checkpoint.fill_event_ids).issubset(planning_checkpoint.fill_event_ids)
         or root_checkpoint.risk_input_evidence_id != root_risk_input.evidence_id
         or root_risk_input.authorization_id != root_authorization.authorization_id
         or root_risk_input.account_id != root_authorization.account_id
@@ -231,7 +265,13 @@ def plan_strategic_allocation(
             "exchange_session": current_session.isoformat(),
             "quotes": risk_input.quotes,
             "continuation_handoff_fingerprint": handoff.handoff_fingerprint,
-            "strategy_equity_checkpoint_fingerprint": checkpoint.checkpoint_fingerprint,
+            "handoff_strategy_equity_checkpoint_fingerprint": (
+                handoff_checkpoint.checkpoint_fingerprint
+            ),
+            "planning_settlement_fingerprint": planning_settlement.proof_fingerprint,
+            "planning_strategy_equity_checkpoint_fingerprint": (
+                planning_checkpoint.checkpoint_fingerprint
+            ),
         }
     )
     rebalance_due = session_count == 1 or (session_count - 1) % _REBALANCE_EVERY == 0
@@ -287,7 +327,13 @@ def plan_strategic_allocation(
             "portfolio_snapshot_fingerprint": snapshot.snapshot_fingerprint,
             "risk_input_evidence_id": risk_input.evidence_id,
             "continuation_handoff_fingerprint": handoff.handoff_fingerprint,
-            "strategy_equity_checkpoint_fingerprint": checkpoint.checkpoint_fingerprint,
+            "handoff_strategy_equity_checkpoint_fingerprint": (
+                handoff_checkpoint.checkpoint_fingerprint
+            ),
+            "planning_settlement_fingerprint": planning_settlement.proof_fingerprint,
+            "planning_strategy_equity_checkpoint_fingerprint": (
+                planning_checkpoint.checkpoint_fingerprint
+            ),
         }
     )
     evidence_fingerprints = tuple(
@@ -299,7 +345,9 @@ def plan_strategic_allocation(
                 handoff.handoff_fingerprint,
                 snapshot.snapshot_fingerprint,
                 risk_input.evidence_id,
-                checkpoint.checkpoint_fingerprint,
+                handoff_checkpoint.checkpoint_fingerprint,
+                planning_settlement.proof_fingerprint,
+                planning_checkpoint.checkpoint_fingerprint,
                 root_checkpoint.checkpoint_fingerprint,
                 root_risk_input.evidence_id,
                 market_state_fingerprint,
