@@ -16,7 +16,13 @@ from .backtesting import (
     Strategy,
 )
 from .domain import OHLCVBar, Symbol
-from .rapid_strategies import StartBoundPortfolioStrategy, StartBoundStrategy
+from .rapid_strategies import (
+    ChannelBreakoutPortfolioStrategy,
+    MovingAverageStatePortfolioStrategy,
+    StartBoundPortfolioStrategy,
+    StartBoundStrategy,
+    TrendPullbackPortfolioStrategy,
+)
 from .strategies import (
     BuyAndHoldStrategy,
     CashStrategy,
@@ -88,6 +94,17 @@ STRATEGIES: dict[str, StrategyDefinition] = {
             target_weight=Decimal("1") / Decimal(len(symbols)),
         ),
     ),
+    "moving-average-state": StrategyDefinition(
+        "moving-average-state",
+        "moving-average-state-portfolio",
+        "trend",
+        "Change fixed sleeves only when their moving-average state changes.",
+        (StrategyParameter("window", 40, 2),),
+        lambda symbols, parameters: MovingAverageStatePortfolioStrategy(
+            symbols, window=_parameter(parameters, "window")
+        ),
+        portfolio=True,
+    ),
     "mean-reversion": StrategyDefinition(
         "mean-reversion",
         "moving-average-mean-reversion",
@@ -109,6 +126,38 @@ STRATEGIES: dict[str, StrategyDefinition] = {
             lookback=_parameter(parameters, "lookback"),
             target_weight=Decimal("1") / Decimal(len(symbols)),
         ),
+    ),
+    "trend-pullback": StrategyDefinition(
+        "trend-pullback",
+        "trend-pullback-portfolio",
+        "mean-reversion",
+        "Buy short pullbacks inside longer uptrends and exit on recovery.",
+        (
+            StrategyParameter("trend_window", 63, 2),
+            StrategyParameter("pullback_window", 5, 2),
+        ),
+        lambda symbols, parameters: TrendPullbackPortfolioStrategy(
+            symbols,
+            trend_window=_parameter(parameters, "trend_window"),
+            pullback_window=_parameter(parameters, "pullback_window"),
+        ),
+        portfolio=True,
+    ),
+    "channel-breakout": StrategyDefinition(
+        "channel-breakout",
+        "channel-breakout-portfolio",
+        "breakout",
+        "Enter above prior highs and exit below prior lows.",
+        (
+            StrategyParameter("entry_window", 20, 2),
+            StrategyParameter("exit_window", 10),
+        ),
+        lambda symbols, parameters: ChannelBreakoutPortfolioStrategy(
+            symbols,
+            entry_window=_parameter(parameters, "entry_window"),
+            exit_window=_parameter(parameters, "exit_window"),
+        ),
+        portfolio=True,
     ),
     "relative-strength": StrategyDefinition(
         "relative-strength",
