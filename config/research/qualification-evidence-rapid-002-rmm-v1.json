@@ -1,0 +1,80 @@
+{
+  "id": "qualification-evidence-rapid-002-rmm-v1",
+  "campaign_id": "rapid-002-rmm-40-40-10-controlled-v1",
+  "benchmark_strategy_id": "fixed-weight",
+  "candidates": [
+    {
+      "id": "rr-a480ff073a90e448c8b2",
+      "strategy_id": "risk-managed-momentum-portfolio",
+      "base_parameters": {
+        "lookback": 40,
+        "volatility_window": 40,
+        "rebalance_every": 10
+      },
+      "base_cost_model_version": "conservative-bps-v1",
+      "base_execution_model_version": "next-bar-v1",
+      "cost_sensitivity_model_version": "bps-10-2-v1",
+      "delay_sensitivity_model_version": "delayed-2-bars-v1",
+      "parameter_neighbor_values": [
+        {"lookback": 30, "volatility_window": 40, "rebalance_every": 10},
+        {"lookback": 50, "volatility_window": 40, "rebalance_every": 10},
+        {"lookback": 40, "volatility_window": 30, "rebalance_every": 10},
+        {"lookback": 40, "volatility_window": 50, "rebalance_every": 10},
+        {"lookback": 40, "volatility_window": 40, "rebalance_every": 5},
+        {"lookback": 40, "volatility_window": 40, "rebalance_every": 15}
+      ],
+      "base_validation_ids": [
+        "r2-rmm-base-2023",
+        "r2-rmm-base-2024",
+        "r2-rmm-base-2025"
+      ],
+      "benchmark_validation_ids": [
+        "r2-fixed-weight-2023",
+        "r2-fixed-weight-2024",
+        "r2-fixed-weight-2025"
+      ],
+      "cost_sensitivity_ids": [
+        "r2-rmm-cost2x-2025"
+      ],
+      "delay_sensitivity_ids": [
+        "r2-rmm-delay2-2025"
+      ],
+      "parameter_neighbor_ids": [
+        "r2-rmm-lookback30-2023",
+        "r2-rmm-lookback30-2024",
+        "r2-rmm-lookback30-2025",
+        "r2-rmm-lookback50-2023",
+        "r2-rmm-lookback50-2024",
+        "r2-rmm-lookback50-2025",
+        "r2-rmm-volatility30-2023",
+        "r2-rmm-volatility30-2024",
+        "r2-rmm-volatility30-2025",
+        "r2-rmm-volatility50-2023",
+        "r2-rmm-volatility50-2024",
+        "r2-rmm-volatility50-2025",
+        "r2-rmm-cadence5-2023",
+        "r2-rmm-cadence5-2024",
+        "r2-rmm-cadence5-2025",
+        "r2-rmm-cadence15-2023",
+        "r2-rmm-cadence15-2024",
+        "r2-rmm-cadence15-2025"
+      ],
+      "combined_stresses": [
+        {
+          "role": "stress-a",
+          "experiment_id": "r2-rmm-stress-a-2025",
+          "parent_base_id": "r2-rmm-base-2025",
+          "cost_model_version": "bps-10-2-v1",
+          "execution_model_version": "delayed-2-bars-v1"
+        },
+        {
+          "role": "stress-b",
+          "experiment_id": "r2-rmm-stress-b-2025",
+          "parent_base_id": "r2-rmm-base-2025",
+          "cost_model_version": "bps-20-5-v1",
+          "execution_model_version": "delayed-3-bars-v1"
+        }
+      ]
+    }
+  ]
+}

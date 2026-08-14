@@ -17,6 +17,15 @@ from .qualification import ProposalStatus, QualificationProposal, evaluate
 
 
 @dataclass(frozen=True)
+class CombinedStressEvidenceSpec:
+    role: str
+    experiment_id: str
+    parent_base_id: str
+    cost_model_version: str
+    execution_model_version: str
+
+
+@dataclass(frozen=True)
 class CandidateEvidenceSpec:
     candidate_id: str
     strategy_id: str
@@ -31,6 +40,7 @@ class CandidateEvidenceSpec:
     cost_sensitivity_ids: tuple[str, ...]
     delay_sensitivity_ids: tuple[str, ...]
     parameter_neighbor_ids: tuple[str, ...]
+    combined_stresses: tuple[CombinedStressEvidenceSpec, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -83,7 +93,7 @@ def build_evidence_reports(
         payload: dict[str, object] = {
             "schema_version": "qualification-evidence-v1",
             "manifest_id": manifest.manifest_id,
-            "manifest_fingerprint": fingerprint(manifest),
+            "manifest_fingerprint": evidence_manifest_fingerprint(manifest),
             "proposal_id": proposal.proposal_id,
             "proposal_fingerprint": fingerprint(proposal),
             "campaign_id": manifest.campaign_id,
@@ -97,6 +107,19 @@ def build_evidence_reports(
         payload["evidence_fingerprint"] = fingerprint(payload)
         reports.append(payload)
     return tuple(reports)
+
+
+def evidence_manifest_fingerprint(manifest: QualificationEvidenceManifest) -> str:
+    """Keep v1 manifest fingerprints stable when combined stresses are absent."""
+    payload = canonicalize(manifest)
+    assert isinstance(payload, dict)
+    candidates = payload["candidates"]
+    assert isinstance(candidates, list)
+    for candidate in candidates:
+        assert isinstance(candidate, dict)
+        if candidate.get("combined_stresses") == []:
+            candidate.pop("combined_stresses")
+    return fingerprint(payload)
 
 
 def authorize_holdout_run(
@@ -189,11 +212,21 @@ def _aggregate_candidate(
         candidate.strategy_id,
         candidate.parameter_neighbor_ids,
     )
+    stresses = (
+        _records(
+            registry,
+            manifest.campaign_id,
+            candidate.strategy_id,
+            tuple(stress.experiment_id for stress in candidate.combined_stresses),
+        )
+        if candidate.combined_stresses
+        else ()
+    )
     if len(base) != len(benchmark):
         raise ValueError(f"candidate {candidate.candidate_id} has unmatched benchmark folds")
     _validate_base_folds(candidate, base, benchmark)
     base_by_id = {str(record["experiment_id"]): record for record in base}
-    _validate_variants(candidate, base_by_id, costs, delays, neighbors)
+    _validate_variants(candidate, base_by_id, costs, delays, neighbors, stresses)
     base_metrics = [_metrics(record) for record in base]
     benchmark_by_period = {_period(record): record for record in benchmark}
     wins = sum(
@@ -238,6 +271,7 @@ def _aggregate_candidate(
         ),
         "campaign_candidate_count": campaign_candidate_count,
     }
+    metrics.update(_combined_stress_metrics(candidate, stresses, base_by_id))
     return metrics, _candidate_specification(base)
 
 
@@ -301,12 +335,14 @@ def _validate_base_folds(
         raise ValueError(f"candidate {candidate.candidate_id} base folds differ")
     all_records = tuple(base) + tuple(benchmark)
     provenance_fields = (
+        "code_commit",
         "dataset_id",
         "dataset_fingerprint",
         "universe_id",
         "universe_fingerprint",
         "cost_model_version",
         "execution_model_version",
+        "random_seed",
     )
     if any(
         any(_spec(record)[field] != first[field] for field in provenance_fields)
@@ -321,8 +357,16 @@ def _validate_variants(
     costs: Sequence[Mapping[str, object]],
     delays: Sequence[Mapping[str, object]],
     neighbors: Sequence[Mapping[str, object]],
+    stresses: Sequence[Mapping[str, object]],
 ) -> None:
-    for kind, records in (("cost", costs), ("delay", delays), ("parameter", neighbors)):
+    _validate_combined_stress_specs(candidate)
+    stress_specs = {stress.experiment_id: stress for stress in candidate.combined_stresses}
+    for kind, records in (
+        ("cost", costs),
+        ("delay", delays),
+        ("parameter", neighbors),
+        ("combined stress", stresses),
+    ):
         for record in records:
             spec = _spec(record)
             parent_id = spec.get("parent_candidate")
@@ -333,10 +377,14 @@ def _validate_variants(
                 )
             parent_spec = _spec(parent)
             common = (
+                "code_commit",
+                "strategy_version",
+                "strategy_family",
                 "dataset_id",
                 "dataset_fingerprint",
                 "universe_id",
                 "universe_fingerprint",
+                "random_seed",
             )
             if any(spec[field] != parent_spec[field] for field in common):
                 raise ValueError(f"candidate {candidate.candidate_id} {kind} provenance differs")
@@ -348,6 +396,8 @@ def _validate_variants(
             expected = {"cost_model_version" if kind == "cost" else "execution_model_version"}
             if kind == "parameter":
                 expected = {"parameters"}
+            elif kind == "combined stress":
+                expected = {"cost_model_version", "execution_model_version"}
             if differences != expected:
                 raise ValueError(f"candidate {candidate.candidate_id} invalid {kind} variant")
             if kind == "cost" and (
@@ -358,6 +408,16 @@ def _validate_variants(
                 spec["execution_model_version"] != candidate.delay_sensitivity_model_version
             ):
                 raise ValueError(f"candidate {candidate.candidate_id} delay model differs")
+            if kind == "combined stress":
+                stress = stress_specs[str(record["experiment_id"])]
+                if (
+                    parent_id != stress.parent_base_id
+                    or spec["cost_model_version"] != stress.cost_model_version
+                    or spec["execution_model_version"] != stress.execution_model_version
+                ):
+                    raise ValueError(
+                        f"candidate {candidate.candidate_id} {stress.role} specification differs"
+                    )
     expected_neighbors = {
         canonical_json(parameters) for parameters in candidate.parameter_neighbor_values
     }
@@ -376,6 +436,36 @@ def _validate_variants(
             raise ValueError(
                 f"candidate {candidate.candidate_id} parameter neighbor coverage differs"
             )
+
+
+def _validate_combined_stress_specs(candidate: CandidateEvidenceSpec) -> None:
+    stresses = candidate.combined_stresses
+    if not stresses:
+        return
+    if (
+        tuple(stress.role for stress in stresses) != ("stress-a", "stress-b")
+        or len({stress.experiment_id for stress in stresses}) != 2
+        or len({stress.parent_base_id for stress in stresses}) != 1
+    ):
+        raise ValueError(f"candidate {candidate.candidate_id} combined stress roles differ")
+
+
+def _combined_stress_metrics(
+    candidate: CandidateEvidenceSpec,
+    records: Sequence[Mapping[str, object]],
+    base_by_id: Mapping[str, Mapping[str, object]],
+) -> dict[str, Decimal]:
+    by_id = {str(record["experiment_id"]): record for record in records}
+    metrics: dict[str, Decimal] = {}
+    for stress in candidate.combined_stresses:
+        stress_return = _metric(_metrics(by_id[stress.experiment_id]), "total_return")
+        base_return = _metric(_metrics(base_by_id[stress.parent_base_id]), "total_return")
+        if base_return <= 0:
+            raise ValueError("return retention requires a positive base return")
+        prefix = stress.role.replace("-", "_")
+        metrics[f"{prefix}_return"] = stress_return
+        metrics[f"{prefix}_return_retention"] = stress_return / base_return
+    return metrics
 
 
 def _minimum_retention(
@@ -468,7 +558,13 @@ def _candidate(value: object, index: int) -> CandidateEvidenceSpec:
         "delay_sensitivity_ids",
         "parameter_neighbor_ids",
     }
-    _exact_fields(item, fields, f"candidate {index}")
+    extended_fields = fields | {"combined_stresses"}
+    if set(item) not in (fields, extended_fields):
+        _exact_fields(
+            item,
+            extended_fields if "combined_stresses" in item else fields,
+            f"candidate {index}",
+        )
     return CandidateEvidenceSpec(
         _text(item["id"], f"candidate {index} id"),
         _text(item["strategy_id"], f"candidate {index} strategy id"),
@@ -491,6 +587,11 @@ def _candidate(value: object, index: int) -> CandidateEvidenceSpec:
         _text_list(item["cost_sensitivity_ids"], f"candidate {index} cost sensitivity IDs"),
         _text_list(item["delay_sensitivity_ids"], f"candidate {index} delay sensitivity IDs"),
         _text_list(item["parameter_neighbor_ids"], f"candidate {index} parameter neighbor IDs"),
+        (
+            _combined_stress_list(item["combined_stresses"], f"candidate {index}")
+            if "combined_stresses" in item
+            else ()
+        ),
     )
 
 
@@ -501,6 +602,7 @@ def _all_ids(candidate: CandidateEvidenceSpec) -> tuple[str, ...]:
         + candidate.cost_sensitivity_ids
         + candidate.delay_sensitivity_ids
         + candidate.parameter_neighbor_ids
+        + tuple(stress.experiment_id for stress in candidate.combined_stresses)
     )
 
 
@@ -544,6 +646,42 @@ def _parameter_list(value: object, context: str) -> tuple[Mapping[str, object], 
     if not isinstance(value, list) or not value:
         raise ValueError(f"{context} must be a nonempty list")
     return tuple(_parameters(item, context) for item in value)
+
+
+def _combined_stress_list(value: object, context: str) -> tuple[CombinedStressEvidenceSpec, ...]:
+    if not isinstance(value, list) or len(value) != 2:
+        raise ValueError(f"{context} combined stresses must contain Stress A and Stress B")
+    stresses: list[CombinedStressEvidenceSpec] = []
+    fields = {
+        "role",
+        "experiment_id",
+        "parent_base_id",
+        "cost_model_version",
+        "execution_model_version",
+    }
+    for index, raw in enumerate(value):
+        item = _object(raw, f"{context} combined stress {index}")
+        _exact_fields(item, fields, f"{context} combined stress {index}")
+        stresses.append(
+            CombinedStressEvidenceSpec(
+                _text(item["role"], f"{context} combined stress role"),
+                _text(item["experiment_id"], f"{context} combined stress experiment ID"),
+                _text(item["parent_base_id"], f"{context} combined stress parent base ID"),
+                _text(item["cost_model_version"], f"{context} combined stress cost model"),
+                _text(
+                    item["execution_model_version"],
+                    f"{context} combined stress execution model",
+                ),
+            )
+        )
+    result = tuple(stresses)
+    if (
+        tuple(stress.role for stress in result) != ("stress-a", "stress-b")
+        or len({stress.experiment_id for stress in result}) != 2
+        or len({stress.parent_base_id for stress in result}) != 1
+    ):
+        raise ValueError(f"{context} combined stress roles differ")
+    return result
 
 
 def _spec(record: Mapping[str, object]) -> Mapping[str, object]:

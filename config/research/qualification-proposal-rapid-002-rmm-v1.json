@@ -1,0 +1,217 @@
+{
+  "id": "qualification-gates-rapid-002-rmm-v1",
+  "status": "approved",
+  "evidence_campaign_id": "rapid-002-rmm-40-40-10-controlled-v1",
+  "gates": [
+    {
+      "name": "validation fold coverage",
+      "metric": "validation_fold_count",
+      "comparison": ">=",
+      "threshold": "3",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require evidence from at least three chronological validation periods."
+    },
+    {
+      "name": "positive validation folds",
+      "metric": "positive_validation_fold_rate",
+      "comparison": ">=",
+      "threshold": "1",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Reject a candidate that loses money in any validation fold before holdout review."
+    },
+    {
+      "name": "fixed-weight benchmark wins",
+      "metric": "benchmark_win_rate",
+      "comparison": ">=",
+      "threshold": "0.6666666666666666666666666667",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require the candidate to beat the fixed-weight baseline in at least two of three validation folds."
+    },
+    {
+      "name": "worst validation return",
+      "metric": "worst_validation_return",
+      "comparison": ">=",
+      "threshold": "0",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require nonnegative after-cost return in every validation fold."
+    },
+    {
+      "name": "worst validation Sharpe",
+      "metric": "worst_validation_sharpe",
+      "comparison": ">=",
+      "threshold": "0.5",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require a positive risk-adjusted result with margin above zero in every validation fold."
+    },
+    {
+      "name": "validation drawdown cap",
+      "metric": "max_validation_drawdown",
+      "comparison": "<=",
+      "threshold": "0.20",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Reject validation drawdown above twenty percent."
+    },
+    {
+      "name": "gross exposure cap",
+      "metric": "max_average_gross_exposure",
+      "comparison": "<=",
+      "threshold": "1",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Keep average gross exposure within fully invested unlevered capital."
+    },
+    {
+      "name": "session profit concentration cap",
+      "metric": "max_top_5_session_profit_share",
+      "comparison": "<=",
+      "threshold": "0.25",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Limit dependence on the five most profitable sessions in each validation fold."
+    },
+    {
+      "name": "instrument profit concentration cap",
+      "metric": "max_top_instrument_profit_share",
+      "comparison": "<=",
+      "threshold": "0.50",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require positive profit to come from more than one dominant instrument."
+    },
+    {
+      "name": "doubled-cost retention",
+      "metric": "min_cost2x_return_retention",
+      "comparison": ">=",
+      "threshold": "0.80",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require at least eighty percent of base return after doubling modeled costs."
+    },
+    {
+      "name": "two-bar-delay retention",
+      "metric": "min_delay2_return_retention",
+      "comparison": ">=",
+      "threshold": "0.80",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require at least eighty percent of base return with a two-bar fill delay."
+    },
+    {
+      "name": "parameter-neighbor retention",
+      "metric": "min_parameter_neighbor_return_retention",
+      "comparison": ">=",
+      "threshold": "0.50",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require nearby parameters to retain at least half of the base return."
+    },
+    {
+      "name": "up-regime coverage",
+      "metric": "min_up_regime_sessions",
+      "comparison": ">=",
+      "threshold": "50",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require enough positive SPY sessions in every validation fold for regime evidence."
+    },
+    {
+      "name": "down-regime coverage",
+      "metric": "min_down_regime_sessions",
+      "comparison": ">=",
+      "threshold": "50",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require enough negative SPY sessions in every validation fold for regime evidence."
+    },
+    {
+      "name": "turnover cap",
+      "metric": "max_turnover",
+      "comparison": "<=",
+      "threshold": "30",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Limit annual validation turnover before later execution-capacity analysis."
+    },
+    {
+      "name": "validation trade count floor",
+      "metric": "total_validation_trade_count",
+      "comparison": ">=",
+      "threshold": "100",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require operational evidence from at least one hundred fills across all predeclared base validation folds; separate gates enforce outcomes within each fold."
+    },
+    {
+      "name": "search-volume cap",
+      "metric": "campaign_candidate_count",
+      "comparison": "<=",
+      "threshold": "40",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Cap the recorded search near the planned campaign size and preserve every candidate as evidence."
+    },
+    {
+      "name": "Stress A positive return",
+      "metric": "stress_a_return",
+      "comparison": ">",
+      "threshold": "0",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require Stress A to remain profitable under combined doubled costs and a two-bar delay."
+    },
+    {
+      "name": "Stress A return retention",
+      "metric": "stress_a_return_retention",
+      "comparison": ">=",
+      "threshold": "0.80",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require Stress A to retain at least eighty percent of the 2025 normal return."
+    },
+    {
+      "name": "Stress B positive return",
+      "metric": "stress_b_return",
+      "comparison": ">",
+      "threshold": "0",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require Stress B to remain profitable under 20/5 basis-point costs and a three-bar delay."
+    },
+    {
+      "name": "Stress B return retention",
+      "metric": "stress_b_return_retention",
+      "comparison": ">=",
+      "threshold": "0.80",
+      "disqualifying": true,
+      "approved": true,
+      "scope": "campaign",
+      "rationale": "Require Stress B to retain at least eighty percent of the 2025 normal return."
+    }
+  ]
+}

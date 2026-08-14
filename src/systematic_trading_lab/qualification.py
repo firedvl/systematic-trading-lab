@@ -21,6 +21,7 @@ from .fingerprints import canonicalize, fingerprint
 
 
 class Comparison(StrEnum):
+    GREATER_THAN = ">"
     GREATER_THAN_OR_EQUAL = ">="
     LESS_THAN_OR_EQUAL = "<="
 
@@ -212,6 +213,9 @@ def evaluate(
         if observed is None or not observed.is_finite():
             passed = False
             reason = "metric-missing-or-invalid"
+        elif gate.comparison is Comparison.GREATER_THAN:
+            passed = observed > gate.threshold
+            reason = "passed" if passed else "not-above-threshold"
         elif gate.comparison is Comparison.GREATER_THAN_OR_EQUAL:
             passed = observed >= gate.threshold
             reason = "passed" if passed else "below-threshold"
