@@ -4,11 +4,15 @@ Systematic Trading Lab is developed in public as research and software infrastru
 
 The repository deliberately keeps research claims, execution authority, and operational evidence separate. Public collaboration must preserve that distinction: a successful backtest is not a production claim, qualification is not execution authorization, and paper operation is not live-trading approval.
 
+Rapid Research is the default public contribution path for strategies and historical evaluation. It needs no campaign registration or broker credential. Its artifacts are exploratory and cannot grant authority.
+
 ## Good first contribution areas
 
 Useful contributions that do not require broker credentials include:
 
 - fixture-backed regression tests;
+- daily strategies and public registry parameter validation;
+- Rapid Research metrics, walk-forward, stress, and data-usability fixes;
 - documentation and examples;
 - deterministic reporting and inspection tools;
 - backtest correctness and reproducibility improvements;

@@ -1,178 +1,146 @@
 # Systematic Trading Lab
 
-Systematic Trading Lab is an open-source Python research platform for reproducible systematic-trading experiments, qualification, and tightly controlled paper execution.
+Systematic Trading Lab is an open-source Python framework for U.S. ETF data, strategy backtests, parameter sweeps, walk-forward evaluation, and guarded paper-trading research.
 
-The project is built around one principle: **research results and execution authority should be reproducible, reviewable, and difficult to grant by accident.** Dataset identity, experiment plans, qualification evidence, runtime provenance, risk decisions, and paper-account observations are recorded as explicit evidence instead of being inferred from ad-hoc scripts or mutable local state.
+> **Status:** active development. Research and paper workflows exist. Live trading is disabled. Backtests do not establish future profitability.
 
-The current daily-bar research universe is SPY, QQQ, IWM, TLT, and GLD. Intraday research infrastructure is under active development. Real-money/live trading is intentionally unsupported.
+## What you can do
 
-> **Project status:** active development. Interfaces and evidence schemas may still change. The repository is suitable for research and paper-trading experimentation, not unattended real-money trading.
+- Import synthetic, Alpaca, CSV, or Parquet daily OHLCV data.
+- Add a strategy through one typed interface and registry.
+- Run net-of-cost backtests and bounded parameter sweeps.
+- Evaluate fixed parameters through chronological walk-forward folds.
+- Stress results with higher costs and longer fill delays.
+- Store, inspect, compare, and export exploratory candidates.
+- Use separate controlled qualification and paper systems when a candidate is ready for review.
 
-## Why this project exists
-
-Systematic research can fail in ways that ordinary backtest code does not make obvious: accidental lookahead, changed datasets, unrecorded parameter searches, repeated holdout access, unverifiable runtime builds, stale broker state, and unsafe retry behavior.
-
-This project treats those as software and evidence problems. It provides infrastructure for:
-
-- immutable and fingerprinted research inputs;
-- bounded training and validation runs;
-- preregistered experiment campaigns and search budgets;
-- protected holdout access and qualification evidence;
-- conservative backtesting with explicit execution and cost assumptions;
-- attested runtime builds and installed-runtime verification;
-- transaction-bound paper-trading authority and risk controls;
-- restart-safe paper observation and reconciliation;
-- deterministic reports and durable operational evidence.
-
-The goal is not to publish a supposedly profitable strategy. The goal is to make the path from data to research conclusion to paper execution inspectable and reproducible.
-
-## Safety boundary
-
-Real-money execution is disabled by design. Supported modes are:
-
-- `offline`
-- `research`
-- `replay`
-- `shadow`
-- `paper`
-- `live-disabled`
-
-Paper broker writes require explicit paper mode plus separate activation, runtime identity, risk, authorization, and transaction-bound checks. Missing or ambiguous evidence fails closed. Read-only research and observation paths do not grant broker-write authority.
-
-The project currently integrates with Alpaca for market data and paper-account workflows. Production trading hosts are not accepted by the paper execution boundary.
-
-## Current capabilities
-
-### Research and data
-
-- Immutable cataloged datasets with provenance and fingerprints.
-- Bounded reads that load only the declared training or validation interval.
-- Corrections represented as parent-linked dataset versions.
-- Baseline and candidate backtests with explicit execution assumptions.
-- Durable experiment records, claims, failures, and bounded campaign budgets.
-- Strict preregistered training plans that prevent run-time parameter or date overrides.
-- Qualification evidence derived from controlled runs rather than caller-entered metrics.
-- One-time, authorization-gated holdout evaluation.
-- Research-only `1m` and `5m` SPY/QQQ data, replay, exact-range experiments, qualification evidence, closed V1/V2 campaigns, and a development-only V3 foundation.
-
-### Paper execution and operations
-
-- Append-only execution evidence and deterministic local order identities.
-- Explicit paper authorization and reviewed risk configuration.
-- Capacity reservation, order lifecycle, reconciliation, and recovery controls.
-- Fixed-origin paper transport with bounded response handling and no blind retries.
-- Runtime build manifests, GitHub attestations, and installed-runtime verification.
-- Read-only startup assessment before broker mutation is permitted.
-- Restart-safe paper observation campaigns and replay/shadow/paper equivalence evidence.
-- Deployment and recovery runbooks for sustained observation.
-
-For the exact current milestone and known limitations, see [`CURRENT_STATE.md`](CURRENT_STATE.md) and [`ROADMAP.md`](ROADMAP.md).
-
-## Requirements
-
-- Python 3.12+
-- [`uv`](https://docs.astral.sh/uv/)
-- Git
-
-Some data and paper workflows require an Alpaca account and credentials. The fixture-backed research path does not.
+Research iteration is cheap; promotion and execution remain strict.
 
 ## Quick start
 
-Clone the repository and install development dependencies:
+Requirements: Python 3.12+, [uv](https://docs.astral.sh/uv/), and Git.
 
 ```console
 git clone https://github.com/firedvl/systematic-trading-lab.git
 cd systematic-trading-lab
 uv sync --dev
-```
 
-Check the local environment and import the committed synthetic fixture:
-
-```console
 uv run trading-lab doctor
 uv run trading-lab data import-fixture
-uv run trading-lab data import-intraday-fixture --timeframe 5m
-uv run trading-lab data describe
+uv run trading-lab data list
+uv run trading-lab research list-strategies
 ```
 
-Run the baseline suite:
+The fixture has a stable dataset ID. Run a small smoke backtest:
 
 ```console
-uv run trading-lab backtest fixture --strategy all --output .trading-lab/reports/baselines.json
+uv run trading-lab research backtest \
+  --dataset 042e1e94eee7bbc1fe47c2f473bbbf93d773296a135486fa74fb34861c46e06d \
+  --strategy moving-average \
+  --parameter window=2
 ```
 
-Runtime state defaults to `.trading-lab/` and is intentionally not committed. Set `TRADING_LAB_HOME` to use another directory.
+Inspect stored results and run one fixture-sized walk-forward fold:
+
+```console
+uv run trading-lab research list
+uv run trading-lab research walk-forward \
+  --dataset 042e1e94eee7bbc1fe47c2f473bbbf93d773296a135486fa74fb34861c46e06d \
+  --strategy moving-average \
+  --parameter window=2 \
+  --training-window 2 \
+  --test-window 2 \
+  --step-size 2
+```
+
+The five-session fixture checks installation and command flow. Use longer history before interpreting research metrics. Runtime data defaults to `.trading-lab/` and is not committed.
+
+## Using historical data
+
+Alpaca imports are read-only and require research mode plus credentials:
+
+```console
+export TRADING_LAB_MODE=research
+export APCA_API_KEY_ID=your-key
+export APCA_API_SECRET_KEY=your-secret
+
+uv run trading-lab data import-alpaca \
+  --start 2020-07-27 \
+  --end 2025-06-30 \
+  --timeframe 1d
+```
+
+You can also import daily CSV or Parquet data:
+
+```console
+uv run trading-lab data import-local path/to/bars.csv
+uv run trading-lab data list
+```
+
+Required columns:
+
+```text
+timestamp,symbol,open,high,low,close,volume
+2025-01-06T00:00:00Z,SPY,100,102,99,101,1000000
+```
+
+Local files are labeled `user-supplied`; their adjustment policy is unknown. See [Getting started](docs/getting-started.md) and [Data policy](docs/data-policy.md).
+
+## Developing a strategy
+
+Strategies return target positions and never call a broker. Add the class to `rapid_strategies.py`, declare its public parameters in `strategy_registry.py`, add a focused test, then run it by registry name.
+
+See [Strategy development](docs/strategy-development.md) for the interface and a complete example.
 
 ## Research workflow
 
-A typical controlled workflow is:
-
-1. Register or import immutable source data.
-2. Create a bounded campaign or preregister an exact training plan.
-3. Run candidates through the controlled experiment runner.
-4. Generate and review qualification evidence.
-5. Authorize protected holdout access only after qualification gates pass.
-6. Keep any paper-execution authorization separate from research qualification.
-
-Example commands:
-
-```console
-uv run trading-lab experiment create-campaign baseline-v1 --name "Baseline campaign" --budget 20
-uv run trading-lab experiment plan-training --spec PLAN.json
-uv run trading-lab experiment run-planned candidate-1
-uv run trading-lab experiment inspect-intraday-plan --spec config/research/intraday-campaign-v2.json
-uv run trading-lab experiment compare candidate-1 candidate-2
-uv run trading-lab experiment evaluate-qualification \
-  --evidence-manifest config/research/qualification-evidence-v3.json \
-  --proposal config/research/qualification-proposal.json
+```text
+Data
+  ↓
+Explore: backtest + sweep
+  ↓
+Robustness: walk-forward + stress
+  ↓
+Zero-authority candidate export
+  ↓
+Human-reviewed controlled plan + untouched evidence
+  ↓
+Controlled qualification
+  ↓
+Guarded paper evaluation
+  ↓
+Live: unsupported
 ```
 
-The baseline suite includes cash, buy-and-hold, fixed-weight allocation, moving-average trend, time-series momentum, moving-average mean reversion, and volatility-targeted exposure. Baselines are system checks, not claims of profitability.
+Rapid Research is exploratory. It uses a separate SQLite database and artifact directory, never writes controlled campaign or execution registries, and cannot grant protected holdout, paper, broker-write, or live authority. V3 remains an advanced long-horizon benchmark with three reserved validation windows; it is unmaterialized pending the trusted main seal. Rapid Research rejects those windows.
 
-The repository also contains a predeclared strategic-allocation candidate whose controlled validation evidence passed the project's approved gates. That historical result is research evidence only; it does not promise future returns or by itself authorize broker writes.
+See [Rapid Research](docs/rapid-research.md) for backtests, sweeps, walk-forward defaults, metrics, stress tests, storage, and candidate export.
 
-The intraday workflow adds fixed cash, previous-bar-momentum, and 12-bar moving-average-trend engineering baselines for SPY and QQQ. Controlled runs use exact catalog ranges, flat-at-close sessions, completed-bar decisions, deterministic next-bar-open fills, and frozen cost and delay stress variants. The research-only qualification path cannot authorize holdout access, paper execution, or broker writes. See [`docs/intraday-research.md`](docs/intraday-research.md).
+## Safety
 
-Campaign V1 was preregistered and source-reviewed, but its first real Alpaca Training acquisition exposed an extended-hours filtering defect before dataset publication. No candidate ran and no strategy result was observed. Its sealed plan, source review, runtime state, and quarantine evidence remain unchanged and read-only.
+- Strategies and research code have no broker-write path.
+- Candidate export grants zero authority and never promotes automatically.
+- Paper writes require separate authorization, activation, runtime, risk, reconciliation, and transaction checks.
+- Live trading is prohibited by repository policy and configuration.
+- Credentials and local market data must stay outside source control.
 
-Campaign V2 completed all 60 controlled candidates and failed all 12 base research qualification groups under plan fingerprint `52db8a27fa4ff86865ab69b6bd7456899329ef3b861a582e59ab32904c03c122`. It remains closed immutable failed evidence. No intraday holdout was accessed or authorized. See [the V2 postmortem](docs/research-campaigns/intraday-campaign-v2-postmortem.md) and [historical runbook](docs/research-campaigns/intraday-campaign-v2.md).
+Read [Security](SECURITY.md) and the [Threat model](docs/threat-model.md) before changing a protected boundary.
 
-V3 uses state-transition trades and a FIFO N-bar delay so unchanged long states do not rebalance and pending transitions do not suppress later decisions. It fixes 12-bar MA, six-bar momentum, and six-bar opening-range breakout strategies plus a paired realistic/zero-cost diagnostic. The final 60-candidate plan is fingerprinted but creates no runtime state. Its three future validation periods are eligible for prospective market-data freshness, but freshness and validation approval remain false until GitHub attests the exact main seal before the first Validation A bar; universal freshness remains unprovable. The V3-only registry can later verify and materialize that seal, resolve and validate four catalog datasets before one atomic bind, record one human source review, and run stored specs only. No V3 dataset, runtime reservation, source review, result, qualification, holdout access, or execution authority exists. See [the V3 plan](docs/research-campaigns/intraday-campaign-v3-draft.md) and [exposure inventory](docs/research-campaigns/intraday-exposure-inventory.md).
+## Documentation
 
-## Paper workflow
+| Area | Start here |
+| --- | --- |
+| Installation and first backtest | [Getting started](docs/getting-started.md) |
+| Strategies and research | [Strategy development](docs/strategy-development.md), [Rapid Research](docs/rapid-research.md) |
+| Paper trading | [Paper execution plan](docs/paper-execution-plan.md), [Operations](docs/operations.md) |
+| Architecture and research integrity | [Architecture](docs/architecture.md), [Research policy](docs/research-policy.md) |
+| Full index | [Documentation](docs/README.md) |
 
-Paper execution is deliberately more cumbersome than ordinary research. Before any mutation, the system can assess the complete startup evidence surface without writing to the broker:
+Campaign history, V1/V2/V3 provenance, attestation mechanics, and detailed paper procedures live in `docs/`, not in this onboarding page.
 
-```console
-uv run trading-lab paper initialize-storage
-uv run trading-lab paper assess-startup \
-  --authorization AUTHORIZATION_ID \
-  --risk-config config/risk/alpaca-paper-v1.json
-```
+## Contributing
 
-Read-only observation campaigns can then measure account continuity and drift:
-
-```console
-uv run trading-lab paper start-observation paper-week-1 \
-  --maximum-gap-seconds 900 \
-  --duration-hours 168
-uv run trading-lab paper record-observation paper-week-1
-uv run trading-lab paper assess-observation paper-week-1
-```
-
-See [`docs/operations.md`](docs/operations.md), [`docs/paper-execution-plan.md`](docs/paper-execution-plan.md), [`docs/paper-write-readiness.md`](docs/paper-write-readiness.md), and [`docs/risk-policy.md`](docs/risk-policy.md) before changing or operating paper-execution code.
-
-## Configuration and credentials
-
-Copy `.env.example` to `.env` for local workflows that require provider credentials. The repository-local `.env` is ignored.
-
-The Alpaca data path requires `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY`. Secrets must remain outside source control and must not appear in logs, reports, fixtures, prompts, or issue content.
-
-The configuration loader rejects unknown names. Environment configuration alone cannot enable live trading.
-
-## Development
-
-Run the full local quality gates before opening a pull request:
+Run the local gates before opening a pull request:
 
 ```console
 uv run ruff format --check .
@@ -184,24 +152,10 @@ bash -n scripts/*.sh
 uv build
 ```
 
-Contributions are welcome. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md). Changes to protected controls, execution authority, risk semantics, evidence schemas, migrations, or security boundaries require especially careful tests and documentation.
+See [Contributing](CONTRIBUTING.md) and [Open-source guidance](docs/OPEN_SOURCE.md).
 
-Architecture and project history are intentionally kept in the repository:
+## License and disclaimer
 
-- [`docs/architecture.md`](docs/architecture.md) — system boundaries and components
-- [`docs/threat-model.md`](docs/threat-model.md) — security assumptions and protected controls
-- [`DECISIONS.md`](DECISIONS.md) — durable architecture and policy decisions
-- [`CURRENT_STATE.md`](CURRENT_STATE.md) — current operational/development state
-- [`ROADMAP.md`](ROADMAP.md) — planned work and remaining gates
+Licensed under the [Apache License 2.0](LICENSE).
 
-## Security
-
-Please report vulnerabilities privately as described in [`SECURITY.md`](SECURITY.md). Do not open a public issue containing credentials, account data, sensitive broker responses, or exploitable details.
-
-## License
-
-Licensed under the Apache License 2.0. See [`LICENSE`](LICENSE).
-
-## Disclaimer
-
-This software is provided for research and software-development purposes. It does not provide financial advice, and historical or simulated results do not guarantee future performance.
+This software is for research and software development. It is not financial advice. Historical, simulated, and paper results do not guarantee future performance.

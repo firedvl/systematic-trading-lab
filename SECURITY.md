@@ -28,6 +28,8 @@ Real-money/live execution is prohibited. The only supported broker mutation scop
 
 Paper mutation authority is not granted by credentials or environment mode alone. The execution path also requires the repository's authorization, activation, runtime identity, risk, reconciliation, and transaction-bound controls.
 
+Rapid Research has no broker mutation path and cannot create paper or live authority. Report any path from a Rapid module or candidate export into protected holdout, risk, order, paper, execution, reconciliation, broker, or V3 state as a security boundary violation.
+
 ## Secrets and sensitive data
 
 Secrets enter through environment variables or other explicitly documented local credential mechanisms and must never be committed to source control.

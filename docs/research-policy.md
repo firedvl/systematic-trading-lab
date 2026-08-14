@@ -1,5 +1,12 @@
 # Research policy
 
+Research has two tracks:
+
+- **Rapid Research** is exploratory and non-authoritative. It records enough local detail to repeat and compare ordinary backtests, sweeps, chronological walk-forward folds, and stress reruns without preregistration or approval. It uses a separate store, retains valid sweep configurations and runtime failures, reports no hidden score, blocks selected V3 windows, identifiable controlled catalog artifacts, and registered or reserved controlled holdout ranges in its active storage root, and cannot create qualification, holdout, paper, broker-write, live, or automatic-promotion authority. Detached user-supplied files carry no intrinsic catalog provenance; protected bars must not be copied or re-encoded for Rapid use.
+- **Controlled research** owns official evidence, qualification, protected holdout access, and later paper-candidate review. The remaining policy applies to this track unless it explicitly names Rapid Research.
+
+Research iteration is cheap; promotion and execution remain strict. A Rapid candidate export is a zero-authority review input, not controlled evidence. Promotion requires a separate human-reviewed controlled plan and untouched evaluation boundary.
+
 Official research records every candidate, parameter set, failure, code revision, dataset fingerprint, universe ID and fingerprint, cost and execution model, random seed, data split, and artifact hash. Compare results with cash, SPY, relevant buy-and-hold instruments, a fixed-weight ETF portfolio, and approved baselines after costs and risk.
 
 Create the experiment record before execution, claim it before work begins, heartbeat long runs, and complete or fail it explicitly. Campaign budgets count every created candidate. Recovery marks stale runs failed instead of guessing whether they completed.
@@ -16,7 +23,7 @@ Walk-forward training must end before its validation window begins, and validati
 
 Multi-symbol portfolio research must make one decision from a complete session and history ending at that session. Treat its nonempty target set as one atomic full-universe decision: each session symbol must appear once, each weight must be long-only, and total target weight must not exceed one. Execute reductions before buys at the next eligible open. Do not use symbol processing order to obtain same-session information or allow part of an invalid allocation to trade.
 
-CLI runs use only immutable cataloged datasets and read only the declared training or validation range. Dataset manifests supply the dataset fingerprint and exact universe provenance; callers cannot override them. The command records that provenance, code commit, strategy parameters, cost version, execution version, split, and reason before reading bars. It rejects parameters the selected strategy would ignore.
+Controlled `experiment` CLI runs use only immutable cataloged datasets and read only the declared training or validation range. Dataset manifests supply the dataset fingerprint and exact universe provenance; callers cannot override them. The command records that provenance, code commit, strategy parameters, cost version, execution version, split, and reason before reading bars. It rejects parameters the selected strategy would ignore.
 
 Future official training campaigns must use a strict `training-campaign-plan-v1` artifact. The
 registry stores its canonical content and fingerprint and atomically preregisters the exact candidate

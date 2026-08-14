@@ -2,6 +2,16 @@
 
 Each milestone requires passing formatting, lint, typing, tests, secret checks, documentation review, and every listed gate. A later milestone does not weaken an earlier gate.
 
+## Immediate research direction
+
+1. Use Rapid Research for fast historical daily strategy development on exposed data.
+2. Add and reject broader strategy families through bounded, fully recorded sweeps.
+3. Require chronological walk-forward and worse-execution stress before candidate export.
+4. Package promising results as zero-authority paper-candidate inputs for separate controlled review.
+5. Evaluate only qualified, independently authorized candidates in the guarded paper system.
+
+Research iteration is cheap; promotion and execution remain strict. V3 stays separate and unmaterialized pending the trusted main seal. Live trading remains out of scope.
+
 ## M0 — Foundation and policy
 
 Package, safe configuration, CLI, CI, persistent documentation, initial domain types, deterministic fingerprints, storage layout, and test infrastructure. Gate: clean setup; CLI and checks pass; runtime defaults offline; live is rejected; no secrets or generated data are tracked.
@@ -31,7 +41,7 @@ Replay/shadow/paper comparison, supervisor recovery, disconnect and stale-data h
 
 ## M6 — Bounded automated research
 
-Machine-readable specifications, approved strategy families, bounded candidate generation, search accounting, isolated runs, and evidence-producing pull requests. Gate: all candidates remain recorded; agents cannot alter protected controls or promote strategies.
+Rapid Research now provides the manual foundation: a public strategy registry, bounded deterministic sweeps, search accounting, chronological walk-forward folds, execution stress, isolated result storage, and zero-authority export. Remaining work covers broader reviewed strategy families, resumable long runs where measured, and evidence-producing pull requests. Gate: all valid attempted candidates remain recorded; agents cannot alter protected controls or promote strategies.
 
 ## Intraday extension
 

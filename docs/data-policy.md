@@ -1,5 +1,17 @@
 # Data policy
 
+## Rapid Research inputs
+
+Rapid Research can read immutable cataloged daily datasets without writing controlled experiment state. It can also import a complete user-supplied daily CSV or Parquet file into its separate `rapid-research/datasets/` namespace. The local importer requires exact `timestamp,symbol,open,high,low,close,volume` fields, UTC midnight timestamps, increasing rows per symbol, no duplicate bars, valid OHLC relationships, nonnegative integer volume, and complete XNYS sessions for every included symbol.
+
+Local files are labeled `user-supplied` with adjustment policy `user-supplied-unknown-v1`. Import does not infer splits, dividends, symbol changes, delistings, point-in-time membership, provider provenance, or qualification value. The artifact can support exploration only; it cannot become controlled evidence through the Rapid store.
+
+Rapid rejects direct imports from a controlled catalog artifact directory, including when another `TRADING_LAB_HOME` is active. Before importing or resolving user-supplied bars, it also rejects overlap with protected ranges in the active controlled registry. A detached or re-encoded file has no intrinsic catalog provenance, so users must keep protected data out of ordinary local-data workflows.
+
+Before a Rapid run reads normalized bars, its requested inclusive range must not overlap V3 Validation A (2026-10-01 through 2026-12-03), Validation B (2026-12-04 through 2027-02-09), or Validation C (2027-02-10 through 2027-04-15). The rejection has no casual override.
+
+## Controlled data
+
 Initial production research scope is adjusted regular-session daily OHLCV for SPY, QQQ, IWM, TLT, and GLD. The research-only intraday path permits offline `1m` and `5m` regular-session OHLCV, initially for SPY and QQQ. Preserve provider adapter, provider feed when present, request and actual ranges, retrieval time, raw hashes, schema and normalization versions, adjustment, calendar and timestamp policy, universe ID and fingerprint, validation evidence, missing and duplicate intervals, conflicts, quarantine counts, parent version, and final fingerprint.
 
 Raw and normalized evidence is immutable. A dataset version ID binds the provider adapter, provider feed when present, sorted symbol set, timeframe, requested range, adjustment policy, schema, normalization and calendar versions, universe ID and fingerprint, raw artifact hash, and normalized-bar fingerprint. For Alpaca intraday imports, raw evidence includes every mapped transport bar while normalized evidence contains only exact requested XNYS bar opens; filtering cannot erase transport extras from the published raw hash or, on rejection, from quarantine acquisition evidence. A changed snapshot for the same stable request and universe links to its latest cataloged parent; an exact repeat returns the existing version after its stored artifacts pass validation. Identical bars from different providers, feeds, requests, or universe definitions remain separate versions.

@@ -7,6 +7,8 @@ Contributions are welcome. Systematic Trading Lab contains ordinary research cod
 Read:
 
 - `README.md` for setup and project scope;
+- `docs/strategy-development.md` for the public strategy interface and registry;
+- `docs/rapid-research.md` for the ordinary research workflow;
 - `CURRENT_STATE.md` for the current implementation state;
 - `docs/architecture.md` for system boundaries;
 - `docs/threat-model.md` for security assumptions;
@@ -25,6 +27,8 @@ uv run trading-lab data import-fixture
 ```
 
 The committed fixture is enough for most development and test work. Do not require contributors to provide broker credentials for code paths that can be exercised offline.
+
+For a first strategy contribution, keep the class target-only, register only the parameters it uses, and include one deterministic unit test plus a fixture-backed Rapid Research command check.
 
 ## Pull requests
 
