@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sqlite3
 from dataclasses import dataclass, replace
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta, tzinfo
 from decimal import Decimal
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 import systematic_trading_lab.cli as cli
 import systematic_trading_lab.reconciliation as reconciliation
+import systematic_trading_lab.risk as risk_module
 from systematic_trading_lab.broker_events import BrokerEventStore, BrokerOrderEvent
 from systematic_trading_lab.config import Settings
 from systematic_trading_lab.domain import TradingMode
@@ -45,6 +48,17 @@ from systematic_trading_lab.risk_inputs import (
 from systematic_trading_lab.settled_capacity import SettledCapacityStore
 from systematic_trading_lab.strategy_equity import StrategyEquityCheckpoint, StrategyEquityStore
 
+_ROOT_SESSION_AT = datetime(2026, 8, 3, 14, 0, tzinfo=UTC)
+
+
+def _frozen_datetime(at: datetime) -> type[datetime]:
+    class FrozenDateTime(datetime):
+        @classmethod
+        def now(cls, timezone: tzinfo | None = None) -> FrozenDateTime:
+            return cls.fromtimestamp(at.timestamp(), timezone)
+
+    return FrozenDateTime
+
 
 @dataclass(frozen=True)
 class _SourceState:
@@ -52,6 +66,7 @@ class _SourceState:
     limits: RiskLimits
     authorization: PaperAuthorization
     checkpoint: StrategyEquityCheckpoint
+    risk_input: RiskInputEvidence
     settled_snapshot: PortfolioSnapshot
     now: datetime
 
@@ -86,7 +101,7 @@ def _limits(now: datetime) -> RiskLimits:
         reviewed_by="reviewer",
         review_reason="continuation test",
         effective_at=now - timedelta(days=1),
-        expires_at=now + timedelta(days=2),
+        expires_at=now + timedelta(days=90),
     )
 
 
@@ -199,12 +214,13 @@ def _risk_input(
     attestation_fingerprint: str,
     limits: RiskLimits,
     observed_at: datetime,
+    spy_ask: str = "100",
 ) -> RiskInputEvidence:
     prices = {
         "GLD": ("199", "200"),
         "IWM": ("99", "100"),
         "QQQ": ("499", "500"),
-        "SPY": ("50", "100"),
+        "SPY": ("50", spy_ask),
     }
     quotes = tuple(
         LatestQuoteEvidence(
@@ -250,10 +266,10 @@ def _risk_input(
     )
 
 
-def _source_state(tmp_path: Path) -> _SourceState:
+def _source_state(tmp_path: Path, *, now: datetime = _ROOT_SESSION_AT) -> _SourceState:
     path = tmp_path / "execution.sqlite3"
-    store = ReconciliationStore(path)
-    now = store.get_emergency().changed_at + timedelta(seconds=1)
+    with patch.object(risk_module, "datetime", _frozen_datetime(now - timedelta(seconds=1))):
+        store = ReconciliationStore(path)
     limits = _limits(now)
     report = _qualification_report()
     authorization = _authorization(limits, report, now=now)
@@ -414,12 +430,18 @@ def _source_state(tmp_path: Path) -> _SourceState:
         limits=limits,
         released_at=now + timedelta(seconds=16),
     )
-    return _SourceState(path, limits, authorization, checkpoint, settled_snapshot, now)
+    return _SourceState(path, limits, authorization, checkpoint, risk_input, settled_snapshot, now)
 
 
-def _completed_continuation(tmp_path: Path) -> _ContinuationState:
-    source = _source_state(tmp_path)
-    authorized_at = source.now + timedelta(seconds=20)
+def _completed_continuation(
+    tmp_path: Path,
+    *,
+    root_at: datetime = _ROOT_SESSION_AT,
+    continuation_at: datetime | None = None,
+    current_spy_ask: str = "100",
+) -> _ContinuationState:
+    source = _source_state(tmp_path, now=root_at)
+    authorized_at = continuation_at or source.now + timedelta(seconds=20)
     authorization, _ = ReconciliationStore(source.path).authorize_continuation(
         authorization_id="continuation-authorization",
         previous_authorization_id=source.authorization.authorization_id,
@@ -448,6 +470,7 @@ def _completed_continuation(tmp_path: Path) -> _ContinuationState:
         attestation_fingerprint=_attestation_fingerprint(source.path, snapshot.snapshot_id),
         limits=source.limits,
         observed_at=snapshot_at,
+        spy_ask=current_spy_ask,
     )
     handoff = PaperContinuationStore(source.path).complete_continuation(
         authorization_id=authorization.authorization_id,
@@ -472,26 +495,14 @@ def test_continuation_preserves_lineage_and_plans_deterministically(tmp_path: Pa
     state = _completed_continuation(tmp_path)
     store = PaperContinuationStore(state.source.path)
     plan_at = state.handoff.completed_at
-    market_state = fingerprint({"market-session": 22})
     first = store.plan_strategic_allocation(
         authorization_id=state.authorization.authorization_id,
         limits=state.source.limits,
-        market_state_fingerprint=market_state,
-        session_count=22,
         planned_at=plan_at,
     )
     second = store.plan_strategic_allocation(
         authorization_id=state.authorization.authorization_id,
         limits=state.source.limits,
-        market_state_fingerprint=market_state,
-        session_count=22,
-        planned_at=plan_at,
-    )
-    no_op = store.plan_strategic_allocation(
-        authorization_id=state.authorization.authorization_id,
-        limits=state.source.limits,
-        market_state_fingerprint=market_state,
-        session_count=2,
         planned_at=plan_at,
     )
 
@@ -509,8 +520,9 @@ def test_continuation_preserves_lineage_and_plans_deterministically(tmp_path: Pa
         ("QQQ", 5),
         ("SPY", 31),
     )
-    assert no_op.targets == no_op.current_positions
-    assert not no_op.trade_required
+    assert first.session_count == 1
+    assert first.root_exchange_session == first.current_exchange_session
+    assert first.market_state_fingerprint in first.evidence_fingerprints
     assert not any(dict(first.authority).values())
     assert not hasattr(first, "submit")
 
@@ -612,6 +624,208 @@ def test_continuation_preserves_lineage_and_plans_deterministically(tmp_path: Pa
         )
 
 
+@pytest.mark.parametrize(
+    ("option", "value"),
+    (
+        pytest.param("--session-count", "22", id="session-count"),
+        pytest.param("--market-state-fingerprint", "1" * 64, id="market-state-fingerprint"),
+    ),
+)
+def test_paper_plan_cli_rejects_manual_planning_provenance(
+    tmp_path: Path, option: str, value: str
+) -> None:
+    command = [
+        "paper",
+        "plan",
+        "--authorization",
+        "continuation-authorization",
+        "--replay-plan",
+        str(tmp_path / "replay.json"),
+        "--shadow-plan",
+        str(tmp_path / "shadow.json"),
+    ]
+
+    with pytest.raises(SystemExit):
+        cli.parser().parse_args([*command, option, value])
+
+
+def test_paper_plan_cli_outputs_derived_planning_provenance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    state = _completed_continuation(
+        tmp_path,
+        continuation_at=datetime(2026, 8, 4, 14, 0, tzinfo=UTC),
+    )
+    monkeypatch.setattr(cli, "load_risk_limits", lambda _: state.source.limits)
+    monkeypatch.setattr(cli, "datetime", _frozen_datetime(state.handoff.completed_at))
+    arguments = cli.parser().parse_args(
+        [
+            "paper",
+            "plan",
+            "--authorization",
+            state.authorization.authorization_id,
+            "--replay-plan",
+            str(tmp_path / "replay.json"),
+            "--shadow-plan",
+            str(tmp_path / "shadow.json"),
+        ]
+    )
+
+    assert not hasattr(arguments, "session_count")
+    assert not hasattr(arguments, "market_state_fingerprint")
+    assert cli.run(arguments, Settings(TradingMode.OFFLINE, tmp_path)) == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output["root_exchange_session"] == "2026-08-03"
+    assert output["current_exchange_session"] == "2026-08-04"
+    assert output["session_count"] == 2
+    assert output["rebalance_due"] is False
+    assert len(output["market_state_fingerprint"]) == 64
+    assert output["authority"] == {
+        "activation": False,
+        "broker_write": False,
+        "intent": False,
+        "live": False,
+        "risk": False,
+    }
+
+
+@pytest.mark.parametrize(
+    ("root_at", "continuation_at"),
+    (
+        pytest.param(
+            datetime(2026, 8, 7, 14, 0, tzinfo=UTC),
+            datetime(2026, 8, 10, 14, 0, tzinfo=UTC),
+            id="weekend",
+        ),
+        pytest.param(
+            datetime(2026, 7, 2, 14, 0, tzinfo=UTC),
+            datetime(2026, 7, 6, 14, 0, tzinfo=UTC),
+            id="xnys-holiday",
+        ),
+    ),
+)
+def test_planner_counts_only_xnys_sessions(
+    tmp_path: Path, root_at: datetime, continuation_at: datetime
+) -> None:
+    state = _completed_continuation(tmp_path, root_at=root_at, continuation_at=continuation_at)
+    plan = PaperContinuationStore(state.source.path).plan_strategic_allocation(
+        authorization_id=state.authorization.authorization_id,
+        limits=state.source.limits,
+        planned_at=state.handoff.completed_at,
+    )
+
+    assert plan.root_exchange_session == root_at.date().isoformat()
+    assert plan.current_exchange_session == continuation_at.date().isoformat()
+    assert plan.session_count == 2
+    assert not plan.rebalance_due
+    assert plan.targets == plan.current_positions
+
+
+def test_market_state_fingerprint_is_canonical_and_evidence_sensitive(
+    tmp_path: Path,
+) -> None:
+    first_home = tmp_path / "first"
+    changed_home = tmp_path / "changed"
+    first_home.mkdir()
+    changed_home.mkdir()
+    first = _completed_continuation(first_home)
+    changed = _completed_continuation(changed_home, current_spy_ask="101")
+    first_store = PaperContinuationStore(first.source.path)
+    first_plan = first_store.plan_strategic_allocation(
+        authorization_id=first.authorization.authorization_id,
+        limits=first.source.limits,
+        planned_at=first.handoff.completed_at,
+    )
+    repeated = first_store.plan_strategic_allocation(
+        authorization_id=first.authorization.authorization_id,
+        limits=first.source.limits,
+        planned_at=first.handoff.completed_at,
+    )
+    changed_plan = PaperContinuationStore(changed.source.path).plan_strategic_allocation(
+        authorization_id=changed.authorization.authorization_id,
+        limits=changed.source.limits,
+        planned_at=changed.handoff.completed_at,
+    )
+    checkpoint = StrategyEquityStore(first.source.path).latest_checkpoint(
+        first.authorization.authorization_id
+    )
+
+    assert first_plan.market_state_fingerprint == fingerprint(
+        {
+            "account_id": first.authorization.account_id,
+            "portfolio_snapshot_id": first.snapshot.snapshot_id,
+            "portfolio_snapshot_fingerprint": first.snapshot.snapshot_fingerprint,
+            "portfolio_attestation_fingerprint": (
+                first.risk_input.portfolio_attestation_fingerprint
+            ),
+            "risk_input_evidence_id": first.risk_input.evidence_id,
+            "market_clock": first.risk_input.clock,
+            "exchange_session": first_plan.current_exchange_session,
+            "quotes": first.risk_input.quotes,
+            "continuation_handoff_fingerprint": first.handoff.handoff_fingerprint,
+            "strategy_equity_checkpoint_fingerprint": checkpoint.checkpoint_fingerprint,
+        }
+    )
+    assert repeated == first_plan
+    assert repeated.plan_fingerprint == first_plan.plan_fingerprint
+    assert changed_plan.market_state_fingerprint != first_plan.market_state_fingerprint
+    assert changed_plan.plan_fingerprint != first_plan.plan_fingerprint
+
+
+@pytest.mark.parametrize("mutation", ("missing", "malformed", "stale"))
+def test_planner_rejects_unverifiable_market_clock(tmp_path: Path, mutation: str) -> None:
+    state = _completed_continuation(tmp_path)
+    with sqlite3.connect(state.source.path) as connection:
+        connection.execute("DROP TRIGGER risk_input_evidence_no_update")
+        if mutation == "missing":
+            connection.execute(
+                "UPDATE risk_input_evidence SET evidence_json = "
+                "json_remove(evidence_json, '$.clock') WHERE evidence_id = ?",
+                (state.risk_input.evidence_id,),
+            )
+        elif mutation == "malformed":
+            connection.execute(
+                "UPDATE risk_input_evidence SET evidence_json = "
+                "json_set(evidence_json, '$.clock.provider_timestamp', 'invalid') "
+                "WHERE evidence_id = ?",
+                (state.risk_input.evidence_id,),
+            )
+        else:
+            stale = state.risk_input.clock.observed_at - timedelta(
+                seconds=state.risk_input.maximum_age_seconds + 1
+            )
+            connection.execute(
+                "UPDATE risk_input_evidence SET evidence_json = "
+                "json_set(evidence_json, '$.clock.provider_timestamp', ?) "
+                "WHERE evidence_id = ?",
+                (stale.isoformat().replace("+00:00", "Z"), state.risk_input.evidence_id),
+            )
+
+    with pytest.raises(JournalIntegrityError):
+        PaperContinuationStore(state.source.path)
+
+
+def test_root_session_lineage_tampering_fails_journal_verification(tmp_path: Path) -> None:
+    state = _completed_continuation(tmp_path)
+    with sqlite3.connect(state.source.path) as connection:
+        connection.execute("DROP TRIGGER paper_continuation_declarations_no_update")
+        connection.execute(
+            "UPDATE paper_continuation_declarations SET previous_authorization_id = ? "
+            "WHERE authorization_id = ?",
+            ("missing-root", state.authorization.authorization_id),
+        )
+
+    with pytest.raises(JournalIntegrityError):
+        store = PaperContinuationStore(state.source.path)
+        store.plan_strategic_allocation(
+            authorization_id=state.authorization.authorization_id,
+            limits=state.source.limits,
+            planned_at=state.handoff.completed_at,
+        )
+
+
 @pytest.mark.parametrize("mismatch", ["account", "configuration", "strategy"])
 def test_planner_rejects_authority_mismatch(tmp_path: Path, mismatch: str) -> None:
     state = _completed_continuation(tmp_path)
@@ -635,8 +849,9 @@ def test_planner_rejects_authority_mismatch(tmp_path: Path, mismatch: str) -> No
             snapshot=state.snapshot,
             risk_input=state.risk_input,
             checkpoint=checkpoint,
-            market_state_fingerprint=fingerprint({"market": 1}),
-            session_count=22,
+            root_authorization=state.source.authorization,
+            root_risk_input=state.source.risk_input,
+            root_checkpoint=state.source.checkpoint,
         )
 
 
@@ -888,9 +1103,17 @@ def test_malformed_handoff_checkpoint_fails_as_journal_integrity_error(tmp_path:
 
 
 def test_continuation_chain_has_one_successor_and_preserves_lineage(tmp_path: Path) -> None:
-    state = _completed_continuation(tmp_path)
+    state = _completed_continuation(
+        tmp_path,
+        continuation_at=datetime(2026, 8, 4, 14, 0, tzinfo=UTC),
+    )
+    first_plan = PaperContinuationStore(state.source.path).plan_strategic_allocation(
+        authorization_id=state.authorization.authorization_id,
+        limits=state.source.limits,
+        planned_at=state.handoff.completed_at,
+    )
     store = ReconciliationStore(state.source.path)
-    second_authorized_at = state.authorization.expires_at
+    second_authorized_at = datetime(2026, 9, 1, 14, 0, tzinfo=UTC)
 
     with pytest.raises(HoldoutAccessError, match="already has a continuation successor"):
         store.authorize_continuation(
@@ -942,7 +1165,22 @@ def test_continuation_chain_has_one_successor_and_preserves_lineage(tmp_path: Pa
         reason="clean chained continuation handoff",
         completed_at=snapshot_at + timedelta(seconds=1),
     )
+    second_plan = PaperContinuationStore(state.source.path).plan_strategic_allocation(
+        authorization_id=authorization.authorization_id,
+        limits=state.source.limits,
+        planned_at=handoff.completed_at,
+    )
 
+    assert first_plan.root_exchange_session == "2026-08-03"
+    assert first_plan.current_exchange_session == "2026-08-04"
+    assert first_plan.session_count == 2
+    assert not first_plan.rebalance_due
+    assert first_plan.targets == first_plan.current_positions
+    assert not first_plan.trade_required
+    assert second_plan.root_exchange_session == "2026-08-03"
+    assert second_plan.current_exchange_session == "2026-09-01"
+    assert second_plan.session_count == 22
+    assert second_plan.rebalance_due
     assert handoff.previous_authorization_id == state.authorization.authorization_id
     assert handoff.source_fill_event_ids == state.handoff.source_fill_event_ids
     assert handoff.positions == state.handoff.positions

@@ -398,8 +398,6 @@ class PaperContinuationStore(AttestedRiskContextStore):
         *,
         authorization_id: str,
         limits: RiskLimits,
-        market_state_fingerprint: str,
-        session_count: int,
         planned_at: datetime,
     ) -> PresentStateActionPlan:
         """Read immutable continuation evidence and derive a broker-free plan."""
@@ -420,6 +418,9 @@ class PaperContinuationStore(AttestedRiskContextStore):
                 cast(ReconciliationStore, self), connection
             )
             authorizations = self._verify_authorizations(connection)
+            declarations = ReconciliationStore._verify_continuation_declarations(
+                cast(ReconciliationStore, self), connection, authorizations
+            )
             handoff = self._stored_handoff(connection, authorization_id)
             if handoff is None:
                 raise HoldoutAccessError("paper planning requires a completed continuation")
@@ -461,6 +462,27 @@ class PaperContinuationStore(AttestedRiskContextStore):
                     "paper planning requires unchanged clean continuation state"
                 )
             authorization = authorizations[authorization_id]
+            root_authorization_id = authorization_id
+            visited: set[str] = set()
+            while root_authorization_id in declarations:
+                if root_authorization_id in visited:
+                    raise JournalIntegrityError("paper planning continuation lineage is cyclic")
+                visited.add(root_authorization_id)
+                root_authorization_id = declarations[
+                    root_authorization_id
+                ].previous_authorization_id
+            try:
+                root_authorization = authorizations[root_authorization_id]
+                root_checkpoint = next(
+                    item
+                    for item in checkpoints.values()
+                    if item.authorization_id == root_authorization_id and item.fill_event_ids
+                )
+                root_risk_input = authorities[2][root_checkpoint.risk_input_evidence_id]
+            except (KeyError, StopIteration) as error:
+                raise HoldoutAccessError(
+                    "paper planning root strategy session is missing"
+                ) from error
             return plan_strategic_allocation(
                 authorization=authorization,
                 limits=limits,
@@ -468,8 +490,9 @@ class PaperContinuationStore(AttestedRiskContextStore):
                 snapshot=snapshot,
                 risk_input=risk_input,
                 checkpoint=checkpoint,
-                market_state_fingerprint=market_state_fingerprint,
-                session_count=session_count,
+                root_authorization=root_authorization,
+                root_risk_input=root_risk_input,
+                root_checkpoint=root_checkpoint,
             )
 
     def get_handoff(self, authorization_id: str) -> PaperContinuationHandoff:

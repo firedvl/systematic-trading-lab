@@ -37,9 +37,11 @@ schema initialization. The first real Alpaca paper session ran on 2026-08-04 and
 production-bound orders: GLD 3, IWM 8, QQQ 3, and SPY 4. Its initial-entry replay/shadow/paper
 comparison passed. Present-state planning and an append-only non-flat authorization handoff now
 support a later strategic-allocation session without resetting positions, fill economics, equity
-peak, or drawdown. Declaration, completion, and planning add no broker authority. The current Alpaca
-HTTP 401 remains an operator credential blocker, and authority-grade verification still requires the
-unprivileged deployment account.
+peak, drawdown, or the root strategy epoch. Planning derives the inclusive XNYS session count from
+the root fill-backed and current attested NYSE clocks and derives its market-state fingerprint from
+immutable current evidence; neither value is an operator input. Declaration, completion, and
+planning add no broker authority. The current Alpaca HTTP 401 remains an operator credential
+blocker, and authority-grade verification still requires the unprivileged deployment account.
 
 ## M5 — Equivalence and sustained paper operation
 

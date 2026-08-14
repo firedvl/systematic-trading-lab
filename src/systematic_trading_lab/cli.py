@@ -217,8 +217,6 @@ def parser() -> argparse.ArgumentParser:
     )
     plan.add_argument("--authorization", required=True)
     plan.add_argument("--risk-config", type=Path, default=Path("config/risk/alpaca-paper-v1.json"))
-    plan.add_argument("--market-state-fingerprint", required=True)
-    plan.add_argument("--session-count", type=int, required=True)
     plan.add_argument("--replay-plan", type=Path, required=True)
     plan.add_argument("--shadow-plan", type=Path, required=True)
     data = commands.add_parser("data", help="manage local market data").add_subparsers(
@@ -560,8 +558,6 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             present_plan = PaperContinuationStore(layout.execution).plan_strategic_allocation(
                 authorization_id=arguments.authorization,
                 limits=limits,
-                market_state_fingerprint=arguments.market_state_fingerprint,
-                session_count=arguments.session_count,
                 planned_at=datetime.now(UTC),
             )
             replay_path, shadow_path = write_action_plans(
@@ -575,12 +571,15 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                     "candidate_id": present_plan.candidate_id,
                     "strategy_id": present_plan.strategy_id,
                     "strategy_version": present_plan.strategy_version,
+                    "root_exchange_session": present_plan.root_exchange_session,
+                    "current_exchange_session": present_plan.current_exchange_session,
                     "session_count": present_plan.session_count,
                     "rebalance_every": present_plan.rebalance_every,
                     "rebalance_due": present_plan.rebalance_due,
                     "trade_required": present_plan.trade_required,
                     "source_data_fingerprint": present_plan.source_data_fingerprint,
                     "source_state_fingerprint": present_plan.source_state_fingerprint,
+                    "market_state_fingerprint": present_plan.market_state_fingerprint,
                     "configuration_fingerprint": present_plan.configuration_fingerprint,
                     "plan_fingerprint": present_plan.plan_fingerprint,
                     "current_positions": [

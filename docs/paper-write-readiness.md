@@ -30,8 +30,10 @@ replay/shadow/paper comparison passed. That evidence does not authorize another 
    append-only handoff must preserve positions, fill economics, strategy cash, equity peak, and
    drawdown. It cannot create a flat baseline.
 4. Generate replay and shadow plans with `paper plan`, create matching quantity intents through the
-   existing guarded path, record equivalence, and rerun startup assessment. Any mismatch, stale
-   input, active reservation, unresolved order, or emergency transition stops the run.
+   existing guarded path, record equivalence, and rerun startup assessment. The planner derives the
+   XNYS session count and market-state fingerprint from immutable root and current attested evidence;
+   the operator cannot supply either value. Any mismatch, stale input, active reservation,
+   unresolved order, or emergency transition stops the run.
 5. Obtain explicit user approval immediately before any new paper broker mutation.
 
 M5 began and produced sustained observation and recovery evidence. Its remaining 168-hour duration

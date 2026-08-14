@@ -115,19 +115,24 @@ The 2026-08-04 initial session established the flat strategy baseline and filled
    the non-flat expected snapshot, clean reconciliation, strategy-equity baseline, continuation
    settlement and checkpoint, and final handoff. Prior fills, strategy cash, positions, equity peak,
    and drawdown remain in the new lineage.
-4. Generate create-only replay and shadow files. `SESSION_COUNT` and
-   `MARKET_STATE_FINGERPRINT` must come from the reviewed daily market-state evidence for this
-   strategy decision:
+4. Generate create-only replay and shadow files:
 
    ```console
    trading-lab paper plan \
      --authorization NEW_AUTHORIZATION \
      --risk-config config/risk/alpaca-paper-v1.json \
-     --market-state-fingerprint MARKET_STATE_FINGERPRINT \
-     --session-count SESSION_COUNT \
      --replay-plan replay-plan.json \
      --shadow-plan shadow-plan.json
    ```
+
+   The planner traces the continuation declarations to the root authorization's first fill-backed
+   strategy-equity checkpoint. It derives the root and current sessions from their attested NYSE
+   core clocks, counts the inclusive XNYS sessions, and derives a canonical market-state fingerprint
+   from the current attested snapshot, risk input, clock, quotes, account, handoff, and checkpoint.
+   Missing, stale, malformed, or non-session clock evidence stops planning. The output reports
+   `root_exchange_session`, `current_exchange_session`, `session_count`, `rebalance_due`,
+   `market_state_fingerprint`, and `source_state_fingerprint`; the operator supplies none of these
+   decision values.
 
    The planner reads only immutable local evidence. It calls no broker and grants no intent, risk,
    activation, or broker authority. On a non-rebalance session it emits current quantities as a

@@ -5,8 +5,11 @@ from __future__ import annotations
 import os
 import tempfile
 from dataclasses import dataclass
+from datetime import UTC, date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
+from .calendar import expected_sessions
 from .fingerprints import canonical_json, canonicalize, fingerprint
 from .orders import whole_share_target
 from .paper_equivalence import ActionPlan, ActionTarget
@@ -14,7 +17,7 @@ from .reconciliation import PaperContinuationHandoff, PortfolioSnapshot
 from .risk import PaperAuthorization, RiskLimits
 from .risk_inputs import RiskInputEvidence
 from .strategies import STRATEGIC_ALLOCATION_WEIGHTS
-from .strategy_equity import StrategyEquityCheckpoint
+from .strategy_equity import _FILL_CHECKPOINT_MODE, StrategyEquityCheckpoint
 
 _CANDIDATE_ID = "strategic-allocation-21"
 _STRATEGY_ID = "strategic-allocation-portfolio"
@@ -22,6 +25,7 @@ _STRATEGY_VERSION = "1"
 _REBALANCE_EVERY = 21
 _PARAMETERS = {"rebalance_every": _REBALANCE_EVERY}
 _SIZING_MODEL = "whole-share-floor-at-ask-v1"
+_XNYS_TIMEZONE = ZoneInfo("America/New_York")
 
 
 @dataclass(frozen=True, order=True)
@@ -52,11 +56,14 @@ class PresentStateActionPlan:
     strategy_id: str
     strategy_version: str
     account_id: str
+    root_exchange_session: str
+    current_exchange_session: str
     session_count: int
     rebalance_every: int
     rebalance_due: bool
     source_data_fingerprint: str
     source_state_fingerprint: str
+    market_state_fingerprint: str
     configuration_fingerprint: str
     current_positions: tuple[ActionTarget, ...]
     targets: tuple[ActionTarget, ...]
@@ -73,14 +80,23 @@ class PresentStateActionPlan:
     )
 
     def __post_init__(self) -> None:
+        try:
+            root_session = date.fromisoformat(self.root_exchange_session)
+            current_session = date.fromisoformat(self.current_exchange_session)
+            derived_session_count = _session_count(root_session, current_session)
+        except ValueError as error:
+            raise ValueError("present-state action plan sessions are invalid") from error
         if (
             not self.authorization_id
             or self.candidate_id != _CANDIDATE_ID
             or self.strategy_id != _STRATEGY_ID
             or self.strategy_version != _STRATEGY_VERSION
             or not self.account_id
+            or self.root_exchange_session != root_session.isoformat()
+            or self.current_exchange_session != current_session.isoformat()
             or isinstance(self.session_count, bool)
             or self.session_count < 1
+            or self.session_count != derived_session_count
             or self.rebalance_every != _REBALANCE_EVERY
             or self.rebalance_due
             != (self.session_count == 1 or (self.session_count - 1) % self.rebalance_every == 0)
@@ -113,6 +129,7 @@ class PresentStateActionPlan:
         for value in (
             self.source_data_fingerprint,
             self.source_state_fingerprint,
+            self.market_state_fingerprint,
             self.configuration_fingerprint,
             *self.evidence_fingerprints,
         ):
@@ -135,13 +152,11 @@ def plan_strategic_allocation(
     snapshot: PortfolioSnapshot,
     risk_input: RiskInputEvidence,
     checkpoint: StrategyEquityCheckpoint,
-    market_state_fingerprint: str,
-    session_count: int,
+    root_authorization: PaperAuthorization,
+    root_risk_input: RiskInputEvidence,
+    root_checkpoint: StrategyEquityCheckpoint,
 ) -> PresentStateActionPlan:
     """Derive targets and deltas from immutable present-state evidence only."""
-    _sha256(market_state_fingerprint)
-    if isinstance(session_count, bool) or session_count < 1:
-        raise ValueError("strategy session count must be positive")
     positive_weights = {
         symbol: weight for symbol, weight in STRATEGIC_ALLOCATION_WEIGHTS if weight > 0
     }
@@ -163,6 +178,37 @@ def plan_strategic_allocation(
         or risk_input.authorization_id != authorization.authorization_id
         or risk_input.portfolio_snapshot_id != snapshot.snapshot_id
         or risk_input.risk_configuration_fingerprint != limits.configuration_fingerprint
+        or any(
+            getattr(root_authorization, name) != getattr(authorization, name)
+            for name in (
+                "candidate_id",
+                "strategy_id",
+                "strategy_version",
+                "parameters_fingerprint",
+                "code_commit",
+                "dataset_id",
+                "dataset_fingerprint",
+                "universe_id",
+                "universe_fingerprint",
+                "qualification_evidence_fingerprint",
+                "account_id",
+                "risk_configuration_fingerprint",
+            )
+        )
+        or root_checkpoint.authorization_id != root_authorization.authorization_id
+        or root_checkpoint.account_id != root_authorization.account_id
+        or root_checkpoint.strategy_id != root_authorization.strategy_id
+        or root_checkpoint.strategy_version != root_authorization.strategy_version
+        or root_checkpoint.risk_configuration_fingerprint
+        != root_authorization.risk_configuration_fingerprint
+        or root_checkpoint.checkpoint_mode != _FILL_CHECKPOINT_MODE
+        or not root_checkpoint.fill_event_ids
+        or not set(root_checkpoint.fill_event_ids).issubset(checkpoint.fill_event_ids)
+        or root_checkpoint.risk_input_evidence_id != root_risk_input.evidence_id
+        or root_risk_input.authorization_id != root_authorization.authorization_id
+        or root_risk_input.account_id != root_authorization.account_id
+        or root_risk_input.risk_configuration_fingerprint
+        != root_authorization.risk_configuration_fingerprint
     ):
         raise ValueError("strategic-allocation planning authority differs")
     current = {item.symbol: item.quantity for item in snapshot.positions}
@@ -171,6 +217,23 @@ def plan_strategic_allocation(
     asks = {quote.symbol: quote.ask_price for quote in risk_input.quotes}
     if not set(limits.allowed_symbols).issubset(asks):
         raise ValueError("strategic-allocation planning quotes are incomplete")
+    root_session = _xnys_session(root_risk_input)
+    current_session = _xnys_session(risk_input)
+    session_count = _session_count(root_session, current_session)
+    market_state_fingerprint = fingerprint(
+        {
+            "account_id": authorization.account_id,
+            "portfolio_snapshot_id": snapshot.snapshot_id,
+            "portfolio_snapshot_fingerprint": snapshot.snapshot_fingerprint,
+            "portfolio_attestation_fingerprint": risk_input.portfolio_attestation_fingerprint,
+            "risk_input_evidence_id": risk_input.evidence_id,
+            "market_clock": risk_input.clock,
+            "exchange_session": current_session.isoformat(),
+            "quotes": risk_input.quotes,
+            "continuation_handoff_fingerprint": handoff.handoff_fingerprint,
+            "strategy_equity_checkpoint_fingerprint": checkpoint.checkpoint_fingerprint,
+        }
+    )
     rebalance_due = session_count == 1 or (session_count - 1) % _REBALANCE_EVERY == 0
     desired = (
         {
@@ -214,6 +277,11 @@ def plan_strategic_allocation(
         {
             "authorization_fingerprint": authorization.authorization_fingerprint,
             "dataset_fingerprint": authorization.dataset_fingerprint,
+            "root_authorization_fingerprint": root_authorization.authorization_fingerprint,
+            "root_strategy_equity_checkpoint_fingerprint": (root_checkpoint.checkpoint_fingerprint),
+            "root_risk_input_evidence_id": root_risk_input.evidence_id,
+            "root_exchange_session": root_session.isoformat(),
+            "current_exchange_session": current_session.isoformat(),
             "market_state_fingerprint": market_state_fingerprint,
             "session_count": session_count,
             "portfolio_snapshot_fingerprint": snapshot.snapshot_fingerprint,
@@ -226,11 +294,14 @@ def plan_strategic_allocation(
         sorted(
             {
                 authorization.authorization_fingerprint,
+                root_authorization.authorization_fingerprint,
                 limits.configuration_fingerprint,
                 handoff.handoff_fingerprint,
                 snapshot.snapshot_fingerprint,
                 risk_input.evidence_id,
                 checkpoint.checkpoint_fingerprint,
+                root_checkpoint.checkpoint_fingerprint,
+                root_risk_input.evidence_id,
                 market_state_fingerprint,
                 planning_configuration_fingerprint,
                 source_state_fingerprint,
@@ -255,11 +326,14 @@ def plan_strategic_allocation(
         strategy_id=_STRATEGY_ID,
         strategy_version=_STRATEGY_VERSION,
         account_id=authorization.account_id,
+        root_exchange_session=root_session.isoformat(),
+        current_exchange_session=current_session.isoformat(),
         session_count=session_count,
         rebalance_every=_REBALANCE_EVERY,
         rebalance_due=rebalance_due,
         source_data_fingerprint=authorization.dataset_fingerprint,
         source_state_fingerprint=source_state_fingerprint,
+        market_state_fingerprint=market_state_fingerprint,
         configuration_fingerprint=configuration_fingerprint,
         current_positions=current_positions,
         targets=targets,
@@ -268,6 +342,31 @@ def plan_strategic_allocation(
         replay=plans["replay"],
         shadow=plans["shadow"],
     )
+
+
+def _xnys_session(evidence: RiskInputEvidence) -> date:
+    session = evidence.clock.provider_timestamp.astimezone(_XNYS_TIMEZONE).date()
+    boundary = datetime(session.year, session.month, session.day, tzinfo=UTC)
+    if (
+        not evidence.clock.regular_session_open
+        or not evidence.clock.is_market_day
+        or expected_sessions(boundary, boundary, "XNYS") != (session,)
+    ):
+        raise ValueError("market clock does not establish an XNYS session")
+    return session
+
+
+def _session_count(root_session: date, current_session: date) -> int:
+    if current_session < root_session:
+        raise ValueError("current XNYS session predates the root strategy session")
+    sessions = expected_sessions(
+        datetime(root_session.year, root_session.month, root_session.day, tzinfo=UTC),
+        datetime(current_session.year, current_session.month, current_session.day, tzinfo=UTC),
+        "XNYS",
+    )
+    if not sessions or sessions[0] != root_session or sessions[-1] != current_session:
+        raise ValueError("strategy session range is not bounded by XNYS sessions")
+    return len(sessions)
 
 
 def write_action_plans(
