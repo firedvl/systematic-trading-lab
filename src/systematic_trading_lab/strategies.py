@@ -379,6 +379,15 @@ class VolatilityBalancedPortfolioStrategy:
         )
 
 
+STRATEGIC_ALLOCATION_WEIGHTS = (
+    ("GLD", Decimal("0.15")),
+    ("IWM", Decimal("0.25")),
+    ("QQQ", Decimal("0.25")),
+    ("SPY", Decimal("0.35")),
+    ("TLT", Decimal("0")),
+)
+
+
 @dataclass(frozen=True)
 class StrategicAllocationPortfolioStrategy:
     symbols: tuple[Symbol, ...]
@@ -406,13 +415,7 @@ class StrategicAllocationPortfolioStrategy:
         session_count = next(iter(lengths))
         if session_count != 1 and (session_count - 1) % self.rebalance_every:
             return ()
-        weights = {
-            "SPY": Decimal("0.35"),
-            "QQQ": Decimal("0.25"),
-            "IWM": Decimal("0.25"),
-            "GLD": Decimal("0.15"),
-            "TLT": Decimal("0"),
-        }
+        weights = dict(STRATEGIC_ALLOCATION_WEIGHTS)
         return tuple(
             TargetPosition(symbol, weights[symbol.value], "strategic-allocation")
             for symbol in sorted(self.symbols, key=lambda item: item.value)

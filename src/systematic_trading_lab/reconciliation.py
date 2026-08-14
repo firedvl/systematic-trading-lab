@@ -6,8 +6,8 @@ import json
 import re
 import sqlite3
 from contextlib import nullcontext
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import StrEnum
 from itertools import pairwise
@@ -21,6 +21,14 @@ from .risk import EmergencyState, PaperAuthorization, RiskLimits, RiskStore
 
 _SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,15}")
 _ALPACA_READER_CAPABILITY = object()
+_CONTINUATION_TABLES = {
+    "paper_continuation_declarations",
+    "paper_continuation_handoffs",
+}
+_CONTINUATION_EVENTS = {
+    "paper-continuation-declared",
+    "paper-continuation-completed",
+}
 
 
 class SnapshotSource(StrEnum):
@@ -331,6 +339,165 @@ class StrategyEquityBaseline:
 
 
 @dataclass(frozen=True)
+class PaperContinuationDeclaration:
+    authorization_id: str
+    authorization_fingerprint: str
+    previous_authorization_id: str
+    previous_authorization_fingerprint: str
+    candidate_id: str
+    strategy_id: str
+    strategy_version: str
+    account_id: str
+    risk_configuration_fingerprint: str
+    declared_at: datetime
+
+    def __post_init__(self) -> None:
+        for name, value in (
+            ("authorization ID", self.authorization_id),
+            ("previous authorization ID", self.previous_authorization_id),
+            ("candidate ID", self.candidate_id),
+            ("strategy ID", self.strategy_id),
+            ("strategy version", self.strategy_version),
+            ("account ID", self.account_id),
+        ):
+            _bounded_text(name, value)
+        if self.authorization_id == self.previous_authorization_id:
+            raise ValueError("continuation authorization must follow another authorization")
+        for name, value in (
+            ("authorization", self.authorization_fingerprint),
+            ("previous authorization", self.previous_authorization_fingerprint),
+            ("risk configuration", self.risk_configuration_fingerprint),
+        ):
+            _sha256(name, value)
+        _utc("continuation declaration time", self.declared_at)
+
+    @property
+    def declaration_fingerprint(self) -> str:
+        return fingerprint(self)
+
+
+@dataclass(frozen=True)
+class PaperContinuationHandoff:
+    authorization_id: str
+    declaration_fingerprint: str
+    previous_authorization_id: str
+    source_authorization_fingerprint: str
+    candidate_id: str
+    strategy_id: str
+    strategy_version: str
+    account_id: str
+    risk_configuration_fingerprint: str
+    source_reconciliation_baseline_id: str
+    source_settlement_proof_id: str
+    source_settlement_proof_fingerprint: str
+    source_strategy_equity_checkpoint_id: str
+    source_strategy_equity_checkpoint_fingerprint: str
+    source_fill_event_ids: tuple[str, ...]
+    current_snapshot_id: str
+    current_snapshot_fingerprint: str
+    current_attestation_fingerprint: str
+    current_risk_input_evidence_id: str
+    reconciliation_baseline_id: str
+    reconciliation_baseline_fingerprint: str
+    reconciliation_evidence_id: str
+    strategy_equity_baseline_id: str
+    strategy_equity_baseline_fingerprint: str
+    settlement_proof_id: str
+    settlement_proof_fingerprint: str
+    strategy_equity_checkpoint_id: str
+    strategy_equity_checkpoint_fingerprint: str
+    cash: Decimal
+    equity: Decimal
+    buying_power: Decimal
+    positions: tuple[PositionSnapshot, ...]
+    allocated_capital: Decimal
+    gross_buy_notional: Decimal
+    gross_sell_notional: Decimal
+    fill_cost_reserve: Decimal
+    strategy_cash: Decimal
+    strategy_equity: Decimal
+    peak_equity: Decimal
+    strategy_drawdown: Decimal
+    emergency_generation: int
+    completed_at: datetime
+
+    def __post_init__(self) -> None:
+        for name, value in (
+            ("authorization ID", self.authorization_id),
+            ("previous authorization ID", self.previous_authorization_id),
+            ("candidate ID", self.candidate_id),
+            ("strategy ID", self.strategy_id),
+            ("strategy version", self.strategy_version),
+            ("account ID", self.account_id),
+            ("source reconciliation baseline ID", self.source_reconciliation_baseline_id),
+            ("source settlement proof ID", self.source_settlement_proof_id),
+            ("source strategy equity checkpoint ID", self.source_strategy_equity_checkpoint_id),
+            ("current snapshot ID", self.current_snapshot_id),
+            ("reconciliation baseline ID", self.reconciliation_baseline_id),
+            ("strategy equity baseline ID", self.strategy_equity_baseline_id),
+            ("settlement proof ID", self.settlement_proof_id),
+            ("strategy equity checkpoint ID", self.strategy_equity_checkpoint_id),
+        ):
+            _bounded_text(name, value)
+        for name, value in (
+            ("declaration", self.declaration_fingerprint),
+            ("source authorization", self.source_authorization_fingerprint),
+            ("risk configuration", self.risk_configuration_fingerprint),
+            ("source settlement", self.source_settlement_proof_fingerprint),
+            (
+                "source strategy equity checkpoint",
+                self.source_strategy_equity_checkpoint_fingerprint,
+            ),
+            ("current snapshot", self.current_snapshot_fingerprint),
+            ("current attestation", self.current_attestation_fingerprint),
+            ("current risk input", self.current_risk_input_evidence_id),
+            ("reconciliation baseline", self.reconciliation_baseline_fingerprint),
+            ("reconciliation evidence", self.reconciliation_evidence_id),
+            ("strategy equity baseline", self.strategy_equity_baseline_fingerprint),
+            ("settlement", self.settlement_proof_fingerprint),
+            ("strategy equity checkpoint", self.strategy_equity_checkpoint_fingerprint),
+        ):
+            _sha256(name, value)
+        if self.source_fill_event_ids != tuple(sorted(set(self.source_fill_event_ids))):
+            raise ValueError("continuation fill-event lineage must be sorted and unique")
+        for event_id in self.source_fill_event_ids:
+            _bounded_text("source fill-event ID", event_id)
+        if self.positions != tuple(sorted(self.positions, key=lambda item: item.symbol)) or len(
+            {item.symbol for item in self.positions}
+        ) != len(self.positions):
+            raise ValueError("continuation positions must be sorted and unique")
+        for amount_name, amount in (
+            ("cash", self.cash),
+            ("equity", self.equity),
+            ("buying power", self.buying_power),
+            ("allocated capital", self.allocated_capital),
+            ("gross buy notional", self.gross_buy_notional),
+            ("gross sell notional", self.gross_sell_notional),
+            ("fill cost reserve", self.fill_cost_reserve),
+            ("strategy equity", self.strategy_equity),
+            ("peak equity", self.peak_equity),
+            ("strategy drawdown", self.strategy_drawdown),
+        ):
+            if not amount.is_finite() or amount < 0:
+                raise ValueError(f"continuation {amount_name} must be finite and nonnegative")
+        if (
+            not self.strategy_cash.is_finite()
+            or self.allocated_capital <= 0
+            or self.strategy_equity <= 0
+            or self.peak_equity < self.strategy_equity
+            or self.strategy_drawdown
+            != (self.peak_equity - self.strategy_equity) / self.peak_equity
+            or self.emergency_generation < 1
+        ):
+            raise ValueError("continuation strategy equity lineage is inconsistent")
+        _utc("continuation completion time", self.completed_at)
+
+    @property
+    def handoff_fingerprint(self) -> str:
+        return fingerprint(self)
+
+
+@dataclass(frozen=True)
 class ReconciliationEvidence:
     evidence_id: str
     baseline_id: str
@@ -512,6 +679,22 @@ class ReconciliationStore(RiskStore):
                     baseline_json TEXT NOT NULL,
                     journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
                 );
+                CREATE TABLE IF NOT EXISTS paper_continuation_declarations (
+                    authorization_id TEXT PRIMARY KEY
+                        REFERENCES paper_authorizations(authorization_id),
+                    previous_authorization_id TEXT NOT NULL
+                        REFERENCES paper_authorizations(authorization_id),
+                    declaration_fingerprint TEXT NOT NULL UNIQUE,
+                    declaration_json TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
+                CREATE TABLE IF NOT EXISTS paper_continuation_handoffs (
+                    authorization_id TEXT PRIMARY KEY
+                        REFERENCES paper_continuation_declarations(authorization_id),
+                    handoff_fingerprint TEXT NOT NULL UNIQUE,
+                    handoff_json TEXT NOT NULL,
+                    journal_sequence INTEGER NOT NULL UNIQUE REFERENCES journal(sequence)
+                );
                 CREATE TABLE IF NOT EXISTS reconciliation_evidence (
                     evidence_id TEXT PRIMARY KEY,
                     evidence_json TEXT NOT NULL,
@@ -547,6 +730,22 @@ class ReconciliationStore(RiskStore):
                 CREATE TRIGGER IF NOT EXISTS strategy_equity_baselines_no_delete
                 BEFORE DELETE ON strategy_equity_baselines BEGIN
                     SELECT RAISE(ABORT, 'strategy equity baselines are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS paper_continuation_declarations_no_update
+                BEFORE UPDATE ON paper_continuation_declarations BEGIN
+                    SELECT RAISE(ABORT, 'paper continuation declarations are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS paper_continuation_declarations_no_delete
+                BEFORE DELETE ON paper_continuation_declarations BEGIN
+                    SELECT RAISE(ABORT, 'paper continuation declarations are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS paper_continuation_handoffs_no_update
+                BEFORE UPDATE ON paper_continuation_handoffs BEGIN
+                    SELECT RAISE(ABORT, 'paper continuation handoffs are immutable');
+                END;
+                CREATE TRIGGER IF NOT EXISTS paper_continuation_handoffs_no_delete
+                BEFORE DELETE ON paper_continuation_handoffs BEGIN
+                    SELECT RAISE(ABORT, 'paper continuation handoffs are immutable');
                 END;
                 CREATE TRIGGER IF NOT EXISTS reconciliation_evidence_no_update
                 BEFORE UPDATE ON reconciliation_evidence BEGIN
@@ -740,6 +939,174 @@ class ReconciliationStore(RiskStore):
             ),
         )
 
+    def authorize_continuation(
+        self,
+        *,
+        authorization_id: str,
+        previous_authorization_id: str,
+        limits: RiskLimits,
+        authorized_by: str,
+        reason: str,
+        authorized_at: datetime,
+        expires_at: datetime,
+    ) -> tuple[PaperAuthorization, PaperContinuationDeclaration]:
+        """Declare a continuation authorization without granting usable risk context."""
+        with self._connect() as connection:
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                self._verify_all(connection)
+                authorizations = self._verify_authorizations(connection)
+                declarations = self._verify_continuation_declarations(connection, authorizations)
+                try:
+                    previous = authorizations[previous_authorization_id]
+                except KeyError as error:
+                    raise HoldoutAccessError("previous paper authorization is missing") from error
+                authorization = replace(
+                    previous,
+                    authorization_id=authorization_id,
+                    authorized_by=authorized_by,
+                    authorization_reason=reason,
+                    authorized_at=authorized_at,
+                    expires_at=expires_at,
+                )
+                declaration = PaperContinuationDeclaration(
+                    authorization_id=authorization.authorization_id,
+                    authorization_fingerprint=authorization.authorization_fingerprint,
+                    previous_authorization_id=previous.authorization_id,
+                    previous_authorization_fingerprint=previous.authorization_fingerprint,
+                    candidate_id=authorization.candidate_id,
+                    strategy_id=authorization.strategy_id,
+                    strategy_version=authorization.strategy_version,
+                    account_id=authorization.account_id,
+                    risk_configuration_fingerprint=authorization.risk_configuration_fingerprint,
+                    declared_at=authorization.authorized_at,
+                )
+                existing = declarations.get(authorization_id)
+                if existing is not None:
+                    if (
+                        existing != declaration
+                        or authorizations.get(authorization_id) != authorization
+                    ):
+                        raise HoldoutAccessError(
+                            "continuation authorization ID is bound to different content"
+                        )
+                    connection.commit()
+                    return authorization, existing
+                if authorization_id in authorizations:
+                    raise HoldoutAccessError(
+                        "existing paper authorization cannot become a continuation"
+                    )
+                if any(
+                    item.previous_authorization_id == previous_authorization_id
+                    for item in declarations.values()
+                ):
+                    raise HoldoutAccessError(
+                        "previous paper authorization already has a continuation successor"
+                    )
+                if previous_authorization_id in declarations:
+                    completed = connection.execute(
+                        "SELECT 1 FROM paper_continuation_handoffs WHERE authorization_id = ?",
+                        (previous_authorization_id,),
+                    ).fetchone()
+                    if completed is None:
+                        raise HoldoutAccessError(
+                            "previous continuation authorization has no completed handoff"
+                        )
+                emergency = self._verify_emergency(connection)
+                required_tables = {
+                    "orders",
+                    "position_settlement_evidence",
+                    "strategy_equity_checkpoints",
+                }
+                present_tables = {
+                    str(row[0])
+                    for row in connection.execute(
+                        "SELECT name FROM sqlite_master WHERE type = 'table'"
+                    ).fetchall()
+                }
+                source_checkpoint = (
+                    connection.execute(
+                        "SELECT checkpoint_json FROM strategy_equity_checkpoints "
+                        "WHERE json_extract(checkpoint_json, '$.authorization_id') = ? "
+                        "ORDER BY journal_sequence DESC LIMIT 1",
+                        (previous_authorization_id,),
+                    ).fetchone()
+                    if required_tables.issubset(present_tables)
+                    else None
+                )
+                nonterminal_order = (
+                    connection.execute(
+                        "SELECT 1 FROM orders WHERE state NOT IN "
+                        "('filled', 'canceled', 'rejected') "
+                        "LIMIT 1"
+                    ).fetchone()
+                    if "orders" in present_tables
+                    else None
+                )
+                if source_checkpoint is None:
+                    raise HoldoutAccessError(
+                        "continuation requires established strategy equity lineage"
+                    )
+                try:
+                    checkpoint_value = json.loads(str(source_checkpoint[0]))
+                    checkpoint_marked_at = _parse_utc(checkpoint_value["marked_at"])
+                except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+                    raise JournalIntegrityError(
+                        "source strategy equity checkpoint is invalid"
+                    ) from error
+                evidence_row = connection.execute(
+                    "SELECT evidence_json FROM paper_authorizations WHERE authorization_id = ?",
+                    (previous_authorization_id,),
+                ).fetchone()
+                if evidence_row is None:
+                    raise JournalIntegrityError("previous authorization evidence is missing")
+                try:
+                    evidence_report = json.loads(str(evidence_row[0]))
+                except json.JSONDecodeError as error:
+                    raise JournalIntegrityError(
+                        "previous authorization evidence is invalid"
+                    ) from error
+                self._validate_paper_authorization(authorization, evidence_report, limits)
+                if (
+                    emergency.disabled
+                    or nonterminal_order is not None
+                    or authorization.authorized_at <= previous.authorized_at
+                    or authorization.authorized_at < previous.expires_at
+                    or authorization.authorized_at < checkpoint_marked_at
+                    or authorization.expires_at > authorization.authorized_at + timedelta(hours=24)
+                ):
+                    raise HoldoutAccessError(
+                        "continuation requires clear settled lineage and a maximum "
+                        "24-hour authorization"
+                    )
+                self._record_paper_authorization(connection, authorization, evidence_report)
+                sequence = self._append_event(
+                    connection,
+                    occurred_at=declaration.declared_at,
+                    event_type="paper-continuation-declared",
+                    entity_type="paper-continuation-declaration",
+                    entity_id=declaration.authorization_id,
+                    payload=canonicalize(declaration),
+                )
+                connection.execute(
+                    "INSERT INTO paper_continuation_declarations VALUES (?, ?, ?, ?, ?)",
+                    (
+                        declaration.authorization_id,
+                        declaration.previous_authorization_id,
+                        declaration.declaration_fingerprint,
+                        canonical_json(declaration),
+                        sequence,
+                    ),
+                )
+                connection.commit()
+            except sqlite3.IntegrityError as error:
+                connection.rollback()
+                raise HoldoutAccessError("paper continuation declaration already exists") from error
+            except Exception:
+                connection.rollback()
+                raise
+        return authorization, declaration
+
     def create_flat_baseline(
         self,
         *,
@@ -757,6 +1124,9 @@ class ReconciliationStore(RiskStore):
                 connection.execute("BEGIN IMMEDIATE")
                 snapshots, attestations, baselines, _ = self._verify_all(connection)
                 authorizations = self._verify_authorizations(connection)
+                continuation_declarations = self._verify_continuation_declarations(
+                    connection, authorizations
+                )
                 try:
                     authorization = authorizations[authorization_id]
                     expected = snapshots[expected_snapshot_id]
@@ -781,6 +1151,7 @@ class ReconciliationStore(RiskStore):
                     not comparison.clean
                     or expected.positions
                     or expected.open_client_order_ids
+                    or authorization_id in continuation_declarations
                     or observed_snapshot_id not in attestations
                     or authorization.account_id != expected.account_id
                     or authorization.risk_configuration_fingerprint
@@ -1303,6 +1674,327 @@ class ReconciliationStore(RiskStore):
         self._verify_decisions(connection)
         return self._verify_reconciliation(connection)
 
+    def _verify_continuation_declarations(
+        self,
+        connection: sqlite3.Connection,
+        authorizations: dict[str, PaperAuthorization] | None = None,
+    ) -> dict[str, PaperContinuationDeclaration]:
+        authorizations = authorizations or self._verify_authorizations(connection)
+        if not _continuation_tables_present(connection):
+            return {}
+        rows = connection.execute(
+            "SELECT authorization_id, previous_authorization_id, declaration_fingerprint, "
+            "declaration_json, journal_sequence FROM paper_continuation_declarations"
+        ).fetchall()
+        _require_event_count(connection, "paper-continuation-declared", len(rows))
+        result: dict[str, PaperContinuationDeclaration] = {}
+        predecessor_ids: set[str] = set()
+        continuation_ids = {str(row[0]) for row in rows}
+        completed_ids = {
+            str(row[0])
+            for row in connection.execute(
+                "SELECT authorization_id FROM paper_continuation_handoffs"
+            ).fetchall()
+        }
+        for row in rows:
+            try:
+                declaration = _decode_continuation_declaration(json.loads(row[3]))
+                authorization = authorizations[declaration.authorization_id]
+                previous = authorizations[declaration.previous_authorization_id]
+            except (KeyError, ValueError, json.JSONDecodeError) as error:
+                raise JournalIntegrityError(
+                    "stored paper continuation declaration is invalid"
+                ) from error
+            same_lineage = all(
+                getattr(authorization, name) == getattr(previous, name)
+                for name in (
+                    "candidate_id",
+                    "strategy_id",
+                    "strategy_version",
+                    "parameters_fingerprint",
+                    "code_commit",
+                    "dataset_id",
+                    "dataset_fingerprint",
+                    "universe_id",
+                    "universe_fingerprint",
+                    "qualification_evidence_fingerprint",
+                    "account_id",
+                    "risk_configuration_fingerprint",
+                )
+            )
+            if (
+                row[:4]
+                != (
+                    declaration.authorization_id,
+                    declaration.previous_authorization_id,
+                    declaration.declaration_fingerprint,
+                    canonical_json(declaration),
+                )
+                or declaration.authorization_fingerprint != authorization.authorization_fingerprint
+                or declaration.previous_authorization_fingerprint
+                != previous.authorization_fingerprint
+                or declaration.candidate_id != authorization.candidate_id
+                or declaration.strategy_id != authorization.strategy_id
+                or declaration.strategy_version != authorization.strategy_version
+                or declaration.account_id != authorization.account_id
+                or declaration.risk_configuration_fingerprint
+                != authorization.risk_configuration_fingerprint
+                or declaration.declared_at != authorization.authorized_at
+                or authorization.authorized_at <= previous.authorized_at
+                or authorization.authorized_at < previous.expires_at
+                or authorization.expires_at > authorization.authorized_at + timedelta(hours=24)
+                or declaration.previous_authorization_id in predecessor_ids
+                or (
+                    declaration.previous_authorization_id in continuation_ids
+                    and declaration.previous_authorization_id not in completed_ids
+                )
+                or not same_lineage
+                or not _event_matches(
+                    connection,
+                    row[4],
+                    _utc_text(declaration.declared_at),
+                    "paper-continuation-declared",
+                    "paper-continuation-declaration",
+                    declaration.authorization_id,
+                    canonical_json(declaration),
+                )
+            ):
+                raise JournalIntegrityError(
+                    "paper continuation declaration differs from its authority"
+                )
+            predecessor_ids.add(declaration.previous_authorization_id)
+            result[declaration.authorization_id] = declaration
+        return result
+
+    def _verify_continuation_handoffs(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        authorizations: dict[str, PaperAuthorization],
+        declarations: dict[str, PaperContinuationDeclaration],
+        snapshots: dict[str, PortfolioSnapshot],
+        attestations: dict[str, _PaperAttestation],
+        reconciliation_baselines: dict[str, ReconciliationBaseline],
+        reconciliations: dict[str, ReconciliationEvidence],
+        strategy_equity_baselines: dict[str, StrategyEquityBaseline],
+    ) -> dict[str, PaperContinuationHandoff]:
+        if not _continuation_tables_present(connection):
+            return {}
+        rows = connection.execute(
+            "SELECT authorization_id, handoff_fingerprint, handoff_json, journal_sequence "
+            "FROM paper_continuation_handoffs"
+        ).fetchall()
+        _require_event_count(connection, "paper-continuation-completed", len(rows))
+        result: dict[str, PaperContinuationHandoff] = {}
+        for row in rows:
+            try:
+                handoff = _decode_continuation_handoff(json.loads(row[2]))
+                declaration = declarations[handoff.authorization_id]
+                authorization = authorizations[handoff.authorization_id]
+                previous = authorizations[handoff.previous_authorization_id]
+                snapshot = snapshots[handoff.current_snapshot_id]
+                attestation = attestations[handoff.current_snapshot_id]
+                baseline = reconciliation_baselines[handoff.reconciliation_baseline_id]
+                reconciliation = reconciliations[handoff.reconciliation_evidence_id]
+                strategy_baseline = strategy_equity_baselines[handoff.strategy_equity_baseline_id]
+                source_baseline = reconciliation_baselines[
+                    handoff.source_reconciliation_baseline_id
+                ]
+                risk_input_row = connection.execute(
+                    "SELECT portfolio_snapshot_id, authorization_id, evidence_json "
+                    "FROM risk_input_evidence WHERE evidence_id = ?",
+                    (handoff.current_risk_input_evidence_id,),
+                ).fetchone()
+                source_settlement_row = connection.execute(
+                    "SELECT evidence_json FROM position_settlement_evidence WHERE proof_id = ?",
+                    (handoff.source_settlement_proof_id,),
+                ).fetchone()
+                settlement_row = connection.execute(
+                    "SELECT evidence_json FROM position_settlement_evidence WHERE proof_id = ?",
+                    (handoff.settlement_proof_id,),
+                ).fetchone()
+                source_checkpoint_row = connection.execute(
+                    "SELECT checkpoint_fingerprint, checkpoint_json, journal_sequence "
+                    "FROM strategy_equity_checkpoints WHERE checkpoint_id = ?",
+                    (handoff.source_strategy_equity_checkpoint_id,),
+                ).fetchone()
+                checkpoint_row = connection.execute(
+                    "SELECT checkpoint_fingerprint, checkpoint_json FROM "
+                    "strategy_equity_checkpoints WHERE checkpoint_id = ?",
+                    (handoff.strategy_equity_checkpoint_id,),
+                ).fetchone()
+                if any(
+                    item is None
+                    for item in (
+                        risk_input_row,
+                        source_settlement_row,
+                        settlement_row,
+                        source_checkpoint_row,
+                        checkpoint_row,
+                    )
+                ):
+                    raise ValueError("continuation evidence is missing")
+                assert risk_input_row is not None
+                assert source_settlement_row is not None
+                assert settlement_row is not None
+                assert source_checkpoint_row is not None
+                assert checkpoint_row is not None
+                risk_input = json.loads(str(risk_input_row[2]))
+                source_settlement = json.loads(str(source_settlement_row[0]))
+                settlement = json.loads(str(settlement_row[0]))
+                source_checkpoint = json.loads(str(source_checkpoint_row[1]))
+                checkpoint = json.loads(str(checkpoint_row[1]))
+                checkpoint_amounts = {
+                    name: Decimal(str(checkpoint[name]))
+                    for name in (
+                        "allocated_capital",
+                        "gross_buy_notional",
+                        "gross_sell_notional",
+                        "fill_cost_reserve",
+                        "strategy_cash",
+                        "strategy_equity",
+                        "peak_equity",
+                        "strategy_drawdown",
+                    )
+                }
+            except (
+                ArithmeticError,
+                KeyError,
+                TypeError,
+                ValueError,
+                sqlite3.OperationalError,
+                json.JSONDecodeError,
+            ) as error:
+                raise JournalIntegrityError(
+                    "stored paper continuation handoff is invalid"
+                ) from error
+            latest_source_checkpoint = connection.execute(
+                "SELECT checkpoint_id FROM strategy_equity_checkpoints "
+                "WHERE json_extract(checkpoint_json, '$.authorization_id') = ? "
+                "AND journal_sequence < ? ORDER BY journal_sequence DESC LIMIT 1",
+                (handoff.previous_authorization_id, row[3]),
+            ).fetchone()
+            emergency_event = connection.execute(
+                "SELECT payload_json FROM journal WHERE event_type IN "
+                "('emergency-initialized', 'emergency-cleared', 'emergency-disabled') "
+                "AND sequence < ? ORDER BY sequence DESC LIMIT 1",
+                (row[3],),
+            ).fetchone()
+            emergency_payload = (
+                {} if emergency_event is None else json.loads(str(emergency_event[0]))
+            )
+            expected = snapshots[baseline.expected_snapshot_id]
+            if (
+                row[:3]
+                != (
+                    handoff.authorization_id,
+                    handoff.handoff_fingerprint,
+                    canonical_json(handoff),
+                )
+                or declaration.declaration_fingerprint != handoff.declaration_fingerprint
+                or authorization.authorization_fingerprint != declaration.authorization_fingerprint
+                or previous.authorization_fingerprint != handoff.source_authorization_fingerprint
+                or handoff.candidate_id != authorization.candidate_id
+                or handoff.strategy_id != authorization.strategy_id
+                or handoff.strategy_version != authorization.strategy_version
+                or handoff.account_id != authorization.account_id
+                or handoff.risk_configuration_fingerprint
+                != authorization.risk_configuration_fingerprint
+                or handoff.completed_at < authorization.authorized_at
+                or handoff.completed_at >= authorization.expires_at
+                or snapshot.snapshot_fingerprint != handoff.current_snapshot_fingerprint
+                or attestation.attestation_fingerprint != handoff.current_attestation_fingerprint
+                or snapshot.account_id != handoff.account_id
+                or not snapshot.account_ready
+                or snapshot.open_orders
+                or snapshot.positions != handoff.positions
+                or any(
+                    observed > handoff.completed_at
+                    or (handoff.completed_at - observed).total_seconds()
+                    > baseline.maximum_age_seconds
+                    for observed in (
+                        snapshot.account_observed_at,
+                        snapshot.positions_observed_at,
+                        snapshot.orders_observed_at,
+                    )
+                )
+                or risk_input_row[:2] != (handoff.current_snapshot_id, handoff.authorization_id)
+                or risk_input.get("risk_configuration_fingerprint")
+                != handoff.risk_configuration_fingerprint
+                or risk_input.get("completed_at") is None
+                or _parse_utc(str(risk_input["completed_at"])) > handoff.completed_at
+                or baseline.authorization_id != handoff.authorization_id
+                or fingerprint(baseline) != handoff.reconciliation_baseline_fingerprint
+                or expected.source is not SnapshotSource.LOCAL_EXPECTED
+                or expected.account_id != snapshot.account_id
+                or expected.cash != snapshot.cash
+                or expected.equity != snapshot.equity
+                or expected.buying_power != snapshot.buying_power
+                or expected.positions != snapshot.positions
+                or expected.open_orders
+                or reconciliation.baseline_id != baseline.baseline_id
+                or reconciliation.observed_snapshot_id != snapshot.snapshot_id
+                or not reconciliation.result.clean
+                or reconciliation.unresolved_mutations != 0
+                or strategy_baseline.authorization_id != handoff.authorization_id
+                or strategy_baseline.baseline_fingerprint
+                != handoff.strategy_equity_baseline_fingerprint
+                or source_checkpoint_row[0] != handoff.source_strategy_equity_checkpoint_fingerprint
+                or source_checkpoint.get("authorization_id") != handoff.previous_authorization_id
+                or source_checkpoint.get("settlement_proof_id")
+                != handoff.source_settlement_proof_id
+                or tuple(source_checkpoint.get("fill_event_ids", ()))
+                != handoff.source_fill_event_ids
+                or fingerprint(source_settlement) != handoff.source_settlement_proof_fingerprint
+                or source_settlement.get("authorization_id") != handoff.previous_authorization_id
+                or source_settlement.get("baseline_id") != handoff.source_reconciliation_baseline_id
+                or source_baseline.authorization_id != handoff.previous_authorization_id
+                or source_baseline.account_id != handoff.account_id
+                or source_baseline.risk_configuration_fingerprint
+                != handoff.risk_configuration_fingerprint
+                or latest_source_checkpoint != (handoff.source_strategy_equity_checkpoint_id,)
+                or settlement.get("settlement_mode") != "authorization-continuation-v1"
+                or settlement.get("authorization_id") != handoff.authorization_id
+                or settlement.get("observed_snapshot_id") != handoff.current_snapshot_id
+                or settlement.get("reconciliation_evidence_id")
+                != handoff.reconciliation_evidence_id
+                or fingerprint(settlement) != handoff.settlement_proof_fingerprint
+                or checkpoint_row[0] != handoff.strategy_equity_checkpoint_fingerprint
+                or checkpoint.get("checkpoint_mode") != "authorization-continuation-v1"
+                or checkpoint.get("authorization_id") != handoff.authorization_id
+                or checkpoint.get("prior_checkpoint_fingerprint")
+                != handoff.source_strategy_equity_checkpoint_fingerprint
+                or checkpoint.get("settlement_proof_id") != handoff.settlement_proof_id
+                or checkpoint.get("risk_input_evidence_id")
+                != handoff.current_risk_input_evidence_id
+                or tuple(checkpoint.get("fill_event_ids", ())) != handoff.source_fill_event_ids
+                or checkpoint_amounts["allocated_capital"] != handoff.allocated_capital
+                or checkpoint_amounts["gross_buy_notional"] != handoff.gross_buy_notional
+                or checkpoint_amounts["gross_sell_notional"] != handoff.gross_sell_notional
+                or checkpoint_amounts["fill_cost_reserve"] != handoff.fill_cost_reserve
+                or checkpoint_amounts["strategy_cash"] != handoff.strategy_cash
+                or checkpoint_amounts["strategy_equity"] != handoff.strategy_equity
+                or checkpoint_amounts["peak_equity"] != handoff.peak_equity
+                or checkpoint_amounts["strategy_drawdown"] != handoff.strategy_drawdown
+                or snapshot.cash != handoff.cash
+                or snapshot.equity != handoff.equity
+                or snapshot.buying_power != handoff.buying_power
+                or emergency_payload.get("disabled") is not False
+                or emergency_payload.get("generation") != handoff.emergency_generation
+                or not _event_matches(
+                    connection,
+                    row[3],
+                    _utc_text(handoff.completed_at),
+                    "paper-continuation-completed",
+                    "paper-continuation-handoff",
+                    handoff.authorization_id,
+                    canonical_json(handoff),
+                )
+            ):
+                raise JournalIntegrityError("paper continuation handoff differs from its evidence")
+            result[handoff.authorization_id] = handoff
+        return result
+
     def _verify_reconciliation(
         self, connection: sqlite3.Connection
     ) -> tuple[
@@ -1382,6 +2074,9 @@ class ReconciliationStore(RiskStore):
             attestations[row[0]] = attestation
 
         authorizations = self._verify_authorizations(connection)
+        continuation_declarations = ReconciliationStore._verify_continuation_declarations(
+            self, connection, authorizations
+        )
         baselines: dict[str, ReconciliationBaseline] = {}
         rows = connection.execute(
             "SELECT baseline_id, baseline_json, journal_sequence FROM reconciliation_baselines"
@@ -1416,7 +2111,10 @@ class ReconciliationStore(RiskStore):
                 or comparison.result_fingerprint != baseline.comparison_fingerprint
                 or baseline.expected_fingerprint != expected.snapshot_fingerprint
                 or baseline.observed_fingerprint != observed.snapshot_fingerprint
-                or expected.positions
+                or (
+                    expected.positions
+                    and baseline.authorization_id not in continuation_declarations
+                )
                 or expected.open_client_order_ids
                 or baseline.observed_snapshot_id not in attestations
                 or authorization.account_id != baseline.account_id
@@ -1496,8 +2194,19 @@ class ReconciliationStore(RiskStore):
             ):
                 raise JournalIntegrityError("reconciliation evidence does not match its inputs")
             evidence_by_id[evidence.evidence_id] = evidence
-        ReconciliationStore._verify_strategy_equity_baselines(
+        strategy_equity_baselines = ReconciliationStore._verify_strategy_equity_baselines(
             self, connection, baselines, authorizations
+        )
+        ReconciliationStore._verify_continuation_handoffs(
+            self,
+            connection,
+            authorizations=authorizations,
+            declarations=continuation_declarations,
+            snapshots=snapshots,
+            attestations=attestations,
+            reconciliation_baselines=baselines,
+            reconciliations=evidence_by_id,
+            strategy_equity_baselines=strategy_equity_baselines,
         )
         return snapshots, attestations, baselines, evidence_by_id
 
@@ -1639,6 +2348,50 @@ def _decode_strategy_equity_baseline(value: Any) -> StrategyEquityBaseline:
         raise ValueError("strategy equity baseline fields differ") from error
 
 
+def _decode_continuation_declaration(value: Any) -> PaperContinuationDeclaration:
+    if not isinstance(value, dict):
+        raise ValueError("paper continuation declaration must be an object")
+    try:
+        return PaperContinuationDeclaration(
+            **{
+                **value,
+                "declared_at": _parse_utc(value["declared_at"]),
+            }
+        )
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("paper continuation declaration fields differ") from error
+
+
+def _decode_continuation_handoff(value: Any) -> PaperContinuationHandoff:
+    if not isinstance(value, dict):
+        raise ValueError("paper continuation handoff must be an object")
+    decimal_fields = {
+        "cash",
+        "equity",
+        "buying_power",
+        "allocated_capital",
+        "gross_buy_notional",
+        "gross_sell_notional",
+        "fill_cost_reserve",
+        "strategy_cash",
+        "strategy_equity",
+        "peak_equity",
+        "strategy_drawdown",
+    }
+    try:
+        return PaperContinuationHandoff(
+            **{
+                **value,
+                **{name: Decimal(value[name]) for name in decimal_fields},
+                "positions": tuple(PositionSnapshot(**item) for item in value["positions"]),
+                "source_fill_event_ids": tuple(value["source_fill_event_ids"]),
+                "completed_at": _parse_utc(value["completed_at"]),
+            }
+        )
+    except (ArithmeticError, KeyError, TypeError, ValueError) as error:
+        raise ValueError("paper continuation handoff fields differ") from error
+
+
 def _decode_evidence(value: Any) -> ReconciliationEvidence:
     if not isinstance(value, dict) or not isinstance(value.get("result"), dict):
         raise ValueError("reconciliation evidence must be an object")
@@ -1681,6 +2434,28 @@ def _require_event_count(connection: sqlite3.Connection, event_type: str, count:
     ).fetchone()[0]
     if stored != count:
         raise JournalIntegrityError(f"{event_type} journal count differs")
+
+
+def _continuation_tables_present(connection: sqlite3.Connection) -> bool:
+    present = {
+        str(row[0])
+        for row in connection.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' "
+            "AND name IN ('paper_continuation_declarations', "
+            "'paper_continuation_handoffs')"
+        ).fetchall()
+    }
+    if present == _CONTINUATION_TABLES:
+        return True
+    event_count = int(
+        connection.execute(
+            "SELECT COUNT(*) FROM journal WHERE event_type IN "
+            "('paper-continuation-declared', 'paper-continuation-completed')"
+        ).fetchone()[0]
+    )
+    if present or event_count:
+        raise JournalIntegrityError("paper continuation schema and journal differ")
+    return False
 
 
 def _bounded_text(name: str, value: str) -> None:

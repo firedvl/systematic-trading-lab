@@ -59,6 +59,7 @@ from .intraday_source_provenance import (
     IntradayExecutionSourceProvenanceError,
     assess_intraday_execution_source,
 )
+from .paper_continuation import PaperContinuationStore
 from .paper_equivalence import PaperEquivalenceStore, load_action_plan
 from .paper_observation import (
     PaperObservation,
@@ -66,6 +67,7 @@ from .paper_observation import (
     PaperObservationStore,
     record_production_observation,
 )
+from .paper_planning import write_action_plans
 from .paper_startup import assess_paper_startup, initialize_paper_storage
 from .paper_supervision import (
     observation_supervisor_lock,
@@ -84,6 +86,7 @@ from .qualification_evidence import (
 from .reconciliation import ReconciliationStore
 from .reporting import benchmark_suite, build_report, report_json, strategy_result, write_report
 from .risk import load_risk_limits
+from .risk_inputs import AlpacaRiskInputReader, RiskInputEvidenceStore
 from .runtime_build import (
     RuntimeBuildAttestationIndeterminateError,
     RuntimeBuildVerificationError,
@@ -186,6 +189,36 @@ def parser() -> argparse.ArgumentParser:
     equivalence.add_argument("--replay-plan", type=Path, required=True)
     equivalence.add_argument("--shadow-plan", type=Path, required=True)
     equivalence.add_argument("--paper-intent", action="append", required=True)
+    continuation = paper.add_parser(
+        "authorize-continuation",
+        help="declare a short-lived continuation from settled strategy lineage",
+    )
+    continuation.add_argument("authorization_id")
+    continuation.add_argument("--previous-authorization", required=True)
+    continuation.add_argument(
+        "--risk-config", type=Path, default=Path("config/risk/alpaca-paper-v1.json")
+    )
+    continuation.add_argument("--authorized-by", required=True)
+    continuation.add_argument("--reason", required=True)
+    continuation.add_argument("--authorized-at", type=_parse_utc, required=True)
+    continuation.add_argument("--expires-at", type=_parse_utc, required=True)
+    complete_continuation = paper.add_parser(
+        "complete-continuation",
+        help="collect fresh GET-only evidence and complete an append-only continuation",
+    )
+    complete_continuation.add_argument("authorization_id")
+    complete_continuation.add_argument(
+        "--risk-config", type=Path, default=Path("config/risk/alpaca-paper-v1.json")
+    )
+    complete_continuation.add_argument("--operator", required=True)
+    complete_continuation.add_argument("--reason", required=True)
+    plan = paper.add_parser(
+        "plan", help="write deterministic broker-free replay and shadow action plans"
+    )
+    plan.add_argument("--authorization", required=True)
+    plan.add_argument("--risk-config", type=Path, default=Path("config/risk/alpaca-paper-v1.json"))
+    plan.add_argument("--replay-plan", type=Path, required=True)
+    plan.add_argument("--shadow-plan", type=Path, required=True)
     data = commands.add_parser("data", help="manage local market data").add_subparsers(
         dest="data_command", required=True
     )
@@ -427,6 +460,138 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                     "journal_event_count": result.journal_event_count,
                     "authority_evidence_unchanged": result.authority_evidence_unchanged,
                     "broker_writes_allowed": False,
+                }
+            )
+            return 0
+        if arguments.paper_command == "authorize-continuation":
+            if settings.mode is not TradingMode.PAPER:
+                raise ConfigurationError("paper continuation requires paper mode")
+            limits = load_risk_limits(arguments.risk_config)
+            continuation_authorization, declaration = ReconciliationStore(
+                layout.execution
+            ).authorize_continuation(
+                authorization_id=arguments.authorization_id,
+                previous_authorization_id=arguments.previous_authorization,
+                limits=limits,
+                authorized_by=arguments.authorized_by,
+                reason=arguments.reason,
+                authorized_at=arguments.authorized_at,
+                expires_at=arguments.expires_at,
+            )
+            _print(
+                {
+                    "authorization_id": continuation_authorization.authorization_id,
+                    "authorization_fingerprint": (
+                        continuation_authorization.authorization_fingerprint
+                    ),
+                    "previous_authorization_id": declaration.previous_authorization_id,
+                    "declaration_fingerprint": declaration.declaration_fingerprint,
+                    "authorized_at": continuation_authorization.authorized_at.isoformat().replace(
+                        "+00:00", "Z"
+                    ),
+                    "expires_at": continuation_authorization.expires_at.isoformat().replace(
+                        "+00:00", "Z"
+                    ),
+                    "continuation_complete": False,
+                    "broker_writes_allowed": False,
+                }
+            )
+            return 0
+        if arguments.paper_command == "complete-continuation":
+            limits = load_risk_limits(arguments.risk_config)
+            continuation_store = PaperContinuationStore(layout.execution)
+            try:
+                existing = continuation_store.get_handoff(arguments.authorization_id)
+                handoff = continuation_store.complete_continuation(
+                    authorization_id=arguments.authorization_id,
+                    portfolio_snapshot_id=existing.current_snapshot_id,
+                    risk_input_evidence_id=existing.current_risk_input_evidence_id,
+                    limits=limits,
+                    operator=arguments.operator,
+                    reason=arguments.reason,
+                    completed_at=existing.completed_at,
+                )
+            except KeyError:
+                snapshot = _paper_observation_reader(
+                    settings, limits.account_id, limits.allowed_symbols
+                ).record_portfolio(ReconciliationStore(layout.execution))
+                risk_input = AlpacaRiskInputReader(
+                    os.environ.get("APCA_API_KEY_ID", ""),
+                    os.environ.get("APCA_API_SECRET_KEY", ""),
+                    limits=limits,
+                ).record(
+                    RiskInputEvidenceStore(layout.execution),
+                    portfolio_snapshot_id=snapshot.snapshot_id,
+                    authorization_id=arguments.authorization_id,
+                )
+                handoff = continuation_store.complete_continuation(
+                    authorization_id=arguments.authorization_id,
+                    portfolio_snapshot_id=snapshot.snapshot_id,
+                    risk_input_evidence_id=risk_input.evidence_id,
+                    limits=limits,
+                    operator=arguments.operator,
+                    reason=arguments.reason,
+                    completed_at=datetime.now(UTC),
+                )
+            _print(
+                {
+                    "authorization_id": handoff.authorization_id,
+                    "previous_authorization_id": handoff.previous_authorization_id,
+                    "handoff_fingerprint": handoff.handoff_fingerprint,
+                    "reconciliation_evidence_id": handoff.reconciliation_evidence_id,
+                    "settlement_proof_id": handoff.settlement_proof_id,
+                    "strategy_equity_checkpoint_id": handoff.strategy_equity_checkpoint_id,
+                    "positions": [
+                        {"symbol": item.symbol, "quantity": item.quantity}
+                        for item in handoff.positions
+                    ],
+                    "strategy_equity": str(handoff.strategy_equity),
+                    "peak_equity": str(handoff.peak_equity),
+                    "strategy_drawdown": str(handoff.strategy_drawdown),
+                    "completed_at": handoff.completed_at.isoformat().replace("+00:00", "Z"),
+                    "broker_writes_allowed": False,
+                }
+            )
+            return 0
+        if arguments.paper_command == "plan":
+            limits = load_risk_limits(arguments.risk_config)
+            present_plan = PaperContinuationStore(layout.execution).plan_strategic_allocation(
+                authorization_id=arguments.authorization,
+                limits=limits,
+                planned_at=datetime.now(UTC),
+            )
+            replay_path, shadow_path = write_action_plans(
+                present_plan,
+                replay_path=arguments.replay_plan,
+                shadow_path=arguments.shadow_plan,
+            )
+            _print(
+                {
+                    "authorization_id": present_plan.authorization_id,
+                    "candidate_id": present_plan.candidate_id,
+                    "strategy_id": present_plan.strategy_id,
+                    "strategy_version": present_plan.strategy_version,
+                    "root_exchange_session": present_plan.root_exchange_session,
+                    "current_exchange_session": present_plan.current_exchange_session,
+                    "session_count": present_plan.session_count,
+                    "rebalance_every": present_plan.rebalance_every,
+                    "rebalance_due": present_plan.rebalance_due,
+                    "trade_required": present_plan.trade_required,
+                    "source_data_fingerprint": present_plan.source_data_fingerprint,
+                    "source_state_fingerprint": present_plan.source_state_fingerprint,
+                    "market_state_fingerprint": present_plan.market_state_fingerprint,
+                    "configuration_fingerprint": present_plan.configuration_fingerprint,
+                    "plan_fingerprint": present_plan.plan_fingerprint,
+                    "current_positions": [
+                        canonicalize(item) for item in present_plan.current_positions
+                    ],
+                    "targets": [canonicalize(item) for item in present_plan.targets],
+                    "deltas": [canonicalize(item) for item in present_plan.deltas],
+                    "replay_plan": str(replay_path.resolve()),
+                    "replay_plan_fingerprint": present_plan.replay.plan_fingerprint,
+                    "shadow_plan": str(shadow_path.resolve()),
+                    "shadow_plan_fingerprint": present_plan.shadow.plan_fingerprint,
+                    "authority": dict(present_plan.authority),
                 }
             )
             return 0

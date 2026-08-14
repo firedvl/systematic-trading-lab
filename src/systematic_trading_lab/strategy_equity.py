@@ -19,6 +19,8 @@ from .reconciliation import (
     PositionSnapshot,
     ReconciliationStore,
     StrategyEquityBaseline,
+    _continuation_tables_present,
+    _decode_snapshot,
 )
 from .risk import RiskLimits
 from .risk_inputs import RiskInputEvidence, RiskInputEvidenceStore
@@ -27,6 +29,7 @@ _BPS = Decimal(10_000)
 _MARKING_BASIS = "iex-bid-liquidation-v1"
 _FILL_CHECKPOINT_MODE = "fill-replay-v1"
 _FLAT_BASELINE_CHECKPOINT_MODE = "flat-baseline-v1"
+_CONTINUATION_CHECKPOINT_MODE = "authorization-continuation-v1"
 
 
 @dataclass(frozen=True)
@@ -81,7 +84,11 @@ class StrategyEquityCheckpoint:
             _sha256(name, value)
         if self.prior_checkpoint_fingerprint is not None:
             _sha256("prior checkpoint", self.prior_checkpoint_fingerprint)
-        if self.checkpoint_mode not in {_FILL_CHECKPOINT_MODE, _FLAT_BASELINE_CHECKPOINT_MODE}:
+        if self.checkpoint_mode not in {
+            _FILL_CHECKPOINT_MODE,
+            _FLAT_BASELINE_CHECKPOINT_MODE,
+            _CONTINUATION_CHECKPOINT_MODE,
+        }:
             raise ValueError("strategy equity checkpoint mode is unsupported")
         if self.fill_event_ids != tuple(sorted(set(self.fill_event_ids))):
             raise ValueError("fill event IDs must be sorted and unique")
@@ -123,7 +130,7 @@ class StrategyEquityCheckpoint:
             if not self.fill_event_ids or not self.advance_fingerprint:
                 raise ValueError("fill checkpoint lineage is invalid")
             _sha256("advance", self.advance_fingerprint)
-        elif (
+        elif self.checkpoint_mode == _FLAT_BASELINE_CHECKPOINT_MODE and (
             self.fill_event_ids
             or self.advance_fingerprint
             or self.gross_buy_notional != 0
@@ -137,6 +144,11 @@ class StrategyEquityCheckpoint:
             or self.strategy_drawdown != 0
         ):
             raise ValueError("flat baseline checkpoint is not zero state")
+        elif self.checkpoint_mode == _CONTINUATION_CHECKPOINT_MODE:
+            if self.prior_checkpoint_fingerprint is None:
+                raise ValueError("continuation checkpoint lacks prior equity lineage")
+            if self.advance_fingerprint:
+                _sha256("continuation advance", self.advance_fingerprint)
         if (
             self.positions != tuple(sorted(self.positions, key=lambda item: item.symbol))
             or self.marking_basis != _MARKING_BASIS
@@ -452,6 +464,17 @@ class StrategyEquityStore(PositionSettlementStore):
                 marked_at=marked_at,
                 before_sequence=before_sequence,
             )
+        if settlement.settlement_mode == _CONTINUATION_CHECKPOINT_MODE:
+            return self._derive_continuation_checkpoint(
+                connection,
+                baseline=baseline,
+                settlement=settlement,
+                risk_input=risk_input,
+                fill_cost_bps=fill_cost_bps,
+                prior=prior,
+                marked_at=marked_at,
+                before_sequence=before_sequence,
+            )
         advance_row = connection.execute(
             "SELECT advance_json, journal_sequence FROM expected_position_advances "
             "WHERE advance_fingerprint = ? AND baseline_id = ?",
@@ -489,10 +512,15 @@ class StrategyEquityStore(PositionSettlementStore):
                 int(advance_row[1]),
             ),
         ).fetchall()
+        inherited = _continuation_source_checkpoint(
+            connection,
+            authorization_id=baseline.authorization_id,
+            before_sequence=before_sequence,
+        )
         prior_notional: dict[str, Decimal] = {}
-        gross_buy = Decimal(0)
-        gross_sell = Decimal(0)
-        event_ids: list[str] = []
+        gross_buy = Decimal(0) if inherited is None else inherited.gross_buy_notional
+        gross_sell = Decimal(0) if inherited is None else inherited.gross_sell_notional
+        event_ids = [] if inherited is None else list(inherited.fill_event_ids)
         for event_json, delta_json in rows:
             event = _decode_event(json.loads(str(event_json)))
             delta = _decode_delta(json.loads(str(delta_json)))
@@ -512,7 +540,13 @@ class StrategyEquityStore(PositionSettlementStore):
             (quotes[item.symbol] * item.quantity for item in advance.positions), Decimal(0)
         )
         equity = cash + market_value
-        prior_peak = baseline.allocated_capital if prior is None else prior.peak_equity
+        prior_peak = (
+            inherited.peak_equity
+            if prior is None and inherited is not None
+            else baseline.allocated_capital
+            if prior is None
+            else prior.peak_equity
+        )
         peak = max(prior_peak, equity)
         checkpoint_id = fingerprint(
             {
@@ -553,6 +587,102 @@ class StrategyEquityStore(PositionSettlementStore):
             marking_basis=_MARKING_BASIS,
             marked_at=marked_at,
             checkpoint_mode=_FILL_CHECKPOINT_MODE,
+        )
+
+    def _derive_continuation_checkpoint(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        baseline: StrategyEquityBaseline,
+        settlement: PositionSettlementEvidence,
+        risk_input: RiskInputEvidence,
+        fill_cost_bps: Decimal,
+        prior: StrategyEquityCheckpoint | None,
+        marked_at: datetime,
+        before_sequence: int | None,
+    ) -> StrategyEquityCheckpoint:
+        source = _continuation_source_checkpoint(
+            connection,
+            authorization_id=baseline.authorization_id,
+            before_sequence=before_sequence,
+        )
+        snapshot_row = connection.execute(
+            "SELECT snapshot_json FROM portfolio_snapshots WHERE snapshot_id = ?",
+            (settlement.observed_snapshot_id,),
+        ).fetchone()
+        try:
+            snapshot = (
+                None if snapshot_row is None else _decode_snapshot(json.loads(snapshot_row[0]))
+            )
+        except (json.JSONDecodeError, ValueError) as error:
+            raise ValueError("continuation portfolio snapshot is invalid") from error
+        if (
+            source is None
+            or snapshot is None
+            or prior is not None
+            or settlement.reconciliation_evidence_id is None
+            or settlement.advance_fingerprint != source.advance_fingerprint
+            or settlement.observed_snapshot_id != risk_input.portfolio_snapshot_id
+            or snapshot.positions != source.positions
+            or source.account_id != baseline.account_id
+            or source.strategy_id != baseline.strategy_id
+            or source.strategy_version != baseline.strategy_version
+            or source.risk_configuration_fingerprint != baseline.risk_configuration_fingerprint
+            or source.allocated_capital != baseline.allocated_capital
+            or source.fill_cost_bps != fill_cost_bps
+            or source.marked_at >= marked_at
+        ):
+            raise ValueError("continuation strategy equity lineage is invalid")
+        quotes = {item.symbol: item.bid_price for item in risk_input.quotes}
+        if not set(item.symbol for item in snapshot.positions).issubset(quotes):
+            raise ValueError("continuation requires a bid for every position")
+        market_value = sum(
+            (quotes[item.symbol] * item.quantity for item in snapshot.positions), Decimal(0)
+        )
+        equity = source.strategy_cash + market_value
+        if equity <= 0:
+            raise ValueError("continuation strategy equity must remain positive")
+        peak = max(source.peak_equity, equity)
+        checkpoint_id = fingerprint(
+            {
+                "strategy_equity_baseline": baseline.baseline_fingerprint,
+                "prior_checkpoint": source.checkpoint_fingerprint,
+                "settlement": settlement.proof_fingerprint,
+                "risk_input": risk_input.evidence_id,
+                "fill_cost_bps": fill_cost_bps,
+                "marked_at": marked_at,
+                "mode": _CONTINUATION_CHECKPOINT_MODE,
+            }
+        )
+        return StrategyEquityCheckpoint(
+            checkpoint_id=checkpoint_id,
+            strategy_equity_baseline_id=baseline.baseline_id,
+            strategy_equity_baseline_fingerprint=baseline.baseline_fingerprint,
+            prior_checkpoint_fingerprint=source.checkpoint_fingerprint,
+            authorization_id=baseline.authorization_id,
+            account_id=baseline.account_id,
+            strategy_id=baseline.strategy_id,
+            strategy_version=baseline.strategy_version,
+            risk_configuration_fingerprint=baseline.risk_configuration_fingerprint,
+            settlement_proof_id=settlement.proof_id,
+            settlement_proof_fingerprint=settlement.proof_fingerprint,
+            risk_input_evidence_id=risk_input.evidence_id,
+            advance_fingerprint=source.advance_fingerprint,
+            fill_event_ids=source.fill_event_ids,
+            fill_cost_bps=source.fill_cost_bps,
+            allocated_capital=source.allocated_capital,
+            gross_buy_notional=source.gross_buy_notional,
+            gross_sell_notional=source.gross_sell_notional,
+            fill_cost_reserve=source.fill_cost_reserve,
+            strategy_cash=source.strategy_cash,
+            positions=snapshot.positions,
+            position_market_value=market_value,
+            strategy_equity=equity,
+            peak_equity=peak,
+            strategy_drawdown=(peak - equity) / peak,
+            marking_basis=_MARKING_BASIS,
+            marked_at=marked_at,
+            checkpoint_mode=_CONTINUATION_CHECKPOINT_MODE,
         )
 
     def _derive_flat_baseline_checkpoint(
@@ -632,6 +762,35 @@ def _latest_checkpoint(
         item for item in checkpoints.values() if item.strategy_equity_baseline_id == baseline_id
     ]
     return None if not matching else matching[-1]
+
+
+def _continuation_source_checkpoint(
+    connection: sqlite3.Connection,
+    *,
+    authorization_id: str,
+    before_sequence: int | None,
+) -> StrategyEquityCheckpoint | None:
+    if not _continuation_tables_present(connection):
+        return None
+    declaration = connection.execute(
+        "SELECT previous_authorization_id FROM paper_continuation_declarations "
+        "WHERE authorization_id = ?",
+        (authorization_id,),
+    ).fetchone()
+    if declaration is None:
+        return None
+    row = connection.execute(
+        "SELECT checkpoint_json FROM strategy_equity_checkpoints "
+        "WHERE json_extract(checkpoint_json, '$.authorization_id') = ? "
+        "AND (? IS NULL OR journal_sequence < ?) ORDER BY journal_sequence DESC LIMIT 1",
+        (str(declaration[0]), before_sequence, before_sequence),
+    ).fetchone()
+    if row is None:
+        return None
+    try:
+        return _decode_checkpoint(json.loads(str(row[0])))
+    except (json.JSONDecodeError, ValueError) as error:
+        raise JournalIntegrityError("continuation source checkpoint is invalid") from error
 
 
 def _decode_checkpoint(value: object) -> StrategyEquityCheckpoint:
