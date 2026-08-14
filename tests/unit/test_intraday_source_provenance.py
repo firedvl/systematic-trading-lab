@@ -40,8 +40,11 @@ from systematic_trading_lab.runtime_build import (
 NOW = datetime(2026, 8, 13, tzinfo=UTC)
 CAMPAIGN_V2_SURFACE = provenance._load_reviewed_surface_manifest(INTRADAY_CAMPAIGN_V2_ID)
 CURRENT_V2_SURFACE_MISMATCHES = (
+    "systematic_trading_lab/campaign_specs.py",
     "systematic_trading_lab/cli.py",
     "systematic_trading_lab/execution.py",
+    "systematic_trading_lab/experiment_runner.py",
+    "systematic_trading_lab/experiments.py",
     "systematic_trading_lab/position_settlement.py",
     "systematic_trading_lab/qualification.py",
     "systematic_trading_lab/qualification_evidence.py",

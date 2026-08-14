@@ -11,6 +11,10 @@ The candidate fingerprint is
 `1efe7aa4043fd6dcab7e34025e70b1a45c03a5d2ca6e15f520af3ef9a4742bf9`.
 Every authority field in the Rapid export remains false.
 
+The executable control path is implemented separately from this design. Its plan fingerprint remains
+unset until that control change merges: the plan must bind the final merged execution commit. Do not
+materialize the campaign or run a candidate from the development branch.
+
 ## Frozen candidate
 
 - Strategy: `risk-managed-momentum-portfolio`, version `1`.
@@ -110,6 +114,24 @@ The existing gate engine compares one metric per gate. The two compound stress r
 therefore use four visible machine gates: positive return and return retention for Stress A, then the
 same two checks for Stress B. All four must pass. The existing 17 gates and historical manifest
 fingerprints remain unchanged. A manual summary cannot substitute for registry-backed evidence.
+
+## Executable sealing and running
+
+From a clean, fetched, fast-forwarded `main` after the control change merges, seal the plan once:
+
+```console
+uv run trading-lab experiment plan-rapid-002 \
+  --candidate-export .trading-lab/rapid-research/candidates/rr-a480ff073a90e448c8b2.json \
+  --evidence-manifest config/research/qualification-evidence-rapid-002-rmm-v1.json \
+  --proposal config/research/qualification-proposal-rapid-002-rmm-v1.json
+```
+
+The command verifies the exact candidate bytes and fingerprint, full dataset integrity and identity,
+preserved source, strategy hash, manifest, and proposal before one transaction stores the plan and all
+28 pending reservations. It prints the executable plan fingerprint. Run a reservation only as
+`uv run trading-lab experiment run-planned EXPERIMENT_ID`; the command accepts no execution inputs.
+Completion or failure is terminal. Qualification requires all 28 records and the same stored plan
+fingerprint.
 
 ## Pass/fail gates
 

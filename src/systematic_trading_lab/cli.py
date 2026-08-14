@@ -16,10 +16,15 @@ from . import __version__
 from .alpaca_paper import AlpacaPaperReader
 from .backtesting import CostModel
 from .campaign_specs import (
+    RAPID_002_DATASET_ID,
     build_planned_intraday_experiments,
+    build_rapid_002_controlled_plan,
     load_intraday_research_campaign_plan,
     load_training_campaign_plan,
     parse_intraday_research_campaign_plan,
+    validate_rapid_002_control_binding,
+    validate_rapid_002_dataset_manifest,
+    verify_rapid_002_candidate_export,
 )
 from .config import ConfigurationError, Settings, load_dotenv, load_settings
 from .datasets import (
@@ -38,6 +43,7 @@ from .experiment_runner import (
     run_cataloged_experiment,
     run_cataloged_intraday_experiment,
     run_holdout_experiment,
+    run_planned_cataloged_experiment,
 )
 from .experiments import (
     ExperimentError,
@@ -263,6 +269,13 @@ def parser() -> argparse.ArgumentParser:
     campaign.add_argument("--budget", required=True, type=int)
     planned_campaign = experiment_commands.add_parser("plan-training")
     planned_campaign.add_argument("--spec", type=Path, required=True)
+    rapid_002_plan = experiment_commands.add_parser(
+        "plan-rapid-002",
+        help="verify artifacts and atomically seal the exact Rapid-002 validation plan",
+    )
+    rapid_002_plan.add_argument("--candidate-export", type=Path, required=True)
+    rapid_002_plan.add_argument("--evidence-manifest", type=Path, required=True)
+    rapid_002_plan.add_argument("--proposal", type=Path, required=True)
     create = experiment_commands.add_parser("create")
     create.add_argument("experiment_id")
     create.add_argument("--campaign", required=True)
@@ -318,7 +331,7 @@ def parser() -> argparse.ArgumentParser:
     intraday.add_argument("--cost-version")
     intraday.add_argument("--fill-delay-bars", type=int, default=1)
     planned_run = experiment_commands.add_parser(
-        "run-planned", help="run one pre-registered sealed training candidate"
+        "run-planned", help="run one daily candidate using only its sealed stored inputs"
     )
     planned_run.add_argument("experiment_id")
     plan_intraday = experiment_commands.add_parser(
@@ -857,6 +870,31 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         elif arguments.experiment_command == "plan-training":
             plan = load_training_campaign_plan(arguments.spec)
             _print(registry.create_planned_campaign(plan.payload))
+        elif arguments.experiment_command == "plan-rapid-002":
+            rapid_plan = build_rapid_002_controlled_plan()
+            candidate_evidence = verify_rapid_002_candidate_export(arguments.candidate_export)
+            validation = service.validate(RAPID_002_DATASET_ID)
+            if not validation["valid"]:
+                raise DatasetValidationError("Rapid-002 dataset integrity validation failed")
+            validate_rapid_002_dataset_manifest(service.describe(RAPID_002_DATASET_ID))
+            evidence_manifest = load_evidence_manifest(arguments.evidence_manifest)
+            proposal = load_qualification_proposal(arguments.proposal)
+            validate_rapid_002_control_binding(rapid_plan, evidence_manifest, proposal)
+            sealed = registry.create_planned_campaign(rapid_plan.payload)
+            _print(
+                {
+                    **sealed,
+                    "candidate_artifact": candidate_evidence,
+                    "dataset_id": RAPID_002_DATASET_ID,
+                    "dataset_fingerprint": rapid_plan.candidates[0].spec.dataset_fingerprint,
+                    "evidence_manifest_fingerprint": (rapid_plan.evidence_manifest_fingerprint),
+                    "proposal_fingerprint": rapid_plan.proposal_fingerprint,
+                    "independent_evaluation_authority": False,
+                    "paper_authority": False,
+                    "broker_write_authority": False,
+                    "v3_authority": False,
+                }
+            )
         elif arguments.experiment_command == "plan-intraday":
             intraday_plan = load_intraday_research_campaign_plan(arguments.spec)
             _print(registry.create_planned_intraday_campaign(intraday_plan.payload))
@@ -973,13 +1011,11 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                 {"recovered": registry.recover_stale(timedelta(minutes=arguments.max_age_minutes))}
             )
         elif arguments.experiment_command == "run-planned":
-            spec = registry.get_planned_spec(arguments.experiment_id)
-            run_cataloged_experiment(
+            run_planned_cataloged_experiment(
                 registry,
                 service,
-                spec,
+                arguments.experiment_id,
                 layout.reports,
-                pre_registered=True,
             )
             _print(registry.get(arguments.experiment_id))
         elif arguments.experiment_command == "run-intraday":

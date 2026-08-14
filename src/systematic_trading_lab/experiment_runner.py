@@ -165,22 +165,110 @@ def run_cataloged_experiment(
     initial_cash: Decimal = Decimal("100000"),
     cost_model: CostModel | None = None,
     fill_delay_bars: int = 1,
-    *,
-    pre_registered: bool = False,
 ) -> BacktestResult:
     """Run training or validation from only its cataloged timestamp range."""
     if spec.split is ExperimentSplit.HOLDOUT:
         raise HoldoutAccessError("cataloged research runner cannot execute holdout data")
     selected_costs = cost_model or CostModel()
-    if pre_registered:
-        if registry.get_planned_spec(spec.experiment_id) != spec:
-            raise ExperimentError("stored planned experiment differs")
+    registry.create_experiment(spec)
+    registry.claim(spec.experiment_id)
+    return _run_claimed_cataloged_experiment(
+        registry,
+        datasets,
+        spec,
+        output_directory,
+        initial_cash,
+        selected_costs,
+        fill_delay_bars,
+        planned=False,
+    )
+
+
+def run_planned_cataloged_experiment(
+    registry: ExperimentRegistry,
+    datasets: DatasetService,
+    experiment_id: str,
+    output_directory: Path,
+) -> BacktestResult:
+    """Run one daily candidate using only its sealed stored inputs."""
+
+    from .campaign_specs import (
+        ControlledValidationCampaignPlan,
+        controlled_validation_reservation,
+        parse_daily_campaign_plan,
+        rapid_002_execution_source_identity,
+        validate_rapid_002_dataset_manifest,
+    )
+
+    record = registry.get(experiment_id)
+    if record["status"] != "pending":
+        raise ExperimentError(f"planned experiment is not pending: {experiment_id}")
+    campaign_id = record["campaign_id"]
+    if not isinstance(campaign_id, str):
+        raise ExperimentError("stored planned experiment campaign is malformed")
+    stored_plan = registry.get_campaign_plan(campaign_id)
+    plan_json = stored_plan["plan_json"]
+    if not isinstance(plan_json, Mapping):
+        raise ExperimentError("stored daily campaign plan is malformed")
+    plan = parse_daily_campaign_plan(plan_json)
+    if stored_plan["plan_fingerprint"] != plan.plan_fingerprint:
+        raise ExperimentError("stored daily campaign plan fingerprint differs")
+
+    if isinstance(plan, ControlledValidationCampaignPlan):
+        plan = registry.get_controlled_validation_plan(campaign_id)
+        reservation = controlled_validation_reservation(plan, experiment_id)
+        planned_spec = reservation.spec
+        if canonicalize(
+            rapid_002_execution_source_identity(require_merged_main=False)
+        ) != canonicalize(plan.execution_source):
+            raise ExperimentError("Rapid-002 execution source differs from its sealed plan")
+        _require_planned_storage_root(registry, datasets, output_directory)
+        if not datasets.validate(planned_spec.dataset_id)["valid"]:
+            raise DatasetValidationError("Rapid-002 dataset integrity validation failed")
+        validate_rapid_002_dataset_manifest(datasets.describe(planned_spec.dataset_id))
+        initial_cash = reservation.initial_cash
+        costs = CostModel(
+            planned_spec.cost_model_version,
+            reservation.slippage_bps,
+            reservation.commission_bps,
+        )
+        fill_delay_bars = reservation.fill_delay_bars
     else:
-        registry.create_experiment(spec)
-    if pre_registered:
-        registry._claim_planned(spec)
-    else:
-        registry.claim(spec.experiment_id)
+        matching_specs = tuple(
+            candidate for candidate in plan.candidates if candidate.experiment_id == experiment_id
+        )
+        if len(matching_specs) != 1:
+            raise ExperimentError(f"candidate is not reserved by the daily plan: {experiment_id}")
+        planned_spec = matching_specs[0]
+        initial_cash = Decimal("100000")
+        costs = CostModel()
+        fill_delay_bars = 1
+    if registry.get_planned_spec(experiment_id) != planned_spec:
+        raise ExperimentError("stored planned experiment differs")
+    registry._claim_planned(planned_spec)
+    return _run_claimed_cataloged_experiment(
+        registry,
+        datasets,
+        planned_spec,
+        output_directory,
+        initial_cash,
+        costs,
+        fill_delay_bars,
+        planned=True,
+    )
+
+
+def _run_claimed_cataloged_experiment(
+    registry: ExperimentRegistry,
+    datasets: DatasetService,
+    spec: ExperimentSpec,
+    output_directory: Path,
+    initial_cash: Decimal,
+    selected_costs: CostModel,
+    fill_delay_bars: int,
+    *,
+    planned: bool,
+) -> BacktestResult:
     try:
         _validate_execution_models(spec, selected_costs, fill_delay_bars)
         _require_daily_dataset(datasets, spec.dataset_id)
@@ -199,7 +287,7 @@ def run_cataloged_experiment(
             initial_cash,
             selected_costs,
             fill_delay_bars,
-            pre_registered,
+            planned,
             True,
         )
     except Exception as error:
@@ -380,6 +468,26 @@ def _planned_intraday_execution_inputs(
         spec.slippage_bps,
         spec.commission_bps,
     )
+
+
+def _require_planned_storage_root(
+    registry: ExperimentRegistry,
+    datasets: DatasetService,
+    output_directory: Path,
+) -> None:
+    if (
+        type(registry) is not ExperimentRegistry
+        or type(datasets) is not DatasetService
+        or type(datasets.catalog) is not DatasetCatalog
+    ):
+        raise ExperimentError("planned daily execution requires concrete storage services")
+    layout = datasets.layout
+    if (
+        registry.path.resolve() != layout.experiments.resolve()
+        or datasets.catalog.path.resolve() != layout.catalog.resolve()
+        or output_directory.resolve() != layout.reports.resolve()
+    ):
+        raise ExperimentError("planned daily registry, datasets, and reports must share one root")
 
 
 def run_holdout_experiment(
