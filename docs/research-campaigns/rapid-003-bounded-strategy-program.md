@@ -51,14 +51,14 @@ hypothesis, implementation, parameter dimensions, configurations, result, and re
 | --- | --- | --- |
 | A | Absolute momentum | Existing momentum and risk-managed momentum plus multi-horizon agreement |
 | B | Relative strength | Existing positive-filtered top-N rotation |
-| C | Dual momentum | Role-aware risk/defensive rotation |
+| C | Dual momentum | Role-aware risk rotation with single-asset and diversified defensive fallback |
 | D | Trend following | Existing moving-average state transitions |
 | E | Breakout | Existing entry/exit channel state transitions |
 | F | Pullback / mean reversion | Existing trend pullback and moving-average reversal |
 | G | Volatility management | Existing volatility target, balance, and risk-managed momentum |
 | H | Risk parity / diversification | Existing capped inverse-volatility allocation |
 | I | Risk-on / risk-off regimes | SPY trend-plus-volatility regime allocation |
-| J | Defensive rotation | Covered by role-aware dual momentum |
+| J | Defensive rotation | Covered by single-asset and diversified dual-momentum fallback |
 | K | Tactical asset allocation | Covered by dual and multi-horizon active subsets |
 | L | Multi-horizon signals | Two-horizon positive agreement and ranking |
 | M | Signal + regime combinations | Test only combinations with independent economic meaning |

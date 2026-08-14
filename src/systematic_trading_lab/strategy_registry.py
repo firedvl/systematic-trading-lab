@@ -221,6 +221,28 @@ STRATEGIES: dict[str, StrategyDefinition] = {
         ),
         portfolio=True,
     ),
+    "diversified-dual-momentum": StrategyDefinition(
+        "diversified-dual-momentum",
+        "diversified-dual-momentum-portfolio",
+        "dual-momentum",
+        "Rank positive risk assets, then fall back to a positive TLT/GLD basket or cash.",
+        (
+            StrategyParameter("short_lookback", 20),
+            StrategyParameter("long_lookback", 126, 2),
+            StrategyParameter("selection_count", 2),
+            StrategyParameter("rebalance_every", 5),
+        ),
+        lambda symbols, parameters: DualMomentumPortfolioStrategy(
+            symbols,
+            short_lookback=_parameter(parameters, "short_lookback"),
+            long_lookback=_parameter(parameters, "long_lookback"),
+            selection_count=_parameter(parameters, "selection_count"),
+            defensive_selection_count=2,
+            rebalance_every=_parameter(parameters, "rebalance_every"),
+            strategy_id="diversified-dual-momentum-portfolio",
+        ),
+        portfolio=True,
+    ),
     "risk-managed-momentum": StrategyDefinition(
         "risk-managed-momentum",
         "risk-managed-momentum-portfolio",
@@ -354,11 +376,14 @@ def validate_strategy_parameters(name: str, parameters: Mapping[str, object]) ->
             raise ValueError(f"{parameter.name} must be at least {parameter.minimum}")
         validated[parameter.name] = value
     if (
-        definition.name in {"multi-horizon-momentum", "dual-momentum"}
+        definition.name in {"multi-horizon-momentum", "dual-momentum", "diversified-dual-momentum"}
         and validated["short_lookback"] >= validated["long_lookback"]
     ):
         raise ValueError("short_lookback must be shorter than long_lookback")
-    if definition.name == "dual-momentum" and validated["selection_count"] > 3:
+    if (
+        definition.name in {"dual-momentum", "diversified-dual-momentum"}
+        and validated["selection_count"] > 3
+    ):
         raise ValueError("dual-momentum selection_count must not exceed three risk assets")
     return validated
 
