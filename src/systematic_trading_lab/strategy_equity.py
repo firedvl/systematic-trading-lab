@@ -14,7 +14,11 @@ from .broker_events import BrokerOrderEvent, ExpectedPositionAdvance, _filled_no
 from .execution import JournalIntegrityError
 from .fingerprints import canonical_json, canonicalize, fingerprint
 from .orders import OrderSide, _decode_delta
-from .position_settlement import PositionSettlementEvidence, PositionSettlementStore
+from .position_settlement import (
+    _PLANNING_SETTLEMENT_MODE,
+    PositionSettlementEvidence,
+    PositionSettlementStore,
+)
 from .reconciliation import (
     PositionSnapshot,
     ReconciliationStore,
@@ -30,6 +34,7 @@ _MARKING_BASIS = "iex-bid-liquidation-v1"
 _FILL_CHECKPOINT_MODE = "fill-replay-v1"
 _FLAT_BASELINE_CHECKPOINT_MODE = "flat-baseline-v1"
 _CONTINUATION_CHECKPOINT_MODE = "authorization-continuation-v1"
+_PLANNING_CHECKPOINT_MODE = "continuation-planning-mark-v1"
 
 
 @dataclass(frozen=True)
@@ -88,6 +93,7 @@ class StrategyEquityCheckpoint:
             _FILL_CHECKPOINT_MODE,
             _FLAT_BASELINE_CHECKPOINT_MODE,
             _CONTINUATION_CHECKPOINT_MODE,
+            _PLANNING_CHECKPOINT_MODE,
         }:
             raise ValueError("strategy equity checkpoint mode is unsupported")
         if self.fill_event_ids != tuple(sorted(set(self.fill_event_ids))):
@@ -149,6 +155,11 @@ class StrategyEquityCheckpoint:
                 raise ValueError("continuation checkpoint lacks prior equity lineage")
             if self.advance_fingerprint:
                 _sha256("continuation advance", self.advance_fingerprint)
+        elif self.checkpoint_mode == _PLANNING_CHECKPOINT_MODE:
+            if self.prior_checkpoint_fingerprint is None:
+                raise ValueError("planning checkpoint lacks prior equity lineage")
+            if self.advance_fingerprint:
+                _sha256("planning advance", self.advance_fingerprint)
         if (
             self.positions != tuple(sorted(self.positions, key=lambda item: item.symbol))
             or self.marking_basis != _MARKING_BASIS
@@ -450,6 +461,9 @@ class StrategyEquityStore(PositionSettlementStore):
                 or (marked_at - quote.observed_at).total_seconds() > risk_input.maximum_age_seconds
                 for quote in risk_input.quotes
             )
+            or risk_input.clock.observed_at > marked_at
+            or (marked_at - risk_input.clock.observed_at).total_seconds()
+            > risk_input.maximum_age_seconds
             or (prior is not None and marked_at <= prior.marked_at)
         ):
             raise ValueError("strategy equity authorities do not align")
@@ -463,6 +477,16 @@ class StrategyEquityStore(PositionSettlementStore):
                 prior=prior,
                 marked_at=marked_at,
                 before_sequence=before_sequence,
+            )
+        if settlement.settlement_mode == _PLANNING_SETTLEMENT_MODE:
+            return self._derive_planning_checkpoint(
+                connection,
+                baseline=baseline,
+                settlement=settlement,
+                risk_input=risk_input,
+                fill_cost_bps=fill_cost_bps,
+                prior=prior,
+                marked_at=marked_at,
             )
         if settlement.settlement_mode == _CONTINUATION_CHECKPOINT_MODE:
             return self._derive_continuation_checkpoint(
@@ -683,6 +707,98 @@ class StrategyEquityStore(PositionSettlementStore):
             marking_basis=_MARKING_BASIS,
             marked_at=marked_at,
             checkpoint_mode=_CONTINUATION_CHECKPOINT_MODE,
+        )
+
+    def _derive_planning_checkpoint(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        baseline: StrategyEquityBaseline,
+        settlement: PositionSettlementEvidence,
+        risk_input: RiskInputEvidence,
+        fill_cost_bps: Decimal,
+        prior: StrategyEquityCheckpoint | None,
+        marked_at: datetime,
+    ) -> StrategyEquityCheckpoint:
+        snapshot_row = connection.execute(
+            "SELECT snapshot_json FROM portfolio_snapshots WHERE snapshot_id = ?",
+            (settlement.observed_snapshot_id,),
+        ).fetchone()
+        try:
+            snapshot = (
+                None if snapshot_row is None else _decode_snapshot(json.loads(snapshot_row[0]))
+            )
+        except (json.JSONDecodeError, ValueError) as error:
+            raise ValueError("planning portfolio snapshot is invalid") from error
+        if (
+            prior is None
+            or snapshot is None
+            or prior.checkpoint_mode
+            not in {_CONTINUATION_CHECKPOINT_MODE, _PLANNING_CHECKPOINT_MODE}
+            or settlement.reconciliation_evidence_id is None
+            or settlement.settled_at != marked_at
+            or settlement.advance_fingerprint != prior.advance_fingerprint
+            or snapshot.positions != prior.positions
+            or prior.authorization_id != baseline.authorization_id
+            or prior.account_id != baseline.account_id
+            or prior.strategy_id != baseline.strategy_id
+            or prior.strategy_version != baseline.strategy_version
+            or prior.risk_configuration_fingerprint != baseline.risk_configuration_fingerprint
+            or prior.strategy_equity_baseline_id != baseline.baseline_id
+            or prior.allocated_capital != baseline.allocated_capital
+            or prior.fill_cost_bps != fill_cost_bps
+        ):
+            raise ValueError("planning strategy equity lineage is invalid")
+        quotes = {item.symbol: item.bid_price for item in risk_input.quotes}
+        if not set(item.symbol for item in snapshot.positions).issubset(quotes):
+            raise ValueError("planning requires a bid for every position")
+        market_value = sum(
+            (quotes[item.symbol] * item.quantity for item in snapshot.positions), Decimal(0)
+        )
+        equity = prior.strategy_cash + market_value
+        if equity <= 0:
+            raise ValueError("planning strategy equity must remain positive")
+        peak = max(prior.peak_equity, equity)
+        checkpoint_id = fingerprint(
+            {
+                "strategy_equity_baseline": baseline.baseline_fingerprint,
+                "prior_checkpoint": prior.checkpoint_fingerprint,
+                "settlement": settlement.proof_fingerprint,
+                "risk_input": risk_input.evidence_id,
+                "fill_cost_bps": fill_cost_bps,
+                "marked_at": marked_at,
+                "mode": _PLANNING_CHECKPOINT_MODE,
+            }
+        )
+        return StrategyEquityCheckpoint(
+            checkpoint_id=checkpoint_id,
+            strategy_equity_baseline_id=baseline.baseline_id,
+            strategy_equity_baseline_fingerprint=baseline.baseline_fingerprint,
+            prior_checkpoint_fingerprint=prior.checkpoint_fingerprint,
+            authorization_id=baseline.authorization_id,
+            account_id=baseline.account_id,
+            strategy_id=baseline.strategy_id,
+            strategy_version=baseline.strategy_version,
+            risk_configuration_fingerprint=baseline.risk_configuration_fingerprint,
+            settlement_proof_id=settlement.proof_id,
+            settlement_proof_fingerprint=settlement.proof_fingerprint,
+            risk_input_evidence_id=risk_input.evidence_id,
+            advance_fingerprint=prior.advance_fingerprint,
+            fill_event_ids=prior.fill_event_ids,
+            fill_cost_bps=prior.fill_cost_bps,
+            allocated_capital=prior.allocated_capital,
+            gross_buy_notional=prior.gross_buy_notional,
+            gross_sell_notional=prior.gross_sell_notional,
+            fill_cost_reserve=prior.fill_cost_reserve,
+            strategy_cash=prior.strategy_cash,
+            positions=snapshot.positions,
+            position_market_value=market_value,
+            strategy_equity=equity,
+            peak_equity=peak,
+            strategy_drawdown=(peak - equity) / peak,
+            marking_basis=_MARKING_BASIS,
+            marked_at=marked_at,
+            checkpoint_mode=_PLANNING_CHECKPOINT_MODE,
         )
 
     def _derive_flat_baseline_checkpoint(

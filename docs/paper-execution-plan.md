@@ -193,6 +193,15 @@ A later immutable checkpoint can replay every accepted fill increment for that b
 the reviewed fill-cost reserve, require the latest settlement proof, mark long positions at attested
 IEX bids, and derive peak-linked strategy drawdown. A checkpoint remains read-only and does not make
 the full `RiskContext` authoritative.
+After a non-flat continuation handoff, the planning boundary collects another production-attested
+portfolio snapshot and risk-input bundle through Alpaca GET requests only. A planning-state
+settlement proves the same authorization, account, risk configuration, cash, settled positions,
+clear emergency generation, no broker open order, and no unresolved local mutation or active
+reservation. A new planning checkpoint references the prior checkpoint, carries its fill economics
+and strategy cash, marks positions at fresh bids, and keeps `max(inherited_peak, current_equity)` as
+the peak. The historical handoff and its checkpoint remain unchanged. The reviewed 15-second limit
+applies to the new snapshot, quotes, clock, and mark, not to the handoff as historical lineage. Plan
+identity binds both evidence categories. The path cannot submit or cancel an order.
 The read-only context builder now derives every `RiskContext` field from verified evidence in one
 transaction and returns a fingerprinted provenance proof. It does not persist approval or mutate
 capacity. The risk-decision transaction must rederive the same authorities before it can replace the

@@ -18,6 +18,7 @@ from .reconciliation import (
     ReconciliationStore,
     _decode_attestation,
     _decode_baseline,
+    _decode_continuation_handoff,
     _decode_snapshot,
     _PaperSnapshotAttestationV2,
 )
@@ -30,6 +31,7 @@ _TERMINAL_STATES = {OrderState.FILLED, OrderState.CANCELED, OrderState.REJECTED}
 _FILL_SETTLEMENT_MODE = "fill-settlement-v1"
 _FLAT_BASELINE_SETTLEMENT_MODE = "flat-baseline-v1"
 _CONTINUATION_SETTLEMENT_MODE = "authorization-continuation-v1"
+_PLANNING_SETTLEMENT_MODE = "continuation-planning-state-v1"
 
 
 @dataclass(frozen=True)
@@ -70,6 +72,7 @@ class PositionSettlementEvidence:
             _FILL_SETTLEMENT_MODE,
             _FLAT_BASELINE_SETTLEMENT_MODE,
             _CONTINUATION_SETTLEMENT_MODE,
+            _PLANNING_SETTLEMENT_MODE,
         }:
             raise ValueError("settlement mode is unsupported")
         if self.settlement_mode == _FILL_SETTLEMENT_MODE:
@@ -91,7 +94,10 @@ class PositionSettlementEvidence:
             )
         ):
             raise ValueError("flat baseline settlement lineage is invalid")
-        elif self.settlement_mode == _CONTINUATION_SETTLEMENT_MODE and (
+        elif self.settlement_mode in {
+            _CONTINUATION_SETTLEMENT_MODE,
+            _PLANNING_SETTLEMENT_MODE,
+        } and (
             (
                 self.advance_fingerprint
                 and (
@@ -550,7 +556,8 @@ class PositionSettlementStore(BrokerEventStore):
     ) -> dict[str, PositionSettlementEvidence]:
         rows = connection.execute(
             "SELECT proof_id, baseline_id, advance_fingerprint, observed_snapshot_id, "
-            "evidence_json, journal_sequence FROM position_settlement_evidence"
+            "evidence_json, journal_sequence FROM position_settlement_evidence "
+            "ORDER BY journal_sequence"
         ).fetchall()
         count = connection.execute(
             "SELECT COUNT(*) FROM journal WHERE event_type = 'position-settlement-proved'"
@@ -716,7 +723,7 @@ class PositionSettlementStore(BrokerEventStore):
                         or reconciliation.unresolved_mutations != 0
                         or int(reconciliation_row[1]) <= int(emergency_event[2])
                     )
-            else:
+            elif evidence.settlement_mode == _CONTINUATION_SETTLEMENT_MODE:
                 reconciliation_row = connection.execute(
                     "SELECT evidence_json FROM reconciliation_evidence WHERE evidence_id = ?",
                     (evidence.reconciliation_evidence_id,),
@@ -772,6 +779,98 @@ class PositionSettlementStore(BrokerEventStore):
                     or continuation_handoff.get("settlement_proof_id") != evidence.proof_id
                     or continuation_handoff.get("settlement_proof_fingerprint")
                     != evidence.proof_fingerprint
+                )
+            else:
+                reconciliation_row = connection.execute(
+                    "SELECT evidence_json FROM reconciliation_evidence WHERE evidence_id = ?",
+                    (evidence.reconciliation_evidence_id,),
+                ).fetchone()
+                expected_row = connection.execute(
+                    "SELECT s.snapshot_json FROM reconciliation_baselines b "
+                    "JOIN portfolio_snapshots s ON s.snapshot_id = "
+                    "json_extract(b.baseline_json, '$.expected_snapshot_id') "
+                    "WHERE b.baseline_id = ?",
+                    (evidence.baseline_id,),
+                ).fetchone()
+                handoff_row = connection.execute(
+                    "SELECT handoff_json FROM paper_continuation_handoffs "
+                    "WHERE authorization_id = ?",
+                    (evidence.authorization_id,),
+                ).fetchone()
+                execution_artifact = connection.execute(
+                    "SELECT 1 FROM capacity_reservations WHERE authorization_id = ? "
+                    "AND journal_sequence < ? LIMIT 1",
+                    (evidence.authorization_id, row[5]),
+                ).fetchone()
+                active_reservation = connection.execute(
+                    "SELECT 1 FROM capacity_reservations r "
+                    "LEFT JOIN capacity_releases x ON x.reservation_id = r.reservation_id "
+                    "AND x.journal_sequence < ? "
+                    "WHERE json_extract(r.reservation_json, '$.account_id') = ? "
+                    "AND r.journal_sequence < ? AND r.reserved_at <= ? AND r.expires_at > ? "
+                    "AND (x.reservation_id IS NULL OR x.released_at > ?) LIMIT 1",
+                    (
+                        row[5],
+                        evidence.account_id,
+                        row[5],
+                        _utc_text(evidence.settled_at),
+                        _utc_text(evidence.settled_at),
+                        _utc_text(evidence.settled_at),
+                    ),
+                ).fetchone()
+                try:
+                    planning_reconciliation = (
+                        None
+                        if reconciliation_row is None
+                        else _decode_reconciliation(json.loads(reconciliation_row[0]))
+                    )
+                    planning_expected = (
+                        None
+                        if expected_row is None
+                        else _decode_snapshot(json.loads(expected_row[0]))
+                    )
+                    planning_handoff = (
+                        None
+                        if handoff_row is None
+                        else _decode_continuation_handoff(json.loads(handoff_row[0]))
+                    )
+                    handoff_settlement = (
+                        None
+                        if planning_handoff is None
+                        else result.get(planning_handoff.settlement_proof_id)
+                    )
+                except (json.JSONDecodeError, ValueError) as error:
+                    raise JournalIntegrityError("stored position settlement is invalid") from error
+                mode_invalid = (
+                    not isinstance(attestation, _PaperSnapshotAttestationV2)
+                    or planning_reconciliation is None
+                    or planning_expected is None
+                    or planning_handoff is None
+                    or handoff_settlement is None
+                    or execution_artifact is not None
+                    or active_reservation is not None
+                    or advance_row is not None
+                    or later_advance is not None
+                    or planning_handoff.authorization_id != evidence.authorization_id
+                    or planning_handoff.account_id != evidence.account_id
+                    or planning_handoff.risk_configuration_fingerprint
+                    != evidence.risk_configuration_fingerprint
+                    or planning_handoff.reconciliation_baseline_id != evidence.baseline_id
+                    or planning_handoff.reconciliation_evidence_id
+                    != evidence.reconciliation_evidence_id
+                    or planning_handoff.positions != planning_expected.positions
+                    or planning_handoff.positions != snapshot.positions
+                    or planning_handoff.cash != snapshot.cash
+                    or planning_handoff.emergency_generation != evidence.emergency_generation
+                    or planning_handoff.completed_at >= evidence.settled_at
+                    or planning_reconciliation.baseline_id != evidence.baseline_id
+                    or planning_reconciliation.observed_snapshot_id
+                    != planning_handoff.current_snapshot_id
+                    or not planning_reconciliation.result.clean
+                    or planning_reconciliation.unresolved_mutations != 0
+                    or handoff_settlement.proof_id != planning_handoff.settlement_proof_id
+                    or handoff_settlement.advance_fingerprint != evidence.advance_fingerprint
+                    or handoff_settlement.terminal_orders != evidence.terminal_orders
                 )
             if common_invalid or mode_invalid:
                 raise JournalIntegrityError("position settlement does not match its evidence")

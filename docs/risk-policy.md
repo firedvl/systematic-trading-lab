@@ -115,6 +115,17 @@ continuation equity checkpoint, and final handoff. The checkpoint carries prior 
 sell notional, fill-cost reserve, strategy cash, positions, peak equity, and drawdown. It marks the
 carried positions at current bids without erasing adverse history. Historical authorizations and
 baselines remain immutable.
+Planning after the handoff uses a separate fresh evidence set. `paper plan` records a new
+production-attested portfolio snapshot and risk-input bundle, then appends a planning-state
+settlement and strategy-equity mark. It requires the handoff account, authorization, strategy, risk
+configuration, cash, settled positions, emergency generation, and mutation-free local state to
+remain unchanged. It also requires account readiness, no broker open order, no active reservation,
+and the complete current quote set and NYSE clock. The reviewed 15-second limit applies to this new
+snapshot, every quote, the clock, and the mark; it does not make the immutable handoff evidence
+expire as lineage. The mark references the prior checkpoint, carries fill economics and strategy
+cash, and derives peak equity as the greater of the inherited peak and current bid-marked strategy
+equity. It cannot create a flat baseline or reset drawdown. Both handoff and planning fingerprints
+enter the plan identity. The refresh grants no risk, capacity, activation, or broker-write authority.
 Risk decisions now derive the temporal active reservation set inside their immediate transaction.
 They replace caller pending-capacity totals and bind the exact reservation IDs, fingerprints,
 aggregates, and count. A reservation is active only after creation, before expiry, and before any

@@ -19,8 +19,8 @@ replay/shadow/paper comparison passed. That evidence does not authorize another 
 
 ## Current blockers
 
-1. Restore valid dedicated Alpaca PAPER credentials. Current GET requests return sanitized HTTP 401.
-   Do not print, log, or weaken authentication handling.
+1. Verify the dedicated Alpaca PAPER credentials with an account GET and exact approved-account
+   binding. Keep the credentials outside the repository and never print or log them.
 2. Before each session, build and verify the current main-only attested wheel, install it without
    edits, and use an activation bound to that exact commit. Run authority-grade verification as the
    documented unprivileged execution account; root ownership of protected artifacts is not verifier
@@ -29,11 +29,14 @@ replay/shadow/paper comparison passed. That evidence does not authorize another 
    it only from fresh production-attested account, position, order, quote, and clock evidence. The
    append-only handoff must preserve positions, fill economics, strategy cash, equity peak, and
    drawdown. It cannot create a flat baseline.
-4. Generate replay and shadow plans with `paper plan`, create matching quantity intents through the
+4. Run `paper plan` so it collects a second GET-only account, position, open-order, quote, and clock
+   evidence set after the immutable handoff. It appends a planning-state settlement and peak-linked
+   equity mark, then generates replay and shadow plans. Create matching quantity intents through the
    existing guarded path, record equivalence, and rerun startup assessment. The planner derives the
-   XNYS session count and market-state fingerprint from immutable root and current attested evidence;
-   the operator cannot supply either value. Any mismatch, stale input, active reservation,
-   unresolved order, or emergency transition stops the run.
+   XNYS session count and market-state fingerprint from the immutable root/handoff and fresh planning
+   evidence; the operator cannot supply either value. The fresh evidence retains the 15-second limit.
+   Any mismatch, stale input, active reservation, unresolved order, or emergency transition stops the
+   run.
 5. Obtain explicit user approval immediately before any new paper broker mutation.
 
 M5 began and produced sustained observation and recovery evidence. Its remaining 168-hour duration
