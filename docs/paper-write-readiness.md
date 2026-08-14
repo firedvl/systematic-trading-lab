@@ -1,36 +1,47 @@
 # Paper broker-write readiness
 
-Status: **not ready**. This checklist does not authorize a broker call. Exact paper mode plus an
+Status: **not ready for another broker call**. This checklist does not authorize a broker call. Exact paper mode plus an
 activation-and-commit process opt-in opens only the outer runtime gate. The production coordinator
 still requires current transaction-bound authority before any network access. Live trading remains
 prohibited.
 
 ## Approved scope
 
-The first paper run may use only candidate `strategic-allocation-21`, strategy
+Paper execution may use only candidate `strategic-allocation-21`, strategy
 `strategic-allocation-portfolio` version `1`, and risk configuration
 `alpaca-paper-strategic-allocation-v1` with fingerprint
 `20b4f89e13f1b379c0055d9c37b2296de2b95a798dba67602f6d28b68a6d3703`. The account,
 symbols, and financial values come only from `config/risk/alpaca-paper-v1.json`. The paper
 authorization and activation must each expire no later than 24 hours after creation. A shorter
-window is allowed; extension or renewal needs a new record.
+window is allowed; extension or renewal needs a new record. The first Alpaca paper session occurred
+on 2026-08-04. Four production-bound orders filled: GLD 3, IWM 8, QQQ 3, and SPY 4. Its
+replay/shadow/paper comparison passed. That evidence does not authorize another session.
 
 ## Current blockers
 
-1. Before each session, build and verify the current main-only attested wheel, install it without
-   edits, and use an activation bound to that exact commit.
-2. During a regular market session, record fresh production account, reconciliation, quote, and clock
-   evidence; settle the flat baseline; record its zero-equity checkpoint; and derive the attested
-   risk context.
-3. Re-run startup assessment from that installed wheel. Any blocker, stale input, mismatch,
-   unresolved mutation, or emergency transition stops the run.
-4. Obtain explicit user approval immediately before the first paper broker mutation.
-5. M5 sustained paper operation, recovery drills, and equivalence evidence have not begun.
+1. Restore valid dedicated Alpaca PAPER credentials. Current GET requests return sanitized HTTP 401.
+   Do not print, log, or weaken authentication handling.
+2. Before each session, build and verify the current main-only attested wheel, install it without
+   edits, and use an activation bound to that exact commit. Run authority-grade verification as the
+   documented unprivileged execution account; root ownership of protected artifacts is not verifier
+   authority.
+3. Create a maximum-24-hour continuation declaration from the latest settled authorization. Complete
+   it only from fresh production-attested account, position, order, quote, and clock evidence. The
+   append-only handoff must preserve positions, fill economics, strategy cash, equity peak, and
+   drawdown. It cannot create a flat baseline.
+4. Generate replay and shadow plans with `paper plan`, create matching quantity intents through the
+   existing guarded path, record equivalence, and rerun startup assessment. Any mismatch, stale
+   input, active reservation, unresolved order, or emergency transition stops the run.
+5. Obtain explicit user approval immediately before any new paper broker mutation.
+
+M5 began and produced sustained observation and recovery evidence. Its remaining 168-hour duration
+was explicitly waived and remains incomplete; the waiver does not turn the failed Week 1 continuity
+limit or the unobserved period into passing evidence.
 
 ## Fixed-origin transport design
 
-The first production writer must reuse the existing request construction and response normalization.
-It adds one transport function, not another order schema or broker client.
+The production writer reuses the existing request construction and response normalization. It does
+not add another order schema or broker client.
 
 1. The origin is the constant `https://paper-api.alpaca.markets`. Configuration, command-line
    arguments, responses, redirects, or environment variables cannot replace it.
@@ -74,12 +85,12 @@ Before any production paper mutation, the reviewed system must provide:
    quote and clock evidence, clean reconciliation, clear emergency state, and no unresolved mutation.
 6. Shutdown, restart, exact-lookup recovery, cancel-all, credential rotation, database backup, and
    evidence-retention procedures.
-7. Independent code review, injected failure tests, and explicit user approval for the first paper
+7. Independent code review, injected failure tests, and explicit user approval for the next paper
    broker mutation. Live trading needs a later separate policy and approval process.
 
-## First paper session gate
+## Paper session gate
 
-When the blockers above have been removed, an operator must stop before the first write unless all of
+When the blockers above have been removed, an operator must stop before a write unless all of
 these facts hold at the same assessment time:
 
 1. Runtime mode is exactly `paper`; the selected origin is exactly

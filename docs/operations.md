@@ -6,7 +6,13 @@
 4. Inspect `trading-lab status`, `data describe`, and `data validate`.
 5. Preserve the dataset directory and manifest together when moving evidence.
 
-Recovery: artifact directories are authoritative. After moving a disposable `catalog.sqlite3` aside, run `trading-lab data rebuild-catalog`. Never edit an artifact in place. The execution store can list journal-verified `submission-unknown` orders without changing state. The production reader can retain a sanitized immutable 404 from an exact lookup, but that result is historical evidence only. A read-only proof can bind it to later complete clean reconciliation and the unchanged protected controls for operator review. It does not authorize retry. There is no broker process, retry, cancel action, or live recovery procedure in this phase.
+Recovery: artifact directories are authoritative. After moving a disposable `catalog.sqlite3` aside,
+run `trading-lab data rebuild-catalog`. Never edit an artifact in place. The execution store can list
+journal-verified `submission-unknown` orders without changing state. The production reader can retain
+a sanitized immutable 404 from an exact lookup, but that result is historical evidence only. A
+read-only proof can bind it to later complete clean reconciliation and the unchanged protected
+controls for operator review. It does not authorize retry. Guarded paper submit and single-order
+cancel paths exist; no blind retry or live recovery path exists.
 
 Run this command to inspect paper blockers without changing the execution database:
 
@@ -23,7 +29,8 @@ terminal event can report `resolved-canceled`, `resolved-rejected`, or `resolved
 nonterminal or stale lookup remains unresolved. No result authorizes another broker call.
 
 Before any future paper mutation work, use [paper-write-readiness.md](paper-write-readiness.md). Its
-current status is not ready and every listed blocker remains mandatory. Process opt-in opens only
+current status is not ready for another broker call, and every listed blocker remains mandatory.
+Process opt-in opens only
 the outer runtime gate and cannot override transaction-bound authority.
 
 ## Sustained paper observation
@@ -69,6 +76,68 @@ The store derives the paper plan from the named immutable quantity intents. It c
 source data, configuration, and sorted targets. A mismatch remains evidence and exits nonzero. The
 comparison reads no broker state and grants no execution authority.
 
+## Continuation paper session
+
+The 2026-08-04 initial session established the flat strategy baseline and filled GLD 3, IWM 8, QQQ
+3, and SPY 4. Do not create another flat baseline. A later session uses two append-only steps.
+
+1. Confirm the prior authorization has no existing successor, has expired, and has a latest settled
+   strategy-equity checkpoint, no nonterminal order, no active reservation, and clear emergency
+   state. A continuation source must also have a completed handoff. Use valid dedicated Alpaca PAPER
+   credentials; the current sanitized HTTP 401 response is a credential blocker, not a reason to
+   change authentication code.
+2. From the verified unprivileged runtime, declare a new authorization no longer than 24 hours:
+
+   ```console
+   trading-lab paper authorize-continuation NEW_AUTHORIZATION \
+     --previous-authorization PRIOR_AUTHORIZATION \
+     --risk-config config/risk/alpaca-paper-v1.json \
+     --authorized-by REVIEWER \
+     --reason "REASON" \
+     --authorized-at AUTHORIZED_AT_UTC \
+     --expires-at EXPIRES_AT_UTC
+   ```
+
+   This stores the new authorization and continuation declaration in one transaction. It creates no
+   baseline, risk context, intent, activation, or broker-write authority.
+3. Complete the declaration from fresh GET-only Alpaca account, position, open-order, quote, and
+   clock evidence:
+
+   ```console
+   trading-lab paper complete-continuation NEW_AUTHORIZATION \
+     --risk-config config/risk/alpaca-paper-v1.json \
+     --operator OPERATOR \
+     --reason "fresh reconciled continuation state"
+   ```
+
+   The command rejects stale or mismatched evidence, changed account or risk configuration, dirty
+   state, active reservations, nonterminal orders, and emergency disable. One transaction appends
+   the non-flat expected snapshot, clean reconciliation, strategy-equity baseline, continuation
+   settlement and checkpoint, and final handoff. Prior fills, strategy cash, positions, equity peak,
+   and drawdown remain in the new lineage.
+4. Generate create-only replay and shadow files. `SESSION_COUNT` and
+   `MARKET_STATE_FINGERPRINT` must come from the reviewed daily market-state evidence for this
+   strategy decision:
+
+   ```console
+   trading-lab paper plan \
+     --authorization NEW_AUTHORIZATION \
+     --risk-config config/risk/alpaca-paper-v1.json \
+     --market-state-fingerprint MARKET_STATE_FINGERPRINT \
+     --session-count SESSION_COUNT \
+     --replay-plan replay-plan.json \
+     --shadow-plan shadow-plan.json
+   ```
+
+   The planner reads only immutable local evidence. It calls no broker and grants no intent, risk,
+   activation, or broker authority. On a non-rebalance session it emits current quantities as a
+   valid no-op plan. For each quantity intent, copy the emitted `source_data_fingerprint` and
+   `configuration_fingerprint`; `source_state_fingerprint` identifies the current planning evidence
+   but does not replace the authorization-bound intent fingerprints.
+5. Record all quantity intents through the existing guarded path, then run
+   `paper record-equivalence` and `paper assess-startup`. Stop for explicit user approval before any
+   activation or paper mutation.
+
 The first sustained campaign uses the Windows task `SystematicTradingLab-PaperObservation` as an
 external 10-minute timer. It pins the exact attested runtime and campaign ID, runs from the repository
 directory so the ignored `.env` loads, starts missed work when the computer becomes available, wakes
@@ -98,7 +167,9 @@ verified environment remain root-owned and non-writable by the service user. The
 unsafe links, multiple hard links, a writable repository root, or any protected runtime path that is
 not root-owned and non-group/world-writable. It never uses recursive `chown`.
 
-Use one dedicated, unprivileged service account. The repository and exact attested runtime must
+Use one dedicated, unprivileged service account. Authority-grade runtime verification must run as
+that account. Root may own the protected repository and build artifacts but is not an accepted
+verifier. The repository and exact attested runtime must
 already exist under `/opt/systematic-trading-lab`. Put the wheel and manifest beside the verified
 virtual environment:
 

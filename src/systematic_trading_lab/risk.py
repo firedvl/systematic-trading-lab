@@ -631,6 +631,26 @@ class RiskStore(ExecutionStore):
         evidence_report: dict[str, object],
         limits: RiskLimits,
     ) -> PaperAuthorization:
+        report = self._validate_paper_authorization(authorization, evidence_report, limits)
+        with self._connect() as connection:
+            try:
+                connection.execute("BEGIN IMMEDIATE")
+                result = self._record_paper_authorization(connection, authorization, report)
+                connection.commit()
+            except sqlite3.IntegrityError as error:
+                connection.rollback()
+                raise HoldoutAccessError("paper authorization already exists") from error
+            except Exception:
+                connection.rollback()
+                raise
+        return result
+
+    def _validate_paper_authorization(
+        self,
+        authorization: PaperAuthorization,
+        evidence_report: dict[str, object],
+        limits: RiskLimits,
+    ) -> dict[str, object]:
         report = validate_passing_qualification_evidence(evidence_report)
         expected = {
             **_evidence_bindings(report),
@@ -645,51 +665,48 @@ class RiskStore(ExecutionStore):
             or authorization.expires_at > limits.expires_at
         ):
             raise HoldoutAccessError("paper authorization is outside the risk configuration period")
+        return report
+
+    def _record_paper_authorization(
+        self,
+        connection: sqlite3.Connection,
+        authorization: PaperAuthorization,
+        report: dict[str, object],
+    ) -> PaperAuthorization:
         authorization_json = canonical_json(authorization)
         evidence_json = canonical_json(report)
-        with self._connect() as connection:
-            try:
-                connection.execute("BEGIN IMMEDIATE")
-                self._verify_connection(connection)
-                self._verify_emergency(connection)
-                self._verify_authorizations(connection)
-                row = connection.execute(
-                    """
-                    SELECT authorization_json, evidence_json FROM paper_authorizations
-                    WHERE authorization_id = ?
-                    """,
-                    (authorization.authorization_id,),
-                ).fetchone()
-                if row is not None:
-                    if row != (authorization_json, evidence_json):
-                        raise HoldoutAccessError("authorization ID is bound to different content")
-                    connection.commit()
-                    return authorization
-                sequence = self._append_event(
-                    connection,
-                    occurred_at=authorization.authorized_at,
-                    event_type="paper-authorized",
-                    entity_type="paper-authorization",
-                    entity_id=authorization.authorization_id,
-                    payload=canonicalize(authorization),
-                )
-                connection.execute(
-                    "INSERT INTO paper_authorizations VALUES (?, ?, ?, ?, ?)",
-                    (
-                        authorization.authorization_id,
-                        authorization.authorization_fingerprint,
-                        authorization_json,
-                        evidence_json,
-                        sequence,
-                    ),
-                )
-                connection.commit()
-            except sqlite3.IntegrityError as error:
-                connection.rollback()
-                raise HoldoutAccessError("paper authorization already exists") from error
-            except Exception:
-                connection.rollback()
-                raise
+        self._verify_connection(connection)
+        self._verify_emergency(connection)
+        self._verify_authorizations(connection)
+        row = connection.execute(
+            """
+            SELECT authorization_json, evidence_json FROM paper_authorizations
+            WHERE authorization_id = ?
+            """,
+            (authorization.authorization_id,),
+        ).fetchone()
+        if row is not None:
+            if row != (authorization_json, evidence_json):
+                raise HoldoutAccessError("authorization ID is bound to different content")
+            return authorization
+        sequence = self._append_event(
+            connection,
+            occurred_at=authorization.authorized_at,
+            event_type="paper-authorized",
+            entity_type="paper-authorization",
+            entity_id=authorization.authorization_id,
+            payload=canonicalize(authorization),
+        )
+        connection.execute(
+            "INSERT INTO paper_authorizations VALUES (?, ?, ?, ?, ?)",
+            (
+                authorization.authorization_id,
+                authorization.authorization_fingerprint,
+                authorization_json,
+                evidence_json,
+                sequence,
+            ),
+        )
         return authorization
 
     def get_paper_authorization(self, authorization_id: str) -> PaperAuthorization:

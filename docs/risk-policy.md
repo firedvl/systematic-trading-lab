@@ -1,6 +1,8 @@
 # Risk policy
 
-Current permitted execution authority is none. Offline research is the default; paper is a declared future mode but no broker writer exists. Live remains disabled.
+Current permitted execution authority is none. Offline research is the default. A guarded production
+paper writer exists, but no document, stored authorization, or current runtime state alone permits a
+broker call. Live remains disabled.
 
 Before paper execution, independent risk must enforce position and gross-exposure limits, daily loss and strategy drawdown, order-rate limits, stale and duplicate rejection, expected broker positions, price movement, regular sessions, emergency disable, cancel-all, and append-only events. Unknown configuration, data, broker state, or portfolio state rejects the operation. Research agents cannot weaken these controls.
 
@@ -35,8 +37,8 @@ The broker-free risk model now implements this envelope without supplying any fi
 context and configuration fingerprints and returns every failed gate plus the cash, order-notional,
 and gross-exposure capacity a later transaction must reserve. A risk decision alone grants no paper
 or broker authority. The execution database initializes emergency disable as active and journals it;
-missing or changed emergency state fails closed. Clearing it remains unavailable until the protected
-authorization, reconciliation, operator, and journal-proof checks exist.
+missing or changed emergency state fails closed. Clearing it requires the protected authorization,
+reconciliation, operator, and journal-proof checks.
 
 Paper authorization is now a separate immutable journaled record. It accepts only fingerprint-valid
 qualification evidence whose approved gates all pass, and it binds the evidence candidate's strategy,
@@ -100,6 +102,19 @@ production-attested IEX bids. Each checkpoint binds the latest position-settleme
 evidence, fill-event set, prior checkpoint, equity peak, and derived drawdown. A later fill requires
 new settlement before another checkpoint. The lineage remains read-only and grants no risk approval
 or capacity release.
+A continuation session cannot reuse the initial flat bootstrap. It first appends a new maximum-24-hour
+authorization and a declaration bound to the previous authorization's candidate, strategy version,
+parameters, code, dataset, universe, qualification, account, and risk configuration. Each authorization
+has at most one successor, sessions cannot overlap, and a continuation source must have a completed
+handoff. The new declaration has no usable risk context. Completion requires fresh
+production-attested portfolio and market evidence, exact settled positions, no open or nonterminal
+order, no active reservation, clear emergency state, and unchanged strategy and risk lineage. One
+transaction appends a non-flat expected snapshot,
+clean reconciliation baseline and evidence, strategy-equity baseline, continuation settlement,
+continuation equity checkpoint, and final handoff. The checkpoint carries prior fills, gross buy and
+sell notional, fill-cost reserve, strategy cash, positions, peak equity, and drawdown. It marks the
+carried positions at current bids without erasing adverse history. Historical authorizations and
+baselines remain immutable.
 Risk decisions now derive the temporal active reservation set inside their immediate transaction.
 They replace caller pending-capacity totals and bind the exact reservation IDs, fingerprints,
 aggregates, and count. A reservation is active only after creation, before expiry, and before any
@@ -126,21 +141,22 @@ Immediately before a quantity-target order can enter `submitting`, preflight red
 attested context under the submitter-claim transaction and reevaluates every gate without counting
 the order's own reservation twice. The staged delta must match current shares, and current order,
 cash, and gross-exposure amounts cannot exceed the existing reservation. The immutable proof binds
-the authorization, limits, intent, delta, submitter, paper origin, and rechecked context. No broker
-transport exists.
-Only the process that creates the preflight may invoke the fake submission callable. Existing proof
-means an attempt may already have reached the broker boundary, so replay requires lookup and full
-reconciliation. A failed call or invalid normalized result enters `submission-unknown`; it never
-releases capacity or retries.
-The Alpaca paper order adapter is test-only because its transport is mandatory and injected. It
-permits only the fixed paper `POST /v2/orders` request, validates the complete supported order echo,
-and returns normalized broker evidence. It has no production network fallback or live origin.
+the authorization, limits, intent, delta, submitter, paper origin, and rechecked context. The proof
+alone grants no broker transport authority.
+Only the process that creates the preflight may invoke the production paper submission coordinator.
+Existing proof means an attempt may already have reached the broker boundary, so replay requires
+lookup and full reconciliation. A failed call or invalid normalized result enters
+`submission-unknown`; it never releases capacity or retries.
+The production Alpaca paper order adapter permits only fixed-origin `POST /v2/orders`, validates the
+complete supported order echo, and returns normalized broker evidence. Tests use injected transports
+that cannot gain production provenance. No live origin exists.
 Cancellation intent is a one-shot record separate from broker order state. It binds the latest
 nonterminal event and never releases capacity. Unknown outcome remains unresolved until a later
 authoritative terminal event or reconciliation proves the result; no retry path exists.
-The injected cancellation adapter has no production fallback and permits only the fixed paper
-single-order DELETE target. Empty acceptance grants no capacity release. Timeout or invalid response
-records unknown outcome, and the immutable attempt blocks another call.
+The production cancellation adapter permits only the fixed paper single-order DELETE target after
+the same activation, runtime, attempt-cap, and transaction-bound checks. Tests use injected
+transports. Empty acceptance grants no capacity release. Timeout or invalid response records unknown
+outcome, and the immutable attempt blocks another call.
 Cancel-all is plan evidence only. It binds the complete current nonterminal local order set but adds
 no bulk mutation authority. Each order keeps its own capacity, attempt, unknown outcome, and terminal
 resolution.

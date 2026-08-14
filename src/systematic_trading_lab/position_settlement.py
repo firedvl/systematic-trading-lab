@@ -29,6 +29,7 @@ from .risk import RiskLimits
 _TERMINAL_STATES = {OrderState.FILLED, OrderState.CANCELED, OrderState.REJECTED}
 _FILL_SETTLEMENT_MODE = "fill-settlement-v1"
 _FLAT_BASELINE_SETTLEMENT_MODE = "flat-baseline-v1"
+_CONTINUATION_SETTLEMENT_MODE = "authorization-continuation-v1"
 
 
 @dataclass(frozen=True)
@@ -68,6 +69,7 @@ class PositionSettlementEvidence:
         if self.settlement_mode not in {
             _FILL_SETTLEMENT_MODE,
             _FLAT_BASELINE_SETTLEMENT_MODE,
+            _CONTINUATION_SETTLEMENT_MODE,
         }:
             raise ValueError("settlement mode is unsupported")
         if self.settlement_mode == _FILL_SETTLEMENT_MODE:
@@ -79,7 +81,7 @@ class PositionSettlementEvidence:
                 or self.reconciliation_evidence_id is not None
             ):
                 raise ValueError("fill settlement lineage is invalid")
-        elif (
+        elif self.settlement_mode == _FLAT_BASELINE_SETTLEMENT_MODE and (
             self.advance_fingerprint
             or self.terminal_orders
             or self.reconciliation_evidence_id is None
@@ -89,6 +91,24 @@ class PositionSettlementEvidence:
             )
         ):
             raise ValueError("flat baseline settlement lineage is invalid")
+        elif self.settlement_mode == _CONTINUATION_SETTLEMENT_MODE and (
+            (
+                self.advance_fingerprint
+                and (
+                    len(self.advance_fingerprint) != 64
+                    or any(
+                        character not in "0123456789abcdef"
+                        for character in self.advance_fingerprint
+                    )
+                )
+            )
+            or self.reconciliation_evidence_id is None
+            or len(self.reconciliation_evidence_id) != 64
+            or any(
+                character not in "0123456789abcdef" for character in self.reconciliation_evidence_id
+            )
+        ):
+            raise ValueError("continuation settlement lineage is invalid")
         if self.emergency_generation < 1:
             raise ValueError("emergency generation must be positive")
         if (
@@ -662,7 +682,7 @@ class PositionSettlementStore(BrokerEventStore):
                         and not recovery_clear
                     )
                 )
-            else:
+            elif evidence.settlement_mode == _FLAT_BASELINE_SETTLEMENT_MODE:
                 reconciliation_row = connection.execute(
                     "SELECT evidence_json, journal_sequence FROM reconciliation_evidence "
                     "WHERE evidence_id = ?",
@@ -696,6 +716,63 @@ class PositionSettlementStore(BrokerEventStore):
                         or reconciliation.unresolved_mutations != 0
                         or int(reconciliation_row[1]) <= int(emergency_event[2])
                     )
+            else:
+                reconciliation_row = connection.execute(
+                    "SELECT evidence_json FROM reconciliation_evidence WHERE evidence_id = ?",
+                    (evidence.reconciliation_evidence_id,),
+                ).fetchone()
+                expected_row = connection.execute(
+                    "SELECT s.snapshot_json FROM reconciliation_baselines b "
+                    "JOIN portfolio_snapshots s ON s.snapshot_id = "
+                    "json_extract(b.baseline_json, '$.expected_snapshot_id') "
+                    "WHERE b.baseline_id = ?",
+                    (evidence.baseline_id,),
+                ).fetchone()
+                handoff_row = connection.execute(
+                    "SELECT handoff_json FROM paper_continuation_handoffs "
+                    "WHERE authorization_id = ?",
+                    (evidence.authorization_id,),
+                ).fetchone()
+                execution_artifact = connection.execute(
+                    "SELECT 1 FROM capacity_reservations WHERE authorization_id = ? "
+                    "AND journal_sequence < ? LIMIT 1",
+                    (evidence.authorization_id, row[5]),
+                ).fetchone()
+                try:
+                    continuation_reconciliation = (
+                        None
+                        if reconciliation_row is None
+                        else _decode_reconciliation(json.loads(reconciliation_row[0]))
+                    )
+                    continuation_expected = (
+                        None
+                        if expected_row is None
+                        else _decode_snapshot(json.loads(expected_row[0]))
+                    )
+                    continuation_handoff = (
+                        None if handoff_row is None else json.loads(handoff_row[0])
+                    )
+                except (json.JSONDecodeError, ValueError) as error:
+                    raise JournalIntegrityError("stored position settlement is invalid") from error
+                mode_invalid = (
+                    not isinstance(attestation, _PaperSnapshotAttestationV2)
+                    or continuation_reconciliation is None
+                    or continuation_expected is None
+                    or not isinstance(continuation_handoff, dict)
+                    or execution_artifact is not None
+                    or advance_row is not None
+                    or later_advance is not None
+                    or continuation_expected.positions != snapshot.positions
+                    or bool(continuation_expected.open_orders)
+                    or continuation_reconciliation.baseline_id != evidence.baseline_id
+                    or continuation_reconciliation.observed_snapshot_id
+                    != evidence.observed_snapshot_id
+                    or not continuation_reconciliation.result.clean
+                    or continuation_reconciliation.unresolved_mutations != 0
+                    or continuation_handoff.get("settlement_proof_id") != evidence.proof_id
+                    or continuation_handoff.get("settlement_proof_fingerprint")
+                    != evidence.proof_fingerprint
+                )
             if common_invalid or mode_invalid:
                 raise JournalIntegrityError("position settlement does not match its evidence")
             result[evidence.proof_id] = evidence

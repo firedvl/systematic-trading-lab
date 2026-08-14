@@ -50,6 +50,8 @@ _KNOWN_EVENT_TYPES = {
     "paper-observation-campaign-started",
     "paper-observation-recorded",
     "paper-equivalence-recorded",
+    "paper-continuation-declared",
+    "paper-continuation-completed",
 }
 _FINGERPRINT = re.compile(r"[0-9a-f]{64}")
 _SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,15}")

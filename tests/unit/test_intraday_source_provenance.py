@@ -39,6 +39,15 @@ from systematic_trading_lab.runtime_build import (
 
 NOW = datetime(2026, 8, 13, tzinfo=UTC)
 CAMPAIGN_V2_SURFACE = provenance._load_reviewed_surface_manifest(INTRADAY_CAMPAIGN_V2_ID)
+CURRENT_V2_SURFACE_MISMATCHES = (
+    "systematic_trading_lab/cli.py",
+    "systematic_trading_lab/execution.py",
+    "systematic_trading_lab/position_settlement.py",
+    "systematic_trading_lab/reconciliation.py",
+    "systematic_trading_lab/risk.py",
+    "systematic_trading_lab/strategies.py",
+    "systematic_trading_lab/strategy_equity.py",
+)
 
 
 def _wheel(
@@ -100,12 +109,12 @@ def _environment() -> IntradayRuntimeEnvironmentIdentity:
     )
 
 
-def test_reviewed_campaign_v2_surface_remains_reconstructable(tmp_path: Path) -> None:
+def test_current_build_differs_from_closed_campaign_v2_surface(tmp_path: Path) -> None:
     comparison = _surface_comparison(_wheel(tmp_path), INTRADAY_CAMPAIGN_V2_ID)
 
-    assert comparison.equivalent
-    assert comparison.mismatches == ()
-    assert comparison.reviewed_component_hashes == comparison.observed_component_hashes
+    assert not comparison.equivalent
+    assert comparison.mismatches == CURRENT_V2_SURFACE_MISMATCHES
+    assert comparison.reviewed_component_hashes != comparison.observed_component_hashes
     assert comparison.reviewed_surface_fingerprint
     assert comparison.surface_manifest_fingerprint
 
@@ -124,9 +133,11 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "3789c1c2549065cc40a9fcc362435a17c75d0cf48f8bb570b146a18fa511ecb6"
     )
     assert len(CAMPAIGN_V2_SURFACE.hashes) == 49
-    assert dict(CAMPAIGN_V2_SURFACE.hashes) == {
-        path: observed[path] for path, _ in CAMPAIGN_V2_SURFACE.hashes
-    }
+    assert {
+        path
+        for path, reviewed_hash in CAMPAIGN_V2_SURFACE.hashes
+        if observed[path] != reviewed_hash
+    } == set(CURRENT_V2_SURFACE_MISMATCHES)
     assert set(observed) - dict(CAMPAIGN_V2_SURFACE.hashes).keys() == {
         "systematic_trading_lab/intraday_exposure.py",
         "systematic_trading_lab/intraday_v3.py",
@@ -136,6 +147,8 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "systematic_trading_lab/intraday_v3_registry.py",
         "systematic_trading_lab/intraday_v3_runner.py",
         "systematic_trading_lab/intraday_v3_source_provenance.py",
+        "systematic_trading_lab/paper_continuation.py",
+        "systematic_trading_lab/paper_planning.py",
         "systematic_trading_lab/public_cli.py",
         "systematic_trading_lab/rapid_data.py",
         "systematic_trading_lab/rapid_research.py",
@@ -604,7 +617,8 @@ def test_assessment_uses_attested_build_and_installed_runtime_without_timestamps
     )
 
     assert calls == [("build", NOW), ("installed", NOW)]
-    assert assessment.surface_comparison.equivalent
+    assert not assessment.surface_comparison.equivalent
+    assert assessment.surface_comparison.mismatches == CURRENT_V2_SURFACE_MISMATCHES
     assert assessment.build_identity == IntradayExecutionBuildIdentity(
         source_commit="a" * 40,
         wheel_sha256="b" * 64,
@@ -698,7 +712,8 @@ def test_assessment_retains_attestation_verifier_identity(
     )
 
     assert assessment.build_identity.attestation_verifier == verifier
-    assert assessment.surface_comparison.equivalent
+    assert not assessment.surface_comparison.equivalent
+    assert assessment.surface_comparison.mismatches == CURRENT_V2_SURFACE_MISMATCHES
 
 
 def test_source_bound_report_preserves_sealed_provenance_and_changes_fingerprint() -> None:
