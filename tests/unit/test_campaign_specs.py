@@ -1,20 +1,30 @@
 import copy
 import json
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
 
+import systematic_trading_lab.campaign_specs as campaign_specs
 from systematic_trading_lab.calendar import expected_bar_timestamps
 from systematic_trading_lab.campaign_specs import (
+    RAPID_002_CAMPAIGN_ID,
     REVIEWED_INTRADAY_UNIVERSE_FINGERPRINT,
     REVIEWED_INTRADAY_UNIVERSE_ID,
     build_planned_intraday_experiment,
     build_planned_intraday_experiments,
+    build_rapid_002_controlled_plan,
     load_intraday_research_campaign_plan,
     load_training_campaign_plan,
+    parse_controlled_validation_campaign_plan,
     parse_intraday_research_campaign_plan,
+    validate_rapid_002_control_binding,
+    validate_rapid_002_dataset_manifest,
+    verify_rapid_002_candidate_export,
 )
 from systematic_trading_lab.domain import Timeframe
+from systematic_trading_lab.qualification import load_qualification_proposal
+from systematic_trading_lab.qualification_evidence import load_evidence_manifest
 from systematic_trading_lab.universe import load_intraday_universe
 
 INTRADAY_V1_PLAN = Path("config/research/intraday-campaign-v1.json")
@@ -134,6 +144,184 @@ def test_training_plan_accepts_strategic_allocation(tmp_path: Path) -> None:
     plan = load_training_campaign_plan(write_plan(tmp_path / "allocation.json", payload))
 
     assert plan.candidates[1].parameters == {"rebalance_every": 21}
+
+
+def _rapid_002_plan(
+    monkeypatch: pytest.MonkeyPatch,
+) -> campaign_specs.ControlledValidationCampaignPlan:
+    source = campaign_specs._rapid_002_source_payload("f" * 40)
+    monkeypatch.setattr(campaign_specs, "rapid_002_execution_source_identity", lambda: source)
+    return build_rapid_002_controlled_plan()
+
+
+def test_rapid_002_plan_freezes_exact_28_record_execution_matrix(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    plan = _rapid_002_plan(monkeypatch)
+    reservations = {item.spec.experiment_id: item for item in plan.candidates}
+    expected_ids = {
+        *(f"r2-rmm-base-{year}" for year in (2023, 2024, 2025)),
+        *(f"r2-fixed-weight-{year}" for year in (2023, 2024, 2025)),
+        *(
+            f"r2-rmm-{tag}-{year}"
+            for tag in (
+                "lookback30",
+                "lookback50",
+                "volatility30",
+                "volatility50",
+                "cadence5",
+                "cadence15",
+            )
+            for year in (2023, 2024, 2025)
+        ),
+        "r2-rmm-cost2x-2025",
+        "r2-rmm-delay2-2025",
+        "r2-rmm-stress-a-2025",
+        "r2-rmm-stress-b-2025",
+    }
+
+    assert plan.campaign_id == RAPID_002_CAMPAIGN_ID
+    assert len(plan.candidates) == plan.search_budget == 28
+    assert {item.ordinal for item in plan.candidates} == set(range(1, 29))
+    assert set(reservations) == expected_ids
+    assert all(item.spec.split.value == "validation" for item in plan.candidates)
+    assert all(item.spec.code_commit == "f" * 40 for item in plan.candidates)
+    assert all(
+        (item.initial_cash, item.spec.random_seed) == (Decimal("100000"), 0)
+        for item in plan.candidates
+    )
+
+    normal_ids = expected_ids - {
+        "r2-rmm-cost2x-2025",
+        "r2-rmm-delay2-2025",
+        "r2-rmm-stress-a-2025",
+        "r2-rmm-stress-b-2025",
+    }
+    assert {
+        (
+            reservations[item].slippage_bps,
+            reservations[item].commission_bps,
+            reservations[item].fill_delay_bars,
+        )
+        for item in normal_ids
+    } == {(Decimal("5"), Decimal("1"), 1)}
+    assert (
+        reservations["r2-rmm-cost2x-2025"].slippage_bps,
+        reservations["r2-rmm-cost2x-2025"].commission_bps,
+        reservations["r2-rmm-cost2x-2025"].fill_delay_bars,
+    ) == (Decimal("10"), Decimal("2"), 1)
+    assert (
+        reservations["r2-rmm-delay2-2025"].slippage_bps,
+        reservations["r2-rmm-delay2-2025"].commission_bps,
+        reservations["r2-rmm-delay2-2025"].fill_delay_bars,
+    ) == (Decimal("5"), Decimal("1"), 2)
+    assert (
+        reservations["r2-rmm-stress-a-2025"].slippage_bps,
+        reservations["r2-rmm-stress-a-2025"].commission_bps,
+        reservations["r2-rmm-stress-a-2025"].fill_delay_bars,
+    ) == (Decimal("10"), Decimal("2"), 2)
+    assert (
+        reservations["r2-rmm-stress-b-2025"].slippage_bps,
+        reservations["r2-rmm-stress-b-2025"].commission_bps,
+        reservations["r2-rmm-stress-b-2025"].fill_delay_bars,
+    ) == (Decimal("20"), Decimal("5"), 3)
+
+    validate_rapid_002_control_binding(
+        plan,
+        load_evidence_manifest(
+            Path("config/research/qualification-evidence-rapid-002-rmm-v1.json")
+        ),
+        load_qualification_proposal(
+            Path("config/research/qualification-proposal-rapid-002-rmm-v1.json")
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    "defect",
+    (
+        "parameter",
+        "cost",
+        "delay",
+        "manifest",
+        "proposal",
+        "source",
+        "dataset",
+        "authority",
+        "candidate-count",
+    ),
+)
+def test_rapid_002_plan_rejects_any_frozen_control_mutation(
+    monkeypatch: pytest.MonkeyPatch, defect: str
+) -> None:
+    payload = copy.deepcopy(_rapid_002_plan(monkeypatch).payload)
+    candidates = payload["candidates"]
+    qualification = payload["qualification"]
+    source = payload["execution_source"]
+    dataset = payload["dataset"]
+    authorities = payload["authorities"]
+    assert isinstance(candidates, list) and isinstance(candidates[0], dict)
+    assert isinstance(qualification, dict)
+    assert isinstance(source, dict)
+    assert isinstance(dataset, dict)
+    assert isinstance(authorities, dict)
+    if defect == "parameter":
+        parameters = candidates[0]["parameters"]
+        assert isinstance(parameters, dict)
+        parameters["lookback"] = 41
+    elif defect == "cost":
+        candidates[0]["slippage_bps"] = "6"
+    elif defect == "delay":
+        candidates[0]["fill_delay_bars"] = 2
+    elif defect == "manifest":
+        qualification["evidence_manifest_fingerprint"] = "0" * 64
+    elif defect == "proposal":
+        qualification["proposal_fingerprint"] = "0" * 64
+    elif defect == "source":
+        source["strategy_sha256"] = "0" * 64
+    elif defect == "dataset":
+        dataset["symbols"] = ["SPY"]
+    elif defect == "authority":
+        authorities["paper_execution"] = True
+    else:
+        candidates.pop()
+
+    with pytest.raises(ValueError, match="plan differs"):
+        parse_controlled_validation_campaign_plan(payload)
+
+
+def test_rapid_002_dataset_and_candidate_artifacts_fail_closed(tmp_path: Path) -> None:
+    manifest: dict[str, object] = {
+        "identity": {
+            "dataset_id": campaign_specs.RAPID_002_DATASET_ID,
+            "fingerprint": campaign_specs.RAPID_002_DATASET_FINGERPRINT,
+        },
+        "provider": "alpaca-historical-v2",
+        "symbols": [{"value": symbol} for symbol in ("SPY", "QQQ", "IWM", "TLT", "GLD")],
+        "timeframe": "1d",
+        "requested_range": {
+            "start": "2020-07-27T00:00:00Z",
+            "end": "2026-07-31T00:00:00Z",
+        },
+        "actual_range": {
+            "start": "2020-07-27T00:00:00Z",
+            "end": "2026-07-31T00:00:00Z",
+        },
+        "adjustment_policy": "provider-adjusted-all-v1",
+        "calendar_policy": "XNYS-v1",
+        "universe_id": campaign_specs.RAPID_002_UNIVERSE_ID,
+        "universe_fingerprint": campaign_specs.RAPID_002_UNIVERSE_FINGERPRINT,
+    }
+    validate_rapid_002_dataset_manifest(manifest)
+    changed = copy.deepcopy(manifest)
+    changed["adjustment_policy"] = "unknown"
+    with pytest.raises(ValueError, match="dataset manifest differs"):
+        validate_rapid_002_dataset_manifest(changed)
+
+    invalid_export = tmp_path / "candidate.json"
+    invalid_export.write_text("{}\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="SHA-256 differs"):
+        verify_rapid_002_candidate_export(invalid_export)
 
 
 def test_intraday_campaign_v1_reserves_the_complete_fixed_matrix() -> None:

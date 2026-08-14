@@ -5,7 +5,12 @@ from typing import cast
 
 import pytest
 
-from systematic_trading_lab.campaign_specs import load_intraday_research_campaign_plan
+import systematic_trading_lab.campaign_specs as campaign_specs
+import systematic_trading_lab.cli as cli
+from systematic_trading_lab.campaign_specs import (
+    RAPID_002_CAMPAIGN_ID,
+    load_intraday_research_campaign_plan,
+)
 from systematic_trading_lab.cli import parser, run
 from systematic_trading_lab.config import Settings
 from systematic_trading_lab.datasets import (
@@ -72,6 +77,78 @@ def test_cli_inspects_intraday_plan_without_creating_runtime_state(
     assert result["reserved_candidate_ordinals"] == list(range(1, 61))
     assert result["protected_holdout_authority"] is False
     assert not runtime_home.exists()
+
+
+def test_cli_verifies_artifacts_before_atomically_sealing_rapid_002(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = campaign_specs._rapid_002_source_payload("f" * 40)
+    monkeypatch.setattr(campaign_specs, "rapid_002_execution_source_identity", lambda: source)
+    monkeypatch.setattr(
+        cli,
+        "verify_rapid_002_candidate_export",
+        lambda path: {
+            "path": str(path),
+            "candidate_id": campaign_specs.RAPID_002_CANDIDATE_ID,
+            "candidate_fingerprint": campaign_specs.RAPID_002_CANDIDATE_FINGERPRINT,
+            "file_sha256": campaign_specs.RAPID_002_CANDIDATE_EXPORT_SHA256,
+            "authority": {},
+        },
+    )
+
+    def validate(self: DatasetService, dataset_id: str) -> dict[str, object]:
+        return {"valid": dataset_id == campaign_specs.RAPID_002_DATASET_ID}
+
+    def describe(self: DatasetService, dataset_id: str) -> dict[str, object]:
+        assert dataset_id == campaign_specs.RAPID_002_DATASET_ID
+        return {
+            "identity": {
+                "dataset_id": campaign_specs.RAPID_002_DATASET_ID,
+                "fingerprint": campaign_specs.RAPID_002_DATASET_FINGERPRINT,
+            },
+            "provider": "alpaca-historical-v2",
+            "symbols": [{"value": symbol} for symbol in ("SPY", "QQQ", "IWM", "TLT", "GLD")],
+            "timeframe": "1d",
+            "requested_range": {
+                "start": "2020-07-27T00:00:00Z",
+                "end": "2026-07-31T00:00:00Z",
+            },
+            "actual_range": {
+                "start": "2020-07-27T00:00:00Z",
+                "end": "2026-07-31T00:00:00Z",
+            },
+            "adjustment_policy": "provider-adjusted-all-v1",
+            "calendar_policy": "XNYS-v1",
+            "universe_id": campaign_specs.RAPID_002_UNIVERSE_ID,
+            "universe_fingerprint": campaign_specs.RAPID_002_UNIVERSE_FINGERPRINT,
+        }
+
+    monkeypatch.setattr(DatasetService, "validate", validate)
+    monkeypatch.setattr(DatasetService, "describe", describe)
+    arguments = parser().parse_args(
+        [
+            "experiment",
+            "plan-rapid-002",
+            "--candidate-export",
+            str(tmp_path / "candidate.json"),
+            "--evidence-manifest",
+            "config/research/qualification-evidence-rapid-002-rmm-v1.json",
+            "--proposal",
+            "config/research/qualification-proposal-rapid-002-rmm-v1.json",
+        ]
+    )
+
+    assert run(arguments, Settings(TradingMode.OFFLINE, tmp_path)) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["campaign_id"] == RAPID_002_CAMPAIGN_ID
+    assert result["declared_candidates"] == 28
+    assert result["independent_evaluation_authority"] is False
+    assert result["paper_authority"] is False
+    records = ExperimentRegistry(StorageLayout(tmp_path).experiments).list(RAPID_002_CAMPAIGN_ID)
+    assert len(records) == 28
+    assert {record["status"] for record in records} == {"pending"}
 
 
 def test_cli_seals_campaign_v2_and_blocks_arbitrary_campaign_runs(

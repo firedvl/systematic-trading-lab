@@ -1,4 +1,5 @@
 import json
+import sqlite3
 from dataclasses import replace
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -6,10 +7,16 @@ from pathlib import Path
 
 import pytest
 
+import systematic_trading_lab.campaign_specs as campaign_specs
+from systematic_trading_lab.campaign_specs import (
+    RAPID_002_CAMPAIGN_ID,
+    build_rapid_002_controlled_plan,
+)
 from systematic_trading_lab.cli import parser, run
 from systematic_trading_lab.config import Settings
 from systematic_trading_lab.domain import TradingMode
 from systematic_trading_lab.experiments import (
+    ExperimentError,
     ExperimentRegistry,
     ExperimentSpec,
     ExperimentSplit,
@@ -652,6 +659,139 @@ def test_rapid_002_manifest_freezes_exact_28_record_ledger() -> None:
         "stress_b_return",
         "stress_b_return_retention",
     )
+
+
+def _rapid_002_registry(
+    path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[ExperimentRegistry, campaign_specs.ControlledValidationCampaignPlan]:
+    source = campaign_specs._rapid_002_source_payload("f" * 40)
+    monkeypatch.setattr(campaign_specs, "rapid_002_execution_source_identity", lambda: source)
+    plan = build_rapid_002_controlled_plan()
+    registry = ExperimentRegistry(path)
+    registry.create_planned_campaign(plan.payload)
+    return registry, plan
+
+
+def _complete_rapid_002_plan(
+    registry: ExperimentRegistry,
+    plan: campaign_specs.ControlledValidationCampaignPlan,
+) -> None:
+    for reservation in plan.candidates:
+        role = reservation.role
+        total_return = (
+            Decimal("0.05")
+            if role == "benchmark"
+            else Decimal("0.06")
+            if role.startswith("neighbor-")
+            else Decimal("0.09")
+            if role in {"isolated-cost", "isolated-delay", "stress-a", "stress-b"}
+            else Decimal("0.10")
+        )
+        metrics: dict[str, object] = {
+            "total_return": total_return,
+            "sharpe_ratio": Decimal("1"),
+            "max_drawdown": Decimal("0.10"),
+            "average_gross_exposure": Decimal("0.8"),
+            "top_5_session_profit_share": Decimal("0.2"),
+            "top_instrument_profit_share": Decimal("0.4"),
+            "up_regime_sessions": 120,
+            "down_regime_sessions": 100,
+            "turnover": Decimal("10"),
+            "trade_count": 40 if role == "base" else 1,
+        }
+        spec = reservation.spec
+        report: dict[str, object] = {
+            "schema_version": "backtest-report-v2",
+            "results": {spec.experiment_id: metrics},
+            "comparisons": {},
+        }
+        report["report_fingerprint"] = fingerprint(report)
+        report_path = registry.path.parent / f"{spec.experiment_id}.json"
+        report_path.write_text(canonical_json(report) + "\n", encoding="utf-8")
+        registry._claim_planned(spec)
+        registry._complete_planned(
+            spec,
+            metrics,
+            [str(report_path)],
+            [str(report["report_fingerprint"])],
+        )
+
+
+def test_rapid_002_qualification_requires_and_reports_the_exact_plan(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry, plan = _rapid_002_registry(tmp_path / "experiments.sqlite3", monkeypatch)
+    _complete_rapid_002_plan(registry, plan)
+    manifest = load_evidence_manifest(
+        Path("config/research/qualification-evidence-rapid-002-rmm-v1.json")
+    )
+    proposal = load_qualification_proposal(
+        Path("config/research/qualification-proposal-rapid-002-rmm-v1.json")
+    )
+
+    report = build_evidence_reports(registry, manifest, proposal)[0]
+    qualification = report["qualification"]
+    assert isinstance(qualification, dict)
+
+    assert report["campaign_plan_fingerprint"] == plan.plan_fingerprint
+    assert report["source_experiment_ids"] == sorted(
+        reservation.spec.experiment_id for reservation in plan.candidates
+    )
+    assert qualification["state"] == "qualified"
+    assert all(
+        record["campaign_plan_fingerprint"] == plan.plan_fingerprint
+        for record in registry.list(RAPID_002_CAMPAIGN_ID)
+    )
+
+
+@pytest.mark.parametrize("defect", ("missing", "extra", "non-plan-bound"))
+def test_rapid_002_qualification_rejects_any_plan_closure_defect(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, defect: str
+) -> None:
+    registry, plan = _rapid_002_registry(tmp_path / "experiments.sqlite3", monkeypatch)
+    first = plan.candidates[0].spec
+    with sqlite3.connect(registry.path) as connection:
+        if defect == "missing":
+            connection.execute("DROP TRIGGER rapid_002_reservation_no_delete")
+            connection.execute(
+                "DELETE FROM experiments WHERE experiment_id = ?", (first.experiment_id,)
+            )
+        elif defect == "extra":
+            connection.execute("DROP TRIGGER rapid_002_no_post_seal_reservation")
+            extra = replace(first, experiment_id="unplanned-extra")
+            connection.execute(
+                """
+                INSERT INTO experiments
+                (experiment_id, campaign_id, spec_json, split, status, qualification_state,
+                 created_at, campaign_plan_fingerprint)
+                VALUES (?, ?, ?, ?, 'pending', 'not-evaluated', ?, ?)
+                """,
+                (
+                    extra.experiment_id,
+                    RAPID_002_CAMPAIGN_ID,
+                    canonical_json(extra),
+                    extra.split.value,
+                    "2026-08-14T00:00:00+00:00",
+                    plan.plan_fingerprint,
+                ),
+            )
+        else:
+            connection.execute("DROP TRIGGER rapid_002_reservation_no_identity_update")
+            connection.execute(
+                "UPDATE experiments SET campaign_plan_fingerprint = NULL WHERE experiment_id = ?",
+                (first.experiment_id,),
+            )
+
+    with pytest.raises(ExperimentError, match="controlled validation"):
+        build_evidence_reports(
+            registry,
+            load_evidence_manifest(
+                Path("config/research/qualification-evidence-rapid-002-rmm-v1.json")
+            ),
+            load_qualification_proposal(
+                Path("config/research/qualification-proposal-rapid-002-rmm-v1.json")
+            ),
+        )
 
 
 @pytest.mark.parametrize(

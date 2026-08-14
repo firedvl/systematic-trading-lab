@@ -12,6 +12,12 @@ A qualification evidence manifest names each candidate's base validation folds, 
 
 The Rapid-002 candidate manifest may also name exactly Stress A and Stress B as combined-cost-and-delay variants. Both must link to the named base fold, preserve source, strategy, dataset, universe, parameters, period, and seed, and match their exact cost and execution model versions. Their returns and same-base return retentions enter four visible disqualifying gates. This candidate-specific addition does not change the 17 approved daily gates or historical manifest fingerprints.
 
+Rapid-002 qualification also requires its stored `controlled-validation-campaign-plan-v1` fingerprint,
+the exact manifest and proposal fingerprints bound by that plan, and exact closure over all 28 stored
+reservations. Every source record must carry the same plan fingerprint. Missing, extra, substituted,
+or non-plan-bound records stop evaluation. The plan fingerprint appears in the candidate-specific
+qualification report; historical daily reports and fingerprints do not change.
+
 A holdout-run authorization can be stored only after the system rebuilds evidence from the registry and obtains `qualified` from an approved proposal with every gate approved and passing. The authorization binds one candidate ID, code revision, strategy version and family, parameters, cost and execution models, dataset and universe provenance, and the end of validation. A holdout must match those fields, name the qualified candidate as its parent, and begin after validation. Creating it consumes the authorization in the same transaction. Only then may the controlled runner read the exact holdout range. A load or simulation failure remains failed evidence and does not restore the authorization. The runner does not return holdout metrics or write a readable report. The candidate, manifest, proposal, and source experiment set can authorize at most one holdout even if campaign bookkeeping later changes the evidence fingerprint. A completed holdout can receive only one logged read event. A separate paper authorization revalidates the same evidence and also binds the account, reviewed risk configuration, reviewer, reason, and expiry; it grants no broker authority by itself.
 
 `experiment review-holdout` refuses an unapproved proposal before logging access. For an approved

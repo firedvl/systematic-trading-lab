@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import subprocess
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-from .calendar import expected_bar_timestamps
+from .calendar import expected_bar_timestamps, expected_sessions
+from .config import non_broker_subprocess_environment
 from .domain import Timeframe
 from .experiments import ExperimentSpec, ExperimentSplit, IntradayExperimentSpec
-from .fingerprints import fingerprint
+from .fingerprints import canonical_json, fingerprint
 from .intraday_campaigns import get_intraday_campaign_contract
 from .intraday_qualification import REVIEWED_POLICY_FINGERPRINT
 from .providers import ALPACA_HISTORICAL_PROVIDER_NAME
@@ -146,6 +149,53 @@ REVIEWED_INTRADAY_UNIVERSE_FINGERPRINT = (
     "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9"
 )
 
+RAPID_002_CAMPAIGN_ID = "rapid-002-rmm-40-40-10-controlled-v1"
+RAPID_002_CANDIDATE_ID = "rr-a480ff073a90e448c8b2"
+RAPID_002_CANDIDATE_FINGERPRINT = "1efe7aa4043fd6dcab7e34025e70b1a45c03a5d2ca6e15f520af3ef9a4742bf9"
+RAPID_002_CANDIDATE_EXPORT_SHA256 = (
+    "63a8c70b8e5d2cbb0142a5ccb0909a0ab739a543bf5b000930b32f6589c072ba"
+)
+RAPID_002_DATASET_ID = "508c606884112c92402707c30b56fc9d8c07cfc1c01c64f8538a6494888eeeca"
+RAPID_002_DATASET_FINGERPRINT = "4fe62ab615ae713e23926da940256b9a728db39c2bc60c028df6d1136be49494"
+RAPID_002_UNIVERSE_ID = "liquid-etfs-v1"
+RAPID_002_UNIVERSE_FINGERPRINT = "cb0827988973c61362f2014c3f20fde53081217a32fa70f04a5a9e1a48b01985"
+RAPID_002_EVIDENCE_MANIFEST_ID = "qualification-evidence-rapid-002-rmm-v1"
+RAPID_002_EVIDENCE_MANIFEST_FINGERPRINT = (
+    "b997afb53fdf05ef26be72934fb3318cb582ba503f4527fa9ca96f88f7b72693"
+)
+RAPID_002_PROPOSAL_ID = "qualification-gates-rapid-002-rmm-v1"
+RAPID_002_PROPOSAL_FINGERPRINT = "fa168aa162de2d7e244d32bcc980d5e3c3c7baf127562b17c0aa40a8cc955fb0"
+RAPID_002_BASE_COMMIT = "07fc39e542c468cd3592f41bf13a9e1cb08ea276"
+RAPID_002_SOURCE_PRESERVATION_COMMIT = "3025987959057642639fed313424497217c45f44"
+RAPID_002_CONTROL_BINDING_COMMIT = "94049895f39d1b19c36e0dd7f375145e63d5aa06"
+RAPID_002_SOURCE_FINGERPRINT = "fc927594a1ac7efb5cf7dadd9667c5d00b17d2cb3c380841fb22f7e0fb336d16"
+RAPID_002_STRATEGY_PATH = "src/systematic_trading_lab/strategies.py"
+RAPID_002_STRATEGY_SHA256 = "4be05a18badf460f60016f9401206d5dcf3c89ea270835991f11aae3754085af"
+
+_RAPID_002_AUTHORITY = {
+    "independent_evaluation": False,
+    "protected_holdout": False,
+    "paper_execution": False,
+    "broker_writes": False,
+    "live_execution": False,
+    "automatic_promotion": False,
+    "v3_access": False,
+}
+_RAPID_002_CANDIDATE_AUTHORITY = {
+    "controlled_research_evidence": False,
+    "qualification": False,
+    "protected_holdout": False,
+    "paper_execution": False,
+    "broker_writes": False,
+    "live_execution": False,
+    "automatic_promotion": False,
+}
+_RAPID_002_FOLDS = {
+    2023: ("2023-01-03T00:00:00Z", "2023-12-29T00:00:00Z", 250),
+    2024: ("2024-01-02T00:00:00Z", "2024-12-31T00:00:00Z", 252),
+    2025: ("2025-01-02T00:00:00Z", "2025-12-31T00:00:00Z", 250),
+}
+
 
 @dataclass(frozen=True)
 class TrainingCampaignPlan:
@@ -158,6 +208,32 @@ class TrainingCampaignPlan:
     universe_id: str
     universe_fingerprint: str
     candidates: tuple[ExperimentSpec, ...]
+    payload: Mapping[str, object]
+    plan_fingerprint: str
+
+
+@dataclass(frozen=True)
+class ControlledValidationReservation:
+    ordinal: int
+    role: str
+    spec: ExperimentSpec
+    initial_cash: Decimal
+    slippage_bps: Decimal
+    commission_bps: Decimal
+    fill_delay_bars: int
+
+
+@dataclass(frozen=True)
+class ControlledValidationCampaignPlan:
+    campaign_id: str
+    name: str
+    search_budget: int
+    execution_source: Mapping[str, object]
+    evidence_manifest_id: str
+    evidence_manifest_fingerprint: str
+    proposal_id: str
+    proposal_fingerprint: str
+    candidates: tuple[ControlledValidationReservation, ...]
     payload: Mapping[str, object]
     plan_fingerprint: str
 
@@ -305,6 +381,522 @@ def parse_training_campaign_plan(raw: object) -> TrainingCampaignPlan:
         payload=raw,
         plan_fingerprint=fingerprint(raw),
     )
+
+
+def parse_daily_campaign_plan(
+    raw: object,
+) -> TrainingCampaignPlan | ControlledValidationCampaignPlan:
+    if (
+        isinstance(raw, dict)
+        and raw.get("schema_version") == "controlled-validation-campaign-plan-v1"
+    ):
+        return parse_controlled_validation_campaign_plan(raw)
+    return parse_training_campaign_plan(raw)
+
+
+def build_rapid_002_controlled_plan() -> ControlledValidationCampaignPlan:
+    source = rapid_002_execution_source_identity()
+    commit = source["execution_code_commit"]
+    assert isinstance(commit, str)
+    return parse_controlled_validation_campaign_plan(_rapid_002_plan_payload(commit))
+
+
+def parse_controlled_validation_campaign_plan(
+    raw: object,
+) -> ControlledValidationCampaignPlan:
+    if not isinstance(raw, dict):
+        raise ValueError("controlled validation campaign plan must be an object")
+    source = raw.get("execution_source")
+    if not isinstance(source, dict):
+        raise ValueError("controlled validation execution source is malformed")
+    commit = _git_sha(source.get("execution_code_commit"), "controlled execution commit")
+    expected = _rapid_002_plan_payload(commit)
+    if raw != expected:
+        raise ValueError("Rapid-002 controlled validation plan differs")
+    for year, (start, end, count) in _RAPID_002_FOLDS.items():
+        sessions = expected_sessions(_utc(start), _utc(end))
+        if len(sessions) != count or sessions[0].year != year or sessions[-1].year != year:
+            raise ValueError("Rapid-002 XNYS validation folds differ")
+
+    reservations: list[ControlledValidationReservation] = []
+    for candidate in _rapid_002_candidates():
+        parameters = candidate["parameters"]
+        ordinal = candidate["ordinal"]
+        fill_delay_bars = candidate["fill_delay_bars"]
+        assert isinstance(parameters, dict)
+        assert type(ordinal) is int
+        assert type(fill_delay_bars) is int
+        spec = ExperimentSpec(
+            experiment_id=str(candidate["experiment_id"]),
+            campaign_id=RAPID_002_CAMPAIGN_ID,
+            strategy_id=str(candidate["strategy_id"]),
+            strategy_version="1",
+            strategy_family=str(candidate["strategy_family"]),
+            code_commit=commit,
+            dataset_id=RAPID_002_DATASET_ID,
+            dataset_fingerprint=RAPID_002_DATASET_FINGERPRINT,
+            universe_id=RAPID_002_UNIVERSE_ID,
+            universe_fingerprint=RAPID_002_UNIVERSE_FINGERPRINT,
+            parameters=parameters,
+            cost_model_version=str(candidate["cost_model_version"]),
+            execution_model_version=str(candidate["execution_model_version"]),
+            split=ExperimentSplit.VALIDATION,
+            start_timestamp=_utc(candidate["start_timestamp"]),
+            end_timestamp=_utc(candidate["end_timestamp"]),
+            random_seed=0,
+            creation_reason=str(candidate["creation_reason"]),
+            parent_candidate=(
+                None
+                if candidate["parent_candidate"] is None
+                else str(candidate["parent_candidate"])
+            ),
+        )
+        reservations.append(
+            ControlledValidationReservation(
+                ordinal=ordinal,
+                role=str(candidate["role"]),
+                spec=spec,
+                initial_cash=Decimal("100000"),
+                slippage_bps=Decimal(str(candidate["slippage_bps"])),
+                commission_bps=Decimal(str(candidate["commission_bps"])),
+                fill_delay_bars=fill_delay_bars,
+            )
+        )
+    return ControlledValidationCampaignPlan(
+        campaign_id=RAPID_002_CAMPAIGN_ID,
+        name="Rapid-002 risk-managed momentum controlled validation",
+        search_budget=28,
+        execution_source=source,
+        evidence_manifest_id=RAPID_002_EVIDENCE_MANIFEST_ID,
+        evidence_manifest_fingerprint=RAPID_002_EVIDENCE_MANIFEST_FINGERPRINT,
+        proposal_id=RAPID_002_PROPOSAL_ID,
+        proposal_fingerprint=RAPID_002_PROPOSAL_FINGERPRINT,
+        candidates=tuple(reservations),
+        payload=raw,
+        plan_fingerprint=fingerprint(raw),
+    )
+
+
+def rapid_002_execution_source_identity(*, require_merged_main: bool = True) -> dict[str, object]:
+    from .rapid_research import _code_identity
+
+    identity = _code_identity()
+    commit = _git_sha(identity.get("commit"), "controlled execution commit")
+    if identity.get("dirty") is not False or identity.get("working_tree_fingerprint") is not None:
+        raise ValueError("Rapid-002 controlled execution requires a clean source checkout")
+    repository = Path(__file__).resolve().parents[2]
+    if (repository / RAPID_002_STRATEGY_PATH).resolve() != Path(__file__).resolve().parent.joinpath(
+        "strategies.py"
+    ):
+        raise ValueError("Rapid-002 controlled execution source is not the repository checkout")
+    environment = non_broker_subprocess_environment()
+    environment.update(
+        {
+            "GIT_CONFIG_GLOBAL": "/dev/null",
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "HOME": "/nonexistent",
+            "XDG_CONFIG_HOME": "/nonexistent",
+        }
+    )
+    git = ("git", "--no-replace-objects", "-c", "core.fsmonitor=false")
+    main_commits: set[str] | None = None
+    try:
+        checkout_status = subprocess.run(
+            (*git, "status", "--porcelain=v1", "--untracked-files=all"),
+            check=True,
+            capture_output=True,
+            cwd=repository,
+            env=environment,
+            timeout=5,
+        ).stdout
+        for ancestor in (
+            RAPID_002_SOURCE_PRESERVATION_COMMIT,
+            RAPID_002_CONTROL_BINDING_COMMIT,
+        ):
+            subprocess.run(
+                (*git, "merge-base", "--is-ancestor", ancestor, commit),
+                check=True,
+                capture_output=True,
+                cwd=repository,
+                env=environment,
+                timeout=5,
+            )
+        if require_merged_main:
+            main_commits = {
+                subprocess.run(
+                    (*git, "rev-parse", "--verify", reference),
+                    check=True,
+                    capture_output=True,
+                    cwd=repository,
+                    env=environment,
+                    text=True,
+                    timeout=5,
+                ).stdout.strip()
+                for reference in ("refs/heads/main", "refs/remotes/origin/main")
+            }
+        source_diff = subprocess.run(
+            (
+                *git,
+                "diff",
+                "--binary",
+                "--no-ext-diff",
+                "--no-textconv",
+                RAPID_002_BASE_COMMIT,
+                RAPID_002_SOURCE_PRESERVATION_COMMIT,
+                "--",
+                "src/systematic_trading_lab",
+                "pyproject.toml",
+                "uv.lock",
+            ),
+            check=True,
+            capture_output=True,
+            cwd=repository,
+            env=environment,
+            timeout=5,
+        ).stdout
+    except (OSError, subprocess.SubprocessError) as error:
+        raise ValueError("Rapid-002 controlled execution source ancestry is invalid") from error
+    if checkout_status:
+        raise ValueError("Rapid-002 controlled execution requires a clean checkout")
+    if require_merged_main and main_commits != {commit}:
+        raise ValueError("Rapid-002 controlled execution requires exact merged main")
+    if hashlib.sha256(source_diff).hexdigest() != RAPID_002_SOURCE_FINGERPRINT:
+        raise ValueError("Rapid-002 preserved source fingerprint differs")
+    if (
+        hashlib.sha256((repository / RAPID_002_STRATEGY_PATH).read_bytes()).hexdigest()
+        != RAPID_002_STRATEGY_SHA256
+    ):
+        raise ValueError("Rapid-002 strategy source fingerprint differs")
+    return _rapid_002_source_payload(commit)
+
+
+def verify_rapid_002_candidate_export(path: Path) -> dict[str, object]:
+    raw = path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != RAPID_002_CANDIDATE_EXPORT_SHA256:
+        raise ValueError("Rapid-002 candidate export SHA-256 differs")
+    payload = json.loads(raw)
+    if not isinstance(payload, dict) or (canonical_json(payload) + "\n").encode() != raw:
+        raise ValueError("Rapid-002 candidate export is not canonical JSON")
+    candidate_fingerprint = payload.pop("candidate_fingerprint", None)
+    if (
+        candidate_fingerprint != RAPID_002_CANDIDATE_FINGERPRINT
+        or fingerprint(payload) != RAPID_002_CANDIDATE_FINGERPRINT
+        or payload.get("authority") != _RAPID_002_CANDIDATE_AUTHORITY
+    ):
+        raise ValueError("Rapid-002 candidate export identity differs")
+    selected = payload.get("selected_run")
+    if (
+        not isinstance(selected, dict)
+        or payload.get("selected_run_id") != RAPID_002_CANDIDATE_ID
+        or selected.get("run_id") != RAPID_002_CANDIDATE_ID
+    ):
+        raise ValueError("Rapid-002 selected candidate differs")
+    specification = selected.get("specification")
+    if not isinstance(specification, dict):
+        raise ValueError("Rapid-002 candidate specification is missing")
+    expected = {
+        "code": {
+            "commit": RAPID_002_BASE_COMMIT,
+            "dirty": True,
+            "working_tree_fingerprint": RAPID_002_SOURCE_FINGERPRINT,
+        },
+        "dataset": {
+            "id": RAPID_002_DATASET_ID,
+            "fingerprint": RAPID_002_DATASET_FINGERPRINT,
+            "source": "alpaca-historical-v2",
+            "symbols": ["GLD", "IWM", "QQQ", "SPY", "TLT"],
+            "timeframe": "1d",
+        },
+        "strategy": {
+            "family": "portfolio-momentum",
+            "id": "risk-managed-momentum-portfolio",
+            "name": "risk-managed-momentum",
+            "parameters": {"lookback": 40, "rebalance_every": 10, "volatility_window": 40},
+            "version": "1",
+        },
+        "costs": {"commission_bps": "1", "slippage_bps": "5", "version": "conservative-bps-v1"},
+        "execution": {"fill_delay_bars": 1, "model": "deterministic-next-bar-open-v1"},
+        "initial_cash": "100000",
+        "start_timestamp": "2025-01-02T00:00:00Z",
+        "end_timestamp": "2025-12-31T00:00:00Z",
+    }
+    if any(specification.get(key) != value for key, value in expected.items()):
+        raise ValueError("Rapid-002 candidate specification differs")
+    ledger = payload.get("search_ledger")
+    if not isinstance(ledger, list) or payload.get("search_ledger_fingerprint") != fingerprint(
+        ledger
+    ):
+        raise ValueError("Rapid-002 candidate search ledger differs")
+    return {
+        "path": str(path.resolve()),
+        "candidate_id": RAPID_002_CANDIDATE_ID,
+        "candidate_fingerprint": RAPID_002_CANDIDATE_FINGERPRINT,
+        "file_sha256": RAPID_002_CANDIDATE_EXPORT_SHA256,
+        "authority": dict(_RAPID_002_CANDIDATE_AUTHORITY),
+    }
+
+
+def validate_rapid_002_dataset_manifest(manifest: Mapping[str, object]) -> None:
+    identity = manifest.get("identity")
+    expected = {
+        "provider": "alpaca-historical-v2",
+        "symbols": [{"value": symbol} for symbol in ("SPY", "QQQ", "IWM", "TLT", "GLD")],
+        "timeframe": "1d",
+        "requested_range": {
+            "start": "2020-07-27T00:00:00Z",
+            "end": "2026-07-31T00:00:00Z",
+        },
+        "actual_range": {
+            "start": "2020-07-27T00:00:00Z",
+            "end": "2026-07-31T00:00:00Z",
+        },
+        "adjustment_policy": "provider-adjusted-all-v1",
+        "calendar_policy": "XNYS-v1",
+        "universe_id": RAPID_002_UNIVERSE_ID,
+        "universe_fingerprint": RAPID_002_UNIVERSE_FINGERPRINT,
+    }
+    if identity != {
+        "dataset_id": RAPID_002_DATASET_ID,
+        "fingerprint": RAPID_002_DATASET_FINGERPRINT,
+    } or any(manifest.get(key) != value for key, value in expected.items()):
+        raise ValueError("Rapid-002 controlled dataset manifest differs")
+
+
+def validate_rapid_002_control_binding(
+    plan: ControlledValidationCampaignPlan,
+    manifest: object,
+    proposal: object,
+) -> None:
+    from .qualification import QualificationProposal
+    from .qualification_evidence import QualificationEvidenceManifest, evidence_manifest_fingerprint
+
+    if (
+        not isinstance(manifest, QualificationEvidenceManifest)
+        or not isinstance(proposal, QualificationProposal)
+        or manifest.manifest_id != plan.evidence_manifest_id
+        or manifest.campaign_id != plan.campaign_id
+        or evidence_manifest_fingerprint(manifest) != plan.evidence_manifest_fingerprint
+        or proposal.proposal_id != plan.proposal_id
+        or proposal.evidence_campaign_id != plan.campaign_id
+        or fingerprint(proposal) != plan.proposal_fingerprint
+    ):
+        raise ValueError("Rapid-002 qualification binding differs")
+    if len(manifest.candidates) != 1:
+        raise ValueError("Rapid-002 qualification candidate count differs")
+    candidate = manifest.candidates[0]
+    evidence_ids = (
+        candidate.base_validation_ids
+        + candidate.benchmark_validation_ids
+        + candidate.cost_sensitivity_ids
+        + candidate.delay_sensitivity_ids
+        + candidate.parameter_neighbor_ids
+        + tuple(stress.experiment_id for stress in candidate.combined_stresses)
+    )
+    planned_ids = tuple(reservation.spec.experiment_id for reservation in plan.candidates)
+    if len(evidence_ids) != 28 or set(evidence_ids) != set(planned_ids):
+        raise ValueError("Rapid-002 qualification evidence IDs differ from the controlled plan")
+
+
+def controlled_validation_reservation(
+    plan: ControlledValidationCampaignPlan, experiment_id: str
+) -> ControlledValidationReservation:
+    reservation = next(
+        (
+            candidate
+            for candidate in plan.candidates
+            if candidate.spec.experiment_id == experiment_id
+        ),
+        None,
+    )
+    if reservation is None:
+        raise ValueError(f"candidate is not reserved by the controlled plan: {experiment_id}")
+    return reservation
+
+
+def _rapid_002_plan_payload(execution_code_commit: str) -> dict[str, object]:
+    _git_sha(execution_code_commit, "controlled execution commit")
+    return {
+        "schema_version": "controlled-validation-campaign-plan-v1",
+        "campaign_id": RAPID_002_CAMPAIGN_ID,
+        "name": "Rapid-002 risk-managed momentum controlled validation",
+        "status": "preregistered",
+        "search_budget": 28,
+        "execution_source": _rapid_002_source_payload(execution_code_commit),
+        "candidate_artifact": {
+            "candidate_id": RAPID_002_CANDIDATE_ID,
+            "candidate_fingerprint": RAPID_002_CANDIDATE_FINGERPRINT,
+            "candidate_export_sha256": RAPID_002_CANDIDATE_EXPORT_SHA256,
+            "authority": dict(_RAPID_002_CANDIDATE_AUTHORITY),
+        },
+        "dataset": {
+            "dataset_id": RAPID_002_DATASET_ID,
+            "dataset_fingerprint": RAPID_002_DATASET_FINGERPRINT,
+            "provider": "alpaca-historical-v2",
+            "adjustment_policy": "provider-adjusted-all-v1",
+            "timeframe": "1d",
+            "symbols": ["SPY", "QQQ", "IWM", "TLT", "GLD"],
+            "universe_id": RAPID_002_UNIVERSE_ID,
+            "universe_fingerprint": RAPID_002_UNIVERSE_FINGERPRINT,
+        },
+        "initial_cash": "100000",
+        "random_seed": 0,
+        "qualification": {
+            "evidence_manifest_id": RAPID_002_EVIDENCE_MANIFEST_ID,
+            "evidence_manifest_fingerprint": RAPID_002_EVIDENCE_MANIFEST_FINGERPRINT,
+            "proposal_id": RAPID_002_PROPOSAL_ID,
+            "proposal_fingerprint": RAPID_002_PROPOSAL_FINGERPRINT,
+        },
+        "candidates": _rapid_002_candidates(),
+        "authorities": dict(_RAPID_002_AUTHORITY),
+        "change_control": "no-retry-no-reselection-after-seal",
+    }
+
+
+def _rapid_002_source_payload(execution_code_commit: str) -> dict[str, object]:
+    return {
+        "execution_code_commit": execution_code_commit,
+        "rapid_base_commit": RAPID_002_BASE_COMMIT,
+        "source_preservation_commit": RAPID_002_SOURCE_PRESERVATION_COMMIT,
+        "control_binding_commit": RAPID_002_CONTROL_BINDING_COMMIT,
+        "rapid_source_fingerprint": RAPID_002_SOURCE_FINGERPRINT,
+        "strategy_path": RAPID_002_STRATEGY_PATH,
+        "strategy_sha256": RAPID_002_STRATEGY_SHA256,
+    }
+
+
+def _rapid_002_candidates() -> list[dict[str, object]]:
+    candidates: list[dict[str, object]] = []
+
+    def add(
+        experiment_id: str,
+        role: str,
+        year: int,
+        strategy_id: str,
+        strategy_family: str,
+        parameters: Mapping[str, int],
+        cost_model_version: str = "conservative-bps-v1",
+        slippage_bps: str = "5",
+        commission_bps: str = "1",
+        execution_model_version: str = "next-bar-v1",
+        fill_delay_bars: int = 1,
+        parent_candidate: str | None = None,
+    ) -> None:
+        start, end, _ = _RAPID_002_FOLDS[year]
+        candidates.append(
+            {
+                "ordinal": len(candidates) + 1,
+                "experiment_id": experiment_id,
+                "role": role,
+                "strategy_id": strategy_id,
+                "strategy_version": "1",
+                "strategy_family": strategy_family,
+                "parameters": dict(parameters),
+                "split": "validation",
+                "start_timestamp": start,
+                "end_timestamp": end,
+                "cost_model_version": cost_model_version,
+                "slippage_bps": slippage_bps,
+                "commission_bps": commission_bps,
+                "execution_model_version": execution_model_version,
+                "fill_delay_bars": fill_delay_bars,
+                "parent_candidate": parent_candidate,
+                "creation_reason": f"frozen Rapid-002 {role} validation evidence",
+            }
+        )
+
+    base = {"lookback": 40, "volatility_window": 40, "rebalance_every": 10}
+    for year in _RAPID_002_FOLDS:
+        add(
+            f"r2-rmm-base-{year}",
+            "base",
+            year,
+            "risk-managed-momentum-portfolio",
+            "portfolio-momentum",
+            base,
+        )
+    for year in _RAPID_002_FOLDS:
+        add(f"r2-fixed-weight-{year}", "benchmark", year, "fixed-weight", "allocation", {})
+    neighbors = (
+        ("lookback30", {**base, "lookback": 30}),
+        ("lookback50", {**base, "lookback": 50}),
+        ("volatility30", {**base, "volatility_window": 30}),
+        ("volatility50", {**base, "volatility_window": 50}),
+        ("cadence5", {**base, "rebalance_every": 5}),
+        ("cadence15", {**base, "rebalance_every": 15}),
+    )
+    for tag, parameters in neighbors:
+        for year in _RAPID_002_FOLDS:
+            add(
+                f"r2-rmm-{tag}-{year}",
+                f"neighbor-{tag}",
+                year,
+                "risk-managed-momentum-portfolio",
+                "portfolio-momentum",
+                parameters,
+                parent_candidate=f"r2-rmm-base-{year}",
+            )
+    add(
+        "r2-rmm-cost2x-2025",
+        "isolated-cost",
+        2025,
+        "risk-managed-momentum-portfolio",
+        "portfolio-momentum",
+        base,
+        "bps-10-2-v1",
+        "10",
+        "2",
+        parent_candidate="r2-rmm-base-2025",
+    )
+    add(
+        "r2-rmm-delay2-2025",
+        "isolated-delay",
+        2025,
+        "risk-managed-momentum-portfolio",
+        "portfolio-momentum",
+        base,
+        execution_model_version="delayed-2-bars-v1",
+        fill_delay_bars=2,
+        parent_candidate="r2-rmm-base-2025",
+    )
+    add(
+        "r2-rmm-stress-a-2025",
+        "stress-a",
+        2025,
+        "risk-managed-momentum-portfolio",
+        "portfolio-momentum",
+        base,
+        "bps-10-2-v1",
+        "10",
+        "2",
+        "delayed-2-bars-v1",
+        2,
+        "r2-rmm-base-2025",
+    )
+    add(
+        "r2-rmm-stress-b-2025",
+        "stress-b",
+        2025,
+        "risk-managed-momentum-portfolio",
+        "portfolio-momentum",
+        base,
+        "bps-20-5-v1",
+        "20",
+        "5",
+        "delayed-3-bars-v1",
+        3,
+        "r2-rmm-base-2025",
+    )
+    return candidates
+
+
+def _git_sha(value: object, label: str) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != 40
+        or any(character not in "0123456789abcdef" for character in value)
+    ):
+        raise ValueError(f"{label} must be a full lowercase Git SHA")
+    return value
 
 
 def load_intraday_research_campaign_plan(path: Path) -> IntradayResearchCampaignPlan:

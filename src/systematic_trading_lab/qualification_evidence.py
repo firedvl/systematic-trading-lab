@@ -80,6 +80,7 @@ def build_evidence_reports(
 ) -> tuple[dict[str, object], ...]:
     if manifest.campaign_id != proposal.evidence_campaign_id:
         raise ValueError("proposal and evidence manifest campaigns differ")
+    campaign_plan_fingerprint = _controlled_plan_fingerprint(registry, manifest, proposal)
     campaign_candidate_count = len(registry.list(manifest.campaign_id))
     reports: list[dict[str, object]] = []
     for candidate in manifest.candidates:
@@ -104,9 +105,25 @@ def build_evidence_reports(
             "metrics": metrics,
             "qualification": canonicalize(qualification),
         }
+        if campaign_plan_fingerprint is not None:
+            payload["campaign_plan_fingerprint"] = campaign_plan_fingerprint
         payload["evidence_fingerprint"] = fingerprint(payload)
         reports.append(payload)
     return tuple(reports)
+
+
+def _controlled_plan_fingerprint(
+    registry: ExperimentRegistry,
+    manifest: QualificationEvidenceManifest,
+    proposal: QualificationProposal,
+) -> str | None:
+    from .campaign_specs import RAPID_002_CAMPAIGN_ID, validate_rapid_002_control_binding
+
+    if manifest.campaign_id != RAPID_002_CAMPAIGN_ID:
+        return None
+    plan = registry.get_controlled_validation_plan(manifest.campaign_id)
+    validate_rapid_002_control_binding(plan, manifest, proposal)
+    return plan.plan_fingerprint
 
 
 def evidence_manifest_fingerprint(manifest: QualificationEvidenceManifest) -> str:

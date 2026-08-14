@@ -21,7 +21,11 @@ from .intraday_campaigns import (
 )
 
 if TYPE_CHECKING:
-    from .campaign_specs import IntradayCandidateReservation, IntradayResearchCampaignPlan
+    from .campaign_specs import (
+        ControlledValidationCampaignPlan,
+        IntradayCandidateReservation,
+        IntradayResearchCampaignPlan,
+    )
 
 
 class ExperimentSplit(StrEnum):
@@ -183,7 +187,9 @@ ExperimentContract = ExperimentSpec | IntradayExperimentSpec
 
 
 class ExperimentRegistry:
-    _RESERVED_CAMPAIGN_IDS = RESERVED_INTRADAY_CAMPAIGN_IDS
+    _RESERVED_CAMPAIGN_IDS = RESERVED_INTRADAY_CAMPAIGN_IDS | {
+        "rapid-002-rmm-40-40-10-controlled-v1"
+    }
 
     def __init__(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -293,6 +299,48 @@ class ExperimentRegistry:
                 BEFORE DELETE ON experiments
                 WHEN OLD.campaign_id = 'intraday-research-v1'
                 BEGIN SELECT RAISE(ABORT, 'Campaign V1 evidence is immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS rapid_002_campaign_no_update
+                BEFORE UPDATE ON campaigns
+                WHEN OLD.campaign_id = 'rapid-002-rmm-40-40-10-controlled-v1'
+                BEGIN SELECT RAISE(ABORT, 'Rapid-002 sealed campaign is immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS rapid_002_campaign_no_delete
+                BEFORE DELETE ON campaigns
+                WHEN OLD.campaign_id = 'rapid-002-rmm-40-40-10-controlled-v1'
+                BEGIN SELECT RAISE(ABORT, 'Rapid-002 sealed campaign is immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS rapid_002_plan_no_update
+                BEFORE UPDATE ON campaign_plans
+                WHEN OLD.campaign_id = 'rapid-002-rmm-40-40-10-controlled-v1'
+                BEGIN SELECT RAISE(ABORT, 'Rapid-002 sealed plan is immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS rapid_002_plan_no_delete
+                BEFORE DELETE ON campaign_plans
+                WHEN OLD.campaign_id = 'rapid-002-rmm-40-40-10-controlled-v1'
+                BEGIN SELECT RAISE(ABORT, 'Rapid-002 sealed plan is immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS rapid_002_reservation_no_identity_update
+                BEFORE UPDATE OF experiment_id, campaign_id, spec_json, split, created_at,
+                    campaign_plan_fingerprint ON experiments
+                WHEN OLD.campaign_id = 'rapid-002-rmm-40-40-10-controlled-v1'
+                  OR NEW.campaign_id = 'rapid-002-rmm-40-40-10-controlled-v1'
+                BEGIN SELECT RAISE(ABORT, 'Rapid-002 sealed reservation is immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS rapid_002_reservation_no_delete
+                BEFORE DELETE ON experiments
+                WHEN OLD.campaign_id = 'rapid-002-rmm-40-40-10-controlled-v1'
+                BEGIN SELECT RAISE(ABORT, 'Rapid-002 sealed reservation is immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS rapid_002_no_post_seal_reservation
+                BEFORE INSERT ON experiments
+                WHEN NEW.campaign_id = 'rapid-002-rmm-40-40-10-controlled-v1'
+                  AND EXISTS (
+                      SELECT 1 FROM campaign_plans
+                      WHERE campaign_id = 'rapid-002-rmm-40-40-10-controlled-v1'
+                  )
+                BEGIN SELECT RAISE(ABORT, 'Rapid-002 sealed plan cannot gain reservations'); END;
+                CREATE TRIGGER IF NOT EXISTS rapid_002_plan_requires_exact_reservations
+                BEFORE INSERT ON campaign_plans
+                WHEN NEW.campaign_id = 'rapid-002-rmm-40-40-10-controlled-v1'
+                  AND (
+                      SELECT COUNT(*) FROM experiments
+                      WHERE campaign_id = 'rapid-002-rmm-40-40-10-controlled-v1'
+                  ) != 28
+                BEGIN SELECT RAISE(ABORT, 'Rapid-002 sealed plan requires 28 reservations'); END;
                 """
             )
             experiment_columns = {
@@ -366,9 +414,23 @@ class ExperimentRegistry:
         }
 
     def create_planned_campaign(self, plan: Mapping[str, object]) -> dict[str, object]:
-        from .campaign_specs import parse_training_campaign_plan
+        from .campaign_specs import (
+            ControlledValidationCampaignPlan,
+            parse_daily_campaign_plan,
+            rapid_002_execution_source_identity,
+        )
 
-        parsed = parse_training_campaign_plan(plan)
+        parsed = parse_daily_campaign_plan(plan)
+        if isinstance(parsed, ControlledValidationCampaignPlan):
+            controlled = True
+            if canonicalize(rapid_002_execution_source_identity()) != canonicalize(
+                parsed.execution_source
+            ):
+                raise ExperimentError("Rapid-002 execution source differs from exact merged main")
+            specs = tuple(reservation.spec for reservation in parsed.candidates)
+        else:
+            controlled = False
+            specs = parsed.candidates
         timestamp = _now()
         with self._connect() as connection:
             try:
@@ -382,16 +444,17 @@ class ExperimentRegistry:
                         parsed.search_budget,
                     ),
                 )
-                connection.execute(
-                    "INSERT INTO campaign_plans VALUES (?, ?, ?, ?)",
-                    (
-                        parsed.campaign_id,
-                        canonical_json(parsed.payload),
-                        parsed.plan_fingerprint,
-                        timestamp,
-                    ),
-                )
-                for spec in parsed.candidates:
+                if not controlled:
+                    connection.execute(
+                        "INSERT INTO campaign_plans VALUES (?, ?, ?, ?)",
+                        (
+                            parsed.campaign_id,
+                            canonical_json(parsed.payload),
+                            parsed.plan_fingerprint,
+                            timestamp,
+                        ),
+                    )
+                for spec in specs:
                     connection.execute(
                         """
                         INSERT INTO experiments
@@ -410,6 +473,16 @@ class ExperimentRegistry:
                             parsed.plan_fingerprint,
                         ),
                     )
+                if controlled:
+                    connection.execute(
+                        "INSERT INTO campaign_plans VALUES (?, ?, ?, ?)",
+                        (
+                            parsed.campaign_id,
+                            canonical_json(parsed.payload),
+                            parsed.plan_fingerprint,
+                            timestamp,
+                        ),
+                    )
             except sqlite3.IntegrityError as error:
                 raise ExperimentError(
                     f"sealed campaign already exists: {parsed.campaign_id}"
@@ -420,7 +493,7 @@ class ExperimentRegistry:
             "status": "sealed",
             "search_budget": parsed.search_budget,
             "plan_fingerprint": parsed.plan_fingerprint,
-            "declared_candidates": len(parsed.candidates),
+            "declared_candidates": len(specs),
         }
 
     def create_planned_intraday_campaign(self, plan: Mapping[str, object]) -> dict[str, object]:
@@ -499,6 +572,46 @@ class ExperimentRegistry:
             "plan_fingerprint": row[1],
             "sealed_at": row[2],
         }
+
+    def get_controlled_validation_plan(self, campaign_id: str) -> ControlledValidationCampaignPlan:
+        from .campaign_specs import (
+            ControlledValidationCampaignPlan,
+            parse_daily_campaign_plan,
+        )
+
+        stored = self.get_campaign_plan(campaign_id)
+        plan_json = stored["plan_json"]
+        if not isinstance(plan_json, Mapping):
+            raise ExperimentError("stored controlled validation plan is malformed")
+        plan = parse_daily_campaign_plan(plan_json)
+        if not isinstance(plan, ControlledValidationCampaignPlan):
+            raise ExperimentError("sealed daily plan is not a controlled validation plan")
+        campaign = self.get_campaign(campaign_id)
+        records = self.list(campaign_id)
+        by_id = {str(record["experiment_id"]): record for record in records}
+        expected_ids = {reservation.spec.experiment_id for reservation in plan.candidates}
+        if (
+            plan.campaign_id != campaign_id
+            or stored["plan_fingerprint"] != plan.plan_fingerprint
+            or campaign["status"] != "sealed"
+            or campaign["search_budget"] != plan.search_budget
+            or len(records) != plan.search_budget
+            or set(by_id) != expected_ids
+        ):
+            raise ExperimentError("stored controlled validation campaign differs from its plan")
+        for reservation in plan.candidates:
+            record = by_id[reservation.spec.experiment_id]
+            if (
+                record["campaign_id"] != campaign_id
+                or record["split"] != ExperimentSplit.VALIDATION.value
+                or record["campaign_plan_fingerprint"] != plan.plan_fingerprint
+                or canonicalize(record["spec_json"]) != canonicalize(reservation.spec)
+                or record["status"] not in {status.value for status in ExperimentStatus}
+            ):
+                raise ExperimentError(
+                    "stored controlled validation reservations differ from the plan"
+                )
+        return plan
 
     def record_intraday_execution_source_review(
         self,
@@ -1606,11 +1719,12 @@ _EVIDENCE_REPORT_FIELDS = {
     "qualification",
     "evidence_fingerprint",
 }
+_PLANNED_EVIDENCE_REPORT_FIELDS = _EVIDENCE_REPORT_FIELDS | {"campaign_plan_fingerprint"}
 
 
 def _validate_qualification_evidence_report(report: Mapping[str, object]) -> None:
     if (
-        set(report) != _EVIDENCE_REPORT_FIELDS
+        set(report) not in (_EVIDENCE_REPORT_FIELDS, _PLANNED_EVIDENCE_REPORT_FIELDS)
         or report["schema_version"] != "qualification-evidence-v1"
     ):
         raise HoldoutAccessError("qualification evidence fields differ")
@@ -1625,6 +1739,13 @@ def _validate_qualification_evidence_report(report: Mapping[str, object]) -> Non
     }
     if any(not isinstance(report[field], str) or not report[field] for field in text_fields):
         raise HoldoutAccessError("qualification evidence contains an invalid value")
+    plan_fingerprint = report.get("campaign_plan_fingerprint")
+    if plan_fingerprint is not None and (
+        not isinstance(plan_fingerprint, str)
+        or len(plan_fingerprint) != 64
+        or not set(plan_fingerprint) <= set("0123456789abcdef")
+    ):
+        raise HoldoutAccessError("qualification evidence campaign plan fingerprint is invalid")
     candidate = report["candidate_specification"]
     if not isinstance(candidate, Mapping) or candidate.get("strategy_id") != report["strategy_id"]:
         raise HoldoutAccessError("qualification evidence candidate differs")
