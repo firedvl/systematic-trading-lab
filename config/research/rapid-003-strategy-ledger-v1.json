@@ -1,0 +1,249 @@
+{
+  "schema_version": "rapid-strategy-program-ledger-v1",
+  "program_id": "rapid-003-bounded-strategy-discovery",
+  "status": "discovery-open",
+  "starting_main_commit": "26686b3dad56fe0dc327f3fadf8a63b3c0e21348",
+  "dataset": {
+    "dataset_id": "508c606884112c92402707c30b56fc9d8c07cfc1c01c64f8538a6494888eeeca",
+    "dataset_fingerprint": "4fe62ab615ae713e23926da940256b9a728db39c2bc60c028df6d1136be49494",
+    "symbols": ["SPY", "QQQ", "IWM", "TLT", "GLD"],
+    "timeframe": "1d",
+    "adjustment": "adjusted",
+    "available_range": ["2020-07-27", "2026-07-31"]
+  },
+  "search": {
+    "parent_configuration_ceiling": 2000,
+    "parent_configurations_run": 0,
+    "fold_and_stress_runs": 0,
+    "initial_rapid_store_run_count": 0,
+    "accounting_source": "all non-fold, non-stress rapid_runs rows in the program's initially empty Rapid store",
+    "method": "coarse exploration, early rejection, then bounded neighbor checks"
+  },
+  "operator_constraints": {
+    "allowed_dataset_id": "508c606884112c92402707c30b56fc9d8c07cfc1c01c64f8538a6494888eeeca",
+    "data_acquisition_allowed": false,
+    "local_data_import_allowed": false,
+    "explicit_research_range_required": true,
+    "range_enforcement": "operator command scope plus final rapid_runs date audit"
+  },
+  "execution_scenarios": [
+    {"name": "normal", "slippage_bps": 5, "commission_bps": 1, "fill_delay_bars": 1},
+    {"name": "stress-a", "slippage_bps": 10, "commission_bps": 2, "fill_delay_bars": 2},
+    {"name": "stress-b", "slippage_bps": 20, "commission_bps": 5, "fill_delay_bars": 3}
+  ],
+  "exposure_ledger": [
+    {
+      "range": ["2020-07-27", "2026-07-31"],
+      "status": "historically-exposed",
+      "permitted_use": "rapid discovery, walk-forward, stress, robustness, and controlled replay"
+    },
+    {
+      "range": ["2018-01-02", "2019-12-31"],
+      "status": "sealed-unopened",
+      "permitted_use": "none in this program"
+    },
+    {
+      "range": ["2026-10-01", "2027-04-15"],
+      "status": "v3-sealed-unopened",
+      "permitted_use": "none in this program"
+    }
+  ],
+  "prior_evidence": [
+    {
+      "campaign_id": "rapid-002-rmm-40-40-10-controlled-v1",
+      "status": "closed-rejected",
+      "reuse": "forbidden",
+      "failed_gates": ["fixed-weight-benchmark-wins", "instrument-profit-concentration"]
+    }
+  ],
+  "families": [
+    {
+      "id": "A",
+      "family": "absolute-momentum",
+      "hypothesis": "Positive trailing returns identify assets whose exposure should remain invested; otherwise hold cash.",
+      "implementation_status": "existing-plus-planned-multi-horizon",
+      "strategies": ["momentum", "risk-managed-momentum", "multi-horizon-momentum"],
+      "parameter_dimensions": ["lookback", "short_lookback", "long_lookback", "rebalance_every"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "B",
+      "family": "relative-strength",
+      "hypothesis": "The strongest positive-momentum ETFs outperform an unfiltered fixed allocation.",
+      "implementation_status": "existing",
+      "strategies": ["relative-strength"],
+      "parameter_dimensions": ["lookback", "rebalance_every", "selection_count"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "C",
+      "family": "dual-momentum",
+      "hypothesis": "Cross-sectional winners should be held only when their own momentum is positive, with defensive assets or cash as fallback.",
+      "implementation_status": "planned-minimal",
+      "strategies": ["dual-momentum"],
+      "parameter_dimensions": ["short_lookback", "long_lookback", "selection_count", "rebalance_every"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "D",
+      "family": "trend-following",
+      "hypothesis": "State changes around trailing moving averages reduce drawdown without repeated identical resizing.",
+      "implementation_status": "existing",
+      "strategies": ["moving-average-state", "moving-average"],
+      "parameter_dimensions": ["window"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "E",
+      "family": "breakout",
+      "hypothesis": "New channel highs begin persistent moves while shorter channel lows provide deterministic exits.",
+      "implementation_status": "existing",
+      "strategies": ["channel-breakout"],
+      "parameter_dimensions": ["entry_window", "exit_window"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "F",
+      "family": "pullback-mean-reversion",
+      "hypothesis": "Short pullbacks inside established uptrends recover before their longer trend fails.",
+      "implementation_status": "existing",
+      "strategies": ["trend-pullback", "mean-reversion"],
+      "parameter_dimensions": ["trend_window", "pullback_window", "window"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "G",
+      "family": "volatility-management",
+      "hypothesis": "Reducing exposure or weight to volatile assets improves risk-adjusted net returns.",
+      "implementation_status": "existing",
+      "strategies": ["volatility-targeted", "volatility-balanced", "risk-managed-momentum"],
+      "parameter_dimensions": ["volatility_window", "rebalance_every"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "H",
+      "family": "risk-parity-diversification",
+      "hypothesis": "Capped inverse-volatility weights diversify risk better than equal capital weights.",
+      "implementation_status": "existing",
+      "strategies": ["volatility-balanced"],
+      "parameter_dimensions": ["volatility_window", "rebalance_every"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "I",
+      "family": "risk-on-risk-off-regimes",
+      "hypothesis": "SPY trend plus realized volatility can switch between equal risk-asset and defensive sleeves before execution.",
+      "implementation_status": "planned-minimal",
+      "strategies": ["regime-allocation"],
+      "parameter_dimensions": ["trend_window", "volatility_window", "volatility_limit_percent", "rebalance_every"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "J",
+      "family": "defensive-rotation",
+      "hypothesis": "When risk assets lack positive momentum, rotating to the stronger positive TLT or GLD signal improves drawdown and concentration.",
+      "implementation_status": "planned-minimal",
+      "strategies": ["dual-momentum"],
+      "parameter_dimensions": ["short_lookback", "long_lookback", "rebalance_every"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "K",
+      "family": "tactical-asset-allocation",
+      "hypothesis": "A trend-filtered, momentum-ranked active subset can trade several times per month while remaining diversified.",
+      "implementation_status": "planned-minimal",
+      "strategies": ["dual-momentum", "multi-horizon-momentum"],
+      "parameter_dimensions": ["short_lookback", "long_lookback", "selection_count", "rebalance_every"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "L",
+      "family": "multi-horizon-signals",
+      "hypothesis": "Agreement between short and long momentum horizons is less fragile than one optimized lookback.",
+      "implementation_status": "planned-minimal",
+      "strategies": ["multi-horizon-momentum", "dual-momentum"],
+      "parameter_dimensions": ["short_lookback", "long_lookback", "rebalance_every"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "M",
+      "family": "signal-regime-combinations",
+      "hypothesis": "Independent momentum, trend, and volatility conditions can filter weak exposures without an opaque score.",
+      "implementation_status": "planned-minimal",
+      "strategies": ["dual-momentum", "regime-allocation", "trend-pullback"],
+      "parameter_dimensions": ["lookbacks", "volatility_window", "rebalance_every"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "N",
+      "family": "drawdown-aware-exposure",
+      "hypothesis": "A deterministic SPY trailing-drawdown trigger can reduce risk-asset exposure without future information.",
+      "implementation_status": "planned-minimal",
+      "strategies": ["drawdown-aware-allocation"],
+      "parameter_dimensions": ["lookback", "trigger_percent", "rebalance_every"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "O",
+      "family": "cash-defensive-filters",
+      "hypothesis": "Requiring positive signal strength before investment avoids weak exposures.",
+      "implementation_status": "existing-plus-planned-defensive-fallback",
+      "strategies": ["momentum", "relative-strength", "risk-managed-momentum", "dual-momentum"],
+      "parameter_dimensions": ["lookback", "selection_count", "rebalance_every"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    },
+    {
+      "id": "P",
+      "family": "diversification-constrained-momentum",
+      "hypothesis": "Equal-weight top-N positive signals reduce single-instrument dependence as part of the strategy design.",
+      "implementation_status": "planned-minimal",
+      "strategies": ["multi-horizon-momentum", "dual-momentum"],
+      "parameter_dimensions": ["short_lookback", "long_lookback", "selection_count", "rebalance_every"],
+      "configurations_tested": [],
+      "result": "pending",
+      "rejection_or_survival_reason": null
+    }
+  ],
+  "final_cohort": {
+    "status": "not-frozen",
+    "candidates": [],
+    "controlled_results_inspected": false
+  },
+  "protected_state": {
+    "independent_2018_2019_touched": false,
+    "v3_touched": false,
+    "paper_broker_live_touched": false,
+    "strategic_allocation_21_touched": false,
+    "verification": "audit Rapid run ranges, Git operations, and commands; no acquisition or local-import command is permitted"
+  }
+}
