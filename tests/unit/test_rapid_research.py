@@ -79,6 +79,29 @@ def test_parameter_parsing_and_registry_validation() -> None:
         parse_parameters(("window=2", "window=3"))
 
 
+@pytest.mark.parametrize(
+    ("strategy", "parameters", "message"),
+    (
+        (
+            "multi-horizon-momentum",
+            {"short_lookback": 126, "long_lookback": 20},
+            "short_lookback must be shorter",
+        ),
+        (
+            "dual-momentum",
+            {"short_lookback": 126, "long_lookback": 20},
+            "short_lookback must be shorter",
+        ),
+        ("dual-momentum", {"selection_count": 4}, "must not exceed three"),
+    ),
+)
+def test_registry_rejects_invalid_strategy_parameter_combinations(
+    strategy: str, parameters: dict[str, int], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        validate_strategy_parameters(strategy, parameters)
+
+
 def test_code_identity_scrubs_broker_and_untrusted_git_environment(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

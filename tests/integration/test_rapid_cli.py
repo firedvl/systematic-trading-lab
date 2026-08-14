@@ -93,7 +93,14 @@ def test_documented_newcomer_path_runs_in_a_clean_home(tmp_path: Path) -> None:
     assert all(cast(dict[str, bool], doctor["checks"]).values())
     assert imported["dataset_id"] == FIXTURE_DATASET_ID
     assert len(cast(list[object], datasets["datasets"])) == 1
-    assert len(cast(list[object], strategies["strategies"])) == 14
+    listed_strategies = cast(list[dict[str, object]], strategies["strategies"])
+    assert len(listed_strategies) == 18
+    assert {
+        "multi-horizon-momentum",
+        "dual-momentum",
+        "regime-allocation",
+        "drawdown-aware-allocation",
+    } <= {str(strategy["name"]) for strategy in listed_strategies}
     assert backtest["status"] == "completed"
     assert shown["run_id"] == backtest["run_id"]
     assert not any(cast(dict[str, bool], shown["authority"]).values())
