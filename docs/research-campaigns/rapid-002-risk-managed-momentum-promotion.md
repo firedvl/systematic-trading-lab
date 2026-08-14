@@ -99,11 +99,17 @@ base. The isolated sensitivities and exact stresses are linked to `r2-rmm-base-2
 including failures, count against the campaign budget. No rerun or replacement is allowed under the
 same ID.
 
-The current daily evidence manifest can enforce the isolated cost, isolated delay, and parameter
-roles. It cannot represent a variant that changes both cost and delay. Before execution, a separate
-control-only review must bind the two exact stress records into qualification evidence and the two
-stress gates below. A manual summary cannot substitute for that binding. This is the only identified
-qualification-format gap; it does not justify a new campaign framework.
+The candidate-specific manifest
+`config/research/qualification-evidence-rapid-002-rmm-v1.json` extends the daily evidence format with
+exactly two combined-stress roles. Each role must name its 2025 base parent, preserve source, strategy,
+data, universe, parameters, and seed, and change both the cost and execution model to the versions
+listed above. The manifest freezes all 28 experiment IDs and has fingerprint
+`b997afb53fdf05ef26be72934fb3318cb582ba503f4527fa9ca96f88f7b72693`.
+
+The existing gate engine compares one metric per gate. The two compound stress requirements below
+therefore use four visible machine gates: positive return and return retention for Stress A, then the
+same two checks for Stress B. All four must pass. The existing 17 gates and historical manifest
+fingerprints remain unchanged. A manual summary cannot substitute for registry-backed evidence.
 
 ## Pass/fail gates
 
@@ -131,10 +137,14 @@ The existing 17 approved daily gates remain unchanged:
 16. The three base folds contain at least 100 fills in total.
 17. The campaign contains at most 40 candidates.
 
-Two candidate-specific stress gates also apply:
+Two candidate-specific compound stress requirements also apply:
 
 18. Stress A return is positive and at least 80% of the 2025 normal-base return.
 19. Stress B return is positive and at least 80% of the 2025 normal-base return.
+
+`config/research/qualification-proposal-rapid-002-rmm-v1.json` records each return and retention
+condition as its own approved, disqualifying gate. A zero stress return fails the strict positive
+return gate.
 
 Any failed gate rejects the candidate. Do not retune, omit a record, weaken a threshold, or use the
 independent range after a controlled failure.

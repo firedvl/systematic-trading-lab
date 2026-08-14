@@ -19,9 +19,11 @@ from systematic_trading_lab.fingerprints import canonical_json, fingerprint
 from systematic_trading_lab.qualification import load_qualification_proposal
 from systematic_trading_lab.qualification_evidence import (
     CandidateEvidenceSpec,
+    CombinedStressEvidenceSpec,
     QualificationEvidenceManifest,
     authorize_holdout_run,
     build_evidence_reports,
+    evidence_manifest_fingerprint,
     load_evidence_manifest,
     write_evidence_reports,
 )
@@ -36,6 +38,7 @@ def _spec(
     parameters: dict[str, object] | None = None,
     cost_version: str = "conservative-bps-v1",
     execution_version: str = "next-bar-v1",
+    code_commit: str = "abc123",
 ) -> ExperimentSpec:
     return ExperimentSpec(
         experiment_id=experiment_id,
@@ -43,7 +46,7 @@ def _spec(
         strategy_id=strategy_id,
         strategy_version="1",
         strategy_family="trend" if strategy_id == "candidate-strategy" else "allocation",
-        code_commit="abc123",
+        code_commit=code_commit,
         dataset_id="dataset-1",
         dataset_fingerprint="fingerprint-1",
         universe_id="liquid-etfs-v1",
@@ -96,7 +99,15 @@ def _complete(
     )
 
 
-def _seed_registry(path: Path, *, corrupt_cost: bool = False) -> ExperimentRegistry:
+def _seed_registry(
+    path: Path,
+    *,
+    corrupt_cost: bool = False,
+    include_stresses: bool = False,
+    stress_b_return: str = "0.24",
+    stress_a_execution_version: str = "delayed-2-bars-v1",
+    stress_code_commit: str = "abc123",
+) -> ExperimentRegistry:
     registry = ExperimentRegistry(path)
     registry.create_campaign("campaign-evidence", "Evidence", 16)
     base_returns = ("0.1", "0.2", "0.3")
@@ -140,6 +151,32 @@ def _seed_registry(path: Path, *, corrupt_cost: bool = False) -> ExperimentRegis
         ),
         _metrics("0.27", 3),
     )
+    if include_stresses:
+        _complete(
+            registry,
+            _spec(
+                "stress-a",
+                "candidate-strategy",
+                2025,
+                parent="base-3",
+                cost_version="bps-10-2-v1",
+                execution_version=stress_a_execution_version,
+                code_commit=stress_code_commit,
+            ),
+            _metrics("0.25", 3),
+        )
+        _complete(
+            registry,
+            _spec(
+                "stress-b",
+                "candidate-strategy",
+                2025,
+                parent="base-3",
+                cost_version="bps-20-5-v1",
+                execution_version="delayed-3-bars-v1",
+            ),
+            _metrics(stress_b_return, 3),
+        )
     for index, year in enumerate((2023, 2024, 2025), start=1):
         base_return = Decimal(base_returns[index - 1])
         for window, retention in ((15, Decimal("0.5")), (25, Decimal("0.75"))):
@@ -157,7 +194,7 @@ def _seed_registry(path: Path, *, corrupt_cost: bool = False) -> ExperimentRegis
     return registry
 
 
-def _manifest() -> QualificationEvidenceManifest:
+def _manifest(*, include_stresses: bool = False) -> QualificationEvidenceManifest:
     return QualificationEvidenceManifest(
         "evidence-test",
         "campaign-evidence",
@@ -184,6 +221,24 @@ def _manifest() -> QualificationEvidenceManifest:
                     "neighbor-3-15",
                     "neighbor-3-25",
                 ),
+                (
+                    CombinedStressEvidenceSpec(
+                        "stress-a",
+                        "stress-a",
+                        "base-3",
+                        "bps-10-2-v1",
+                        "delayed-2-bars-v1",
+                    ),
+                    CombinedStressEvidenceSpec(
+                        "stress-b",
+                        "stress-b",
+                        "base-3",
+                        "bps-20-5-v1",
+                        "delayed-3-bars-v1",
+                    ),
+                )
+                if include_stresses
+                else (),
             ),
         ),
     )
@@ -466,6 +521,85 @@ def test_registry_evidence_rejects_mislabeled_variant(tmp_path: Path) -> None:
         build_evidence_reports(registry, _manifest(), proposal)
 
 
+def test_combined_stresses_bind_both_models_and_qualify(tmp_path: Path) -> None:
+    registry = _seed_registry(tmp_path / "experiments.sqlite3", include_stresses=True)
+    proposal = replace(
+        load_qualification_proposal(
+            Path("config/research/qualification-proposal-rapid-002-rmm-v1.json")
+        ),
+        evidence_campaign_id="campaign-evidence",
+    )
+
+    report = build_evidence_reports(registry, _manifest(include_stresses=True), proposal)[0]
+    metrics = report["metrics"]
+    qualification = report["qualification"]
+
+    assert isinstance(metrics, dict)
+    assert metrics["stress_a_return"] == Decimal("0.25")
+    assert metrics["stress_a_return_retention"] == Decimal("0.25") / Decimal("0.3")
+    assert metrics["stress_b_return"] == Decimal("0.24")
+    assert metrics["stress_b_return_retention"] == Decimal("0.8")
+    assert metrics["campaign_candidate_count"] == 16
+    assert isinstance(qualification, dict)
+    assert qualification["state"] == "qualified"
+    assert all(gate["passed"] for gate in qualification["gates"])
+
+
+def test_combined_stress_zero_return_fails_strict_gate(tmp_path: Path) -> None:
+    registry = _seed_registry(
+        tmp_path / "experiments.sqlite3",
+        include_stresses=True,
+        stress_b_return="0",
+    )
+    proposal = replace(
+        load_qualification_proposal(
+            Path("config/research/qualification-proposal-rapid-002-rmm-v1.json")
+        ),
+        evidence_campaign_id="campaign-evidence",
+    )
+
+    qualification = build_evidence_reports(registry, _manifest(include_stresses=True), proposal)[0][
+        "qualification"
+    ]
+
+    assert isinstance(qualification, dict)
+    assert qualification["state"] == "rejected"
+    stress_b_return = next(
+        gate for gate in qualification["gates"] if gate["metric"] == "stress_b_return"
+    )
+    assert stress_b_return["passed"] is False
+    assert stress_b_return["reason"] == "not-above-threshold"
+
+
+@pytest.mark.parametrize(
+    ("stress_a_execution_version", "stress_code_commit"),
+    (
+        ("next-bar-v1", "abc123"),
+        ("delayed-2-bars-v1", "different-source"),
+    ),
+)
+def test_combined_stress_rejects_one_axis_or_source_mismatch(
+    tmp_path: Path,
+    stress_a_execution_version: str,
+    stress_code_commit: str,
+) -> None:
+    registry = _seed_registry(
+        tmp_path / "experiments.sqlite3",
+        include_stresses=True,
+        stress_a_execution_version=stress_a_execution_version,
+        stress_code_commit=stress_code_commit,
+    )
+    proposal = replace(
+        load_qualification_proposal(
+            Path("config/research/qualification-proposal-rapid-002-rmm-v1.json")
+        ),
+        evidence_campaign_id="campaign-evidence",
+    )
+
+    with pytest.raises(ValueError, match="combined stress"):
+        build_evidence_reports(registry, _manifest(include_stresses=True), proposal)
+
+
 def test_committed_evidence_manifest_is_strict() -> None:
     manifest = load_evidence_manifest(Path("config/research/qualification-evidence-v3.json"))
 
@@ -474,3 +608,64 @@ def test_committed_evidence_manifest_is_strict() -> None:
         "moving-average-20",
         "momentum-20",
     ]
+
+
+def test_rapid_002_manifest_freezes_exact_28_record_ledger() -> None:
+    manifest = load_evidence_manifest(
+        Path("config/research/qualification-evidence-rapid-002-rmm-v1.json")
+    )
+    proposal = load_qualification_proposal(
+        Path("config/research/qualification-proposal-rapid-002-rmm-v1.json")
+    )
+    approved_daily = load_qualification_proposal(
+        Path("config/research/qualification-proposal-strategic-allocation-v1.json")
+    )
+    candidate = manifest.candidates[0]
+    ids = (
+        candidate.base_validation_ids
+        + candidate.benchmark_validation_ids
+        + candidate.cost_sensitivity_ids
+        + candidate.delay_sensitivity_ids
+        + candidate.parameter_neighbor_ids
+        + tuple(stress.experiment_id for stress in candidate.combined_stresses)
+    )
+
+    assert manifest.campaign_id == "rapid-002-rmm-40-40-10-controlled-v1"
+    assert candidate.candidate_id == "rr-a480ff073a90e448c8b2"
+    assert candidate.base_parameters == {
+        "lookback": 40,
+        "rebalance_every": 10,
+        "volatility_window": 40,
+    }
+    assert len(ids) == len(set(ids)) == 28
+    assert tuple(stress.role for stress in candidate.combined_stresses) == (
+        "stress-a",
+        "stress-b",
+    )
+    assert evidence_manifest_fingerprint(manifest) == (
+        "b997afb53fdf05ef26be72934fb3318cb582ba503f4527fa9ca96f88f7b72693"
+    )
+    assert proposal.gates[:17] == approved_daily.gates
+    assert tuple(gate.spec.metric for gate in proposal.gates[17:]) == (
+        "stress_a_return",
+        "stress_a_return_retention",
+        "stress_b_return",
+        "stress_b_return_retention",
+    )
+
+
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    (
+        (
+            "config/research/qualification-evidence-strategic-allocation-v1.json",
+            "1feddfba3b889d8fc15c83ee241b776dd69afe607ecf2d05a1b92154071822b5",
+        ),
+        (
+            "config/research/qualification-evidence-v3.json",
+            "e34075c041054b54ddf1141b39c5827fb492ec3fd3a836f18c5d95e59982a73d",
+        ),
+    ),
+)
+def test_existing_manifest_fingerprints_remain_stable(path: str, expected: str) -> None:
+    assert evidence_manifest_fingerprint(load_evidence_manifest(Path(path))) == expected

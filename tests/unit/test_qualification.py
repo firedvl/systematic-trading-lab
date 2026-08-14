@@ -51,6 +51,22 @@ def test_disqualifying_and_missing_metric_gates_reject() -> None:
     assert missing.gates[1].reason == "metric-missing-or-invalid"
 
 
+def test_strict_positive_gate_rejects_zero() -> None:
+    gate = GateSpec(
+        "positive return",
+        "total_return",
+        Comparison.GREATER_THAN,
+        Decimal("0"),
+        approved=True,
+    )
+
+    assert evaluate("zero", {"total_return": "0"}, [gate]).state is QualificationState.REJECTED
+    assert (
+        evaluate("positive", {"total_return": "0.0001"}, [gate]).state
+        is QualificationState.QUALIFIED
+    )
+
+
 def test_approved_config_loads_and_can_qualify_passing_evidence() -> None:
     proposal = load_qualification_proposal(Path("config/research/qualification-proposal.json"))
     passing_metrics = {gate.spec.metric: gate.spec.threshold for gate in proposal.gates}
