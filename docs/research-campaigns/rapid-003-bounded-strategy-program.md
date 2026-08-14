@@ -41,25 +41,28 @@ non-stress row in `rapid_runs` and will not start a batch that would cross 2,000
 and stress rows remain separately counted. This avoids adding an orchestration subsystem for one
 bounded local campaign while leaving every attempted run in the existing durable store.
 
+The four new state-transition strategies use reevaluation cadences of at least five sessions. Their
+next evaluation therefore occurs after the longest declared three-bar Stress B fill delay.
+
 Every family below must end as tested or explicitly infeasible. The machine ledger records the
 hypothesis, implementation, parameter dimensions, configurations, result, and reason.
 
 | ID | Family | Initial implementation |
 | --- | --- | --- |
-| A | Absolute momentum | Existing momentum and risk-managed momentum; add one multi-horizon rule |
+| A | Absolute momentum | Existing momentum and risk-managed momentum plus multi-horizon agreement |
 | B | Relative strength | Existing positive-filtered top-N rotation |
-| C | Dual momentum | Add one role-aware risk/defensive rotation rule |
+| C | Dual momentum | Role-aware risk/defensive rotation |
 | D | Trend following | Existing moving-average state transitions |
 | E | Breakout | Existing entry/exit channel state transitions |
 | F | Pullback / mean reversion | Existing trend pullback and moving-average reversal |
 | G | Volatility management | Existing volatility target, balance, and risk-managed momentum |
 | H | Risk parity / diversification | Existing capped inverse-volatility allocation |
-| I | Risk-on / risk-off regimes | Add one SPY trend-plus-volatility regime rule |
-| J | Defensive rotation | Covered by the new role-aware dual-momentum rule |
+| I | Risk-on / risk-off regimes | SPY trend-plus-volatility regime allocation |
+| J | Defensive rotation | Covered by role-aware dual momentum |
 | K | Tactical asset allocation | Covered by dual and multi-horizon active subsets |
-| L | Multi-horizon signals | Add one two-horizon voting rule |
+| L | Multi-horizon signals | Two-horizon positive agreement and ranking |
 | M | Signal + regime combinations | Test only combinations with independent economic meaning |
-| N | Drawdown-aware exposure | Add one SPY trailing-drawdown state rule |
+| N | Drawdown-aware exposure | SPY trailing-drawdown state rule |
 | O | Cash / defensive filters | Existing positive filters plus dual-momentum fallback |
 | P | Diversification-constrained momentum | Equal-weight top-N signals by construction |
 

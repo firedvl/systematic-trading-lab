@@ -18,7 +18,11 @@ from .backtesting import (
 from .domain import OHLCVBar, Symbol
 from .rapid_strategies import (
     ChannelBreakoutPortfolioStrategy,
+    DrawdownAwareAllocationPortfolioStrategy,
+    DualMomentumPortfolioStrategy,
     MovingAverageStatePortfolioStrategy,
+    MultiHorizonMomentumPortfolioStrategy,
+    RegimeAllocationPortfolioStrategy,
     StartBoundPortfolioStrategy,
     StartBoundStrategy,
     TrendPullbackPortfolioStrategy,
@@ -71,8 +75,8 @@ STRATEGIES: dict[str, StrategyDefinition] = {
         "buy-and-hold",
         "buy-and-hold",
         "baseline",
-        "Buy the first symbol and hold it.",
-        (),
+        "Buy one selected symbol and hold it.",
+        (StrategyParameter("symbol_number", 1),),
         lambda _symbols, _parameters: BuyAndHoldStrategy(),
     ),
     "fixed-weight": StrategyDefinition(
@@ -127,6 +131,26 @@ STRATEGIES: dict[str, StrategyDefinition] = {
             target_weight=Decimal("1") / Decimal(len(symbols)),
         ),
     ),
+    "multi-horizon-momentum": StrategyDefinition(
+        "multi-horizon-momentum",
+        "multi-horizon-momentum-portfolio",
+        "portfolio-momentum",
+        "Hold an equal-weight top-N subset when two momentum horizons are positive.",
+        (
+            StrategyParameter("short_lookback", 20),
+            StrategyParameter("long_lookback", 126, 2),
+            StrategyParameter("selection_count", 3),
+            StrategyParameter("rebalance_every", 5),
+        ),
+        lambda symbols, parameters: MultiHorizonMomentumPortfolioStrategy(
+            symbols,
+            short_lookback=_parameter(parameters, "short_lookback"),
+            long_lookback=_parameter(parameters, "long_lookback"),
+            selection_count=_parameter(parameters, "selection_count"),
+            rebalance_every=_parameter(parameters, "rebalance_every"),
+        ),
+        portfolio=True,
+    ),
     "trend-pullback": StrategyDefinition(
         "trend-pullback",
         "trend-pullback-portfolio",
@@ -174,6 +198,26 @@ STRATEGIES: dict[str, StrategyDefinition] = {
             lookback=_parameter(parameters, "lookback"),
             rebalance_every=_parameter(parameters, "rebalance_every"),
             selection_count=_parameter(parameters, "selection_count"),
+        ),
+        portfolio=True,
+    ),
+    "dual-momentum": StrategyDefinition(
+        "dual-momentum",
+        "dual-momentum-portfolio",
+        "dual-momentum",
+        "Rank positive risk assets, then fall back to TLT, GLD, or cash.",
+        (
+            StrategyParameter("short_lookback", 20),
+            StrategyParameter("long_lookback", 126, 2),
+            StrategyParameter("selection_count", 2),
+            StrategyParameter("rebalance_every", 5),
+        ),
+        lambda symbols, parameters: DualMomentumPortfolioStrategy(
+            symbols,
+            short_lookback=_parameter(parameters, "short_lookback"),
+            long_lookback=_parameter(parameters, "long_lookback"),
+            selection_count=_parameter(parameters, "selection_count"),
+            rebalance_every=_parameter(parameters, "rebalance_every"),
         ),
         portfolio=True,
     ),
@@ -233,6 +277,44 @@ STRATEGIES: dict[str, StrategyDefinition] = {
             maximum_weight=Decimal("1") / Decimal(len(symbols)),
         ),
     ),
+    "regime-allocation": StrategyDefinition(
+        "regime-allocation",
+        "regime-allocation-portfolio",
+        "regime",
+        "Switch between fixed risk and defensive sleeves using SPY trend and volatility.",
+        (
+            StrategyParameter("trend_window", 126, 2),
+            StrategyParameter("volatility_window", 20, 2),
+            StrategyParameter("volatility_limit_percent", 20),
+            StrategyParameter("rebalance_every", 5),
+        ),
+        lambda symbols, parameters: RegimeAllocationPortfolioStrategy(
+            symbols,
+            trend_window=_parameter(parameters, "trend_window"),
+            volatility_window=_parameter(parameters, "volatility_window"),
+            volatility_limit_percent=_parameter(parameters, "volatility_limit_percent"),
+            rebalance_every=_parameter(parameters, "rebalance_every"),
+        ),
+        portfolio=True,
+    ),
+    "drawdown-aware-allocation": StrategyDefinition(
+        "drawdown-aware-allocation",
+        "drawdown-aware-allocation-portfolio",
+        "drawdown",
+        "Move equal risk sleeves to cash after a trailing SPY drawdown.",
+        (
+            StrategyParameter("lookback", 126, 2),
+            StrategyParameter("trigger_percent", 10),
+            StrategyParameter("rebalance_every", 5),
+        ),
+        lambda symbols, parameters: DrawdownAwareAllocationPortfolioStrategy(
+            symbols,
+            lookback=_parameter(parameters, "lookback"),
+            trigger_percent=_parameter(parameters, "trigger_percent"),
+            rebalance_every=_parameter(parameters, "rebalance_every"),
+        ),
+        portfolio=True,
+    ),
 }
 
 _ALIASES = {definition.strategy_id: name for name, definition in STRATEGIES.items()} | {
@@ -271,6 +353,13 @@ def validate_strategy_parameters(name: str, parameters: Mapping[str, object]) ->
                 raise ValueError(f"{parameter.name} must be a positive integer")
             raise ValueError(f"{parameter.name} must be at least {parameter.minimum}")
         validated[parameter.name] = value
+    if (
+        definition.name in {"multi-horizon-momentum", "dual-momentum"}
+        and validated["short_lookback"] >= validated["long_lookback"]
+    ):
+        raise ValueError("short_lookback must be shorter than long_lookback")
+    if definition.name == "dual-momentum" and validated["selection_count"] > 3:
+        raise ValueError("dual-momentum selection_count must not exceed three risk assets")
     return validated
 
 
@@ -290,8 +379,12 @@ def run_registered_strategy(
     if definition.name == "buy-and-hold":
         if not symbols:
             raise ValueError("buy-and-hold requires at least one symbol")
-        selected_bars = tuple(bar for bar in bars if bar.symbol == symbols[0])
-        symbols = (symbols[0],)
+        symbol_number = validated["symbol_number"]
+        if symbol_number > len(symbols):
+            raise ValueError("buy-and-hold symbol number exceeds the strategy universe")
+        selected_symbol = symbols[symbol_number - 1]
+        selected_bars = tuple(bar for bar in bars if bar.symbol == selected_symbol)
+        symbols = (selected_symbol,)
     if not symbols:
         raise ValueError("strategy requires at least one symbol")
     built = definition.factory(symbols, validated)
