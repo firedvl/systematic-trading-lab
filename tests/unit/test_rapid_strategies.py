@@ -110,9 +110,10 @@ def test_multi_horizon_momentum_selects_top_n_only_on_state_change() -> None:
 
 def test_dual_momentum_falls_back_to_strongest_positive_defense() -> None:
     symbols = tuple(Symbol(value) for value in ("SPY", "QQQ", "IWM", "TLT", "GLD"))
-    strategy = DualMomentumPortfolioStrategy(
-        symbols, short_lookback=2, long_lookback=4, selection_count=2, rebalance_every=1
-    )
+    strategy = DualMomentumPortfolioStrategy(symbols, 2, 4, 2, 1)
+
+    assert strategy.rebalance_every == 1
+    assert strategy.defensive_selection_count == 1
 
     decision = _portfolio_decision(
         strategy,

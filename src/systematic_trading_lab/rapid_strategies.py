@@ -274,10 +274,10 @@ class DualMomentumPortfolioStrategy:
     short_lookback: int = 20
     long_lookback: int = 126
     selection_count: int = 2
-    defensive_selection_count: int = 1
     rebalance_every: int = 5
     strategy_id: str = "dual-momentum-portfolio"
     version: str = "1"
+    defensive_selection_count: int = 1
     _active: frozenset[Symbol] | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
