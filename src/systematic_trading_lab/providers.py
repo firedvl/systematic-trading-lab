@@ -369,7 +369,14 @@ def _yahoo_chart_records(
             "data_granularity": meta["dataGranularity"],
             "vendor_timestamp": vendor_timestamp,
             "timestamp": timestamp.isoformat().replace("+00:00", "Z"),
-            **{name: values[index] for name, values in series.items()},
+            **{
+                name: (
+                    values[index]
+                    if name == "volume" or values[index] is None
+                    else str(values[index])
+                )
+                for name, values in series.items()
+            },
         }
         raw_records.append(raw)
         close = _positive_decimal(raw["close"], "close")
