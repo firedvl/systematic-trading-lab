@@ -310,6 +310,7 @@ class DatasetService:
         expected_fingerprint: str,
         expected_universe_id: str,
         expected_universe_fingerprint: str,
+        verify_full_dataset: bool = False,
     ) -> tuple[OHLCVBar, ...]:
         """Load and validate only one bounded range from a sealed dataset."""
         manifest = self.describe(dataset_id)
@@ -351,7 +352,19 @@ class DatasetService:
             timeframe = Timeframe(manifest["timeframe"])
         except (KeyError, ValueError) as error:
             raise DatasetValidationError("cataloged dataset timeframe is invalid") from error
-        records = from_parquet_range(dataset_path / "bars.parquet", requested.start, requested.end)
+        if verify_full_dataset:
+            loaded = self.load_bars(dataset_id)
+            if fingerprint(tuple(bar.to_record() for bar in loaded)) != expected_fingerprint:
+                raise DatasetValidationError("loaded dataset differs from the expected fingerprint")
+            records = tuple(
+                bar.to_record()
+                for bar in loaded
+                if requested.start <= bar.timestamp <= requested.end
+            )
+        else:
+            records = from_parquet_range(
+                dataset_path / "bars.parquet", requested.start, requested.end
+            )
         checked = _validate_records(
             records,
             timeframe,

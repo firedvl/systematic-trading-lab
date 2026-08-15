@@ -4,6 +4,7 @@ import csv
 import json
 import sqlite3
 import subprocess
+from dataclasses import replace
 from datetime import UTC, datetime, time
 from decimal import Decimal
 from pathlib import Path
@@ -13,6 +14,15 @@ import pytest
 
 import systematic_trading_lab.rapid_research as rapid_research
 from systematic_trading_lab.calendar import expected_sessions
+from systematic_trading_lab.datasets import (
+    DatasetService,
+    DatasetValidationError,
+    fixture_request,
+    fixture_symbols,
+)
+from systematic_trading_lab.domain import Timeframe
+from systematic_trading_lab.parquet import to_parquet
+from systematic_trading_lab.providers import FixtureProvider
 from systematic_trading_lab.rapid_data import import_local_data, parse_utc
 from systematic_trading_lab.rapid_research import (
     ResearchInputs,
@@ -24,7 +34,9 @@ from systematic_trading_lab.rapid_research import (
     run_walk_forward,
 )
 from systematic_trading_lab.rapid_store import RAPID_AUTHORITY, RapidResearchStore
+from systematic_trading_lab.storage import StorageLayout
 from systematic_trading_lab.strategy_registry import validate_strategy_parameters
+from systematic_trading_lab.universe import load_research_universe
 
 FIELDS = ("timestamp", "symbol", "open", "high", "low", "close", "volume")
 
@@ -63,6 +75,21 @@ def _inputs(dataset_id: str, strategy: str = "moving-average") -> ResearchInputs
     return ResearchInputs(
         dataset_id, strategy, {"window": 2} if strategy == "moving-average" else {}
     )
+
+
+def _catalog_dataset(
+    tmp_path: Path,
+) -> tuple[Path, RapidResearchStore, DatasetService, str]:
+    root = tmp_path / "state"
+    service = DatasetService(StorageLayout(root))
+    imported = service.import_from(
+        FixtureProvider(),
+        fixture_symbols(),
+        Timeframe.DAILY,
+        fixture_request(),
+        load_research_universe(),
+    )
+    return root, RapidResearchStore(root), service, imported.dataset_id
 
 
 def test_parameter_parsing_and_registry_validation() -> None:
@@ -167,6 +194,58 @@ def test_backtest_replay_is_deterministic_and_create_only(tmp_path: Path) -> Non
     assert report.read_bytes() == first_bytes
     assert len(store.list_runs()) == 1
     assert cast(dict[str, object], first["metrics"])["net_of_costs"] is True
+
+
+def test_campaign_binding_is_recorded_and_changes_run_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, store, _service, dataset_id = _catalog_dataset(tmp_path)
+    campaign = {
+        "id": "rapid-004-expanded-universe",
+        "freeze_sha256": "f" * 64,
+        "dataset_id": "d" * 64,
+    }
+    monkeypatch.setattr(rapid_research, "bind_rapid_004_dataset", lambda *_args: campaign)
+
+    ordinary = run_backtest(root, store, _inputs(dataset_id))
+    bound = run_backtest(
+        root,
+        store,
+        ResearchInputs(
+            dataset_id,
+            "moving-average",
+            {"window": 2},
+            campaign_id="rapid-004-expanded-universe",
+        ),
+    )
+
+    assert bound["run_id"] != ordinary["run_id"]
+    assert cast(dict[str, object], bound["specification"])["campaign"] == campaign
+
+
+def test_campaign_rejects_structurally_valid_modified_catalog_bars(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, store, service, dataset_id = _catalog_dataset(tmp_path)
+    campaign = {"id": "rapid-004-expanded-universe", "dataset_id": dataset_id}
+    monkeypatch.setattr(rapid_research, "bind_rapid_004_dataset", lambda *_args: campaign)
+    bars = list(service.load_bars(dataset_id))
+    bars[0] = replace(bars[0], volume=bars[0].volume + 1)
+    (service.layout.dataset(dataset_id) / "bars.parquet").write_bytes(to_parquet(bars))
+
+    with pytest.raises(DatasetValidationError, match="dataset integrity validation failed"):
+        run_backtest(
+            root,
+            store,
+            ResearchInputs(
+                dataset_id,
+                "moving-average",
+                {"window": 2},
+                campaign_id="rapid-004-expanded-universe",
+            ),
+        )
+
+    assert store.list_runs() == []
 
 
 def test_pending_run_recovers_after_report_precedes_database_completion(

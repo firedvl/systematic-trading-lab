@@ -1,9 +1,20 @@
 {
   "schema_version": "rapid-004-strategy-ledger-v1",
   "program_id": "rapid-004-expanded-universe",
-  "status": "universe-design",
+  "status": "universe-frozen-before-strategy-performance-research",
   "starting_main": "a8312b641d0dcfec4933c735b593b346c27eb564",
   "seed_universe": "config/research/rapid-004-seed-universe-v1.json",
+  "final_universe": "config/research/rapid-004-final-universe-v1.json",
+  "universe_freeze": "config/research/rapid-004-universe-freeze-v1.json",
+  "final_universe_id": "rapid-004-expanded-final-universe-v1",
+  "final_universe_fingerprint": "d57039d3a172337c78ad8206644feeb72d76d124ce33a4e5cbe4733dbb2e94e3",
+  "dataset_id": "450e329a8f11f1bd19dcc37ac417b2c59a262e875723eb668332beb22c48d3ff",
+  "dataset_fingerprint": "ac506268e019a03f7e9e202858171141c3f2d63fc88e03649a1dda091ac47304",
+  "required_run_binding": {
+    "campaign_id": "rapid-004-expanded-universe",
+    "freeze_sha256": "e99cd6e7cd8f4dc11cd80bbe9affadc2e4136945250f44b2eec6d4d83de8efba",
+    "cli_argument": "--campaign rapid-004-expanded-universe"
+  },
   "parent_configuration_ceiling": 3000,
   "parent_configurations_completed": 0,
   "walk_forward_folds_completed": 0,

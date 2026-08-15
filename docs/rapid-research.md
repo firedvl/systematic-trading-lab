@@ -41,6 +41,12 @@ Dates are optional and inclusive:
 
 Signals observe a completed daily bar. Orders can first fill at a later bar open after the configured whole-bar delay. Results are net of slippage and commission.
 
+Rapid-004 runs must add `--campaign rapid-004-expanded-universe`. This binds the campaign identity
+into the run specification, verifies the complete frozen dataset, and rejects any dataset, universe,
+symbol set, range, provider, or adjustment policy that differs from its committed freeze before
+strategy execution. A run without this option is ordinary Rapid evidence and cannot count toward
+Rapid-004.
+
 ## Parameter sweep
 
 ```console

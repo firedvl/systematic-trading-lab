@@ -15,6 +15,7 @@ from . import __version__
 from .config import ConfigurationError, Settings, load_dotenv, load_settings
 from .domain import TradingMode
 from .fingerprints import canonicalize
+from .rapid_004 import RAPID_004_PROGRAM_ID
 from .rapid_data import import_local_data, list_research_datasets, parse_utc
 from .rapid_research import (
     ResearchInputs,
@@ -244,6 +245,11 @@ def _run_data(arguments: argparse.Namespace, settings: Settings) -> int:
 
 def _add_inputs(command: argparse.ArgumentParser, *, parameter_help: str | None = None) -> None:
     command.add_argument("--dataset", required=True, help="dataset ID from `data list`")
+    command.add_argument(
+        "--campaign",
+        choices=(RAPID_004_PROGRAM_ID,),
+        help="bind the run to an exact frozen campaign dataset",
+    )
     command.add_argument("--strategy", required=True, choices=strategy_names())
     command.add_argument(
         "--parameter",
@@ -281,6 +287,7 @@ def _inputs(arguments: argparse.Namespace) -> ResearchInputs:
         arguments.slippage_bps,
         arguments.commission_bps,
         arguments.fill_delay_bars,
+        arguments.campaign,
     )
 
 

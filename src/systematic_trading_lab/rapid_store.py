@@ -370,11 +370,13 @@ def _validate_run_specification(value: Mapping[str, object]) -> None:
         "execution",
         "code",
     }
-    optional = {"group_id", "parent_run_id", "fold", "exploratory_context"}
+    optional = {"group_id", "parent_run_id", "fold", "exploratory_context", "campaign"}
     if set(value) - optional != required or value["schema_version"] != "rapid-research-run-v1":
         raise ValueError("rapid research run fields differ")
     for name in ("dataset", "strategy", "costs", "execution", "code"):
         _mapping(value[name], name)
+    if value.get("campaign") is not None:
+        _mapping(value["campaign"], "campaign")
 
 
 def _dataset_record(row: sqlite3.Row) -> dict[str, object]:

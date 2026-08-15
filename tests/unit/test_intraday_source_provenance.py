@@ -159,6 +159,7 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "systematic_trading_lab/paper_continuation.py",
         "systematic_trading_lab/paper_planning.py",
         "systematic_trading_lab/public_cli.py",
+        "systematic_trading_lab/rapid_004.py",
         "systematic_trading_lab/rapid_data.py",
         "systematic_trading_lab/rapid_research.py",
         "systematic_trading_lab/rapid_store.py",

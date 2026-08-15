@@ -14,6 +14,7 @@ from pathlib import Path
 from .backtesting import BacktestResult, CostModel
 from .config import non_broker_subprocess_environment
 from .fingerprints import fingerprint
+from .rapid_004 import RAPID_004_PROGRAM_ID, bind_rapid_004_dataset
 from .rapid_data import ResearchDataset, parse_utc, resolve_research_dataset
 from .rapid_store import RapidResearchStore, rapid_authority
 from .strategy_registry import (
@@ -35,6 +36,7 @@ class ResearchInputs:
     slippage_bps: Decimal = Decimal("5")
     commission_bps: Decimal = Decimal("1")
     fill_delay_bars: int = 1
+    campaign_id: str | None = None
 
     def __post_init__(self) -> None:
         if self.initial_cash <= 0:
@@ -43,6 +45,8 @@ class ResearchInputs:
             raise ValueError("research costs must not be negative")
         if self.fill_delay_bars < 1:
             raise ValueError("fill delay must be at least one bar")
+        if self.campaign_id not in {None, RAPID_004_PROGRAM_ID}:
+            raise ValueError("unsupported Rapid Research campaign")
 
 
 def list_strategies() -> list[dict[str, object]]:
@@ -77,7 +81,7 @@ def run_backtest(
     parent_run_id: str | None = None,
     exploratory_context: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
-    dataset = resolve_research_dataset(root, store, inputs.dataset_id, inputs.start, inputs.end)
+    dataset, campaign = _resolve_inputs_dataset(root, store, inputs)
     parameters = validate_strategy_parameters(inputs.strategy, inputs.parameters)
     specification = _specification(
         dataset,
@@ -87,6 +91,7 @@ def run_backtest(
         group_id=group_id,
         parent_run_id=parent_run_id,
         exploratory_context=exploratory_context,
+        campaign=campaign,
     )
     return _execute(store, specification, dataset, inputs, parameters)
 
@@ -109,8 +114,9 @@ def run_sweep(
         validate_strategy_parameters(inputs.strategy, configuration)
         for configuration in configurations
     )
+    dataset, campaign = _resolve_inputs_dataset(root, store, inputs)
     group_identity = {
-        "inputs": inputs,
+        "inputs": _inputs_identity(inputs),
         "grid": grid,
         "maximum_runs": maximum_runs,
         "code": _code_identity(),
@@ -128,22 +134,23 @@ def run_sweep(
             inputs.slippage_bps,
             inputs.commission_bps,
             inputs.fill_delay_bars,
+            inputs.campaign_id,
         )
-        runs.append(
-            run_backtest(
-                root,
-                store,
-                selected,
-                run_type="sweep",
-                group_id=group_id,
-                exploratory_context={
-                    "classification": "exploratory-in-sample-parameter-sweep",
-                    "configuration_ordinal": ordinal,
-                    "configuration_count": len(configurations),
-                    "maximum_search_size": maximum_runs,
-                },
-            )
+        specification = _specification(
+            dataset,
+            selected,
+            parameters,
+            "sweep",
+            group_id=group_id,
+            exploratory_context={
+                "classification": "exploratory-in-sample-parameter-sweep",
+                "configuration_ordinal": ordinal,
+                "configuration_count": len(configurations),
+                "maximum_search_size": maximum_runs,
+            },
+            campaign=campaign,
         )
+        runs.append(_execute(store, specification, dataset, selected, parameters))
     return {
         "group_id": group_id,
         "configuration_count": len(configurations),
@@ -168,7 +175,7 @@ def run_walk_forward(
         raise ValueError(
             "walk-forward windows must be positive and step size must cover the test window"
         )
-    dataset = resolve_research_dataset(root, store, inputs.dataset_id, inputs.start, inputs.end)
+    dataset, campaign = _resolve_inputs_dataset(root, store, inputs)
     parameters = validate_strategy_parameters(inputs.strategy, inputs.parameters)
     sessions = tuple(sorted({bar.timestamp for bar in dataset.bars}))
     folds: list[tuple[int, int, int, int]] = []
@@ -187,7 +194,7 @@ def run_walk_forward(
     if not folds:
         raise ValueError("dataset is too short for the requested walk-forward windows")
     group_context = {
-        "inputs": inputs,
+        "inputs": _inputs_identity(inputs),
         "training_window": training_window,
         "test_window": test_window,
         "step_size": step_size,
@@ -218,6 +225,7 @@ def run_walk_forward(
             "training_mode": "expanding" if expanding else "rolling",
             "fold_count": len(folds),
         },
+        campaign=campaign,
     )
     parent = store.begin_run(parent_spec)
     if parent["status"] != "pending":
@@ -267,6 +275,7 @@ def run_walk_forward(
                 "validation_end": validation_end,
                 "training_mode": "expanding" if expanding else "rolling",
             },
+            campaign=campaign,
         )
         fold_records.append(
             _execute(
@@ -340,8 +349,13 @@ def run_stress(
         slippage_bps,
         commission_bps,
         fill_delay_bars,
+        (
+            str(_mapping(source_specification["campaign"])["id"])
+            if source_specification.get("campaign") is not None
+            else None
+        ),
     )
-    group_id = f"rrg-{fingerprint({'parent': run_id, 'inputs': inputs})[:20]}"
+    group_id = f"rrg-{fingerprint({'parent': run_id, 'inputs': _inputs_identity(inputs)})[:20]}"
     stressed = run_backtest(
         root,
         store,
@@ -411,6 +425,44 @@ def parameter_configurations(grid: Mapping[str, Sequence[int]]) -> tuple[dict[st
     return tuple(
         dict(zip(names, values, strict=True))
         for values in product(*(tuple(grid[name]) for name in names))
+    )
+
+
+def _inputs_identity(inputs: ResearchInputs) -> dict[str, object]:
+    identity: dict[str, object] = {
+        "dataset_id": inputs.dataset_id,
+        "strategy": inputs.strategy,
+        "parameters": inputs.parameters,
+        "start": inputs.start,
+        "end": inputs.end,
+        "initial_cash": inputs.initial_cash,
+        "slippage_bps": inputs.slippage_bps,
+        "commission_bps": inputs.commission_bps,
+        "fill_delay_bars": inputs.fill_delay_bars,
+    }
+    if inputs.campaign_id is not None:
+        identity["campaign_id"] = inputs.campaign_id
+    return identity
+
+
+def _resolve_inputs_dataset(
+    root: Path, store: RapidResearchStore, inputs: ResearchInputs
+) -> tuple[ResearchDataset, Mapping[str, object] | None]:
+    campaign = (
+        bind_rapid_004_dataset(root, store, inputs.dataset_id)
+        if inputs.campaign_id == RAPID_004_PROGRAM_ID
+        else None
+    )
+    return (
+        resolve_research_dataset(
+            root,
+            store,
+            inputs.dataset_id,
+            inputs.start,
+            inputs.end,
+            verify_full_cataloged_dataset=campaign is not None,
+        ),
+        campaign,
     )
 
 
@@ -564,6 +616,7 @@ def _specification(
     parent_run_id: str | None = None,
     fold: Mapping[str, object] | None = None,
     exploratory_context: Mapping[str, object] | None = None,
+    campaign: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     definition = get_strategy_definition(inputs.strategy)
     specification: dict[str, object] = {
@@ -605,6 +658,8 @@ def _specification(
         specification["fold"] = fold
     if exploratory_context is not None:
         specification["exploratory_context"] = exploratory_context
+    if campaign is not None:
+        specification["campaign"] = campaign
     return specification
 
 
