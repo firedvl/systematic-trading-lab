@@ -268,7 +268,7 @@ class MultiHorizonMomentumPortfolioStrategy:
 
 @dataclass
 class DualMomentumPortfolioStrategy:
-    """Rank positive risk assets, then fall back to the strongest positive defense."""
+    """Rank positive risk assets, then fall back to positive defense or cash."""
 
     symbols: tuple[Symbol, ...]
     short_lookback: int = 20
@@ -277,14 +277,17 @@ class DualMomentumPortfolioStrategy:
     rebalance_every: int = 5
     strategy_id: str = "dual-momentum-portfolio"
     version: str = "1"
+    defensive_selection_count: int = 1
     _active: frozenset[Symbol] | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
-        risk, _defensive = _fixed_roles(self.symbols)
+        risk, defensive = _fixed_roles(self.symbols)
         if not 1 <= self.short_lookback < self.long_lookback:
             raise ValueError("short lookback must be positive and shorter than long lookback")
         if not 1 <= self.selection_count <= len(risk) or self.rebalance_every < 1:
             raise ValueError("selection count and rebalance interval are invalid")
+        if not 1 <= self.defensive_selection_count <= len(defensive):
+            raise ValueError("defensive selection count is invalid")
 
     def on_session(
         self,
@@ -332,11 +335,17 @@ class DualMomentumPortfolioStrategy:
                 ),
                 key=lambda item: (-item[0], item[1].value),
             )
-            active = frozenset(symbol for _score, symbol in ranked_defensive[:1])
+            active = frozenset(
+                symbol for _score, symbol in ranked_defensive[: self.defensive_selection_count]
+            )
         if active == self._active:
             return ()
         self._active = active
-        weight = Decimal("1") if defensive_mode else Decimal("1") / Decimal(self.selection_count)
+        weight = (
+            Decimal("1") / Decimal(len(active))
+            if defensive_mode and active
+            else Decimal("1") / Decimal(self.selection_count)
+        )
         return _weighted_targets(
             self.symbols,
             {symbol: weight for symbol in active},

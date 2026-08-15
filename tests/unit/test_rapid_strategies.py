@@ -110,9 +110,10 @@ def test_multi_horizon_momentum_selects_top_n_only_on_state_change() -> None:
 
 def test_dual_momentum_falls_back_to_strongest_positive_defense() -> None:
     symbols = tuple(Symbol(value) for value in ("SPY", "QQQ", "IWM", "TLT", "GLD"))
-    strategy = DualMomentumPortfolioStrategy(
-        symbols, short_lookback=2, long_lookback=4, selection_count=2, rebalance_every=1
-    )
+    strategy = DualMomentumPortfolioStrategy(symbols, 2, 4, 2, 1)
+
+    assert strategy.rebalance_every == 1
+    assert strategy.defensive_selection_count == 1
 
     decision = _portfolio_decision(
         strategy,
@@ -127,6 +128,34 @@ def test_dual_momentum_falls_back_to_strongest_positive_defense() -> None:
 
     assert {target.symbol.value: target.weight for target in decision}["GLD"] == Decimal("1")
     assert sum((target.weight for target in decision), Decimal("0")) == Decimal("1")
+
+
+def test_dual_momentum_can_diversify_positive_defense() -> None:
+    symbols = tuple(Symbol(value) for value in ("SPY", "QQQ", "IWM", "TLT", "GLD"))
+    strategy = DualMomentumPortfolioStrategy(
+        symbols,
+        short_lookback=2,
+        long_lookback=4,
+        selection_count=2,
+        defensive_selection_count=2,
+        rebalance_every=1,
+    )
+
+    decision = _portfolio_decision(
+        strategy,
+        {
+            "SPY": ("110", "108", "105", "103", "100"),
+            "QQQ": ("110", "108", "105", "103", "100"),
+            "IWM": ("110", "108", "105", "103", "100"),
+            "TLT": ("100", "101", "102", "103", "105"),
+            "GLD": ("100", "101", "103", "106", "110"),
+        },
+    )
+
+    assert {target.symbol.value: target.weight for target in decision if target.weight} == {
+        "GLD": Decimal("0.5"),
+        "TLT": Decimal("0.5"),
+    }
 
 
 def test_regime_allocation_uses_risk_and_defensive_sleeves() -> None:
@@ -243,6 +272,10 @@ def test_buy_and_hold_selects_requested_symbol() -> None:
         lambda: ChannelBreakoutPortfolioStrategy((Symbol("SPY"),), entry_window=5, exit_window=5),
         lambda: MultiHorizonMomentumPortfolioStrategy(
             (Symbol("SPY"),), short_lookback=5, long_lookback=5
+        ),
+        lambda: DualMomentumPortfolioStrategy(
+            tuple(Symbol(value) for value in ("SPY", "QQQ", "IWM", "TLT", "GLD")),
+            defensive_selection_count=3,
         ),
         lambda: DrawdownAwareAllocationPortfolioStrategy(
             tuple(Symbol(value) for value in ("SPY", "QQQ", "IWM", "TLT", "GLD")),

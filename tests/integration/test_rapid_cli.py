@@ -94,10 +94,11 @@ def test_documented_newcomer_path_runs_in_a_clean_home(tmp_path: Path) -> None:
     assert imported["dataset_id"] == FIXTURE_DATASET_ID
     assert len(cast(list[object], datasets["datasets"])) == 1
     listed_strategies = cast(list[dict[str, object]], strategies["strategies"])
-    assert len(listed_strategies) == 18
+    assert len(listed_strategies) == 19
     assert {
         "multi-horizon-momentum",
         "dual-momentum",
+        "diversified-dual-momentum",
         "regime-allocation",
         "drawdown-aware-allocation",
     } <= {str(strategy["name"]) for strategy in listed_strategies}
