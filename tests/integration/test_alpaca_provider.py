@@ -47,7 +47,7 @@ def _yahoo_payload(*timestamps: int) -> dict[str, object]:
                                 "volume": [10] * len(timestamps),
                             }
                         ],
-                        "adjclose": [{"adjclose": [80] * len(timestamps)}],
+                        "adjclose": [{"adjclose": [80.0] * len(timestamps)}],
                     },
                 }
             ],
@@ -387,15 +387,16 @@ def test_yahoo_provider_binds_metadata_and_scales_daily_ohlc() -> None:
         "open": "79.2",
         "high": "80.8",
         "low": "78.4",
-        "close": "80",
+        "close": "80.0",
         "volume": 10,
     }
     assert records.raw_records[0]["vendor_timestamp"] == vendor_timestamp
-    assert records.raw_records[0]["adjusted_close"] == 80
+    assert records.raw_records[0]["adjusted_close"] == "80.0"
     assert records.raw_records[0]["instrument_type"] == "ETF"
     assert records.raw_records[0]["currency"] == "USD"
     assert records.raw_records[0]["exchange_timezone"] == "America/New_York"
     assert records.raw_records[0]["data_granularity"] == "1d"
+    assert fingerprint(records.raw_records)
     assert requests[0].headers["User-agent"].startswith("Mozilla/5.0")
     query = parse_qs(urlparse(str(requests[0].full_url)).query)
     assert query["period1"] == [str(int(requested.start.timestamp()))]
