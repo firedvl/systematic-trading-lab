@@ -16,6 +16,9 @@ trading-lab research list
 trading-lab research show RUN_ID
 trading-lab research compare RUN_A RUN_B
 trading-lab research export-candidate RUN_ID
+trading-lab research rapid-004 plan
+trading-lab research rapid-004 status
+trading-lab research rapid-004 run
 ```
 
 Run these through `uv run` in a checkout.
@@ -41,11 +44,18 @@ Dates are optional and inclusive:
 
 Signals observe a completed daily bar. Orders can first fill at a later bar open after the configured whole-bar delay. Results are net of slippage and commission.
 
-The generic `--campaign rapid-004-expanded-universe` path now verifies the frozen dataset and
-immutable research predeclaration, then fails closed before reading bars. Only the planned
-Rapid-004 runner may later create campaign rows after it validates the exact family, stage, strategy
-profile, parameters, period, execution scenario, neighbor relation, and cumulative parent budget.
-An ordinary Rapid run cannot count toward Rapid-004.
+The generic `--campaign rapid-004-expanded-universe` path verifies the frozen dataset and immutable
+research predeclaration, then fails closed before reading bars. The dedicated `rapid-004 run`
+command accepts no dataset, strategy, parameter, date, cost, delay, or candidate input. It derives
+those values from the frozen predeclaration, validates the complete catalog, Parquet, and raw
+snapshot before creating a run row, and enforces the cumulative parent budget. On resume it also
+rebuilds every allowed specification from the freeze and verifies each SQLite row and create-only
+report before using it. It executes the fixed benchmark, discovery, conditional confirmation,
+fixed-block, walk-forward, declared-neighbor, sensitivity, stress, uniform-screen, and simultaneous
+cohort-freeze stages in their frozen global order. A nonempty cohort artifact contains every exact
+candidate-controlled plan; an empty cohort contains no controlled plan. `plan` reads only the
+reviewed configuration; `status` reads only campaign state. An ordinary Rapid run cannot count
+toward Rapid-004.
 
 ## Parameter sweep
 

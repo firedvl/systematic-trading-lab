@@ -16,6 +16,11 @@ from .config import ConfigurationError, Settings, load_dotenv, load_settings
 from .domain import TradingMode
 from .fingerprints import canonicalize
 from .rapid_004 import RAPID_004_PROGRAM_ID
+from .rapid_004_runner import (
+    rapid_004_plan_summary,
+    rapid_004_status,
+    run_rapid_004_campaign,
+)
 from .rapid_data import import_local_data, list_research_datasets, parse_utc
 from .rapid_research import (
     ResearchInputs,
@@ -64,6 +69,10 @@ def research_parser() -> argparse.ArgumentParser:
     )
     commands = root.add_subparsers(dest="research_command", required=True)
     commands.add_parser("list-strategies", help="show built-in daily strategies and parameters")
+    rapid_004 = commands.add_parser(
+        "rapid-004", help="plan, run, or inspect the frozen Rapid-004 campaign"
+    )
+    rapid_004.add_argument("action", nargs="?", choices=("plan", "run", "status"), default="status")
     backtest = commands.add_parser(
         "backtest",
         help="run one net-of-cost historical simulation",
@@ -179,6 +188,21 @@ def _run_public(arguments: argparse.Namespace) -> int:
 def _run_research(arguments: argparse.Namespace, settings: Settings) -> int:
     if arguments.research_command == "list-strategies":
         _print({"strategies": list_strategies(), "authority": rapid_authority()})
+        return 0
+    if arguments.research_command == "rapid-004":
+        repository = Path(__file__).resolve().parents[2]
+        if arguments.action == "plan":
+            _print(rapid_004_plan_summary(repository))
+        elif arguments.action == "status":
+            _print(rapid_004_status(repository, settings.home))
+        else:
+            _print(
+                run_rapid_004_campaign(
+                    repository,
+                    settings.home,
+                    progress=lambda message: print(message, file=sys.stderr),
+                )
+            )
         return 0
     store = RapidResearchStore(settings.home)
     if arguments.research_command == "list":
