@@ -392,7 +392,7 @@ def _yahoo_chart_records(
                 "open": str(_positive_decimal(raw["open"], "open") * factor),
                 "high": str(_positive_decimal(raw["high"], "high") * factor),
                 "low": str(_positive_decimal(raw["low"], "low") * factor),
-                "close": str(adjusted_close),
+                "close": str(close * factor),
                 "volume": volume,
             }
         )
