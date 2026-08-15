@@ -1,7 +1,7 @@
 {
   "schema_version": "rapid-strategy-program-ledger-v1",
   "program_id": "rapid-003-bounded-strategy-discovery",
-  "status": "discovery-open",
+  "status": "complete-no-controlled-qualified-candidate",
   "starting_main_commit": "26686b3dad56fe0dc327f3fadf8a63b3c0e21348",
   "dataset": {
     "dataset_id": "508c606884112c92402707c30b56fc9d8c07cfc1c01c64f8538a6494888eeeca",
@@ -13,8 +13,11 @@
   },
   "search": {
     "parent_configuration_ceiling": 2000,
-    "parent_configurations_run": 0,
-    "fold_and_stress_runs": 0,
+    "parent_configurations_run": 1219,
+    "fold_and_stress_runs": 176,
+    "total_run_records": 1395,
+    "completed_run_records": 1395,
+    "failed_run_records": 0,
     "initial_rapid_store_run_count": 0,
     "accounting_source": "all non-fold, non-stress rapid_runs rows in the program's initially empty Rapid store",
     "method": "coarse exploration, early rejection, then bounded neighbor checks"
@@ -64,9 +67,13 @@
       "implementation_status": "implemented",
       "strategies": ["momentum", "risk-managed-momentum", "multi-horizon-momentum"],
       "parameter_dimensions": ["lookback", "short_lookback", "long_lookback", "rebalance_every"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": [
+        "momentum: 7 parents",
+        "multi-horizon-momentum: 78 parents, 2 walk-forward parents, 18 folds",
+        "Rapid-002 40/40/10 remained closed and was not rerun"
+      ],
+      "result": "rejected",
+      "rejection_or_survival_reason": "Single-horizon and multi-horizon variants were benchmark-inferior or unstable out of sample; the prior Rapid-002 risk-managed point remains permanently rejected."
     },
     {
       "id": "B",
@@ -75,9 +82,9 @@
       "implementation_status": "existing",
       "strategies": ["relative-strength"],
       "parameter_dimensions": ["lookback", "rebalance_every", "selection_count"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["relative-strength: 67 parents, 1 walk-forward parent, 9 folds"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "The strongest point compounded 49.95% out of sample versus 56.35% for SPY and retained losing folds and concentration weakness."
     },
     {
       "id": "C",
@@ -86,9 +93,12 @@
       "implementation_status": "implemented",
       "strategies": ["dual-momentum", "diversified-dual-momentum"],
       "parameter_dimensions": ["short_lookback", "long_lookback", "selection_count", "rebalance_every"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": [
+        "dual-momentum: 362 parents, 6 walk-forward parents, 54 folds, 8 stresses",
+        "diversified-dual-momentum: 309 parents"
+      ],
+      "result": "rejected",
+      "rejection_or_survival_reason": "Old dual-momentum survivors failed fixed-block fill, concentration, benchmark, or neighbor gates. A uniform audit of all 84 complete fixed-block identities found four diversified-defense base passes; their minimum one-parameter neighbor retentions were -43.4%, -9.9%, 12.9%, and 39.1%."
     },
     {
       "id": "D",
@@ -97,9 +107,9 @@
       "implementation_status": "existing",
       "strategies": ["moving-average-state", "moving-average"],
       "parameter_dimensions": ["window"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["moving-average: 7 parents", "moving-average-state: 7 parents"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "State and continuous moving-average variants were benchmark-inferior and did not justify stricter evaluation."
     },
     {
       "id": "E",
@@ -108,9 +118,9 @@
       "implementation_status": "existing",
       "strategies": ["channel-breakout"],
       "parameter_dimensions": ["entry_window", "exit_window"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["channel-breakout: 12 parents"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "Channel variants were weak, cost-sensitive, and benchmark-inferior."
     },
     {
       "id": "F",
@@ -119,9 +129,9 @@
       "implementation_status": "existing",
       "strategies": ["trend-pullback", "mean-reversion"],
       "parameter_dimensions": ["trend_window", "pullback_window", "window"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["trend-pullback: 16 parents", "mean-reversion: 7 parents"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "Pullback and reversal variants were weak or transaction-cost dominated."
     },
     {
       "id": "G",
@@ -130,9 +140,9 @@
       "implementation_status": "existing",
       "strategies": ["volatility-targeted", "volatility-balanced", "risk-managed-momentum"],
       "parameter_dimensions": ["volatility_window", "rebalance_every"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["volatility-targeted: 6 parents", "volatility-balanced: 18 parents"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "Volatility targeting and balancing did not add enough return or drawdown value over simple benchmarks; Rapid-002 risk-managed momentum was not retried."
     },
     {
       "id": "H",
@@ -141,9 +151,9 @@
       "implementation_status": "existing",
       "strategies": ["volatility-balanced"],
       "parameter_dimensions": ["volatility_window", "rebalance_every"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["volatility-balanced: 18 parents"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "The bounded inverse-volatility approximation was benchmark-inferior; optimizer complexity was not justified."
     },
     {
       "id": "I",
@@ -152,9 +162,9 @@
       "implementation_status": "implemented",
       "strategies": ["regime-allocation"],
       "parameter_dimensions": ["trend_window", "volatility_window", "volatility_limit_percent", "rebalance_every"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["regime-allocation: 247 parents, 4 walk-forward parents, 36 folds, 6 stresses"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "Regime 84/30/15/21 led walk-forward at 94.26% with all folds positive, but fixed blocks produced only 67 fills and a worst Sharpe of 0.415. Regime 63/20/20/21 passed the other visible base gates but produced only 62 fills."
     },
     {
       "id": "J",
@@ -163,9 +173,9 @@
       "implementation_status": "implemented",
       "strategies": ["dual-momentum", "diversified-dual-momentum"],
       "parameter_dimensions": ["short_lookback", "long_lookback", "rebalance_every"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["dual-momentum and diversified-dual-momentum counts are recorded under family C"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "Single-defense variants remained concentrated or inactive; diversified TLT/GLD fallback reduced concentration but did not survive fixed parameter neighbors."
     },
     {
       "id": "K",
@@ -174,9 +184,9 @@
       "implementation_status": "implemented",
       "strategies": ["dual-momentum", "diversified-dual-momentum", "multi-horizon-momentum"],
       "parameter_dimensions": ["short_lookback", "long_lookback", "selection_count", "rebalance_every"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["dual-momentum, diversified-dual-momentum, and multi-horizon counts are recorded under families C and L"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "The active-subset variants either missed benchmark, concentration, activity, or neighbor-retention gates."
     },
     {
       "id": "L",
@@ -185,9 +195,9 @@
       "implementation_status": "implemented",
       "strategies": ["multi-horizon-momentum", "dual-momentum", "diversified-dual-momentum"],
       "parameter_dimensions": ["short_lookback", "long_lookback", "rebalance_every"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["multi-horizon-momentum: 78 parents, 2 walk-forward parents, 18 folds", "dual-family counts are recorded under family C"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "Multi-horizon agreement did not beat the walk-forward benchmarks; dual variants had stronger returns but failed later base or neighbor gates."
     },
     {
       "id": "M",
@@ -196,9 +206,9 @@
       "implementation_status": "implemented",
       "strategies": ["dual-momentum", "diversified-dual-momentum", "regime-allocation", "trend-pullback"],
       "parameter_dimensions": ["lookbacks", "volatility_window", "rebalance_every"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["dual, diversified-dual, regime-allocation, and trend-pullback counts are recorded in their primary families"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "Economically interpretable combinations were tested through dual momentum, regime allocation, and trend pullback; none cleared the complete gate set."
     },
     {
       "id": "N",
@@ -207,9 +217,9 @@
       "implementation_status": "implemented",
       "strategies": ["drawdown-aware-allocation"],
       "parameter_dimensions": ["lookback", "trigger_percent", "rebalance_every"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["drawdown-aware-allocation: 48 parents"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "Deterministic de-risking reduced exposure but was materially benchmark-inferior."
     },
     {
       "id": "O",
@@ -218,9 +228,9 @@
       "implementation_status": "implemented",
       "strategies": ["momentum", "relative-strength", "risk-managed-momentum", "dual-momentum", "diversified-dual-momentum"],
       "parameter_dimensions": ["lookback", "selection_count", "rebalance_every"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["positive-signal cash and defensive fallbacks were exercised across momentum, relative-strength, and both dual families"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "Cash and defensive filters improved some drawdowns but did not produce a robust candidate that cleared benchmark, concentration, activity, and neighbor gates together."
     },
     {
       "id": "P",
@@ -229,21 +239,62 @@
       "implementation_status": "implemented",
       "strategies": ["multi-horizon-momentum", "dual-momentum", "diversified-dual-momentum"],
       "parameter_dimensions": ["short_lookback", "long_lookback", "selection_count", "rebalance_every"],
-      "configurations_tested": [],
-      "result": "pending",
-      "rejection_or_survival_reason": null
+      "configurations_tested": ["equal-weight top-2/top-3 variants were tested across multi-horizon, dual, and diversified-dual families"],
+      "result": "rejected",
+      "rejection_or_survival_reason": "Equal-weight top-N construction reduced full-range concentration, but every visible-base survivor failed fixed-fold parameter-neighbor retention."
     }
   ],
   "final_cohort": {
-    "status": "not-frozen",
+    "status": "frozen-empty",
+    "frozen_source_commit": "d45934bc8696a9bfc03764042d38a4872cca7267",
+    "exposed_screen": {
+      "path": "config/research/rapid-003-exposed-screen-v1.json",
+      "sha256": "971e8cbb381180245b8a7660ee8bb5c908538bed1417c239707eadf415fee69b"
+    },
     "candidates": [],
-    "controlled_results_inspected": false
+    "selection_reason": "The read-only parent-disposition query classified all 1,219 parents and uniformly screened all 84 complete fixed-block identities. Five passed the base gates and all five failed the one-parameter neighbor screen, so no candidate deserved research promotion.",
+    "controlled_qualification_attempts": 0,
+    "controlled_results_inspected": false,
+    "qualification_status": "not-run-no-deserving-candidate"
+  },
+  "delivery": {
+    "final_research_source_commit": "d45934bc8696a9bfc03764042d38a4872cca7267",
+    "program_pull_requests": [
+      {
+        "number": 129,
+        "merge_commit": "f912621678127c1cd08996f9b92e93b26db7b9d4",
+        "purpose": "program ledger"
+      },
+      {
+        "number": 130,
+        "merge_commit": "308d16792e8aeb97a7181f1e417cb55dd9af0a60",
+        "purpose": "strategy families"
+      },
+      {
+        "number": 131,
+        "merge_commit": "d45934bc8696a9bfc03764042d38a4872cca7267",
+        "purpose": "diversified defensive momentum"
+      },
+      {
+        "number": 132,
+        "merge_commit": null,
+        "purpose": "final closeout; merge identity attested by rapid-003-closeout-v1"
+      }
+    ],
+    "markdown_report": "docs/research-campaigns/rapid-003-final-report.md",
+    "exposed_screen": "config/research/rapid-003-exposed-screen-v1.json",
+    "parent_disposition_query": "config/research/rapid-003-parent-dispositions-v1.sql",
+    "closeout_attestation_tag": "rapid-003-closeout-v1",
+    "closeout_attestation_note": "The annotated tag points to exact merged closeout main and records the final main, closeout PR and merge SHA, report, ledger, screen, and Rapid database SHA-256 values, exact open-PR and branch counts, and protected-state confirmations without a recursive in-file commit hash.",
+    "independent_evaluation_recommendation": null,
+    "independent_evaluation_runner_up": null
   },
   "protected_state": {
     "independent_2018_2019_touched": false,
     "v3_touched": false,
     "paper_broker_live_touched": false,
     "strategic_allocation_21_touched": false,
-    "verification": "audit Rapid run ranges, Git operations, and commands; no acquisition or local-import command is permitted"
+    "verification": "The Rapid database proves that all 1,395 rows use the one allowed dataset and fingerprint, stay within 2020-07-27 through 2026-07-31, and have zero independent-range or V3 overlap; rapid_datasets contains zero local imports. The no-acquisition and no-protected-mutation findings rely on the audited operator command record and Git scope, not on Rapid database rows alone.",
+    "enforcement_limit": "The generic public CLI does not enforce the Rapid-003 2018-2019 seal. This program ran only exact catalog-bound commands for the named dataset and allowed range and ran no acquisition, local-import, or data-validation command."
   }
 }
