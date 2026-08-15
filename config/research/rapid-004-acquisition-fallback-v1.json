@@ -26,7 +26,7 @@
     "normalization": {
       "session_timestamp": "convert the vendor timestamp in America/New_York to its session date, then store UTC midnight",
       "open_high_low": "multiply each vendor value by adjusted_close divided by close",
-      "close": "use vendor adjusted_close",
+      "close": "multiply vendor close by adjusted_close divided by close, using the same Decimal factor as open/high/low",
       "volume": "use the vendor-reported integer volume unchanged"
     },
     "required_metadata": {

@@ -1,6 +1,7 @@
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Any
 from urllib.parse import parse_qs, urlparse
 from urllib.request import Request
 
@@ -8,7 +9,13 @@ import pytest
 
 from systematic_trading_lab.calendar import expected_bar_timestamps
 from systematic_trading_lab.datasets import DatasetService, DatasetValidationError
-from systematic_trading_lab.domain import AdjustmentPolicy, Symbol, Timeframe, TimestampRange
+from systematic_trading_lab.domain import (
+    AdjustmentPolicy,
+    OHLCVBar,
+    Symbol,
+    Timeframe,
+    TimestampRange,
+)
 from systematic_trading_lab.fingerprints import fingerprint
 from systematic_trading_lab.providers import (
     AlpacaHistoricalProvider,
@@ -23,7 +30,7 @@ def _alpaca_bar(timestamp: str) -> dict[str, object]:
     return {"t": timestamp, "o": 100, "h": 101, "l": 99, "c": 100.5, "v": 10}
 
 
-def _yahoo_payload(*timestamps: int) -> dict[str, object]:
+def _yahoo_payload(*timestamps: int) -> dict[str, Any]:
     return {
         "chart": {
             "error": None,
@@ -416,3 +423,25 @@ def test_yahoo_provider_rejects_non_xnys_daily_records() -> None:
             Timeframe.DAILY,
             TimestampRange(datetime(2025, 1, 6, tzinfo=UTC), datetime(2025, 1, 11, tzinfo=UTC)),
         )
+
+
+def test_yahoo_provider_scales_close_with_the_same_decimal_factor() -> None:
+    vendor_timestamp = int(datetime(2025, 1, 6, 14, 30, tzinfo=UTC).timestamp())
+    payload = _yahoo_payload(vendor_timestamp)
+    result = payload["chart"]["result"][0]
+    result["indicators"] = {
+        "quote": [{"open": [3], "high": [3], "low": [2], "close": [3], "volume": [10]}],
+        "adjclose": [{"adjclose": [1]}],
+    }
+
+    def transport(request: Request) -> bytes:
+        return json.dumps(payload).encode()
+
+    records = YahooHistoricalProvider(transport=transport).fetch(
+        [Symbol("SPY")],
+        Timeframe.DAILY,
+        TimestampRange(datetime(2025, 1, 6, tzinfo=UTC), datetime(2025, 1, 6, tzinfo=UTC)),
+    )
+
+    assert records[0]["high"] == records[0]["close"]
+    assert OHLCVBar.from_record(records[0])
