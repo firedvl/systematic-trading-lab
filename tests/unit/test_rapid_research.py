@@ -4,7 +4,6 @@ import csv
 import json
 import sqlite3
 import subprocess
-from dataclasses import replace
 from datetime import UTC, datetime, time
 from decimal import Decimal
 from pathlib import Path
@@ -16,12 +15,10 @@ import systematic_trading_lab.rapid_research as rapid_research
 from systematic_trading_lab.calendar import expected_sessions
 from systematic_trading_lab.datasets import (
     DatasetService,
-    DatasetValidationError,
     fixture_request,
     fixture_symbols,
 )
 from systematic_trading_lab.domain import Timeframe
-from systematic_trading_lab.parquet import to_parquet
 from systematic_trading_lab.providers import FixtureProvider
 from systematic_trading_lab.rapid_data import import_local_data, parse_utc
 from systematic_trading_lab.rapid_research import (
@@ -196,7 +193,7 @@ def test_backtest_replay_is_deterministic_and_create_only(tmp_path: Path) -> Non
     assert cast(dict[str, object], first["metrics"])["net_of_costs"] is True
 
 
-def test_campaign_binding_is_recorded_and_changes_run_identity(
+def test_generic_campaign_requires_the_predeclared_runner(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     root, store, _service, dataset_id = _catalog_dataset(tmp_path)
@@ -207,33 +204,7 @@ def test_campaign_binding_is_recorded_and_changes_run_identity(
     }
     monkeypatch.setattr(rapid_research, "bind_rapid_004_dataset", lambda *_args: campaign)
 
-    ordinary = run_backtest(root, store, _inputs(dataset_id))
-    bound = run_backtest(
-        root,
-        store,
-        ResearchInputs(
-            dataset_id,
-            "moving-average",
-            {"window": 2},
-            campaign_id="rapid-004-expanded-universe",
-        ),
-    )
-
-    assert bound["run_id"] != ordinary["run_id"]
-    assert cast(dict[str, object], bound["specification"])["campaign"] == campaign
-
-
-def test_campaign_rejects_structurally_valid_modified_catalog_bars(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    root, store, service, dataset_id = _catalog_dataset(tmp_path)
-    campaign = {"id": "rapid-004-expanded-universe", "dataset_id": dataset_id}
-    monkeypatch.setattr(rapid_research, "bind_rapid_004_dataset", lambda *_args: campaign)
-    bars = list(service.load_bars(dataset_id))
-    bars[0] = replace(bars[0], volume=bars[0].volume + 1)
-    (service.layout.dataset(dataset_id) / "bars.parquet").write_bytes(to_parquet(bars))
-
-    with pytest.raises(DatasetValidationError, match="dataset integrity validation failed"):
+    with pytest.raises(ValueError, match="requires its predeclared campaign runner"):
         run_backtest(
             root,
             store,
