@@ -1,0 +1,564 @@
+{
+  "schema_version": "rapid-003-exposed-screen-v1",
+  "screen_id": "rapid-003-final-cohort-exposed-screen-v1",
+  "program_id": "rapid-003-bounded-strategy-discovery",
+  "status": "closed-no-survivor",
+  "purpose": "Define the exposed-data research screen used to decide whether any candidate deserved final-cohort freeze and later controlled qualification.",
+  "source": {
+    "final_research_commit": "d45934bc8696a9bfc03764042d38a4872cca7267",
+    "dataset_id": "508c606884112c92402707c30b56fc9d8c07cfc1c01c64f8538a6494888eeeca",
+    "dataset_fingerprint": "4fe62ab615ae713e23926da940256b9a728db39c2bc60c028df6d1136be49494",
+    "allowed_start": "2020-07-27",
+    "allowed_end": "2026-07-31",
+    "fixed_blocks": [
+      {
+        "id": "block-1",
+        "start": "2020-07-27",
+        "end": "2022-07-25",
+        "sessions": 503,
+        "fixed_weight_run_id": "rr-3fd6781408bf2d5f16cc",
+        "fixed_weight_total_return": "0.046747709544293819443509323"
+      },
+      {
+        "id": "block-2",
+        "start": "2022-07-26",
+        "end": "2024-07-26",
+        "sessions": 504,
+        "fixed_weight_run_id": "rr-54b94640d00031b7e1b8",
+        "fixed_weight_total_return": "0.285767268353344194769191055"
+      },
+      {
+        "id": "block-3",
+        "start": "2024-07-29",
+        "end": "2026-07-31",
+        "sessions": 504,
+        "fixed_weight_run_id": "rr-96d485058dd096e3aa2f",
+        "fixed_weight_total_return": "0.369598860728034231732375059"
+      }
+    ],
+    "normal_execution": {
+      "cost_model_version": "conservative-bps-v1",
+      "slippage_bps": "5",
+      "commission_bps": "1",
+      "fill_delay_bars": 1,
+      "initial_cash": "100000"
+    },
+    "parent_disposition_query": {
+      "path": "config/research/rapid-003-parent-dispositions-v1.sql",
+      "sha256": "11d18522eefd4a05fffedb87654d07a71d3c77857af035ac30bf26c2a9d67a7e",
+      "database_mode": "read-only",
+      "expected_parent_rows": 1219,
+      "expected_fixed_block_rows": 252,
+      "expected_complete_fixed_identities": 84
+    }
+  },
+  "authority": {
+    "automatic_promotion": false,
+    "broker_writes": false,
+    "controlled_research_evidence": false,
+    "live_execution": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "qualification": false
+  },
+  "policy": {
+    "sequence": [
+      "The disposition query assigns every one of the 1,219 parent configurations a stage and outcome.",
+      "Every complete fixed-block identity must pass every visible-base gate across the three fixed blocks.",
+      "Every base survivor must pass every complete same-strategy, same-commit fixed-block identity that differs in exactly one parameter.",
+      "A neighbor survivor must pass both full-range execution stresses.",
+      "Only a complete survivor may enter the simultaneously frozen final cohort before any controlled result is inspected."
+    ],
+    "visible_base": {
+      "candidate_set": "all 84 strategy, parameter, and code-commit identities with completed Normal rows for all three fixed blocks",
+      "required": "all gates",
+      "gates": [
+        {
+          "metric": "validation_fold_count",
+          "aggregation": "count of listed fixed blocks",
+          "comparison": ">=",
+          "threshold": "3"
+        },
+        {
+          "metric": "positive_validation_fold_rate",
+          "aggregation": "positive total-return blocks divided by listed fixed blocks",
+          "comparison": ">=",
+          "threshold": "1"
+        },
+        {
+          "metric": "fixed_weight_benchmark_win_rate",
+          "aggregation": "blocks with candidate total return greater than fixed-weight total return divided by listed fixed blocks",
+          "comparison": ">=",
+          "threshold": "0.6666666666666666666666666667"
+        },
+        {
+          "metric": "worst_validation_return",
+          "aggregation": "minimum block total_return",
+          "comparison": ">=",
+          "threshold": "0"
+        },
+        {
+          "metric": "worst_validation_sharpe",
+          "aggregation": "minimum block sharpe_ratio",
+          "comparison": ">=",
+          "threshold": "0.5"
+        },
+        {
+          "metric": "max_validation_drawdown",
+          "aggregation": "maximum block max_drawdown",
+          "comparison": "<=",
+          "threshold": "0.20"
+        },
+        {
+          "metric": "max_average_gross_exposure",
+          "aggregation": "maximum block average_gross_exposure",
+          "comparison": "<=",
+          "threshold": "1"
+        },
+        {
+          "metric": "max_top_5_session_profit_share",
+          "aggregation": "maximum block top_5_session_profit_share",
+          "comparison": "<=",
+          "threshold": "0.25"
+        },
+        {
+          "metric": "max_top_instrument_profit_share",
+          "aggregation": "maximum block top_instrument_profit_share",
+          "comparison": "<=",
+          "threshold": "0.50"
+        },
+        {
+          "metric": "max_turnover",
+          "aggregation": "maximum block turnover",
+          "comparison": "<=",
+          "threshold": "30"
+        },
+        {
+          "metric": "total_validation_trade_count",
+          "aggregation": "sum of block trade_count",
+          "comparison": ">=",
+          "threshold": "100"
+        }
+      ]
+    },
+    "parameter_neighbors": {
+      "candidate_set": "every complete same-strategy and same-code-commit fixed-block identity whose parameters_json differs from the base identity in exactly one of short_lookback, long_lookback, selection_count, or rebalance_every",
+      "required": "all query-selected one-parameter neighbors on all three fixed blocks",
+      "metric": "parameter_neighbor_return_retention",
+      "formula": "neighbor block total_return / base block total_return",
+      "aggregation": "minimum across every query-selected neighbor and matching fixed block",
+      "comparison": ">=",
+      "threshold": "0.50",
+      "substitution_after_results": false,
+      "source_query": "config/research/rapid-003-parent-dispositions-v1.sql"
+    },
+    "execution_stress": {
+      "range": "2020-07-27..2026-07-31",
+      "required": "both scenarios",
+      "scenarios": [
+        {
+          "id": "stress-a",
+          "slippage_bps": "10",
+          "commission_bps": "2",
+          "fill_delay_bars": 2,
+          "gates": [
+            {
+              "metric": "stress_a_return",
+              "comparison": ">",
+              "threshold": "0"
+            },
+            {
+              "metric": "stress_a_return_retention",
+              "formula": "stress total_return / normal full-range total_return",
+              "comparison": ">=",
+              "threshold": "0.80"
+            }
+          ]
+        },
+        {
+          "id": "stress-b",
+          "slippage_bps": "20",
+          "commission_bps": "5",
+          "fill_delay_bars": 3,
+          "gates": [
+            {
+              "metric": "stress_b_return",
+              "comparison": ">",
+              "threshold": "0"
+            },
+            {
+              "metric": "stress_b_return_retention",
+              "formula": "stress total_return / normal full-range total_return",
+              "comparison": ">=",
+              "threshold": "0.80"
+            }
+          ]
+        }
+      ]
+    },
+    "scope_note": "This exposed research screen uses the applicable daily base, neighbor, and combined-stress thresholds. Controlled-only regime-coverage, isolated-cost, isolated-delay, candidate-count, stored-plan, and authority gates were not evaluated here. Any survivor would still require a separately reviewed controlled plan and every unchanged controlled gate."
+  },
+  "historical_evidence_note": "These four rows preserve the ordered research checks described in the report. The uniform_final_screen and parent-disposition query are the authoritative exhaustive closeout proof.",
+  "historical_candidate_evidence": [
+    {
+      "candidate_id": "dual-5-50-top3-21",
+      "strategy": "dual-momentum",
+      "code_commit": "308d16792e8aeb97a7181f1e417cb55dd9af0a60",
+      "parameters": {
+        "short_lookback": 5,
+        "long_lookback": 50,
+        "selection_count": 3,
+        "rebalance_every": 21
+      },
+      "base_block_run_ids": [
+        "rr-e63cdc60312e5a5dc199",
+        "rr-6b2bf1571408acc253fd",
+        "rr-42051424928fc8745008"
+      ],
+      "base_result": "pass",
+      "neighbor_evidence": {
+        "mode": "earlier full-range broad-neighbor check",
+        "normal_full_range_run_id": "rr-b770dcf7cc83eaab0a0e",
+        "neighbors": [
+          {
+            "dimension": "long_lookback",
+            "parameters": {
+              "short_lookback": 5,
+              "long_lookback": 55,
+              "selection_count": 3,
+              "rebalance_every": 21
+            },
+            "run_id": "rr-92b7fcdac1edb3f45e18",
+            "return_retention": "0.472016378799"
+          }
+        ]
+      },
+      "screen_result": "fail-parameter-neighbor-retention"
+    },
+    {
+      "candidate_id": "diversified-dual-20-84-top2-15",
+      "strategy": "diversified-dual-momentum",
+      "code_commit": "d45934bc8696a9bfc03764042d38a4872cca7267",
+      "parameters": {
+        "short_lookback": 20,
+        "long_lookback": 84,
+        "selection_count": 2,
+        "rebalance_every": 15
+      },
+      "base_block_run_ids": [
+        "rr-39a444d6dfaf4dfbe3cf",
+        "rr-3c4b4a3f723dfd1a1948",
+        "rr-8ec0a2e9c00d341e03be"
+      ],
+      "base_result": "pass",
+      "neighbor_sets": [
+        {
+          "dimension": "short_lookback",
+          "value": 15,
+          "run_ids": ["rr-4b780d7d3d1902101343", "rr-9c12002c5f5abd00e8d8", "rr-279ce604c2f5091c40b3"]
+        },
+        {
+          "dimension": "short_lookback",
+          "value": 25,
+          "run_ids": ["rr-f6587235e398549f3ec9", "rr-5d2d2a805e5c962c6cce", "rr-9e9e2bf09643a17bed38"]
+        },
+        {
+          "dimension": "long_lookback",
+          "value": 63,
+          "run_ids": ["rr-b844af999fb88141c8b4", "rr-85a95b5f0d99a70660f5", "rr-87c357f360a47a116691"]
+        },
+        {
+          "dimension": "long_lookback",
+          "value": 105,
+          "run_ids": ["rr-3297b08ac538b7c2d1cc", "rr-35c37fdcfc06ab99992c", "rr-dee2b4c95ab6adfd128a"]
+        },
+        {
+          "dimension": "selection_count",
+          "value": 1,
+          "run_ids": ["rr-85daaac2043f0d17ad8f", "rr-b784b37551a2ba46c1ba", "rr-c5f934ab03e409515a01"]
+        },
+        {
+          "dimension": "selection_count",
+          "value": 3,
+          "run_ids": ["rr-d26161f1c682e0f3f566", "rr-cf7be843faa6326a5b64", "rr-9a3589ffbc4be726bc21"]
+        },
+        {
+          "dimension": "rebalance_every",
+          "value": 10,
+          "run_ids": ["rr-0ee3a6feadb9fe2fda1b", "rr-f2bedfb5bf7c07b253d9", "rr-08769e3c1489b287d766"]
+        },
+        {
+          "dimension": "rebalance_every",
+          "value": 21,
+          "run_ids": ["rr-ed601d2bbb78f6e779e3", "rr-927c3a8a5ef617cb839a", "rr-d058a05dc70762d6fa27"]
+        }
+      ],
+      "minimum_neighbor_return_retention": "-0.434220357881",
+      "minimum_neighbor_run_id": "rr-3297b08ac538b7c2d1cc",
+      "screen_result": "fail-parameter-neighbor-retention"
+    },
+    {
+      "candidate_id": "diversified-dual-20-63-top3-21",
+      "strategy": "diversified-dual-momentum",
+      "code_commit": "d45934bc8696a9bfc03764042d38a4872cca7267",
+      "parameters": {
+        "short_lookback": 20,
+        "long_lookback": 63,
+        "selection_count": 3,
+        "rebalance_every": 21
+      },
+      "base_block_run_ids": [
+        "rr-d57bd9fe8159947f9d6a",
+        "rr-6a8ebf104ceb1387325d",
+        "rr-c881b8afe49b7c0e7752"
+      ],
+      "base_result": "pass",
+      "neighbor_sets": [
+        {
+          "dimension": "short_lookback",
+          "value": 15,
+          "run_ids": ["rr-1a6c1c347b2bc565ea69", "rr-461b0b36b053ce98b233", "rr-9dea989badde7c24af83"]
+        },
+        {
+          "dimension": "short_lookback",
+          "value": 25,
+          "run_ids": ["rr-078fb013d130d03cab3f", "rr-b5c9980b20249ad029d7", "rr-ab32f7bb4c5849aab945"]
+        },
+        {
+          "dimension": "long_lookback",
+          "value": 50,
+          "run_ids": ["rr-a5b94f355dfec2d8a094", "rr-daa280686a1aee117419", "rr-98ef79f9dc84cfb0a69a"]
+        },
+        {
+          "dimension": "long_lookback",
+          "value": 84,
+          "run_ids": ["rr-3b16f47a74b4f0355b87", "rr-a3143d42f889a9e1a495", "rr-514d0b8bfeadeb94e282"]
+        },
+        {
+          "dimension": "selection_count",
+          "value": 2,
+          "run_ids": ["rr-9ab6b75e6b4c5f1e98f8", "rr-bc835500f753f6a3d520", "rr-15d75aaeabba0fd2668c"]
+        },
+        {
+          "dimension": "rebalance_every",
+          "value": 15,
+          "run_ids": ["rr-637850662d7b69a08a74", "rr-1c13f79e4ab7c231316e", "rr-fbef7d613688d12b73bb"]
+        }
+      ],
+      "minimum_neighbor_return_retention": "0.128684208818",
+      "minimum_neighbor_run_id": "rr-637850662d7b69a08a74",
+      "screen_result": "fail-parameter-neighbor-retention"
+    },
+    {
+      "candidate_id": "diversified-dual-10-63-top2-21",
+      "strategy": "diversified-dual-momentum",
+      "code_commit": "d45934bc8696a9bfc03764042d38a4872cca7267",
+      "parameters": {
+        "short_lookback": 10,
+        "long_lookback": 63,
+        "selection_count": 2,
+        "rebalance_every": 21
+      },
+      "base_block_run_ids": [
+        "rr-42553370e4c5bcec5989",
+        "rr-fa90b14c1f77cf7a867f",
+        "rr-7416a870e6952ee6f977"
+      ],
+      "base_result": "pass",
+      "neighbor_sets": [
+        {
+          "dimension": "short_lookback",
+          "value": 5,
+          "run_ids": ["rr-d3e2960ddff141545c7d", "rr-cc7ec8d4e807fb33800a", "rr-5bafa4eb1b18e5ef8ce8"]
+        },
+        {
+          "dimension": "short_lookback",
+          "value": 15,
+          "run_ids": ["rr-76bdc407a266741e09d5", "rr-3849b1de0b19bbecc30d", "rr-6afa888365d111a5e3e8"]
+        },
+        {
+          "dimension": "long_lookback",
+          "value": 50,
+          "run_ids": ["rr-b220dad10961b60cb676", "rr-aaa403e9cbe988712d3e", "rr-17f378cadc74eec41b30"]
+        },
+        {
+          "dimension": "long_lookback",
+          "value": 84,
+          "run_ids": ["rr-f1124e691c3d666a5222", "rr-1e3d875402feaf6a5019", "rr-c0a15cd784feacc8ec97"]
+        },
+        {
+          "dimension": "selection_count",
+          "value": 1,
+          "run_ids": ["rr-46583975dab3468dafcc", "rr-e79e7767c50ad84c3986", "rr-57d4122d1dce74a59767"]
+        },
+        {
+          "dimension": "selection_count",
+          "value": 3,
+          "run_ids": ["rr-2edf361b81898d742b0c", "rr-25eb2752c04a02ae36df", "rr-79e62ca80e2d4f878861"]
+        },
+        {
+          "dimension": "rebalance_every",
+          "value": 15,
+          "run_ids": ["rr-0b3f6506bf50f1daec46", "rr-e14cc683d1929b85f28e", "rr-583c511e2242c82d60ac"]
+        }
+      ],
+      "minimum_neighbor_return_retention": "-0.098635047382",
+      "minimum_neighbor_run_id": "rr-b220dad10961b60cb676",
+      "screen_result": "fail-parameter-neighbor-retention"
+    }
+  ],
+  "uniform_final_screen": {
+    "source_query": "config/research/rapid-003-parent-dispositions-v1.sql",
+    "parent_configuration_count": 1219,
+    "fixed_block_row_count": 252,
+    "complete_fixed_identity_count": 84,
+    "visible_base_passes": [
+      {
+        "candidate_id": "dual-5-50-top3-21",
+        "strategy": "dual-momentum",
+        "code_commit": "308d16792e8aeb97a7181f1e417cb55dd9af0a60",
+        "parameters": {
+          "short_lookback": 5,
+          "long_lookback": 50,
+          "selection_count": 3,
+          "rebalance_every": 21
+        },
+        "base_block_run_ids": [
+          "rr-e63cdc60312e5a5dc199",
+          "rr-6b2bf1571408acc253fd",
+          "rr-42051424928fc8745008"
+        ],
+        "neighbor_identity_count": 2,
+        "minimum_neighbor_return_retention": "0.293730793826",
+        "minimum_neighbor_parameters": {
+          "short_lookback": 5,
+          "long_lookback": 63,
+          "selection_count": 3,
+          "rebalance_every": 21
+        },
+        "minimum_base_run_id": "rr-42051424928fc8745008",
+        "minimum_neighbor_run_id": "rr-1b0081473d7868a8596e",
+        "result": "fail-parameter-neighbor-retention"
+      },
+      {
+        "candidate_id": "diversified-dual-10-63-top2-21",
+        "strategy": "diversified-dual-momentum",
+        "code_commit": "d45934bc8696a9bfc03764042d38a4872cca7267",
+        "parameters": {
+          "short_lookback": 10,
+          "long_lookback": 63,
+          "selection_count": 2,
+          "rebalance_every": 21
+        },
+        "base_block_run_ids": [
+          "rr-42553370e4c5bcec5989",
+          "rr-fa90b14c1f77cf7a867f",
+          "rr-7416a870e6952ee6f977"
+        ],
+        "neighbor_identity_count": 10,
+        "minimum_neighbor_return_retention": "-0.098635047382",
+        "minimum_neighbor_parameters": {
+          "short_lookback": 10,
+          "long_lookback": 50,
+          "selection_count": 2,
+          "rebalance_every": 21
+        },
+        "minimum_base_run_id": "rr-42553370e4c5bcec5989",
+        "minimum_neighbor_run_id": "rr-b220dad10961b60cb676",
+        "result": "fail-parameter-neighbor-retention"
+      },
+      {
+        "candidate_id": "diversified-dual-20-63-top3-21",
+        "strategy": "diversified-dual-momentum",
+        "code_commit": "d45934bc8696a9bfc03764042d38a4872cca7267",
+        "parameters": {
+          "short_lookback": 20,
+          "long_lookback": 63,
+          "selection_count": 3,
+          "rebalance_every": 21
+        },
+        "base_block_run_ids": [
+          "rr-d57bd9fe8159947f9d6a",
+          "rr-6a8ebf104ceb1387325d",
+          "rr-c881b8afe49b7c0e7752"
+        ],
+        "neighbor_identity_count": 11,
+        "minimum_neighbor_return_retention": "0.128684208818",
+        "minimum_neighbor_parameters": {
+          "short_lookback": 20,
+          "long_lookback": 63,
+          "selection_count": 3,
+          "rebalance_every": 15
+        },
+        "minimum_base_run_id": "rr-d57bd9fe8159947f9d6a",
+        "minimum_neighbor_run_id": "rr-637850662d7b69a08a74",
+        "result": "fail-parameter-neighbor-retention"
+      },
+      {
+        "candidate_id": "diversified-dual-25-63-top3-21",
+        "strategy": "diversified-dual-momentum",
+        "code_commit": "d45934bc8696a9bfc03764042d38a4872cca7267",
+        "parameters": {
+          "short_lookback": 25,
+          "long_lookback": 63,
+          "selection_count": 3,
+          "rebalance_every": 21
+        },
+        "base_block_run_ids": [
+          "rr-078fb013d130d03cab3f",
+          "rr-b5c9980b20249ad029d7",
+          "rr-ab32f7bb4c5849aab945"
+        ],
+        "neighbor_identity_count": 5,
+        "minimum_neighbor_return_retention": "0.390665419829",
+        "minimum_neighbor_parameters": {
+          "short_lookback": 15,
+          "long_lookback": 63,
+          "selection_count": 3,
+          "rebalance_every": 21
+        },
+        "minimum_base_run_id": "rr-ab32f7bb4c5849aab945",
+        "minimum_neighbor_run_id": "rr-9dea989badde7c24af83",
+        "result": "fail-parameter-neighbor-retention"
+      },
+      {
+        "candidate_id": "diversified-dual-20-84-top2-15",
+        "strategy": "diversified-dual-momentum",
+        "code_commit": "d45934bc8696a9bfc03764042d38a4872cca7267",
+        "parameters": {
+          "short_lookback": 20,
+          "long_lookback": 84,
+          "selection_count": 2,
+          "rebalance_every": 15
+        },
+        "base_block_run_ids": [
+          "rr-39a444d6dfaf4dfbe3cf",
+          "rr-3c4b4a3f723dfd1a1948",
+          "rr-8ec0a2e9c00d341e03be"
+        ],
+        "neighbor_identity_count": 10,
+        "minimum_neighbor_return_retention": "-0.434220357881",
+        "minimum_neighbor_parameters": {
+          "short_lookback": 20,
+          "long_lookback": 105,
+          "selection_count": 2,
+          "rebalance_every": 15
+        },
+        "minimum_base_run_id": "rr-39a444d6dfaf4dfbe3cf",
+        "minimum_neighbor_run_id": "rr-3297b08ac538b7c2d1cc",
+        "result": "fail-parameter-neighbor-retention"
+      }
+    ],
+    "parameter_neighbor_survivors": 0,
+    "execution_stress_entrants": 0
+  },
+  "outcome": {
+    "visible_base_survivors": 5,
+    "parameter_neighbor_survivors": 0,
+    "screen_stress_entrants": 0,
+    "final_cohort": [],
+    "controlled_qualification_attempts": 0,
+    "controlled_results_inspected": false,
+    "independent_evaluation_recommendation": null
+  }
+}

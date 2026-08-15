@@ -2,11 +2,14 @@
 
 ## Status
 
-`rapid-003-bounded-strategy-discovery` is open for non-authoritative daily research. The machine
-ledger is `config/research/rapid-003-strategy-ledger-v1.json`. It starts from main
+`rapid-003-bounded-strategy-discovery` is closed with no controlled-qualified candidate. The machine
+ledger is `config/research/rapid-003-strategy-ledger-v1.json`; the final report is
+`docs/research-campaigns/rapid-003-final-report.md`; the exact exposed screen is
+`config/research/rapid-003-exposed-screen-v1.json`; the read-only parent disposition query is
+`config/research/rapid-003-parent-dispositions-v1.sql`. The program started from main
 `26686b3dad56fe0dc327f3fadf8a63b3c0e21348` after the Rapid-002 rejection merged.
 
-Rapid-002 remains closed rejected evidence. This program will not retry it, tune from its controlled
+Rapid-002 remains closed rejected evidence. This program did not retry it, tune from its controlled
 result, or open its proposed 2018–2019 independent range.
 
 ## Data and exposure
@@ -71,10 +74,11 @@ No optimizer, opaque score, genetic search, Bayesian search, or giant Cartesian 
 
 ## Freeze and qualification
 
-Broad Rapid research must finish before the final cohort is selected. All cohort definitions,
-parameters, source, data, ranges, and execution assumptions must freeze together before any
-controlled result is inspected. Each frozen candidate then receives one controlled qualification
-attempt under unchanged gates. A failure is final for this program.
+Broad Rapid research finished before cohort selection. The disposition query classified all 1,219
+parents and screened all 84 complete fixed-block identities. Five passed the base gates and none
+passed the one-parameter neighbor gate, so the cohort froze empty at research source commit
+`d45934bc8696a9bfc03764042d38a4872cca7267`. No controlled plan was created and no controlled result
+was inspected.
 
-The program stops after the frozen cohort completes. Passing candidates remain frozen for a later
-user-authorized independent evaluation; failed candidates do not start another adaptive loop.
+The program is stopped. Its failed points do not start another adaptive loop, and no candidate from
+this program may access the independent range.
