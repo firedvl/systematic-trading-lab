@@ -1,0 +1,512 @@
+{
+  "schema_version": "rapid-004-predeclaration-v1",
+  "program_id": "rapid-004-expanded-universe",
+  "status": "frozen-before-strategy-performance-research",
+  "frozen_at": "2026-08-15T10:09:05Z",
+  "purpose": "Bind the economic roles, benchmarks, A-U hypotheses, bounded grids, chronology, execution models, advancement rules, robustness checks, and one exposed screen before the first Rapid-004 strategy run.",
+  "source": {
+    "starting_main": "a8312b641d0dcfec4933c735b593b346c27eb564",
+    "universe_freeze_path": "config/research/rapid-004-universe-freeze-v1.json",
+    "universe_freeze_sha256": "e99cd6e7cd8f4dc11cd80bbe9affadc2e4136945250f44b2eec6d4d83de8efba",
+    "universe_specification_path": "config/research/rapid-004-final-universe-v1.json",
+    "universe_specification_sha256": "100ed3b1f195e35827fb70c418f1a2bce9ef2c7444385c79c2c61278d32f60dc",
+    "universe_id": "rapid-004-expanded-final-universe-v1",
+    "universe_fingerprint": "d57039d3a172337c78ad8206644feeb72d76d124ce33a4e5cbe4733dbb2e94e3",
+    "dataset_id": "450e329a8f11f1bd19dcc37ac417b2c59a262e875723eb668332beb22c48d3ff",
+    "dataset_fingerprint": "ac506268e019a03f7e9e202858171141c3f2d63fc88e03649a1dda091ac47304",
+    "allowed_start": "2020-07-27",
+    "allowed_end": "2026-07-31"
+  },
+  "role_map": {
+    "categories": {
+      "core-us-equity": ["SPY", "QQQ", "IWM", "DIA", "MDY"],
+      "us-style-factor": ["IWD", "IWF", "MTUM", "QUAL", "USMV", "VLUE"],
+      "us-sector": ["XLK", "XLF", "XLE", "XLV", "XLI", "XLP", "XLY", "XLU", "XLB", "XLRE"],
+      "international": ["EFA", "EEM", "VGK", "EWJ"],
+      "fixed-income": ["TLT", "IEF", "SHY", "TIP", "LQD", "HYG", "AGG", "EMB"],
+      "real-assets": ["GLD", "SLV", "DBC", "VNQ"]
+    },
+    "sleeves": {
+      "us-equity": ["SPY", "QQQ", "IWM", "DIA", "MDY", "IWD", "IWF", "MTUM", "QUAL", "USMV", "VLUE", "XLK", "XLF", "XLE", "XLV", "XLI", "XLP", "XLY", "XLU", "XLB", "XLRE"],
+      "international-equity": ["EFA", "EEM", "VGK", "EWJ"],
+      "fixed-income": ["TLT", "IEF", "SHY", "TIP", "LQD", "HYG", "AGG", "EMB"],
+      "real-assets": ["GLD", "SLV", "DBC", "VNQ"]
+    },
+    "groups": {
+      "all": ["SPY", "QQQ", "IWM", "DIA", "MDY", "IWD", "IWF", "MTUM", "QUAL", "USMV", "VLUE", "XLK", "XLF", "XLE", "XLV", "XLI", "XLP", "XLY", "XLU", "XLB", "XLRE", "EFA", "EEM", "VGK", "EWJ", "TLT", "IEF", "SHY", "TIP", "LQD", "HYG", "AGG", "EMB", "GLD", "SLV", "DBC", "VNQ"],
+      "core-us": ["SPY", "QQQ", "IWM", "DIA", "MDY"],
+      "style": ["IWD", "IWF", "MTUM", "QUAL", "USMV", "VLUE"],
+      "sectors": ["XLK", "XLF", "XLE", "XLV", "XLI", "XLP", "XLY", "XLU", "XLB", "XLRE"],
+      "international": ["EFA", "EEM", "VGK", "EWJ"],
+      "international-rotation": ["SPY", "EFA", "EEM", "VGK", "EWJ"],
+      "duration": ["SHY", "IEF", "TLT"],
+      "duration-tip": ["SHY", "IEF", "TLT", "TIP"],
+      "fixed-income": ["TLT", "IEF", "SHY", "TIP", "LQD", "HYG", "AGG", "EMB"],
+      "real-assets": ["GLD", "SLV", "DBC", "VNQ"],
+      "risk-breadth": ["SPY", "QQQ", "IWM", "DIA", "MDY", "IWD", "IWF", "MTUM", "QUAL", "USMV", "VLUE", "XLK", "XLF", "XLE", "XLV", "XLI", "XLP", "XLY", "XLU", "XLB", "XLRE", "EFA", "EEM", "VGK", "EWJ"],
+      "defensive": ["SHY", "IEF", "TLT", "GLD"],
+      "tactical-representatives": ["SPY", "EFA", "EEM", "TLT", "LQD", "TIP", "GLD", "DBC", "VNQ"],
+      "static-core": ["SPY", "EFA", "AGG", "GLD"],
+      "benchmark-symbols": ["SPY", "QQQ", "EFA", "AGG", "GLD"]
+    },
+    "invariants": {
+      "exact_frozen_symbol_set_required": true,
+      "categories_are_exact_partition": true,
+      "sleeves_are_exact_partition": true,
+      "unknown_group_symbols_rejected": true,
+      "empty_groups_rejected": true,
+      "cash_is_implicit_and_not_a_symbol": true
+    }
+  },
+  "execution": {
+    "initial_cash": "100000",
+    "cost_model_version": "conservative-bps-v1",
+    "execution_model_version": "deterministic-next-bar-open-v1",
+    "normal": {"slippage_bps": "5", "commission_bps": "1", "fill_delay_bars": 1},
+    "isolated_cost_2x": {"id": "isolated-cost-2x", "slippage_bps": "10", "commission_bps": "2", "fill_delay_bars": 1},
+    "isolated_delay_2": {"id": "isolated-delay-2", "slippage_bps": "5", "commission_bps": "1", "fill_delay_bars": 2},
+    "stress_a": {"id": "stress-a", "slippage_bps": "10", "commission_bps": "2", "fill_delay_bars": 2},
+    "stress_b": {"id": "stress-b", "slippage_bps": "20", "commission_bps": "5", "fill_delay_bars": 3},
+    "signals_observe_completed_bar_only": true,
+    "shorting": false,
+    "leverage": false
+  },
+  "benchmarks": {
+    "gate_benchmark_id": "rapid-004-static-multi-asset-60-30-10-v1",
+    "same_normal_cost_and_delay_as_candidates": true,
+    "definitions": [
+      {"id": "cash", "strategy_id": "cash", "symbols": [], "parameters": {}, "gate": false, "reported": true},
+      {"id": "spy-buy-and-hold", "strategy_id": "buy-and-hold", "symbols": ["SPY"], "parameters": {"symbol_number": 1}, "gate": false, "reported": true},
+      {"id": "qqq-buy-and-hold", "strategy_id": "buy-and-hold", "symbols": ["QQQ"], "parameters": {"symbol_number": 1}, "gate": false, "reported": true},
+      {
+        "id": "rapid-004-static-multi-asset-60-30-10-v1",
+        "strategy_id": "fixed-weight-configured",
+        "symbols": ["SPY", "EFA", "AGG", "GLD"],
+        "weights": {"SPY": "0.40", "EFA": "0.20", "AGG": "0.30", "GLD": "0.10"},
+        "parameters": {"rebalance_every": 21},
+        "gate": true,
+        "reported": true,
+        "selection_basis": "fixed 60 percent developed equity, 30 percent aggregate bonds, and 10 percent gold; chosen from economic roles without candidate results"
+      },
+      {
+        "id": "strategic-allocation-21-historical-reference",
+        "strategy_id": "strategic-allocation-portfolio",
+        "symbols": ["SPY", "QQQ", "IWM", "TLT", "GLD"],
+        "weights": {"SPY": "0.35", "QQQ": "0.25", "IWM": "0.25", "TLT": "0", "GLD": "0.15"},
+        "parameters": {"rebalance_every": 21},
+        "gate": false,
+        "reported": true,
+        "historical_reference_only": true,
+        "implementation_must_remain_unchanged": true
+      }
+    ],
+    "comparison_policy": {
+      "report_each_full_range_and_fixed_block_return": true,
+      "report_each_candidate_excess_return": true,
+      "qualification_gate_uses_only_gate_benchmark": true,
+      "no_hidden_composite_score": true
+    }
+  },
+  "chronology": {
+    "full_range": {"start": "2020-07-27", "end": "2026-07-31"},
+    "fixed_blocks": [
+      {"id": "block-1", "start": "2020-07-27", "end": "2022-07-25"},
+      {"id": "block-2", "start": "2022-07-26", "end": "2024-07-26"},
+      {"id": "block-3", "start": "2024-07-29", "end": "2026-07-31"}
+    ],
+    "walk_forward": {
+      "mode": "rolling",
+      "training_sessions": 252,
+      "test_sessions": 126,
+      "step_sessions": 126,
+      "parameters_fixed_before_each_run": true,
+      "training_ends_before_test": true,
+      "test_folds_nonoverlapping": true
+    }
+  },
+  "search": {
+    "parent_configuration_ceiling": 3000,
+    "result_free_stage_order": ["benchmark", "full-range-discovery", "conditional-full-range-confirmation", "fixed-block", "walk-forward-and-neighbor", "isolated-sensitivity", "combined-stress", "uniform-screen", "cohort-freeze"],
+    "full_range_early_gate": {
+      "required": "all",
+      "gates": [
+        {"metric": "total_return", "comparison": ">", "threshold": "0"},
+        {"metric": "sharpe_ratio", "comparison": ">", "threshold": "0"},
+        {"metric": "max_drawdown", "comparison": "<=", "threshold": "0.30"},
+        {"metric": "average_gross_exposure", "comparison": "<=", "threshold": "1"},
+        {"metric": "top_instrument_profit_share", "comparison": "<=", "threshold": "0.80"},
+        {"metric": "turnover", "comparison": "<=", "threshold": "45"},
+        {"metric": "trade_count", "comparison": ">=", "threshold": "30"}
+      ]
+    },
+    "confirmation_activation": "Run a family's complete frozen confirmation grid only when at least one discovery configuration passes every full-range early gate.",
+    "fixed_block_selection": {
+      "always_run_predeclared_anchor_per_family": true,
+      "additional_identity_cap_per_family": 4,
+      "additional_eligibility": "Pass every full-range early gate and either beat the gate benchmark on total return or pass the benchmark-risk exception.",
+      "benchmark_risk_exception": {
+        "comparability": "Candidate and gate benchmark must use the identical dataset, period, cost model, and fill delay.",
+        "candidate_total_return": "> 0",
+        "candidate_sharpe_ratio": ">= gate benchmark Sharpe ratio",
+        "candidate_max_drawdown": "<= 0.75 times gate benchmark max drawdown",
+        "candidate_annualized_return": ">= 0.80 times gate benchmark annualized return, unless benchmark annualized return <= 0",
+        "unavailable_when": "Any required metric is null or gate benchmark max drawdown is zero.",
+        "final_screen_waiver": false
+      },
+      "lexicographic_order": ["beats gate benchmark total return descending", "total_return descending", "sharpe_ratio descending", "max_drawdown ascending", "canonical configuration identity ascending"],
+      "selection_after_results_may_not_change": true
+    },
+    "serious_candidate_selection": {
+      "candidate_set": "fixed-block identities that pass every visible-base gate",
+      "cap_per_family": 3,
+      "lexicographic_order": ["gate benchmark wins descending", "worst fixed-block excess return descending", "worst fixed-block Sharpe descending", "maximum fixed-block drawdown ascending", "canonical configuration identity ascending"],
+      "required_next_steps": ["walk-forward", "all incident predeclared parameter neighbors"]
+    },
+    "neighbor_topology": {
+      "same_strategy_id_required": true,
+      "same_nonvaried_parameters_required": true,
+      "categorical_strategy_identity_is_not_a_neighbor_axis": true,
+      "rule": "For each listed integer parameter axis, every immediately lower and higher value in its ordered values is a required direct neighbor when the resulting strategy parameters remain valid.",
+      "maximum_integer_axes": 4,
+      "maximum_direct_neighbors_per_base": 8,
+      "all_incident_neighbors_required_on_all_three_fixed_blocks": true,
+      "substitution_after_results": false
+    },
+    "parent_budget": {
+      "benchmark_full_range_and_fixed_blocks": 20,
+      "all_discovery_and_confirmation_full_range": 542,
+      "maximum_fixed_block_parents": 315,
+      "maximum_neighbor_fixed_block_parents": 1512,
+      "maximum_walk_forward_parents": 63,
+      "maximum_parent_records": 2452,
+      "remaining_below_ceiling": 548,
+      "walk_forward_fold_rows_are_linked_children": true,
+      "sensitivity_and_stress_rows_are_linked_children": true
+    }
+  },
+  "mechanics": {
+    "shared_contract": {
+      "decision_data": "Complete daily sessions and per-symbol history through the current completed close only.",
+      "execution": "Every changed target is an atomic full-universe long-only target and may first fill under the declared later-bar model.",
+      "rebalance_schedule": "After warmup, scheduled strategies evaluate when (complete_session_count - warmup - 1) modulo rebalance_every equals zero.",
+      "ranking_tie_break": "symbol ascending",
+      "cash_residual": true,
+      "maximum_gross_target": "1",
+      "moving_average": "arithmetic mean of the latest window closes including the current completed close",
+      "trailing_return": "current close divided by the close lookback complete sessions earlier, minus one",
+      "realized_volatility": "sample standard deviation of daily close-to-close returns over volatility_window",
+      "inverse_volatility": "deterministic water-fill by reciprocal realized volatility, capped at the profile cap; any infeasible residual stays cash",
+      "scoped_adapter": "Pass only the frozen role group to the inner portfolio strategy, then expand each nonempty target to all 37 symbols with zero outside the group."
+    },
+    "contracts": {
+      "ranked-equal-v1": "Rank eligible positive trailing returns, select top selection_count, and give each selected asset 1/selection_count; minimum_return_bps, when present, is an inclusive return floor divided by 10,000.",
+      "ranked-inverse-volatility-v1": "Rank eligible positive trailing returns, select top selection_count, then use capped inverse-volatility weights over selected assets.",
+      "dual-momentum-v1": "Rank risk assets by short plus long return only when both are positive. Hold selected risk assets when any qualify; otherwise use the profile fallback assets whose long return is positive, or cash. Equal profiles use fixed 1/selection_count risk weights and equal positive fallback weights; inverse-volatility profiles use capped inverse-volatility weights.",
+      "multi-horizon-v1": "Rank by short plus long return only when both are positive, select top selection_count, and use equal 1/selection_count weights.",
+      "multi-horizon-inverse-volatility-v1": "Use multi-horizon eligibility and rank, then capped inverse-volatility weights over the selected assets.",
+      "trend-relative-strength-v1": "Require current close above the declared trend-window moving average and positive rank-lookback return, rank by that return, select top selection_count, and use equal 1/selection_count weights.",
+      "independent-trend-v1": "Each asset above its moving average receives a fixed 1/group-size slice; inactive slices stay cash. Emit only when the active set changes.",
+      "independent-trend-inverse-volatility-v1": "Assets above their moving averages receive capped inverse-volatility weights; emit only when the active set changes.",
+      "channel-breakout-v1": "Enter when close exceeds every prior high in entry_window and exit when close falls below every prior low in exit_window. Each active asset receives a fixed 1/group-size slice; emit only when the active set changes.",
+      "channel-breakout-inverse-volatility-v1": "Use the same breakout state and capped inverse-volatility weights over active assets; emit only when the active set changes.",
+      "equity-bond-gold-regime-v1": "Risk-on requires SPY above its trend moving average and annualized SPY realized volatility at or below volatility_limit_percent. Risk-on weights SPY 70% and EFA 30%. Otherwise hold equal one-third IEF, TLT, and GLD positions only where each asset is above its own trend moving average; missing thirds stay cash.",
+      "inverse-volatility-allocation-v1": "At each schedule, allocate across every profile-group asset by capped inverse volatility without return selection.",
+      "hierarchical-sleeve-v1": "Within each of the four frozen sleeves select the one asset with the highest positive trailing return. Equal mode gives each selected sleeve 25%; inverse-volatility mode allocates selected sleeve representatives by capped inverse volatility.",
+      "breadth-scale-v1": "Breadth is the fraction of risk-breadth assets above their trend moving average. When breadth meets the threshold, multiply every static-core benchmark weight by the breadth fraction; otherwise hold cash.",
+      "one-per-sleeve-v1": "Take the strongest positive-return asset from each frozen sleeve, rank those sleeve winners, select top selection_count, and give each 1/selection_count.",
+      "defensive-breadth-v1": "When risk breadth meets the threshold, hold the static-core benchmark. Otherwise use the profile fallback: cash, 100% SHY, or equal weights in the two strongest positive-return assets from SHY, IEF, TLT, and GLD; absent slots stay cash.",
+      "normalized-mean-reversion-v1": "Among assets above their trend moving average and with negative reversal_lookback return, rank that return divided by realized volatility from lowest to highest, select the most negative selection_count scores, and give each 1/selection_count at the fixed cadence.",
+      "core-satellite-v1": "Scale the static-core benchmark by core_weight_percent. Allocate the remaining weight equally to the top selection_count positive trailing-return assets from EEM, TLT, LQD, TIP, DBC, and VNQ; absent slots stay cash.",
+      "signal-consensus-v1": "For each tactical representative, cast one vote for positive momentum, one for close above its trend moving average, and one when global risk breadth meets the threshold. Rank assets with at least two votes by momentum, select top selection_count, and give each 1/selection_count.",
+      "fixed-weight-configured-v1": "Use the exact declared symbol weights on the first complete subset session and every rebalance_every sessions thereafter."
+    },
+    "strategy_profiles": {
+      "relative-strength": {"contract": "ranked-equal-v1", "group": "all"},
+      "ranked-relative-strength": {"contract": "ranked-equal-v1", "group": "all"},
+      "dual-momentum-shy": {"contract": "dual-momentum-v1", "group": "all", "risk_group": "risk-breadth", "fallback": ["SHY"], "defensive_selection_count": 1, "weighting": "equal", "cap": "0.40"},
+      "dual-momentum-treasury-gold": {"contract": "dual-momentum-v1", "group": "all", "risk_group": "risk-breadth", "fallback": ["IEF", "TLT", "GLD"], "defensive_selection_count": 2, "weighting": "equal", "cap": "0.40"},
+      "dual-momentum-defensive": {"contract": "dual-momentum-v1", "group": "all", "risk_group": "risk-breadth", "fallback_group": "defensive", "defensive_selection_count": 4, "weighting": "equal", "cap": "0.40"},
+      "dual-momentum-shy-inverse-volatility": {"contract": "dual-momentum-v1", "group": "all", "risk_group": "risk-breadth", "fallback": ["SHY"], "defensive_selection_count": 1, "weighting": "inverse-volatility", "risk_cap": "0.40", "fallback_cap": "1", "volatility_window": 63},
+      "dual-momentum-treasury-gold-inverse-volatility": {"contract": "dual-momentum-v1", "group": "all", "risk_group": "risk-breadth", "fallback": ["IEF", "TLT", "GLD"], "defensive_selection_count": 2, "weighting": "inverse-volatility", "risk_cap": "0.40", "fallback_cap": "0.50", "volatility_window": 63},
+      "dual-momentum-defensive-inverse-volatility": {"contract": "dual-momentum-v1", "group": "all", "risk_group": "risk-breadth", "fallback_group": "defensive", "defensive_selection_count": 4, "weighting": "inverse-volatility", "risk_cap": "0.40", "fallback_cap": "0.40", "volatility_window": 63},
+      "tactical-relative-strength": {"contract": "ranked-equal-v1", "group": "tactical-representatives"},
+      "tactical-inverse-volatility-momentum": {"contract": "ranked-inverse-volatility-v1", "group": "tactical-representatives", "cap": "0.40", "volatility_window": 63},
+      "tactical-multi-horizon-momentum": {"contract": "multi-horizon-v1", "group": "tactical-representatives"},
+      "sector-relative-strength": {"contract": "ranked-equal-v1", "group": "sectors"},
+      "sector-trend-relative-strength": {"contract": "trend-relative-strength-v1", "group": "sectors", "trend_window_parameter": "lookback", "rank_lookback_parameter": "lookback"},
+      "style-relative-strength": {"contract": "ranked-equal-v1", "group": "style"},
+      "style-trend-relative-strength": {"contract": "trend-relative-strength-v1", "group": "style", "trend_window_parameter": "lookback", "rank_lookback_parameter": "lookback"},
+      "international-relative-strength": {"contract": "ranked-equal-v1", "group": "international-rotation"},
+      "international-trend-relative-strength": {"contract": "trend-relative-strength-v1", "group": "international-rotation", "trend_window_parameter": "lookback", "rank_lookback_parameter": "lookback"},
+      "duration-relative-strength": {"contract": "ranked-equal-v1", "group": "duration"},
+      "duration-tip-relative-strength": {"contract": "ranked-equal-v1", "group": "duration-tip"},
+      "bond-relative-strength": {"contract": "ranked-equal-v1", "group": "fixed-income"},
+      "duration-inverse-volatility-momentum": {"contract": "ranked-inverse-volatility-v1", "group": "duration-tip", "cap": "0.50"},
+      "bond-inverse-volatility-momentum": {"contract": "ranked-inverse-volatility-v1", "group": "fixed-income", "cap": "0.40"},
+      "equity-bond-gold-regime": {"contract": "equity-bond-gold-regime-v1", "group": "all"},
+      "multi-asset-trend": {"contract": "independent-trend-v1", "group": "all"},
+      "tactical-trend": {"contract": "independent-trend-v1", "group": "tactical-representatives"},
+      "multi-asset-inverse-volatility-trend": {"contract": "independent-trend-inverse-volatility-v1", "group": "all", "cap": "0.25", "volatility_window": 63},
+      "tactical-inverse-volatility-trend": {"contract": "independent-trend-inverse-volatility-v1", "group": "tactical-representatives", "cap": "0.40", "volatility_window": 63},
+      "multi-asset-breakout": {"contract": "channel-breakout-v1", "group": "all"},
+      "tactical-breakout": {"contract": "channel-breakout-v1", "group": "tactical-representatives"},
+      "multi-asset-inverse-volatility-breakout": {"contract": "channel-breakout-inverse-volatility-v1", "group": "all", "cap": "0.25"},
+      "tactical-inverse-volatility-breakout": {"contract": "channel-breakout-inverse-volatility-v1", "group": "tactical-representatives", "cap": "0.40"},
+      "ranked-inverse-volatility-momentum": {"contract": "ranked-inverse-volatility-v1", "group": "all", "cap": "0.40"},
+      "ranked-inverse-volatility-momentum-cap30": {"contract": "ranked-inverse-volatility-v1", "group": "all", "cap": "0.30", "selection_count": 3},
+      "ranked-inverse-volatility-momentum-cap50": {"contract": "ranked-inverse-volatility-v1", "group": "all", "cap": "0.50", "selection_count": 3},
+      "volatility-balanced": {"contract": "inverse-volatility-allocation-v1", "group": "all", "cap": "0.30"},
+      "tactical-volatility-balanced": {"contract": "inverse-volatility-allocation-v1", "group": "tactical-representatives", "cap": "0.30"},
+      "tactical-volatility-balanced-cap20": {"contract": "inverse-volatility-allocation-v1", "group": "tactical-representatives", "cap": "0.20", "rebalance_every": 21},
+      "tactical-volatility-balanced-cap25": {"contract": "inverse-volatility-allocation-v1", "group": "tactical-representatives", "cap": "0.25", "rebalance_every": 21},
+      "tactical-volatility-balanced-cap35": {"contract": "inverse-volatility-allocation-v1", "group": "tactical-representatives", "cap": "0.35", "rebalance_every": 21},
+      "hierarchical-sleeve-allocation": {"contract": "hierarchical-sleeve-v1", "group": "all", "weighting": "equal"},
+      "hierarchical-sleeve-inverse-volatility": {"contract": "hierarchical-sleeve-v1", "group": "all", "weighting": "inverse-volatility", "cap": "0.40", "volatility_window": 63},
+      "breadth-regime": {"contract": "breadth-scale-v1", "group": "all", "breadth_group": "risk-breadth", "allocation_group": "static-core"},
+      "diversified-rotation": {"contract": "one-per-sleeve-v1", "group": "all"},
+      "multi-horizon-momentum": {"contract": "multi-horizon-v1", "group": "all"},
+      "multi-horizon-inverse-volatility-momentum": {"contract": "multi-horizon-inverse-volatility-v1", "group": "all", "cap": "0.40"},
+      "trend-relative-strength": {"contract": "trend-relative-strength-v1", "group": "all"},
+      "defensive-breadth-cash": {"contract": "defensive-breadth-v1", "group": "all", "fallback": "cash"},
+      "defensive-breadth-shy": {"contract": "defensive-breadth-v1", "group": "all", "fallback": "SHY"},
+      "defensive-breadth-ranked": {"contract": "defensive-breadth-v1", "group": "all", "fallback_group": "defensive", "defensive_selection_count": 2},
+      "cross-sectional-mean-reversion": {"contract": "normalized-mean-reversion-v1", "group": "all"},
+      "static-core-tactical-satellite": {"contract": "core-satellite-v1", "group": "all", "core_group": "static-core", "satellite": ["EEM", "TLT", "LQD", "TIP", "DBC", "VNQ"]},
+      "signal-consensus": {"contract": "signal-consensus-v1", "group": "tactical-representatives", "breadth_group": "risk-breadth", "minimum_votes": 2},
+      "fixed-weight-configured": {"contract": "fixed-weight-configured-v1", "group": "static-core"}
+    }
+  },
+  "families": [
+    {
+      "id": "A", "cohort_diversity_group": "A", "name": "cross-sectional relative strength", "hypothesis": "Broad cross-sectional strength can identify a small positive-momentum subset without concentration becoming dominant.",
+      "discovery": {"strategy_ids": ["relative-strength"], "parameters": {"lookback": [63, 126, 189], "selection_count": [1, 2, 3, 4, 5], "rebalance_every": [5, 21]}, "configuration_count": 30},
+      "confirmation": {"strategy_ids": ["ranked-relative-strength"], "parameters": {"lookback": [63, 126, 189], "selection_count": [2, 3], "rebalance_every": [5, 21], "minimum_return_bps": [0, 500]}, "configuration_count": 24},
+      "anchor": {"strategy_id": "relative-strength", "parameters": {"lookback": 126, "selection_count": 3, "rebalance_every": 21}},
+      "neighbor_values": {"lookback": [63, 126, 189], "selection_count": [1, 2, 3, 4, 5], "rebalance_every": [5, 21], "minimum_return_bps": [0, 500]},
+      "shared_required_evidence": ["K volatility-weighted selected assets"]
+    },
+    {
+      "id": "B", "cohort_diversity_group": "B", "name": "dual momentum", "hypothesis": "Positive relative momentum with fixed defensive fallbacks can reduce broad risk-asset losses.",
+      "discovery": {"strategy_ids": ["dual-momentum-shy", "dual-momentum-treasury-gold", "dual-momentum-defensive"], "parameter_sets": [{"short_lookback": 20, "long_lookback": 63}, {"short_lookback": 20, "long_lookback": 126}, {"short_lookback": 40, "long_lookback": 126}, {"short_lookback": 63, "long_lookback": 189}], "parameters": {"selection_count": [1, 2]}, "fixed_parameters": {"rebalance_every": 21}, "configuration_count": 24},
+      "confirmation": {"strategy_ids": ["dual-momentum-shy-inverse-volatility", "dual-momentum-treasury-gold-inverse-volatility", "dual-momentum-defensive-inverse-volatility"], "parameter_sets": [{"short_lookback": 20, "long_lookback": 126}, {"short_lookback": 63, "long_lookback": 189}], "parameters": {"selection_count": [1, 2]}, "fixed_parameters": {"rebalance_every": 21}, "configuration_count": 12},
+      "anchor": {"strategy_id": "dual-momentum-defensive", "parameters": {"short_lookback": 20, "long_lookback": 126, "selection_count": 2, "rebalance_every": 21}},
+      "neighbor_values": {"short_lookback": [20, 40, 63], "long_lookback": [63, 126, 189], "selection_count": [1, 2]}
+    },
+    {
+      "id": "C", "cohort_diversity_group": "C", "name": "tactical multi-asset allocation", "hypothesis": "A small set of economic representatives can rotate across asset classes with lower noise than direct ranking of all funds.",
+      "discovery": {"strategy_ids": ["tactical-relative-strength", "tactical-inverse-volatility-momentum"], "parameters": {"lookback": [63, 126, 189], "selection_count": [2, 3], "rebalance_every": [10, 21]}, "configuration_count": 24},
+      "confirmation": {"strategy_ids": ["tactical-multi-horizon-momentum"], "parameter_sets": [{"short_lookback": 20, "long_lookback": 63}, {"short_lookback": 40, "long_lookback": 126}, {"short_lookback": 63, "long_lookback": 189}], "parameters": {"selection_count": [2, 3], "rebalance_every": [10, 21]}, "configuration_count": 12},
+      "anchor": {"strategy_id": "tactical-relative-strength", "parameters": {"lookback": 126, "selection_count": 3, "rebalance_every": 21}},
+      "neighbor_values": {"lookback": [63, 126, 189], "short_lookback": [20, 40, 63], "long_lookback": [63, 126, 189], "selection_count": [2, 3], "rebalance_every": [10, 21]}
+    },
+    {
+      "id": "D", "cohort_diversity_group": "D", "name": "sector rotation", "hypothesis": "Sector dispersion can support ranked rotation distinct from broad-index timing.",
+      "discovery": {"strategy_ids": ["sector-relative-strength"], "parameters": {"lookback": [63, 126, 189], "selection_count": [1, 2, 3], "rebalance_every": [5, 21]}, "configuration_count": 18},
+      "confirmation": {"strategy_ids": ["sector-trend-relative-strength"], "parameters": {"lookback": [84, 252], "selection_count": [1, 2], "rebalance_every": [5, 21]}, "configuration_count": 8},
+      "anchor": {"strategy_id": "sector-relative-strength", "parameters": {"lookback": 126, "selection_count": 2, "rebalance_every": 21}},
+      "neighbor_values": {"lookback": [63, 84, 126, 189, 252], "selection_count": [1, 2, 3], "rebalance_every": [5, 21]}
+    },
+    {
+      "id": "E", "cohort_diversity_group": "E", "name": "style and factor rotation", "hypothesis": "Simple style and factor strength can rotate among persistent economic exposures without factor-return fitting.",
+      "discovery": {"strategy_ids": ["style-relative-strength"], "parameters": {"lookback": [63, 126, 189], "selection_count": [1, 2, 3], "rebalance_every": [5, 21]}, "configuration_count": 18},
+      "confirmation": {"strategy_ids": ["style-trend-relative-strength"], "parameters": {"lookback": [84, 252], "selection_count": [1, 2], "rebalance_every": [5, 21]}, "configuration_count": 8},
+      "anchor": {"strategy_id": "style-relative-strength", "parameters": {"lookback": 126, "selection_count": 2, "rebalance_every": 21}},
+      "neighbor_values": {"lookback": [63, 84, 126, 189, 252], "selection_count": [1, 2, 3], "rebalance_every": [5, 21]}
+    },
+    {
+      "id": "F", "cohort_diversity_group": "F", "name": "international rotation", "hypothesis": "US, developed, emerging, European, and Japanese equity dispersion can support defensive relative rotation.",
+      "discovery": {"strategy_ids": ["international-relative-strength"], "parameters": {"lookback": [63, 126, 189], "selection_count": [1, 2], "rebalance_every": [5, 21]}, "configuration_count": 12},
+      "confirmation": {"strategy_ids": ["international-trend-relative-strength"], "parameters": {"lookback": [84, 252], "selection_count": [1, 2], "rebalance_every": [5, 21]}, "configuration_count": 8},
+      "anchor": {"strategy_id": "international-relative-strength", "parameters": {"lookback": 126, "selection_count": 2, "rebalance_every": 21}},
+      "neighbor_values": {"lookback": [63, 84, 126, 189, 252], "selection_count": [1, 2], "rebalance_every": [5, 21]}
+    },
+    {
+      "id": "G", "cohort_diversity_group": "G", "name": "bond duration rotation", "hypothesis": "Treasury duration, inflation, and credit dispersion can support a distinct fixed-income rotation.",
+      "discovery": {"strategy_ids": ["duration-relative-strength", "duration-tip-relative-strength", "bond-relative-strength"], "parameters": {"lookback": [63, 126, 189], "selection_count": [1, 2]}, "fixed_parameters": {"rebalance_every": 21}, "configuration_count": 18},
+      "confirmation": {"strategy_ids": ["duration-inverse-volatility-momentum", "bond-inverse-volatility-momentum"], "parameters": {"lookback": [84, 252], "selection_count": [1, 2]}, "fixed_parameters": {"volatility_window": 63, "rebalance_every": 21}, "configuration_count": 8},
+      "anchor": {"strategy_id": "duration-tip-relative-strength", "parameters": {"lookback": 126, "selection_count": 1, "rebalance_every": 21}},
+      "neighbor_values": {"lookback": [63, 84, 126, 189, 252], "selection_count": [1, 2], "volatility_window": [40, 63, 84]}
+    },
+    {
+      "id": "H", "cohort_diversity_group": "H", "name": "equity bond gold regime", "hypothesis": "Broad equity trend and volatility can shift a fixed equity, Treasury, gold, and cash allocation before execution.",
+      "discovery": {"strategy_ids": ["equity-bond-gold-regime"], "parameters": {"trend_window": [63, 126, 189], "volatility_window": [20, 63], "volatility_limit_percent": [15, 20, 25]}, "fixed_parameters": {"rebalance_every": 5}, "configuration_count": 18},
+      "confirmation": {"strategy_ids": ["equity-bond-gold-regime"], "parameters": {"trend_window": [84, 252], "volatility_window": [40, 84], "volatility_limit_percent": [15, 25]}, "fixed_parameters": {"rebalance_every": 5}, "configuration_count": 8},
+      "anchor": {"strategy_id": "equity-bond-gold-regime", "parameters": {"trend_window": 126, "volatility_window": 63, "volatility_limit_percent": 20, "rebalance_every": 5}},
+      "neighbor_values": {"trend_window": [63, 84, 126, 189, 252], "volatility_window": [20, 40, 63, 84], "volatility_limit_percent": [15, 20, 25]}
+    },
+    {
+      "id": "I", "cohort_diversity_group": "I", "name": "multi-asset trend following", "hypothesis": "Independent trend states across many assets can diversify timing decisions.",
+      "discovery": {"strategy_ids": ["multi-asset-trend", "tactical-trend", "multi-asset-inverse-volatility-trend", "tactical-inverse-volatility-trend"], "parameters": {"window": [63, 126, 189]}, "configuration_count": 12},
+      "confirmation": {"strategy_ids": ["multi-asset-trend", "tactical-trend", "multi-asset-inverse-volatility-trend", "tactical-inverse-volatility-trend"], "parameters": {"window": [84, 252]}, "configuration_count": 8},
+      "anchor": {"strategy_id": "multi-asset-trend", "parameters": {"window": 126}},
+      "neighbor_values": {"window": [63, 84, 126, 189, 252]}
+    },
+    {
+      "id": "J", "cohort_diversity_group": "J", "name": "multi-asset breakout", "hypothesis": "Independent channel breakouts across broad assets can aggregate into a controlled trend portfolio.",
+      "discovery": {"strategy_ids": ["multi-asset-breakout", "tactical-breakout"], "parameter_sets": [{"entry_window": 20, "exit_window": 10}, {"entry_window": 40, "exit_window": 20}, {"entry_window": 63, "exit_window": 20}, {"entry_window": 84, "exit_window": 40}, {"entry_window": 126, "exit_window": 63}, {"entry_window": 189, "exit_window": 84}], "configuration_count": 12},
+      "confirmation": {"strategy_ids": ["multi-asset-inverse-volatility-breakout", "tactical-inverse-volatility-breakout"], "parameter_sets": [{"entry_window": 40, "exit_window": 20}, {"entry_window": 84, "exit_window": 40}, {"entry_window": 126, "exit_window": 63}], "fixed_parameters": {"volatility_window": 63}, "configuration_count": 6},
+      "anchor": {"strategy_id": "multi-asset-breakout", "parameters": {"entry_window": 84, "exit_window": 40}},
+      "neighbor_values": {"entry_window": [20, 40, 63, 84, 126, 189], "exit_window": [10, 20, 40, 63, 84], "volatility_window": [40, 63, 84]}
+    },
+    {
+      "id": "K", "cohort_diversity_group": "K", "name": "volatility-weighted momentum", "hypothesis": "Momentum selection followed by capped inverse-volatility weights can reduce concentration without an optimizer.",
+      "discovery": {"strategy_ids": ["ranked-inverse-volatility-momentum"], "parameters": {"lookback": [63, 126, 189], "volatility_window": [20, 63], "selection_count": [2, 3, 5]}, "fixed_parameters": {"rebalance_every": 21}, "configuration_count": 18},
+      "confirmation": {"strategy_ids": ["ranked-inverse-volatility-momentum-cap30", "ranked-inverse-volatility-momentum-cap50"], "parameters": {"lookback": [84, 252], "volatility_window": [40, 84]}, "fixed_parameters": {"selection_count": 3, "rebalance_every": 21}, "configuration_count": 8},
+      "anchor": {"strategy_id": "ranked-inverse-volatility-momentum", "parameters": {"lookback": 126, "volatility_window": 63, "selection_count": 3, "rebalance_every": 21}},
+      "neighbor_values": {"lookback": [63, 84, 126, 189, 252], "volatility_window": [20, 40, 63, 84], "selection_count": [2, 3, 5], "rebalance_every": [10, 21]}
+    },
+    {
+      "id": "L", "cohort_diversity_group": "L", "name": "risk parity and inverse volatility", "hypothesis": "Capped inverse-volatility weights can diversify broad or tactical assets without covariance optimization.",
+      "discovery": {"strategy_ids": ["volatility-balanced", "tactical-volatility-balanced"], "parameters": {"volatility_window": [20, 63, 126], "rebalance_every": [5, 21]}, "configuration_count": 12},
+      "confirmation": {"strategy_ids": ["tactical-volatility-balanced-cap20", "tactical-volatility-balanced-cap25", "tactical-volatility-balanced-cap35"], "parameters": {"volatility_window": [40, 84]}, "fixed_parameters": {"rebalance_every": 21}, "configuration_count": 6},
+      "anchor": {"strategy_id": "volatility-balanced", "parameters": {"volatility_window": 63, "rebalance_every": 21}},
+      "neighbor_values": {"volatility_window": [20, 40, 63, 84, 126], "rebalance_every": [5, 21]}
+    },
+    {
+      "id": "M", "cohort_diversity_group": "M", "name": "hierarchical and sleeve allocation", "hypothesis": "Equal sleeve budgets followed by within-sleeve selection can prevent member-count bias and reduce concentration.",
+      "discovery": {"strategy_ids": ["hierarchical-sleeve-allocation", "hierarchical-sleeve-inverse-volatility"], "parameters": {"lookback": [63, 126, 189], "rebalance_every": [5, 21]}, "configuration_count": 12},
+      "confirmation": {"strategy_ids": ["hierarchical-sleeve-allocation", "hierarchical-sleeve-inverse-volatility"], "parameters": {"lookback": [84, 252], "rebalance_every": [5, 21]}, "configuration_count": 8},
+      "anchor": {"strategy_id": "hierarchical-sleeve-allocation", "parameters": {"lookback": 126, "rebalance_every": 21}},
+      "neighbor_values": {"lookback": [63, 84, 126, 189, 252], "rebalance_every": [5, 21]}
+    },
+    {
+      "id": "N", "cohort_diversity_group": "N", "name": "breadth-based regime", "hypothesis": "The fraction of risk assets above trend can scale a diversified allocation before broad weakness.",
+      "discovery": {"strategy_ids": ["breadth-regime"], "parameters": {"trend_window": [63, 126], "breadth_threshold_percent": [40, 60, 80], "rebalance_every": [5, 10, 21]}, "configuration_count": 18},
+      "confirmation": {"strategy_ids": ["breadth-regime"], "parameters": {"trend_window": [84, 189], "breadth_threshold_percent": [40, 60], "rebalance_every": [5, 21]}, "configuration_count": 8},
+      "anchor": {"strategy_id": "breadth-regime", "parameters": {"trend_window": 126, "breadth_threshold_percent": 60, "rebalance_every": 10}},
+      "neighbor_values": {"trend_window": [63, 84, 126, 189], "breadth_threshold_percent": [40, 60, 80], "rebalance_every": [5, 10, 21]}
+    },
+    {
+      "id": "O", "cohort_diversity_group": "O", "name": "diversification-constrained rotation", "hypothesis": "Selecting at most one strong asset per economic sleeve can retain dispersion while enforcing genuine diversification.",
+      "discovery": {"strategy_ids": ["diversified-rotation"], "parameters": {"lookback": [63, 126, 189], "selection_count": [2, 3, 4], "rebalance_every": [5, 21]}, "configuration_count": 18},
+      "confirmation": {"strategy_ids": ["diversified-rotation"], "parameters": {"lookback": [84, 252], "selection_count": [2, 3], "rebalance_every": [5, 21]}, "configuration_count": 8},
+      "anchor": {"strategy_id": "diversified-rotation", "parameters": {"lookback": 126, "selection_count": 3, "rebalance_every": 21}},
+      "neighbor_values": {"lookback": [63, 84, 126, 189, 252], "selection_count": [2, 3, 4], "rebalance_every": [5, 21]}
+    },
+    {
+      "id": "P", "cohort_diversity_group": "P", "name": "multi-horizon cross-sectional momentum", "hypothesis": "Agreement across two simple horizons can reject transient ranks without fitted coefficients.",
+      "discovery": {"strategy_ids": ["multi-horizon-momentum"], "parameter_sets": [{"short_lookback": 20, "long_lookback": 63}, {"short_lookback": 40, "long_lookback": 126}, {"short_lookback": 63, "long_lookback": 126}, {"short_lookback": 63, "long_lookback": 189}, {"short_lookback": 126, "long_lookback": 252}], "parameters": {"selection_count": [1, 3], "rebalance_every": [5, 21]}, "configuration_count": 20},
+      "confirmation": {"strategy_ids": ["multi-horizon-inverse-volatility-momentum"], "parameter_sets": [{"short_lookback": 20, "long_lookback": 63}, {"short_lookback": 40, "long_lookback": 126}, {"short_lookback": 63, "long_lookback": 189}], "parameters": {"selection_count": [1, 3], "rebalance_every": [5, 21]}, "fixed_parameters": {"volatility_window": 63}, "configuration_count": 12},
+      "anchor": {"strategy_id": "multi-horizon-momentum", "parameters": {"short_lookback": 63, "long_lookback": 126, "selection_count": 3, "rebalance_every": 21}},
+      "neighbor_values": {"short_lookback": [20, 40, 63, 126], "long_lookback": [63, 126, 189, 252], "selection_count": [1, 3], "rebalance_every": [5, 21]}
+    },
+    {
+      "id": "Q", "cohort_diversity_group": "Q", "name": "trend and relative-strength combinations", "hypothesis": "Requiring both favorable absolute trend and relative rank can improve cross-sectional timing.",
+      "discovery": {"strategy_ids": ["trend-relative-strength"], "parameter_sets": [{"trend_window": 63, "rank_lookback": 63}, {"trend_window": 126, "rank_lookback": 126}, {"trend_window": 189, "rank_lookback": 126}], "parameters": {"selection_count": [1, 3, 5], "rebalance_every": [5, 21]}, "configuration_count": 18},
+      "confirmation": {"strategy_ids": ["trend-relative-strength"], "parameter_sets": [{"trend_window": 84, "rank_lookback": 63}, {"trend_window": 252, "rank_lookback": 189}], "parameters": {"selection_count": [2, 4], "rebalance_every": [5, 21]}, "configuration_count": 8},
+      "anchor": {"strategy_id": "trend-relative-strength", "parameters": {"trend_window": 126, "rank_lookback": 126, "selection_count": 3, "rebalance_every": 21}},
+      "neighbor_values": {"trend_window": [63, 84, 126, 189, 252], "rank_lookback": [63, 126, 189], "selection_count": [1, 2, 3, 4, 5], "rebalance_every": [5, 21]}
+    },
+    {
+      "id": "R", "cohort_diversity_group": "R", "name": "defensive breadth and crisis allocation", "hypothesis": "Weak broad risk breadth can rotate capital among predeclared Treasury, gold, or cash defenses without hindsight labels.",
+      "discovery": {"strategy_ids": ["defensive-breadth-cash", "defensive-breadth-shy", "defensive-breadth-ranked"], "parameters": {"trend_window": [63, 126], "breadth_threshold_percent": [40, 60, 80]}, "fixed_parameters": {"rebalance_every": 5}, "configuration_count": 18},
+      "confirmation": {"strategy_ids": ["defensive-breadth-cash", "defensive-breadth-ranked"], "parameters": {"trend_window": [84, 189], "breadth_threshold_percent": [40, 60]}, "fixed_parameters": {"rebalance_every": 5}, "configuration_count": 8},
+      "anchor": {"strategy_id": "defensive-breadth-ranked", "parameters": {"trend_window": 126, "breadth_threshold_percent": 60, "rebalance_every": 5}},
+      "neighbor_values": {"trend_window": [63, 84, 126, 189], "breadth_threshold_percent": [40, 60, 80], "rebalance_every": [5, 10, 21]}
+    },
+    {
+      "id": "S", "cohort_diversity_group": "S", "name": "cross-sectional mean reversion", "hypothesis": "Short normalized reversals inside long uptrends may capture dispersion without unrestricted contrarian exposure.",
+      "discovery": {"strategy_ids": ["cross-sectional-mean-reversion"], "parameters": {"reversal_lookback": [5, 10, 20], "trend_window": [63, 126], "selection_count": [1, 3]}, "fixed_parameters": {"rebalance_every": 5, "volatility_window": 20}, "configuration_count": 12},
+      "confirmation": {"strategy_ids": ["cross-sectional-mean-reversion"], "parameters": {"reversal_lookback": [5, 10, 20], "trend_window": [189], "selection_count": [1, 3]}, "fixed_parameters": {"rebalance_every": 5, "volatility_window": 40}, "configuration_count": 6},
+      "anchor": {"strategy_id": "cross-sectional-mean-reversion", "parameters": {"reversal_lookback": 10, "trend_window": 126, "selection_count": 3, "rebalance_every": 5, "volatility_window": 20}},
+      "neighbor_values": {"reversal_lookback": [5, 10, 20], "trend_window": [63, 126, 189], "selection_count": [1, 3], "rebalance_every": [5, 10]}
+    },
+    {
+      "id": "T", "cohort_diversity_group": "T", "name": "static core and tactical satellite", "hypothesis": "A fixed diversified core plus a bounded tactical sleeve can retain static exposure while using cross-sectional dispersion.",
+      "discovery": {"strategy_ids": ["static-core-tactical-satellite"], "parameters": {"core_weight_percent": [70, 80, 90], "tactical_lookback": [63, 126], "selection_count": [1, 3]}, "fixed_parameters": {"rebalance_every": 21}, "configuration_count": 12},
+      "confirmation": {"strategy_ids": ["static-core-tactical-satellite"], "parameters": {"core_weight_percent": [70, 80, 90], "tactical_lookback": [84], "selection_count": [1, 3]}, "fixed_parameters": {"rebalance_every": 21}, "configuration_count": 6},
+      "anchor": {"strategy_id": "static-core-tactical-satellite", "parameters": {"core_weight_percent": 80, "tactical_lookback": 126, "selection_count": 3, "rebalance_every": 21}},
+      "neighbor_values": {"core_weight_percent": [70, 80, 90], "tactical_lookback": [63, 84, 126], "selection_count": [1, 3], "rebalance_every": [10, 21]}
+    },
+    {
+      "id": "U", "cohort_diversity_group": "U", "name": "ensemble and signal consensus", "hypothesis": "Fixed trend, momentum, and breadth votes can suppress isolated signals without fitted ensemble weights.",
+      "prerequisite_families": ["A", "I", "N"],
+      "discovery": {"strategy_ids": ["signal-consensus"], "parameters": {"momentum_lookback": [63, 126], "breadth_threshold_percent": [40, 60, 80], "selection_count": [1, 3]}, "fixed_parameters": {"trend_window": 126, "rebalance_every": 21}, "configuration_count": 12},
+      "confirmation": {"strategy_ids": ["signal-consensus"], "parameters": {"momentum_lookback": [84], "breadth_threshold_percent": [40, 60, 80], "selection_count": [1, 3]}, "fixed_parameters": {"trend_window": 189, "rebalance_every": 21}, "configuration_count": 6},
+      "anchor": {"strategy_id": "signal-consensus", "parameters": {"momentum_lookback": 126, "breadth_threshold_percent": 60, "selection_count": 3, "trend_window": 126, "rebalance_every": 21}},
+      "neighbor_values": {"momentum_lookback": [63, 84, 126], "breadth_threshold_percent": [40, 60, 80], "selection_count": [1, 3], "trend_window": [126, 189]}
+    }
+  ],
+  "walk_forward_screen": {
+    "required_fold_count": 9,
+    "gates": [
+      {"metric": "fold_count", "comparison": "==", "threshold": "9"},
+      {"metric": "completed_fold_count", "comparison": "==", "threshold": "9"},
+      {"metric": "overall_out_of_sample_return", "comparison": ">", "threshold": "0"},
+      {"metric": "profitable_fold_rate", "comparison": ">=", "threshold": "0.6666666666666666666666666667"},
+      {"metric": "worst_fold_return", "comparison": ">=", "threshold": "-0.10"}
+    ],
+    "report_without_threshold": ["fold_return_dispersion", "profitable_fold_count", "fold_returns"]
+  },
+  "exposed_screen": {
+    "screen_id": "rapid-004-uniform-exposed-screen-v1",
+    "candidate_set": "Every serious identity with complete fixed-block, walk-forward, direct-neighbor, isolated-sensitivity, and combined-stress evidence.",
+    "visible_base": {
+      "required": "all gates across the three fixed blocks",
+      "gates": [
+        {"metric": "validation_fold_count", "comparison": ">=", "threshold": "3"},
+        {"metric": "positive_validation_fold_rate", "comparison": ">=", "threshold": "1"},
+        {"metric": "gate_benchmark_win_rate", "comparison": ">=", "threshold": "0.6666666666666666666666666667"},
+        {"metric": "worst_validation_return", "comparison": ">=", "threshold": "0"},
+        {"metric": "worst_validation_sharpe", "comparison": ">=", "threshold": "0.5"},
+        {"metric": "max_validation_drawdown", "comparison": "<=", "threshold": "0.20"},
+        {"metric": "max_average_gross_exposure", "comparison": "<=", "threshold": "1"},
+        {"metric": "max_top_5_session_profit_share", "comparison": "<=", "threshold": "0.25"},
+        {"metric": "max_top_instrument_profit_share", "comparison": "<=", "threshold": "0.50"},
+        {"metric": "max_sleeve_profit_share", "comparison": "<=", "threshold": "0.50", "definition": "For each block, sum positive instrument P&L by frozen role-map sleeve, then divide the largest positive sleeve P&L by total positive sleeve P&L; a missing, zero, or invalid denominator fails."},
+        {"metric": "min_up_regime_sessions", "comparison": ">=", "threshold": "50"},
+        {"metric": "min_down_regime_sessions", "comparison": ">=", "threshold": "50"},
+        {"metric": "max_turnover", "comparison": "<=", "threshold": "30"},
+        {"metric": "total_validation_trade_count", "comparison": ">=", "threshold": "100"}
+      ]
+    },
+    "parameter_neighbors": {"required": "all predeclared direct neighbors on all three fixed blocks", "metric": "minimum_parameter_neighbor_return_retention", "formula": "neighbor block total_return divided by same-block base total_return", "comparison": ">=", "threshold": "0.50"},
+    "isolated_sensitivity": [
+      {"scenario_id": "isolated-cost-2x", "metric": "minimum_cost_2x_return_retention", "formula": "scenario total_return divided by same-range normal total_return", "comparison": ">=", "threshold": "0.80"},
+      {"scenario_id": "isolated-delay-2", "metric": "minimum_delay_2_return_retention", "formula": "scenario total_return divided by same-range normal total_return", "comparison": ">=", "threshold": "0.80"}
+    ],
+    "combined_stress": [
+      {"scenario_id": "stress-a", "return_comparison": ">", "return_threshold": "0", "retention_comparison": ">=", "retention_threshold": "0.80"},
+      {"scenario_id": "stress-b", "return_comparison": ">", "return_threshold": "0", "retention_comparison": ">=", "retention_threshold": "0.80"}
+    ],
+    "walk_forward": "Every walk_forward_screen gate must pass.",
+    "missing_or_null_metric_fails": true,
+    "zero_final_cohort_permitted": true
+  },
+  "cohort": {
+    "maximum_candidates": 6,
+    "freeze_entire_cohort_before_any_controlled_result": true,
+    "selection_method": "Round robin across immutable cohort_diversity_group values; take one passing identity per group before any second member, stop at six, and never fill with a failing identity.",
+    "selection_order_within_round": ["minimum fixed-block excess return versus gate benchmark descending", "worst fixed-block Sharpe descending", "maximum fixed-block drawdown ascending", "maximum fixed-block turnover ascending", "configuration fingerprint ascending"],
+    "controlled_plan": {
+      "separate_plan_per_candidate": true,
+      "maximum_records": 38,
+      "base_blocks": 3,
+      "gate_benchmark_blocks": 3,
+      "isolated_cost_blocks": 3,
+      "isolated_delay_blocks": 3,
+      "maximum_parameter_neighbor_blocks": 24,
+      "combined_stresses": 2,
+      "campaign_candidate_count_gate": "<= 40",
+      "execute_each_sealed_record_exactly_once": true,
+      "failure_is_final": true
+    },
+    "passing_candidate_rank_order": ["controlled gate benchmark wins descending", "controlled worst excess return descending", "controlled worst Sharpe descending", "controlled maximum drawdown ascending", "canonical candidate identity ascending"]
+  },
+  "authority": {
+    "automatic_promotion": false,
+    "broker_writes": false,
+    "controlled_research_evidence": false,
+    "live_execution": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "qualification": false
+  },
+  "protected_state": {
+    "independent_2018_2019_market_data_touched": false,
+    "v3_touched": false,
+    "paper_broker_or_live_touched": false,
+    "strategic_allocation_21_implementation_touched": false,
+    "rapid_004_strategy_results_inspected_before_predeclaration": false
+  }
+}

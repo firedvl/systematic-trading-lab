@@ -448,11 +448,9 @@ def _inputs_identity(inputs: ResearchInputs) -> dict[str, object]:
 def _resolve_inputs_dataset(
     root: Path, store: RapidResearchStore, inputs: ResearchInputs
 ) -> tuple[ResearchDataset, Mapping[str, object] | None]:
-    campaign = (
+    if inputs.campaign_id == RAPID_004_PROGRAM_ID:
         bind_rapid_004_dataset(root, store, inputs.dataset_id)
-        if inputs.campaign_id == RAPID_004_PROGRAM_ID
-        else None
-    )
+        raise ValueError("Rapid-004 requires its predeclared campaign runner")
     return (
         resolve_research_dataset(
             root,
@@ -460,9 +458,9 @@ def _resolve_inputs_dataset(
             inputs.dataset_id,
             inputs.start,
             inputs.end,
-            verify_full_cataloged_dataset=campaign is not None,
+            verify_full_cataloged_dataset=False,
         ),
-        campaign,
+        None,
     )
 
 
