@@ -128,10 +128,12 @@ def test_public_wrapper_imports_local_csv_and_delegates_legacy_status(tmp_path: 
     imported = _json(_run(home, "data", "import-local", str(source)))
     status = _json(_run(home, "status"))
     stress_help = _run(home, "research", "stress", "--help").stdout
+    backtest_help = _run(home, "research", "backtest", "--help").stdout
 
     assert imported["data_origin"] == "user-supplied"
     assert status["mode"] == "offline"
     assert "(default: 10)" in stress_help
+    assert "--campaign {rapid-004-expanded-universe}" in backtest_help
 
 
 def test_sweep_prints_count_before_running_every_configuration(tmp_path: Path) -> None:

@@ -1,0 +1,877 @@
+{
+  "schema_version": "rapid-004-final-universe-v1",
+  "program_id": "rapid-004-expanded-universe",
+  "status": "frozen-before-strategy-performance-research",
+  "id": "rapid-004-expanded-final-universe-v1",
+  "timeframe": "1d",
+  "acquisition": {
+    "start": "2020-07-27",
+    "end": "2026-07-31"
+  },
+  "selection_source": {
+    "seed_universe": "config/research/rapid-004-seed-universe-v1.json",
+    "seed_universe_sha256": "876ed95716a2e7010232d2790f6210c0110de42c9b10ada90202b0176238eb59",
+    "dataset_id": "1c3b228a7c5fb4dc247f25cd9b4030482c7494533bb2a3fa2af77346d8274799",
+    "dataset_fingerprint": "24574dfcce34d3e2096eef1700a916e74ebca2775dd1039b5f38c6be9e10a9c1",
+    "universe_id": "rapid-004-expanded-seed-universe-v1",
+    "universe_fingerprint": "3df61e7df8797947fa6e646abe562916810e310dbaf0d9826c3ba2ed7d3b6d5a",
+    "provider": "yahoo-chart-v8",
+    "feed": null,
+    "adjustment_policy": "yahoo-adjusted-ohlc-v1",
+    "requested_start": "2020-07-27",
+    "requested_end": "2026-07-31",
+    "raw_record_fingerprint": "44211943c528b86b049ea3ffccb7d9c9c68353c0d99e55207d6dbd912c76f32b",
+    "retrieval_timestamp": "2026-08-15T09:11:48.442089Z"
+  },
+  "liquidity_screen": {
+    "id": "rapid-004-liquidity-screen-yahoo-v1",
+    "start": "2020-07-27",
+    "end": "2022-12-30",
+    "expected_xnys_sessions_per_symbol": 614,
+    "daily_dollar_volume_definition": "normalized adjusted close multiplied by vendor-reported integer volume",
+    "median_definition": "exact Decimal median; for 614 observations, arithmetic mean of the two central sorted values",
+    "minimum_inclusive": "10000000",
+    "price_field": "normalized adjusted close under yahoo-adjusted-ohlc-v1",
+    "volume_field": "Yahoo vendor-reported integer volume retained unchanged",
+    "seed_policy_resolution": "the seed file says adjusted daily volume; the pre-screen Yahoo fallback policy retains vendor volume and defines the only available deterministic volume field, so the final screen binds that field explicitly",
+    "performance_fields_calculated": [],
+    "strategy_results_inspected": false
+  },
+  "duplicate_resolution": {
+    "comparison": "higher exact Decimal median daily dollar volume without rounding",
+    "equality_rule": "not invoked; every predeclared pair differs on the first tie-breaker",
+    "groups": [
+      {
+        "id": "us-large-value",
+        "selected": "IWD",
+        "excluded": "IVE",
+        "selected_median_daily_dollar_volume": "352163890.08026121515",
+        "excluded_median_daily_dollar_volume": "96822387.248229976975",
+        "decisive_criterion": "higher median daily dollar volume"
+      },
+      {
+        "id": "us-large-growth",
+        "selected": "IWF",
+        "excluded": "IVW",
+        "selected_median_daily_dollar_volume": "401941165.0344848514648",
+        "excluded_median_daily_dollar_volume": "136298953.24249267578125",
+        "decisive_criterion": "higher median daily dollar volume"
+      },
+      {
+        "id": "emerging-markets-equity",
+        "selected": "EEM",
+        "excluded": "VWO",
+        "selected_median_daily_dollar_volume": "1665961756.5429688455365",
+        "excluded_median_daily_dollar_volume": "461495005.2288055499437",
+        "decisive_criterion": "higher median daily dollar volume"
+      }
+    ]
+  },
+  "selection_result": {
+    "seed_symbol_count": 40,
+    "included_symbol_count": 37,
+    "excluded_symbol_count": 3,
+    "target_minimum": 25,
+    "target_maximum": 40,
+    "all_seed_symbols_passed_liquidity_threshold": true,
+    "ordered_final_symbols": [
+      "SPY",
+      "QQQ",
+      "IWM",
+      "DIA",
+      "MDY",
+      "IWD",
+      "IWF",
+      "MTUM",
+      "QUAL",
+      "USMV",
+      "VLUE",
+      "XLK",
+      "XLF",
+      "XLE",
+      "XLV",
+      "XLI",
+      "XLP",
+      "XLY",
+      "XLU",
+      "XLB",
+      "XLRE",
+      "EFA",
+      "EEM",
+      "VGK",
+      "EWJ",
+      "TLT",
+      "IEF",
+      "SHY",
+      "TIP",
+      "LQD",
+      "HYG",
+      "AGG",
+      "EMB",
+      "GLD",
+      "SLV",
+      "DBC",
+      "VNQ"
+    ]
+  },
+  "dispositions": [
+    {
+      "symbol": "SPY",
+      "category": "core-us-equity",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "28401558142.27294921875",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "QQQ",
+      "category": "core-us-equity",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "15003352604.2144775390625",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "IWM",
+      "category": "core-us-equity",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "4943693509.8487854292425",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "DIA",
+      "category": "core-us-equity",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "1132947686.41510005061",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "MDY",
+      "category": "core-us-equity",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "374966675.25482177765",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "IWD",
+      "category": "us-style-factor",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "352163890.08026121515",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: us-large-value duplicate winner; exact median daily dollar volume exceeds IVE (352163890.08026121515 > 96822387.248229976975)",
+      "duplicate_group": "us-large-value",
+      "excluded_representative": "IVE"
+    },
+    {
+      "symbol": "IWF",
+      "category": "us-style-factor",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "401941165.0344848514648",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: us-large-growth duplicate winner; exact median daily dollar volume exceeds IVW (401941165.0344848514648 > 136298953.24249267578125)",
+      "duplicate_group": "us-large-growth",
+      "excluded_representative": "IVW"
+    },
+    {
+      "symbol": "IVE",
+      "category": "us-style-factor",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "96822387.248229976975",
+      "liquidity_threshold_passed": true,
+      "included": false,
+      "reason": "excluded: us-large-value duplicate; IWD has higher exact median daily dollar volume (352163890.08026121515 > 96822387.248229976975)",
+      "duplicate_group": "us-large-value",
+      "selected_representative": "IWD"
+    },
+    {
+      "symbol": "IVW",
+      "category": "us-style-factor",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "136298953.24249267578125",
+      "liquidity_threshold_passed": true,
+      "included": false,
+      "reason": "excluded: us-large-growth duplicate; IWF has higher exact median daily dollar volume (401941165.0344848514648 > 136298953.24249267578125)",
+      "duplicate_group": "us-large-growth",
+      "selected_representative": "IWF"
+    },
+    {
+      "symbol": "MTUM",
+      "category": "us-style-factor",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "125114647.909545899672",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "QUAL",
+      "category": "us-style-factor",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "114522604.410552979167",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "USMV",
+      "category": "us-style-factor",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "204947656.7577362113035",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "VLUE",
+      "category": "us-style-factor",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "81163326.105880734484",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "XLK",
+      "category": "us-sector",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "1014245711.221313475904",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "XLF",
+      "category": "us-sector",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "1539820762.4534607504055",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "XLE",
+      "category": "us-sector",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "1410140892.024421677523",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "XLV",
+      "category": "us-sector",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "1043792313.834762584518",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "XLI",
+      "category": "us-sector",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "933260149.922561659772",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "XLP",
+      "category": "us-sector",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "665578557.3596954347145",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "XLY",
+      "category": "us-sector",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "717926077.441406265923",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "XLU",
+      "category": "us-sector",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "722900087.908172645752",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "XLB",
+      "category": "us-sector",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "451823618.28002931243",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "XLRE",
+      "category": "us-sector",
+      "sleeve": "us-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "181498941.6664123461388",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "EFA",
+      "category": "international",
+      "sleeve": "international-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "1342567983.79707337388",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "EEM",
+      "category": "international",
+      "sleeve": "international-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "1665961756.5429688455365",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: emerging-markets-equity duplicate winner; exact median daily dollar volume exceeds VWO (1665961756.5429688455365 > 461495005.2288055499437)",
+      "duplicate_group": "emerging-markets-equity",
+      "excluded_representative": "VWO"
+    },
+    {
+      "symbol": "VWO",
+      "category": "international",
+      "sleeve": "international-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "461495005.2288055499437",
+      "liquidity_threshold_passed": true,
+      "included": false,
+      "reason": "excluded: emerging-markets-equity duplicate; EEM has higher exact median daily dollar volume (1665961756.5429688455365 > 461495005.2288055499437)",
+      "duplicate_group": "emerging-markets-equity",
+      "selected_representative": "EEM"
+    },
+    {
+      "symbol": "VGK",
+      "category": "international",
+      "sleeve": "international-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "241036694.8823928841969",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "EWJ",
+      "category": "international",
+      "sleeve": "international-equity",
+      "sessions": 614,
+      "median_daily_dollar_volume": "308362317.038536069937",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "TLT",
+      "category": "fixed-income",
+      "sleeve": "fixed-income",
+      "sessions": 614,
+      "median_daily_dollar_volume": "1721159311.6886138836745",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "IEF",
+      "category": "fixed-income",
+      "sleeve": "fixed-income",
+      "sessions": 614,
+      "median_daily_dollar_volume": "624065088.819122290994",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "SHY",
+      "category": "fixed-income",
+      "sleeve": "fixed-income",
+      "sessions": 614,
+      "median_daily_dollar_volume": "245961093.000030523861",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "TIP",
+      "category": "fixed-income",
+      "sleeve": "fixed-income",
+      "sessions": 614,
+      "median_daily_dollar_volume": "320648306.198501589045",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "LQD",
+      "category": "fixed-income",
+      "sleeve": "fixed-income",
+      "sessions": 614,
+      "median_daily_dollar_volume": "1581461776.170349064499",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "HYG",
+      "category": "fixed-income",
+      "sleeve": "fixed-income",
+      "sessions": 614,
+      "median_daily_dollar_volume": "1792269892.433547933457",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "AGG",
+      "category": "fixed-income",
+      "sleeve": "fixed-income",
+      "sessions": 614,
+      "median_daily_dollar_volume": "606953324.770355236343",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "EMB",
+      "category": "fixed-income",
+      "sleeve": "fixed-income",
+      "sessions": 614,
+      "median_daily_dollar_volume": "403229075.698852527424",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "GLD",
+      "category": "real-assets",
+      "sleeve": "real-assets",
+      "sessions": 614,
+      "median_daily_dollar_volume": "1293232475.932312013125",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "SLV",
+      "category": "real-assets",
+      "sleeve": "real-assets",
+      "sessions": 614,
+      "median_daily_dollar_volume": "512450958.6179733394339",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "DBC",
+      "category": "real-assets",
+      "sleeve": "real-assets",
+      "sessions": 614,
+      "median_daily_dollar_volume": "51479458.5790634171109",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    },
+    {
+      "symbol": "VNQ",
+      "category": "real-assets",
+      "sleeve": "real-assets",
+      "sessions": 614,
+      "median_daily_dollar_volume": "361942390.483856223246",
+      "liquidity_threshold_passed": true,
+      "included": true,
+      "reason": "included: complete data, exact liquidity threshold passed, and no predeclared duplicate exclusion"
+    }
+  ],
+  "memberships": [
+    {
+      "symbol": "SPY",
+      "category": "core-us-equity",
+      "economic_exposure": "S&P 500 large-cap equity",
+      "start": "1993-01-22",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-500-etf-trust-spy",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "QQQ",
+      "category": "core-us-equity",
+      "economic_exposure": "Nasdaq-100 large-cap growth equity",
+      "start": "1999-03-10",
+      "end": null,
+      "source": "https://www.invesco.com/qqq-etf/en/about.html",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "IWM",
+      "category": "core-us-equity",
+      "economic_exposure": "Russell 2000 small-cap equity",
+      "start": "2000-05-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239710/ishares-russell-2000-etf",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "DIA",
+      "category": "core-us-equity",
+      "economic_exposure": "Dow Jones Industrial Average equity",
+      "start": "1998-01-14",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/spdr-dow-jones-industrial-average-etf-trust-dia",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "MDY",
+      "category": "core-us-equity",
+      "economic_exposure": "S&P MidCap 400 equity",
+      "start": "1995-05-04",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/spdr-sp-midcap-400-etf-trust-mdy",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "IWD",
+      "category": "us-style-factor",
+      "economic_exposure": "Russell 1000 value equity",
+      "start": "2000-05-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239708/ishares-russell-1000-value-etf",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "IWF",
+      "category": "us-style-factor",
+      "economic_exposure": "Russell 1000 growth equity",
+      "start": "2000-05-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239706/ishares-russell-1000-growth-etf",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "MTUM",
+      "category": "us-style-factor",
+      "economic_exposure": "US momentum-factor equity",
+      "start": "2013-04-16",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/251614/ishares-msci-usa-momentum-factor-etf",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "QUAL",
+      "category": "us-style-factor",
+      "economic_exposure": "US quality-factor equity",
+      "start": "2013-07-16",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/256101/ishares-msci-usa-quality-factor-etf",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "USMV",
+      "category": "us-style-factor",
+      "economic_exposure": "US minimum-volatility equity",
+      "start": "2011-10-18",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239695/ishares-msci-usa-minimum-volatility-etf",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "VLUE",
+      "category": "us-style-factor",
+      "economic_exposure": "US enhanced-value-factor equity",
+      "start": "2013-04-16",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/251616/ishares-msci-usa-value-factor-etf",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "XLK",
+      "category": "us-sector",
+      "economic_exposure": "US technology sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-technology-select-sector-spdr-fund-xlk",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "XLF",
+      "category": "us-sector",
+      "economic_exposure": "US financial sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-financial-select-sector-spdr-fund-xlf",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "XLE",
+      "category": "us-sector",
+      "economic_exposure": "US energy sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-energy-select-sector-spdr-fund-xle",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "XLV",
+      "category": "us-sector",
+      "economic_exposure": "US health-care sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-health-care-select-sector-spdr-fund-xlv",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "XLI",
+      "category": "us-sector",
+      "economic_exposure": "US industrial sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-industrial-select-sector-spdr-fund-xli",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "XLP",
+      "category": "us-sector",
+      "economic_exposure": "US consumer-staples sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-consumer-staples-select-sector-spdr-fund-xlp",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "XLY",
+      "category": "us-sector",
+      "economic_exposure": "US consumer-discretionary sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-consumer-discretionary-select-sector-spdr-fund-xly",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "XLU",
+      "category": "us-sector",
+      "economic_exposure": "US utilities sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-utilities-select-sector-spdr-fund-xlu",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "XLB",
+      "category": "us-sector",
+      "economic_exposure": "US materials sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-materials-select-sector-spdr-fund-xlb",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "XLRE",
+      "category": "us-sector",
+      "economic_exposure": "US real-estate sector equity",
+      "start": "2015-10-07",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-real-estate-select-sector-spdr-fund-xlre",
+      "sleeve": "us-equity"
+    },
+    {
+      "symbol": "EFA",
+      "category": "international",
+      "economic_exposure": "developed markets outside US and Canada",
+      "start": "2001-08-14",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239623/ishares-msci-eafe-etf",
+      "sleeve": "international-equity"
+    },
+    {
+      "symbol": "EEM",
+      "category": "international",
+      "economic_exposure": "broad emerging-markets equity",
+      "start": "2003-04-07",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239637/ishares-msci-emerging-markets-etf",
+      "sleeve": "international-equity"
+    },
+    {
+      "symbol": "VGK",
+      "category": "international",
+      "economic_exposure": "developed Europe equity",
+      "start": "2005-03-04",
+      "end": null,
+      "source": "https://investor.vanguard.com/investment-products/etfs/profile/vgk",
+      "sleeve": "international-equity"
+    },
+    {
+      "symbol": "EWJ",
+      "category": "international",
+      "economic_exposure": "Japan equity",
+      "start": "1996-03-12",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239665/ishares-msci-japan-etf",
+      "sleeve": "international-equity"
+    },
+    {
+      "symbol": "TLT",
+      "category": "fixed-income",
+      "economic_exposure": "long-duration US Treasury bonds",
+      "start": "2002-07-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239454/ishares-20-year-treasury-bond-etf",
+      "sleeve": "fixed-income"
+    },
+    {
+      "symbol": "IEF",
+      "category": "fixed-income",
+      "economic_exposure": "intermediate-duration US Treasury bonds",
+      "start": "2002-07-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239456/ishares-7-10-year-treasury-bond-etf",
+      "sleeve": "fixed-income"
+    },
+    {
+      "symbol": "SHY",
+      "category": "fixed-income",
+      "economic_exposure": "short-duration US Treasury bonds",
+      "start": "2002-07-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239452/ishares-1-3-year-treasury-bond-etf",
+      "sleeve": "fixed-income"
+    },
+    {
+      "symbol": "TIP",
+      "category": "fixed-income",
+      "economic_exposure": "US inflation-protected Treasury bonds",
+      "start": "2003-12-04",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239467/ishares-tips-bond-etf",
+      "sleeve": "fixed-income"
+    },
+    {
+      "symbol": "LQD",
+      "category": "fixed-income",
+      "economic_exposure": "US investment-grade corporate bonds",
+      "start": "2002-07-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239566/ishares-iboxx-investment-grade-corporate-bond-etf",
+      "sleeve": "fixed-income"
+    },
+    {
+      "symbol": "HYG",
+      "category": "fixed-income",
+      "economic_exposure": "US high-yield corporate bonds",
+      "start": "2007-04-04",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239565/ishares-iboxx-high-yield-corporate-bond-etf",
+      "sleeve": "fixed-income"
+    },
+    {
+      "symbol": "AGG",
+      "category": "fixed-income",
+      "economic_exposure": "broad US investment-grade bonds",
+      "start": "2003-09-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239458/ishares-core-total-us-bond-market-etf",
+      "sleeve": "fixed-income"
+    },
+    {
+      "symbol": "EMB",
+      "category": "fixed-income",
+      "economic_exposure": "US-dollar emerging-markets sovereign bonds",
+      "start": "2007-12-17",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239572/ishares-jp-morgan-usd-emerging-markets-bond-etf",
+      "sleeve": "fixed-income"
+    },
+    {
+      "symbol": "GLD",
+      "category": "real-assets",
+      "economic_exposure": "gold bullion",
+      "start": "2004-11-18",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/spdr-gold-shares-gld",
+      "sleeve": "real-assets"
+    },
+    {
+      "symbol": "SLV",
+      "category": "real-assets",
+      "economic_exposure": "silver bullion",
+      "start": "2006-04-21",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239855/ishares-silver-trust-fund",
+      "sleeve": "real-assets"
+    },
+    {
+      "symbol": "DBC",
+      "category": "real-assets",
+      "economic_exposure": "diversified commodity futures",
+      "start": "2006-02-03",
+      "end": null,
+      "source": "https://www.invesco.com/us/financial-products/etfs/product-detail?audienceType=Investor&ticker=DBC",
+      "sleeve": "real-assets"
+    },
+    {
+      "symbol": "VNQ",
+      "category": "real-assets",
+      "economic_exposure": "US equity real estate investment trusts",
+      "start": "2004-09-23",
+      "end": null,
+      "source": "https://investor.vanguard.com/investment-products/etfs/profile/vnq",
+      "sleeve": "real-assets"
+    }
+  ],
+  "sealed_boundaries": {
+    "independent_daily_range": {
+      "start": "2018-01-02",
+      "end": "2019-12-31",
+      "market_data_access_allowed": false
+    },
+    "v3_access_allowed": false,
+    "paper_or_broker_mutation_allowed": false,
+    "live_trading_allowed": false,
+    "strategic_allocation_21_changes_allowed": false
+  }
+}

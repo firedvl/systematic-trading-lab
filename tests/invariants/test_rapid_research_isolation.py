@@ -7,6 +7,7 @@ from pathlib import Path
 from systematic_trading_lab.rapid_store import RapidResearchStore
 
 RAPID_MODULES = (
+    "rapid_004.py",
     "rapid_data.py",
     "rapid_research.py",
     "rapid_store.py",

@@ -104,6 +104,8 @@ def resolve_research_dataset(
     dataset_id: str,
     start: datetime | None,
     end: datetime | None,
+    *,
+    verify_full_cataloged_dataset: bool = False,
 ) -> ResearchDataset:
     if start is not None:
         reject_v3_overlap(start, end if end is not None else start)
@@ -111,6 +113,8 @@ def resolve_research_dataset(
         reject_v3_overlap(end, end)
     rapid = store.get_dataset(dataset_id)
     if rapid is not None:
+        if verify_full_cataloged_dataset:
+            raise ValueError("full catalog integrity validation requires a cataloged dataset")
         actual_start = parse_utc(str(rapid["start_timestamp"]))
         actual_end = parse_utc(str(rapid["end_timestamp"]))
         selected = _selected_range(start, end, actual_start, actual_end)
@@ -158,6 +162,7 @@ def resolve_research_dataset(
         expected_fingerprint=str(identity.get("fingerprint")),
         expected_universe_id=str(manifest.get("universe_id")),
         expected_universe_fingerprint=str(manifest.get("universe_fingerprint")),
+        verify_full_dataset=verify_full_cataloged_dataset,
     )
     symbols = manifest.get("symbols")
     if not isinstance(symbols, list) or any(
