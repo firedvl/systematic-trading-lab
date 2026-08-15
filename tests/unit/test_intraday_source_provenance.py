@@ -52,6 +52,7 @@ CURRENT_V2_SURFACE_MISMATCHES = (
     "systematic_trading_lab/risk.py",
     "systematic_trading_lab/strategies.py",
     "systematic_trading_lab/strategy_equity.py",
+    "systematic_trading_lab/universe.py",
 )
 
 

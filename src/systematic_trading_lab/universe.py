@@ -43,6 +43,14 @@ class UniverseDefinition:
     timeframe: Timeframe
     memberships: tuple[Membership, ...]
     universe_fingerprint: str
+    acquisition_range: TimestampRange | None = None
+
+    def require_acquisition_range(self, requested: TimestampRange) -> None:
+        if self.acquisition_range is not None and not (
+            self.acquisition_range.start <= requested.start
+            and requested.end <= self.acquisition_range.end
+        ):
+            raise UniverseError("request falls outside the universe acquisition range")
 
     def require_full_coverage(
         self, symbols: tuple[Symbol, ...], timeframe: Timeframe, requested: TimestampRange
@@ -83,7 +91,19 @@ def load_research_universe(path: Path | None = None) -> UniverseDefinition:
     if len({membership.symbol for membership in memberships}) != len(memberships):
         raise UniverseError("universe v1 requires one interval per symbol")
     content = {"id": universe_id, "timeframe": timeframe, "memberships": memberships}
-    return UniverseDefinition(universe_id, timeframe, memberships, fingerprint(content))
+    acquisition_range = _acquisition_range(payload.get("acquisition"))
+    universe_fingerprint = (
+        fingerprint(content)
+        if set(payload) == {"id", "timeframe", "memberships"}
+        else fingerprint(payload)
+    )
+    return UniverseDefinition(
+        universe_id,
+        timeframe,
+        memberships,
+        universe_fingerprint,
+        acquisition_range,
+    )
 
 
 def load_intraday_universe(timeframe: Timeframe) -> UniverseDefinition:
@@ -119,3 +139,14 @@ def _date(value: object) -> datetime:
     if parsed.strftime("%Y-%m-%d") != value:
         raise UniverseError("membership dates must use YYYY-MM-DD")
     return parsed.replace(tzinfo=UTC)
+
+
+def _acquisition_range(value: object) -> TimestampRange | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise UniverseError("universe acquisition policy must be an object")
+    try:
+        return TimestampRange(_date(value["start"]), _date(value["end"]))
+    except (KeyError, TypeError, ValueError) as error:
+        raise UniverseError("invalid universe acquisition range") from error

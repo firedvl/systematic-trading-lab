@@ -695,3 +695,10 @@
 - Context: `training-campaign-plan-v1` is training-only and fixes 5/1 basis-point costs with a one-bar delay. The generic daily runner accepted caller-supplied inputs. PR #126 bound qualification roles but did not create an executable 28-record plan.
 - Consequences: the Rapid-002 campaign namespace is reserved. Its campaign, plan, and reservation identities are immutable, completed or failed records cannot rerun, and qualification requires the exact stored plan fingerprint and all 28 plan-bound records. The plan fingerprint cannot exist until the final execution change is merged because the plan binds that merged commit. This change creates no campaign, experiment, qualification, independent evaluation, holdout, paper, broker, live, or V3 state.
 - Revisit when: another daily candidate needs non-default sealed execution inputs. Add a reviewed schema version; do not widen Rapid-002 or alter historical `ExperimentSpec` fingerprints.
+
+## 2026-08-15 — Daily acquisition can name a versioned universe
+
+- Decision: let `data import-alpaca` accept one explicit daily universe file and require its complete membership set. Enforce a declared acquisition range before provider construction and bind extended universe files by their full content. Keep the five-ETF universe as the default.
+- Context: Rapid-004 needs a predeclared expanded seed pool without changing the dataset and strategy lineage used by prior campaigns or `strategic-allocation-21`.
+- Consequences: the existing universe and datasets remain unchanged. A custom import still requires research mode, read-only Alpaca access, complete membership coverage, adjusted bars, full validation, and immutable dataset publication. It cannot silently drop later-inception members or leave a declared acquisition range. Intraday imports reject the option.
+- Revisit when: a reviewed universe format supports multiple membership intervals or another venue requires a different symbol-selection rule.
