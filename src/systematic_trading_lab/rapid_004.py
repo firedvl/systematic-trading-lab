@@ -214,6 +214,21 @@ def load_rapid_004_predeclaration(
     return load_rapid_004_binding(repository).predeclaration
 
 
+def load_rapid_004_predeclaration_payload(
+    repository: Path | None = None,
+) -> dict[str, Any]:
+    """Return a fresh copy only after every frozen binding and semantic check passes."""
+    root = repository or Path(__file__).resolve().parents[2]
+    load_rapid_004_binding(root)
+    try:
+        payload = json.loads((root / _PREDECLARATION_PATH).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError("Rapid-004 predeclaration is unreadable") from error
+    if not isinstance(payload, dict):
+        raise ValueError("Rapid-004 predeclaration must be an object")
+    return payload
+
+
 def bind_rapid_004_dataset(
     root: Path, store: RapidResearchStore, dataset_id: str
 ) -> dict[str, object]:

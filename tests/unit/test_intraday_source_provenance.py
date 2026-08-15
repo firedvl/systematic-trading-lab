@@ -40,6 +40,7 @@ from systematic_trading_lab.runtime_build import (
 NOW = datetime(2026, 8, 13, tzinfo=UTC)
 CAMPAIGN_V2_SURFACE = provenance._load_reviewed_surface_manifest(INTRADAY_CAMPAIGN_V2_ID)
 CURRENT_V2_SURFACE_MISMATCHES = (
+    "systematic_trading_lab/backtesting.py",
     "systematic_trading_lab/campaign_specs.py",
     "systematic_trading_lab/cli.py",
     "systematic_trading_lab/datasets.py",
@@ -160,6 +161,8 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "systematic_trading_lab/paper_planning.py",
         "systematic_trading_lab/public_cli.py",
         "systematic_trading_lab/rapid_004.py",
+        "systematic_trading_lab/rapid_004_runner.py",
+        "systematic_trading_lab/rapid_004_strategies.py",
         "systematic_trading_lab/rapid_data.py",
         "systematic_trading_lab/rapid_research.py",
         "systematic_trading_lab/rapid_store.py",

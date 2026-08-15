@@ -129,11 +129,15 @@ def test_public_wrapper_imports_local_csv_and_delegates_legacy_status(tmp_path: 
     status = _json(_run(home, "status"))
     stress_help = _run(home, "research", "stress", "--help").stdout
     backtest_help = _run(home, "research", "backtest", "--help").stdout
+    rapid_plan = _json(_run(home, "research", "rapid-004", "plan"))
+    rapid_status = _json(_run(home, "research", "rapid-004", "status"))
 
     assert imported["data_origin"] == "user-supplied"
     assert status["mode"] == "offline"
     assert "(default: 10)" in stress_help
     assert "--campaign {rapid-004-expanded-universe}" in backtest_help
+    assert rapid_plan["maximum_parent_records"] == 2452
+    assert rapid_status["parent_record_count"] == 0
 
 
 def test_sweep_prints_count_before_running_every_configuration(tmp_path: Path) -> None:

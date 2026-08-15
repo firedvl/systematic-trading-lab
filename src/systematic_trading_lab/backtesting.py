@@ -166,6 +166,7 @@ class BacktestEngine:
         fill_delay_bars: int = 1,
         timeframe: Timeframe = Timeframe.DAILY,
         session_policy: IntradaySessionPolicy | None = None,
+        queue_portfolio_targets: bool = False,
     ) -> None:
         if initial_cash <= 0:
             raise ValueError("initial cash must be positive")
@@ -180,6 +181,7 @@ class BacktestEngine:
         self.fill_delay_bars = fill_delay_bars
         self.timeframe = timeframe
         self.session_policy = session_policy
+        self.queue_portfolio_targets = queue_portfolio_targets
 
     def run(self, bars: Sequence[OHLCVBar], strategy: Strategy) -> BacktestResult:
         ordered = tuple(sorted(bars, key=lambda bar: (bar.timestamp, bar.symbol.value)))
@@ -328,7 +330,7 @@ class BacktestEngine:
         positions: dict[Symbol, Decimal] = {}
         marks: dict[Symbol, Decimal] = {}
         history: dict[Symbol, list[OHLCVBar]] = {}
-        pending: dict[Symbol, Order] = {}
+        pending: dict[Symbol, list[Order]] = {}
         decisions: list[Decision | SessionDecision] = []
         orders: list[OrderEvent] = []
         trades: list[Trade] = []
@@ -344,7 +346,8 @@ class BacktestEngine:
                 marks[bar.symbol] = bar.open
             due: list[tuple[OHLCVBar, Order]] = []
             for bar in session:
-                pending_order = pending.get(bar.symbol)
+                queued = pending.get(bar.symbol)
+                pending_order = queued[0] if queued else None
                 if (
                     pending_order is not None
                     and bar.timestamp >= pending_order.earliest_fill_timestamp
@@ -357,7 +360,11 @@ class BacktestEngine:
                 )
             )
             for bar, pending_order in due:
-                pending.pop(bar.symbol)
+                queued = pending[bar.symbol]
+                if queued.pop(0) != pending_order:
+                    raise BacktestError("portfolio pending order queue differs")
+                if not queued:
+                    del pending[bar.symbol]
                 cash, event, trade = self._execute(pending_order, bar.open, cash, positions, marks)
                 orders.append(event)
                 if trade is not None:
@@ -382,15 +389,16 @@ class BacktestEngine:
             )
             decision_timestamp = _bar_observable_timestamp(session[0], self.timeframe)
             if self._must_flatten(session[0], next_bar, final_session_bars):
-                for symbol, pending_order in tuple(pending.items()):
+                for symbol, queued in tuple(pending.items()):
                     del pending[symbol]
-                    orders.append(
+                    orders.extend(
                         OrderEvent(
                             pending_order.symbol,
                             decision_timestamp,
                             "rejected",
                             "session-close-cutoff",
                         )
+                        for pending_order in queued
                     )
                 orders.extend(
                     OrderEvent(
@@ -414,7 +422,12 @@ class BacktestEngine:
                 SessionDecision(decision_timestamp, strategy.strategy_id, strategy.version, targets)
             )
             rejection = self._portfolio_rejection(
-                targets, timestamp, session_symbols, pending, next_bar
+                targets,
+                timestamp,
+                session_symbols,
+                pending,
+                next_bar,
+                queue_pending=self.queue_portfolio_targets,
             )
             if rejection is not None:
                 orders.extend(
@@ -426,12 +439,14 @@ class BacktestEngine:
                     following = next_bar[(target.symbol, timestamp)]
                     if following.timestamp < decision_timestamp:
                         raise BacktestError("next-bar fill precedes completed-bar observability")
-                    pending[target.symbol] = Order(
-                        target.symbol,
-                        decision_timestamp,
-                        decision_timestamp,
-                        following.timestamp,
-                        target,
+                    pending.setdefault(target.symbol, []).append(
+                        Order(
+                            target.symbol,
+                            decision_timestamp,
+                            decision_timestamp,
+                            following.timestamp,
+                            target,
+                        )
                     )
             curve.append(self._equity_point(decision_timestamp, cash, positions, marks))
             if self._is_final_session_bar(session[0], final_session_bars) and (
@@ -439,12 +454,16 @@ class BacktestEngine:
             ):
                 raise BacktestError("day-trading session ended with exposure")
 
-        for order in pending.values():
-            orders.append(
-                OrderEvent(
-                    order.symbol, order.earliest_fill_timestamp, "rejected", "no-future-fill"
+        for queued in pending.values():
+            for order in queued:
+                orders.append(
+                    OrderEvent(
+                        order.symbol,
+                        order.earliest_fill_timestamp,
+                        "rejected",
+                        "no-future-fill",
+                    )
                 )
-            )
         return self._result(strategy, curve, decisions, orders, trades, ordered, positions, marks)
 
     def _result(
@@ -539,8 +558,10 @@ class BacktestEngine:
         targets: Sequence[TargetPosition],
         timestamp: datetime,
         session_symbols: set[Symbol],
-        pending: Mapping[Symbol, Order],
+        pending: Mapping[Symbol, Sequence[Order]],
         next_bars: Mapping[tuple[Symbol, datetime], OHLCVBar],
+        *,
+        queue_pending: bool = False,
     ) -> str | None:
         symbols = tuple(target.symbol for target in targets)
         if len(symbols) != len(set(symbols)):
@@ -551,7 +572,7 @@ class BacktestEngine:
             return "weight-out-of-range"
         if sum((target.weight for target in targets), Decimal("0")) > Decimal("1"):
             return "portfolio-weight-out-of-range"
-        if any(symbol in pending for symbol in symbols):
+        if not queue_pending and any(symbol in pending for symbol in symbols):
             return "pending-order-exists"
         if any((symbol, timestamp) not in next_bars for symbol in symbols):
             return "no-future-fill"
