@@ -70,6 +70,9 @@ uv run trading-lab data import-alpaca \
   --timeframe 1d
 ```
 
+Use `--universe-config PATH` to acquire a different versioned daily universe without changing the
+default five-ETF definition.
+
 You can also import daily CSV or Parquet data:
 
 ```console

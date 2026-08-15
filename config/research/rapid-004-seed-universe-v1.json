@@ -1,0 +1,408 @@
+{
+  "schema_version": "rapid-004-seed-universe-v1",
+  "program_id": "rapid-004-expanded-universe",
+  "id": "rapid-004-expanded-seed-universe-v1",
+  "timeframe": "1d",
+  "status": "predeclared-before-market-data-screening",
+  "target_final_symbol_count": {
+    "minimum": 25,
+    "maximum": 40
+  },
+  "acquisition": {
+    "provider": "alpaca-historical-v2",
+    "feed": "iex",
+    "adjustment_policy": "provider-adjusted-all-v1",
+    "start": "2020-07-27",
+    "end": "2026-07-31"
+  },
+  "selection_policy": {
+    "screen_start": "2020-07-27",
+    "screen_end": "2022-12-30",
+    "median_daily_dollar_volume_minimum": "10000000",
+    "daily_dollar_volume_definition": "adjusted close multiplied by adjusted daily volume",
+    "permitted_criteria": [
+      "inception before 2018-01-02",
+      "provider support",
+      "complete exposed-period daily data",
+      "symbol continuity",
+      "standard unlevered ETF structure",
+      "median daily dollar volume",
+      "economic exposure uniqueness",
+      "dataset integrity"
+    ],
+    "prohibited_criteria": [
+      "return",
+      "Sharpe ratio",
+      "momentum",
+      "drawdown",
+      "strategy performance",
+      "future profitability"
+    ],
+    "excluded_product_types": [
+      "leveraged",
+      "inverse",
+      "covered-call",
+      "volatility ETP",
+      "single-stock",
+      "crypto",
+      "highly thematic or niche",
+      "unsupported derivatives structure"
+    ],
+    "duplicate_groups": [
+      {
+        "id": "us-large-value",
+        "symbols": ["IWD", "IVE"],
+        "selection_rule": "retain the representative with better liquidity, then data quality, longevity, and simplicity"
+      },
+      {
+        "id": "us-large-growth",
+        "symbols": ["IWF", "IVW"],
+        "selection_rule": "retain the representative with better liquidity, then data quality, longevity, and simplicity"
+      },
+      {
+        "id": "emerging-markets-equity",
+        "symbols": ["EEM", "VWO"],
+        "selection_rule": "retain the representative with better liquidity, then data quality, longevity, and simplicity"
+      }
+    ],
+    "tie_breakers_in_order": [
+      "higher median daily dollar volume",
+      "cleaner and more complete data",
+      "earlier inception",
+      "simpler exposure"
+    ]
+  },
+  "sealed_boundaries": {
+    "independent_daily_range": {
+      "start": "2018-01-02",
+      "end": "2019-12-31",
+      "market_data_access_allowed": false
+    },
+    "v3_access_allowed": false,
+    "paper_or_broker_mutation_allowed": false,
+    "live_trading_allowed": false,
+    "strategic_allocation_21_changes_allowed": false
+  },
+  "memberships": [
+    {
+      "symbol": "SPY",
+      "category": "core-us-equity",
+      "economic_exposure": "S&P 500 large-cap equity",
+      "start": "1993-01-22",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-500-etf-trust-spy"
+    },
+    {
+      "symbol": "QQQ",
+      "category": "core-us-equity",
+      "economic_exposure": "Nasdaq-100 large-cap growth equity",
+      "start": "1999-03-10",
+      "end": null,
+      "source": "https://www.invesco.com/qqq-etf/en/about.html"
+    },
+    {
+      "symbol": "IWM",
+      "category": "core-us-equity",
+      "economic_exposure": "Russell 2000 small-cap equity",
+      "start": "2000-05-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239710/ishares-russell-2000-etf"
+    },
+    {
+      "symbol": "DIA",
+      "category": "core-us-equity",
+      "economic_exposure": "Dow Jones Industrial Average equity",
+      "start": "1998-01-14",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/spdr-dow-jones-industrial-average-etf-trust-dia"
+    },
+    {
+      "symbol": "MDY",
+      "category": "core-us-equity",
+      "economic_exposure": "S&P MidCap 400 equity",
+      "start": "1995-05-04",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/spdr-sp-midcap-400-etf-trust-mdy"
+    },
+    {
+      "symbol": "IWD",
+      "category": "us-style-factor",
+      "economic_exposure": "Russell 1000 value equity",
+      "start": "2000-05-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239708/ishares-russell-1000-value-etf"
+    },
+    {
+      "symbol": "IWF",
+      "category": "us-style-factor",
+      "economic_exposure": "Russell 1000 growth equity",
+      "start": "2000-05-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239706/ishares-russell-1000-growth-etf"
+    },
+    {
+      "symbol": "IVE",
+      "category": "us-style-factor",
+      "economic_exposure": "S&P 500 value equity",
+      "start": "2000-05-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239728/ishares-sp-500-value-etf"
+    },
+    {
+      "symbol": "IVW",
+      "category": "us-style-factor",
+      "economic_exposure": "S&P 500 growth equity",
+      "start": "2000-05-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239725/ishares-sp-500-growth-etf"
+    },
+    {
+      "symbol": "MTUM",
+      "category": "us-style-factor",
+      "economic_exposure": "US momentum-factor equity",
+      "start": "2013-04-16",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/251614/ishares-msci-usa-momentum-factor-etf"
+    },
+    {
+      "symbol": "QUAL",
+      "category": "us-style-factor",
+      "economic_exposure": "US quality-factor equity",
+      "start": "2013-07-16",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/256101/ishares-msci-usa-quality-factor-etf"
+    },
+    {
+      "symbol": "USMV",
+      "category": "us-style-factor",
+      "economic_exposure": "US minimum-volatility equity",
+      "start": "2011-10-18",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239695/ishares-msci-usa-minimum-volatility-etf"
+    },
+    {
+      "symbol": "VLUE",
+      "category": "us-style-factor",
+      "economic_exposure": "US enhanced-value-factor equity",
+      "start": "2013-04-16",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/251616/ishares-msci-usa-value-factor-etf"
+    },
+    {
+      "symbol": "XLK",
+      "category": "us-sector",
+      "economic_exposure": "US technology sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-technology-select-sector-spdr-fund-xlk"
+    },
+    {
+      "symbol": "XLF",
+      "category": "us-sector",
+      "economic_exposure": "US financial sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-financial-select-sector-spdr-fund-xlf"
+    },
+    {
+      "symbol": "XLE",
+      "category": "us-sector",
+      "economic_exposure": "US energy sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-energy-select-sector-spdr-fund-xle"
+    },
+    {
+      "symbol": "XLV",
+      "category": "us-sector",
+      "economic_exposure": "US health-care sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-health-care-select-sector-spdr-fund-xlv"
+    },
+    {
+      "symbol": "XLI",
+      "category": "us-sector",
+      "economic_exposure": "US industrial sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-industrial-select-sector-spdr-fund-xli"
+    },
+    {
+      "symbol": "XLP",
+      "category": "us-sector",
+      "economic_exposure": "US consumer-staples sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-consumer-staples-select-sector-spdr-fund-xlp"
+    },
+    {
+      "symbol": "XLY",
+      "category": "us-sector",
+      "economic_exposure": "US consumer-discretionary sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-consumer-discretionary-select-sector-spdr-fund-xly"
+    },
+    {
+      "symbol": "XLU",
+      "category": "us-sector",
+      "economic_exposure": "US utilities sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-utilities-select-sector-spdr-fund-xlu"
+    },
+    {
+      "symbol": "XLB",
+      "category": "us-sector",
+      "economic_exposure": "US materials sector equity",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-materials-select-sector-spdr-fund-xlb"
+    },
+    {
+      "symbol": "XLRE",
+      "category": "us-sector",
+      "economic_exposure": "US real-estate sector equity",
+      "start": "2015-10-07",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-real-estate-select-sector-spdr-fund-xlre"
+    },
+    {
+      "symbol": "EFA",
+      "category": "international",
+      "economic_exposure": "developed markets outside US and Canada",
+      "start": "2001-08-14",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239623/ishares-msci-eafe-etf"
+    },
+    {
+      "symbol": "EEM",
+      "category": "international",
+      "economic_exposure": "broad emerging-markets equity",
+      "start": "2003-04-07",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239637/ishares-msci-emerging-markets-etf"
+    },
+    {
+      "symbol": "VWO",
+      "category": "international",
+      "economic_exposure": "broad emerging-markets equity",
+      "start": "2005-03-04",
+      "end": null,
+      "source": "https://investor.vanguard.com/investment-products/etfs/profile/vwo"
+    },
+    {
+      "symbol": "VGK",
+      "category": "international",
+      "economic_exposure": "developed Europe equity",
+      "start": "2005-03-04",
+      "end": null,
+      "source": "https://investor.vanguard.com/investment-products/etfs/profile/vgk"
+    },
+    {
+      "symbol": "EWJ",
+      "category": "international",
+      "economic_exposure": "Japan equity",
+      "start": "1996-03-12",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239665/ishares-msci-japan-etf"
+    },
+    {
+      "symbol": "TLT",
+      "category": "fixed-income",
+      "economic_exposure": "long-duration US Treasury bonds",
+      "start": "2002-07-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239454/ishares-20-year-treasury-bond-etf"
+    },
+    {
+      "symbol": "IEF",
+      "category": "fixed-income",
+      "economic_exposure": "intermediate-duration US Treasury bonds",
+      "start": "2002-07-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239456/ishares-7-10-year-treasury-bond-etf"
+    },
+    {
+      "symbol": "SHY",
+      "category": "fixed-income",
+      "economic_exposure": "short-duration US Treasury bonds",
+      "start": "2002-07-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239452/ishares-1-3-year-treasury-bond-etf"
+    },
+    {
+      "symbol": "TIP",
+      "category": "fixed-income",
+      "economic_exposure": "US inflation-protected Treasury bonds",
+      "start": "2003-12-04",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239467/ishares-tips-bond-etf"
+    },
+    {
+      "symbol": "LQD",
+      "category": "fixed-income",
+      "economic_exposure": "US investment-grade corporate bonds",
+      "start": "2002-07-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239566/ishares-iboxx-investment-grade-corporate-bond-etf"
+    },
+    {
+      "symbol": "HYG",
+      "category": "fixed-income",
+      "economic_exposure": "US high-yield corporate bonds",
+      "start": "2007-04-04",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239565/ishares-iboxx-high-yield-corporate-bond-etf"
+    },
+    {
+      "symbol": "AGG",
+      "category": "fixed-income",
+      "economic_exposure": "broad US investment-grade bonds",
+      "start": "2003-09-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239458/ishares-core-total-us-bond-market-etf"
+    },
+    {
+      "symbol": "EMB",
+      "category": "fixed-income",
+      "economic_exposure": "US-dollar emerging-markets sovereign bonds",
+      "start": "2007-12-17",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239572/ishares-jp-morgan-usd-emerging-markets-bond-etf"
+    },
+    {
+      "symbol": "GLD",
+      "category": "real-assets",
+      "economic_exposure": "gold bullion",
+      "start": "2004-11-18",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/spdr-gold-shares-gld"
+    },
+    {
+      "symbol": "SLV",
+      "category": "real-assets",
+      "economic_exposure": "silver bullion",
+      "start": "2006-04-21",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239855/ishares-silver-trust-fund"
+    },
+    {
+      "symbol": "DBC",
+      "category": "real-assets",
+      "economic_exposure": "diversified commodity futures",
+      "start": "2006-02-03",
+      "end": null,
+      "source": "https://www.invesco.com/us/financial-products/etfs/product-detail?audienceType=Investor&ticker=DBC"
+    },
+    {
+      "symbol": "VNQ",
+      "category": "real-assets",
+      "economic_exposure": "US equity real estate investment trusts",
+      "start": "2004-09-23",
+      "end": null,
+      "source": "https://investor.vanguard.com/investment-products/etfs/profile/vnq"
+    }
+  ]
+}

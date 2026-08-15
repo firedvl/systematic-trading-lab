@@ -237,6 +237,11 @@ def parser() -> argparse.ArgumentParser:
     alpaca.add_argument("--start", required=True, help="UTC date or RFC-3339 start")
     alpaca.add_argument("--end", required=True, help="UTC date or RFC-3339 end")
     alpaca.add_argument("--timeframe", choices=("1d", "1m", "5m"), default="1d")
+    alpaca.add_argument(
+        "--universe-config",
+        type=Path,
+        help="versioned daily universe file; defaults to config/research/universe.json",
+    )
     for name in ("validate", "describe"):
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
@@ -1258,21 +1263,26 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
     if arguments.data_command == "import-alpaca":
         if settings.mode is not TradingMode.RESEARCH:
             raise ValueError("Alpaca data import requires TRADING_LAB_MODE=research")
+        timeframe = Timeframe(arguments.timeframe)
+        requested = TimestampRange(_parse_utc(arguments.start), _parse_utc(arguments.end))
+        if timeframe is Timeframe.DAILY:
+            universe = load_research_universe(arguments.universe_config)
+            universe.require_acquisition_range(requested)
+            symbols = tuple(membership.symbol for membership in universe.memberships)
+            universe.require_full_coverage(symbols, timeframe, requested)
+        else:
+            if arguments.universe_config is not None:
+                raise ValueError("--universe-config supports daily imports only")
+            symbols = intraday_fixture_symbols()
+            universe = load_intraday_universe(timeframe)
         provider = AlpacaHistoricalProvider(
             os.environ.get("APCA_API_KEY_ID", ""), os.environ.get("APCA_API_SECRET_KEY", "")
-        )
-        timeframe = Timeframe(arguments.timeframe)
-        symbols = fixture_symbols() if timeframe is Timeframe.DAILY else intraday_fixture_symbols()
-        universe = (
-            load_research_universe()
-            if timeframe is Timeframe.DAILY
-            else load_intraday_universe(timeframe)
         )
         imported = service.import_from(
             provider,
             symbols,
             timeframe,
-            TimestampRange(_parse_utc(arguments.start), _parse_utc(arguments.end)),
+            requested,
             universe,
         )
         _print(imported.__dict__)

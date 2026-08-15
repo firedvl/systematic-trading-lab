@@ -1,12 +1,16 @@
+import json
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
 import systematic_trading_lab.cli as cli
 from systematic_trading_lab.cli import main, parser, run
 from systematic_trading_lab.config import ConfigurationError, load_dotenv, load_settings
+from systematic_trading_lab.datasets import DatasetService
 from systematic_trading_lab.domain import OHLCVBar, Symbol, Timeframe
 from systematic_trading_lab.fingerprints import fingerprint
 from systematic_trading_lab.paper_startup import initialize_paper_storage
@@ -55,6 +59,144 @@ def test_doctor_does_not_load_unused_research_universe(
         run(parser().parse_args(["doctor"]), load_settings({"TRADING_LAB_HOME": str(tmp_path)}))
         == 0
     )
+
+
+def test_alpaca_import_accepts_an_explicit_daily_universe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    universe_path = tmp_path / "universe.json"
+    universe_path.write_text(
+        json.dumps(
+            {
+                "id": "test-expanded-universe-v1",
+                "timeframe": "1d",
+                "memberships": [
+                    {
+                        "symbol": symbol,
+                        "start": "2000-01-01",
+                        "end": None,
+                        "source": f"https://example.com/{symbol.lower()}",
+                    }
+                    for symbol in ("SPY", "IEF")
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    captured: dict[str, Any] = {}
+
+    monkeypatch.setattr(cli, "AlpacaHistoricalProvider", lambda *_args: object())
+
+    def import_from(
+        _service: object,
+        _provider: object,
+        symbols: object,
+        timeframe: object,
+        requested: object,
+        universe: object,
+    ) -> SimpleNamespace:
+        captured.update(
+            symbols=symbols,
+            timeframe=timeframe,
+            requested=requested,
+            universe=universe,
+        )
+        return SimpleNamespace(dataset_id="dataset", fingerprint="fingerprint", created=True)
+
+    monkeypatch.setattr(DatasetService, "import_from", import_from)
+    settings = load_settings({"TRADING_LAB_HOME": str(tmp_path), "TRADING_LAB_MODE": "research"})
+
+    assert (
+        run(
+            parser().parse_args(
+                [
+                    "data",
+                    "import-alpaca",
+                    "--start",
+                    "2020-07-27",
+                    "--end",
+                    "2020-07-28",
+                    "--universe-config",
+                    str(universe_path),
+                ]
+            ),
+            settings,
+        )
+        == 0
+    )
+    assert tuple(str(symbol) for symbol in captured["symbols"]) == ("SPY", "IEF")
+    assert captured["timeframe"] is Timeframe.DAILY
+    assert captured["universe"].universe_id == "test-expanded-universe-v1"
+
+
+def test_alpaca_import_rejects_policy_and_membership_ranges_before_provider(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        cli,
+        "AlpacaHistoricalProvider",
+        lambda *_args: pytest.fail("provider must not be constructed"),
+    )
+    settings = load_settings({"TRADING_LAB_HOME": str(tmp_path), "TRADING_LAB_MODE": "research"})
+    rapid_universe = (
+        Path(__file__).resolve().parents[2]
+        / "config"
+        / "research"
+        / "rapid-004-seed-universe-v1.json"
+    )
+
+    with pytest.raises(ValueError, match="outside the universe acquisition range"):
+        run(
+            parser().parse_args(
+                [
+                    "data",
+                    "import-alpaca",
+                    "--start",
+                    "2018-01-02",
+                    "--end",
+                    "2019-12-31",
+                    "--universe-config",
+                    str(rapid_universe),
+                ]
+            ),
+            settings,
+        )
+
+    crossing = tmp_path / "crossing.json"
+    crossing.write_text(
+        json.dumps(
+            {
+                "id": "inception-crossing-v1",
+                "timeframe": "1d",
+                "memberships": [
+                    {
+                        "symbol": symbol,
+                        "start": start,
+                        "end": None,
+                        "source": f"https://example.com/{symbol.lower()}",
+                    }
+                    for symbol, start in (("SPY", "1993-01-22"), ("QUAL", "2013-07-16"))
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="symbols lack full-range membership: QUAL"):
+        run(
+            parser().parse_args(
+                [
+                    "data",
+                    "import-alpaca",
+                    "--start",
+                    "2010-01-04",
+                    "--end",
+                    "2010-01-05",
+                    "--universe-config",
+                    str(crossing),
+                ]
+            ),
+            settings,
+        )
 
 
 def test_dotenv_loads_supported_values_without_overriding_environment(tmp_path: Path) -> None:
