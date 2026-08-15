@@ -9,10 +9,11 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any, Protocol, cast, overload
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
+from zoneinfo import ZoneInfo
 
-from .calendar import expected_bar_timestamps
+from .calendar import expected_bar_timestamps, expected_sessions
 from .domain import AdjustmentPolicy, OHLCVBar, Symbol, Timeframe, TimestampRange
 
 
@@ -29,6 +30,7 @@ class MarketDataProvider(Protocol):
 
 HttpTransport = Callable[[Request], bytes]
 ALPACA_HISTORICAL_PROVIDER_NAME = "alpaca-historical-v2"
+YAHOO_HISTORICAL_PROVIDER_NAME = "yahoo-chart-v8"
 
 
 @dataclass(frozen=True)
@@ -153,6 +155,53 @@ class AlpacaHistoricalProvider:
         raise RuntimeError("Alpaca historical data exceeded the configured page limit")
 
 
+class YahooHistoricalProvider:
+    """Daily ETF adapter for Yahoo's chart endpoint and adjusted close series."""
+
+    name = YAHOO_HISTORICAL_PROVIDER_NAME
+    feed: str | None = None
+    adjustment_policy = AdjustmentPolicy.YAHOO_ADJUSTED_OHLC
+
+    def __init__(
+        self,
+        base_url: str = "https://query2.finance.yahoo.com/v8/finance/chart",
+        transport: HttpTransport | None = None,
+    ) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.transport = transport or _urlopen_bytes
+        self.retrieval_timestamp = datetime.now(UTC)
+
+    def fetch(
+        self, symbols: Sequence[Symbol], timeframe: Timeframe, requested: TimestampRange
+    ) -> Sequence[dict[str, Any]]:
+        if timeframe is not Timeframe.DAILY:
+            raise ValueError("Yahoo adapter supports daily bars only")
+        if not symbols:
+            raise ValueError("at least one symbol is required")
+        records: list[dict[str, Any]] = []
+        raw_records: list[dict[str, Any]] = []
+        for symbol in symbols:
+            params = {
+                "period1": int(requested.start.timestamp()),
+                "period2": int((requested.end + timedelta(days=1)).timestamp()),
+                "interval": "1d",
+                "includeAdjustedClose": "true",
+            }
+            request = Request(
+                f"{self.base_url}/{quote(symbol.value)}?{urlencode(params)}",
+                headers={"User-Agent": "Mozilla/5.0 systematic-trading-lab/1.0"},
+            )
+            try:
+                payload = json.loads(self.transport(request))
+                result = _yahoo_chart_result(payload, symbol)
+                normalized, raw = _yahoo_chart_records(result, symbol, requested)
+            except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+                raise RuntimeError(f"Yahoo historical data request failed for {symbol}") from error
+            records.extend(normalized)
+            raw_records.extend(raw)
+        return ProviderRecords(tuple(records), tuple(raw_records))
+
+
 class FixtureProvider:
     name = "deterministic-fixture-v1"
     feed: str | None = None
@@ -240,6 +289,117 @@ def _alpaca_bar_record(symbol: str, bar: dict[str, Any], timeframe: Timeframe) -
         "close": str(bar["c"]),
         "volume": bar["v"],
     }
+
+
+def _yahoo_chart_result(payload: object, symbol: Symbol) -> dict[str, Any]:
+    if not isinstance(payload, dict) or not isinstance(payload.get("chart"), dict):
+        raise ValueError("invalid Yahoo chart response")
+    chart = payload["chart"]
+    result = chart.get("result")
+    if chart.get("error") is not None or not isinstance(result, list) or len(result) != 1:
+        raise ValueError("invalid Yahoo chart result")
+    item = result[0]
+    if not isinstance(item, dict) or not isinstance(item.get("meta"), dict):
+        raise ValueError("invalid Yahoo chart metadata")
+    meta = item["meta"]
+    if (
+        meta.get("symbol") != symbol.value
+        or meta.get("instrumentType") != "ETF"
+        or meta.get("currency") != "USD"
+        or meta.get("exchangeTimezoneName") != "America/New_York"
+        or meta.get("dataGranularity") != "1d"
+    ):
+        raise ValueError("Yahoo chart metadata differs from the requested US ETF")
+    return item
+
+
+def _yahoo_chart_records(
+    result: dict[str, Any], symbol: Symbol, requested: TimestampRange
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    timestamps = result.get("timestamp")
+    indicators = result.get("indicators")
+    if not isinstance(timestamps, list) or not isinstance(indicators, dict):
+        raise ValueError("invalid Yahoo chart series")
+    quotes = indicators.get("quote")
+    adjusted = indicators.get("adjclose")
+    if (
+        not isinstance(quotes, list)
+        or len(quotes) != 1
+        or not isinstance(quotes[0], dict)
+        or not isinstance(adjusted, list)
+        or len(adjusted) != 1
+        or not isinstance(adjusted[0], dict)
+    ):
+        raise ValueError("invalid Yahoo chart indicators")
+    quote_values = quotes[0]
+    fields = {
+        "open": quote_values.get("open"),
+        "high": quote_values.get("high"),
+        "low": quote_values.get("low"),
+        "close": quote_values.get("close"),
+        "volume": quote_values.get("volume"),
+        "adjusted_close": adjusted[0].get("adjclose"),
+    }
+    if any(
+        not isinstance(values, list) or len(values) != len(timestamps) for values in fields.values()
+    ):
+        raise ValueError("Yahoo chart indicator lengths differ")
+    series = cast(dict[str, list[object]], fields)
+
+    eastern = ZoneInfo("America/New_York")
+    meta = result["meta"]
+    allowed_sessions = set(expected_sessions(requested.start, requested.end))
+    records: list[dict[str, Any]] = []
+    raw_records: list[dict[str, Any]] = []
+    for index, vendor_timestamp in enumerate(timestamps):
+        if isinstance(vendor_timestamp, bool) or not isinstance(vendor_timestamp, int):
+            raise ValueError("invalid Yahoo chart timestamp")
+        session = datetime.fromtimestamp(vendor_timestamp, UTC).astimezone(eastern).date()
+        if session not in allowed_sessions:
+            raise ValueError("Yahoo chart returned a non-XNYS session")
+        timestamp = datetime(session.year, session.month, session.day, tzinfo=UTC)
+        if not requested.start <= timestamp <= requested.end:
+            raise ValueError("Yahoo chart returned a bar outside the requested range")
+        raw = {
+            "source": YAHOO_HISTORICAL_PROVIDER_NAME,
+            "symbol": symbol.value,
+            "instrument_type": meta["instrumentType"],
+            "currency": meta["currency"],
+            "exchange_timezone": meta["exchangeTimezoneName"],
+            "data_granularity": meta["dataGranularity"],
+            "vendor_timestamp": vendor_timestamp,
+            "timestamp": timestamp.isoformat().replace("+00:00", "Z"),
+            **{name: values[index] for name, values in series.items()},
+        }
+        raw_records.append(raw)
+        close = _positive_decimal(raw["close"], "close")
+        adjusted_close = _positive_decimal(raw["adjusted_close"], "adjusted close")
+        factor = adjusted_close / close
+        volume = raw["volume"]
+        if isinstance(volume, bool) or not isinstance(volume, int) or volume < 0:
+            raise ValueError("invalid Yahoo chart volume")
+        records.append(
+            {
+                "symbol": symbol.value,
+                "timestamp": raw["timestamp"],
+                "open": str(_positive_decimal(raw["open"], "open") * factor),
+                "high": str(_positive_decimal(raw["high"], "high") * factor),
+                "low": str(_positive_decimal(raw["low"], "low") * factor),
+                "close": str(adjusted_close),
+                "volume": volume,
+            }
+        )
+    return records, raw_records
+
+
+def _positive_decimal(value: object, field: str) -> Decimal:
+    try:
+        parsed = Decimal(str(value))
+    except (ArithmeticError, ValueError) as error:
+        raise ValueError(f"invalid Yahoo chart {field}") from error
+    if not parsed.is_finite() or parsed <= 0:
+        raise ValueError(f"invalid Yahoo chart {field}")
+    return parsed
 
 
 def _urlopen_bytes(request: Request) -> bytes:

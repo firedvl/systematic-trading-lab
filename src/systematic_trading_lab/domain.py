@@ -56,6 +56,7 @@ class TradingMode(StrEnum):
 
 class AdjustmentPolicy(StrEnum):
     PROVIDER_ADJUSTED_ALL = "provider-adjusted-all-v1"
+    YAHOO_ADJUSTED_OHLC = "yahoo-adjusted-ohlc-v1"
     SYNTHETIC_NO_ACTIONS = "synthetic-no-actions-v1"
     UNADJUSTED = "unadjusted-v1"
 

@@ -133,6 +133,7 @@ def data_parser() -> argparse.ArgumentParser:
         ("import-fixture", "import deterministic offline daily bars"),
         ("import-intraday-fixture", "import deterministic offline intraday bars"),
         ("import-alpaca", "import read-only Alpaca historical bars"),
+        ("import-yahoo", "import read-only Yahoo daily ETF bars"),
         ("describe", "show one cataloged dataset manifest"),
         ("validate", "validate one cataloged dataset"),
         ("rebuild-catalog", "rebuild the catalog from immutable manifests"),

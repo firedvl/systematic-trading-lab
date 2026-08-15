@@ -1,0 +1,49 @@
+{
+  "schema_version": "rapid-004-acquisition-fallback-v1",
+  "program_id": "rapid-004-expanded-universe",
+  "status": "predeclared-before-seed-data-acquisition",
+  "enforcement": "descriptive operator record; the final universe freeze binds the actual provider, policy, dataset, and fingerprints",
+  "recorded_at": "2026-08-15T08:46:38Z",
+  "source_main": "712d6aba333c9d26b6c564a611e29bb59cbab400",
+  "seed_universe": "config/research/rapid-004-seed-universe-v1.json",
+  "original_provider_attempt": {
+    "provider": "alpaca-historical-v2",
+    "feed": "iex",
+    "adjustment_policy": "provider-adjusted-all-v1",
+    "result": "HTTP 401 before any dataset was published",
+    "credentials_changed": false,
+    "broker_state_queried_or_mutated": false
+  },
+  "fallback": {
+    "reason": "the existing external Alpaca credential pair was rejected and changing broker credentials is outside Rapid-004 authority",
+    "provider": "yahoo-chart-v8",
+    "endpoint": "https://query2.finance.yahoo.com/v8/finance/chart/{symbol}",
+    "feed": null,
+    "adjustment_policy": "yahoo-adjusted-ohlc-v1",
+    "start": "2020-07-27",
+    "end": "2026-07-31",
+    "timeframe": "1d",
+    "normalization": {
+      "session_timestamp": "convert the vendor timestamp in America/New_York to its session date, then store UTC midnight",
+      "open_high_low": "multiply each vendor value by adjusted_close divided by close",
+      "close": "use vendor adjusted_close",
+      "volume": "use the vendor-reported integer volume unchanged"
+    },
+    "required_metadata": {
+      "instrumentType": "ETF",
+      "currency": "USD",
+      "exchangeTimezoneName": "America/New_York",
+      "dataGranularity": "1d"
+    },
+    "raw_evidence": "retain every requested vendor bar field, adjusted close, vendor timestamp, normalized session date, validated metadata, source, and symbol",
+    "dataset_publication": "reuse DatasetService validation, quarantine, immutable artifacts, catalog identity, and deterministic fingerprints; the dataset does not claim to bind this operator record"
+  },
+  "selection_results_inspected": false,
+  "strategy_results_inspected": false,
+  "protected_state": {
+    "independent_2018_2019_market_data_touched": false,
+    "v3_touched": false,
+    "paper_broker_or_live_touched": false,
+    "strategic_allocation_21_touched": false
+  }
+}
