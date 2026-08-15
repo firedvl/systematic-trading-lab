@@ -49,6 +49,7 @@ disposition query is `config/research/rapid-003-parent-dispositions-v1.sql`, SHA
 | #129 | `f912621678127c1cd08996f9b92e93b26db7b9d4` | Open the bounded program and strategy ledger |
 | #130 | `308d16792e8aeb97a7181f1e417cb55dd9af0a60` | Add the missing strategy families |
 | #131 | `d45934bc8696a9bfc03764042d38a4872cca7267` | Add diversified defensive dual momentum |
+| #132 | Attested by `rapid-003-closeout-v1` | Close the bounded program and freeze the empty cohort |
 
 The annotated Git tag `rapid-003-closeout-v1` is the canonical post-merge attestation. It points to
 the exact merged closeout main and records the closeout PR and merge SHA, final report, ledger,

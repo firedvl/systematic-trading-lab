@@ -274,6 +274,11 @@
         "number": 131,
         "merge_commit": "d45934bc8696a9bfc03764042d38a4872cca7267",
         "purpose": "diversified defensive momentum"
+      },
+      {
+        "number": 132,
+        "merge_commit": null,
+        "purpose": "final closeout; merge identity attested by rapid-003-closeout-v1"
       }
     ],
     "markdown_report": "docs/research-campaigns/rapid-003-final-report.md",
