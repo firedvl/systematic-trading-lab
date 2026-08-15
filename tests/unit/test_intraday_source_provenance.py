@@ -42,10 +42,13 @@ CAMPAIGN_V2_SURFACE = provenance._load_reviewed_surface_manifest(INTRADAY_CAMPAI
 CURRENT_V2_SURFACE_MISMATCHES = (
     "systematic_trading_lab/campaign_specs.py",
     "systematic_trading_lab/cli.py",
+    "systematic_trading_lab/datasets.py",
+    "systematic_trading_lab/domain.py",
     "systematic_trading_lab/execution.py",
     "systematic_trading_lab/experiment_runner.py",
     "systematic_trading_lab/experiments.py",
     "systematic_trading_lab/position_settlement.py",
+    "systematic_trading_lab/providers.py",
     "systematic_trading_lab/qualification.py",
     "systematic_trading_lab/qualification_evidence.py",
     "systematic_trading_lab/reconciliation.py",

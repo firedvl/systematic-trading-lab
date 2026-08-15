@@ -44,6 +44,7 @@ _NORMALIZATION_VERSION = "ohlcv-normalization-v1"
 _SCHEMA_VERSION = "ohlcv-v1"
 _SUPPORTED_ADJUSTMENTS = {
     AdjustmentPolicy.PROVIDER_ADJUSTED_ALL,
+    AdjustmentPolicy.YAHOO_ADJUSTED_OHLC,
     AdjustmentPolicy.SYNTHETIC_NO_ACTIONS,
 }
 

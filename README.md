@@ -73,6 +73,16 @@ uv run trading-lab data import-alpaca \
 Use `--universe-config PATH` to acquire a different versioned daily universe without changing the
 default five-ETF definition.
 
+An explicit versioned universe can use the read-only Yahoo fallback when Alpaca credentials are
+unavailable:
+
+```console
+TRADING_LAB_MODE=research uv run trading-lab data import-yahoo \
+  --start 2020-07-27 \
+  --end 2026-07-31 \
+  --universe-config config/research/rapid-004-seed-universe-v1.json
+```
+
 You can also import daily CSV or Parquet data:
 
 ```console

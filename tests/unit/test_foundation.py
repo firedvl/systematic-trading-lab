@@ -199,6 +199,40 @@ def test_alpaca_import_rejects_policy_and_membership_ranges_before_provider(
         )
 
 
+def test_yahoo_import_rejects_policy_range_before_provider(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        cli,
+        "YahooHistoricalProvider",
+        lambda: pytest.fail("provider must not be constructed"),
+    )
+    settings = load_settings({"TRADING_LAB_HOME": str(tmp_path), "TRADING_LAB_MODE": "research"})
+    rapid_universe = (
+        Path(__file__).resolve().parents[2]
+        / "config"
+        / "research"
+        / "rapid-004-seed-universe-v1.json"
+    )
+
+    with pytest.raises(ValueError, match="outside the universe acquisition range"):
+        run(
+            parser().parse_args(
+                [
+                    "data",
+                    "import-yahoo",
+                    "--start",
+                    "2018-01-02",
+                    "--end",
+                    "2019-12-31",
+                    "--universe-config",
+                    str(rapid_universe),
+                ]
+            ),
+            settings,
+        )
+
+
 def test_dotenv_loads_supported_values_without_overriding_environment(tmp_path: Path) -> None:
     path = tmp_path / ".env"
     path.write_text(

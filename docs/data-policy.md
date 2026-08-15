@@ -30,3 +30,12 @@ Daily Alpaca acquisition may name another versioned universe with `--universe-co
 requires every membership to cover the request. When the file declares an acquisition range, the
 request must stay inside it. The dataset binds the file's ID and full content fingerprint. The
 default file and its existing datasets remain unchanged.
+
+The read-only Yahoo fallback identifies itself as `yahoo-chart-v8` and declares no exchange-feed
+identity. It accepts only USD ETFs whose response names `America/New_York` and daily granularity.
+It maps each vendor timestamp to its New York session date, scales open/high/low by
+`adjusted_close / close`, uses adjusted close as close, and retains vendor integer volume. The
+distinct `yahoo-adjusted-ohlc-v1` policy prevents this derivation from being mistaken for Alpaca
+`adjustment=all`. Every requested source bar and the validated response metadata remain in raw evidence. Rapid-004 may use the
+resulting immutable catalog dataset for exposed research; the dataset grants no qualification or
+trading authority.

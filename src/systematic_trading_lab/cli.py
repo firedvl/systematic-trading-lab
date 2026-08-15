@@ -81,7 +81,12 @@ from .paper_supervision import (
     validate_observation_supervision,
     verify_observation_runtime,
 )
-from .providers import AlpacaHistoricalProvider, FixtureProvider, IntradayFixtureProvider
+from .providers import (
+    AlpacaHistoricalProvider,
+    FixtureProvider,
+    IntradayFixtureProvider,
+    YahooHistoricalProvider,
+)
 from .qualification import load_qualification_proposal, review_holdout
 from .qualification_evidence import (
     authorize_holdout_run,
@@ -242,6 +247,10 @@ def parser() -> argparse.ArgumentParser:
         type=Path,
         help="versioned daily universe file; defaults to config/research/universe.json",
     )
+    yahoo = data.add_parser("import-yahoo", help="import read-only Yahoo daily ETF bars")
+    yahoo.add_argument("--start", required=True, help="UTC date or RFC-3339 start")
+    yahoo.add_argument("--end", required=True, help="UTC date or RFC-3339 end")
+    yahoo.add_argument("--universe-config", type=Path, required=True)
     for name in ("validate", "describe"):
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
@@ -1284,6 +1293,19 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
             timeframe,
             requested,
             universe,
+        )
+        _print(imported.__dict__)
+        return 0
+    if arguments.data_command == "import-yahoo":
+        if settings.mode is not TradingMode.RESEARCH:
+            raise ValueError("Yahoo data import requires TRADING_LAB_MODE=research")
+        requested = TimestampRange(_parse_utc(arguments.start), _parse_utc(arguments.end))
+        universe = load_research_universe(arguments.universe_config)
+        universe.require_acquisition_range(requested)
+        symbols = tuple(membership.symbol for membership in universe.memberships)
+        universe.require_full_coverage(symbols, Timeframe.DAILY, requested)
+        imported = service.import_from(
+            YahooHistoricalProvider(), symbols, Timeframe.DAILY, requested, universe
         )
         _print(imported.__dict__)
         return 0
