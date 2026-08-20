@@ -1,0 +1,650 @@
+{
+  "schema_version": "intraday-exposed-research-plan-v1",
+  "program_id": "intraday-exposed-001",
+  "status": "frozen-before-strategy-results",
+  "starting_main": "13039947fa7761c77a6b02c224c5cf16d55a34a8",
+  "purpose": "Bounded exposed-data intraday research for SPY and QQQ. Results are research evidence, not a profitability claim or trading authority.",
+  "runtime_namespace": ".trading-lab/intraday-exposed-001",
+  "immutable_exclusions": [
+    "intraday-research-v1",
+    "intraday-research-v2",
+    "intraday-research-v3",
+    "rapid-002-strategy-discovery",
+    "rapid-003-bounded-strategy-discovery",
+    "rapid-004-expanded-universe",
+    "strategic-allocation-21"
+  ],
+  "authority": {
+    "protected_holdout": false,
+    "independent_evaluation": false,
+    "automatic_promotion": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "data": {
+    "exposed_start": "2025-07-01T13:30:00Z",
+    "exposed_end": "2026-06-30T19:55:00Z",
+    "provider": "alpaca-historical-v2",
+    "feed": "iex",
+    "adjustment_policy": "provider-adjusted-all-v1",
+    "calendar_policy": "XNYS-v1",
+    "timestamp_policy": "bar-open-utc-v1",
+    "universe_id": "liquid-etfs-intraday-5m-v1",
+    "universe_fingerprint": "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9",
+    "symbols": [
+      "QQQ",
+      "SPY"
+    ],
+    "timeframe": "5m",
+    "datasets": [
+      {
+        "dataset_id": "0a307dd767283d8f268c10b372c416abc49ac555cb242bf612f0b485be518363",
+        "fingerprint": "166722d26f52ca344abf38c35e56e9c6496c1fd7444affa5218495091aaee01e",
+        "raw_fingerprint": "249f23deb77c2a4488d7cdde058b538d8431f1dde912a483d80a5d5f73605d3d",
+        "start": "2025-07-01T13:30:00Z",
+        "end": "2025-12-31T20:55:00Z",
+        "bar_count": 19752
+      },
+      {
+        "dataset_id": "074e66c2260f576d6c1765295db93b5e22fb4753dc8f9912ef6f5be7fa937479",
+        "fingerprint": "d74ba8fefd3ac0f46cb86f155212f5d5eecef286d5d411847c952f6ab60e8437",
+        "raw_fingerprint": "b08465f9fdd726cf0e9669836e510bd181dd0eae3771fa80da63c2c820f104d5",
+        "start": "2026-01-02T14:30:00Z",
+        "end": "2026-02-27T20:55:00Z",
+        "bar_count": 6084
+      },
+      {
+        "dataset_id": "1b1b5b1179a84522d6827827a6143a547321ef8b49262cdfb4d6a81885f647ed",
+        "fingerprint": "bbff4ec9c8992d088a2a85cf35196d20b0b30328d9d5e287540b8e73e907c470",
+        "raw_fingerprint": "b21dc4074f31b1ba8cbc15f1767f76aa1287b5d128310f20c9b5ea002ea3609a",
+        "start": "2026-03-02T14:30:00Z",
+        "end": "2026-04-30T19:55:00Z",
+        "bar_count": 6708
+      },
+      {
+        "dataset_id": "9b4ff70403ac81ff7874f37578930df5654adfe321e8586e6f64bc10dd1ced23",
+        "fingerprint": "53c3d52a42a7baf099ff195ed67815a8db682c1c77e31e4869e484d7027c3ecb",
+        "raw_fingerprint": "d44cb2ab7da7eec3a8d717583c59f0af6f230b992a64c276515458fa7b8b6536",
+        "start": "2026-05-01T13:30:00Z",
+        "end": "2026-06-30T19:55:00Z",
+        "bar_count": 6396
+      }
+    ],
+    "verified_totals": {
+      "bar_count": 38940,
+      "bars_per_symbol": 19470,
+      "session_count": 251,
+      "full_session_count": 248,
+      "early_close_sessions": [
+        "2025-07-03",
+        "2025-11-28",
+        "2025-12-24"
+      ],
+      "missing_interval_count": 0,
+      "duplicate_interval_count": 0,
+      "quarantined_record_count": 0,
+      "zero_volume_bar_count": 0
+    },
+    "unavailable_timeframes": [
+      {
+        "timeframe": "1m",
+        "reason": "No immutable exposed-period artifact was found and the isolated read-only Alpaca acquisition failed with HTTP 401 before publication."
+      }
+    ],
+    "universe_expansion": "none"
+  },
+  "chronology": {
+    "discovery": {
+      "context_start": "2025-07-01T13:30:00Z",
+      "evaluation_start": "2025-07-01T13:30:00Z",
+      "evaluation_end": "2025-10-31T19:55:00Z"
+    },
+    "walk_forward_folds": [
+      {
+        "id": "wf-1",
+        "context_start": "2025-07-01T13:30:00Z",
+        "evaluation_start": "2025-11-03T14:30:00Z",
+        "evaluation_end": "2025-12-31T20:55:00Z"
+      },
+      {
+        "id": "wf-2",
+        "context_start": "2025-09-02T13:30:00Z",
+        "evaluation_start": "2026-01-02T14:30:00Z",
+        "evaluation_end": "2026-02-27T20:55:00Z"
+      },
+      {
+        "id": "wf-3",
+        "context_start": "2025-11-03T14:30:00Z",
+        "evaluation_start": "2026-03-02T14:30:00Z",
+        "evaluation_end": "2026-04-30T19:55:00Z"
+      },
+      {
+        "id": "wf-4-final-exposed-stress",
+        "context_start": "2026-01-02T14:30:00Z",
+        "evaluation_start": "2026-05-01T13:30:00Z",
+        "evaluation_end": "2026-05-29T19:55:00Z"
+      }
+    ],
+    "controlled_qualification": {
+      "context_start": "2026-03-02T14:30:00Z",
+      "evaluation_start": "2026-06-01T13:30:00Z",
+      "evaluation_end": "2026-06-30T19:55:00Z",
+      "load_after_final_cohort_freeze_only": true
+    }
+  },
+  "execution": {
+    "initial_cash": "100000",
+    "strategy_weight_states": [
+      "0",
+      "0.5",
+      "1"
+    ],
+    "long_only": true,
+    "maximum_gross_weight": "1",
+    "session_policy": "XNYS-regular-session-state-transition-flat-v2",
+    "execution_model": "state-transition-delayed-fifo-v1",
+    "earliest_fill_semantics": "completed-bar-nth-later-open-v1",
+    "queue_policy": "fifo-no-supersession-session-close-override-v1",
+    "normal": {
+      "slippage_bps": "5",
+      "commission_bps": "1",
+      "execution_delay_bars": 1
+    },
+    "stress_a": {
+      "slippage_bps": "10",
+      "commission_bps": "2",
+      "execution_delay_bars": 1
+    },
+    "stress_b": {
+      "slippage_bps": "20",
+      "commission_bps": "5",
+      "execution_delay_bars": 3
+    },
+    "isolated_delay_stresses": [
+      2,
+      3
+    ],
+    "zero_cost_diagnostic": {
+      "slippage_bps": "0",
+      "commission_bps": "0",
+      "execution_delay_bars": 1,
+      "promotion_authority": false
+    }
+  },
+  "search": {
+    "maximum_parent_configurations": 2500,
+    "declared_parent_configurations": 325,
+    "maximum_free_parameters_per_configuration": 4,
+    "maximum_walk_forward_candidates_per_family": 5,
+    "maximum_serious_candidates_per_family": 2,
+    "maximum_final_cohort": 6,
+    "minimum_final_cohort": 3,
+    "minimum_final_cohort_is_advisory": true,
+    "discovery_gates": {
+      "normal_total_return_gt": "0",
+      "zero_cost_total_return_gt": "0",
+      "max_drawdown_lte": "0.08",
+      "completed_round_trips_gte": 10,
+      "turnover_lte": "160",
+      "cost_to_zero_cost_profit_lte": "1"
+    },
+    "walk_forward_gates": {
+      "aggregate_normal_total_return_gt": "0",
+      "aggregate_zero_cost_total_return_gt": "0",
+      "positive_normal_folds_gte": 3,
+      "worst_normal_fold_return_gte": "-0.015",
+      "aggregate_completed_round_trips_gte": 20,
+      "max_fold_drawdown_lte": "0.10",
+      "cost_to_zero_cost_profit_lte": "0.75",
+      "best_symbol_positive_profit_concentration_lte": "0.75"
+    },
+    "final_exposed_stress_gates": {
+      "normal_total_return_gt": "0",
+      "stress_a_total_return_gt": "0",
+      "stress_b_total_return_gt": "0",
+      "delay_2_total_return_gt": "0",
+      "delay_3_total_return_gt": "0",
+      "minimum_return_retention_gte": "0.20"
+    },
+    "selection_order": [
+      "higher_worst_fold_return",
+      "higher_stress_b_return",
+      "lower_turnover",
+      "configuration_fingerprint"
+    ]
+  },
+  "robustness": {
+    "neighbor_definition": "Change one numeric parameter to the next lower or higher value declared for the same contract; hold every other field fixed.",
+    "maximum_neighbors_per_candidate": 6,
+    "minimum_neighbors_per_candidate": 2,
+    "fewer_than_minimum_neighbors_disposition": "reject-serious-candidate",
+    "positive_neighbor_fraction_gte": "0.60",
+    "minimum_neighbor_return_retention_gte": "0.20",
+    "no_parameter_changes_after_serious_stage": true,
+    "decision_trace_must_match_across_cost_variants": true,
+    "decision_cadence_must_match_across_delay_variants": true,
+    "original_signal_timestamps_must_match_across_delay_variants": true
+  },
+  "families": [
+    {
+      "id": "A",
+      "name": "opening-range-breakout",
+      "declared_configurations": 48,
+      "contracts": [
+        {
+          "id": "orb-time-exit",
+          "parameters": {
+            "opening_bars": [1, 2, 3, 6],
+            "exit_bar": [24, 48, 72]
+          }
+        },
+        {
+          "id": "orb-trend-confirmed",
+          "fixed_parameters": {"exit_bar": 48},
+          "parameters": {
+            "opening_bars": [1, 2, 3, 6],
+            "trend_window": [12, 24]
+          }
+        },
+        {
+          "id": "orb-volume-filtered",
+          "fixed_parameters": {"exit_bar": 48},
+          "parameters": {
+            "opening_bars": [1, 2, 3, 6],
+            "volume_window": [6, 12],
+            "volume_ratio_percent": [100, 125]
+          }
+        },
+        {
+          "id": "orb-opposite-range-exit",
+          "parameters": {"opening_bars": [1, 2, 3, 6]}
+        },
+        {
+          "id": "orb-trailing-exit",
+          "parameters": {
+            "opening_bars": [1, 2, 3, 6],
+            "trailing_bars": [3, 6]
+          }
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "name": "intraday-trend-following",
+      "declared_configurations": 32,
+      "contracts": [
+        {
+          "id": "moving-average-crossover",
+          "parameter_sets": [
+            {"fast_window": 3, "slow_window": 12},
+            {"fast_window": 3, "slow_window": 18},
+            {"fast_window": 3, "slow_window": 24},
+            {"fast_window": 6, "slow_window": 12},
+            {"fast_window": 6, "slow_window": 18},
+            {"fast_window": 6, "slow_window": 24},
+            {"fast_window": 12, "slow_window": 18},
+            {"fast_window": 12, "slow_window": 24}
+          ]
+        },
+        {
+          "id": "price-above-moving-average",
+          "parameters": {"window": [6, 12, 24, 36]}
+        },
+        {
+          "id": "multi-horizon-trend",
+          "parameter_sets": [
+            {"fast_window": 3, "slow_window": 12},
+            {"fast_window": 3, "slow_window": 24},
+            {"fast_window": 3, "slow_window": 36},
+            {"fast_window": 6, "slow_window": 12},
+            {"fast_window": 6, "slow_window": 24},
+            {"fast_window": 6, "slow_window": 36},
+            {"fast_window": 12, "slow_window": 24},
+            {"fast_window": 12, "slow_window": 36}
+          ]
+        },
+        {
+          "id": "trend-pullback-continuation",
+          "parameters": {
+            "trend_window": [12, 24, 36],
+            "pullback_bars": [3, 6],
+            "pullback_threshold_bps": [5, 10]
+          }
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "name": "intraday-momentum",
+      "declared_configurations": 28,
+      "contracts": [
+        {
+          "id": "absolute-momentum",
+          "parameters": {
+            "lookback": [3, 6, 12, 24],
+            "threshold_bps": [0, 5, 10]
+          }
+        },
+        {
+          "id": "momentum-with-trend",
+          "parameters": {
+            "lookback": [3, 6, 12, 24],
+            "trend_window": [12, 24]
+          }
+        },
+        {
+          "id": "relative-momentum",
+          "parameters": {
+            "lookback": [3, 6, 12, 24],
+            "threshold_bps": [0, 5]
+          }
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "name": "mean-reversion-and-pullback",
+      "declared_configurations": 43,
+      "contracts": [
+        {
+          "id": "moving-average-deviation-reversion",
+          "parameters": {
+            "window": [6, 12, 24],
+            "entry_z_hundredths": [75, 100, 150],
+            "exit_z_hundredths": [0, 25]
+          }
+        },
+        {
+          "id": "short-term-reversal",
+          "parameters": {
+            "lookback": [1, 2, 3, 6],
+            "threshold_bps": [5, 10]
+          }
+        },
+        {
+          "id": "pullback-in-trend",
+          "parameters": {
+            "trend_window": [12, 24],
+            "pullback_bars": [3, 6],
+            "threshold_bps": [5, 10]
+          }
+        },
+        {
+          "id": "volatility-normalized-pullback",
+          "parameters": {
+            "window": [6, 12, 24],
+            "entry_z_hundredths": [75, 100, 150]
+          }
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "name": "gap-continuation-and-fade",
+      "declared_configurations": 32,
+      "contracts": [
+        {
+          "id": "gap-continuation",
+          "parameters": {
+            "gap_threshold_bps": [10, 20, 30, 50],
+            "entry_delay_bars": [1, 3, 6]
+          }
+        },
+        {
+          "id": "gap-fade",
+          "parameters": {
+            "gap_threshold_bps": [10, 20, 30, 50],
+            "entry_delay_bars": [1, 3, 6]
+          }
+        },
+        {
+          "id": "gap-continuation-with-trend",
+          "parameters": {
+            "gap_threshold_bps": [20, 50],
+            "trend_window": [12, 24]
+          }
+        },
+        {
+          "id": "gap-fade-with-trend",
+          "parameters": {
+            "gap_threshold_bps": [20, 50],
+            "trend_window": [12, 24]
+          }
+        }
+      ]
+    },
+    {
+      "id": "F",
+      "name": "time-of-day",
+      "declared_configurations": 16,
+      "contracts": [
+        {
+          "id": "windowed-momentum",
+          "parameter_sets": [
+            {"window_start_bar": 0, "window_end_bar": 11},
+            {"window_start_bar": 12, "window_end_bar": 29},
+            {"window_start_bar": 30, "window_end_bar": 53},
+            {"window_start_bar": 54, "window_end_bar": 71}
+          ],
+          "parameters": {
+            "lookback": [3, 6],
+            "threshold_bps": [0, 5]
+          }
+        }
+      ]
+    },
+    {
+      "id": "G",
+      "name": "volatility-breakout",
+      "declared_configurations": 18,
+      "contracts": [
+        {
+          "id": "rolling-range-breakout",
+          "parameters": {
+            "lookback": [3, 6, 12, 24],
+            "threshold_half_ranges": [1, 2, 3]
+          }
+        },
+        {
+          "id": "average-range-breakout",
+          "parameters": {
+            "window": [6, 12, 24],
+            "threshold_half_ranges": [1, 2]
+          }
+        }
+      ]
+    },
+    {
+      "id": "H",
+      "name": "volatility-regime-filter",
+      "declared_configurations": 16,
+      "contracts": [
+        {
+          "id": "momentum-volatility-filter",
+          "parameters": {
+            "lookback": [6, 12],
+            "volatility_window": [12, 24],
+            "maximum_average_absolute_return_bps": [10, 20]
+          }
+        },
+        {
+          "id": "trend-volatility-filter",
+          "parameters": {
+            "trend_window": [12, 24],
+            "volatility_window": [12, 24],
+            "maximum_average_absolute_return_bps": [10, 20]
+          }
+        }
+      ]
+    },
+    {
+      "id": "I",
+      "name": "cross-asset-confirmation",
+      "declared_configurations": 16,
+      "contracts": [
+        {
+          "id": "cross-asset-momentum-confirmation",
+          "parameters": {
+            "lookback": [3, 6, 12, 24],
+            "threshold_bps": [0, 5]
+          }
+        },
+        {
+          "id": "cross-asset-trend-confirmation",
+          "parameters": {
+            "window": [6, 12, 24, 36],
+            "threshold_bps": [0, 5]
+          }
+        }
+      ]
+    },
+    {
+      "id": "J",
+      "name": "relative-strength-rotation",
+      "declared_configurations": 28,
+      "contracts": [
+        {
+          "id": "single-horizon-relative-strength",
+          "parameters": {
+            "lookback": [3, 6, 12, 24],
+            "threshold_bps": [0, 5, 10]
+          }
+        },
+        {
+          "id": "dual-horizon-relative-strength",
+          "parameter_sets": [
+            {"fast_lookback": 3, "slow_lookback": 12},
+            {"fast_lookback": 3, "slow_lookback": 24},
+            {"fast_lookback": 3, "slow_lookback": 36},
+            {"fast_lookback": 6, "slow_lookback": 12},
+            {"fast_lookback": 6, "slow_lookback": 24},
+            {"fast_lookback": 6, "slow_lookback": 36},
+            {"fast_lookback": 12, "slow_lookback": 24},
+            {"fast_lookback": 12, "slow_lookback": 36}
+          ],
+          "parameters": {"threshold_bps": [0, 5]}
+        }
+      ]
+    },
+    {
+      "id": "K",
+      "name": "session-high-low-breakout",
+      "declared_configurations": 12,
+      "contracts": [
+        {
+          "id": "completed-session-channel-breakout",
+          "parameters": {
+            "entry_lookback": [3, 6, 12, 24],
+            "exit_lookback": [2, 3, 6]
+          }
+        }
+      ]
+    },
+    {
+      "id": "L",
+      "name": "causal-vwap",
+      "declared_configurations": 18,
+      "contracts": [
+        {
+          "id": "price-above-cumulative-vwap",
+          "parameters": {
+            "threshold_bps": [0, 5, 10, 20],
+            "minimum_bars": [3, 6, 12]
+          }
+        },
+        {
+          "id": "cumulative-vwap-reversion",
+          "parameters": {
+            "entry_threshold_bps": [10, 20, 30],
+            "exit_threshold_bps": [0, 5]
+          }
+        }
+      ]
+    },
+    {
+      "id": "M",
+      "name": "simple-combinations",
+      "declared_configurations": 18,
+      "contracts": [
+        {
+          "id": "opening-range-plus-market-trend",
+          "parameters": {
+            "opening_bars": [2, 3, 6],
+            "trend_window": [12, 24]
+          }
+        },
+        {
+          "id": "momentum-plus-volatility-filter",
+          "parameters": {
+            "lookback": [6, 12, 24],
+            "volatility_window": [12, 24]
+          }
+        },
+        {
+          "id": "pullback-plus-long-trend",
+          "parameters": {
+            "trend_window": [12, 24, 36],
+            "pullback_bars": [3, 6]
+          }
+        }
+      ]
+    }
+  ],
+  "controlled_qualification": {
+    "enabled_only_for_nonempty_frozen_cohort": true,
+    "all_final_cohort_candidates_frozen_before_first_controlled_qualification_result": true,
+    "policy_id": "intraday-qualification-policy-v1",
+    "required_roles": [
+      "base",
+      "increased-cost",
+      "harsher-cost",
+      "plus-1-bar",
+      "plus-2-bars",
+      "zero-cost-diagnostic",
+      "parameter-neighbors"
+    ],
+    "additional_gates": {
+      "base_total_return_gt": "0",
+      "zero_cost_total_return_gt": "0",
+      "all_cost_and_delay_stress_returns_gt": "0",
+      "minimum_stress_return_retention_gte": "0.20",
+      "cost_to_zero_cost_profit_lte": "0.75",
+      "positive_neighbor_fraction_gte": "0.60",
+      "minimum_neighbor_return_retention_gte": "0.20",
+      "decision_trace_identity": true,
+      "delay_decision_cadence_identity": true,
+      "original_signal_timestamp_identity": true
+    },
+    "result_authority": {
+      "independent_evaluation": false,
+      "paper_execution": false,
+      "broker_writes": false,
+      "live_execution": false
+    }
+  },
+  "required_reporting": [
+    "net_return",
+    "zero_cost_return",
+    "sharpe_ratio",
+    "max_drawdown",
+    "turnover",
+    "fill_count",
+    "completed_round_trips",
+    "hit_rate",
+    "average_trade",
+    "cost_paid",
+    "cost_to_zero_cost_profit_ratio",
+    "average_holding_duration",
+    "exposure_time",
+    "long_and_flat_state_duration",
+    "chronological_block_performance",
+    "time_of_day_performance",
+    "symbol_contribution",
+    "worst_fold",
+    "fold_dispersion",
+    "stress_a_retention",
+    "stress_b_retention",
+    "parameter_neighbor_retention"
+  ]
+}
