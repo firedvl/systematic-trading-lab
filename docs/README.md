@@ -27,6 +27,7 @@ Start with the research path. Open the controlled campaign and paper documents o
 
 - [Architecture](architecture.md) — components, authority boundaries, and storage
 - [Qualification policy](qualification-policy.md) — controlled evidence and holdout access
+- [Rapid-004 expanded-universe final report](research-campaigns/rapid-004-final-report.md) — closed 37-ETF A–U campaign, empty exposed cohort, and evidence hashes
 - [Rapid-003 bounded strategy program](research-campaigns/rapid-003-bounded-strategy-program.md) — closed family ledger, exposed screen, and final report
 - [Rapid-002 promotion design](research-campaigns/rapid-002-risk-managed-momentum-promotion.md) — frozen 40/40/10 controlled path
 - [Threat model](threat-model.md) — protected assets, trust boundaries, and failure rules
