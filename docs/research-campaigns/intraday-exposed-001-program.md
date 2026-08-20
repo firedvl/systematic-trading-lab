@@ -32,6 +32,8 @@ cover 2025-07-01 through 2026-06-30: 38,940 bars, 19,470 bars per symbol, and 25
 sessions. Three sessions close early: 2025-07-03, 2025-11-28, and 2025-12-24. Full integrity checks
 matched each catalog manifest, normalized fingerprint, raw fingerprint, universe, and expected XNYS
 grid. The data has no missing intervals, duplicates, quarantined records, or zero-volume bars.
+The frozen design uses the `XNYS-v1` research calendar; each intraday dataset manifest separately
+binds the `XNYS-regular-session-bars-v1` bar-grid policy. The runner requires both exact values.
 
 No exposed one-minute artifact was found. A new read-only Alpaca request failed with HTTP 401 before
 publication. The frozen program therefore uses five-minute bars only. The universe remains SPY and
