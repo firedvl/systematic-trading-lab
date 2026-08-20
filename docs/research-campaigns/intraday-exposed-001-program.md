@@ -1,6 +1,8 @@
 # Intraday Exposed 001 program
 
-Status: research design frozen before strategy results.
+Status: closed with an empty final cohort and no controlled-qualified candidate.
+
+Final report: [Intraday Exposed 001 final report](intraday-exposed-001-final-report.md)
 
 Program ID: `intraday-exposed-001`
 
