@@ -893,6 +893,8 @@ class IntradayExposedRunner:
     def _verify_data(self) -> None:
         data = _mapping(self.plan.payload["data"], "data")
         expected_symbols = _strings(data["symbols"], "symbols")
+        if data.get("calendar_policy") != "XNYS-v1":
+            raise ValueError("Intraday Exposed 001 research calendar policy differs")
         for binding in self.plan.datasets:
             manifest = self.data.describe(binding.dataset_id)
             validation = self.data.validate(binding.dataset_id)
@@ -904,7 +906,7 @@ class IntradayExposedRunner:
                 or manifest.get("provider") != data["provider"]
                 or manifest.get("feed") != data["feed"]
                 or manifest.get("adjustment_policy") != data["adjustment_policy"]
-                or manifest.get("calendar_policy") != data["calendar_policy"]
+                or manifest.get("calendar_policy") != "XNYS-regular-session-bars-v1"
                 or manifest.get("timestamp_policy") != data["timestamp_policy"]
                 or manifest.get("universe_id") != data["universe_id"]
                 or manifest.get("universe_fingerprint") != data["universe_fingerprint"]

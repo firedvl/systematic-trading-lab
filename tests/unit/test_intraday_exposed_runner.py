@@ -86,6 +86,47 @@ def test_frozen_plan_sha_count_and_neighbors(tmp_path: Path) -> None:
         load_intraday_exposed_plan(tmp_path)
 
 
+def test_data_verification_distinguishes_research_and_bar_calendar_policies() -> None:
+    plan = load_intraday_exposed_plan(_REPOSITORY)
+    plan_data = plan.payload["data"]
+    assert isinstance(plan_data, Mapping)
+
+    class FrozenData:
+        calendar_policy = "XNYS-regular-session-bars-v1"
+
+        def describe(self, dataset_id: str) -> dict[str, object]:
+            binding = next(item for item in plan.datasets if item.dataset_id == dataset_id)
+            return {
+                "timeframe": "5m",
+                "provider": plan_data["provider"],
+                "feed": plan_data["feed"],
+                "adjustment_policy": plan_data["adjustment_policy"],
+                "calendar_policy": self.calendar_policy,
+                "timestamp_policy": plan_data["timestamp_policy"],
+                "universe_id": plan_data["universe_id"],
+                "universe_fingerprint": plan_data["universe_fingerprint"],
+                "symbols": [{"value": symbol} for symbol in plan_data["symbols"]],
+                "raw_artifact_hashes": [binding.raw_fingerprint],
+                "requested_range": {
+                    "start": binding.start.isoformat().replace("+00:00", "Z"),
+                    "end": binding.end.isoformat().replace("+00:00", "Z"),
+                },
+            }
+
+        def validate(self, dataset_id: str) -> dict[str, object]:
+            binding = next(item for item in plan.datasets if item.dataset_id == dataset_id)
+            return {"valid": True, "fingerprint": binding.fingerprint}
+
+    runner = object.__new__(IntradayExposedRunner)
+    runner.plan = plan
+    runner.data = FrozenData()  # type: ignore[assignment]
+    runner._verify_data()
+
+    runner.data.calendar_policy = "XNYS-v1"  # type: ignore[attr-defined]
+    with pytest.raises(ValueError, match="dataset differs"):
+        runner._verify_data()
+
+
 def test_same_policy_id_with_changed_content_is_rejected(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
