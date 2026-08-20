@@ -24,11 +24,12 @@ from .fingerprints import canonical_json, fingerprint
 from .storage import StorageLayout
 
 PROGRAM_ID = "intraday-execution-calibration-001"
-PLAN_SCHEMA = "intraday-execution-calibration-plan-v1"
-QUOTE_DATASET_SCHEMA = "intraday-quote-calibration-dataset-v1"
-ANALYSIS_SCHEMA = "intraday-execution-calibration-analysis-v1"
-PLAN_RELATIVE_PATH = Path("config/research/intraday-execution-calibration-001-plan-v1.json")
-REVIEWED_PLAN_SHA256 = "7f762cb4195b406c8b86197bc02f36e562d65af559f8ae1c0070ce05a40d9e38"
+RUN_ID = "intraday-execution-calibration-001-v2"
+PLAN_SCHEMA = "intraday-execution-calibration-plan-v2"
+QUOTE_DATASET_SCHEMA = "intraday-quote-calibration-dataset-v2"
+ANALYSIS_SCHEMA = "intraday-execution-calibration-analysis-v2"
+PLAN_RELATIVE_PATH = Path("config/research/intraday-execution-calibration-001-plan-v2.json")
+REVIEWED_PLAN_SHA256 = "67dc2a2155a91f5ab26395a4c3f34457ebcb6e1813f95f7e02c642129c9db546"
 ALPACA_QUOTES_ENDPOINT = "https://data.alpaca.markets/v2/stocks/quotes"
 _TIMESTAMP = re.compile(r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,9}))?Z$")
 _BPS = Decimal("10000")
@@ -59,6 +60,7 @@ class CalibrationPlan:
     payload: Mapping[str, Any]
     sha256: str
     plan_fingerprint: str
+    run_id: str
     symbols: tuple[str, ...]
     sessions: tuple[date, ...]
     windows: tuple[CalibrationWindow, ...]
@@ -142,6 +144,7 @@ class QuoteAcquisitionError(RuntimeError):
 
 
 QuoteTransport = Callable[[Request], bytes]
+QuoteDataCallback = Callable[[], None]
 
 
 class AlpacaHistoricalQuoteClient:
@@ -155,6 +158,7 @@ class AlpacaHistoricalQuoteClient:
         *,
         endpoint: str = ALPACA_QUOTES_ENDPOINT,
         transport: QuoteTransport | None = None,
+        on_quote_data_returned: QuoteDataCallback | None = None,
         max_pages: int = 1000,
     ) -> None:
         if not api_key or not secret_key:
@@ -168,6 +172,7 @@ class AlpacaHistoricalQuoteClient:
         self.feed = feed
         self.endpoint = endpoint
         self.transport = transport or _urlopen_bytes
+        self.on_quote_data_returned = on_quote_data_returned
         self.max_pages = max_pages
 
     def fetch(self, symbol: str, start: datetime, end: datetime) -> tuple[HistoricalQuote, ...]:
@@ -206,6 +211,10 @@ class AlpacaHistoricalQuoteClient:
                 raise QuoteAcquisitionError("Alpaca historical quote request failed") from error
             item = _mapping(payload, "historical quote response")
             quote_map = _mapping(item.get("quotes"), "historical quote response quotes")
+            if self.on_quote_data_returned is not None and any(
+                bool(value) for value in quote_map.values()
+            ):
+                self.on_quote_data_returned()
             unexpected = set(quote_map) - {symbol}
             if unexpected:
                 raise QuoteAcquisitionError("Alpaca historical quote response changed symbol")
@@ -231,9 +240,13 @@ def load_calibration_plan(repository: Path) -> CalibrationPlan:
     except json.JSONDecodeError as error:
         raise ValueError("intraday calibration plan is invalid JSON") from error
     plan = _mapping(payload, "calibration plan")
-    if plan.get("schema_version") != PLAN_SCHEMA or plan.get("program_id") != PROGRAM_ID:
+    if (
+        plan.get("schema_version") != PLAN_SCHEMA
+        or plan.get("program_id") != PROGRAM_ID
+        or plan.get("run_id") != RUN_ID
+    ):
         raise ValueError("intraday calibration plan identity differs")
-    if plan.get("status") != "frozen-before-quote-acquisition":
+    if plan.get("status") != "frozen-before-v2-quote-reacquisition":
         raise ValueError("intraday calibration plan is not frozen")
     source = _mapping(plan.get("source"), "calibration source")
     if source.get("endpoint") != ALPACA_QUOTES_ENDPOINT:
@@ -259,7 +272,7 @@ def load_calibration_plan(repository: Path) -> CalibrationPlan:
     lookback = _positive_int(sampling.get("quote_lookback_seconds"), "quote lookback")
     if grid_interval != 1 or lookback != 5:
         raise ValueError("intraday calibration sampling differs")
-    coverage = _decimal(validation.get("minimum_grid_coverage_per_window"), "coverage")
+    coverage = _decimal(validation.get("minimum_eligible_grid_coverage_per_window"), "coverage")
     if coverage != Decimal("0.99"):
         raise ValueError("intraday calibration coverage differs")
     return CalibrationPlan(
@@ -267,6 +280,7 @@ def load_calibration_plan(repository: Path) -> CalibrationPlan:
         plan,
         sha256,
         fingerprint(plan),
+        RUN_ID,
         ("QQQ", "SPY"),
         sessions,
         windows,
@@ -297,8 +311,8 @@ def validate_quote_sequence(
             raise ValueError("historical quote is outside the request boundary")
         if previous_ns is not None and quote.timestamp_ns < previous_ns:
             raise ValueError("historical quote timestamps are not ordered")
-        if quote.bid_price <= 0 or quote.ask_price < quote.bid_price:
-            raise ValueError("historical quote has an invalid market")
+        if quote.bid_price < 0 or quote.ask_price < 0:
+            raise ValueError("historical quote has a negative price")
         if quote.bid_size < 0 or quote.ask_size < 0:
             raise ValueError("historical quote has an invalid size")
         signature = canonical_json(quote.to_record())
@@ -316,10 +330,29 @@ def validate_quote_sequence(
         previous_ns = quote.timestamp_ns
     return tuple(validated), {
         "raw_quote_count": len(quotes),
-        "validated_quote_count": len(validated),
+        "unique_quote_count": len(validated),
         "exact_duplicate_count": exact_duplicates,
         "same_timestamp_update_count": same_timestamp_updates,
         "maximum_raw_update_gap_ms": Decimal(maximum_gap_ns) / Decimal(1_000_000),
+        "raw_nonpositive_bid_count": sum(quote.bid_price <= 0 for quote in validated),
+        "raw_nonpositive_ask_count": sum(quote.ask_price <= 0 for quote in validated),
+        "raw_zero_bid_size_count": sum(quote.bid_size == 0 for quote in validated),
+        "raw_zero_ask_size_count": sum(quote.ask_size == 0 for quote in validated),
+        "raw_crossed_market_count": sum(
+            quote.bid_price > 0
+            and quote.ask_price > 0
+            and quote.bid_size > 0
+            and quote.ask_size > 0
+            and quote.ask_price < quote.bid_price
+            for quote in validated
+        ),
+        "raw_locked_market_count": sum(
+            quote.bid_price > 0
+            and quote.ask_price == quote.bid_price
+            and quote.bid_size > 0
+            and quote.ask_size > 0
+            for quote in validated
+        ),
     }
 
 
@@ -330,13 +363,22 @@ def sample_quotes(
     *,
     grid_interval_seconds: int = 1,
     quote_lookback_seconds: int = 5,
-) -> tuple[tuple[QuoteObservation, ...], int]:
+) -> tuple[tuple[QuoteObservation, ...], dict[str, int]]:
     if grid_interval_seconds < 1 or quote_lookback_seconds < 1:
         raise ValueError("quote sampling intervals must be positive")
     observations: list[QuoteObservation] = []
     quote_index = 0
     latest: HistoricalQuote | None = None
-    missing = 0
+    exclusions = {
+        "no_quote": 0,
+        "stale_quote": 0,
+        "nonpositive_bid": 0,
+        "nonpositive_ask": 0,
+        "zero_bid_size": 0,
+        "zero_ask_size": 0,
+        "crossed_market": 0,
+    }
+    locked = 0
     grid = window.start
     while grid < window.end:
         grid_ns = _datetime_ns(grid)
@@ -344,11 +386,24 @@ def sample_quotes(
             latest = quotes[quote_index]
             quote_index += 1
         age_ns = grid_ns - latest.timestamp_ns if latest is not None else None
-        if latest is None or age_ns is None or age_ns > quote_lookback_seconds * _NANOSECONDS:
-            missing += 1
+        if latest is None or age_ns is None:
+            exclusions["no_quote"] += 1
+        elif age_ns > quote_lookback_seconds * _NANOSECONDS:
+            exclusions["stale_quote"] += 1
+        elif latest.bid_price <= 0:
+            exclusions["nonpositive_bid"] += 1
+        elif latest.ask_price <= 0:
+            exclusions["nonpositive_ask"] += 1
+        elif latest.bid_size <= 0:
+            exclusions["zero_bid_size"] += 1
+        elif latest.ask_size <= 0:
+            exclusions["zero_ask_size"] += 1
+        elif latest.ask_price < latest.bid_price:
+            exclusions["crossed_market"] += 1
         else:
             spread = latest.ask_price - latest.bid_price
             midpoint = (latest.ask_price + latest.bid_price) / Decimal("2")
+            locked += int(spread == 0)
             spread_bps = spread / midpoint * _BPS
             observations.append(
                 QuoteObservation(
@@ -367,7 +422,11 @@ def sample_quotes(
                 )
             )
         grid += timedelta(seconds=grid_interval_seconds)
-    return tuple(observations), missing
+    return tuple(observations), {
+        **exclusions,
+        "total": sum(exclusions.values()),
+        "eligible_locked_market_count": locked,
+    }
 
 
 def acquire_quote_window(
@@ -377,17 +436,20 @@ def acquire_quote_window(
     window: CalibrationWindow,
     symbol: str,
 ) -> Mapping[str, Any]:
-    layout = StorageLayout(data_home / PROGRAM_ID)
+    layout = StorageLayout(data_home / plan.run_id)
     logical_key = _logical_key(plan, client.feed, symbol, window)
     existing = _existing_artifact(layout, plan, logical_key)
     if existing is not None:
         return existing
     raw_quotes = client.fetch(symbol, window.request_start, window.end)
+    raw_text = "".join(canonical_json(quote.to_record()) + "\n" for quote in raw_quotes)
+    raw_sha256 = hashlib.sha256(raw_text.encode()).hexdigest()
+    validation_evidence: dict[str, object] = {}
     try:
         quotes, validation = validate_quote_sequence(
             raw_quotes, symbol, window.request_start, window.end
         )
-        observations, missing = sample_quotes(
+        observations, exclusions = sample_quotes(
             quotes,
             client.feed,
             window,
@@ -396,27 +458,45 @@ def acquire_quote_window(
         )
         expected = int((window.end - window.start).total_seconds()) // plan.grid_interval_seconds
         coverage = Decimal(len(observations)) / Decimal(expected)
+        validation_evidence = {
+            **validation,
+            "expected_grid_count": expected,
+            "observation_count": len(observations),
+            "grid_exclusions": exclusions,
+            "eligible_grid_coverage": coverage,
+        }
         if coverage < plan.minimum_coverage:
-            raise ValueError("historical quote window failed grid coverage")
+            raise ValueError("historical quote window failed eligible grid coverage")
     except (ArithmeticError, TypeError, ValueError) as error:
         evidence = {
-            "schema_version": "intraday-quote-calibration-quarantine-v1",
+            "schema_version": "intraday-quote-calibration-quarantine-v2",
+            "program_id": PROGRAM_ID,
+            "run_id": plan.run_id,
+            "plan_sha256": plan.sha256,
+            "plan_fingerprint": plan.plan_fingerprint,
             "logical_key": logical_key,
+            "feed": client.feed,
+            "symbol": symbol,
+            "session_date": window.session_date.isoformat(),
+            "window_id": window.window_id,
+            "request": {"start": window.request_start, "end": window.end},
             "error_type": type(error).__name__,
+            "error": str(error),
+            "raw_sha256": raw_sha256,
+            "validation": validation_evidence,
             "raw_quotes": tuple(quote.to_record() for quote in raw_quotes),
         }
         evidence_id = fingerprint(evidence)
         layout.write_quarantine(evidence_id, canonical_json(evidence) + "\n")
         raise
-    raw_text = "".join(canonical_json(quote.to_record()) + "\n" for quote in raw_quotes)
     observation_text = "".join(
         canonical_json(observation.to_record()) + "\n" for observation in observations
     )
-    raw_sha256 = hashlib.sha256(raw_text.encode()).hexdigest()
     observation_sha256 = hashlib.sha256(observation_text.encode()).hexdigest()
     identity = {
         "logical_key": logical_key,
         "plan_fingerprint": plan.plan_fingerprint,
+        "run_id": plan.run_id,
         "feed": client.feed,
         "symbol": symbol,
         "session_date": window.session_date.isoformat(),
@@ -427,6 +507,8 @@ def acquire_quote_window(
     dataset_id = fingerprint(identity)
     manifest = {
         "schema_version": QUOTE_DATASET_SCHEMA,
+        "program_id": PROGRAM_ID,
+        "run_id": plan.run_id,
         "identity": {"dataset_id": dataset_id, **identity},
         "plan_sha256": plan.sha256,
         "provider": "alpaca-market-data-api-v2-historical-quotes",
@@ -439,13 +521,7 @@ def acquire_quote_window(
             "symbol": symbol,
         },
         "observation_window": {"start": window.start, "end": window.end},
-        "validation": {
-            **validation,
-            "expected_grid_count": expected,
-            "observation_count": len(observations),
-            "missing_grid_count": missing,
-            "grid_coverage": coverage,
-        },
+        "validation": validation_evidence,
         "raw_sha256": raw_sha256,
         "observation_sha256": observation_sha256,
     }
@@ -473,28 +549,46 @@ def acquire_calibration_quotes(
     progress: Callable[[str], None] | None = None,
 ) -> dict[str, object]:
     plan = load_calibration_plan(repository)
-    root = data_home / PROGRAM_ID
+    root = data_home / plan.run_id
     layout = StorageLayout(root)
     selection_path = root / "feed-selection.json"
+    sip_data_path = root / "sip-quote-data-returned.json"
+    sip_data_marker: Mapping[str, object] = {
+        "schema_version": "intraday-sip-quote-data-returned-v1",
+        "program_id": PROGRAM_ID,
+        "run_id": plan.run_id,
+        "plan_sha256": plan.sha256,
+        "plan_fingerprint": plan.plan_fingerprint,
+        "feed": "sip",
+        "status": "sip-data-returned-before-feed-selection",
+    }
+    if sip_data_path.exists():
+        _write_create_only(sip_data_path, sip_data_marker)
     selection = _read_json(selection_path) if selection_path.exists() else None
     first_window = plan.windows[0]
     first_symbol = plan.symbols[0]
     if selection is None:
-        sip = AlpacaHistoricalQuoteClient(api_key, secret_key, "sip")
+        sip = AlpacaHistoricalQuoteClient(
+            api_key,
+            secret_key,
+            "sip",
+            on_quote_data_returned=lambda: _write_create_only(sip_data_path, sip_data_marker),
+        )
         try:
             probe = acquire_quote_window(data_home, plan, sip, first_window, first_symbol)
             feed = "sip"
             reason = "sip-authorized"
         except QuoteAcquisitionError as error:
-            if error.status_code != 403 or error.quote_data_returned:
+            if error.status_code != 403 or error.quote_data_returned or sip_data_path.exists():
                 raise
             iex = AlpacaHistoricalQuoteClient(api_key, secret_key, "iex")
             probe = acquire_quote_window(data_home, plan, iex, first_window, first_symbol)
             feed = "iex"
             reason = "sip-http-403-entitlement-fallback"
         selection = {
-            "schema_version": "intraday-quote-feed-selection-v1",
+            "schema_version": "intraday-quote-feed-selection-v2",
             "program_id": PROGRAM_ID,
+            "run_id": plan.run_id,
             "plan_fingerprint": plan.plan_fingerprint,
             "feed": feed,
             "reason": reason,
@@ -503,6 +597,8 @@ def acquire_calibration_quotes(
         }
         _write_create_only(selection_path, selection)
     feed = _selected_feed(layout, plan, selection)
+    if feed == "iex" and sip_data_path.exists():
+        raise ValueError("IEX feed selection conflicts with prior SIP quote data")
     client = AlpacaHistoricalQuoteClient(api_key, secret_key, feed)
     manifests: list[Mapping[str, Any]] = []
     for window in plan.windows:
@@ -513,6 +609,7 @@ def acquire_calibration_quotes(
                 progress(f"{window.logical_id} {symbol} complete")
     return {
         "program_id": PROGRAM_ID,
+        "run_id": plan.run_id,
         "plan_sha256": plan.sha256,
         "plan_fingerprint": plan.plan_fingerprint,
         "feed": feed,
@@ -525,10 +622,12 @@ def acquire_calibration_quotes(
 
 def analyze_calibration_quotes(repository: Path, data_home: Path) -> dict[str, object]:
     plan = load_calibration_plan(repository)
-    root = data_home / PROGRAM_ID
+    root = data_home / plan.run_id
     selection = _read_json(root / "feed-selection.json")
     layout = StorageLayout(root)
     feed = _selected_feed(layout, plan, selection)
+    if feed == "iex" and (root / "sip-quote-data-returned.json").exists():
+        raise ValueError("IEX feed selection conflicts with prior SIP quote data")
     manifests: list[Mapping[str, Any]] = []
     observations: list[Mapping[str, Any]] = []
     for window in plan.windows:
@@ -569,6 +668,7 @@ def analyze_calibration_quotes(repository: Path, data_home: Path) -> dict[str, o
     analysis: dict[str, object] = {
         "schema_version": ANALYSIS_SCHEMA,
         "program_id": PROGRAM_ID,
+        "run_id": plan.run_id,
         "plan_sha256": plan.sha256,
         "plan_fingerprint": plan.plan_fingerprint,
         "feed": feed,
@@ -577,8 +677,9 @@ def analyze_calibration_quotes(repository: Path, data_home: Path) -> dict[str, o
             "window_count": len(plan.windows),
             "dataset_count": len(manifests),
             "observation_count": len(observations),
-            "minimum_window_coverage": min(
-                _decimal(row.get("grid_coverage"), "grid coverage") for row in validation_rows
+            "minimum_eligible_grid_coverage": min(
+                _decimal(row.get("eligible_grid_coverage"), "eligible grid coverage")
+                for row in validation_rows
             ),
             "exact_duplicate_count": sum(
                 int(row.get("exact_duplicate_count", 0)) for row in validation_rows
@@ -586,6 +687,41 @@ def analyze_calibration_quotes(repository: Path, data_home: Path) -> dict[str, o
             "same_timestamp_update_count": sum(
                 int(row.get("same_timestamp_update_count", 0)) for row in validation_rows
             ),
+            "raw_nonpositive_bid_count": sum(
+                int(row.get("raw_nonpositive_bid_count", 0)) for row in validation_rows
+            ),
+            "raw_nonpositive_ask_count": sum(
+                int(row.get("raw_nonpositive_ask_count", 0)) for row in validation_rows
+            ),
+            "raw_zero_bid_size_count": sum(
+                int(row.get("raw_zero_bid_size_count", 0)) for row in validation_rows
+            ),
+            "raw_zero_ask_size_count": sum(
+                int(row.get("raw_zero_ask_size_count", 0)) for row in validation_rows
+            ),
+            "raw_crossed_market_count": sum(
+                int(row.get("raw_crossed_market_count", 0)) for row in validation_rows
+            ),
+            "raw_locked_market_count": sum(
+                int(row.get("raw_locked_market_count", 0)) for row in validation_rows
+            ),
+            "grid_exclusions": {
+                reason: sum(
+                    int(_mapping(row.get("grid_exclusions"), "grid exclusions").get(reason, 0))
+                    for row in validation_rows
+                )
+                for reason in (
+                    "no_quote",
+                    "stale_quote",
+                    "nonpositive_bid",
+                    "nonpositive_ask",
+                    "zero_bid_size",
+                    "zero_ask_size",
+                    "crossed_market",
+                    "total",
+                    "eligible_locked_market_count",
+                )
+            },
             "maximum_raw_update_gap_ms": max(
                 _decimal(row.get("maximum_raw_update_gap_ms"), "raw update gap")
                 for row in validation_rows
@@ -686,7 +822,11 @@ def _quote(symbol: str, value: object) -> HistoricalQuote:
         raise QuoteAcquisitionError("Alpaca historical quote is missing fields")
     timestamp = _text(item, "t")
     conditions = item["c"]
-    if not isinstance(conditions, list) or any(not isinstance(value, str) for value in conditions):
+    if (
+        not isinstance(conditions, list)
+        or len(conditions) not in {1, 2}
+        or any(not isinstance(value, str) or not value for value in conditions)
+    ):
         raise QuoteAcquisitionError("Alpaca historical quote conditions differ")
     return HistoricalQuote(
         symbol,
@@ -722,6 +862,7 @@ def _datetime_ns(value: datetime) -> int:
 def _logical_key(plan: CalibrationPlan, feed: str, symbol: str, window: CalibrationWindow) -> str:
     return fingerprint(
         {
+            "run_id": plan.run_id,
             "plan_fingerprint": plan.plan_fingerprint,
             "feed": feed,
             "symbol": symbol,
@@ -763,6 +904,7 @@ def _verify_artifact(
     identity_fields = (
         "logical_key",
         "plan_fingerprint",
+        "run_id",
         "feed",
         "symbol",
         "session_date",
@@ -787,6 +929,9 @@ def _verify_artifact(
     )
     if (
         identity.get("plan_fingerprint") != plan.plan_fingerprint
+        or identity.get("run_id") != plan.run_id
+        or manifest.get("program_id") != PROGRAM_ID
+        or manifest.get("run_id") != plan.run_id
         or manifest.get("plan_sha256") != plan.sha256
         or feed not in {"sip", "iex"}
         or symbol not in plan.symbols
@@ -820,6 +965,7 @@ def _selected_feed(
     if set(selection) != {
         "schema_version",
         "program_id",
+        "run_id",
         "plan_fingerprint",
         "feed",
         "reason",
@@ -833,8 +979,9 @@ def _selected_feed(
         "iex": "sip-http-403-entitlement-fallback",
     }.get(feed)
     if (
-        selection.get("schema_version") != "intraday-quote-feed-selection-v1"
+        selection.get("schema_version") != "intraday-quote-feed-selection-v2"
         or selection.get("program_id") != PROGRAM_ID
+        or selection.get("run_id") != plan.run_id
         or selection.get("plan_fingerprint") != plan.plan_fingerprint
         or selection.get("reason") != expected_reason
     ):
@@ -929,6 +1076,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
         plan = load_calibration_plan(parsed.repository)
         result: Mapping[str, object] = {
             "program_id": PROGRAM_ID,
+            "run_id": plan.run_id,
             "plan_sha256": plan.sha256,
             "plan_fingerprint": plan.plan_fingerprint,
             "session_count": len(plan.sessions),
