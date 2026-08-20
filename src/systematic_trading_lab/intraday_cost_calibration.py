@@ -596,6 +596,7 @@ def acquire_calibration_quotes(
             "selected_at": datetime.now(UTC),
         }
         _write_create_only(selection_path, selection)
+        selection = _read_json(selection_path)
     feed = _selected_feed(layout, plan, selection)
     if feed == "iex" and sip_data_path.exists():
         raise ValueError("IEX feed selection conflicts with prior SIP quote data")

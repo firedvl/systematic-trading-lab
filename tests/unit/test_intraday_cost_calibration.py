@@ -213,6 +213,35 @@ def test_partial_sip_data_cannot_trigger_iex_fallback(
     assert constructed_feeds == ["sip"]
 
 
+def test_new_feed_selection_is_reloaded_before_verification(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class SipClient:
+        feed = "sip"
+
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+    def acquire(*args: object, **kwargs: object) -> dict[str, object]:
+        return {"identity": {"dataset_id": "0" * 64}}
+
+    class SelectionVerified(RuntimeError):
+        pass
+
+    def verify(*args: object) -> str:
+        selection = args[-1]
+        stored = json.loads((tmp_path / RUN_ID / "feed-selection.json").read_text())
+        assert selection == stored
+        raise SelectionVerified
+
+    monkeypatch.setattr(calibration, "AlpacaHistoricalQuoteClient", SipClient)
+    monkeypatch.setattr(calibration, "acquire_quote_window", acquire)
+    monkeypatch.setattr(calibration, "_selected_feed", verify)
+
+    with pytest.raises(SelectionVerified):
+        calibration.acquire_calibration_quotes(_REPOSITORY, tmp_path, "key", "secret")
+
+
 def test_prior_sip_data_marker_blocks_later_iex_fallback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
