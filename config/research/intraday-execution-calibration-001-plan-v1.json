@@ -1,0 +1,139 @@
+{
+  "schema_version": "intraday-execution-calibration-plan-v1",
+  "program_id": "intraday-execution-calibration-001",
+  "status": "frozen-before-quote-acquisition",
+  "starting_main": "1186e9356de742ed94d030f272ba5522553be78a",
+  "purpose": "Prospective SPY/QQQ intraday execution-cost calibration from exposed historical quotes, independent of strategy returns.",
+  "authority": {
+    "strategy_results": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "exclusions": {
+    "june_2026": {
+      "start": "2026-06-01T13:30:00Z",
+      "end": "2026-06-30T19:55:00Z"
+    },
+    "v3_validation_ranges": [
+      {
+        "start": "2026-10-01T13:30:00Z",
+        "end": "2026-12-03T20:55:00Z"
+      },
+      {
+        "start": "2026-12-04T14:30:00Z",
+        "end": "2027-02-09T20:55:00Z"
+      },
+      {
+        "start": "2027-02-10T14:30:00Z",
+        "end": "2027-04-15T19:55:00Z"
+      }
+    ],
+    "strategy_candidate_timestamps": true,
+    "strategy_returns": true
+  },
+  "source": {
+    "provider": "alpaca-market-data-api-v2-historical-quotes",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/quotes",
+    "symbols": ["QQQ", "SPY"],
+    "feed_selection": {
+      "algorithm": "Try SIP on the first frozen window. Retain the response if authorized. Fall back to IEX only on HTTP 403 before any quote is returned. HTTP 401, malformed data, or any other failure stops acquisition.",
+      "preferred": "sip",
+      "fallback": "iex",
+      "sip_description": "All U.S. exchanges; used as consolidated NBBO evidence when entitled.",
+      "iex_description": "Investors Exchange only; never described as consolidated NBBO."
+    }
+  },
+  "session_selection": {
+    "calendar": "XNYS",
+    "exposed_start": "2025-07-01",
+    "exposed_end": "2026-05-31",
+    "algorithm": "For each calendar month, select the first XNYS session on or after day 15, then add every XNYS early-close session in the exposed range. Sort and deduplicate.",
+    "sessions": [
+      {"date": "2025-07-03", "reason": "early-close"},
+      {"date": "2025-07-15", "reason": "monthly-anchor"},
+      {"date": "2025-08-15", "reason": "monthly-anchor"},
+      {"date": "2025-09-15", "reason": "monthly-anchor"},
+      {"date": "2025-10-15", "reason": "monthly-anchor"},
+      {"date": "2025-11-17", "reason": "monthly-anchor"},
+      {"date": "2025-11-28", "reason": "early-close"},
+      {"date": "2025-12-15", "reason": "monthly-anchor"},
+      {"date": "2025-12-24", "reason": "early-close"},
+      {"date": "2026-01-15", "reason": "monthly-anchor"},
+      {"date": "2026-02-17", "reason": "monthly-anchor"},
+      {"date": "2026-03-16", "reason": "monthly-anchor"},
+      {"date": "2026-04-15", "reason": "monthly-anchor"},
+      {"date": "2026-05-15", "reason": "monthly-anchor"}
+    ]
+  },
+  "window_selection": {
+    "duration_seconds": 600,
+    "windows": [
+      {"id": "opening", "rule": "session-open-plus-5-minutes"},
+      {"id": "morning", "rule": "session-open-plus-60-minutes"},
+      {"id": "midday", "rule": "session-midpoint-minus-5-minutes"},
+      {"id": "afternoon", "rule": "session-open-plus-300-minutes", "normal_sessions_only": true},
+      {"id": "closing", "rule": "session-close-minus-10-minutes"}
+    ]
+  },
+  "sampling": {
+    "grid_interval_seconds": 1,
+    "quote_lookback_seconds": 5,
+    "selection": "For each grid timestamp, use the last validated quote with provider timestamp strictly before the grid timestamp and no more than five seconds old.",
+    "weighting": "One observation per symbol per grid second; quote-message frequency does not weight the distribution.",
+    "percentile_method": "nearest-rank"
+  },
+  "validation": {
+    "timestamp_order": "nondecreasing-per-symbol",
+    "symbol_must_match": true,
+    "feed_must_match_request": true,
+    "bid_price_gt": "0",
+    "ask_price_gte_bid": true,
+    "sizes_are_nonnegative_integers": true,
+    "exact_duplicate_handling": "retain in raw evidence, suppress from validated quote sequence, and count",
+    "same_timestamp_changed_quotes": "retain in provider order and count",
+    "minimum_grid_coverage_per_window": "0.99",
+    "session_boundary": "Only frozen regular-session windows may produce observations. The five-second request lookback is retained as raw causal context only."
+  },
+  "analysis": {
+    "spread_dollars": "ask_price - bid_price",
+    "midpoint": "(ask_price + bid_price) / 2",
+    "spread_bps": "spread_dollars / midpoint * 10000",
+    "half_spread_bps": "spread_bps / 2",
+    "percentiles": ["p50", "p75", "p90", "p95", "p99"],
+    "groups": ["combined", "symbol", "time-window", "symbol-and-time-window"],
+    "continuity": ["grid_coverage", "quote_age_ms", "maximum_raw_update_gap_ms"]
+  },
+  "official_sources": [
+    {
+      "id": "alpaca-regulatory-fees",
+      "url": "https://docs.alpaca.markets/us/docs/regulatory-fees.md",
+      "document_updated_at": "2025-10-03T17:53:13Z",
+      "retrieved_at": "2026-08-20T21:27:06Z",
+      "sha256": "ee2d303dd467b1de58bea957fcfb0f6799e7f807c5260414308b38ef59f656be"
+    },
+    {
+      "id": "alpaca-brokerage-fee-schedule",
+      "url": "https://files.alpaca.markets/disclosures/library/BrokFeeSched.pdf",
+      "document_revised_at": "2026-07-20",
+      "retrieved_at": "2026-08-20T21:27:11Z",
+      "etag": "0cd2845d1fef8c0bafbfe0b875505c8b",
+      "sha256": "cfed684b2554e856022bc80c4883260ea1414c4ba79fc65304f7fc08cc780a7e"
+    },
+    {
+      "id": "alpaca-paper-trading",
+      "url": "https://docs.alpaca.markets/us/docs/paper-trading.md",
+      "document_updated_at": "2026-07-07T13:49:06Z",
+      "retrieved_at": "2026-08-20T21:27:06Z",
+      "sha256": "8a8bfb57946d8ab1fb80ac8bdb65f6f43d904e955a676d6a5f9f76b6a145a846"
+    },
+    {
+      "id": "alpaca-historical-quotes-api",
+      "url": "https://docs.alpaca.markets/us/reference/stockquotes-1.md",
+      "document_updated_at": "2026-05-27T17:58:03Z",
+      "retrieved_at": "2026-08-20T21:27:06Z",
+      "sha256": "5be32c1fa69c8d5e68fb3946d3e8e05da48ddd7e2afb3f0c7f375b33d0a7028c"
+    }
+  ]
+}
