@@ -1,5 +1,11 @@
 # Architecture decisions
 
+## 2026-08-20 — Preserve crossed SIP states without using negative spreads
+
+- Decision: close calibration plan v1 after its first SIP probe failed raw `ask >= bid` validation, then use a separate v2 plan and runtime identity. V2 retains every raw quote in provider/page order. Each one-second grid point inspects the latest unique raw state and excludes it when stale, one-sided, zero-size, or crossed; it never backfills an older eligible quote. Locked states remain eligible at zero spread. Every symbol-window still requires 99% eligible-grid coverage.
+- Context: the v1 probe found 3 transient $0.01 crosses among 112,133 QQQ updates. Official UTP and CTA specifications permit crossed national BBO states, and regular condition `R` does not prohibit them. No dataset or strategy result existed when v1 stopped.
+- Consequences: v1 plan and quarantine stay immutable. V2 plan SHA-256 is `67dc2a2155a91f5ab26395a4c3f34457ebcb6e1813f95f7e02c642129c9db546`; its separate `intraday-execution-calibration-001-v2` root cannot reuse v1 feed or dataset state. A create-only marker blocks later IEX fallback after any SIP data. The analysis reports raw market-state counts and grid exclusions instead of treating a negative spread as execution cost.
+
 ## 2026-08-20 — Calibrate intraday costs before new strategy research
 
 - Decision: freeze one strategy-independent SPY/QQQ quote sample before acquisition. Select the first XNYS session on or after the 15th of each exposed month through May 2026, add every early close, and sample five fixed ten-minute time windows on a one-second causal grid. Prefer SIP; fall back to IEX only on an entitlement HTTP 403 and label it as venue-only evidence.

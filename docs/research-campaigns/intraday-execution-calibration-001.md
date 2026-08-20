@@ -1,14 +1,16 @@
 # Intraday Execution Calibration 001
 
-Status: frozen before quote acquisition.
+Status: v1 closed before dataset publication; v2 frozen before quote reacquisition.
 
-Plan: `config/research/intraday-execution-calibration-001-plan-v1.json`
+Active plan: `config/research/intraday-execution-calibration-001-plan-v2.json`
 
-Plan SHA-256: `7f762cb4195b406c8b86197bc02f36e562d65af559f8ae1c0070ce05a40d9e38`
+V2 plan SHA-256: `67dc2a2155a91f5ab26395a4c3f34457ebcb6e1813f95f7e02c642129c9db546`
 
-Plan fingerprint: `11658a82234ae3bfdb3c080349f1cb586c08d448ff9eb0935002f2fad703481a`
+V2 plan fingerprint: `c0c4971336569eb05935e2b0b92ffbc3aea50ae39686c7192afbd2cbe99fca4b`
 
-Starting main: `1186e9356de742ed94d030f272ba5522553be78a`
+V1 starting main: `1186e9356de742ed94d030f272ba5522553be78a`
+
+V2 starting main: `355e0ae3b8d1697553f3cfc8b3f230b2019b72dd`
 
 This program calibrates a prospective small-order SPY/QQQ execution-cost model. It does not read
 strategy results. It grants no holdout, paper, broker-write, or live authority.
@@ -32,6 +34,26 @@ strategy-result artifact.
 Intraday Exposed 002. No June read is allowed until the complete final cohort and every controlled
 candidate plan are frozen at the same time. A later metadata conflict stops the campaign; it does
 not select another range.
+
+## V1 acquisition failure
+
+The first frozen SIP probe returned 112,133 QQQ quote updates for the 2025-07-03 opening window.
+Three unique updates were crossed by $0.01. All three carried condition `R`, occurred away from an
+exact one-second grid timestamp, and were followed by an uncrossed update within 0.454 milliseconds.
+V1 required every raw update to have `ask >= bid`, so validation stopped before dataset publication,
+feed selection, analysis, or strategy access. It did not fall back to IEX.
+
+The ignored raw quarantine evidence has SHA-256
+`c099643476b3f26f9342697c842245644ba6a81ad95275b3465a5fa592705f82`. The committed sanitized
+failure record is `config/research/intraday-execution-calibration-001-plan-v1-failure-v1.json`,
+SHA-256 `2bab01f3cc5b4e5809e80d4ce2ab11e32038d23ba129d754ca1a46419a129ef0`, fingerprint
+`4d048b3775e971617fd1448e48d6f9cf7957a909fb06ef0161f63fbc96b7b0f7`. V1 plan and quarantine
+bytes remain unchanged.
+
+Official UTP and CTA specifications permit crossed national BBO states. Condition `R` marks a
+regular BBO-eligible quote; it does not make crossing impossible. V2 therefore treats crossing as a
+market state that is ineligible for a simple nonnegative spread observation, not as malformed raw
+data.
 
 ## Exposed 001 cost audit
 
@@ -91,17 +113,26 @@ The plan selects no date from volatility or strategy performance.
   range. This produces 14 sessions, including 2025-07-03, 2025-11-28, and 2025-12-24.
 - Windows: ten minutes after the earliest possible five-minute fill, morning, session midpoint,
   afternoon on normal sessions, and the final ten minutes. This produces 67 windows.
-- Sampling: one grid point per second. Each point uses the last valid quote strictly before that
-  second and no more than five seconds old.
+- Sampling: one grid point per second. Each point inspects the latest unique raw quote strictly
+  before that second and no more than five seconds old, then applies spread eligibility without
+  backfill.
 - Weighting: time-weighted grid observations, not quote-message counts.
-- Validity: ordered timestamps, exact symbol and feed, positive bid, ask at or above bid, nonnegative
-  integer sizes, explicit duplicate counts, and at least 99% grid coverage in every symbol-window.
+- Raw validity: ordered timestamps, exact symbol and feed, nonnegative prices and integer sizes, one
+  or two condition codes, and explicit duplicate and same-timestamp counts.
+- Grid eligibility: inspect the latest unique raw quote strictly before each grid point; never
+  backfill an older quote. Exclude and count stale, one-sided, zero-size, or crossed latest states.
+  Locked states remain eligible with zero spread. Require at least 99% eligible-grid coverage in
+  every symbol-window.
 - Statistics: spread dollars, spread bps, half-spread bps, median, p75, p90, p95, and p99 for each
   symbol, each time window, symbol-window pairs, and the combined sample. Nearest-rank percentiles
   avoid interpolation choices.
 
-The runner publishes 134 content-addressed symbol-window datasets. Each retains canonical raw quotes,
-causal one-second observations, validation counts, source feed, retrieval time, and SHA-256 values.
+The v2 runner uses the separate runtime identity `intraday-execution-calibration-001-v2` and
+publishes 134 content-addressed symbol-window datasets. Each retains canonical raw quotes, causal
+one-second observations, validation counts, source feed, retrieval time, and SHA-256 values. V2
+cannot reuse the v1 quarantine or feed state. Before parsing the first nonempty SIP page, the runner
+writes a create-only marker. If feed selection has not completed, that marker makes every later
+attempt SIP-only; IEX fallback remains possible only when no SIP quote has ever returned in v2.
 
 ```console
 uv run python -m systematic_trading_lab.intraday_cost_calibration \
@@ -120,7 +151,8 @@ uv run python -m systematic_trading_lab.intraday_cost_calibration \
   analyze --data-home .trading-lab
 ```
 
-No quote request had been made when this plan was frozen.
+No v2 quote request had been made when this plan was frozen. The v1 SIP probe described above is the
+only quote request made so far.
 
 ## Official source identity
 
@@ -130,3 +162,5 @@ No quote request had been made when this plan was frozen.
 | <https://files.alpaca.markets/disclosures/library/BrokFeeSched.pdf> | Revised 2026-07-20; retrieved 2026-08-20T21:27:11Z | `cfed684b2554e856022bc80c4883260ea1414c4ba79fc65304f7fc08cc780a7e` |
 | <https://docs.alpaca.markets/us/docs/paper-trading.md> | Updated 2026-07-07; retrieved 2026-08-20T21:27:06Z | `8a8bfb57946d8ab1fb80ac8bdb65f6f43d904e955a676d6a5f9f76b6a145a846` |
 | <https://docs.alpaca.markets/us/reference/stockquotes-1.md> | Updated 2026-05-27; retrieved 2026-08-20T21:27:06Z | `5be32c1fa69c8d5e68fb3946d3e8e05da48ddd7e2afb3f0c7f375b33d0a7028c` |
+| <https://utpplan.com/DOC/UtpBinaryOutputSpec.pdf> | July 2026; retrieved 2026-08-20T22:03:00Z | `e031d0fb283a97558ca0ae7007e92343c696371d44cd4596189737cbb715c1e3` |
+| <https://www.ctaplan.com/publicdocs/ctaplan/CQS_Pillar_Output_Specification.pdf> | PDF created 2026-03-06; retrieved 2026-08-20T22:03:00Z | `57a88227590f136ecc64a1488aa611f88295ab1fe7b569bc59bd656abbb30dc6` |

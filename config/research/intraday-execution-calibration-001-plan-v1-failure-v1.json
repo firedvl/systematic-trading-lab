@@ -1,0 +1,38 @@
+{
+  "schema_version": "intraday-execution-calibration-plan-failure-v1",
+  "program_id": "intraday-execution-calibration-001",
+  "plan_sha256": "7f762cb4195b406c8b86197bc02f36e562d65af559f8ae1c0070ce05a40d9e38",
+  "attempted_at": "2026-08-20T21:55:47Z",
+  "feed": "sip",
+  "probe": {
+    "symbol": "QQQ",
+    "session_date": "2025-07-03",
+    "window_id": "opening"
+  },
+  "outcome": "failed-before-dataset-publication",
+  "reason": "Three unique transient crossed SIP quote updates violated the frozen ask-greater-than-or-equal-to-bid rule.",
+  "diagnostic": {
+    "raw_quote_count": 112133,
+    "nonpositive_bid_count": 0,
+    "crossed_market_count": 3,
+    "invalid_market_count": 3,
+    "crossed_spread_dollars": "-0.01",
+    "invalid_condition_counts": {"R": 3},
+    "invalid_distinct_timestamp_count": 3,
+    "invalid_exact_grid_second_count": 0,
+    "maximum_resolution_ms": "0.454"
+  },
+  "raw_quarantine": {
+    "relative_path": ".trading-lab/intraday-execution-calibration-001/quarantine/debc00998975c0336ee5cd25aa1c628962698cb516192b93e83f72b4cb1b941b.json",
+    "sha256": "c099643476b3f26f9342697c842245644ba6a81ad95275b3465a5fa592705f82",
+    "committed": false
+  },
+  "authority": {
+    "strategy_results_accessed": false,
+    "june_accessed": false,
+    "v3_accessed": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  }
+}

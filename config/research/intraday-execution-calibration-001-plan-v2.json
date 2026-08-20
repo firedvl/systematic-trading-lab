@@ -1,0 +1,163 @@
+{
+  "schema_version": "intraday-execution-calibration-plan-v2",
+  "program_id": "intraday-execution-calibration-001",
+  "run_id": "intraday-execution-calibration-001-v2",
+  "status": "frozen-before-v2-quote-reacquisition",
+  "starting_main": "355e0ae3b8d1697553f3cfc8b3f230b2019b72dd",
+  "purpose": "Prospective SPY/QQQ intraday execution-cost calibration from exposed historical quotes, independent of strategy returns.",
+  "replaces": {
+    "plan_sha256": "7f762cb4195b406c8b86197bc02f36e562d65af559f8ae1c0070ce05a40d9e38",
+    "failure_record": "config/research/intraday-execution-calibration-001-plan-v1-failure-v1.json",
+    "reason": "The first SIP probe returned three transient crossed updates among 112133 raw quotes, so v1 failed its all-raw-updates market-validity rule before dataset publication."
+  },
+  "authority": {
+    "strategy_results": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "exclusions": {
+    "june_2026": {
+      "start": "2026-06-01T13:30:00Z",
+      "end": "2026-06-30T19:55:00Z"
+    },
+    "v3_validation_ranges": [
+      {
+        "start": "2026-10-01T13:30:00Z",
+        "end": "2026-12-03T20:55:00Z"
+      },
+      {
+        "start": "2026-12-04T14:30:00Z",
+        "end": "2027-02-09T20:55:00Z"
+      },
+      {
+        "start": "2027-02-10T14:30:00Z",
+        "end": "2027-04-15T19:55:00Z"
+      }
+    ],
+    "strategy_candidate_timestamps": true,
+    "strategy_returns": true
+  },
+  "source": {
+    "provider": "alpaca-market-data-api-v2-historical-quotes",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/quotes",
+    "symbols": ["QQQ", "SPY"],
+    "feed_selection": {
+      "algorithm": "Try SIP on the first frozen window. Retain the response if authorized. Persist a create-only marker before processing the first nonempty SIP quote page. Fall back to IEX only on HTTP 403 while that marker is absent, meaning no SIP quote data has ever been returned for this v2 run. Once marked, every retry is SIP-only. HTTP 401, malformed data, partial SIP data, or any other failure stops the attempt.",
+      "preferred": "sip",
+      "fallback": "iex",
+      "sip_description": "All U.S. exchanges; used as consolidated NBBO evidence when entitled.",
+      "iex_description": "Investors Exchange only; never described as consolidated NBBO."
+    }
+  },
+  "session_selection": {
+    "calendar": "XNYS",
+    "exposed_start": "2025-07-01",
+    "exposed_end": "2026-05-31",
+    "algorithm": "For each calendar month, select the first XNYS session on or after day 15, then add every XNYS early-close session in the exposed range. Sort and deduplicate.",
+    "sessions": [
+      {"date": "2025-07-03", "reason": "early-close"},
+      {"date": "2025-07-15", "reason": "monthly-anchor"},
+      {"date": "2025-08-15", "reason": "monthly-anchor"},
+      {"date": "2025-09-15", "reason": "monthly-anchor"},
+      {"date": "2025-10-15", "reason": "monthly-anchor"},
+      {"date": "2025-11-17", "reason": "monthly-anchor"},
+      {"date": "2025-11-28", "reason": "early-close"},
+      {"date": "2025-12-15", "reason": "monthly-anchor"},
+      {"date": "2025-12-24", "reason": "early-close"},
+      {"date": "2026-01-15", "reason": "monthly-anchor"},
+      {"date": "2026-02-17", "reason": "monthly-anchor"},
+      {"date": "2026-03-16", "reason": "monthly-anchor"},
+      {"date": "2026-04-15", "reason": "monthly-anchor"},
+      {"date": "2026-05-15", "reason": "monthly-anchor"}
+    ]
+  },
+  "window_selection": {
+    "duration_seconds": 600,
+    "windows": [
+      {"id": "opening", "rule": "session-open-plus-5-minutes"},
+      {"id": "morning", "rule": "session-open-plus-60-minutes"},
+      {"id": "midday", "rule": "session-midpoint-minus-5-minutes"},
+      {"id": "afternoon", "rule": "session-open-plus-300-minutes", "normal_sessions_only": true},
+      {"id": "closing", "rule": "session-close-minus-10-minutes"}
+    ]
+  },
+  "sampling": {
+    "grid_interval_seconds": 1,
+    "quote_lookback_seconds": 5,
+    "selection": "For each grid timestamp, inspect the latest unique raw quote with provider timestamp strictly before the grid timestamp and no more than five seconds old. Evaluate spread eligibility afterward and never backfill an older quote.",
+    "weighting": "One observation per symbol per grid second; quote-message frequency does not weight the distribution.",
+    "percentile_method": "nearest-rank"
+  },
+  "validation": {
+    "timestamp_order": "nondecreasing-per-symbol",
+    "symbol_must_match": true,
+    "feed_must_match_request": true,
+    "prices_are_nonnegative": true,
+    "sizes_are_nonnegative_integers": true,
+    "condition_count": "one-or-two-per-quote",
+    "exact_duplicate_handling": "Retain in raw evidence, suppress before grid sampling, and count.",
+    "same_timestamp_changed_quotes": "Retain in provider and page order and count; do not infer a secondary causal order.",
+    "latest_state_rule": "At each grid timestamp, inspect the latest unique raw quote strictly before the grid timestamp. Never backfill an older eligible quote when the latest state is ineligible.",
+    "spread_eligible_state": "bid_price > 0, ask_price > 0, bid_size > 0, ask_size > 0, and ask_price >= bid_price.",
+    "ineligible_state_handling": "Retain raw, exclude that grid point from spread analysis, and count no-quote, stale, nonpositive-side, zero-size-side, and crossed-market reasons.",
+    "locked_market_handling": "A positive, positive-size quote with ask_price == bid_price is eligible with zero spread and is counted separately.",
+    "minimum_eligible_grid_coverage_per_window": "0.99",
+    "session_boundary": "Only frozen regular-session windows may produce observations. The five-second request lookback is retained as raw causal context only."
+  },
+  "analysis": {
+    "spread_dollars": "ask_price - bid_price",
+    "midpoint": "(ask_price + bid_price) / 2",
+    "spread_bps": "spread_dollars / midpoint * 10000",
+    "half_spread_bps": "spread_bps / 2",
+    "percentiles": ["p50", "p75", "p90", "p95", "p99"],
+    "groups": ["combined", "symbol", "time-window", "symbol-and-time-window"],
+    "continuity": ["eligible_grid_coverage", "grid_exclusion_reasons", "quote_age_ms", "maximum_raw_update_gap_ms", "raw_crossed_market_count", "eligible_locked_market_count"]
+  },
+  "official_sources": [
+    {
+      "id": "alpaca-regulatory-fees",
+      "url": "https://docs.alpaca.markets/us/docs/regulatory-fees.md",
+      "document_updated_at": "2025-10-03T17:53:13Z",
+      "retrieved_at": "2026-08-20T21:27:06Z",
+      "sha256": "ee2d303dd467b1de58bea957fcfb0f6799e7f807c5260414308b38ef59f656be"
+    },
+    {
+      "id": "alpaca-brokerage-fee-schedule",
+      "url": "https://files.alpaca.markets/disclosures/library/BrokFeeSched.pdf",
+      "document_revised_at": "2026-07-20",
+      "retrieved_at": "2026-08-20T21:27:11Z",
+      "etag": "0cd2845d1fef8c0bafbfe0b875505c8b",
+      "sha256": "cfed684b2554e856022bc80c4883260ea1414c4ba79fc65304f7fc08cc780a7e"
+    },
+    {
+      "id": "alpaca-paper-trading",
+      "url": "https://docs.alpaca.markets/us/docs/paper-trading.md",
+      "document_updated_at": "2026-07-07T13:49:06Z",
+      "retrieved_at": "2026-08-20T21:27:06Z",
+      "sha256": "8a8bfb57946d8ab1fb80ac8bdb65f6f43d904e955a676d6a5f9f76b6a145a846"
+    },
+    {
+      "id": "alpaca-historical-quotes-api",
+      "url": "https://docs.alpaca.markets/us/reference/stockquotes-1.md",
+      "document_updated_at": "2026-05-27T17:58:03Z",
+      "retrieved_at": "2026-08-20T21:27:06Z",
+      "sha256": "5be32c1fa69c8d5e68fb3946d3e8e05da48ddd7e2afb3f0c7f375b33d0a7028c"
+    },
+    {
+      "id": "utp-data-feed-services-specification",
+      "url": "https://utpplan.com/DOC/UtpBinaryOutputSpec.pdf",
+      "document_version": "July 2026",
+      "retrieved_at": "2026-08-20T22:03:00Z",
+      "sha256": "e031d0fb283a97558ca0ae7007e92343c696371d44cd4596189737cbb715c1e3"
+    },
+    {
+      "id": "cta-cqs-pillar-output-specification",
+      "url": "https://www.ctaplan.com/publicdocs/ctaplan/CQS_Pillar_Output_Specification.pdf",
+      "pdf_created_at": "2026-03-06T14:51:23Z",
+      "retrieved_at": "2026-08-20T22:03:00Z",
+      "sha256": "57a88227590f136ecc64a1488aa611f88295ab1fe7b569bc59bd656abbb30dc6"
+    }
+  ]
+}
