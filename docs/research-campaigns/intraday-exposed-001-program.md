@@ -61,6 +61,37 @@ is an allowed result.
 If more than six candidates pass, the plan uses the declared lexicographic order: worst-fold return,
 Stress B return, turnover, then configuration fingerprint. It does not calculate a hidden score.
 
+## Prospective implementation
+
+The research-only strategy layer evaluates every completed, aligned SPY/QQQ slice and emits only
+the frozen `0`, `0.5`, and `1` desired states. Opening-range, mean-reversion, VWAP-reversion, and
+channel contracts reconstruct their entry/exit state from completed session bars, so declared exit
+parameters affect behavior without mutable cross-run state. Relative-strength rotations insert one
+flat decision between different full-weight winners; this lets the frozen FIFO executor sell before
+the replacement full-weight buy. The parameter-free volatility cap in the simple
+momentum-plus-volatility combination is 20 basis points of average absolute five-minute return.
+
+The isolated runner stores exploratory and controlled lifecycle rows only under
+`.trading-lab/intraday-exposed-001`. A controlled run cannot start until create-only cohort and
+controlled-plan artifacts exist. The plan reserves every base, cost, delay, zero-cost, and neighbor
+record before the first June replay, binds completed reports by path and SHA-256, retains failures,
+and evaluates the exact reviewed policy fingerprint plus the plan's additional visible gates. One
+OS file lock covers the campaign. After an interrupted claim, the runner never repeats that replay:
+it reconciles an exact published controlled report or records a terminal failure and rejects the
+affected configuration. Any terminal runtime failure stops the campaign at its next stage boundary,
+before it can claim a complete outcome. Execution also requires a clean source where `HEAD`,
+`main`, and `origin/main` match. The final JSON validates all frozen reporting fields for every
+family winner and serious candidate, using explicit nulls when a later-stage measure is unavailable.
+
+Run the reviewed, clean source from the isolated data root with:
+
+```console
+uv run python -m systematic_trading_lab.intraday_exposed_runner \
+  --repository . \
+  --data-home .trading-lab \
+  --implementation-pr PR_NUMBER
+```
+
 ## Controlled qualification
 
 If the final cohort is empty, the program stops. Otherwise, it writes the complete cohort and
