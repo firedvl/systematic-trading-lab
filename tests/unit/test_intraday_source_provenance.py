@@ -150,6 +150,8 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
     } == set(CURRENT_V2_SURFACE_MISMATCHES)
     assert set(observed) - dict(CAMPAIGN_V2_SURFACE.hashes).keys() == {
         "systematic_trading_lab/intraday_exposure.py",
+        "systematic_trading_lab/intraday_exposed_runner.py",
+        "systematic_trading_lab/intraday_exposed_strategies.py",
         "systematic_trading_lab/intraday_v3.py",
         "systematic_trading_lab/intraday_v3_campaign.py",
         "systematic_trading_lab/intraday_v3_freshness.py",
