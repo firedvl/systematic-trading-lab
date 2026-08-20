@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-20 — Calibrate intraday costs before new strategy research
+
+- Decision: freeze one strategy-independent SPY/QQQ quote sample before acquisition. Select the first XNYS session on or after the 15th of each exposed month through May 2026, add every early close, and sample five fixed ten-minute time windows on a one-second causal grid. Prefer SIP; fall back to IEX only on an entitlement HTTP 403 and label it as venue-only evidence.
+- Context: Intraday Exposed 001 charged 5 bps slippage and 1 bp commission on every fill without quote evidence or SEC, TAF, and CAT fees. Its empty cohort left the planned June range unread by that runner.
+- Consequences: plan SHA-256 `7f762cb4195b406c8b86197bc02f36e562d65af559f8ae1c0070ce05a40d9e38` excludes June, V3, candidate timestamps, and strategy returns. A metadata-only audit reserves June once for Intraday Exposed 002; no June read is allowed before simultaneous cohort and controlled-plan freeze. Quote artifacts are content-addressed and grant no holdout, paper, broker-write, or live authority.
+- Revisit when: quote validation fails, SIP entitlement differs, official fees change before model freeze, or an independent reviewer rejects the method. Do not change this plan after a quote is returned; create a new version.
+
 ## 2026-08-02 — Standalone typed Python package
 
 - Decision: use Python 3.12+, a `src` layout, uv, ruff, mypy, and pytest.

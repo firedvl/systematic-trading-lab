@@ -1,0 +1,38 @@
+{
+  "schema_version": "intraday-exposed-controlled-range-reservation-v1",
+  "program_id": "intraday-exposed-002",
+  "status": "reserved-before-cost-calibration-or-strategy-research",
+  "starting_main": "1186e9356de742ed94d030f272ba5522553be78a",
+  "range": {
+    "context_start": "2026-03-02T14:30:00Z",
+    "evaluation_start": "2026-06-01T13:30:00Z",
+    "evaluation_end": "2026-06-30T19:55:00Z",
+    "symbols": ["QQQ", "SPY"],
+    "timeframe": "5m"
+  },
+  "audit": {
+    "performed_at": "2026-08-20T21:20:00Z",
+    "method": "Repository files and SQLite metadata only; no June bar, quote, or strategy-result artifact was opened.",
+    "active_controlled_registry_sha256": "a97fc979ffea292dfee4a08e49559453da69f3a47c414175f0ac744c7867f2b5",
+    "active_controlled_registry_june_experiment_rows": 0,
+    "active_controlled_registry_unconsumed_holdout_authorizations": 0,
+    "exposed_catalog_sha256": "d0aa2aaece29983ae5a8cce6b192d4d513da1e736bcc68bf2e8c7bf360f6b102",
+    "exposed_catalog_has_may_june_bar_dataset_metadata": true,
+    "intraday_exposed_001_runtime_database_present": false,
+    "current_state_sha256": "30e1b811d6ada1b8a6cfb5182627a2c5e2c881dd64784ff443b389dc65824d9d",
+    "current_state_records_intraday_exposed_001_june_strategy_runs": 0,
+    "intraday_exposed_001_plan_sha256": "75e33950647b83d3213fb635153961b36b80d8dbbbfe9e9220350910c09ecfc9",
+    "intraday_exposed_001_controlled_plan_created": false,
+    "intraday_exposed_001_controlled_result_created": false,
+    "conclusion": "The old plan named June but created no controlled plan, reservation, strategy read, or result. Repository policy grants no global claim from that unused plan. June may be reserved once for Intraday Exposed 002 under this stricter plan."
+  },
+  "access_rule": "Do not load any June bar or quote until the complete eligible Intraday Exposed 002 cohort and every controlled candidate plan are frozen simultaneously.",
+  "failure_rule": "If later metadata proves prior Intraday Exposed 001 June access or another immutable reservation conflict, stop before controlled evaluation and do not substitute another range.",
+  "authority": {
+    "read_june_now": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  }
+}
