@@ -9,11 +9,15 @@ from pathlib import Path
 import pytest
 
 import systematic_trading_lab.intraday_exposed_002_runner as runner_module
+from systematic_trading_lab.datasets import DatasetService
 from systematic_trading_lab.intraday_exposed_002_engine import Exposed002ReplayResult
+from systematic_trading_lab.intraday_exposed_002_plan import load_intraday_exposed_002_plan
 from systematic_trading_lab.intraday_exposed_002_runner import (
     IntradayExposed002Store,
     _aggregate_reports,
+    _dataset_bindings,
     _gate_results,
+    _resolve_dataset_services,
     _run_id,
     _run_report,
     _select_with_caps,
@@ -22,6 +26,7 @@ from systematic_trading_lab.intraday_exposed_002_runner import (
     intraday_exposed_002_plan_summary,
     intraday_exposed_002_status,
 )
+from systematic_trading_lab.storage import StorageLayout
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 
@@ -316,6 +321,68 @@ def test_runner_enforces_source_gate_before_data_access(
             data_service=_DataService(),  # type: ignore[arg-type]
         )
     assert accessed is False
+
+
+def test_runner_resolves_frozen_datasets_across_exact_catalog_roots(
+    tmp_path: Path,
+) -> None:
+    bindings = _dataset_bindings(load_intraday_exposed_002_plan(_REPOSITORY))
+    primary = DatasetService(StorageLayout(tmp_path))
+    exposed = DatasetService(StorageLayout(tmp_path / "intraday-exposed"))
+    for binding in bindings[:-1]:
+        exposed.catalog.register(
+            {
+                "identity": {
+                    "dataset_id": binding.dataset_id,
+                    "fingerprint": binding.data_fingerprint,
+                },
+                "retrieval_timestamp": "2026-08-20T00:00:00Z",
+            },
+            exposed.layout.dataset(binding.dataset_id) / "manifest.json",
+        )
+    may = bindings[-1]
+    primary.catalog.register(
+        {
+            "identity": {
+                "dataset_id": may.dataset_id,
+                "fingerprint": may.data_fingerprint,
+            },
+            "retrieval_timestamp": "2026-08-20T00:00:00Z",
+        },
+        primary.layout.dataset(may.dataset_id) / "manifest.json",
+    )
+
+    resolved = _resolve_dataset_services(tmp_path, bindings)
+
+    assert all(
+        resolved[binding.dataset_id].layout.root == exposed.layout.root for binding in bindings[:-1]
+    )
+    assert resolved[may.dataset_id].layout.root == primary.layout.root
+
+    duplicate = bindings[0]
+    primary.catalog.register(
+        {
+            "identity": {
+                "dataset_id": duplicate.dataset_id,
+                "fingerprint": duplicate.data_fingerprint,
+            },
+            "retrieval_timestamp": "2026-08-20T00:00:00Z",
+        },
+        primary.layout.dataset(duplicate.dataset_id) / "manifest.json",
+    )
+    duplicate_resolution = _resolve_dataset_services(tmp_path, bindings)
+    assert duplicate_resolution[duplicate.dataset_id].layout.root == exposed.layout.root
+
+
+def test_missing_exact_dataset_catalog_fails_before_runtime_state(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(runner_module, "_source_commit", lambda _repository: "a" * 40)
+
+    with pytest.raises(ValueError, match="dataset catalog is missing"):
+        runner_module.IntradayExposed002Runner(_REPOSITORY, tmp_path)
+
+    assert not (tmp_path / "intraday-exposed-002").exists()
 
 
 def test_store_database_name_and_no_controlled_table(tmp_path: Path) -> None:

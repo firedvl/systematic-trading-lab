@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-20 — Bind Exposed 002 datasets to their exact local catalogs
+
+- Decision: runner v2 dispatches the three frozen pre-May dataset IDs only through `data_home/intraday-exposed` and the frozen May dataset ID only through `data_home`. It does not scan, relocate, rebuild, or fall back between catalogs. The chosen service still performs the existing manifest, byte, full-integrity, range, and pre-June checks before runtime state exists.
+- Context: PR #152 merged runner v1 at `794045775d323f1ba2481b44a454be4386bc7edd`. Its first CLI invocation used one main-root `DatasetService` for all four bindings and stopped with `dataset not found` because the three historical datasets remain in the isolated catalog. The failure happened before full validation, bar loading, runtime-directory creation, a database or run row, or a strategy result.
+- Consequences: the pre-result failure is not retried or deleted because it created no mutable campaign state. Runner v2 has a new source identity and must pass independent review, CI, merge, and the clean exact-main gate before the first strategy result. Strategy mechanics, costs, periods, gates, dataset identities, June prohibition, and all false authorities remain unchanged.
+- Revisit when: never within Intraday Exposed 002 after its first strategy result. Moving a frozen dataset requires a separate prospective decision and review.
+
 ## 2026-08-20 — Freeze Exposed 002 mechanics and accounting before results
 
 - Decision: use one isolated Exposed 002 engine, registry, and CLI. Strategies emit only binary `0` or `0.5` desired weights after completed five-minute bars. Changed states queue FIFO for the frozen scenario delay, never supersede, never resize, and permit one entry per symbol and session. Existing pre-cutoff entries and exits retain their eligible fills; the controller projects the remaining queue and adds a final-open flatten when its final state is invested. Derive every family rule and metric by the exact formulas in `docs/research-campaigns/intraday-exposed-002-program.md`.
