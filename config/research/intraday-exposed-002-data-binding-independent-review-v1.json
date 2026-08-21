@@ -1,0 +1,95 @@
+{
+  "schema_version": "intraday-exposed-002-data-binding-independent-review-v1",
+  "review_id": "intraday-exposed-002-data-binding-independent-review-v1",
+  "program_id": "intraday-exposed-002",
+  "status": "passed-before-runner-or-strategy-results",
+  "review_date": "2026-08-20",
+  "review_method": "Independent read-only final-byte review of the exact binding and its one permitted local May dataset after the amendment merged.",
+  "reviewed_binding": {
+    "path": "config/research/intraday-exposed-002-data-binding-v1.json",
+    "sha256": "3d6a5dde3b05369ceeb1e3be5b1f47e73a541c74eed184e1850945ee56890769",
+    "binding_fingerprint": "b6849987e7673c4073272ec891e7f7118b91eba6926aa4c16f262162f529ea9d"
+  },
+  "reviewed_amendment": {
+    "path": "config/research/intraday-exposed-002-plan-amendment-v2.json",
+    "sha256": "d6409531b31d25c4f3bcd79a55b2bf22b359ca71e4a0fada346ba06dbf0bc14b",
+    "amendment_fingerprint": "e02a23d078f5b4d7216f7b1ede6dab0c2b85859e8e56c4781da5fa32a6429e00",
+    "review_path": "config/research/intraday-exposed-002-plan-amendment-independent-review-v2.json",
+    "review_sha256": "a739b1e5bb82d0c03640e5d9fd13a4d1edc3b77c1865ed7a065520f9d3c11aa3",
+    "review_fingerprint": "38a359ce9eb04243ba4092e7eb70c7239a46ac738de3ccbd09b6ddde31325976"
+  },
+  "verdict": "pass",
+  "findings": [],
+  "answers": [
+    {
+      "control": "exact-reviewed-dependency-chain",
+      "answer": "pass",
+      "basis": "The binding exactly identifies the merged base plan, plan review, amendment, amendment review, and acquisition disposition."
+    },
+    {
+      "control": "catalog-manifest-and-content-identity",
+      "answer": "pass",
+      "basis": "The catalog row, stored manifest, derived dataset ID, normalized fingerprint, raw fingerprint, and raw, Parquet, and manifest SHA-256 values all agree."
+    },
+    {
+      "control": "complete-pre-june-raw-evidence",
+      "answer": "pass",
+      "basis": "All 3,503 raw records are retained through May 29 at 20:00, 383 are outside the normalized grid, and every timestamp is strictly before June."
+    },
+    {
+      "control": "exact-normalized-may-grid",
+      "answer": "pass",
+      "basis": "The normalized artifact contains 3,120 unique SPY/QQQ five-minute bars over 20 complete XNYS sessions from May 1 at 13:30 through May 29 at 19:55."
+    },
+    {
+      "control": "prospective-single-artifact-selection",
+      "answer": "pass",
+      "basis": "Committed metadata binds the artifact produced by the exact predeclared GET. No alternate dataset or strategy outcome was used."
+    },
+    {
+      "control": "remaining-gates-and-authority",
+      "answer": "pass",
+      "basis": "Binding merge and isolated runner merge remain required. Strategy results, qualification, controlled evaluation, protected holdout, paper, broker-write, and live authority remain false."
+    }
+  ],
+  "verification": {
+    "binding_sha256_revalidated": true,
+    "binding_fingerprint_revalidated": true,
+    "dependency_sha256_values_revalidated": true,
+    "dataset_service_validation_passed": true,
+    "catalog_matches_stored_manifest": true,
+    "derived_dataset_id_matches": true,
+    "raw_sha256_revalidated": true,
+    "bars_sha256_revalidated": true,
+    "manifest_sha256_revalidated": true,
+    "raw_fingerprint_revalidated": true,
+    "normalized_fingerprint_revalidated": true,
+    "manifest_symbol_order": ["SPY", "QQQ"],
+    "raw_record_count": 3503,
+    "raw_outside_regular_grid_count": 383,
+    "normalized_bar_count": 3120,
+    "session_count": 20,
+    "all_permitted_artifact_timestamps_before_june": true,
+    "configuration_count": 60,
+    "independent_focused_tests_passed": 2,
+    "independent_ruff_passed": true,
+    "staged_diff_check_passed": true,
+    "exact_staged_byte_review": true,
+    "opened_dataset_ids": [
+      "4afa60f29ea266ec8b60be9d9600132f8cff4207e846443c65afd3bb5c497a19"
+    ],
+    "other_dataset_artifacts_opened": false,
+    "prices_printed": false
+  },
+  "scope_limit": "External acquisition behavior was accepted from committed immutable provenance because proving it again would exceed scope. The review opened only the exact bound May dataset and did not inspect another dataset, a strategy result, June or V3 data, or PAPER, broker, live, protected, or strategic-allocation-21 state.",
+  "authority": {
+    "strategy_results": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "bae2ed10678d5a18c916773b1dcfe0b11d3b26f1f7ec2d2ec9e88dd88965d444"
+}

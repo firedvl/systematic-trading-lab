@@ -11,7 +11,7 @@
 
 - Decision: do not use the existing May–June Parquet for Exposed 002. After the prospective plan merges, acquire QQQ/SPY IEX five-minute bars for May 1–29 through the GET-only Alpaca historical adapter and publish a separate artifact with no June market-data timestamp. Require normalized Parquet and manifest ranges to end at May 29 at 19:55, and freeze and independently review the exact binding before strategy execution.
 - Context: datasets use Parquet without row-group statistics. A filtered read can scan June rows from the existing combined artifact before returning the May predicate.
-- Consequences: the preregistration binds only the three existing datasets through April. May acquisition, binding review, runner merge, and exact runtime-main checks remain separate gates. Full validation is allowed only for artifacts physically bounded before June.
+- Consequences: the preregistration binds only the three existing datasets through April. The exact May binding passed full validation and independent review at SHA-256 `3d6a5dde3b05369ceeb1e3be5b1f47e73a541c74eed184e1850945ee56890769`, fingerprint `b6849987e7673c4073272ec891e7f7118b91eba6926aa4c16f262162f529ea9d`; review SHA-256 is `16e1ae6bc4f718f5086eec15dfcdab61fa1a2ca57ce85dab73de8fbb045e3701`, fingerprint `bae2ed10678d5a18c916773b1dcfe0b11d3b26f1f7ec2d2ec9e88dd88965d444`. Binding merge, runner merge, and exact runtime-main checks remain separate gates. Full validation is allowed only for artifacts physically bounded before June.
 - Revisit when: never within Intraday Exposed 002. Storage-level partitions or row-group evidence may support a different boundary in a later program.
 
 ## 2026-08-20 — Treat June as exposed and stop before controlled evaluation

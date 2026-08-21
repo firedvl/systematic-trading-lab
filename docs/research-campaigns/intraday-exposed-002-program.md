@@ -1,8 +1,9 @@
 # Intraday Exposed 002
 
 Status: plan v1 and its independent review merged. The exact May GET exposed a pre-result raw
-transport boundary mismatch. That attempt is closed. Amendment v2 and its independent review are
-frozen before data binding or strategy results and await merge.
+transport boundary mismatch. That attempt is closed. Amendment v2 and its review merged. The exact
+May data binding and its independent review are frozen before runner work or strategy results and
+await merge.
 
 Starting main: `71aa4da11875cffbff77693be83d116d11a5cb73`
 
@@ -32,6 +33,16 @@ Plan amendment v2 review SHA-256:
 
 Plan amendment v2 review fingerprint:
 `38a359ce9eb04243ba4092e7eb70c7239a46ac738de3ccbd09b6ddde31325976`
+
+Data binding SHA-256: `3d6a5dde3b05369ceeb1e3be5b1f47e73a541c74eed184e1850945ee56890769`
+
+Data binding fingerprint: `b6849987e7673c4073272ec891e7f7118b91eba6926aa4c16f262162f529ea9d`
+
+Data binding review SHA-256:
+`16e1ae6bc4f718f5086eec15dfcdab61fa1a2ca57ce85dab73de8fbb045e3701`
+
+Data binding review fingerprint:
+`bae2ed10678d5a18c916773b1dcfe0b11d3b26f1f7ec2d2ec9e88dd88965d444`
 
 This campaign tests new sparse SPY/QQQ five-minute strategies under the frozen calibrated execution
 model. It does not replay an Intraday Exposed 001 candidate. It does not read or modify protected
@@ -78,10 +89,10 @@ Amendment v2 preserves every strategy and control while replacing only that boun
 records must remain complete and strictly pre-June; normalized Parquet and manifest ranges must end
 exactly at `19:55`. It binds the exact dataset fingerprints, byte hashes, counts, and bounds.
 
-Amendment v2 still grants no binding authority. Its independent final-byte review passed with no
-findings. The amendment and review must merge first. The exact binding must then be frozen in
-`config/research/intraday-exposed-002-data-binding-v1.json`, independently reviewed, and merged
-before strategy execution. One-minute acquisition remains excluded.
+Amendment v2 and its no-finding review merged in PR #150 at
+`01430416953559e0168a2192afb3f859440bc7a4`. The exact binding then passed full local validation and
+an independent final-byte review. The binding and review must merge before isolated runner work;
+they still grant no strategy-execution authority. One-minute acquisition remains excluded.
 
 | Stage | Evaluation range | Sessions |
 | --- | --- | ---: |
@@ -164,11 +175,11 @@ The plan-v1 independent prospective review passed with no findings after a final
 later transport mismatch did not change any price, strategy, cost, chronology, gate, stress,
 neighbor, cohort, June, or terminal rule.
 
-Amendment v2's independent final-byte review passed all six controls with no findings. Repository
-gates, PR review, CI, and merge remain. The exact May data binding and its separate review must merge
-next. A later isolated runner must then pass focused tests, full repository gates, PR review, CI,
-and merge. The runtime must start from that exact merged implementation main. No strategy run is
-allowed sooner.
+Amendment v2 and its no-finding review passed repository gates, PR review, CI, and merge. The exact
+May data binding also passed independent review with no findings. Repository gates, PR review, CI,
+and merge remain for this binding slice. A later isolated runner must then pass focused tests, full
+repository gates, PR review, CI, and merge. The runtime must start from that exact merged
+implementation main. No strategy run is allowed sooner.
 
 The plan grants no research qualification, controlled evaluation, protected holdout, paper,
 broker-write, or live authority.

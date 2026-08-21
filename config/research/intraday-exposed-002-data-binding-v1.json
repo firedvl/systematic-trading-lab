@@ -1,0 +1,102 @@
+{
+  "schema_version": "intraday-exposed-002-data-binding-v1",
+  "binding_id": "intraday-exposed-002-data-binding-v1",
+  "program_id": "intraday-exposed-002",
+  "status": "frozen-after-amendment-merge-before-runner-or-strategy-results",
+  "binding_main": "01430416953559e0168a2192afb3f859440bc7a4",
+  "frozen_dependencies": {
+    "base_plan": {
+      "path": "config/research/intraday-exposed-002-plan-v1.json",
+      "sha256": "8acb778eec43dd53b56c65712b5a076bdc6126de3504d68114aa714e2474b17f",
+      "plan_fingerprint": "a255949e41c9776e82a04782c6183f5af1476a1dc97c36be4910e4d59424fb98",
+      "review_path": "config/research/intraday-exposed-002-plan-independent-review-v1.json",
+      "review_sha256": "7a87b647aaf420a8613b793f26bc948c5572e6d66907f9aa9c330e9c543fafb0",
+      "review_fingerprint": "2ecd5227c3ddc51de9725484de21c994a930dc6f83b7c866d886b68185efdcc4"
+    },
+    "plan_amendment": {
+      "path": "config/research/intraday-exposed-002-plan-amendment-v2.json",
+      "sha256": "d6409531b31d25c4f3bcd79a55b2bf22b359ca71e4a0fada346ba06dbf0bc14b",
+      "amendment_fingerprint": "e02a23d078f5b4d7216f7b1ede6dab0c2b85859e8e56c4781da5fa32a6429e00",
+      "review_path": "config/research/intraday-exposed-002-plan-amendment-independent-review-v2.json",
+      "review_sha256": "a739b1e5bb82d0c03640e5d9fd13a4d1edc3b77c1865ed7a065520f9d3c11aa3",
+      "review_fingerprint": "38a359ce9eb04243ba4092e7eb70c7239a46ac738de3ccbd09b6ddde31325976"
+    },
+    "acquisition_disposition": {
+      "path": "config/research/intraday-exposed-002-may-acquisition-disposition-v1.json",
+      "sha256": "eca321176b609e5b2e9069b7364a1d61979998899b8ef6c4dc4c75d457816707",
+      "disposition_fingerprint": "3715a0f424e7450976b1d17f0118906ab9c862e601fcb2c226d98916465df7b3"
+    }
+  },
+  "selection_basis": "Bind the only artifact published by the exact post-plan GET. No price value, strategy result, alternate acquisition, or existing May-June artifact informed the selection.",
+  "may_dataset": {
+    "dataset_id": "4afa60f29ea266ec8b60be9d9600132f8cff4207e846443c65afd3bb5c497a19",
+    "fingerprint": "d34de04b0045967396266bfba7c3427b5fac949d5e1800c0d5fe5b3fc454e29c",
+    "raw_fingerprint": "9c0fa665f1afcf9f5355758d5dfe17b49e090671812132cc00612d337b96f5a5",
+    "raw_sha256": "e5fd2680c7915f4673e1735f860473c37e32ceaa57f7876111310d0ac5c87ad2",
+    "manifest_sha256": "027714eeb34f274c6b887c1fefecdd72b18d24ef505a906a9d5137bdc8e2ee5f",
+    "bars_sha256": "74ce7f13971564b4d7d42e0e7adfc1811ed026498cbed9fac7e79864d1afdb44",
+    "provider": "alpaca-historical-v2",
+    "feed": "iex",
+    "symbols": ["SPY", "QQQ"],
+    "timeframe": "5m",
+    "adjustment_policy": "provider-adjusted-all-v1",
+    "calendar_policy": "XNYS-regular-session-bars-v1",
+    "timestamp_policy": "bar-open-utc-v1",
+    "universe_id": "liquid-etfs-intraday-5m-v1",
+    "universe_fingerprint": "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9",
+    "requested_start": "2026-05-01T13:30:00Z",
+    "requested_end": "2026-05-29T19:55:00Z",
+    "actual_start": "2026-05-01T13:30:00Z",
+    "actual_end": "2026-05-29T19:55:00Z",
+    "raw_start": "2026-05-01T13:30:00Z",
+    "raw_end": "2026-05-29T20:00:00Z",
+    "raw_record_count": 3503,
+    "raw_outside_regular_grid_count": 383,
+    "session_count": 20,
+    "bar_count": 3120,
+    "retrieval_timestamp": "2026-08-21T00:51:06.432445Z",
+    "parent_dataset_id": null,
+    "acquisition_main": "1aedc2d4056c955a8fdd835a1795277979c94be4",
+    "contains_june_market_timestamp": false,
+    "physically_bounded_before_june": true
+  },
+  "validation": {
+    "full_dataset_validation_performed_after_amendment_merge": true,
+    "dataset_service_validation_passed": true,
+    "catalog_matches_manifest": true,
+    "identity_matches_manifest": true,
+    "raw_artifact_matches": true,
+    "raw_sha256_revalidated": true,
+    "manifest_sha256_revalidated": true,
+    "bars_sha256_revalidated": true,
+    "normalized_fingerprint_revalidated": true,
+    "raw_fingerprint_revalidated": true,
+    "missing_interval_count": 0,
+    "duplicate_interval_count": 0,
+    "conflict_count": 0,
+    "quarantined_record_count": 0,
+    "raw_contains_june_market_timestamp": false,
+    "normalized_contains_june_market_timestamp": false,
+    "existing_may_june_artifact_accessed": false,
+    "strategy_result_access": false,
+    "v3_data_access": false,
+    "paper_or_broker_state_access": false,
+    "strategic_allocation_21_access": false
+  },
+  "execution_gates": {
+    "data_binding_independent_review_required": true,
+    "data_binding_merge_required": true,
+    "runner_implementation_and_merge_required": true,
+    "strategy_execution_allowed_now": false
+  },
+  "authority": {
+    "strategy_results": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "binding_fingerprint": "b6849987e7673c4073272ec891e7f7118b91eba6926aa4c16f262162f529ea9d"
+}
