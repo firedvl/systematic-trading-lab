@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-21 — Re-execute the exact Exposed 002 design as Intraday Exposed 003
+
+- Decision: freeze a new `intraday-exposed-003` plan that loads the exact reviewed Exposed 002 plan, amendment, data binding, cost model, mechanics, chronology, strategy grid, gates, and cohort rules. Rekey only campaign identities and use `research-attempts-v1` with at most three infrastructure attempts. Do not import Exposed 002 runtime rows or use its partial results to change the design.
+- Context: Exposed 002 ended after its runner disappeared with 4 completed, 1 failed, and 115 pending discovery rows. Its no-retry lifecycle made that operational interruption terminal without producing a qualification result. The partial rows are exposed evidence, so any adaptive change would contaminate a clean re-execution.
+- Consequences: Exposed 003 has new candidate, reservation, run, attempt, database, and report identities while retaining all 60 parents and 120 Normal/zero discovery rows. It reuses the four physically pre-June datasets and calibrated cost model without reacquisition or recalibration. Committed Intraday V2 exposure metadata makes June ineligible; no June read, substitute range, controlled plan, or controlled-qualification claim is allowed. A proven mechanics defect stops the campaign before execution instead of being repaired in place.
+- Revisit when: never after the first Exposed 003 strategy result. A different design, controlled range, or mechanics change requires another prospective campaign.
+
 ## 2026-08-21 — New deterministic campaigns may retry vanished infrastructure attempts
 
 - Decision: add one generic `research-attempts-v1` registry for prospectively versioned deterministic campaigns. Keep each immutable run specification separate from up to three append-only execution attempts. Renew private leases with heartbeats. Only an expired no-result lease may return the same run to pending. Journal one canonical report before create-only file publication. Treat candidate exceptions, data-integrity failures, canonical publication conflicts, and the third expired attempt as terminal.

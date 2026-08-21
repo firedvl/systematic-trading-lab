@@ -155,6 +155,7 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "systematic_trading_lab/intraday_exposed_002_plan.py",
         "systematic_trading_lab/intraday_exposed_002_runner.py",
         "systematic_trading_lab/intraday_exposed_002_strategies.py",
+        "systematic_trading_lab/intraday_exposed_003_plan.py",
         "systematic_trading_lab/intraday_exposure.py",
         "systematic_trading_lab/intraday_exposed_runner.py",
         "systematic_trading_lab/intraday_exposed_strategies.py",
