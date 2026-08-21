@@ -1,0 +1,88 @@
+{
+  "schema_version": "intraday-exposed-002-plan-independent-review-v1",
+  "review_id": "intraday-exposed-002-plan-independent-review-v1",
+  "status": "passed-before-may-only-data-acquisition-or-strategy-results",
+  "review_date": "2026-08-20",
+  "review_method": "Independent read-only prospective control review with a final-byte re-review after the data-boundary correction.",
+  "reviewed_plan": {
+    "program_id": "intraday-exposed-002",
+    "path": "config/research/intraday-exposed-002-plan-v1.json",
+    "sha256": "8acb778eec43dd53b56c65712b5a076bdc6126de3504d68114aa714e2474b17f",
+    "plan_fingerprint": "a255949e41c9776e82a04782c6183f5af1476a1dc97c36be4910e4d59424fb98"
+  },
+  "verdict": "pass",
+  "findings": [],
+  "answers": [
+    {
+      "control": "june-ineligible-no-substitute",
+      "answer": "pass",
+      "basis": "The bound June disposition rejects June reads, a controlled plan, controlled evaluation, and a substitute range."
+    },
+    {
+      "control": "chronology-and-physical-data-boundary",
+      "answer": "pass",
+      "basis": "Three existing bindings end by April 30. The final May fold requires a post-merge GET-only IEX acquisition whose raw and Parquet market-data timestamps and manifest ranges end May 29. The existing May-June artifact cannot be used or filtered."
+    },
+    {
+      "control": "required-directions-a-through-j",
+      "answer": "pass",
+      "basis": "The ten frozen families cover every required direction with causal completed-bar inputs and sparse entry rules."
+    },
+    {
+      "control": "bounded-sparse-search",
+      "answer": "pass",
+      "basis": "Ten families each expand two axes to six parents, for 60 exact configurations under the 800-parent ceiling."
+    },
+    {
+      "control": "paired-cost-model-and-fees",
+      "answer": "pass",
+      "basis": "Normal and zero-cost pairs are frozen, the calibrated model and its passed review are hash-bound, and daily SEC, TAF, and CAT accounting is explicit."
+    },
+    {
+      "control": "prospective-visible-gates",
+      "answer": "pass",
+      "basis": "Return, fold consistency, drawdown, turnover, cost efficiency, gross edge, holding time, symbol concentration, and accounting thresholds are fixed before results."
+    },
+    {
+      "control": "stress-neighbors-and-cohort",
+      "answer": "pass",
+      "basis": "All serious candidates require Stress A, Stress B, isolated delay-2 and delay-3, every immediate neighbor, and uniform cohort selection with at most one candidate per family."
+    },
+    {
+      "control": "terminal-paths-and-authority",
+      "answer": "pass",
+      "basis": "An empty cohort closes as failed exposed evidence. A nonempty cohort freezes and stops without controlled qualification. No Exposed 002 runner or CLI exists in this slice."
+    }
+  ],
+  "resolved_before_final_verdict": [
+    {
+      "finding": "The original May predicate could scan June rows in a Parquet artifact written without row-group statistics.",
+      "resolution": "The final plan removes the May-June binding and requires a new physically May-bounded dataset."
+    },
+    {
+      "finding": "The first revised publication rule could be read as requiring the later manifest retrieval timestamp to end in May.",
+      "resolution": "The final rule limits the cutoff to market-data timestamps and the manifest requested and actual ranges."
+    }
+  ],
+  "verification": {
+    "plan_sha256_revalidated": true,
+    "plan_fingerprint_revalidated": true,
+    "configuration_count": 60,
+    "independent_focused_tests_passed": 9,
+    "independent_direct_loader_check_passed": true,
+    "root_ruff_passed": true,
+    "root_strict_mypy_passed": true,
+    "exact_byte_rereview": true
+  },
+  "scope_limit": "The review did not inspect market data, protected results, June or V3 data, or PAPER, broker, live, or strategic-allocation-21 state.",
+  "authority": {
+    "may_data_acquisition": false,
+    "strategy_results": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "2ecd5227c3ddc51de9725484de21c994a930dc6f83b7c866d886b68185efdcc4"
+}

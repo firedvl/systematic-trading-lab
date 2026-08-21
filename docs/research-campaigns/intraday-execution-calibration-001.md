@@ -42,10 +42,11 @@ strategy-result artifact.
 - The old frozen plan named June, but the name alone created no global reservation or access
   authority under `docs/research-policy.md`.
 
-`config/research/intraday-exposed-002-june-reservation-v1.json` therefore reserves June once for
-Intraday Exposed 002. No June read is allowed until the complete final cohort and every controlled
-candidate plan are frozen at the same time. A later metadata conflict stops the campaign; it does
-not select another range.
+`config/research/intraday-exposed-002-june-reservation-v1.json` recorded that first conclusion and
+forbade early access. A later metadata-only review found the conflict its failure rule anticipated:
+the committed exposure inventory classifies Intraday V2 results through June 30, 2026. The v2 June
+disposition preserves the old artifact but supersedes its clean-range conclusion. Exposed 002 will
+not read June, perform a controlled evaluation there, or choose another range.
 
 ## V1 acquisition failure
 
