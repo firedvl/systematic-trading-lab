@@ -20,6 +20,11 @@ from .intraday_exposed_002_runner import (
     intraday_exposed_002_status,
     run_intraday_exposed_002_campaign,
 )
+from .intraday_exposed_003_runner import (
+    intraday_exposed_003_plan_summary,
+    intraday_exposed_003_status,
+    run_intraday_exposed_003_campaign,
+)
 from .rapid_004 import RAPID_004_PROGRAM_ID
 from .rapid_004_runner import (
     rapid_004_plan_summary,
@@ -83,6 +88,13 @@ def research_parser() -> argparse.ArgumentParser:
         help="plan, run, or inspect the frozen Intraday Exposed 002 campaign",
     )
     intraday_exposed_002.add_argument(
+        "action", nargs="?", choices=("plan", "run", "status"), default="status"
+    )
+    intraday_exposed_003 = commands.add_parser(
+        "intraday-exposed-003",
+        help="plan, run, or inspect the restart-safe Intraday Exposed 003 campaign",
+    )
+    intraday_exposed_003.add_argument(
         "action", nargs="?", choices=("plan", "run", "status"), default="status"
     )
     backtest = commands.add_parser(
@@ -225,6 +237,21 @@ def _run_research(arguments: argparse.Namespace, settings: Settings) -> int:
         else:
             _print(
                 run_intraday_exposed_002_campaign(
+                    repository,
+                    settings.home,
+                    progress=lambda message: print(message, file=sys.stderr),
+                )
+            )
+        return 0
+    if arguments.research_command == "intraday-exposed-003":
+        repository = Path(__file__).resolve().parents[2]
+        if arguments.action == "plan":
+            _print(intraday_exposed_003_plan_summary(repository))
+        elif arguments.action == "status":
+            _print(intraday_exposed_003_status(settings.home))
+        else:
+            _print(
+                run_intraday_exposed_003_campaign(
                     repository,
                     settings.home,
                     progress=lambda message: print(message, file=sys.stderr),

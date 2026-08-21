@@ -1,6 +1,6 @@
 # Intraday Exposed 003 program
 
-Status: frozen before Exposed 003 implementation or strategy execution.
+Status: runner implemented; strategy execution requires a clean exact merged implementation main.
 
 Starting main: `9de63bfe3278091220ffbf88743daba7a24ddb1c`.
 
@@ -74,6 +74,20 @@ publication conflicts, failed gates, and an exhausted third attempt remain termi
 uses a 300-second lease and 60-second heartbeat. Canonical results are journaled once before
 create-only publication and reconciled on restart.
 
+Runner v1 subclasses the frozen Exposed 002 stage logic without changing an Exposed 002 file. Its
+specifications, reservations, reports, runtime, and final evidence use Exposed 003 identities. It
+passes each plan-bound `source_candidate_id` to the unchanged strategy factory and preserves the
+existing evaluation-start wrapper, so strategy mechanics still receive the required `ie002-`
+identity without importing an Exposed 002 result. Full dataset validation still precedes runtime
+directory creation.
+
+Attempt setup, output capture, heartbeat, and canonical publication errors do not become candidate
+failures. Without a canonical result, they retain the active lease for expiry-based recovery.
+Exceptions from strategy construction, replay, or report construction are terminal candidate
+failures; bar-load failures are terminal data failures. A still-active lease produces no terminal
+campaign report. Final evidence records every attempt and validates its database, freeze, JSON,
+and create-only Markdown on restart.
+
 ## June disposition
 
 June 2026 is ineligible before Exposed 003 strategy execution. The metadata-only disposition is
@@ -90,7 +104,9 @@ stops before controlled evaluation without claiming controlled qualification.
 
 The independent prospective plan review passed with no findings. This plan grants no
 strategy-result, controlled-evaluation, qualification, paper, broker-write, or live authority. The
-isolated runner and tests must merge through independent review and green CI.
+isolated runner's independent review found and closed two issues: startup publication conflicts now
+reach terminal evidence, and public status now verifies the final database and freeze. The final
+review found no P0, P1, or P2 issue. Full local gates pass with 764 tests and four skips.
 The first runtime state then requires a clean exact merged implementation main where `HEAD`, local
 `main`, and `origin/main` match. Exposed 001/002, V1/V2/V3, Rapid-002/003/004, PAPER, broker/live,
 and `strategic-allocation-21` evidence remain unchanged.
