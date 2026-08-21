@@ -1,11 +1,11 @@
 # Intraday Exposed 002
 
-Status: plan v1 and its independent review merged. The exact May GET exposed a pre-result raw
-transport boundary mismatch. That attempt is closed. Amendment v2 and its review merged. The exact
-May data binding and its independent review merged in PR #151. The isolated runner and exact
-pre-result mechanics merged in PR #152. Its first invocation stopped during catalog lookup before
-runtime state, bar loading, or a strategy result. Runner v2's exact split-catalog dispatch now awaits
-independent review, CI, and merge before the first strategy result.
+Status: closed as terminally interrupted exposed research evidence. Runner v2 merged in PR #153 and
+started from exact main `32fcfa35ac6d8628bc510b54a90554222f61a1fa`. Four discovery rows
+completed. The process disappeared while the fifth row was running. The frozen recovery path marked
+that claim terminal-failed without retry, leaving 115 pending rows. The no-retry gate blocks all
+further execution. No final cohort or qualification outcome exists. See
+`docs/research-campaigns/intraday-exposed-002-terminal-report.md`.
 
 Starting main: `71aa4da11875cffbff77693be83d116d11a5cb73`
 
@@ -284,9 +284,16 @@ validation, bar loading, runtime-directory creation, a database or run row, or a
 
 Runner v2 dispatches the three exact pre-May dataset IDs only to that isolated catalog and the exact
 May ID only to the main catalog. It does not scan, relocate, rebuild, or fall back between roots.
-Every existing identity, byte, full-validation, range, and June gate remains unchanged. Independent
-review, full repository gates, PR review, CI, and merge remain required. Runtime must start from the
-new exact merged implementation main. No strategy result is allowed sooner.
+Every existing identity, byte, full-validation, range, and June gate remained unchanged. Independent
+review and full repository gates passed; PR #153 merged at
+`32fcfa35ac6d8628bc510b54a90554222f61a1fa`.
+
+Execution from that exact main completed two Normal/zero-cost discovery pairs. The process then
+disappeared while a third parent's Normal row was claimed. A later supported recovery invocation
+changed only that stale row to `failed` with `RuntimeError: interrupted run is terminal and was not
+retried`, then stopped before another pending row. Runtime now contains 4 completed, 1 failed, 115
+pending, and 0 running rows. The plan's terminal rule makes the failure immutable and prevents
+resume. No final freeze, final report, cohort, controlled plan, or qualification outcome exists.
 
 The plan grants no research qualification, controlled evaluation, protected holdout, paper,
 broker-write, or live authority.
