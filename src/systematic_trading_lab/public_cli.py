@@ -15,6 +15,11 @@ from . import __version__
 from .config import ConfigurationError, Settings, load_dotenv, load_settings
 from .domain import TradingMode
 from .fingerprints import canonicalize
+from .intraday_exposed_002_runner import (
+    intraday_exposed_002_plan_summary,
+    intraday_exposed_002_status,
+    run_intraday_exposed_002_campaign,
+)
 from .rapid_004 import RAPID_004_PROGRAM_ID
 from .rapid_004_runner import (
     rapid_004_plan_summary,
@@ -73,6 +78,13 @@ def research_parser() -> argparse.ArgumentParser:
         "rapid-004", help="plan, run, or inspect the frozen Rapid-004 campaign"
     )
     rapid_004.add_argument("action", nargs="?", choices=("plan", "run", "status"), default="status")
+    intraday_exposed_002 = commands.add_parser(
+        "intraday-exposed-002",
+        help="plan, run, or inspect the frozen Intraday Exposed 002 campaign",
+    )
+    intraday_exposed_002.add_argument(
+        "action", nargs="?", choices=("plan", "run", "status"), default="status"
+    )
     backtest = commands.add_parser(
         "backtest",
         help="run one net-of-cost historical simulation",
@@ -198,6 +210,21 @@ def _run_research(arguments: argparse.Namespace, settings: Settings) -> int:
         else:
             _print(
                 run_rapid_004_campaign(
+                    repository,
+                    settings.home,
+                    progress=lambda message: print(message, file=sys.stderr),
+                )
+            )
+        return 0
+    if arguments.research_command == "intraday-exposed-002":
+        repository = Path(__file__).resolve().parents[2]
+        if arguments.action == "plan":
+            _print(intraday_exposed_002_plan_summary(repository))
+        elif arguments.action == "status":
+            _print(intraday_exposed_002_status(settings.home))
+        else:
+            _print(
+                run_intraday_exposed_002_campaign(
                     repository,
                     settings.home,
                     progress=lambda message: print(message, file=sys.stderr),

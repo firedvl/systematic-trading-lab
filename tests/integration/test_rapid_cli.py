@@ -131,6 +131,8 @@ def test_public_wrapper_imports_local_csv_and_delegates_legacy_status(tmp_path: 
     backtest_help = _run(home, "research", "backtest", "--help").stdout
     rapid_plan = _json(_run(home, "research", "rapid-004", "plan"))
     rapid_status = _json(_run(home, "research", "rapid-004", "status"))
+    intraday_plan = _json(_run(home, "research", "intraday-exposed-002", "plan"))
+    intraday_status = _json(_run(home, "research", "intraday-exposed-002", "status"))
 
     assert imported["data_origin"] == "user-supplied"
     assert status["mode"] == "offline"
@@ -138,6 +140,10 @@ def test_public_wrapper_imports_local_csv_and_delegates_legacy_status(tmp_path: 
     assert "--campaign {rapid-004-expanded-universe}" in backtest_help
     assert rapid_plan["maximum_parent_records"] == 2452
     assert rapid_status["parent_record_count"] == 0
+    assert intraday_plan["parent_configuration_count"] == 60
+    assert intraday_plan["june_status"] == "ineligible-no-read-no-substitute"
+    assert intraday_status["database_exists"] is False
+    assert intraday_status["terminal"] is False
 
 
 def test_sweep_prints_count_before_running_every_configuration(tmp_path: Path) -> None:
