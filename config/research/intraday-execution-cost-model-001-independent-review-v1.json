@@ -1,0 +1,84 @@
+{
+  "schema_version": "intraday-execution-cost-model-independent-review-v1",
+  "review_id": "intraday-execution-cost-model-001-independent-review-v1",
+  "status": "passed-before-intraday-exposed-002-strategy-results",
+  "review_date": "2026-08-20",
+  "review_method": "Independent read-only control review of the final frozen model and permitted calibration evidence.",
+  "reviewed_model": {
+    "cost_model_id": "intraday-execution-cost-model-001-v1",
+    "path": "config/research/intraday-execution-cost-model-001-v1.json",
+    "sha256": "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af",
+    "model_fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4"
+  },
+  "reviewed_calibration": {
+    "run_id": "intraday-execution-calibration-001-v2",
+    "plan_sha256": "67dc2a2155a91f5ab26395a4c3f34457ebcb6e1813f95f7e02c642129c9db546",
+    "analysis_sha256": "0555a247138450ffc0e76b5b273d94e1a5c8c6a09634d5f063da57eda8df12be",
+    "quote_datasets_fingerprint": "3c5d4f853b281c635df1f6575fa98db11acd12d640798e043650c603e5a80036"
+  },
+  "verdict": "pass",
+  "findings": [],
+  "answers": [
+    {
+      "question": "Were candidate returns excluded from model selection?",
+      "answer": "yes",
+      "basis": "The model reads only frozen config and the named calibration analysis. Its authority is false and the v2 plan excludes strategy returns."
+    },
+    {
+      "question": "Was June excluded?",
+      "answer": "yes",
+      "basis": "The v2 plan excludes June and the model has no market-data reader."
+    },
+    {
+      "question": "Was V3 excluded?",
+      "answer": "yes",
+      "basis": "The v2 plan excludes all V3 ranges and the model has no V3 input."
+    },
+    {
+      "question": "Are quoted spreads measured causally?",
+      "answer": "yes",
+      "basis": "The plan requires the latest unique quote strictly before each grid time with no backfill. The analysis identity and percentile sources revalidate."
+    },
+    {
+      "question": "Are broker fees represented correctly?",
+      "answer": "yes",
+      "basis": "The direct-retail assumption has zero commission. SEC applies to sells, TAF applies to sells with a per-trade cap, CAT applies to both sides, and each fee type rounds once per New York account day derived from aware execution timestamps."
+    },
+    {
+      "question": "Is Normal defensible rather than optimistic?",
+      "answer": "yes",
+      "basis": "Normal uses each symbol's SIP p75 adverse half-spread rounded upward, one fill-delay bar, and regulatory fees within the stated small-order limits."
+    },
+    {
+      "question": "Are Stress A/B materially stricter than Normal?",
+      "answer": "yes",
+      "basis": "Stress A and B use p95 and p99 adverse half-spreads, which exceed Normal for both symbols, while fill delay rises from one to two and three bars."
+    }
+  ],
+  "resolved_during_review": [
+    {
+      "finding": "TAF capping lacked a trade identity and could cap each partial fill.",
+      "resolution": "Regulatory fills now carry a trade ID and TAF aggregates sell shares by trade before applying the cap."
+    },
+    {
+      "finding": "The New York account day was caller-supplied rather than derived.",
+      "resolution": "The fee boundary now requires aware execution timestamps and derives each account day in America/New_York."
+    }
+  ],
+  "verification": {
+    "calibration_analysis_revalidated": true,
+    "focused_tests_passed": 6,
+    "ruff_passed": true,
+    "strict_mypy_passed": true,
+    "diff_check_passed": true
+  },
+  "scope_limit": "The review did not inspect protected results, June or V3 data, or PAPER, broker, or live state. It cannot prove observations outside the reviewed slice never occurred.",
+  "authority": {
+    "strategy_results": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "8ade5190bb64330af037f88bf0911ed3cdb04578ca7a6d6e27a5fa6d651349b2"
+}

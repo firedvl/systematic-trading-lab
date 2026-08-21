@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-20 — Use symbol-specific quote costs and daily regulatory fees
+
+- Decision: freeze Normal at each symbol's p75 adverse half-spread, Stress A at p95, and Stress B at p99. Round each selected rate upward to 0.01 basis point. Use one, two, and three five-minute fill-delay bars respectively. Keep one bar in the exact zero-cost diagnostic. Apply SEC, TAF, and CAT by their published daily aggregation and cent-ceiling rules. Derive the New York account day from aware execution timestamps and group TAF partial fills under one capped trade identity. Assume zero brokerage commission only for a direct Alpaca retail account without partner or Elite fees.
+- Context: 80,399 causal SIP observations show different SPY and QQQ spread distributions. The generic `CostModel` cannot represent symbol-specific spread cost or account-day fees, and changing it would alter closed evidence.
+- Consequences: model `intraday-execution-cost-model-001-v1` is valid only for retail-sized SPY/QQQ orders without material impact. A new Intraday Exposed 002 boundary must deduct daily fees before carrying equity into the next session and bind the model fingerprint in every result. Legacy runners remain unchanged. A different account fee arrangement invalidates the model instead of changing it after strategy results.
+- Revisit when: official fees change before PAPER use, the account arrangement differs, or execution evidence supports depth, impact, latency, price improvement, or partial-fill modeling. Do not revise this model after Intraday Exposed 002 observes a strategy result.
+
 ## 2026-08-20 — Preserve crossed SIP states without using negative spreads
 
 - Decision: close calibration plan v1 after its first SIP probe failed raw `ask >= bid` validation, then use a separate v2 plan and runtime identity. V2 retains every raw quote in provider/page order. Each one-second grid point inspects the latest unique raw state and excludes it when stale, one-sided, zero-size, or crossed; it never backfills an older eligible quote. Locked states remain eligible at zero spread. Every symbol-window still requires 99% eligible-grid coverage.

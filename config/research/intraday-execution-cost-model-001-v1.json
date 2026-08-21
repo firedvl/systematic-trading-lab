@@ -1,0 +1,167 @@
+{
+  "schema_version": "intraday-execution-cost-model-v1",
+  "cost_model_id": "intraday-execution-cost-model-001-v1",
+  "status": "frozen-before-intraday-exposed-002-strategy-results",
+  "starting_main": "caf2e51ed4a357f339dd6318c1f4884a8a8d7792",
+  "purpose": "Prospective small-order SPY/QQQ execution-cost scenarios derived without strategy-return access.",
+  "calibration_evidence": {
+    "program_id": "intraday-execution-calibration-001",
+    "run_id": "intraday-execution-calibration-001-v2",
+    "plan_path": "config/research/intraday-execution-calibration-001-plan-v2.json",
+    "plan_sha256": "67dc2a2155a91f5ab26395a4c3f34457ebcb6e1813f95f7e02c642129c9db546",
+    "plan_fingerprint": "c0c4971336569eb05935e2b0b92ffbc3aea50ae39686c7192afbd2cbe99fca4b",
+    "feed": "sip",
+    "dataset_count": 134,
+    "dataset_ids_fingerprint": "6ea873f76a26ed38a5522d7a16d6773b7755d2511a3ad6a2681ce6d5fb2aa762",
+    "analysis_path": ".trading-lab/intraday-execution-calibration-001-v2/analysis/5302ae235f4fba10c516fc6a110b0717ba81879a5944e25548fd0ee95e30d07d.json",
+    "analysis_sha256": "0555a247138450ffc0e76b5b273d94e1a5c8c6a09634d5f063da57eda8df12be",
+    "analysis_fingerprint": "5302ae235f4fba10c516fc6a110b0717ba81879a5944e25548fd0ee95e30d07d",
+    "quote_datasets_fingerprint": "3c5d4f853b281c635df1f6575fa98db11acd12d640798e043650c603e5a80036",
+    "observation_count": 80399,
+    "minimum_eligible_grid_coverage": "0.9983333333333333333333333333",
+    "grid_exclusion_count": 1,
+    "raw_crossed_market_count": 3858
+  },
+  "derivation": {
+    "reference": "Latest eligible SIP quote strictly before each frozen one-second grid point.",
+    "per_fill_cost": "Adverse half of the quoted spread for the traded symbol.",
+    "scenario_percentiles": {
+      "normal": "p75",
+      "stress_a": "p95",
+      "stress_b": "p99"
+    },
+    "parameter_rounding": "Round each selected half-spread upward to the next 0.01 basis point.",
+    "normal_reason": "The symbol-specific p75 exceeds the median while remaining representative of observed small-order quote crossing.",
+    "stress_a_reason": "The symbol-specific p95 and a second five-minute fill-delay bar represent materially worse spread and timing.",
+    "stress_b_reason": "The symbol-specific p99 and a third five-minute fill-delay bar form a deliberately severe observed-spread and timing scenario.",
+    "limitations": [
+      "Quote evidence measures displayed spread, not queue position, partial fills, price improvement, order latency, or market impact.",
+      "The scenarios are valid only for retail-sized SPY/QQQ orders whose size does not create material market impact.",
+      "Quote-age statistics measure source-state freshness and do not calibrate broker order-to-fill latency.",
+      "A later mismatch with the applicable Alpaca account fee arrangement invalidates this model instead of changing it after strategy results."
+    ]
+  },
+  "scenarios": {
+    "normal": {
+      "percentile": "p75",
+      "source_half_spread_bps": {
+        "QQQ": "0.1617102475783890425136240884",
+        "SPY": "0.08000832086536999847984190355"
+      },
+      "slippage_bps_per_fill": {
+        "QQQ": "0.17",
+        "SPY": "0.09"
+      },
+      "execution_delay_bars": 1,
+      "brokerage_commission_bps": "0",
+      "regulatory_fee_model_id": "alpaca-us-equity-regulatory-fees-2026-07-20-v1"
+    },
+    "stress_a": {
+      "percentile": "p95",
+      "source_half_spread_bps": {
+        "QQQ": "0.243299136288066177365070354",
+        "SPY": "0.150414391648992975647909992"
+      },
+      "slippage_bps_per_fill": {
+        "QQQ": "0.25",
+        "SPY": "0.16"
+      },
+      "execution_delay_bars": 2,
+      "brokerage_commission_bps": "0",
+      "regulatory_fee_model_id": "alpaca-us-equity-regulatory-fees-2026-07-20-v1"
+    },
+    "stress_b": {
+      "percentile": "p99",
+      "source_half_spread_bps": {
+        "QQQ": "0.3528158230840336727421551402",
+        "SPY": "0.2153578889184008958888179006"
+      },
+      "slippage_bps_per_fill": {
+        "QQQ": "0.36",
+        "SPY": "0.22"
+      },
+      "execution_delay_bars": 3,
+      "brokerage_commission_bps": "0",
+      "regulatory_fee_model_id": "alpaca-us-equity-regulatory-fees-2026-07-20-v1"
+    },
+    "zero_cost_diagnostic": {
+      "percentile": null,
+      "source_half_spread_bps": {
+        "QQQ": "0",
+        "SPY": "0"
+      },
+      "slippage_bps_per_fill": {
+        "QQQ": "0",
+        "SPY": "0"
+      },
+      "execution_delay_bars": 1,
+      "brokerage_commission_bps": "0",
+      "regulatory_fee_model_id": null,
+      "promotion_authority": false
+    }
+  },
+  "regulatory_fees": {
+    "model_id": "alpaca-us-equity-regulatory-fees-2026-07-20-v1",
+    "currency": "USD",
+    "account_day_timezone": "America/New_York",
+    "account_assumption": "Direct Alpaca Securities retail account without a partner commission or Alpaca Elite Smart Router fee.",
+    "brokerage_commission": {
+      "rate_bps": "0",
+      "invalidation": "Any applicable partner or Alpaca Elite commission invalidates this frozen model."
+    },
+    "sec_transaction_fee": {
+      "side": "sell",
+      "rate_per_dollar_of_executed_sell_notional": "0.0000206",
+      "formula": "ceil_cent(rate * sum(executed sell notional for the account day))"
+    },
+    "finra_trading_activity_fee": {
+      "side": "sell",
+      "rate_per_executed_share": "0.000195",
+      "maximum_per_trade": "9.79",
+      "formula": "ceil_cent(sum(min(rate * sum(executed sell shares for the trade), maximum_per_trade) for each sell trade in the account day))"
+    },
+    "finra_cat_fee": {
+      "side": "buy-and-sell",
+      "rate_per_executed_equivalent_share": "0.000003",
+      "formula": "ceil_cent(rate * sum(executed absolute shares for all fills in the account day))"
+    },
+    "rounding": "Aggregate each fee type for one account day, then round that fee type upward once to the nearest cent.",
+    "application": "Derive the account day from each aware execution timestamp in America/New_York. Deduct the three rounded fee totals at the session boundary before carrying cash and equity into the next session.",
+    "official_sources": [
+      {
+        "id": "alpaca-regulatory-fees",
+        "url": "https://docs.alpaca.markets/us/docs/regulatory-fees.md",
+        "document_updated_at": "2025-10-03T17:53:13Z",
+        "retrieved_at": "2026-08-20T21:27:06Z",
+        "sha256": "ee2d303dd467b1de58bea957fcfb0f6799e7f807c5260414308b38ef59f656be"
+      },
+      {
+        "id": "alpaca-brokerage-fee-schedule",
+        "url": "https://files.alpaca.markets/disclosures/library/BrokFeeSched.pdf",
+        "document_revised_at": "2026-07-20",
+        "retrieved_at": "2026-08-20T21:27:11Z",
+        "sha256": "cfed684b2554e856022bc80c4883260ea1414c4ba79fc65304f7fc08cc780a7e"
+      }
+    ]
+  },
+  "isolated_delay_variants": [
+    {
+      "id": "normal-delay-2",
+      "base_scenario": "normal",
+      "execution_delay_bars": 2
+    },
+    {
+      "id": "normal-delay-3",
+      "base_scenario": "normal",
+      "execution_delay_bars": 3
+    }
+  ],
+  "authority": {
+    "strategy_results": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "model_fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4"
+}
