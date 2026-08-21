@@ -1,12 +1,24 @@
 # Intraday Execution Calibration 001
 
-Status: v1 closed before dataset publication; v2 frozen before quote reacquisition.
+Status: v1 closed before dataset publication; v2 acquisition and analysis complete; prospective model frozen before strategy research.
 
 Active plan: `config/research/intraday-execution-calibration-001-plan-v2.json`
 
 V2 plan SHA-256: `67dc2a2155a91f5ab26395a4c3f34457ebcb6e1813f95f7e02c642129c9db546`
 
 V2 plan fingerprint: `c0c4971336569eb05935e2b0b92ffbc3aea50ae39686c7192afbd2cbe99fca4b`
+
+Cost-model ID: `intraday-execution-cost-model-001-v1`
+
+Cost-model SHA-256: `a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af`
+
+Cost-model fingerprint: `94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4`
+
+Independent-review ID: `intraday-execution-cost-model-001-independent-review-v1`
+
+Independent-review SHA-256: `fb197856b9229349e5de4bca742f328a8f1e5e53f9558dfd7324744e91a795aa`
+
+Independent-review fingerprint: `8ade5190bb64330af037f88bf0911ed3cdb04578ca7a6d6e27a5fa6d651349b2`
 
 V1 starting main: `1186e9356de742ed94d030f272ba5522553be78a`
 
@@ -151,8 +163,57 @@ uv run python -m systematic_trading_lab.intraday_cost_calibration \
   analyze --data-home .trading-lab
 ```
 
-No v2 quote request had been made when this plan was frozen. The v1 SIP probe described above is the
-only quote request made so far.
+## V2 result and frozen model
+
+V2 acquired all 134 frozen symbol-windows from SIP. It did not use IEX and wrote no quarantine
+artifact. The raw and observation evidence remains ignored local state under the v2 runtime root.
+The dataset-ID fingerprint is
+`6ea873f76a26ed38a5522d7a16d6773b7755d2511a3ad6a2681ce6d5fb2aa762`.
+
+Analysis fingerprint `5302ae235f4fba10c516fc6a110b0717ba81879a5944e25548fd0ee95e30d07d`
+and SHA-256 `0555a247138450ffc0e76b5b273d94e1a5c8c6a09634d5f063da57eda8df12be`
+bind 80,399 eligible one-second observations. The quote-dataset fingerprint is
+`3c5d4f853b281c635df1f6575fa98db11acd12d640798e043650c603e5a80036`.
+Minimum symbol-window coverage was `0.9983333333333333333333333333`. One grid point was excluded
+because its latest causal state was crossed; 3,858 crossed raw updates remained in evidence.
+
+The model uses adverse half-spread by symbol and rounds the selected rate upward to 0.01 basis
+point:
+
+| Scenario | SPY per fill | QQQ per fill | Delay | Monetary fees |
+| --- | ---: | ---: | ---: | --- |
+| Normal | 0.09 bps (p75) | 0.17 bps (p75) | 1 five-minute bar | SEC, TAF, CAT; zero assumed direct-retail commission |
+| Stress A | 0.16 bps (p95) | 0.25 bps (p95) | 2 five-minute bars | Same fee schedule |
+| Stress B | 0.22 bps (p99) | 0.36 bps (p99) | 3 five-minute bars | Same fee schedule |
+| Zero-cost diagnostic | 0 | 0 | 1 five-minute bar | None; no promotion authority |
+
+The delay changes the eligible market price and is not a fee. Isolated Normal-cost delay-2 and
+delay-3 variants separate timing sensitivity from cost sensitivity. Regulatory fees derive the New
+York account day from each aware execution timestamp and require a trade identity. TAF aggregates
+partial fills by trade before its per-trade cap; each fee type then rounds upward once per account
+day. The model does not
+claim to measure depth, queue position, partial fills, price improvement, order latency, or market
+impact. An applicable partner or Alpaca Elite commission invalidates it.
+
+`config/research/intraday-execution-cost-model-001-v1.json` binds the plan, analysis, dataset
+fingerprints, formulas, source documents, assumptions, scenarios, and false authority fields. The
+typed loader rechecks the exact model bytes and can reverify the ignored analysis before research.
+
+The independent review passed after the fee boundary was changed to group TAF partial fills by
+trade and derive New York account days from aware execution timestamps. Its seven answers were:
+
+| Control question | Answer |
+| --- | --- |
+| Candidate returns excluded? | Yes |
+| June excluded? | Yes |
+| V3 excluded? | Yes |
+| Spreads measured causally? | Yes |
+| Broker fees represented correctly? | Yes |
+| Normal defensible rather than optimistic? | Yes |
+| Stress A/B materially stricter than Normal? | Yes |
+
+The fingerprinted review artifact records each basis, the resolved findings, verification, scope
+limit, and false authority fields. It binds the exact model SHA-256 and fingerprint above.
 
 ## Official source identity
 
