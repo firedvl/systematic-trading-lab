@@ -1,0 +1,136 @@
+{
+  "schema_version": "intraday-exposed-002-research-plan-amendment-v2",
+  "amendment_id": "intraday-exposed-002-plan-amendment-v2",
+  "program_id": "intraday-exposed-002",
+  "status": "frozen-after-transport-boundary-finding-before-data-binding-or-strategy-results",
+  "starting_main": "1aedc2d4056c955a8fdd835a1795277979c94be4",
+  "base_plan": {
+    "path": "config/research/intraday-exposed-002-plan-v1.json",
+    "sha256": "8acb778eec43dd53b56c65712b5a076bdc6126de3504d68114aa714e2474b17f",
+    "plan_fingerprint": "a255949e41c9776e82a04782c6183f5af1476a1dc97c36be4910e4d59424fb98",
+    "review_path": "config/research/intraday-exposed-002-plan-independent-review-v1.json",
+    "review_sha256": "7a87b647aaf420a8613b793f26bc948c5572e6d66907f9aa9c330e9c543fafb0",
+    "review_fingerprint": "2ecd5227c3ddc51de9725484de21c994a930dc6f83b7c866d886b68185efdcc4"
+  },
+  "acquisition_disposition": {
+    "path": "config/research/intraday-exposed-002-may-acquisition-disposition-v1.json",
+    "sha256": "eca321176b609e5b2e9069b7364a1d61979998899b8ef6c4dc4c75d457816707",
+    "fingerprint": "3715a0f424e7450976b1d17f0118906ab9c862e601fcb2c226d98916465df7b3",
+    "status": "closed-pre-result-acquisition-contract-mismatch"
+  },
+  "reason": "The exact post-merge GET retained complete May transport evidence through 20:00 on May 29. This exceeded the plan-v1 raw-record cutoff by five minutes without reading June or changing the exact normalized XNYS dataset. Plan v1 cannot bind the artifact, so this amendment replaces only that transport boundary before data binding or strategy results.",
+  "unchanged_base_sections": [
+    "purpose",
+    "protected_boundaries",
+    "frozen_dependencies",
+    "chronology",
+    "execution",
+    "configuration_contract",
+    "paired_cost_analysis",
+    "discovery_screen",
+    "walk_forward_screen",
+    "serious_candidate_screen",
+    "final_cohort",
+    "controlled_evaluation",
+    "authority"
+  ],
+  "superseded_rule": {
+    "path": "data.may_only_acquisition.publication_rule",
+    "value": "Publish a separate immutable dataset whose raw and Parquet records contain no market-data timestamp after the requested end and whose manifest requested and actual ranges end there.",
+    "disposition": "closed-as-too-strict-for-complete-transport-evidence"
+  },
+  "replacement_data_contract": {
+    "selection_basis": "The artifact came from the exact predeclared request. Price values and strategy results were not used to choose among datasets, and no alternative acquisition was considered.",
+    "source_request": {
+      "method": "GET",
+      "provider": "alpaca-historical-v2",
+      "feed": "iex",
+      "symbols": ["QQQ", "SPY"],
+      "timeframe": "5m",
+      "requested_start": "2026-05-01T13:30:00Z",
+      "requested_end": "2026-05-29T19:55:00Z",
+      "adjustment_policy": "provider-adjusted-all-v1",
+      "fallback_used": false,
+      "existing_artifact_derivation_used": false
+    },
+    "bound_acquisition": {
+      "dataset_id": "4afa60f29ea266ec8b60be9d9600132f8cff4207e846443c65afd3bb5c497a19",
+      "fingerprint": "d34de04b0045967396266bfba7c3427b5fac949d5e1800c0d5fe5b3fc454e29c",
+      "raw_fingerprint": "9c0fa665f1afcf9f5355758d5dfe17b49e090671812132cc00612d337b96f5a5",
+      "raw_sha256": "e5fd2680c7915f4673e1735f860473c37e32ceaa57f7876111310d0ac5c87ad2",
+      "bars_sha256": "74ce7f13971564b4d7d42e0e7adfc1811ed026498cbed9fac7e79864d1afdb44",
+      "manifest_sha256": "027714eeb34f274c6b887c1fefecdd72b18d24ef505a906a9d5137bdc8e2ee5f",
+      "acquisition_main": "1aedc2d4056c955a8fdd835a1795277979c94be4"
+    },
+    "raw_transport": {
+      "retain_every_mapped_transport_record": true,
+      "record_count": 3503,
+      "outside_regular_grid_count": 383,
+      "actual_start": "2026-05-01T13:30:00Z",
+      "actual_end": "2026-05-29T20:00:00Z",
+      "exclusive_latest_permitted_timestamp": "2026-06-01T00:00:00Z",
+      "contains_june_market_timestamp": false,
+      "deletion_or_filtering_allowed": false
+    },
+    "normalized_parquet": {
+      "bar_count": 3120,
+      "session_count": 20,
+      "actual_start": "2026-05-01T13:30:00Z",
+      "actual_end": "2026-05-29T19:55:00Z",
+      "exact_xnys_regular_grid_required": true,
+      "full_dataset_validation_required": true,
+      "contains_june_market_timestamp": false
+    },
+    "manifest": {
+      "requested_start": "2026-05-01T13:30:00Z",
+      "requested_end": "2026-05-29T19:55:00Z",
+      "actual_start": "2026-05-01T13:30:00Z",
+      "actual_end": "2026-05-29T19:55:00Z",
+      "provider": "alpaca-historical-v2",
+      "feed": "iex",
+      "timeframe": "5m"
+    }
+  },
+  "required_data_binding": {
+    "path": "config/research/intraday-exposed-002-data-binding-v1.json",
+    "status": "must-be-frozen-and-independently-reviewed-after-this-amendment-merges-before-strategy-results",
+    "required_fields": [
+      "dataset_id",
+      "fingerprint",
+      "raw_fingerprint",
+      "raw_sha256",
+      "manifest_sha256",
+      "bars_sha256",
+      "requested_start",
+      "requested_end",
+      "actual_start",
+      "actual_end",
+      "raw_start",
+      "raw_end",
+      "raw_record_count",
+      "raw_outside_regular_grid_count",
+      "session_count",
+      "bar_count",
+      "acquisition_main",
+      "contains_june_market_timestamp"
+    ]
+  },
+  "execution_gates": {
+    "amendment_independent_review_required": true,
+    "amendment_merge_required": true,
+    "data_binding_and_independent_review_required": true,
+    "runner_implementation_and_merge_required": true,
+    "strategy_execution_allowed_now": false
+  },
+  "authority": {
+    "data_binding": false,
+    "strategy_results": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "amendment_fingerprint": "e02a23d078f5b4d7216f7b1ede6dab0c2b85859e8e56c4781da5fa32a6429e00"
+}

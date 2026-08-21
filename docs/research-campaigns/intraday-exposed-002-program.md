@@ -1,7 +1,8 @@
 # Intraday Exposed 002
 
-Status: plan and independent prospective review frozen before May-only data acquisition or strategy
-results. Plan merge is required before acquisition.
+Status: plan v1 and its independent review merged. The exact May GET exposed a pre-result raw
+transport boundary mismatch. That attempt is closed. Amendment v2 and its independent review are
+frozen before data binding or strategy results and await merge.
 
 Starting main: `71aa4da11875cffbff77693be83d116d11a5cb73`
 
@@ -14,6 +15,23 @@ Plan fingerprint: `a255949e41c9776e82a04782c6183f5af1476a1dc97c36be4910e4d59424f
 Independent review SHA-256: `7a87b647aaf420a8613b793f26bc948c5572e6d66907f9aa9c330e9c543fafb0`
 
 Independent review fingerprint: `2ecd5227c3ddc51de9725484de21c994a930dc6f83b7c866d886b68185efdcc4`
+
+May acquisition disposition SHA-256:
+`eca321176b609e5b2e9069b7364a1d61979998899b8ef6c4dc4c75d457816707`
+
+May acquisition disposition fingerprint:
+`3715a0f424e7450976b1d17f0118906ab9c862e601fcb2c226d98916465df7b3`
+
+Plan amendment v2 SHA-256: `d6409531b31d25c4f3bcd79a55b2bf22b359ca71e4a0fada346ba06dbf0bc14b`
+
+Plan amendment v2 fingerprint:
+`e02a23d078f5b4d7216f7b1ede6dab0c2b85859e8e56c4781da5fa32a6429e00`
+
+Plan amendment v2 review SHA-256:
+`a739b1e5bb82d0c03640e5d9fd13a4d1edc3b77c1865ed7a065520f9d3c11aa3`
+
+Plan amendment v2 review fingerprint:
+`38a359ce9eb04243ba4092e7eb70c7239a46ac738de3ccbd09b6ddde31325976`
 
 This campaign tests new sparse SPY/QQQ five-minute strategies under the frozen calibrated execution
 model. It does not replay an Intraday Exposed 001 candidate. It does not read or modify protected
@@ -43,15 +61,27 @@ The plan binds three existing IEX five-minute dataset identities through April 3
 not bind the existing May–June artifact. That Parquet file was written without row-group statistics,
 so applying a May predicate can scan June rows before filtering them.
 
-After this plan merges, the program may make one GET-only Alpaca historical acquisition for QQQ and
-SPY from `2026-05-01T13:30:00Z` through `2026-05-29T19:55:00Z`. The request must publish a separate
-IEX five-minute dataset with 20 sessions and 3,120 bars. Its `raw.jsonl`, `bars.parquet`, and manifest
-must contain no bar timestamp after May 29. It cannot derive from or filter the May–June artifact.
+After plan v1 merged at `1aedc2d4056c955a8fdd835a1795277979c94be4`, the program made its exact
+GET-only Alpaca historical request for QQQ and SPY from `2026-05-01T13:30:00Z` through
+`2026-05-29T19:55:00Z`. It published new dataset
+`4afa60f29ea266ec8b60be9d9600132f8cff4207e846443c65afd3bb5c497a19`; it did not derive from or
+filter the May–June artifact.
 
-The exact dataset identity, fingerprints, byte hashes, bounds, counts, and acquisition main must be
-frozen in `config/research/intraday-exposed-002-data-binding-v1.json` and independently reviewed
-before strategy execution. All four runtime datasets can then receive full validation because each
-physical artifact ends before June. One-minute acquisition remains excluded.
+The normalized Parquet is valid and has the exact 20-session, 3,120-bar XNYS grid through `19:55`.
+The manifest requested and actual ranges match it. The immutable raw evidence retained 3,503 mapped
+transport records, including 383 outside that grid, and ends at `20:00` on May 29. No raw,
+normalized, or manifest market-data timestamp reaches June.
+
+The five-minute raw overrun violated plan v1's stricter publication rule. The acquisition
+disposition therefore forbids binding under v1, raw deletion or filtering, and strategy execution.
+Amendment v2 preserves every strategy and control while replacing only that boundary: raw transport
+records must remain complete and strictly pre-June; normalized Parquet and manifest ranges must end
+exactly at `19:55`. It binds the exact dataset fingerprints, byte hashes, counts, and bounds.
+
+Amendment v2 still grants no binding authority. Its independent final-byte review passed with no
+findings. The amendment and review must merge first. The exact binding must then be frozen in
+`config/research/intraday-exposed-002-data-binding-v1.json`, independently reviewed, and merged
+before strategy execution. One-minute acquisition remains excluded.
 
 | Stage | Evaluation range | Sessions |
 | --- | --- | ---: |
@@ -130,14 +160,15 @@ source identities, and June blocker.
 
 ## Required review and implementation gates
 
-The independent prospective review passed with no findings after a final-byte recheck. It approved
-the exact plan, thresholds, causal structure, model binding, June blocker, May-only acquisition
-boundary, stress, neighbors, and terminal actions. The plan must now pass repository gates, PR
-review, CI, and merge. Only that merged main may acquire May.
+The plan-v1 independent prospective review passed with no findings after a final-byte recheck. The
+later transport mismatch did not change any price, strategy, cost, chronology, gate, stress,
+neighbor, cohort, June, or terminal rule.
 
-The exact May data binding and its independent review must merge next. A later isolated runner must
-pass focused tests, full repository gates, PR review, CI, and merge. The runtime must start from that
-exact merged implementation main. No strategy run is allowed sooner.
+Amendment v2's independent final-byte review passed all six controls with no findings. Repository
+gates, PR review, CI, and merge remain. The exact May data binding and its separate review must merge
+next. A later isolated runner must then pass focused tests, full repository gates, PR review, CI,
+and merge. The runtime must start from that exact merged implementation main. No strategy run is
+allowed sooner.
 
 The plan grants no research qualification, controlled evaluation, protected holdout, paper,
 broker-write, or live authority.

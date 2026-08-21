@@ -29,6 +29,29 @@ REVIEWED_PLAN_REVIEW_SHA256 = "7a87b647aaf420a8613b793f26bc948c5572e6d66907f9aa9
 REVIEWED_PLAN_REVIEW_FINGERPRINT = (
     "2ecd5227c3ddc51de9725484de21c994a930dc6f83b7c866d886b68185efdcc4"
 )
+PLAN_AMENDMENT_RELATIVE_PATH = Path("config/research/intraday-exposed-002-plan-amendment-v2.json")
+REVIEWED_PLAN_AMENDMENT_SHA256 = "d6409531b31d25c4f3bcd79a55b2bf22b359ca71e4a0fada346ba06dbf0bc14b"
+REVIEWED_PLAN_AMENDMENT_FINGERPRINT = (
+    "e02a23d078f5b4d7216f7b1ede6dab0c2b85859e8e56c4781da5fa32a6429e00"
+)
+PLAN_AMENDMENT_REVIEW_RELATIVE_PATH = Path(
+    "config/research/intraday-exposed-002-plan-amendment-independent-review-v2.json"
+)
+REVIEWED_PLAN_AMENDMENT_REVIEW_SHA256 = (
+    "a739b1e5bb82d0c03640e5d9fd13a4d1edc3b77c1865ed7a065520f9d3c11aa3"
+)
+REVIEWED_PLAN_AMENDMENT_REVIEW_FINGERPRINT = (
+    "38a359ce9eb04243ba4092e7eb70c7239a46ac738de3ccbd09b6ddde31325976"
+)
+MAY_ACQUISITION_DISPOSITION_RELATIVE_PATH = Path(
+    "config/research/intraday-exposed-002-may-acquisition-disposition-v1.json"
+)
+REVIEWED_MAY_ACQUISITION_DISPOSITION_SHA256 = (
+    "eca321176b609e5b2e9069b7364a1d61979998899b8ef6c4dc4c75d457816707"
+)
+REVIEWED_MAY_ACQUISITION_DISPOSITION_FINGERPRINT = (
+    "3715a0f424e7450976b1d17f0118906ab9c862e601fcb2c226d98916465df7b3"
+)
 JUNE_DISPOSITION_RELATIVE_PATH = Path(
     "config/research/intraday-exposed-002-june-disposition-v2.json"
 )
@@ -40,6 +63,7 @@ REVIEWED_JUNE_DISPOSITION_FINGERPRINT = (
 )
 
 _STARTING_MAIN = "71aa4da11875cffbff77693be83d116d11a5cb73"
+_AMENDMENT_STARTING_MAIN = "1aedc2d4056c955a8fdd835a1795277979c94be4"
 _PLAN_STATUS = "frozen-before-may-only-data-acquisition-or-strategy-results"
 _PRE_MAY_DATA_END = datetime.fromisoformat("2026-04-30T19:55:00+00:00")
 _MAY_START = datetime.fromisoformat("2026-05-01T13:30:00+00:00")
@@ -74,7 +98,40 @@ _DATA_BINDING_FIELDS = [
     "acquisition_main",
     "physically_bounded_before_june",
 ]
+_AMENDMENT_DATA_BINDING_FIELDS = [
+    "dataset_id",
+    "fingerprint",
+    "raw_fingerprint",
+    "raw_sha256",
+    "manifest_sha256",
+    "bars_sha256",
+    "requested_start",
+    "requested_end",
+    "actual_start",
+    "actual_end",
+    "raw_start",
+    "raw_end",
+    "raw_record_count",
+    "raw_outside_regular_grid_count",
+    "session_count",
+    "bar_count",
+    "acquisition_main",
+    "contains_june_market_timestamp",
+]
+_AMENDMENT_BINDING_STATUS = (
+    "must-be-frozen-and-independently-reviewed-after-this-amendment-merges-before-strategy-results"
+)
 _AUTHORITY = {
+    "research_qualification": False,
+    "controlled_evaluation": False,
+    "protected_holdout": False,
+    "paper_execution": False,
+    "broker_writes": False,
+    "live_execution": False,
+}
+_AMENDMENT_AUTHORITY = {
+    "data_binding": False,
+    "strategy_results": False,
     "research_qualification": False,
     "controlled_evaluation": False,
     "protected_holdout": False,
@@ -153,12 +210,17 @@ class IntradayExposed002Plan:
     path: Path
     sha256: str
     plan_fingerprint: str
+    amendment_path: Path
+    amendment_sha256: str
+    amendment_fingerprint: str
     payload: Mapping[str, Any]
+    amendment: Mapping[str, Any]
     configurations: tuple[Exposed002Configuration, ...]
     periods: tuple[Exposed002Period, ...]
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "payload", MappingProxyType(dict(self.payload)))
+        object.__setattr__(self, "amendment", MappingProxyType(dict(self.amendment)))
 
 
 def load_intraday_exposed_002_plan(repository: Path) -> IntradayExposed002Plan:
@@ -191,6 +253,10 @@ def load_intraday_exposed_002_plan(repository: Path) -> IntradayExposed002Plan:
 
     _verify_dependencies(repository, payload)
     _verify_plan_review(repository, sha256, stored_fingerprint)
+    amendment_path, amendment_sha256, amendment_fingerprint, amendment = _load_plan_amendment(
+        repository, payload, sha256, stored_fingerprint
+    )
+    _verify_plan_amendment_review(repository, amendment_sha256, amendment_fingerprint)
     periods = _periods(payload)
     configurations = _configurations(payload)
     _verify_data_boundary(payload, periods)
@@ -200,7 +266,11 @@ def load_intraday_exposed_002_plan(repository: Path) -> IntradayExposed002Plan:
         path,
         sha256,
         stored_fingerprint,
+        amendment_path,
+        amendment_sha256,
+        amendment_fingerprint,
         payload,
+        amendment,
         configurations,
         periods,
     )
@@ -269,6 +339,229 @@ def _verify_plan_review(repository: Path, plan_sha256: str, plan_fingerprint: st
         or reviewed_plan.get("plan_fingerprint") != plan_fingerprint
     ):
         raise ValueError("Intraday Exposed 002 plan review differs")
+
+
+def _load_plan_amendment(
+    repository: Path,
+    base_payload: Mapping[str, Any],
+    base_sha256: str,
+    base_fingerprint: str,
+) -> tuple[Path, str, str, Mapping[str, Any]]:
+    path = repository / PLAN_AMENDMENT_RELATIVE_PATH
+    raw = path.read_bytes()
+    sha256 = hashlib.sha256(raw).hexdigest()
+    if sha256 != REVIEWED_PLAN_AMENDMENT_SHA256:
+        raise ValueError("Intraday Exposed 002 plan-amendment SHA-256 differs")
+    value = _mapping(json.loads(raw), "Intraday Exposed 002 plan amendment")
+    stored_fingerprint = _text(value, "amendment_fingerprint")
+    unsigned = dict(value)
+    del unsigned["amendment_fingerprint"]
+    base = _mapping(value.get("base_plan"), "base plan")
+    disposition_binding = _mapping(value.get("acquisition_disposition"), "acquisition disposition")
+    disposition = _verify_artifact(
+        repository,
+        disposition_binding,
+        "disposition_fingerprint",
+        REVIEWED_MAY_ACQUISITION_DISPOSITION_FINGERPRINT,
+    )
+    replacement = _mapping(value.get("replacement_data_contract"), "replacement contract")
+    source_request = _mapping(replacement.get("source_request"), "source request")
+    bound = _mapping(replacement.get("bound_acquisition"), "bound acquisition")
+    raw_transport = _mapping(replacement.get("raw_transport"), "raw transport")
+    normalized = _mapping(replacement.get("normalized_parquet"), "normalized Parquet")
+    manifest = _mapping(replacement.get("manifest"), "manifest")
+    required_binding = _mapping(value.get("required_data_binding"), "required data binding")
+    gates = _mapping(value.get("execution_gates"), "execution gates")
+    published = _mapping(disposition.get("published_dataset"), "published dataset")
+    program_effect = _mapping(disposition.get("program_effect"), "program effect")
+    superseded = _mapping(value.get("superseded_rule"), "superseded rule")
+    if (
+        fingerprint(unsigned) != stored_fingerprint
+        or stored_fingerprint != REVIEWED_PLAN_AMENDMENT_FINGERPRINT
+        or value.get("schema_version") != "intraday-exposed-002-research-plan-amendment-v2"
+        or value.get("amendment_id") != "intraday-exposed-002-plan-amendment-v2"
+        or value.get("program_id") != PLAN_ID
+        or value.get("status")
+        != "frozen-after-transport-boundary-finding-before-data-binding-or-strategy-results"
+        or value.get("starting_main") != _AMENDMENT_STARTING_MAIN
+        or value.get("authority") != _AMENDMENT_AUTHORITY
+        or base
+        != {
+            "path": PLAN_RELATIVE_PATH.as_posix(),
+            "sha256": base_sha256,
+            "plan_fingerprint": base_fingerprint,
+            "review_path": PLAN_REVIEW_RELATIVE_PATH.as_posix(),
+            "review_sha256": REVIEWED_PLAN_REVIEW_SHA256,
+            "review_fingerprint": REVIEWED_PLAN_REVIEW_FINGERPRINT,
+        }
+        or disposition_binding.get("path") != MAY_ACQUISITION_DISPOSITION_RELATIVE_PATH.as_posix()
+        or disposition_binding.get("sha256") != REVIEWED_MAY_ACQUISITION_DISPOSITION_SHA256
+        or disposition_binding.get("status") != "closed-pre-result-acquisition-contract-mismatch"
+        or disposition.get("status") != disposition_binding.get("status")
+        or superseded.get("path") != "data.may_only_acquisition.publication_rule"
+        or superseded.get("value")
+        != _mapping(
+            _mapping(base_payload.get("data"), "base data").get("may_only_acquisition"),
+            "base May acquisition",
+        ).get("publication_rule")
+        or source_request
+        != {
+            "method": "GET",
+            "provider": "alpaca-historical-v2",
+            "feed": "iex",
+            "symbols": ["QQQ", "SPY"],
+            "timeframe": "5m",
+            "requested_start": "2026-05-01T13:30:00Z",
+            "requested_end": "2026-05-29T19:55:00Z",
+            "adjustment_policy": "provider-adjusted-all-v1",
+            "fallback_used": False,
+            "existing_artifact_derivation_used": False,
+        }
+        or bound
+        != {
+            "dataset_id": "4afa60f29ea266ec8b60be9d9600132f8cff4207e846443c65afd3bb5c497a19",
+            "fingerprint": "d34de04b0045967396266bfba7c3427b5fac949d5e1800c0d5fe5b3fc454e29c",
+            "raw_fingerprint": ("9c0fa665f1afcf9f5355758d5dfe17b49e090671812132cc00612d337b96f5a5"),
+            "raw_sha256": "e5fd2680c7915f4673e1735f860473c37e32ceaa57f7876111310d0ac5c87ad2",
+            "bars_sha256": "74ce7f13971564b4d7d42e0e7adfc1811ed026498cbed9fac7e79864d1afdb44",
+            "manifest_sha256": ("027714eeb34f274c6b887c1fefecdd72b18d24ef505a906a9d5137bdc8e2ee5f"),
+            "acquisition_main": _AMENDMENT_STARTING_MAIN,
+        }
+        or raw_transport
+        != {
+            "retain_every_mapped_transport_record": True,
+            "record_count": 3503,
+            "outside_regular_grid_count": 383,
+            "actual_start": "2026-05-01T13:30:00Z",
+            "actual_end": "2026-05-29T20:00:00Z",
+            "exclusive_latest_permitted_timestamp": "2026-06-01T00:00:00Z",
+            "contains_june_market_timestamp": False,
+            "deletion_or_filtering_allowed": False,
+        }
+        or normalized
+        != {
+            "bar_count": 3120,
+            "session_count": 20,
+            "actual_start": "2026-05-01T13:30:00Z",
+            "actual_end": "2026-05-29T19:55:00Z",
+            "exact_xnys_regular_grid_required": True,
+            "full_dataset_validation_required": True,
+            "contains_june_market_timestamp": False,
+        }
+        or manifest
+        != {
+            "requested_start": "2026-05-01T13:30:00Z",
+            "requested_end": "2026-05-29T19:55:00Z",
+            "actual_start": "2026-05-01T13:30:00Z",
+            "actual_end": "2026-05-29T19:55:00Z",
+            "provider": "alpaca-historical-v2",
+            "feed": "iex",
+            "timeframe": "5m",
+        }
+        or required_binding.get("path")
+        != "config/research/intraday-exposed-002-data-binding-v1.json"
+        or required_binding.get("status") != _AMENDMENT_BINDING_STATUS
+        or required_binding.get("required_fields") != _AMENDMENT_DATA_BINDING_FIELDS
+        or gates
+        != {
+            "amendment_independent_review_required": True,
+            "amendment_merge_required": True,
+            "data_binding_and_independent_review_required": True,
+            "runner_implementation_and_merge_required": True,
+            "strategy_execution_allowed_now": False,
+        }
+        or program_effect.get("bind_under_plan_v1") is not False
+        or program_effect.get("strategy_execution_allowed") is not False
+        or published.get("dataset_id") != bound.get("dataset_id")
+        or published.get("fingerprint") != bound.get("fingerprint")
+        or published.get("raw_fingerprint") != bound.get("raw_fingerprint")
+        or published.get("raw_sha256") != bound.get("raw_sha256")
+        or published.get("bars_sha256") != bound.get("bars_sha256")
+        or published.get("manifest_sha256") != bound.get("manifest_sha256")
+        or published.get("raw_record_count") != raw_transport.get("record_count")
+        or published.get("raw_outside_regular_grid_count")
+        != raw_transport.get("outside_regular_grid_count")
+        or published.get("bar_count") != normalized.get("bar_count")
+        or published.get("session_count") != normalized.get("session_count")
+    ):
+        raise ValueError("Intraday Exposed 002 plan amendment differs")
+    return path, sha256, stored_fingerprint, value
+
+
+def _verify_plan_amendment_review(
+    repository: Path,
+    amendment_sha256: str,
+    amendment_fingerprint: str,
+) -> None:
+    path = repository / PLAN_AMENDMENT_REVIEW_RELATIVE_PATH
+    raw = path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != REVIEWED_PLAN_AMENDMENT_REVIEW_SHA256:
+        raise ValueError("Intraday Exposed 002 plan-amendment-review SHA-256 differs")
+    value = _mapping(json.loads(raw), "Intraday Exposed 002 plan amendment review")
+    stored_fingerprint = _text(value, "review_fingerprint")
+    unsigned = dict(value)
+    del unsigned["review_fingerprint"]
+    reviewed_base = _mapping(value.get("reviewed_base_plan"), "reviewed base plan")
+    reviewed_amendment = _mapping(value.get("reviewed_amendment"), "reviewed amendment")
+    reviewed_disposition = _mapping(
+        value.get("reviewed_acquisition_disposition"), "reviewed acquisition disposition"
+    )
+    verification = _mapping(value.get("verification"), "amendment-review verification")
+    raw_answers = value.get("answers")
+    if not isinstance(raw_answers, list):
+        raise ValueError("Intraday Exposed 002 plan amendment review differs")
+    answers = tuple(_mapping(item, "amendment-review answer") for item in raw_answers)
+    if (
+        fingerprint(unsigned) != stored_fingerprint
+        or stored_fingerprint != REVIEWED_PLAN_AMENDMENT_REVIEW_FINGERPRINT
+        or value.get("schema_version")
+        != "intraday-exposed-002-plan-amendment-independent-review-v2"
+        or value.get("review_id") != "intraday-exposed-002-plan-amendment-independent-review-v2"
+        or value.get("program_id") != PLAN_ID
+        or value.get("status") != "passed-before-data-binding-or-strategy-results"
+        or value.get("verdict") != "pass"
+        or value.get("findings") != []
+        or value.get("authority") != _AMENDMENT_AUTHORITY
+        or reviewed_base
+        != {
+            "path": PLAN_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_PLAN_SHA256,
+            "plan_fingerprint": REVIEWED_PLAN_FINGERPRINT,
+            "review_path": PLAN_REVIEW_RELATIVE_PATH.as_posix(),
+            "review_sha256": REVIEWED_PLAN_REVIEW_SHA256,
+            "review_fingerprint": REVIEWED_PLAN_REVIEW_FINGERPRINT,
+        }
+        or reviewed_amendment
+        != {
+            "path": PLAN_AMENDMENT_RELATIVE_PATH.as_posix(),
+            "sha256": amendment_sha256,
+            "amendment_fingerprint": amendment_fingerprint,
+        }
+        or reviewed_disposition
+        != {
+            "path": MAY_ACQUISITION_DISPOSITION_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_MAY_ACQUISITION_DISPOSITION_SHA256,
+            "disposition_fingerprint": REVIEWED_MAY_ACQUISITION_DISPOSITION_FINGERPRINT,
+        }
+        or {answer.get("control") for answer in answers}
+        != {
+            "pre-result-v1-closure",
+            "complete-pre-june-raw-evidence",
+            "exact-normalized-and-manifest-range",
+            "unchanged-strategy-and-program-controls",
+            "june-v3-and-result-exclusion",
+            "identity-and-authority",
+        }
+        or any(answer.get("answer") != "pass" for answer in answers)
+        or verification.get("amendment_sha256_revalidated") is not True
+        or verification.get("amendment_fingerprint_revalidated") is not True
+        or verification.get("disposition_sha256_revalidated") is not True
+        or verification.get("disposition_fingerprint_revalidated") is not True
+        or verification.get("cross_artifact_consistency_passed") is not True
+        or verification.get("exact_staged_byte_review") is not True
+        or verification.get("market_data_artifacts_opened") is not False
+    ):
+        raise ValueError("Intraday Exposed 002 plan amendment review differs")
 
 
 def _verify_artifact(

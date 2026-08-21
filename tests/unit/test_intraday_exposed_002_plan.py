@@ -8,6 +8,11 @@ import pytest
 
 from systematic_trading_lab.intraday_exposed_002_plan import (
     REVIEWED_JUNE_DISPOSITION_FINGERPRINT,
+    REVIEWED_MAY_ACQUISITION_DISPOSITION_FINGERPRINT,
+    REVIEWED_PLAN_AMENDMENT_FINGERPRINT,
+    REVIEWED_PLAN_AMENDMENT_REVIEW_FINGERPRINT,
+    REVIEWED_PLAN_AMENDMENT_REVIEW_SHA256,
+    REVIEWED_PLAN_AMENDMENT_SHA256,
     REVIEWED_PLAN_FINGERPRINT,
     REVIEWED_PLAN_REVIEW_FINGERPRINT,
     REVIEWED_PLAN_REVIEW_SHA256,
@@ -18,17 +23,29 @@ from systematic_trading_lab.intraday_exposed_002_plan import (
 _REPOSITORY = Path(__file__).resolve().parents[2]
 
 
-def test_frozen_intraday_exposed_002_plan_is_exact_sparse_and_pre_acquisition() -> None:
+def test_frozen_intraday_exposed_002_plan_is_exact_sparse_and_pre_result() -> None:
     plan = load_intraday_exposed_002_plan(_REPOSITORY)
 
     assert plan.sha256 == REVIEWED_PLAN_SHA256
     assert plan.plan_fingerprint == REVIEWED_PLAN_FINGERPRINT
+    assert plan.amendment_sha256 == REVIEWED_PLAN_AMENDMENT_SHA256
+    assert plan.amendment_fingerprint == REVIEWED_PLAN_AMENDMENT_FINGERPRINT
     review_path = (
         _REPOSITORY / "config/research/intraday-exposed-002-plan-independent-review-v1.json"
     )
     assert hashlib.sha256(review_path.read_bytes()).hexdigest() == REVIEWED_PLAN_REVIEW_SHA256
     assert json.loads(review_path.read_text())["review_fingerprint"] == (
         REVIEWED_PLAN_REVIEW_FINGERPRINT
+    )
+    amendment_review_path = (
+        _REPOSITORY
+        / "config/research/intraday-exposed-002-plan-amendment-independent-review-v2.json"
+    )
+    assert hashlib.sha256(amendment_review_path.read_bytes()).hexdigest() == (
+        REVIEWED_PLAN_AMENDMENT_REVIEW_SHA256
+    )
+    assert json.loads(amendment_review_path.read_text())["review_fingerprint"] == (
+        REVIEWED_PLAN_AMENDMENT_REVIEW_FINGERPRINT
     )
     assert len(plan.configurations) == 60
     assert len({item.family_id for item in plan.configurations}) == 10
@@ -73,6 +90,18 @@ def test_frozen_intraday_exposed_002_plan_is_exact_sparse_and_pre_acquisition() 
     }
     assert data["all_runtime_datasets_must_be_physically_bounded_before_june"] is True
     assert data["generic_filtered_read_of_artifact_containing_june"] is False
+    amendment = plan.amendment
+    assert amendment["status"] == (
+        "frozen-after-transport-boundary-finding-before-data-binding-or-strategy-results"
+    )
+    assert amendment["acquisition_disposition"]["fingerprint"] == (
+        REVIEWED_MAY_ACQUISITION_DISPOSITION_FINGERPRINT
+    )
+    replacement = amendment["replacement_data_contract"]
+    assert replacement["raw_transport"]["actual_end"] == "2026-05-29T20:00:00Z"
+    assert replacement["raw_transport"]["contains_june_market_timestamp"] is False
+    assert replacement["normalized_parquet"]["actual_end"] == "2026-05-29T19:55:00Z"
+    assert replacement["normalized_parquet"]["bar_count"] == 3120
     assert plan.payload["controlled_evaluation"] == {
         "range_status": "ineligible",
         "june_read": False,

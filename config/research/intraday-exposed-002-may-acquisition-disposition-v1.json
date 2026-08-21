@@ -1,0 +1,82 @@
+{
+  "schema_version": "intraday-exposed-002-may-acquisition-disposition-v1",
+  "disposition_id": "intraday-exposed-002-may-acquisition-disposition-v1",
+  "program_id": "intraday-exposed-002",
+  "status": "closed-pre-result-acquisition-contract-mismatch",
+  "acquisition_main": "1aedc2d4056c955a8fdd835a1795277979c94be4",
+  "triggering_plan": {
+    "path": "config/research/intraday-exposed-002-plan-v1.json",
+    "sha256": "8acb778eec43dd53b56c65712b5a076bdc6126de3504d68114aa714e2474b17f",
+    "plan_fingerprint": "a255949e41c9776e82a04782c6183f5af1476a1dc97c36be4910e4d59424fb98",
+    "review_path": "config/research/intraday-exposed-002-plan-independent-review-v1.json",
+    "review_sha256": "7a87b647aaf420a8613b793f26bc948c5572e6d66907f9aa9c330e9c543fafb0",
+    "review_fingerprint": "2ecd5227c3ddc51de9725484de21c994a930dc6f83b7c866d886b68185efdcc4"
+  },
+  "request": {
+    "method": "GET",
+    "provider": "alpaca-historical-v2",
+    "feed": "iex",
+    "symbols": ["QQQ", "SPY"],
+    "timeframe": "5m",
+    "requested_start": "2026-05-01T13:30:00Z",
+    "requested_end": "2026-05-29T19:55:00Z",
+    "adjustment_policy": "provider-adjusted-all-v1",
+    "fallback_used": false
+  },
+  "published_dataset": {
+    "dataset_id": "4afa60f29ea266ec8b60be9d9600132f8cff4207e846443c65afd3bb5c497a19",
+    "fingerprint": "d34de04b0045967396266bfba7c3427b5fac949d5e1800c0d5fe5b3fc454e29c",
+    "raw_fingerprint": "9c0fa665f1afcf9f5355758d5dfe17b49e090671812132cc00612d337b96f5a5",
+    "raw_sha256": "e5fd2680c7915f4673e1735f860473c37e32ceaa57f7876111310d0ac5c87ad2",
+    "bars_sha256": "74ce7f13971564b4d7d42e0e7adfc1811ed026498cbed9fac7e79864d1afdb44",
+    "manifest_sha256": "027714eeb34f274c6b887c1fefecdd72b18d24ef505a906a9d5137bdc8e2ee5f",
+    "parent_dataset_id": null,
+    "raw_record_count": 3503,
+    "raw_outside_regular_grid_count": 383,
+    "raw_start": "2026-05-01T13:30:00Z",
+    "raw_end": "2026-05-29T20:00:00Z",
+    "bar_count": 3120,
+    "session_count": 20,
+    "actual_start": "2026-05-01T13:30:00Z",
+    "actual_end": "2026-05-29T19:55:00Z"
+  },
+  "finding": {
+    "classification": "plan-v1-publication-rule-mismatch",
+    "detail": "The immutable raw transport evidence ends five minutes after the plan-v1 requested end. The normalized Parquet and manifest ranges end exactly at the requested end, and no June market-data timestamp was present.",
+    "cause": "Alpaca returned transport records outside the normalized XNYS bar-open grid; the reviewed adapter retained them as raw acquisition evidence before filtering normalization to the exact grid.",
+    "plan_v1_dataset_binding_allowed": false
+  },
+  "verification": {
+    "dataset_service_validation_passed": true,
+    "catalog_matches_manifest": true,
+    "raw_fingerprint_matches_manifest": true,
+    "normalized_fingerprint_matches_manifest": true,
+    "missing_interval_count": 0,
+    "duplicate_interval_count": 0,
+    "raw_and_manifest_contain_june_text": false,
+    "raw_contains_june_market_timestamp": false,
+    "normalized_parquet_contains_june_market_timestamp": false,
+    "strategy_result_access": false,
+    "v3_data_access": false,
+    "june_data_access": false,
+    "paper_or_broker_state_access": false,
+    "strategic_allocation_21_access": false
+  },
+  "program_effect": {
+    "delete_or_filter_raw_evidence": false,
+    "bind_under_plan_v1": false,
+    "strategy_execution_allowed": false,
+    "june_read_allowed": false,
+    "next_action": "Freeze and independently review a narrow v2 amendment that preserves the strategy plan and permits retained raw transport records only before June while keeping normalized and manifest ranges exact."
+  },
+  "authority": {
+    "data_binding": false,
+    "strategy_results": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "disposition_fingerprint": "3715a0f424e7450976b1d17f0118906ab9c862e601fcb2c226d98916465df7b3"
+}

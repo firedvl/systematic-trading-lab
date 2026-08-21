@@ -1,0 +1,86 @@
+{
+  "schema_version": "intraday-exposed-002-plan-amendment-independent-review-v2",
+  "review_id": "intraday-exposed-002-plan-amendment-independent-review-v2",
+  "program_id": "intraday-exposed-002",
+  "status": "passed-before-data-binding-or-strategy-results",
+  "review_date": "2026-08-20",
+  "review_method": "Independent read-only final-byte control review of the staged amendment, acquisition disposition, strict loader, focused tests, and program documentation.",
+  "reviewed_base_plan": {
+    "path": "config/research/intraday-exposed-002-plan-v1.json",
+    "sha256": "8acb778eec43dd53b56c65712b5a076bdc6126de3504d68114aa714e2474b17f",
+    "plan_fingerprint": "a255949e41c9776e82a04782c6183f5af1476a1dc97c36be4910e4d59424fb98",
+    "review_path": "config/research/intraday-exposed-002-plan-independent-review-v1.json",
+    "review_sha256": "7a87b647aaf420a8613b793f26bc948c5572e6d66907f9aa9c330e9c543fafb0",
+    "review_fingerprint": "2ecd5227c3ddc51de9725484de21c994a930dc6f83b7c866d886b68185efdcc4"
+  },
+  "reviewed_amendment": {
+    "path": "config/research/intraday-exposed-002-plan-amendment-v2.json",
+    "sha256": "d6409531b31d25c4f3bcd79a55b2bf22b359ca71e4a0fada346ba06dbf0bc14b",
+    "amendment_fingerprint": "e02a23d078f5b4d7216f7b1ede6dab0c2b85859e8e56c4781da5fa32a6429e00"
+  },
+  "reviewed_acquisition_disposition": {
+    "path": "config/research/intraday-exposed-002-may-acquisition-disposition-v1.json",
+    "sha256": "eca321176b609e5b2e9069b7364a1d61979998899b8ef6c4dc4c75d457816707",
+    "disposition_fingerprint": "3715a0f424e7450976b1d17f0118906ab9c862e601fcb2c226d98916465df7b3"
+  },
+  "verdict": "pass",
+  "findings": [],
+  "answers": [
+    {
+      "control": "pre-result-v1-closure",
+      "answer": "pass",
+      "basis": "The disposition closes plan v1 before data binding or strategy results and forbids using the acquired artifact under v1."
+    },
+    {
+      "control": "complete-pre-june-raw-evidence",
+      "answer": "pass",
+      "basis": "The amendment retains all 3,503 mapped raw records through May 29 at 20:00, forbids deletion or filtering, and requires every raw timestamp to remain before June."
+    },
+    {
+      "control": "exact-normalized-and-manifest-range",
+      "answer": "pass",
+      "basis": "The normalized Parquet remains the exact 20-session, 3,120-bar XNYS grid through May 29 at 19:55, and the manifest requested and actual ranges end there."
+    },
+    {
+      "control": "unchanged-strategy-and-program-controls",
+      "answer": "pass",
+      "basis": "The amendment changes only the raw transport boundary and preserves the strategy, cost, chronology, screen, stress, neighbor, cohort, June, and terminal rules."
+    },
+    {
+      "control": "june-v3-and-result-exclusion",
+      "answer": "pass",
+      "basis": "No June or V3 data or protected result was opened. The no-June and no-substitute controls remain unchanged."
+    },
+    {
+      "control": "identity-and-authority",
+      "answer": "pass",
+      "basis": "The amendment binds the exact base plan, prior review, disposition, acquisition hashes, counts, and ranges. It grants no data-binding, strategy-result, qualification, controlled, holdout, paper, broker-write, or live authority."
+    }
+  ],
+  "verification": {
+    "amendment_sha256_revalidated": true,
+    "amendment_fingerprint_revalidated": true,
+    "disposition_sha256_revalidated": true,
+    "disposition_fingerprint_revalidated": true,
+    "cross_artifact_consistency_passed": true,
+    "configuration_count": 60,
+    "independent_focused_tests_passed": 9,
+    "independent_ruff_passed": true,
+    "staged_diff_check_passed": true,
+    "exact_staged_byte_review": true,
+    "scoped_worktree_matched_staged_index": true,
+    "market_data_artifacts_opened": false
+  },
+  "scope_limit": "Acquisition provenance, validation, and no-June claims were reviewed from immutable metadata only. The review did not open market data, protected results, June or V3 data, or PAPER, broker, live, or strategic-allocation-21 state.",
+  "authority": {
+    "data_binding": false,
+    "strategy_results": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "38a359ce9eb04243ba4092e7eb70c7239a46ac738de3ccbd09b6ddde31325976"
+}
