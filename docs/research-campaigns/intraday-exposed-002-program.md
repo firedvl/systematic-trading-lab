@@ -3,11 +3,15 @@
 Status: plan v1 and its independent review merged. The exact May GET exposed a pre-result raw
 transport boundary mismatch. That attempt is closed. Amendment v2 and its review merged. The exact
 May data binding and its independent review merged in PR #151. The isolated runner and exact
-pre-result mechanics are prepared and await PR review, CI, and merge before any strategy run.
+pre-result mechanics merged in PR #152. Its first invocation stopped during catalog lookup before
+runtime state, bar loading, or a strategy result. Runner v2's exact split-catalog dispatch now awaits
+independent review, CI, and merge before the first strategy result.
 
 Starting main: `71aa4da11875cffbff77693be83d116d11a5cb73`
 
 Runner starting main: `8df22d0eb87f54c8fb19cb5713908f0dc93dc9d8`
+
+Runner implementation main: `794045775d323f1ba2481b44a454be4386bc7edd`
 
 Plan: `config/research/intraday-exposed-002-plan-v1.json`
 
@@ -273,9 +277,16 @@ neighbor, cohort, June, or terminal rule.
 
 Amendment v2, its review, the exact May binding, and its review passed repository gates, PR review,
 CI, and merge. The isolated runner's independent read-only review found no remaining P0, P1, or P2
-issue after focused corrections. Full repository gates, PR review, CI, and merge remain for the
-runner. Runtime must start from that exact merged implementation main. No strategy run is allowed
-sooner.
+issue after focused mechanics corrections, and PR #152 merged it. Its first CLI invocation then
+found that the runner used the main catalog for all four datasets even though the three frozen
+pre-May datasets remain in the isolated `intraday-exposed` catalog. Lookup failed before full
+validation, bar loading, runtime-directory creation, a database or run row, or a strategy result.
+
+Runner v2 dispatches the three exact pre-May dataset IDs only to that isolated catalog and the exact
+May ID only to the main catalog. It does not scan, relocate, rebuild, or fall back between roots.
+Every existing identity, byte, full-validation, range, and June gate remains unchanged. Independent
+review, full repository gates, PR review, CI, and merge remain required. Runtime must start from the
+new exact merged implementation main. No strategy result is allowed sooner.
 
 The plan grants no research qualification, controlled evaluation, protected holdout, paper,
 broker-write, or live authority.

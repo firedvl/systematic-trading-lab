@@ -45,7 +45,7 @@ from .intraday_exposed_002_strategies import build_intraday_exposed_002_strategy
 from .storage import StorageLayout
 from .strategies import TargetPosition
 
-RUNNER_VERSION = "intraday-exposed-002-runner-v1"
+RUNNER_VERSION = "intraday-exposed-002-runner-v2"
 ENGINE_VERSION = "intraday-exposed-002-engine-v1"
 STRATEGY_VERSION = "intraday-exposed-002-mechanics-v1"
 RUN_SCHEMA = "intraday-exposed-002-run-v1"
@@ -58,6 +58,7 @@ _ZERO = Decimal("0")
 _ONE = Decimal("1")
 _ACCOUNTING_PRECISION = Decimal("0.000000000001")
 _SYMBOLS = (Symbol("QQQ"), Symbol("SPY"))
+_EXPOSED_DATA_NAMESPACE = "intraday-exposed"
 _AUTHORITY = MappingProxyType(
     {
         "research_qualification": False,
@@ -77,6 +78,7 @@ class _DatasetBinding:
     raw_fingerprint: str
     start: datetime
     end: datetime
+    data_namespace: str | None
     raw_sha256: str | None = None
     bars_sha256: str | None = None
     manifest_sha256: str | None = None
@@ -315,7 +317,11 @@ class IntradayExposed002Runner:
         self.plan = load_intraday_exposed_002_plan(self.repository)
         self.cost_model = load_intraday_execution_cost_model(self.repository)
         self.datasets = _dataset_bindings(self.plan)
-        self.data = data_service or DatasetService(StorageLayout(self.data_home))
+        self.data_by_dataset = (
+            {binding.dataset_id: data_service for binding in self.datasets}
+            if data_service is not None
+            else _resolve_dataset_services(self.data_home, self.datasets)
+        )
         self._verify_datasets()
         self.runtime_root = self.data_home / PLAN_ID
         self.store = IntradayExposed002Store(self.runtime_root)
@@ -347,7 +353,8 @@ class IntradayExposed002Runner:
     def _verify_datasets(self) -> None:
         data = _mapping(self.plan.payload.get("data"), "plan data")
         for binding in self.datasets:
-            manifest = self.data.describe(binding.dataset_id)
+            service = self.data_by_dataset[binding.dataset_id]
+            manifest = service.describe(binding.dataset_id)
             identity = _mapping(manifest.get("identity"), "dataset identity")
             requested = _mapping(manifest.get("requested_range"), "requested range")
             actual = _mapping(manifest.get("actual_range"), "actual range")
@@ -378,7 +385,7 @@ class IntradayExposed002Runner:
             ):
                 raise ValueError(f"Intraday Exposed 002 dataset differs: {binding.dataset_id}")
             if binding.raw_sha256 is not None:
-                dataset_path = self.data.layout.dataset(binding.dataset_id)
+                dataset_path = service.layout.dataset(binding.dataset_id)
                 expected_hashes = {
                     "raw.jsonl": binding.raw_sha256,
                     "bars.parquet": binding.bars_sha256,
@@ -389,7 +396,7 @@ class IntradayExposed002Runner:
                     for name, expected in expected_hashes.items()
                 ):
                     raise ValueError("Intraday Exposed 002 May artifact bytes differ")
-            validation = self.data.validate(binding.dataset_id)
+            validation = service.validate(binding.dataset_id)
             if (
                 validation.get("valid") is not True
                 or validation.get("fingerprint") != binding.data_fingerprint
@@ -445,7 +452,7 @@ class IntradayExposed002Runner:
             if start > end:
                 continue
             bars.extend(
-                self.data.load_bars_range(
+                self.data_by_dataset[binding.dataset_id].load_bars_range(
                     binding.dataset_id,
                     TimestampRange(start, end),
                     expected_fingerprint=binding.data_fingerprint,
@@ -1407,6 +1414,33 @@ def _select_with_caps(
     return tuple(selected)
 
 
+def _resolve_dataset_services(
+    data_home: Path,
+    bindings: Sequence[_DatasetBinding],
+) -> Mapping[str, DatasetService]:
+    base = data_home.resolve()
+    services: dict[Path, DatasetService] = {}
+    resolved: dict[str, DatasetService] = {}
+    for binding in bindings:
+        root = base if binding.data_namespace is None else base / binding.data_namespace
+        if not (root / "catalog.sqlite3").is_file():
+            raise ValueError(
+                f"Intraday Exposed 002 dataset catalog is missing: {binding.dataset_id}"
+            )
+        service = services.get(root)
+        if service is None:
+            service = DatasetService(StorageLayout(root))
+            services[root] = service
+        try:
+            service.describe(binding.dataset_id)
+        except KeyError as error:
+            raise ValueError(
+                f"Intraday Exposed 002 dataset location is missing: {binding.dataset_id}"
+            ) from error
+        resolved[binding.dataset_id] = service
+    return MappingProxyType(resolved)
+
+
 def _dataset_bindings(plan: IntradayExposed002Plan) -> tuple[_DatasetBinding, ...]:
     data = _mapping(plan.payload.get("data"), "plan data")
     values = data.get("dataset_bindings")
@@ -1425,6 +1459,7 @@ def _dataset_bindings(plan: IntradayExposed002Plan) -> tuple[_DatasetBinding, ..
                 _mapping(value, "dataset binding").get("allowed_read_end"),
                 "allowed end",
             ),
+            _EXPOSED_DATA_NAMESPACE,
         )
         for value in values
     ]
@@ -1436,6 +1471,7 @@ def _dataset_bindings(plan: IntradayExposed002Plan) -> tuple[_DatasetBinding, ..
             _text(may, "raw_fingerprint"),
             _timestamp(may.get("actual_start"), "May start"),
             _timestamp(may.get("actual_end"), "May end"),
+            None,
             _text(may, "raw_sha256"),
             _text(may, "bars_sha256"),
             _text(may, "manifest_sha256"),
