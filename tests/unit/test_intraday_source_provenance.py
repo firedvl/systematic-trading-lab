@@ -151,6 +151,7 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
     assert set(observed) - dict(CAMPAIGN_V2_SURFACE.hashes).keys() == {
         "systematic_trading_lab/intraday_cost_calibration.py",
         "systematic_trading_lab/intraday_execution_cost_model.py",
+        "systematic_trading_lab/intraday_exposed_002_plan.py",
         "systematic_trading_lab/intraday_exposure.py",
         "systematic_trading_lab/intraday_exposed_runner.py",
         "systematic_trading_lab/intraday_exposed_strategies.py",

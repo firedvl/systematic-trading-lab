@@ -1,0 +1,457 @@
+{
+  "schema_version": "intraday-exposed-002-research-plan-v1",
+  "program_id": "intraday-exposed-002",
+  "status": "frozen-before-may-only-data-acquisition-or-strategy-results",
+  "starting_main": "71aa4da11875cffbff77693be83d116d11a5cb73",
+  "purpose": "Prospective cost-aware SPY/QQQ five-minute research that favors sparse signals and high gross edge per unit of turnover.",
+  "protected_boundaries": {
+    "result_sources_not_read_or_modified": [
+      "intraday-v1",
+      "intraday-v2",
+      "intraday-v3",
+      "intraday-exposed-001",
+      "rapid-002",
+      "rapid-003",
+      "rapid-004"
+    ],
+    "v3_data_access": false,
+    "june_data_access": false,
+    "paper_or_broker_state_access": false,
+    "strategic_allocation_21_access": false
+  },
+  "frozen_dependencies": {
+    "execution_cost_model": {
+      "path": "config/research/intraday-execution-cost-model-001-v1.json",
+      "cost_model_id": "intraday-execution-cost-model-001-v1",
+      "sha256": "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af",
+      "fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4"
+    },
+    "execution_cost_review": {
+      "path": "config/research/intraday-execution-cost-model-001-independent-review-v1.json",
+      "sha256": "fb197856b9229349e5de4bca742f328a8f1e5e53f9558dfd7324744e91a795aa",
+      "fingerprint": "8ade5190bb64330af037f88bf0911ed3cdb04578ca7a6d6e27a5fa6d651349b2",
+      "verdict": "pass"
+    },
+    "june_disposition": {
+      "path": "config/research/intraday-exposed-002-june-disposition-v2.json",
+      "sha256": "a3b623a6ab070a8f33cc5d032bf4ab944e9e2d971405c95f4b220e758c5250f0",
+      "fingerprint": "7c8a2ea44a3f6679d5cc7ca72b0aee509073272723755c8fea99b09b85de477d",
+      "status": "ineligible-before-strategy-results"
+    }
+  },
+  "data": {
+    "symbols": ["QQQ", "SPY"],
+    "timeframe": "5m",
+    "provider": "alpaca-historical-v2",
+    "feed": "iex",
+    "adjustment_policy": "provider-adjusted-all-v1",
+    "calendar_policy": "XNYS-regular-session-bars-v1",
+    "timestamp_policy": "bar-open-utc-v1",
+    "universe_id": "liquid-etfs-intraday-5m-v1",
+    "universe_fingerprint": "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9",
+    "dataset_bindings": [
+      {
+        "dataset_id": "0a307dd767283d8f268c10b372c416abc49ac555cb242bf612f0b485be518363",
+        "fingerprint": "166722d26f52ca344abf38c35e56e9c6496c1fd7444affa5218495091aaee01e",
+        "raw_fingerprint": "249f23deb77c2a4488d7cdde058b538d8431f1dde912a483d80a5d5f73605d3d",
+        "allowed_read_start": "2025-07-01T13:30:00Z",
+        "allowed_read_end": "2025-12-31T20:55:00Z"
+      },
+      {
+        "dataset_id": "074e66c2260f576d6c1765295db93b5e22fb4753dc8f9912ef6f5be7fa937479",
+        "fingerprint": "d74ba8fefd3ac0f46cb86f155212f5d5eecef286d5d411847c952f6ab60e8437",
+        "raw_fingerprint": "b08465f9fdd726cf0e9669836e510bd181dd0eae3771fa80da63c2c820f104d5",
+        "allowed_read_start": "2026-01-02T14:30:00Z",
+        "allowed_read_end": "2026-02-27T20:55:00Z"
+      },
+      {
+        "dataset_id": "1b1b5b1179a84522d6827827a6143a547321ef8b49262cdfb4d6a81885f647ed",
+        "fingerprint": "bbff4ec9c8992d088a2a85cf35196d20b0b30328d9d5e287540b8e73e907c470",
+        "raw_fingerprint": "b21dc4074f31b1ba8cbc15f1767f76aa1287b5d128310f20c9b5ea002ea3609a",
+        "allowed_read_start": "2026-03-02T14:30:00Z",
+        "allowed_read_end": "2026-04-30T19:55:00Z"
+      }
+    ],
+    "may_only_acquisition": {
+      "status": "pending-until-plan-merges",
+      "provider": "alpaca-historical-v2",
+      "http_method": "GET",
+      "feed": "iex",
+      "fallback_allowed": false,
+      "symbols": ["QQQ", "SPY"],
+      "timeframe": "5m",
+      "requested_start": "2026-05-01T13:30:00Z",
+      "requested_end": "2026-05-29T19:55:00Z",
+      "expected_session_count": 20,
+      "expected_bar_count": 3120,
+      "adjustment_policy": "provider-adjusted-all-v1",
+      "universe_id": "liquid-etfs-intraday-5m-v1",
+      "universe_fingerprint": "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9",
+      "existing_artifact_derivation_allowed": false,
+      "publication_rule": "Publish a separate immutable dataset whose raw and Parquet records contain no market-data timestamp after the requested end and whose manifest requested and actual ranges end there.",
+      "forbidden_source": "Do not derive the dataset from the existing May-June artifact because reading or filtering that file can scan June rows."
+    },
+    "required_data_binding": {
+      "path": "config/research/intraday-exposed-002-data-binding-v1.json",
+      "status": "must-be-frozen-and-independently-reviewed-before-strategy-results",
+      "required_fields": [
+        "dataset_id",
+        "fingerprint",
+        "raw_fingerprint",
+        "raw_sha256",
+        "manifest_sha256",
+        "bars_sha256",
+        "requested_start",
+        "requested_end",
+        "actual_start",
+        "actual_end",
+        "session_count",
+        "bar_count",
+        "acquisition_main",
+        "physically_bounded_before_june"
+      ]
+    },
+    "all_runtime_datasets_must_be_physically_bounded_before_june": true,
+    "generic_filtered_read_of_artifact_containing_june": false,
+    "full_dataset_validation_during_campaign": true,
+    "acquire_one_minute_data": false,
+    "latest_permitted_bar": "2026-05-29T19:55:00Z"
+  },
+  "chronology": {
+    "discovery": {
+      "period_id": "discovery-2025-07-through-10",
+      "context_start": "2025-07-01T13:30:00Z",
+      "evaluation_start": "2025-07-01T13:30:00Z",
+      "evaluation_end": "2025-10-31T19:55:00Z",
+      "session_count": 87
+    },
+    "walk_forward": [
+      {
+        "period_id": "walk-forward-2025-11-through-12",
+        "context_start": "2025-10-20T13:30:00Z",
+        "evaluation_start": "2025-11-03T14:30:00Z",
+        "evaluation_end": "2025-12-31T20:55:00Z",
+        "session_count": 41
+      },
+      {
+        "period_id": "walk-forward-2026-01-through-02",
+        "context_start": "2025-12-17T14:30:00Z",
+        "evaluation_start": "2026-01-02T14:30:00Z",
+        "evaluation_end": "2026-02-27T20:55:00Z",
+        "session_count": 39
+      },
+      {
+        "period_id": "walk-forward-2026-03-through-04",
+        "context_start": "2026-02-13T14:30:00Z",
+        "evaluation_start": "2026-03-02T14:30:00Z",
+        "evaluation_end": "2026-04-30T19:55:00Z",
+        "session_count": 43
+      },
+      {
+        "period_id": "final-exposed-2026-05",
+        "context_start": "2026-04-17T13:30:00Z",
+        "evaluation_start": "2026-05-01T13:30:00Z",
+        "evaluation_end": "2026-05-29T19:55:00Z",
+        "session_count": 20
+      }
+    ]
+  },
+  "execution": {
+    "initial_cash": "100000",
+    "currency": "USD",
+    "position_policy": "long-only-fixed-half-weight-no-resize-v1",
+    "active_symbol_weight": "0.5",
+    "maximum_gross_weight": "1",
+    "decision_semantics": "completed-five-minute-bar-only-v1",
+    "fill_semantics": "nth-later-eligible-bar-open-v1",
+    "pending_order_policy": "fifo-no-supersession-session-close-cancel-v1",
+    "session_policy": "XNYS-regular-session-flat-at-close-v1",
+    "maximum_entries_per_symbol_session": 1,
+    "maximum_completed_round_trips_per_session": 2,
+    "warmup_policy": "Supply ten prior XNYS sessions when available; otherwise abstain until each strategy has its declared causal history.",
+    "early_close_policy": "Use the XNYS close for each session, require flat state at that close, and retain early-close sessions in evidence.",
+    "fractional_shares": true,
+    "market_impact_model": null,
+    "scenarios": [
+      "normal",
+      "stress_a",
+      "stress_b",
+      "zero_cost_diagnostic",
+      "normal-delay-2",
+      "normal-delay-3"
+    ],
+    "regulatory_fee_application": "Deduct exact SEC, TAF, and CAT account-day totals at each New York session boundary before carrying cash and equity.",
+    "zero_cost_authority": false
+  },
+  "configuration_contract": {
+    "candidate_id_format": "ie002-f{family_ordinal:02d}-a{first_axis_index:02d}-b{second_axis_index:02d}",
+    "expansion": "Cartesian product of each family's two explicit axes in listed order; fixed parameters do not create candidates.",
+    "neighbor_rule": "Immediate neighbors differ on exactly one axis by one adjacent listed value and match on the other axis.",
+    "parent_configuration_count": 60,
+    "maximum_parent_configurations": 800,
+    "maximum_free_parameters_per_family": 2,
+    "families": [
+      {
+        "family_ordinal": 1,
+        "family_id": "gap-down-failed-continuation-fade-v1",
+        "direction": "gap-strategies",
+        "axes": [
+          {"name": "minimum_gap_bps", "values": ["20", "40", "60"]},
+          {"name": "confirmation_bars", "values": [3, 6]}
+        ],
+        "fixed_parameters": {
+          "minimum_retrace_fraction": "0.5",
+          "exit_bar_index": 66,
+          "gap_side": "down-only"
+        }
+      },
+      {
+        "family_ordinal": 2,
+        "family_id": "gap-up-confirmed-continuation-v1",
+        "direction": "gap-strategies",
+        "axes": [
+          {"name": "minimum_gap_bps", "values": ["20", "40", "60"]},
+          {"name": "confirmation_bars", "values": [3, 6]}
+        ],
+        "fixed_parameters": {
+          "breakout_buffer_bps": "5",
+          "exit_bar_index": 66,
+          "gap_side": "up-only"
+        }
+      },
+      {
+        "family_ordinal": 3,
+        "family_id": "opening-range-breakout-v1",
+        "direction": "opening-range",
+        "axes": [
+          {"name": "range_bars", "values": [2, 3, 6]},
+          {"name": "breakout_buffer_bps", "values": ["5", "10"]}
+        ],
+        "fixed_parameters": {
+          "minimum_edge_cost_multiple": "4",
+          "reentry_allowed": false
+        }
+      },
+      {
+        "family_ordinal": 4,
+        "family_id": "volatility-compression-breakout-v1",
+        "direction": "volatility-compression-breakout",
+        "axes": [
+          {"name": "compression_bars", "values": [6, 12, 18]},
+          {"name": "maximum_compression_range_bps", "values": ["15", "30"]}
+        ],
+        "fixed_parameters": {
+          "expansion_buffer_bps": "5",
+          "reentry_allowed": false
+        }
+      },
+      {
+        "family_ordinal": 5,
+        "family_id": "trend-pullback-recovery-v1",
+        "direction": "trend-pullback",
+        "axes": [
+          {"name": "trend_bars", "values": [6, 12, 18]},
+          {"name": "minimum_trend_bps", "values": ["20", "40"]}
+        ],
+        "fixed_parameters": {
+          "pullback_fraction": "0.3333333333333333333333333333",
+          "recovery_buffer_bps": "5",
+          "reentry_allowed": false
+        }
+      },
+      {
+        "family_ordinal": 6,
+        "family_id": "prior-session-level-event-v1",
+        "direction": "prior-session-levels",
+        "axes": [
+          {
+            "name": "event",
+            "values": ["prior-high-breakout", "prior-low-rejection"]
+          },
+          {"name": "minimum_prior_range_bps", "values": ["30", "60", "90"]}
+        ],
+        "fixed_parameters": {
+          "level_buffer_bps": "5",
+          "confirmation_bars": 2,
+          "reentry_allowed": false
+        }
+      },
+      {
+        "family_ordinal": 7,
+        "family_id": "morning-afternoon-continuation-v1",
+        "direction": "morning-afternoon-continuation",
+        "axes": [
+          {"name": "morning_cutoff_bar_index", "values": [24, 30, 36]},
+          {"name": "minimum_morning_return_bps", "values": ["20", "40"]}
+        ],
+        "fixed_parameters": {
+          "earliest_entry_bar_index": 48,
+          "reentry_allowed": false
+        }
+      },
+      {
+        "family_ordinal": 8,
+        "family_id": "cross-asset-confirmed-breakout-v1",
+        "direction": "cross-asset-confirmation",
+        "axes": [
+          {"name": "confirmation_window_bars", "values": [1, 2, 3]},
+          {"name": "minimum_joint_breakout_bps", "values": ["5", "10"]}
+        ],
+        "fixed_parameters": {
+          "opening_range_bars": 6,
+          "require_spy_qqq_agreement": true,
+          "reentry_allowed": false
+        }
+      },
+      {
+        "family_ordinal": 9,
+        "family_id": "volatility-filtered-breakout-v1",
+        "direction": "volatility-filters",
+        "axes": [
+          {"name": "prior_session_lookback", "values": [3, 5, 10]},
+          {"name": "minimum_expected_move_cost_multiple", "values": ["4", "8"]}
+        ],
+        "fixed_parameters": {
+          "opening_range_bars": 6,
+          "breakout_buffer_bps": "5",
+          "reentry_allowed": false
+        }
+      },
+      {
+        "family_ordinal": 10,
+        "family_id": "minimum-edge-hysteresis-one-trade-v1",
+        "direction": "minimum-edge-hysteresis-one-trade",
+        "axes": [
+          {"name": "entry_edge_cost_multiple", "values": ["4", "8", "12"]},
+          {"name": "hysteresis_cost_multiple", "values": ["1", "2"]}
+        ],
+        "fixed_parameters": {
+          "observation_bars": 6,
+          "require_spy_qqq_agreement": true,
+          "maximum_entries_per_symbol_session": 1
+        }
+      }
+    ]
+  },
+  "paired_cost_analysis": {
+    "discovery_scenarios": ["normal", "zero_cost_diagnostic"],
+    "walk_forward_scenarios": ["normal", "zero_cost_diagnostic"],
+    "required_equation": "gross_profit_loss - execution_friction = net_profit_loss",
+    "gross_profit_loss_definition": "Profit and loss on the Normal path at unadjusted eligible market prices using the Normal path's executed quantities.",
+    "execution_friction_definition": "Adverse fill-price slippage plus SEC, TAF, and CAT charges; direct-retail brokerage commission is zero.",
+    "zero_cost_role": "Exact diagnostic replay only; it cannot satisfy a gate or authorize promotion by itself."
+  },
+  "discovery_screen": {
+    "run_all_parents_before_screening": true,
+    "gates": [
+      {"metric": "normal.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "zero_cost_diagnostic.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "normal.completed_round_trips", "comparison": ">=", "threshold": 8},
+      {"metric": "normal.average_round_trips_per_session", "comparison": "<=", "threshold": "2"},
+      {"metric": "normal.max_drawdown", "comparison": "<=", "threshold": "0.05"},
+      {"metric": "normal.cost_to_gross_profit", "comparison": "<=", "threshold": "0.35"},
+      {"metric": "normal.average_gross_trade_edge_bps", "comparison": ">=", "threshold": "3"},
+      {"metric": "normal.average_holding_bars", "comparison": ">=", "threshold": "3"},
+      {"metric": "normal.positive_profit_symbol_concentration", "comparison": "<=", "threshold": "0.85"},
+      {"metric": "normal.accounting_identity_error", "comparison": "=", "threshold": "0"}
+    ],
+    "undefined_metric_action": "fail",
+    "walk_forward_cap": 30,
+    "per_family_cap": 4,
+    "selection_order": [
+      "normal.total_return descending",
+      "normal.cost_to_gross_profit ascending",
+      "candidate_id ascending"
+    ]
+  },
+  "walk_forward_screen": {
+    "required_period_count": 4,
+    "require_complete_normal_zero_pairs": true,
+    "gates": [
+      {"metric": "aggregate.normal.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "positive_normal_fold_count", "comparison": ">=", "threshold": 3},
+      {"metric": "final_exposed_may.normal.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "worst_normal_fold_return", "comparison": ">=", "threshold": "-0.01"},
+      {"metric": "worst_normal_fold_drawdown", "comparison": "<=", "threshold": "0.05"},
+      {"metric": "aggregate.normal.completed_round_trips", "comparison": ">=", "threshold": 8},
+      {"metric": "aggregate.normal.average_round_trips_per_session", "comparison": "<=", "threshold": "2"},
+      {"metric": "aggregate.normal.cost_to_gross_profit", "comparison": "<=", "threshold": "0.35"},
+      {"metric": "aggregate.normal.average_gross_trade_edge_bps", "comparison": ">=", "threshold": "3"},
+      {"metric": "aggregate.normal.average_holding_bars", "comparison": ">=", "threshold": "3"},
+      {"metric": "aggregate.normal.positive_profit_symbol_concentration", "comparison": "<=", "threshold": "0.85"},
+      {"metric": "aggregate.normal.accounting_identity_error", "comparison": "=", "threshold": "0"}
+    ],
+    "undefined_metric_action": "fail",
+    "serious_candidate_cap": 15,
+    "per_family_cap": 2,
+    "selection_order": [
+      "positive_normal_fold_count descending",
+      "aggregate.normal.total_return descending",
+      "aggregate.normal.cost_to_gross_profit ascending",
+      "candidate_id ascending"
+    ]
+  },
+  "serious_candidate_screen": {
+    "stress_scenarios": ["stress_a", "stress_b", "normal-delay-2", "normal-delay-3"],
+    "run_each_stress_on_all_walk_forward_periods": true,
+    "stress_gates": [
+      {"metric": "stress_a.aggregate_total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "stress_a.positive_fold_count", "comparison": ">=", "threshold": 3},
+      {"metric": "stress_a.normal_profit_retention", "comparison": ">=", "threshold": "0.50"},
+      {"metric": "stress_b.aggregate_total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "stress_b.positive_fold_count", "comparison": ">=", "threshold": 3},
+      {"metric": "stress_b.normal_profit_retention", "comparison": ">=", "threshold": "0.25"},
+      {"metric": "normal-delay-2.aggregate_total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "normal-delay-2.positive_fold_count", "comparison": ">=", "threshold": 3},
+      {"metric": "normal-delay-2.normal_profit_retention", "comparison": ">=", "threshold": "0.50"},
+      {"metric": "normal-delay-3.aggregate_total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "normal-delay-3.positive_fold_count", "comparison": ">=", "threshold": 3},
+      {"metric": "normal-delay-3.normal_profit_retention", "comparison": ">=", "threshold": "0.25"}
+    ],
+    "neighbor_scenarios": ["normal", "zero_cost_diagnostic"],
+    "run_each_immediate_neighbor_on_all_walk_forward_periods": true,
+    "neighbor_gates": [
+      {"metric": "positive_neighbor_fraction", "comparison": ">=", "threshold": "0.67"},
+      {"metric": "median_neighbor_normal_profit_retention", "comparison": ">=", "threshold": "0.50"}
+    ],
+    "undefined_metric_action": "fail"
+  },
+  "final_cohort": {
+    "minimum_size": 0,
+    "maximum_size": 5,
+    "maximum_per_family": 1,
+    "eligibility": "Pass every discovery, walk-forward, stress, delay, and neighbor gate without a missing or failed run.",
+    "selection_order": [
+      "stress_b.positive_fold_count descending",
+      "stress_b.aggregate_total_return descending",
+      "aggregate.normal.cost_to_gross_profit ascending",
+      "candidate_id ascending"
+    ],
+    "freeze": "Create one immutable final-freeze artifact containing the full screened ledger, simultaneous cohort, source identities, and June blocker before any terminal action."
+  },
+  "controlled_evaluation": {
+    "range_status": "ineligible",
+    "june_read": false,
+    "substitute_range": false,
+    "controlled_plan_creation": false,
+    "empty_cohort_action": "Close as immutable failed evidence with no controlled-qualified candidate.",
+    "nonempty_cohort_action": "Stop after final freeze and report exposed-serious candidates only; do not claim controlled qualification."
+  },
+  "runtime": {
+    "namespace": "intraday-exposed-002",
+    "database": "intraday-exposed-002.sqlite3",
+    "create_only_artifacts": true,
+    "campaign_lock": true,
+    "interrupted_run_action": "terminal-failure-no-retry",
+    "implementation_gate": "Merge this plan before acquiring the separate May-only dataset. Freeze and independently review the exact data binding. Then merge the isolated implementation and tests through PR and CI before the first strategy run. Runtime source must equal the exact merged implementation main."
+  },
+  "authority": {
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "plan_fingerprint": "a255949e41c9776e82a04782c6183f5af1476a1dc97c36be4910e4d59424fb98"
+}

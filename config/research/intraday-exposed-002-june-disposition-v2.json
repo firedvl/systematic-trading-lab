@@ -1,0 +1,53 @@
+{
+  "schema_version": "intraday-exposed-controlled-range-disposition-v2",
+  "disposition_id": "intraday-exposed-002-june-disposition-v2",
+  "program_id": "intraday-exposed-002",
+  "status": "ineligible-before-strategy-results",
+  "starting_main": "71aa4da11875cffbff77693be83d116d11a5cb73",
+  "superseded_conclusion": {
+    "path": "config/research/intraday-exposed-002-june-reservation-v1.json",
+    "sha256": "5a6e7b8e21cf5bd7aad5b7445880a7d1862b304ba5b1f9e3dab4909ab9c674db",
+    "reason": "The first audit considered Exposed 001 and active registry state but omitted the committed Intraday V2 exposure entry. Its access prohibition remains conservative; its clean-range conclusion does not."
+  },
+  "range": {
+    "evaluation_start": "2026-06-01T13:30:00Z",
+    "evaluation_end": "2026-06-30T19:55:00Z",
+    "symbols": ["QQQ", "SPY"],
+    "timeframe": "5m"
+  },
+  "audit": {
+    "method": "Repository policy, committed exposure metadata, and SQLite metadata queries only. No market-data or strategy-result artifact was opened.",
+    "known_exposures_path": "config/research/intraday-known-exposures-v1.json",
+    "known_exposures_sha256": "f11977e33a5ade47eeb0ad0923180eca733bc694ffef0e4e2f335936da4746aa",
+    "known_exposures_fingerprint": "0666996faabb50abce0b8959c49980e36a655ea290618bc1463342d2ab5122f9",
+    "conflicting_entry_id": "intraday-v2-real-market-results",
+    "conflicting_entry_range": {
+      "start": "2025-07-01",
+      "end": "2026-06-30"
+    },
+    "conflicting_entry_class": "real-market-result-observed",
+    "active_controlled_registry_sha256": "a97fc979ffea292dfee4a08e49559453da69f3a47c414175f0ac744c7867f2b5",
+    "active_controlled_registry_june_experiment_rows": 0,
+    "active_controlled_registry_unconsumed_holdout_authorizations": 0,
+    "exposed_catalog_sha256": "d0aa2aaece29983ae5a8cce6b192d4d513da1e736bcc68bf2e8c7bf360f6b102",
+    "conclusion": "June is already exposed by committed Intraday V2 result metadata. It is not clean and cannot serve as the untouched controlled evaluation range for Intraday Exposed 002."
+  },
+  "program_effect": {
+    "discovery_through_may_allowed": true,
+    "june_read_allowed": false,
+    "controlled_evaluation_allowed": false,
+    "substitute_range_allowed": false,
+    "empty_cohort_action": "Close the campaign as failed exposed evidence without a controlled run.",
+    "nonempty_cohort_action": "Freeze the exposed-serious cohort and blocker evidence, then stop before controlled evaluation without claiming controlled qualification."
+  },
+  "access_rule": "Do not load a June bar, quote, or strategy result for Intraday Exposed 002.",
+  "authority": {
+    "read_june": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "disposition_fingerprint": "7c8a2ea44a3f6679d5cc7ca72b0aee509073272723755c8fea99b09b85de477d"
+}

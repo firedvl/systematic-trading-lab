@@ -1,5 +1,26 @@
 # Architecture decisions
 
+## 2026-08-20 — Require a physically bounded May artifact
+
+- Decision: do not use the existing May–June Parquet for Exposed 002. After the prospective plan merges, acquire QQQ/SPY IEX five-minute bars for May 1–29 through the GET-only Alpaca historical adapter and publish a separate artifact whose raw, Parquet, and manifest evidence has no later bar. Freeze and independently review its exact binding before strategy execution.
+- Context: datasets use Parquet without row-group statistics. A filtered read can scan June rows from the existing combined artifact before returning the May predicate.
+- Consequences: the preregistration binds only the three existing datasets through April. May acquisition, binding review, runner merge, and exact runtime-main checks remain separate gates. Full validation is allowed only for artifacts physically bounded before June.
+- Revisit when: never within Intraday Exposed 002. Storage-level partitions or row-group evidence may support a different boundary in a later program.
+
+## 2026-08-20 — Treat June as exposed and stop before controlled evaluation
+
+- Decision: preserve `intraday-exposed-002-june-reservation-v1.json` as historical evidence but supersede its clean-range conclusion. The committed exposure inventory already records real-market Intraday V2 results through June 30, 2026. Intraday Exposed 002 must not read June, create a June controlled plan, or choose another range.
+- Context: the first audit checked Exposed 001 and active registry metadata but omitted the committed V2 exposure entry. A second metadata-only review found the conflict without opening V2 results or market data.
+- Consequences: research may proceed only through May. An empty cohort closes as failed exposed evidence. A nonempty cohort freezes with blocker evidence and stops before controlled evaluation; it remains exposed-serious and cannot be called controlled-qualified.
+- Revisit when: never within Intraday Exposed 002. A future controlled range requires a separate prospective program and policy review before its first bar.
+
+## 2026-08-20 — Freeze a 60-parent sparse Intraday Exposed 002 search
+
+- Decision: test ten causal families with two small axes and six points each. Use fixed half-weights, no resizing, at most one entry per symbol per session, paired Normal/zero runs, four chronological folds through May, visible cost-efficiency gates, Stress A/B, isolated delay-2/delay-3, immediate neighbors, and a zero-to-five cohort with at most one candidate per family.
+- Context: the prior campaign showed that raw signal without enough edge per trade could not pay its frozen costs. The calibrated model supports a prospective search focused on turnover, holding time, gross trade edge, and cost-to-gross-profit rather than frequent state changes.
+- Consequences: all 60 parents complete discovery before uniform screening. Weak points stop there. No hidden score, post-result threshold change, old candidate replay, one-minute acquisition, June read, controlled qualification, paper, broker-write, or live authority exists.
+- Revisit when: do not change the plan after a strategy result. Any later design requires a new program identity and prospective review.
+
 ## 2026-08-20 — Use symbol-specific quote costs and daily regulatory fees
 
 - Decision: freeze Normal at each symbol's p75 adverse half-spread, Stress A at p95, and Stress B at p99. Round each selected rate upward to 0.01 basis point. Use one, two, and three five-minute fill-delay bars respectively. Keep one bar in the exact zero-cost diagnostic. Apply SEC, TAF, and CAT by their published daily aggregation and cent-ceiling rules. Derive the New York account day from aware execution timestamps and group TAF partial fills under one capped trade identity. Assume zero brokerage commission only for a direct Alpaca retail account without partner or Elite fees.
