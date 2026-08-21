@@ -61,6 +61,7 @@ class ResearchAttemptStore:
         *,
         database_name: str = "research-attempts.sqlite3",
         lease_timeout: timedelta = timedelta(minutes=5),
+        reconcile_on_open: bool = True,
     ) -> None:
         if lease_timeout <= timedelta(0):
             raise ValueError("research attempt lease timeout must be positive")
@@ -196,7 +197,8 @@ class ResearchAttemptStore:
                 END;
                 """
             )
-        self.reconcile_reports()
+        if reconcile_on_open:
+            self.reconcile_reports()
 
     def bind(self, value: Mapping[str, object]) -> None:
         program_id = value.get("program_id")

@@ -1,0 +1,936 @@
+"""Restart-safe runner for the frozen Intraday Exposed 003 campaign."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import sqlite3
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
+from pathlib import Path
+from types import MappingProxyType
+from typing import Any, cast
+
+from .datasets import DatasetService
+from .fingerprints import canonical_json, canonicalize, fingerprint
+from .intraday_execution_cost_model import load_intraday_execution_cost_model
+from .intraday_exposed_002_engine import IntradayExposed002Engine
+from .intraday_exposed_002_plan import (
+    Exposed002Configuration,
+    Exposed002Period,
+    IntradayExposed002Plan,
+)
+from .intraday_exposed_002_runner import (
+    IntradayExposed002Runner,
+    _configuration_summary,
+    _dataset_bindings,
+    _EvaluationBoundStrategy,
+    _exclusive_file_lock,
+    _mapping,
+    _required_text,
+    _resolve_dataset_services,
+    _scenarios,
+    _sha256_path,
+    _source_commit,
+    _text,
+    _write_create_only,
+    _write_create_only_text,
+)
+from .intraday_exposed_002_runner import (
+    _run_report as _source_run_report,
+)
+from .intraday_exposed_002_strategies import build_intraday_exposed_002_strategy
+from .intraday_exposed_003_plan import (
+    PROGRAM_ID,
+    REVIEWED_JUNE_DISPOSITION_FINGERPRINT,
+    REVIEWED_JUNE_DISPOSITION_SHA256,
+    REVIEWED_PLAN_FINGERPRINT,
+    REVIEWED_PLAN_REVIEW_FINGERPRINT,
+    REVIEWED_PLAN_REVIEW_SHA256,
+    REVIEWED_PLAN_SHA256,
+    Exposed003Configuration,
+    IntradayExposed003Plan,
+    load_intraday_exposed_003_plan,
+)
+from .research_attempts import (
+    AttemptClaim,
+    AttemptHeartbeat,
+    AttemptStateError,
+    ResearchAttemptStore,
+)
+
+RUNNER_VERSION = "intraday-exposed-003-runner-v1"
+RUN_SCHEMA = "intraday-exposed-003-run-v1"
+RUN_REPORT_SCHEMA = "intraday-exposed-003-backtest-report-v1"
+FINAL_FREEZE_SCHEMA = "intraday-exposed-003-final-freeze-v1"
+FINAL_REPORT_SCHEMA = "intraday-exposed-003-final-report-v1"
+DATABASE_NAME = "intraday-exposed-003.sqlite3"
+ENGINE_VERSION = "intraday-exposed-002-engine-v1"
+STRATEGY_VERSION = "intraday-exposed-002-mechanics-v1"
+_LEASE_TIMEOUT = timedelta(seconds=300)
+_HEARTBEAT_INTERVAL = timedelta(seconds=60)
+_AUTHORITY = MappingProxyType(
+    {
+        "research_qualification": False,
+        "controlled_evaluation": False,
+        "protected_holdout": False,
+        "paper_execution": False,
+        "broker_writes": False,
+        "live_execution": False,
+    }
+)
+
+
+class IntradayExposed003Store:
+    """003 view over the generic append-only attempt store."""
+
+    def __init__(self, root: Path) -> None:
+        self.root = root.resolve()
+        self.attempts = ResearchAttemptStore(
+            self.root,
+            database_name=DATABASE_NAME,
+            lease_timeout=_LEASE_TIMEOUT,
+            reconcile_on_open=False,
+        )
+        self.path = self.attempts.path
+
+    def bind(self, value: Mapping[str, object]) -> None:
+        self.attempts.bind(value)
+
+    def reserve(self, specifications: Sequence[Mapping[str, object]]) -> None:
+        run_ids = tuple(_run_id(value) for value in specifications)
+        if len(set(run_ids)) != len(run_ids):
+            raise ValueError("Intraday Exposed 003 run specifications collide")
+        for run_id, specification in zip(run_ids, specifications, strict=True):
+            self.attempts.reserve(run_id, specification)
+
+    def claim(self, run_id: str, *, source_sha: str) -> AttemptClaim:
+        return self.attempts.claim(run_id, source_sha=source_sha, started_at=datetime.now(UTC))
+
+    def publish(
+        self,
+        claim: AttemptClaim,
+        report_path: Path,
+        report_bytes: bytes,
+        *,
+        report_fingerprint: str,
+    ) -> None:
+        self.attempts.publish(
+            claim,
+            report_path,
+            report_bytes,
+            report_fingerprint=report_fingerprint,
+            finished_at=datetime.now(UTC),
+            exit_status=0,
+        )
+
+    def fail(self, claim: AttemptClaim, *, failure_class: str, reason: str) -> None:
+        self.attempts.fail(
+            claim,
+            failure_class=failure_class,
+            reason=reason[:4000],
+            finished_at=datetime.now(UTC),
+            exit_status=None,
+        )
+
+    @contextmanager
+    def capture_output(self, claim: AttemptClaim) -> Iterator[None]:
+        with self.attempts.capture_output(claim):
+            yield
+
+    def expire_stale(self) -> tuple[str, ...]:
+        return self.attempts.expire_stale(datetime.now(UTC))
+
+    def reconcile_reports(self) -> tuple[Path, ...]:
+        return self.attempts.reconcile_reports()
+
+    def get(self, run_id: str) -> dict[str, object]:
+        row = self.attempts.get(run_id)
+        specification = _mapping(row.get("specification"), "run specification")
+        context = _mapping(specification.get("context"), "run context")
+        report = row.get("canonical_report_path")
+        relative_report: str | None = None
+        if isinstance(report, Path):
+            relative_report = report.resolve().relative_to(self.root).as_posix()
+        failure_class = row.get("failure_class")
+        failure_reason = row.get("failure_reason")
+        return {
+            **row,
+            "reservation_id": _reservation_id(str(row["run_fingerprint"])),
+            "stage": _text(context, "stage"),
+            "base_candidate_id": context.get("base_candidate_id"),
+            "candidate_id": _text(context, "candidate_id"),
+            "family_id": _text(context, "family_id"),
+            "period_id": _text(context, "period_id"),
+            "scenario_id": _text(context, "scenario_id"),
+            "report_path": relative_report,
+            "report_sha256": row.get("canonical_report_sha256"),
+            "report_fingerprint": row.get("canonical_report_fingerprint"),
+            "error": None if failure_reason is None else f"{failure_class}: {failure_reason}",
+        }
+
+    def list_runs(self) -> tuple[dict[str, object], ...]:
+        return tuple(self.get(str(row["run_id"])) for row in self.attempts.list_runs())
+
+    def list_attempts(self, run_id: str) -> tuple[dict[str, object], ...]:
+        return self.attempts.list_attempts(run_id)
+
+
+class IntradayExposed003Runner(IntradayExposed002Runner):
+    """Reuse the frozen 002 stage logic with 003 identity and attempt semantics."""
+
+    def __init__(
+        self,
+        repository: Path,
+        data_home: Path,
+        *,
+        progress: Callable[[str], None] | None = None,
+        data_service: DatasetService | None = None,
+    ) -> None:
+        self.repository = repository.resolve()
+        self.data_home = data_home.resolve()
+        self.source_commit = _source_commit(self.repository)
+        self.progress = progress or (lambda _message: None)
+        self.control_plan = load_intraday_exposed_003_plan(self.repository)
+        self.plan = _effective_plan(self.control_plan)
+        self.cost_model = load_intraday_execution_cost_model(self.repository)
+        self.datasets = _dataset_bindings(self.control_plan.source_plan)
+        self.data_by_dataset = (
+            {binding.dataset_id: data_service for binding in self.datasets}
+            if data_service is not None
+            else _resolve_dataset_services(self.data_home, self.datasets)
+        )
+        self._verify_datasets()
+        self.runtime_root = self.data_home / PROGRAM_ID
+        self.attempt_store = IntradayExposed003Store(self.runtime_root)
+        self.store = cast(Any, self.attempt_store)
+        self.scenarios = _scenarios(self.cost_model)
+        self._bar_cache = {}
+        self.attempt_store.bind(self._program_binding())
+
+    def _program_binding(self) -> dict[str, object]:
+        source = self.control_plan.source_plan
+        return {
+            "schema_version": "intraday-exposed-003-program-binding-v1",
+            "program_id": PROGRAM_ID,
+            "runner_version": RUNNER_VERSION,
+            "engine_version": ENGINE_VERSION,
+            "strategy_version": STRATEGY_VERSION,
+            "source_commit": self.source_commit,
+            "plan": {
+                "sha256": self.control_plan.sha256,
+                "fingerprint": self.control_plan.plan_fingerprint,
+                "review_sha256": REVIEWED_PLAN_REVIEW_SHA256,
+                "review_fingerprint": REVIEWED_PLAN_REVIEW_FINGERPRINT,
+                "june_disposition_sha256": self.control_plan.june_disposition_sha256,
+                "june_disposition_fingerprint": self.control_plan.june_disposition_fingerprint,
+            },
+            "source_design": {
+                "plan_sha256": source.sha256,
+                "plan_fingerprint": source.plan_fingerprint,
+                "amendment_sha256": source.amendment_sha256,
+                "amendment_fingerprint": source.amendment_fingerprint,
+                "data_binding_sha256": source.data_binding_sha256,
+                "data_binding_fingerprint": source.data_binding_fingerprint,
+            },
+            "cost_model_id": self.cost_model.payload["cost_model_id"],
+            "cost_model_sha256": self.cost_model.sha256,
+            "cost_model_fingerprint": self.cost_model.model_fingerprint,
+            "datasets": [canonicalize(value) for value in self.datasets],
+            "attempt_policy": {
+                "lease_timeout_seconds": int(_LEASE_TIMEOUT.total_seconds()),
+                "heartbeat_interval_seconds": int(_HEARTBEAT_INTERVAL.total_seconds()),
+                "maximum_infrastructure_attempts": 3,
+                "retry_condition": "expired-no-result-infrastructure-lease-only",
+            },
+            "authority": _AUTHORITY,
+        }
+
+    def run(self) -> dict[str, object]:
+        with _exclusive_file_lock(self.runtime_root / "campaign.lock"):
+            existing = self._load_final_report_if_present()
+            if existing is not None:
+                return self._result(existing)
+            try:
+                self.attempt_store.reconcile_reports()
+                self.attempt_store.expire_stale()
+                self._require_no_failures()
+                discovery = self._run_discovery()
+                walk_forward = self._run_walk_forward(discovery)
+                serious = self._run_serious(walk_forward)
+                cohort = self._select_cohort(serious)
+                freeze = self._freeze(discovery, walk_forward, serious, cohort)
+                final = self._final_report(discovery, walk_forward, serious, cohort, freeze)
+            except Exception:
+                failed = tuple(
+                    row for row in self.attempt_store.list_runs() if row["status"] == "failed"
+                )
+                if not failed:
+                    raise
+                final = self._terminal_interruption_report(failed)
+            return self._result(final)
+
+    def _result(self, final: Mapping[str, Any]) -> dict[str, object]:
+        counts = _mapping(final.get("counts"), "final counts")
+        return {
+            "program_id": PROGRAM_ID,
+            "outcome": final["outcome"],
+            "terminal_message": final["terminal_message"],
+            "source_commit": self.source_commit,
+            "cohort_size": counts.get("cohort"),
+            "final_freeze": (
+                None
+                if final.get("final_freeze") is None
+                else str((self.runtime_root / "final-freeze.json").resolve())
+            ),
+            "final_report_json": str((self.runtime_root / "final-report.json").resolve()),
+            "final_report_markdown": str((self.runtime_root / "final-report.md").resolve()),
+            "authority": _AUTHORITY,
+        }
+
+    def _specification(
+        self,
+        stage: str,
+        configuration: Exposed002Configuration,
+        period: Exposed002Period,
+        scenario_id: str,
+        *,
+        base_candidate_id: str | None = None,
+    ) -> dict[str, object]:
+        specification = super()._specification(
+            stage,
+            configuration,
+            period,
+            scenario_id,
+            base_candidate_id=base_candidate_id,
+        )
+        control = self._control_configuration(configuration.candidate_id)
+        configuration_value = dict(
+            _mapping(specification.get("configuration"), "run configuration")
+        )
+        configuration_value["source_candidate_id"] = control.source_candidate_id
+        specification.update(
+            {
+                "schema_version": RUN_SCHEMA,
+                "program_id": PROGRAM_ID,
+                "runner_version": RUNNER_VERSION,
+                "plan_sha256": REVIEWED_PLAN_SHA256,
+                "plan_fingerprint": REVIEWED_PLAN_FINGERPRINT,
+                "plan_review_sha256": REVIEWED_PLAN_REVIEW_SHA256,
+                "plan_review_fingerprint": REVIEWED_PLAN_REVIEW_FINGERPRINT,
+                "june_disposition_sha256": REVIEWED_JUNE_DISPOSITION_SHA256,
+                "june_disposition_fingerprint": REVIEWED_JUNE_DISPOSITION_FINGERPRINT,
+                "source_plan_sha256": self.control_plan.source_plan.sha256,
+                "source_plan_fingerprint": self.control_plan.source_plan.plan_fingerprint,
+                "configuration": configuration_value,
+                "authority": _AUTHORITY,
+            }
+        )
+        return specification
+
+    def _execute(self, specifications: Sequence[Mapping[str, object]]) -> None:
+        self.attempt_store.reserve(specifications)
+        total = len(specifications)
+        for ordinal, specification in enumerate(specifications, 1):
+            run_id = _run_id(specification)
+            row = self.attempt_store.get(run_id)
+            if row["status"] == "completed":
+                self._load_report(row)
+                continue
+            if row["status"] == "failed":
+                raise AttemptStateError(f"Intraday Exposed 003 run is terminal: {run_id}")
+            claim = self.attempt_store.claim(run_id, source_sha=self.source_commit)
+            context = _mapping(specification.get("context"), "run context")
+            with (
+                self.attempt_store.capture_output(claim),
+                AttemptHeartbeat(
+                    self.attempt_store.attempts,
+                    claim,
+                    interval=_HEARTBEAT_INTERVAL,
+                ),
+            ):
+                failure_class = "candidate"
+                try:
+                    configuration = self._configuration(_text(context, "candidate_id"))
+                    source_configuration = self._source_configuration(configuration.candidate_id)
+                    period = self._period(_text(context, "period_id"))
+                    scenario = self.scenarios[_text(context, "scenario_id")]
+                    strategy = _EvaluationBoundStrategy(
+                        build_intraday_exposed_002_strategy(
+                            source_configuration,
+                            cost_model=self.cost_model,
+                        ),
+                        period.evaluation_start,
+                    )
+                    failure_class = "data"
+                    bars = self._bars(period)
+                    failure_class = "candidate"
+                    result = IntradayExposed002Engine(
+                        Decimal(str(self.plan.payload["execution"]["initial_cash"])),
+                        scenario,
+                        self.cost_model.regulatory_fees,
+                    ).run(bars, strategy)
+                    report = _run_report(specification, result, period)
+                    report_bytes = (canonical_json(report) + "\n").encode()
+                except AttemptStateError:
+                    raise
+                except Exception as error:
+                    self.attempt_store.fail(
+                        claim,
+                        failure_class=failure_class,
+                        reason=f"{type(error).__name__}: {error}",
+                    )
+                    raise
+            self.attempt_store.publish(
+                claim,
+                Path("run-reports") / f"{run_id}.json",
+                report_bytes,
+                report_fingerprint=_text(report, "report_fingerprint"),
+            )
+            self.progress(
+                f"{ordinal}/{total} {_text(context, 'stage')} "
+                f"{_text(context, 'candidate_id')} {_text(context, 'period_id')} "
+                f"{_text(context, 'scenario_id')} attempt-{claim.attempt_number}"
+            )
+
+    def _source_configuration(self, candidate_id: str) -> Exposed002Configuration:
+        source_id = self._control_configuration(candidate_id).source_candidate_id
+        for item in self.control_plan.source_plan.configurations:
+            if item.candidate_id == source_id:
+                return item
+        raise ValueError(f"unknown Intraday Exposed 003 source candidate: {source_id}")
+
+    def _control_configuration(self, candidate_id: str) -> Exposed003Configuration:
+        for item in self.control_plan.configurations:
+            if item.candidate_id == candidate_id:
+                return item
+        raise ValueError(f"unknown Intraday Exposed 003 candidate: {candidate_id}")
+
+    def _load_report(self, row: Mapping[str, object]) -> Mapping[str, Any]:
+        if row.get("status") != "completed":
+            raise ValueError("Intraday Exposed 003 run is not completed")
+        relative = Path(_required_text(row.get("report_path"), "report path"))
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ValueError("Intraday Exposed 003 report path is unsafe")
+        raw = (self.runtime_root / relative).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != row.get("report_sha256"):
+            raise ValueError("Intraday Exposed 003 report SHA-256 differs")
+        value = _mapping(json.loads(raw), "run report")
+        stored_fingerprint = _text(value, "report_fingerprint")
+        unsigned = dict(value)
+        del unsigned["report_fingerprint"]
+        specification = _mapping(value.get("specification"), "report specification")
+        if (
+            value.get("schema_version") != RUN_REPORT_SCHEMA
+            or value.get("program_id") != PROGRAM_ID
+            or value.get("run_id") != row.get("run_id")
+            or value.get("specification_fingerprint") != fingerprint(specification)
+            or fingerprint(specification) != row.get("run_fingerprint")
+            or stored_fingerprint != row.get("report_fingerprint")
+            or fingerprint(unsigned) != stored_fingerprint
+            or value.get("authority") != _AUTHORITY
+        ):
+            raise ValueError("Intraday Exposed 003 report fingerprint differs")
+        return value
+
+    def _freeze(
+        self,
+        discovery: Mapping[str, object],
+        walk_forward: Mapping[str, object],
+        serious: Mapping[str, object],
+        cohort: Sequence[str],
+    ) -> Mapping[str, Any]:
+        runs = self.attempt_store.list_runs()
+        attempt_histories = [
+            {
+                "run_id": row["run_id"],
+                "reservation_id": row["reservation_id"],
+                "attempts": self.attempt_store.list_attempts(str(row["run_id"])),
+            }
+            for row in runs
+        ]
+        payload: dict[str, object] = {
+            "schema_version": FINAL_FREEZE_SCHEMA,
+            "program_id": PROGRAM_ID,
+            "status": "frozen-after-complete-exposed-screening",
+            "source_commit": self.source_commit,
+            "runner_version": RUNNER_VERSION,
+            "engine_version": ENGINE_VERSION,
+            "strategy_version": STRATEGY_VERSION,
+            "plan": self._plan_evidence(),
+            "cost_model": {
+                "sha256": self.cost_model.sha256,
+                "fingerprint": self.cost_model.model_fingerprint,
+            },
+            "datasets": [canonicalize(value) for value in self.datasets],
+            "screened_ledger": {
+                "discovery": discovery,
+                "walk_forward": walk_forward,
+                "serious": serious,
+            },
+            "cohort": [self._configuration_summary(value) for value in cohort],
+            "cohort_size": len(cohort),
+            "all_runtime_runs": [_run_evidence(row) for row in runs],
+            "attempt_summary": _attempt_summary(runs, attempt_histories),
+            "attempt_histories": attempt_histories,
+            "june_blocker": {
+                "path": "config/research/intraday-exposed-003-june-disposition-v1.json",
+                "sha256": REVIEWED_JUNE_DISPOSITION_SHA256,
+                "fingerprint": REVIEWED_JUNE_DISPOSITION_FINGERPRINT,
+                "range_status": "ineligible",
+                "june_read": False,
+                "substitute_range": False,
+                "controlled_plan_created": False,
+                "terminal_action": (
+                    "close-empty-cohort-with-no-controlled-qualified-candidate"
+                    if not cohort
+                    else "terminal-stop-before-controlled-evaluation"
+                ),
+            },
+            "protected_access": _protected_access(),
+            "authority": _AUTHORITY,
+        }
+        payload["freeze_fingerprint"] = fingerprint(payload)
+        _write_create_only(self.runtime_root / "final-freeze.json", payload)
+        return payload
+
+    def _final_report(
+        self,
+        discovery: Mapping[str, object],
+        walk_forward: Mapping[str, object],
+        serious: Mapping[str, object],
+        cohort: Sequence[str],
+        freeze: Mapping[str, Any],
+    ) -> Mapping[str, Any]:
+        empty = not cohort
+        terminal = (
+            "AUTONOMOUS INTRADAY EXPOSED 003 COMPLETE — NO CONTROLLED-QUALIFIED CANDIDATE"
+            if empty
+            else "AUTONOMOUS INTRADAY EXPOSED 003 TERMINALLY INTERRUPTED"
+        )
+        payload: dict[str, object] = {
+            "schema_version": FINAL_REPORT_SCHEMA,
+            "program_id": PROGRAM_ID,
+            "outcome": (
+                "no-controlled-qualified-candidate"
+                if empty
+                else "terminally-interrupted-controlled-range-ineligible"
+            ),
+            "terminal_message": terminal,
+            "source_commit": self.source_commit,
+            "complete_exposed_screening": True,
+            "counts": {
+                "discovery_parents": discovery["parent_count"],
+                "discovery_runs": discovery["paired_run_count"],
+                "walk_forward_candidates": walk_forward["candidate_count"],
+                "walk_forward_runs": walk_forward["paired_run_count"],
+                "serious_candidates": serious["candidate_count"],
+                "stress_runs": serious["stress_run_count"],
+                "neighbor_runs": serious["neighbor_run_count"],
+                "cohort": len(cohort),
+            },
+            "cohort": [self._configuration_summary(value) for value in cohort],
+            "attempt_summary": freeze["attempt_summary"],
+            "runtime_database": {
+                "path": DATABASE_NAME,
+                "sha256": _sha256_path(self.attempt_store.path),
+            },
+            "final_freeze": {
+                "path": "final-freeze.json",
+                "sha256": _sha256_path(self.runtime_root / "final-freeze.json"),
+                "fingerprint": freeze["freeze_fingerprint"],
+            },
+            "controlled_evaluation": {
+                "performed": False,
+                "reason": "June is ineligible and no substitute range is allowed.",
+                "controlled_qualified_claim": False,
+            },
+            "protected_access": _protected_access(),
+            "authority": _AUTHORITY,
+        }
+        return self._publish_final_report(payload)
+
+    def _terminal_interruption_report(
+        self, failed: Sequence[Mapping[str, object]]
+    ) -> Mapping[str, Any]:
+        runs = self.attempt_store.list_runs()
+        histories = [
+            {
+                "run_id": row["run_id"],
+                "reservation_id": row["reservation_id"],
+                "attempts": self.attempt_store.list_attempts(str(row["run_id"])),
+            }
+            for row in runs
+        ]
+        counts = {status: sum(row["status"] == status for row in runs) for status in _STATUSES}
+        payload: dict[str, object] = {
+            "schema_version": FINAL_REPORT_SCHEMA,
+            "program_id": PROGRAM_ID,
+            "outcome": "terminally-interrupted",
+            "terminal_message": "AUTONOMOUS INTRADAY EXPOSED 003 TERMINALLY INTERRUPTED",
+            "source_commit": self.source_commit,
+            "complete_exposed_screening": False,
+            "counts": {
+                "discovery_parents": None,
+                "discovery_runs": None,
+                "walk_forward_candidates": None,
+                "walk_forward_runs": None,
+                "serious_candidates": None,
+                "stress_runs": None,
+                "neighbor_runs": None,
+                "cohort": None,
+                "runtime_runs": counts,
+            },
+            "cohort": [],
+            "terminal_failures": [_run_evidence(row) for row in failed],
+            "attempt_summary": _attempt_summary(runs, histories),
+            "attempt_histories": histories,
+            "runtime_database": {
+                "path": DATABASE_NAME,
+                "sha256": _sha256_path(self.attempt_store.path),
+            },
+            "final_freeze": None,
+            "controlled_evaluation": {
+                "performed": False,
+                "reason": "Campaign stopped on terminal fail-closed runtime evidence.",
+                "controlled_qualified_claim": False,
+            },
+            "protected_access": _protected_access(),
+            "authority": _AUTHORITY,
+        }
+        return self._publish_final_report(payload)
+
+    def _publish_final_report(self, payload: dict[str, object]) -> Mapping[str, Any]:
+        payload["report_fingerprint"] = fingerprint(payload)
+        json_path = self.runtime_root / "final-report.json"
+        _write_create_only(json_path, payload)
+        _write_create_only_text(
+            self.runtime_root / "final-report.md",
+            _final_markdown(payload, _sha256_path(json_path)),
+        )
+        return payload
+
+    def _load_final_report_if_present(self) -> Mapping[str, Any] | None:
+        path = self.runtime_root / "final-report.json"
+        if not path.exists():
+            return None
+        value = _read_final_report(path, source_commit=self.source_commit)
+        _validate_final_evidence(self.runtime_root, value)
+        _write_create_only_text(
+            self.runtime_root / "final-report.md",
+            _final_markdown(value, _sha256_path(path)),
+        )
+        return value
+
+    def _plan_evidence(self) -> dict[str, object]:
+        source = self.control_plan.source_plan
+        return {
+            "sha256": self.control_plan.sha256,
+            "fingerprint": self.control_plan.plan_fingerprint,
+            "review_sha256": REVIEWED_PLAN_REVIEW_SHA256,
+            "review_fingerprint": REVIEWED_PLAN_REVIEW_FINGERPRINT,
+            "source_plan_sha256": source.sha256,
+            "source_plan_fingerprint": source.plan_fingerprint,
+            "source_amendment_sha256": source.amendment_sha256,
+            "source_amendment_fingerprint": source.amendment_fingerprint,
+            "source_data_binding_sha256": source.data_binding_sha256,
+            "source_data_binding_fingerprint": source.data_binding_fingerprint,
+            "june_disposition_sha256": self.control_plan.june_disposition_sha256,
+            "june_disposition_fingerprint": self.control_plan.june_disposition_fingerprint,
+        }
+
+    def _configuration_summary(self, candidate_id: str) -> dict[str, object]:
+        summary = _configuration_summary(self._configuration(candidate_id))
+        summary["source_candidate_id"] = self._control_configuration(
+            candidate_id
+        ).source_candidate_id
+        return summary
+
+
+_STATUSES = ("pending", "running", "completed", "failed")
+
+
+def _effective_plan(control: IntradayExposed003Plan) -> IntradayExposed002Plan:
+    source = control.source_plan
+    configurations = tuple(
+        Exposed002Configuration(
+            item.candidate_id,
+            item.family_id,
+            item.family_ordinal,
+            item.parameters,
+            item.neighbor_ids,
+        )
+        for item in control.configurations
+    )
+    return IntradayExposed002Plan(
+        control.path,
+        control.sha256,
+        control.plan_fingerprint,
+        source.amendment_path,
+        source.amendment_sha256,
+        source.amendment_fingerprint,
+        source.data_binding_path,
+        source.data_binding_sha256,
+        source.data_binding_fingerprint,
+        source.payload,
+        source.amendment,
+        source.data_binding,
+        configurations,
+        source.periods,
+    )
+
+
+def _run_id(specification: Mapping[str, object]) -> str:
+    return f"ie003r-{fingerprint(specification)[:24]}"
+
+
+def _reservation_id(run_fingerprint: str) -> str:
+    return f"ie003q-{run_fingerprint[:24]}"
+
+
+def _run_report(
+    specification: Mapping[str, object],
+    result: Any,
+    period: Exposed002Period,
+) -> dict[str, object]:
+    payload = _source_run_report(specification, result, period)
+    del payload["report_fingerprint"]
+    payload.update(
+        {
+            "schema_version": RUN_REPORT_SCHEMA,
+            "program_id": PROGRAM_ID,
+            "run_id": _run_id(specification),
+            "authority": _AUTHORITY,
+        }
+    )
+    payload["report_fingerprint"] = fingerprint(payload)
+    return payload
+
+
+def _run_evidence(row: Mapping[str, object]) -> dict[str, object]:
+    return {
+        "run_id": row["run_id"],
+        "reservation_id": row["reservation_id"],
+        "run_fingerprint": row["run_fingerprint"],
+        "stage": row["stage"],
+        "base_candidate_id": row["base_candidate_id"],
+        "candidate_id": row["candidate_id"],
+        "family_id": row["family_id"],
+        "period_id": row["period_id"],
+        "scenario_id": row["scenario_id"],
+        "status": row["status"],
+        "attempt_count": row["attempt_count"],
+        "report_path": row["report_path"],
+        "report_sha256": row["report_sha256"],
+        "report_fingerprint": row["report_fingerprint"],
+        "failure_class": row["failure_class"],
+        "failure_reason": row["failure_reason"],
+    }
+
+
+def _attempt_summary(
+    runs: Sequence[Mapping[str, object]], histories: Sequence[Mapping[str, object]]
+) -> dict[str, object]:
+    attempts = [
+        attempt
+        for history in histories
+        for attempt in cast(Sequence[Mapping[str, object]], history["attempts"])
+    ]
+    events = [
+        event
+        for attempt in attempts
+        for event in cast(Sequence[Mapping[str, object]], attempt["events"])
+    ]
+    return {
+        "total_attempts": len(attempts),
+        "retried_run_count": sum(cast(int, row["attempt_count"]) > 1 for row in runs),
+        "infrastructure_interruption_count": sum(
+            event.get("kind") == "infrastructure-interruption" for event in events
+        ),
+        "candidate_failure_count": sum(row.get("failure_class") == "candidate" for row in runs),
+        "data_failure_count": sum(row.get("failure_class") == "data" for row in runs),
+        "publication_conflict_count": sum(
+            row.get("failure_class") == "publication-conflict" for row in runs
+        ),
+        "terminal_infrastructure_failure_count": sum(
+            row.get("failure_class") == "infrastructure" for row in runs
+        ),
+        "maximum_attempts_for_one_run": max(
+            (cast(int, row["attempt_count"]) for row in runs), default=0
+        ),
+    }
+
+
+def _protected_access() -> dict[str, bool]:
+    return {
+        "june_market_data_or_results": False,
+        "v3_data_or_results": False,
+        "protected_campaign_results": False,
+        "paper_broker_or_live_state": False,
+        "strategic_allocation_21": False,
+    }
+
+
+def _final_markdown(report: Mapping[str, object], json_sha256: str) -> str:
+    counts = _mapping(report.get("counts"), "final counts")
+    lines = [
+        "# Intraday Exposed 003 final report",
+        "",
+        f"Outcome: `{report['outcome']}`",
+        "",
+        f"Source commit: `{report['source_commit']}`",
+        "",
+        f"JSON SHA-256: `{json_sha256}`",
+        "",
+        "## Counts",
+        "",
+    ]
+    for label, key in (
+        ("Discovery parents", "discovery_parents"),
+        ("Discovery runs", "discovery_runs"),
+        ("Walk-forward candidates", "walk_forward_candidates"),
+        ("Walk-forward runs", "walk_forward_runs"),
+        ("Serious candidates", "serious_candidates"),
+        ("Stress runs", "stress_runs"),
+        ("Neighbor runs", "neighbor_runs"),
+        ("Final cohort", "cohort"),
+    ):
+        lines.append(f"- {label}: {counts.get(key)}")
+    lines.extend(
+        (
+            "",
+            "June remained unread. Committed V2 exposure makes it ineligible, and no substitute "
+            "range or controlled plan was used.",
+            "",
+            f"**{report['terminal_message']}**",
+            "",
+        )
+    )
+    return "\n".join(lines)
+
+
+def _read_final_report(path: Path, *, source_commit: str | None = None) -> Mapping[str, Any]:
+    value = _mapping(json.loads(path.read_bytes()), "final report")
+    stored = _text(value, "report_fingerprint")
+    unsigned = dict(value)
+    del unsigned["report_fingerprint"]
+    if (
+        value.get("schema_version") != FINAL_REPORT_SCHEMA
+        or value.get("program_id") != PROGRAM_ID
+        or (source_commit is not None and value.get("source_commit") != source_commit)
+        or fingerprint(unsigned) != stored
+        or value.get("authority") != _AUTHORITY
+    ):
+        raise ValueError("Intraday Exposed 003 final report differs")
+    return value
+
+
+def _validate_final_evidence(runtime: Path, report: Mapping[str, Any]) -> None:
+    database = _mapping(report.get("runtime_database"), "runtime database")
+    if database.get("path") != DATABASE_NAME or database.get("sha256") != _sha256_path(
+        runtime / DATABASE_NAME
+    ):
+        raise ValueError("Intraday Exposed 003 runtime database differs")
+    freeze_evidence = report.get("final_freeze")
+    if freeze_evidence is None:
+        return
+    evidence = _mapping(freeze_evidence, "final freeze evidence")
+    relative = _required_text(evidence.get("path"), "freeze path")
+    if relative != "final-freeze.json":
+        raise ValueError("Intraday Exposed 003 final freeze path differs")
+    freeze_path = runtime / relative
+    freeze = _mapping(json.loads(freeze_path.read_bytes()), "final freeze")
+    stored_freeze = _text(freeze, "freeze_fingerprint")
+    unsigned_freeze = dict(freeze)
+    del unsigned_freeze["freeze_fingerprint"]
+    if (
+        evidence.get("sha256") != _sha256_path(freeze_path)
+        or evidence.get("fingerprint") != stored_freeze
+        or freeze.get("schema_version") != FINAL_FREEZE_SCHEMA
+        or freeze.get("program_id") != PROGRAM_ID
+        or freeze.get("source_commit") != report.get("source_commit")
+        or freeze.get("authority") != _AUTHORITY
+        or fingerprint(unsigned_freeze) != stored_freeze
+    ):
+        raise ValueError("Intraday Exposed 003 final freeze differs")
+
+
+def intraday_exposed_003_plan_summary(repository: Path) -> dict[str, object]:
+    plan = load_intraday_exposed_003_plan(repository.resolve())
+    return {
+        "program_id": PROGRAM_ID,
+        "status": "ready-for-merged-runner-gate",
+        "plan_sha256": plan.sha256,
+        "plan_fingerprint": plan.plan_fingerprint,
+        "plan_review_sha256": REVIEWED_PLAN_REVIEW_SHA256,
+        "plan_review_fingerprint": REVIEWED_PLAN_REVIEW_FINGERPRINT,
+        "source_plan_sha256": plan.source_plan.sha256,
+        "source_plan_fingerprint": plan.source_plan.plan_fingerprint,
+        "parent_configuration_count": len(plan.configurations),
+        "discovery_run_count": len(plan.configurations) * 2,
+        "period_count": len(plan.periods),
+        "latest_evaluation_bar": plan.periods[-1].evaluation_end,
+        "attempt_policy": plan.payload["research_attempts"],
+        "june_status": "ineligible-no-read-no-substitute",
+        "authority": _AUTHORITY,
+    }
+
+
+def intraday_exposed_003_status(data_home: Path) -> dict[str, object]:
+    runtime = data_home.resolve() / PROGRAM_ID
+    database = runtime / DATABASE_NAME
+    counts = {status: 0 for status in _STATUSES}
+    attempts = 0
+    failures: dict[str, int] = {}
+    if database.exists():
+        connection = sqlite3.connect(f"file:{database}?mode=ro", uri=True)
+        try:
+            for status, count in connection.execute(
+                "SELECT status, COUNT(*) FROM research_runs GROUP BY status"
+            ).fetchall():
+                counts[str(status)] = int(count)
+            attempts = int(
+                connection.execute(
+                    "SELECT COALESCE(SUM(attempt_count), 0) FROM research_runs"
+                ).fetchone()[0]
+            )
+            for failure_class, count in connection.execute(
+                "SELECT failure_class, COUNT(*) FROM research_runs "
+                "WHERE failure_class IS NOT NULL GROUP BY failure_class"
+            ).fetchall():
+                failures[str(failure_class)] = int(count)
+        finally:
+            connection.close()
+    final_path = runtime / "final-report.json"
+    final: Mapping[str, Any] | None = None
+    if final_path.exists():
+        final = _read_final_report(final_path)
+        _validate_final_evidence(runtime, final)
+    return {
+        "program_id": PROGRAM_ID,
+        "database_exists": database.exists(),
+        "run_counts": counts,
+        "attempt_count": attempts,
+        "failure_counts": failures,
+        "terminal": final is not None,
+        "outcome": None if final is None else final.get("outcome"),
+        "cohort_size": None
+        if final is None
+        else _mapping(final.get("counts"), "final counts").get("cohort"),
+        "authority": _AUTHORITY,
+    }
+
+
+def run_intraday_exposed_003_campaign(
+    repository: Path,
+    data_home: Path,
+    *,
+    progress: Callable[[str], None] | None = None,
+) -> dict[str, object]:
+    return IntradayExposed003Runner(
+        repository,
+        data_home,
+        progress=progress,
+    ).run()
