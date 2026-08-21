@@ -7,6 +7,10 @@ from pathlib import Path
 import pytest
 
 from systematic_trading_lab.intraday_exposed_002_plan import (
+    REVIEWED_DATA_BINDING_FINGERPRINT,
+    REVIEWED_DATA_BINDING_REVIEW_FINGERPRINT,
+    REVIEWED_DATA_BINDING_REVIEW_SHA256,
+    REVIEWED_DATA_BINDING_SHA256,
     REVIEWED_JUNE_DISPOSITION_FINGERPRINT,
     REVIEWED_MAY_ACQUISITION_DISPOSITION_FINGERPRINT,
     REVIEWED_PLAN_AMENDMENT_FINGERPRINT,
@@ -30,6 +34,8 @@ def test_frozen_intraday_exposed_002_plan_is_exact_sparse_and_pre_result() -> No
     assert plan.plan_fingerprint == REVIEWED_PLAN_FINGERPRINT
     assert plan.amendment_sha256 == REVIEWED_PLAN_AMENDMENT_SHA256
     assert plan.amendment_fingerprint == REVIEWED_PLAN_AMENDMENT_FINGERPRINT
+    assert plan.data_binding_sha256 == REVIEWED_DATA_BINDING_SHA256
+    assert plan.data_binding_fingerprint == REVIEWED_DATA_BINDING_FINGERPRINT
     review_path = (
         _REPOSITORY / "config/research/intraday-exposed-002-plan-independent-review-v1.json"
     )
@@ -46,6 +52,15 @@ def test_frozen_intraday_exposed_002_plan_is_exact_sparse_and_pre_result() -> No
     )
     assert json.loads(amendment_review_path.read_text())["review_fingerprint"] == (
         REVIEWED_PLAN_AMENDMENT_REVIEW_FINGERPRINT
+    )
+    binding_review_path = (
+        _REPOSITORY / "config/research/intraday-exposed-002-data-binding-independent-review-v1.json"
+    )
+    assert hashlib.sha256(binding_review_path.read_bytes()).hexdigest() == (
+        REVIEWED_DATA_BINDING_REVIEW_SHA256
+    )
+    assert json.loads(binding_review_path.read_text())["review_fingerprint"] == (
+        REVIEWED_DATA_BINDING_REVIEW_FINGERPRINT
     )
     assert len(plan.configurations) == 60
     assert len({item.family_id for item in plan.configurations}) == 10
@@ -102,6 +117,16 @@ def test_frozen_intraday_exposed_002_plan_is_exact_sparse_and_pre_result() -> No
     assert replacement["raw_transport"]["contains_june_market_timestamp"] is False
     assert replacement["normalized_parquet"]["actual_end"] == "2026-05-29T19:55:00Z"
     assert replacement["normalized_parquet"]["bar_count"] == 3120
+    may_dataset = plan.data_binding["may_dataset"]
+    assert may_dataset["dataset_id"] == (
+        "4afa60f29ea266ec8b60be9d9600132f8cff4207e846443c65afd3bb5c497a19"
+    )
+    assert may_dataset["symbols"] == ["SPY", "QQQ"]
+    assert may_dataset["raw_end"] == "2026-05-29T20:00:00Z"
+    assert may_dataset["actual_end"] == "2026-05-29T19:55:00Z"
+    assert may_dataset["raw_record_count"] == 3503
+    assert may_dataset["bar_count"] == 3120
+    assert may_dataset["contains_june_market_timestamp"] is False
     assert plan.payload["controlled_evaluation"] == {
         "range_status": "ineligible",
         "june_read": False,

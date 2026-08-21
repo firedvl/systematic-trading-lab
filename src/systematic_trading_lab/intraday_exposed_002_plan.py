@@ -52,6 +52,20 @@ REVIEWED_MAY_ACQUISITION_DISPOSITION_SHA256 = (
 REVIEWED_MAY_ACQUISITION_DISPOSITION_FINGERPRINT = (
     "3715a0f424e7450976b1d17f0118906ab9c862e601fcb2c226d98916465df7b3"
 )
+DATA_BINDING_RELATIVE_PATH = Path("config/research/intraday-exposed-002-data-binding-v1.json")
+REVIEWED_DATA_BINDING_SHA256 = "3d6a5dde3b05369ceeb1e3be5b1f47e73a541c74eed184e1850945ee56890769"
+REVIEWED_DATA_BINDING_FINGERPRINT = (
+    "b6849987e7673c4073272ec891e7f7118b91eba6926aa4c16f262162f529ea9d"
+)
+DATA_BINDING_REVIEW_RELATIVE_PATH = Path(
+    "config/research/intraday-exposed-002-data-binding-independent-review-v1.json"
+)
+REVIEWED_DATA_BINDING_REVIEW_SHA256 = (
+    "16e1ae6bc4f718f5086eec15dfcdab61fa1a2ca57ce85dab73de8fbb045e3701"
+)
+REVIEWED_DATA_BINDING_REVIEW_FINGERPRINT = (
+    "bae2ed10678d5a18c916773b1dcfe0b11d3b26f1f7ec2d2ec9e88dd88965d444"
+)
 JUNE_DISPOSITION_RELATIVE_PATH = Path(
     "config/research/intraday-exposed-002-june-disposition-v2.json"
 )
@@ -64,6 +78,7 @@ REVIEWED_JUNE_DISPOSITION_FINGERPRINT = (
 
 _STARTING_MAIN = "71aa4da11875cffbff77693be83d116d11a5cb73"
 _AMENDMENT_STARTING_MAIN = "1aedc2d4056c955a8fdd835a1795277979c94be4"
+_DATA_BINDING_STARTING_MAIN = "01430416953559e0168a2192afb3f859440bc7a4"
 _PLAN_STATUS = "frozen-before-may-only-data-acquisition-or-strategy-results"
 _PRE_MAY_DATA_END = datetime.fromisoformat("2026-04-30T19:55:00+00:00")
 _MAY_START = datetime.fromisoformat("2026-05-01T13:30:00+00:00")
@@ -131,6 +146,15 @@ _AUTHORITY = {
 }
 _AMENDMENT_AUTHORITY = {
     "data_binding": False,
+    "strategy_results": False,
+    "research_qualification": False,
+    "controlled_evaluation": False,
+    "protected_holdout": False,
+    "paper_execution": False,
+    "broker_writes": False,
+    "live_execution": False,
+}
+_DATA_BINDING_AUTHORITY = {
     "strategy_results": False,
     "research_qualification": False,
     "controlled_evaluation": False,
@@ -213,14 +237,19 @@ class IntradayExposed002Plan:
     amendment_path: Path
     amendment_sha256: str
     amendment_fingerprint: str
+    data_binding_path: Path
+    data_binding_sha256: str
+    data_binding_fingerprint: str
     payload: Mapping[str, Any]
     amendment: Mapping[str, Any]
+    data_binding: Mapping[str, Any]
     configurations: tuple[Exposed002Configuration, ...]
     periods: tuple[Exposed002Period, ...]
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "payload", MappingProxyType(dict(self.payload)))
         object.__setattr__(self, "amendment", MappingProxyType(dict(self.amendment)))
+        object.__setattr__(self, "data_binding", MappingProxyType(dict(self.data_binding)))
 
 
 def load_intraday_exposed_002_plan(repository: Path) -> IntradayExposed002Plan:
@@ -257,6 +286,10 @@ def load_intraday_exposed_002_plan(repository: Path) -> IntradayExposed002Plan:
         repository, payload, sha256, stored_fingerprint
     )
     _verify_plan_amendment_review(repository, amendment_sha256, amendment_fingerprint)
+    data_binding_path, data_binding_sha256, data_binding_fingerprint, data_binding = (
+        _load_data_binding(repository, payload, amendment, amendment_sha256, amendment_fingerprint)
+    )
+    _verify_data_binding_review(repository, data_binding_sha256, data_binding_fingerprint)
     periods = _periods(payload)
     configurations = _configurations(payload)
     _verify_data_boundary(payload, periods)
@@ -269,8 +302,12 @@ def load_intraday_exposed_002_plan(repository: Path) -> IntradayExposed002Plan:
         amendment_path,
         amendment_sha256,
         amendment_fingerprint,
+        data_binding_path,
+        data_binding_sha256,
+        data_binding_fingerprint,
         payload,
         amendment,
+        data_binding,
         configurations,
         periods,
     )
@@ -562,6 +599,218 @@ def _verify_plan_amendment_review(
         or verification.get("market_data_artifacts_opened") is not False
     ):
         raise ValueError("Intraday Exposed 002 plan amendment review differs")
+
+
+def _load_data_binding(
+    repository: Path,
+    base_payload: Mapping[str, Any],
+    amendment_payload: Mapping[str, Any],
+    amendment_sha256: str,
+    amendment_fingerprint: str,
+) -> tuple[Path, str, str, Mapping[str, Any]]:
+    path = repository / DATA_BINDING_RELATIVE_PATH
+    raw = path.read_bytes()
+    sha256 = hashlib.sha256(raw).hexdigest()
+    if sha256 != REVIEWED_DATA_BINDING_SHA256:
+        raise ValueError("Intraday Exposed 002 data-binding SHA-256 differs")
+    value = _mapping(json.loads(raw), "Intraday Exposed 002 data binding")
+    stored_fingerprint = _text(value, "binding_fingerprint")
+    unsigned = dict(value)
+    del unsigned["binding_fingerprint"]
+    dependencies = _mapping(value.get("frozen_dependencies"), "binding dependencies")
+    may_dataset = _mapping(value.get("may_dataset"), "bound May dataset")
+    validation = _mapping(value.get("validation"), "binding validation")
+    gates = _mapping(value.get("execution_gates"), "binding execution gates")
+    replacement = _mapping(
+        amendment_payload.get("replacement_data_contract"), "amended data contract"
+    )
+    bound = _mapping(replacement.get("bound_acquisition"), "amended bound acquisition")
+    raw_transport = _mapping(replacement.get("raw_transport"), "amended raw transport")
+    normalized = _mapping(replacement.get("normalized_parquet"), "amended normalized Parquet")
+    manifest = _mapping(replacement.get("manifest"), "amended manifest")
+    base_data = _mapping(base_payload.get("data"), "base plan data")
+    if (
+        fingerprint(unsigned) != stored_fingerprint
+        or stored_fingerprint != REVIEWED_DATA_BINDING_FINGERPRINT
+        or value.get("schema_version") != "intraday-exposed-002-data-binding-v1"
+        or value.get("binding_id") != "intraday-exposed-002-data-binding-v1"
+        or value.get("program_id") != PLAN_ID
+        or value.get("status") != "frozen-after-amendment-merge-before-runner-or-strategy-results"
+        or value.get("binding_main") != _DATA_BINDING_STARTING_MAIN
+        or value.get("selection_basis")
+        != (
+            "Bind the only artifact published by the exact post-plan GET. No price value, "
+            "strategy result, alternate acquisition, or existing May-June artifact informed "
+            "the selection."
+        )
+        or value.get("authority") != _DATA_BINDING_AUTHORITY
+        or dependencies
+        != {
+            "base_plan": {
+                "path": PLAN_RELATIVE_PATH.as_posix(),
+                "sha256": REVIEWED_PLAN_SHA256,
+                "plan_fingerprint": REVIEWED_PLAN_FINGERPRINT,
+                "review_path": PLAN_REVIEW_RELATIVE_PATH.as_posix(),
+                "review_sha256": REVIEWED_PLAN_REVIEW_SHA256,
+                "review_fingerprint": REVIEWED_PLAN_REVIEW_FINGERPRINT,
+            },
+            "plan_amendment": {
+                "path": PLAN_AMENDMENT_RELATIVE_PATH.as_posix(),
+                "sha256": amendment_sha256,
+                "amendment_fingerprint": amendment_fingerprint,
+                "review_path": PLAN_AMENDMENT_REVIEW_RELATIVE_PATH.as_posix(),
+                "review_sha256": REVIEWED_PLAN_AMENDMENT_REVIEW_SHA256,
+                "review_fingerprint": REVIEWED_PLAN_AMENDMENT_REVIEW_FINGERPRINT,
+            },
+            "acquisition_disposition": {
+                "path": MAY_ACQUISITION_DISPOSITION_RELATIVE_PATH.as_posix(),
+                "sha256": REVIEWED_MAY_ACQUISITION_DISPOSITION_SHA256,
+                "disposition_fingerprint": REVIEWED_MAY_ACQUISITION_DISPOSITION_FINGERPRINT,
+            },
+        }
+        or may_dataset
+        != {
+            "dataset_id": bound.get("dataset_id"),
+            "fingerprint": bound.get("fingerprint"),
+            "raw_fingerprint": bound.get("raw_fingerprint"),
+            "raw_sha256": bound.get("raw_sha256"),
+            "manifest_sha256": bound.get("manifest_sha256"),
+            "bars_sha256": bound.get("bars_sha256"),
+            "provider": manifest.get("provider"),
+            "feed": manifest.get("feed"),
+            "symbols": ["SPY", "QQQ"],
+            "timeframe": manifest.get("timeframe"),
+            "adjustment_policy": base_data.get("adjustment_policy"),
+            "calendar_policy": base_data.get("calendar_policy"),
+            "timestamp_policy": base_data.get("timestamp_policy"),
+            "universe_id": base_data.get("universe_id"),
+            "universe_fingerprint": base_data.get("universe_fingerprint"),
+            "requested_start": manifest.get("requested_start"),
+            "requested_end": manifest.get("requested_end"),
+            "actual_start": normalized.get("actual_start"),
+            "actual_end": normalized.get("actual_end"),
+            "raw_start": raw_transport.get("actual_start"),
+            "raw_end": raw_transport.get("actual_end"),
+            "raw_record_count": raw_transport.get("record_count"),
+            "raw_outside_regular_grid_count": raw_transport.get("outside_regular_grid_count"),
+            "session_count": normalized.get("session_count"),
+            "bar_count": normalized.get("bar_count"),
+            "retrieval_timestamp": "2026-08-21T00:51:06.432445Z",
+            "parent_dataset_id": None,
+            "acquisition_main": bound.get("acquisition_main"),
+            "contains_june_market_timestamp": False,
+            "physically_bounded_before_june": True,
+        }
+        or validation
+        != {
+            "full_dataset_validation_performed_after_amendment_merge": True,
+            "dataset_service_validation_passed": True,
+            "catalog_matches_manifest": True,
+            "identity_matches_manifest": True,
+            "raw_artifact_matches": True,
+            "raw_sha256_revalidated": True,
+            "manifest_sha256_revalidated": True,
+            "bars_sha256_revalidated": True,
+            "normalized_fingerprint_revalidated": True,
+            "raw_fingerprint_revalidated": True,
+            "missing_interval_count": 0,
+            "duplicate_interval_count": 0,
+            "conflict_count": 0,
+            "quarantined_record_count": 0,
+            "raw_contains_june_market_timestamp": False,
+            "normalized_contains_june_market_timestamp": False,
+            "existing_may_june_artifact_accessed": False,
+            "strategy_result_access": False,
+            "v3_data_access": False,
+            "paper_or_broker_state_access": False,
+            "strategic_allocation_21_access": False,
+        }
+        or gates
+        != {
+            "data_binding_independent_review_required": True,
+            "data_binding_merge_required": True,
+            "runner_implementation_and_merge_required": True,
+            "strategy_execution_allowed_now": False,
+        }
+    ):
+        raise ValueError("Intraday Exposed 002 data binding differs")
+    return path, sha256, stored_fingerprint, value
+
+
+def _verify_data_binding_review(
+    repository: Path,
+    binding_sha256: str,
+    binding_fingerprint: str,
+) -> None:
+    path = repository / DATA_BINDING_REVIEW_RELATIVE_PATH
+    raw = path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != REVIEWED_DATA_BINDING_REVIEW_SHA256:
+        raise ValueError("Intraday Exposed 002 data-binding-review SHA-256 differs")
+    value = _mapping(json.loads(raw), "Intraday Exposed 002 data binding review")
+    stored_fingerprint = _text(value, "review_fingerprint")
+    unsigned = dict(value)
+    del unsigned["review_fingerprint"]
+    reviewed_binding = _mapping(value.get("reviewed_binding"), "reviewed data binding")
+    reviewed_amendment = _mapping(value.get("reviewed_amendment"), "binding-reviewed amendment")
+    verification = _mapping(value.get("verification"), "data-binding-review verification")
+    raw_answers = value.get("answers")
+    if not isinstance(raw_answers, list):
+        raise ValueError("Intraday Exposed 002 data binding review differs")
+    answers = tuple(_mapping(item, "data-binding-review answer") for item in raw_answers)
+    if (
+        fingerprint(unsigned) != stored_fingerprint
+        or stored_fingerprint != REVIEWED_DATA_BINDING_REVIEW_FINGERPRINT
+        or value.get("schema_version") != "intraday-exposed-002-data-binding-independent-review-v1"
+        or value.get("review_id") != "intraday-exposed-002-data-binding-independent-review-v1"
+        or value.get("program_id") != PLAN_ID
+        or value.get("status") != "passed-before-runner-or-strategy-results"
+        or value.get("verdict") != "pass"
+        or value.get("findings") != []
+        or value.get("authority") != _DATA_BINDING_AUTHORITY
+        or reviewed_binding
+        != {
+            "path": DATA_BINDING_RELATIVE_PATH.as_posix(),
+            "sha256": binding_sha256,
+            "binding_fingerprint": binding_fingerprint,
+        }
+        or reviewed_amendment
+        != {
+            "path": PLAN_AMENDMENT_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_PLAN_AMENDMENT_SHA256,
+            "amendment_fingerprint": REVIEWED_PLAN_AMENDMENT_FINGERPRINT,
+            "review_path": PLAN_AMENDMENT_REVIEW_RELATIVE_PATH.as_posix(),
+            "review_sha256": REVIEWED_PLAN_AMENDMENT_REVIEW_SHA256,
+            "review_fingerprint": REVIEWED_PLAN_AMENDMENT_REVIEW_FINGERPRINT,
+        }
+        or {answer.get("control") for answer in answers}
+        != {
+            "exact-reviewed-dependency-chain",
+            "catalog-manifest-and-content-identity",
+            "complete-pre-june-raw-evidence",
+            "exact-normalized-may-grid",
+            "prospective-single-artifact-selection",
+            "remaining-gates-and-authority",
+        }
+        or any(answer.get("answer") != "pass" for answer in answers)
+        or verification.get("binding_sha256_revalidated") is not True
+        or verification.get("binding_fingerprint_revalidated") is not True
+        or verification.get("dependency_sha256_values_revalidated") is not True
+        or verification.get("dataset_service_validation_passed") is not True
+        or verification.get("catalog_matches_stored_manifest") is not True
+        or verification.get("derived_dataset_id_matches") is not True
+        or verification.get("raw_sha256_revalidated") is not True
+        or verification.get("bars_sha256_revalidated") is not True
+        or verification.get("manifest_sha256_revalidated") is not True
+        or verification.get("raw_fingerprint_revalidated") is not True
+        or verification.get("normalized_fingerprint_revalidated") is not True
+        or verification.get("all_permitted_artifact_timestamps_before_june") is not True
+        or verification.get("exact_staged_byte_review") is not True
+        or verification.get("opened_dataset_ids")
+        != ["4afa60f29ea266ec8b60be9d9600132f8cff4207e846443c65afd3bb5c497a19"]
+        or verification.get("other_dataset_artifacts_opened") is not False
+        or verification.get("prices_printed") is not False
+    ):
+        raise ValueError("Intraday Exposed 002 data binding review differs")
 
 
 def _verify_artifact(
