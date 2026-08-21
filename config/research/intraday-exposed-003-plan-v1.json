@@ -1,0 +1,133 @@
+{
+  "schema_version": "intraday-exposed-003-research-plan-v1",
+  "plan_id": "intraday-exposed-003-plan-v1",
+  "program_id": "intraday-exposed-003",
+  "campaign_id": "intraday-exposed-003",
+  "status": "frozen-before-exposed-003-implementation-or-strategy-results",
+  "starting_main": "9de63bfe3278091220ffbf88743daba7a24ddb1c",
+  "purpose": "Clean execution of the exact frozen Intraday Exposed 002 exposed-research design under a new restart-safe campaign identity.",
+  "source_design": {
+    "path": "config/research/intraday-exposed-002-plan-v1.json",
+    "program_id": "intraday-exposed-002",
+    "sha256": "8acb778eec43dd53b56c65712b5a076bdc6126de3504d68114aa714e2474b17f",
+    "fingerprint": "a255949e41c9776e82a04782c6183f5af1476a1dc97c36be4910e4d59424fb98",
+    "amendment_sha256": "d6409531b31d25c4f3bcd79a55b2bf22b359ca71e4a0fada346ba06dbf0bc14b",
+    "amendment_fingerprint": "e02a23d078f5b4d7216f7b1ede6dab0c2b85859e8e56c4781da5fa32a6429e00",
+    "data_binding_sha256": "3d6a5dde3b05369ceeb1e3be5b1f47e73a541c74eed184e1850945ee56890769",
+    "data_binding_fingerprint": "b6849987e7673c4073272ec891e7f7118b91eba6926aa4c16f262162f529ea9d",
+    "reuse_mode": "exact-source-fields-with-campaign-identities-rekeyed-only",
+    "exact_reuse_sections": [
+      "frozen_dependencies.execution_cost_model",
+      "data",
+      "chronology",
+      "execution",
+      "configuration_contract.expansion",
+      "configuration_contract.neighbor_rule",
+      "configuration_contract.parent_configuration_count",
+      "configuration_contract.maximum_parent_configurations",
+      "configuration_contract.maximum_free_parameters_per_family",
+      "configuration_contract.families",
+      "paired_cost_analysis",
+      "discovery_screen",
+      "walk_forward_screen",
+      "serious_candidate_screen",
+      "final_cohort"
+    ],
+    "parent_configuration_count": 60,
+    "discovery_run_count": 120,
+    "runtime_rows_imported": false,
+    "result_dependent_design_change": false,
+    "adaptation_rule": "Exposed 002 partial results may be reported for provenance but must not influence any family, parameter, grid, chronology, cost, strategy, gate, cap, neighbor, or selection field."
+  },
+  "implementation_binding": {
+    "strategy_path": "src/systematic_trading_lab/intraday_exposed_002_strategies.py",
+    "strategy_sha256": "4c6cbc193b78d32a072ef5f71c1c179714c88d182887a97a2c5e031b54fc2ad4",
+    "strategy_version": "intraday-exposed-002-mechanics-v1",
+    "engine_path": "src/systematic_trading_lab/intraday_exposed_002_engine.py",
+    "engine_sha256": "bf62f6661b0beb2ac57b83668412b90a17255fd176fa559966ec0f5a64032c66",
+    "engine_version": "intraday-exposed-002-engine-v1",
+    "reuse_rule": "Use the exact source mechanics and engine without modification. Campaign-specific orchestration may only rekey identities and use research-attempts-v1.",
+    "implementation_bug_action": "Stop and document the independently proven defect before any strategy execution. Do not silently repair and continue."
+  },
+  "cost_model": {
+    "path": "config/research/intraday-execution-cost-model-001-v1.json",
+    "cost_model_id": "intraday-execution-cost-model-001-v1",
+    "sha256": "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af",
+    "fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4",
+    "recalibration_allowed": false
+  },
+  "data_reuse": {
+    "source_data_binding_path": "config/research/intraday-exposed-002-data-binding-v1.json",
+    "new_acquisition_allowed": false,
+    "june_data_access": false,
+    "latest_permitted_bar": "2026-05-29T19:55:00Z",
+    "full_integrity_reverification_required_before_runtime_state": true
+  },
+  "identity": {
+    "candidate_id_format": "ie003-f{family_ordinal:02d}-a{first_axis_index:02d}-b{second_axis_index:02d}",
+    "reservation_id_format": "ie003q-{run_fingerprint_prefix_24}",
+    "run_id_format": "ie003r-{run_fingerprint_prefix_24}",
+    "attempt_id_format": "ra-{attempt_fingerprint_prefix_24}",
+    "runtime_root": ".trading-lab/intraday-exposed-003",
+    "database": "intraday-exposed-003.sqlite3",
+    "report_relative_path_format": "run-reports/{run_id}.json",
+    "final_freeze": "final-freeze.json",
+    "final_report_json": "final-report.json",
+    "final_report_markdown": "final-report.md"
+  },
+  "research_attempts": {
+    "schema": "research-attempts-v1",
+    "maximum_infrastructure_attempts": 3,
+    "lease_timeout_seconds": 300,
+    "heartbeat_interval_seconds": 60,
+    "retry_condition": "expired-no-result-infrastructure-lease-only",
+    "completed_result_retry_allowed": false,
+    "candidate_exception_retry_allowed": false,
+    "data_integrity_retry_allowed": false,
+    "publication_conflict_retry_allowed": false,
+    "failed_qualification_gate_retry_allowed": false,
+    "attempt_exhaustion_action": "terminal-infrastructure-failure-and-campaign-stop"
+  },
+  "execution_order": {
+    "discovery": "Run all 60 parents under Normal and paired exact zero-cost diagnostic before uniform screening.",
+    "later_stages": "Run only source-plan walk-forward, stress, isolated-delay, neighbor, and cohort stages when every preceding frozen gate permits them.",
+    "runtime_source_rule": "The first runtime state may be created only from a clean exact merged implementation main where HEAD, local main, and origin/main match."
+  },
+  "june_disposition": {
+    "path": "config/research/intraday-exposed-003-june-disposition-v1.json",
+    "sha256": "af91ca3889327a402851e652592d842b43a31d04bba4aa2efe3305d855165efa",
+    "fingerprint": "2c5b84269e255a78b41f591cbcfd79a684adb6159f6172733da4219e06ce5278",
+    "status": "ineligible-before-strategy-results"
+  },
+  "controlled_evaluation": {
+    "range_status": "ineligible",
+    "june_read": false,
+    "substitute_range": false,
+    "controlled_plan_creation": false,
+    "empty_cohort_action": "Close with no controlled-qualified candidate and no controlled run.",
+    "nonempty_cohort_action": "Freeze exposed-serious candidates and blocker evidence, then stop before controlled evaluation without claiming controlled qualification."
+  },
+  "protected_boundaries": {
+    "immutable_prior_evidence": [
+      "intraday-exposed-001",
+      "intraday-exposed-002",
+      "intraday-v1",
+      "intraday-v2",
+      "intraday-v3",
+      "rapid-002",
+      "rapid-003",
+      "rapid-004"
+    ],
+    "paper_or_broker_state_access": false,
+    "strategic_allocation_21_access": false
+  },
+  "authority": {
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "plan_fingerprint": "ac8b3c029599fd912464020e57bbe3cdbde907f63d46f5a7ef748cab2655bc2e"
+}

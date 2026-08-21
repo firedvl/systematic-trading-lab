@@ -1,0 +1,81 @@
+{
+  "schema_version": "intraday-exposed-003-plan-independent-review-v1",
+  "review_id": "intraday-exposed-003-plan-independent-review-v1",
+  "status": "passed-before-exposed-003-implementation-or-strategy-results",
+  "review_date": "2026-08-21",
+  "review_method": "Independent read-only prospective control review of the final plan and June-disposition bytes.",
+  "reviewed_plan": {
+    "program_id": "intraday-exposed-003",
+    "path": "config/research/intraday-exposed-003-plan-v1.json",
+    "sha256": "7d5edd0c52e80d42d322cfa2d3cf1d91ed10bc7c06cd5b418328ba8a3e649f22",
+    "plan_fingerprint": "ac8b3c029599fd912464020e57bbe3cdbde907f63d46f5a7ef748cab2655bc2e"
+  },
+  "reviewed_june_disposition": {
+    "path": "config/research/intraday-exposed-003-june-disposition-v1.json",
+    "sha256": "af91ca3889327a402851e652592d842b43a31d04bba4aa2efe3305d855165efa",
+    "disposition_fingerprint": "2c5b84269e255a78b41f591cbcfd79a684adb6159f6172733da4219e06ce5278",
+    "status": "ineligible-before-strategy-results"
+  },
+  "verdict": "pass",
+  "findings": [],
+  "answers": [
+    {
+      "control": "exact-exposed-002-design-binding",
+      "answer": "pass",
+      "basis": "The loader revalidates the exact reviewed Exposed 002 plan, amendment, data binding, cost model, chronology, 60-parent grid, 120 discovery rows, gates, neighbors, and cohort rules. Only candidate and neighbor IDs are rekeyed."
+    },
+    {
+      "control": "new-campaign-identities",
+      "answer": "pass",
+      "basis": "Program, campaign, plan, candidate, reservation, run, attempt, database, runtime-root, and report identities are new; no Exposed 002 runtime row is imported."
+    },
+    {
+      "control": "restart-safe-attempt-policy",
+      "answer": "pass",
+      "basis": "The plan opts into research-attempts-v1 with a 300-second lease, 60-second heartbeat, three total infrastructure attempts, and retry only after an expired no-result infrastructure lease."
+    },
+    {
+      "control": "june-ineligible-no-substitute",
+      "answer": "pass",
+      "basis": "Committed Intraday V2 exposure metadata makes June ineligible. The disposition forbids June reads, a substitute range, a controlled plan, and controlled evaluation regardless of cohort size."
+    },
+    {
+      "control": "implementation-source-binding",
+      "answer": "pass",
+      "basis": "The exact Exposed 002 strategy and engine source SHA-256 values are frozen and revalidated. A proven defect requires a stop before strategy execution."
+    },
+    {
+      "control": "protected-boundaries-and-authority",
+      "answer": "pass",
+      "basis": "All qualification, controlled-evaluation, holdout, paper, broker-write, and live authorities are false. June, V3, PAPER, broker/live, and strategic-allocation-21 access remain forbidden."
+    },
+    {
+      "control": "prior-evidence-immutability",
+      "answer": "pass",
+      "basis": "No Intraday Exposed 001/002, V1/V2/V3, Rapid-002/003/004 runtime, report, result, plan, or evidence artifact is changed by this plan slice."
+    }
+  ],
+  "verification": {
+    "plan_sha256_revalidated": true,
+    "plan_fingerprint_revalidated": true,
+    "june_disposition_sha256_revalidated": true,
+    "june_disposition_fingerprint_revalidated": true,
+    "configuration_count": 60,
+    "discovery_run_count": 120,
+    "focused_tests_passed": 4,
+    "ruff_passed": true,
+    "strict_mypy_passed": true,
+    "direct_loader_check_passed": true,
+    "exact_byte_rereview": true
+  },
+  "scope_limit": "The review inspected committed metadata and source only. It did not open market data, strategy results, June or V3 data, or PAPER, broker, live, or strategic-allocation-21 state.",
+  "authority": {
+    "strategy_execution": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "b3e3cad3a8489b1079b83b8f8fdf11dc93e96151ee8311603b3fdfe38fb637ab"
+}
