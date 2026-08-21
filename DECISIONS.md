@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-21 — New deterministic campaigns may retry vanished infrastructure attempts
+
+- Decision: add one generic `research-attempts-v1` registry for prospectively versioned deterministic campaigns. Keep each immutable run specification separate from up to three append-only execution attempts. Renew private leases with heartbeats. Only an expired no-result lease may return the same run to pending. Journal one canonical report before create-only file publication. Treat candidate exceptions, data-integrity failures, canonical publication conflicts, and the third expired attempt as terminal.
+- Context: Intraday Exposed 002 completed four rows, then its process disappeared while the fifth row was claimed. Its frozen lifecycle stored no attempt ID, time, PID, host, heartbeat, output, exit status, or resource telemetry. Its required recovery converted that stale claim to terminal failure and ended the 120-row campaign without a qualification outcome. Host inspection found no reliable cause evidence.
+- Consequences: new opted-in campaigns retain stdout, stderr, exit status when known, start and end times, source SHA, immutable run fingerprint, hostname, PID, memory, disk, load, and duration evidence around each attempt. Attempt identities and events reject update and deletion. Completed canonical bytes cannot change or create retry authority. Existing campaign runners, databases, reports, and stale-run rules remain unchanged. The registry adds no strategy, data, qualification, holdout, paper, broker, or live authority.
+- Revisit when: measured concurrent-worker volume exceeds SQLite, a remote executor can attest process outcomes, or a campaign needs a reviewed infrastructure-failure class beyond an expired no-result lease.
+
 ## 2026-08-20 — Bind Exposed 002 datasets to their exact local catalogs
 
 - Decision: runner v2 dispatches the three frozen pre-May dataset IDs only through `data_home/intraday-exposed` and the frozen May dataset ID only through `data_home`. It does not scan, relocate, rebuild, or fall back between catalogs. The chosen service still performs the existing manifest, byte, full-integrity, range, and pre-June checks before runtime state exists.
