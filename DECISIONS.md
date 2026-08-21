@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-20 — Freeze Exposed 002 mechanics and accounting before results
+
+- Decision: use one isolated Exposed 002 engine, registry, and CLI. Strategies emit only binary `0` or `0.5` desired weights after completed five-minute bars. Changed states queue FIFO for the frozen scenario delay, never supersede, never resize, and permit one entry per symbol and session. Existing pre-cutoff entries and exits retain their eligible fills; the controller projects the remaining queue and adds a final-open flatten when its final state is invested. Derive every family rule and metric by the exact formulas in `docs/research-campaigns/intraday-exposed-002-program.md`.
+- Context: the prospective plan froze families, axes, periods, costs, screens, and terminal actions, but the runner still needed exact causal event order, cost-filter estimates, aggregation rules, and metric definitions before its first result.
+- Consequences: a run must start from a clean commit where `HEAD`, local `main`, and `origin/main` match. The source gate runs before plan or data access. The runner uses only the four physically pre-June datasets, writes only `intraday-exposed-002.sqlite3` and create-only campaign artifacts, makes interrupted work terminal, and creates no controlled plan. Independent read-only review found no remaining P0, P1, or P2 issue after the focused regression fixes. No strategy, June, V3, protected result, PAPER/broker/live state, or `strategic-allocation-21` state was accessed while fixing the mechanics.
+- Revisit when: never within Intraday Exposed 002 after its first strategy result. A different event rule, formula, range, or authority requires a new prospective program.
+
 ## 2026-08-20 — Preserve pre-June transport records outside the normalized grid
 
 - Decision: keep every mapped raw record returned by the exact Exposed 002 May GET, including records outside the XNYS normalization grid through May 29 at 20:00. Require every raw timestamp to remain strictly before June, while normalized Parquet and manifest requested and actual ranges must end at May 29 at 19:55. Bind both surfaces by exact hashes and counts.
