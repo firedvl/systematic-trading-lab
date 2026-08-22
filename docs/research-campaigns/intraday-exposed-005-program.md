@@ -87,8 +87,9 @@ the final single-file database hash covers all authoritative state.
 
 ## Launch gates
 
-The run action remains blocked until a second reviewed change binds the launch-control artifact's
-raw SHA-256 and canonical fingerprint. That artifact must bind:
+The launch-control artifact is bound at raw SHA-256
+`6b431eb34de1cce4a0126fa10d42685bc55abf28587a15ade466912c0cbe3b94` and canonical
+fingerprint `f05a789b5e4bcc71d21485d8c95237ac29fc864013521cd7a4b1e8383fbded1d`. It binds:
 
 - the exact merged implementation commit and named source-file hashes;
 - all seven repository quality gates;
@@ -99,8 +100,14 @@ raw SHA-256 and canonical fingerprint. That artifact must bind:
 - the hash-bound Exposed 004 pre-attempt failure disposition; and
 - an independent finding-free control review.
 
-The binding change may alter only the control artifact, fixed binding constants, their tests, and
-listed state documents. Launch then requires a clean commit where `HEAD`, local `main`, and
+Fresh equivalence from implementation main `1d6744432ed2635ce6ae19268b64b1c89fc0017d`
+replayed four fixtures in `3936.880792` seconds with one worker and `1149.137974` seconds with
+four, a `3.426` speedup. Every specification, fingerprint, fill sequence, round trip, metric,
+canonical report, report hash, and report fingerprint matched. Source database and dataset inputs
+remained byte-identical.
+
+The binding change alters only the control artifact, fixed binding constants, their tests, and
+listed state documents. Launch requires a clean commit where `HEAD`, local `main`, and
 `origin/main` match. Any mismatch stops before runtime state.
 
 ## Worker-count evaluation
@@ -113,14 +120,14 @@ separate reviewed infrastructure decision.
 
 ## Commands
 
-Before launch control is bound, only plan and health status are usable:
+Plan and health status remain available without runtime authority:
 
 ```console
 uv run trading-lab research intraday-exposed-005 plan
 uv run trading-lab research intraday-exposed-005 status
 ```
 
-After every launch gate passes on clean merged main, the exact run command is:
+After every launch gate passes on clean merged main, use exactly:
 
 ```console
 uv run trading-lab research intraday-exposed-005 run --workers 4

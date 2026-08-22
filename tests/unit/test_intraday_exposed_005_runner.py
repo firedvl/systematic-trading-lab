@@ -329,7 +329,7 @@ def test_plan_status_and_cli_expose_four_worker_default_without_authority(
     assert plan["parent_configuration_count"] == 60
     assert plan["discovery_run_count"] == 120
     assert plan["default_workers"] == 4
-    assert plan["launch_control_exists"] is False
+    assert plan["launch_control_exists"] is True
     assert status["database_exists"] is False
     assert arguments.workers == 6
     assert not any(cast(Mapping[str, bool], status["authority"]).values())
@@ -638,10 +638,21 @@ def test_launch_control_accepts_only_hash_bound_complete_review(
     assert loaded["implementation"] == value["implementation"]
 
 
-def test_repository_launch_control_remains_unbound_before_review() -> None:
-    assert not (_REPOSITORY / runner_module.LAUNCH_CONTROL_RELATIVE_PATH).exists()
-    assert REVIEWED_LAUNCH_CONTROL_SHA256 is None
-    assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT is None
+def test_repository_launch_control_is_hash_bound_after_review() -> None:
+    assert (_REPOSITORY / runner_module.LAUNCH_CONTROL_RELATIVE_PATH).is_file()
+    assert (
+        REVIEWED_LAUNCH_CONTROL_SHA256
+        == "6b431eb34de1cce4a0126fa10d42685bc55abf28587a15ade466912c0cbe3b94"
+    )
+    assert (
+        REVIEWED_LAUNCH_CONTROL_FINGERPRINT
+        == "f05a789b5e4bcc71d21485d8c95237ac29fc864013521cd7a4b1e8383fbded1d"
+    )
+    loaded = _load_launch_control(
+        _REPOSITORY,
+        source_commit="1d6744432ed2635ce6ae19268b64b1c89fc0017d",
+    )
+    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
 
 
 def test_launch_control_rejects_minimal_fake_pass(
