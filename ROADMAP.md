@@ -49,7 +49,7 @@ Replay/shadow/paper comparison, supervisor recovery, disconnect and stale-data h
 
 ## M6 — Bounded automated research
 
-Rapid Research now provides the manual foundation: a public strategy registry, bounded deterministic sweeps, search accounting, chronological walk-forward folds, execution stress, isolated result storage, and zero-authority export. Remaining work covers broader reviewed strategy families, resumable long runs where measured, and evidence-producing pull requests. Gate: all valid attempted candidates remain recorded; agents cannot alter protected controls or promote strategies.
+Rapid Research now provides the manual foundation: a public strategy registry, bounded deterministic sweeps, search accounting, chronological walk-forward folds, execution stress, isolated result storage, and zero-authority export. A generic spawned-process executor now supports bounded same-stage work with a four-worker default, worker-local immutable caches, ordered results, isolated worker death, and the unchanged `research-attempts-v1` retry boundary. Remaining work covers broader reviewed strategy families, measured campaign adoption, resumable long runs where needed, and evidence-producing pull requests. Gate: all valid attempted candidates remain recorded; agents cannot alter protected controls or promote strategies.
 
 ## Intraday extension
 

@@ -11,9 +11,20 @@ from typing import Any
 
 
 class DatasetCatalog:
-    def __init__(self, path: Path) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        self.path = path
+    def __init__(self, path: Path, *, read_only: bool = False) -> None:
+        self.path = path.resolve()
+        self.read_only = read_only
+        if read_only:
+            if not self.path.is_file():
+                raise ValueError("read-only dataset catalog is missing")
+            with self._connect() as connection:
+                table = connection.execute(
+                    "SELECT name FROM sqlite_schema WHERE type = 'table' AND name = 'datasets'"
+                ).fetchone()
+            if table != ("datasets",):
+                raise ValueError("read-only dataset catalog schema is missing")
+            return
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as connection:
             connection.execute(
                 """
@@ -28,6 +39,8 @@ class DatasetCatalog:
             )
 
     def register(self, manifest: dict[str, Any], path: Path) -> bool:
+        if self.read_only:
+            raise ValueError("read-only dataset catalog cannot register a dataset")
         identity = manifest["identity"]
         encoded = json.dumps(manifest, separators=(",", ":"), sort_keys=True)
         with self._connect() as connection:
@@ -73,6 +86,8 @@ class DatasetCatalog:
         return [json.loads(row[0]) for row in rows]
 
     def rebuild(self, datasets: Path) -> int:
+        if self.read_only:
+            raise ValueError("read-only dataset catalog cannot rebuild")
         count = 0
         for path in sorted(datasets.glob("*/manifest.json")):
             manifest = json.loads(path.read_text(encoding="utf-8"))
@@ -82,7 +97,13 @@ class DatasetCatalog:
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
-        connection = sqlite3.connect(self.path)
+        connection = (
+            sqlite3.connect(f"{self.path.as_uri()}?mode=ro", uri=True)
+            if self.read_only
+            else sqlite3.connect(self.path)
+        )
+        if self.read_only:
+            connection.execute("PRAGMA query_only = ON")
         connection.execute("PRAGMA foreign_keys = ON")
         try:
             with connection:

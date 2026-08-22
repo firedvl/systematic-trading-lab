@@ -28,6 +28,7 @@ from .fingerprints import canonical_json, fingerprint
 
 _SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
 _FINGERPRINT_PATTERN = re.compile(r"[0-9a-f]{64}")
+_ATTEMPT_PREFIX_PATTERN = re.compile(r"[a-z0-9]+-")
 _FAILURE_CLASSES = frozenset({"candidate", "data"})
 _LEASE_EVENTS = ("started", "heartbeat")
 MAX_INFRASTRUCTURE_ATTEMPTS = 3
@@ -62,15 +63,19 @@ class ResearchAttemptStore:
         database_name: str = "research-attempts.sqlite3",
         lease_timeout: timedelta = timedelta(minutes=5),
         reconcile_on_open: bool = True,
+        attempt_id_prefix: str = "ra-",
     ) -> None:
         if lease_timeout <= timedelta(0):
             raise ValueError("research attempt lease timeout must be positive")
         if Path(database_name).name != database_name:
             raise ValueError("research attempt database name must be a file name")
+        if _ATTEMPT_PREFIX_PATTERN.fullmatch(attempt_id_prefix) is None:
+            raise ValueError("research attempt ID prefix must be lowercase alphanumeric plus '-'")
         self.root = root.resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.path = self.root / database_name
         self.lease_timeout = lease_timeout
+        self.attempt_id_prefix = attempt_id_prefix
         self.output_root = self.root / "attempt-output"
         self.output_root.mkdir(parents=True, exist_ok=True)
         with self._connect() as connection:
@@ -279,7 +284,7 @@ class ResearchAttemptStore:
             if expected_source != source_sha:
                 raise AttemptStateError("attempt source SHA differs from its immutable run")
             attempt_id = (
-                "ra-"
+                self.attempt_id_prefix
                 + fingerprint(
                     {
                         "run_id": run_id,
@@ -470,6 +475,7 @@ class ResearchAttemptStore:
             raise ValueError("canonical research report cannot be empty")
         report_sha256 = hashlib.sha256(report_bytes).hexdigest()
         end_telemetry = _safe_resource_telemetry(self.root, observed_at=finished_at)
+        output = _seal_output(claim.stdout_path, claim.stderr_path)
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             self._require_active_claim(connection, claim)
@@ -482,7 +488,7 @@ class ResearchAttemptStore:
                     "duration_seconds": _duration(claim.started_at, finished_at),
                     "end_telemetry": end_telemetry,
                     "exit_status": exit_status,
-                    "output": _seal_output(claim.stdout_path, claim.stderr_path),
+                    "output": output,
                     "report_path": relative,
                     "report_sha256": report_sha256,
                     "report_fingerprint": report_fingerprint,
@@ -536,6 +542,7 @@ class ResearchAttemptStore:
             raise ValueError("research failure reason is empty or too long")
         _require_utc(finished_at)
         end_telemetry = _safe_resource_telemetry(self.root, observed_at=finished_at)
+        output = _seal_output(claim.stdout_path, claim.stderr_path)
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             self._require_active_claim(connection, claim)
@@ -548,7 +555,7 @@ class ResearchAttemptStore:
                     "duration_seconds": _duration(claim.started_at, finished_at),
                     "end_telemetry": end_telemetry,
                     "exit_status": exit_status,
-                    "output": _seal_output(claim.stdout_path, claim.stderr_path),
+                    "output": output,
                     "reason": reason,
                 },
             )

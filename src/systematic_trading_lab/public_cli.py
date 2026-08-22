@@ -20,10 +20,18 @@ from .intraday_exposed_002_runner import (
     intraday_exposed_002_status,
     run_intraday_exposed_002_campaign,
 )
+from .intraday_exposed_003_equivalence import (
+    verify_intraday_exposed_003_parallel_equivalence,
+)
 from .intraday_exposed_003_runner import (
     intraday_exposed_003_plan_summary,
     intraday_exposed_003_status,
     run_intraday_exposed_003_campaign,
+)
+from .intraday_exposed_004_runner import (
+    intraday_exposed_004_plan_summary,
+    intraday_exposed_004_status,
+    run_intraday_exposed_004_campaign,
 )
 from .rapid_004 import RAPID_004_PROGRAM_ID
 from .rapid_004_runner import (
@@ -95,7 +103,35 @@ def research_parser() -> argparse.ArgumentParser:
         help="plan, run, or inspect the restart-safe Intraday Exposed 003 campaign",
     )
     intraday_exposed_003.add_argument(
+        "action",
+        nargs="?",
+        choices=("equivalence", "plan", "run", "status"),
+        default="status",
+    )
+    intraday_exposed_003.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="processes used only by the read-only equivalence action",
+    )
+    intraday_exposed_003.add_argument(
+        "--fixtures",
+        type=int,
+        default=4,
+        help="completed runs used only by the read-only equivalence action",
+    )
+    intraday_exposed_004 = commands.add_parser(
+        "intraday-exposed-004",
+        help="plan, run, or inspect the process-parallel Intraday Exposed 004 campaign",
+    )
+    intraday_exposed_004.add_argument(
         "action", nargs="?", choices=("plan", "run", "status"), default="status"
+    )
+    intraday_exposed_004.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="bounded worker processes used within each research stage",
     )
     backtest = commands.add_parser(
         "backtest",
@@ -249,11 +285,36 @@ def _run_research(arguments: argparse.Namespace, settings: Settings) -> int:
             _print(intraday_exposed_003_plan_summary(repository))
         elif arguments.action == "status":
             _print(intraday_exposed_003_status(settings.home))
+        elif arguments.action == "equivalence":
+            _print(
+                verify_intraday_exposed_003_parallel_equivalence(
+                    repository,
+                    settings.home,
+                    workers=arguments.workers,
+                    fixture_count=arguments.fixtures,
+                )
+            )
         else:
             _print(
                 run_intraday_exposed_003_campaign(
                     repository,
                     settings.home,
+                    progress=lambda message: print(message, file=sys.stderr),
+                )
+            )
+        return 0
+    if arguments.research_command == "intraday-exposed-004":
+        repository = Path(__file__).resolve().parents[2]
+        if arguments.action == "plan":
+            _print(intraday_exposed_004_plan_summary(repository))
+        elif arguments.action == "status":
+            _print(intraday_exposed_004_status(settings.home))
+        else:
+            _print(
+                run_intraday_exposed_004_campaign(
+                    repository,
+                    settings.home,
+                    workers=arguments.workers,
                     progress=lambda message: print(message, file=sys.stderr),
                 )
             )

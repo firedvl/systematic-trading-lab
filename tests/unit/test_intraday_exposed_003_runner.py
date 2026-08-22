@@ -91,6 +91,9 @@ def test_plan_status_and_parser_grant_no_authority(tmp_path: Path) -> None:
     plan = intraday_exposed_003_plan_summary(_REPOSITORY)
     status = intraday_exposed_003_status(tmp_path)
     arguments = research_parser().parse_args(("intraday-exposed-003", "plan"))
+    equivalence = research_parser().parse_args(
+        ("intraday-exposed-003", "equivalence", "--workers", "2", "--fixtures", "3")
+    )
 
     assert plan["program_id"] == PROGRAM_ID
     assert plan["parent_configuration_count"] == 60
@@ -102,6 +105,9 @@ def test_plan_status_and_parser_grant_no_authority(tmp_path: Path) -> None:
     assert not (tmp_path / PROGRAM_ID).exists()
     assert arguments.research_command == "intraday-exposed-003"
     assert arguments.action == "plan"
+    assert equivalence.action == "equivalence"
+    assert equivalence.workers == 2
+    assert equivalence.fixtures == 3
 
 
 def test_runner_enforces_source_gate_before_data_access(
