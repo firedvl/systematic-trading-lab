@@ -21,6 +21,9 @@ from systematic_trading_lab.intraday_exposed_002_runner import (
     IntradayExposed002Runner,
     _scenarios,
 )
+from systematic_trading_lab.intraday_exposed_004_launch_control import (
+    REVIEWED_LAUNCH_CONTROL_FINGERPRINT,
+)
 from systematic_trading_lab.intraday_exposed_004_plan import (
     PROGRAM_ID,
     REVIEWED_PLAN_FINGERPRINT,
@@ -274,7 +277,7 @@ def test_plan_status_and_cli_expose_four_worker_default_without_authority(
     assert plan["parent_configuration_count"] == 60
     assert plan["discovery_run_count"] == 120
     assert plan["default_workers"] == 4
-    assert plan["launch_control_exists"] is False
+    assert plan["launch_control_exists"] is True
     assert status["database_exists"] is False
     assert arguments.workers == 6
     assert not any(cast(Mapping[str, bool], status["authority"]).values())
@@ -507,12 +510,14 @@ def test_004_store_never_reads_or_imports_003_runtime_rows(tmp_path: Path) -> No
 def test_launch_control_missing_blocks_runtime_before_data_or_004_state(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    repository = _launch_control_repository(tmp_path / "repository")
+    data_home = tmp_path / "data"
     monkeypatch.setattr(runner_module, "_source_commit", lambda _repository: _SOURCE_SHA)
 
     with pytest.raises(ValueError, match="launch control review is missing"):
-        IntradayExposed004Runner(_REPOSITORY, tmp_path)
+        IntradayExposed004Runner(repository, data_home)
 
-    assert not (tmp_path / PROGRAM_ID).exists()
+    assert not (data_home / PROGRAM_ID).exists()
 
 
 def test_launch_control_accepts_only_hash_bound_complete_review(
@@ -526,6 +531,21 @@ def test_launch_control_accepts_only_hash_bound_complete_review(
 
     assert loaded["review_fingerprint"] == value["review_fingerprint"]
     assert loaded["implementation"] == value["implementation"]
+
+
+def test_repository_launch_control_is_hash_bound_to_reviewed_evidence() -> None:
+    path = _REPOSITORY / runner_module.LAUNCH_CONTROL_RELATIVE_PATH
+    value = cast(dict[str, object], json.loads(path.read_bytes()))
+    implementation = cast(dict[str, object], value["implementation"])
+
+    loaded = _load_launch_control(
+        _REPOSITORY,
+        source_commit=cast(str, implementation["source_commit"]),
+    )
+
+    assert loaded["status"] == "passed"
+    assert loaded["verdict"] == "pass"
+    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
 
 
 def test_launch_control_rejects_minimal_fake_pass(

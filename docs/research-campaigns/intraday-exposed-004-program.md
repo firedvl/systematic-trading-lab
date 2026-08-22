@@ -1,11 +1,13 @@
 # Intraday Exposed 004 program
 
-Status: implementation and prospective design review complete; launch remains blocked on merged-main equivalence, final implementation review evidence, and Intraday Exposed 003 disposition.
+Status: implementation, merged-main equivalence, health-only Intraday Exposed 003 disposition, and independent launch-control review complete; launch remains blocked on the launch-control PR, CI, merge, and final clean-main check.
 
 Plan SHA-256: `760df9db4b9be9b2d8eecaa0287713e3e341c7437523b01d0fef47b830f43c8e`.
 Plan fingerprint: `a122cbba4fa76ed1d65236637f52308398306d72a62b0ba4d1836792203b2ddc`.
 Prospective-review SHA-256: `f4d5d01a52d290374d54ab5944aee80047377e224e9ab3453e1237559b56833a`.
 Prospective-review fingerprint: `f92b48f4d0c5e30f230af786ef3f5dbb05ad2e2bb10022332e585cd4dfbb98db`.
+Launch-control SHA-256: `a5a7107d803efb468c1946b1c66244e163c29f27b7f4e1bc7ba93e045c21c5fc`.
+Launch-control fingerprint: `fc0eb76457eb4fc7b752323b69cba602eb0cceb9f84f585c05f68e9fff511a0b`.
 
 ## Scope
 
@@ -106,10 +108,11 @@ equivalence evidence, and health-only Exposed 003 disposition.
 The loader rejects a control artifact unless its raw SHA-256 and canonical fingerprint match fixed
 reviewed constants. It also validates the reviewed plan, current executor/attempt-store/runner file
 hashes, all seven repository gates, detailed one/four-worker fixture evidence, the three allowed 003
-disposition branches, and a finding-free independent review. The binding constants remain unset
-until merged-main evidence exists, so adding an unreviewed `status: passed` file cannot launch 004.
-The final clean-main commit must descend from the reviewed implementation commit, and its diff may
-contain only the control artifact, fixed binding constants, their test, and disposition documents.
+disposition branches, and a finding-free independent review. The binding constants were fixed only
+after merged-main evidence and independent review passed, so an unreviewed `status: passed` file
+cannot launch 004. The final clean-main commit must descend from the reviewed implementation
+commit, and its diff may contain only the control artifact, fixed binding constants, their test, and
+disposition documents.
 
 Before any 004 launch, the read-only Exposed 003 equivalence action must select completed canonical
 specifications by configuration and scenario only, run them with one and four workers, and prove
@@ -117,6 +120,21 @@ exact equality for specification, run fingerprint, fill trace, round trips, metr
 report bytes, SHA-256, and report fingerprint. It must also prove that the source database and
 dataset bytes did not change by comparing their SHA-256 values before and after replay. Any mismatch
 stops the workflow.
+
+Merged implementation main `88f2e2d8696c737e90063e8a9a3578c0f46dd6a1` passed all seven
+repository gates. Because Exposed 003 was still publishing progress, the live-file proof stopped
+when its before/after database hash changed. A consistent read-only SQLite snapshot then completed
+the exact proof without changing the live runtime: four fixtures matched for every required field,
+the snapshot database SHA-256 was
+`ee3ee9662c37f73d46be5808fc53240d29db72eb34a25467446dcc8ff462adde`,
+sequential time was `4105.462651` seconds, four-worker time was `1253.082018` seconds, and speedup
+was `3.276`.
+
+The final health-only Exposed 003 disposition recorded 55 completed, 0 failed, 64 pending, and 1
+running leased row across 57 attempts. The materially incomplete coordinator received `SIGTERM` at
+`2026-08-22T20:47:32Z` and exited without escalation. Its 283 files and database remain preserved;
+no partial strategy merit was inspected. Independent launch-control review
+`codex-independent-launch-control-review-2026-08-22` passed with no findings.
 
 ```console
 uv run trading-lab research intraday-exposed-003 equivalence --workers 4 --fixtures 4
