@@ -1,0 +1,200 @@
+{
+  "schema_version": "intraday-exposed-004-launch-control-review-v1",
+  "review_id": "intraday-exposed-004-launch-control-review-v1",
+  "status": "passed",
+  "verdict": "pass",
+  "review_date": "2026-08-22",
+  "review_method": "Independent source, gate, equivalence, and health-only disposition review.",
+  "reviewed_plan": {
+    "path": "config/research/intraday-exposed-004-plan-v1.json",
+    "sha256": "760df9db4b9be9b2d8eecaa0287713e3e341c7437523b01d0fef47b830f43c8e",
+    "fingerprint": "a122cbba4fa76ed1d65236637f52308398306d72a62b0ba4d1836792203b2ddc"
+  },
+  "implementation": {
+    "source_commit": "88f2e2d8696c737e90063e8a9a3578c0f46dd6a1",
+    "files": [
+      {
+        "path": "src/systematic_trading_lab/research_executor.py",
+        "sha256": "625fccf4875571e7f550a55b73b9b7b3621ad61d3affa6fdb9c35105047ccecf"
+      },
+      {
+        "path": "src/systematic_trading_lab/research_attempts.py",
+        "sha256": "608d710c8fa1d7a7830bf7f82a404a5a0588a6055381d6dcc4676d2c256f5512"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_exposed_004_runner.py",
+        "sha256": "354ca652ec0e98443866ee0a664d8af18ddcd21e342e7c98d7adadfc46111fb8"
+      }
+    ]
+  },
+  "quality_gates": {
+    "source_commit": "88f2e2d8696c737e90063e8a9a3578c0f46dd6a1",
+    "results": [
+      {
+        "command": "uv run ruff format --check .",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "159 files already formatted"
+      },
+      {
+        "command": "uv run ruff check .",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "All checks passed"
+      },
+      {
+        "command": "uv run mypy src tests",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Success: no issues found in 154 source files"
+      },
+      {
+        "command": "uv run pytest",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "811 passed, 4 skipped in 76.90 seconds"
+      },
+      {
+        "command": "uv run python scripts/check_secrets.py",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Secret check passed for 287 files"
+      },
+      {
+        "command": "bash -n scripts/*.sh",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "All shell scripts passed syntax validation"
+      },
+      {
+        "command": "uv build",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Source distribution and wheel built"
+      }
+    ]
+  },
+  "equivalence": {
+    "schema_version": "intraday-exposed-003-parallel-equivalence-v1",
+    "program_id": "intraday-exposed-003",
+    "verification_source_commit": "88f2e2d8696c737e90063e8a9a3578c0f46dd6a1",
+    "source_database": "intraday-exposed-003/intraday-exposed-003.sqlite3",
+    "source_database_sha256": "ee3ee9662c37f73d46be5808fc53240d29db72eb34a25467446dcc8ff462adde",
+    "source_database_mutated": false,
+    "dataset_inputs_mutated": false,
+    "fixture_selection": "completed-specification-configuration-and-scenario-only",
+    "fixture_count": 4,
+    "worker_counts": [
+      1,
+      4
+    ],
+    "comparisons": [
+      "run-specification",
+      "run-fingerprint",
+      "fill-sequence-fingerprint",
+      "round-trip-fingerprint",
+      "metrics",
+      "canonical-report-bytes",
+      "canonical-report-sha256",
+      "report-fingerprint"
+    ],
+    "sequential_seconds": "4105.462651",
+    "parallel_seconds": "1253.082018",
+    "speedup": "3.276",
+    "fixtures": [
+      {
+        "run_id": "ie003r-9f6aa65a1b7719840e277c2c",
+        "candidate_id": "ie003-f01-a01-b01",
+        "scenario_id": "normal",
+        "run_fingerprint": "9f6aa65a1b7719840e277c2c12dea03596c0fb7bc77dea758d5e762075b337ba",
+        "fill_trace_fingerprint": "7789f9d05a6c9ca439ca86c9ce36a6999539b752be2c41cf7d94b1d108308d76",
+        "round_trip_fingerprint": "040cb75afa8ee68681db1e9e7f009df47bbaf4410b0a7f916cbfb85da6c6d1b4",
+        "report_sha256": "edf15e9c2db26eaecc17258c1b6031b3c0bfb1060321ddf2b1914d755c180f5d",
+        "report_fingerprint": "65c33f707c9794851b31535433b31c4208bc2c5457bb9613ed37eb45dc939d4f",
+        "specification_equal": true,
+        "metrics_equal": true,
+        "canonical_report_equal": true
+      },
+      {
+        "run_id": "ie003r-349420e1061004c28ec96a9b",
+        "candidate_id": "ie003-f01-a01-b01",
+        "scenario_id": "zero_cost_diagnostic",
+        "run_fingerprint": "349420e1061004c28ec96a9b93a5a980bb538a9480a196243ca64e0ba74c6560",
+        "fill_trace_fingerprint": "bcfc49543afa684f97df091eddfaf47a55759f366efe8cb409efb30dc8639db4",
+        "round_trip_fingerprint": "276d5caa6a2bfe5e070fac852e16f3a97f91e664d3c2a652d9b8ee0f7c64d421",
+        "report_sha256": "f66803fbbf8975ade00e8a51ed989462e775084da663d841e2dfb53ae19fd3a1",
+        "report_fingerprint": "473ed488a3683344ca52f28acaf730e94b088784d5e0719fe869a8050f351261",
+        "specification_equal": true,
+        "metrics_equal": true,
+        "canonical_report_equal": true
+      },
+      {
+        "run_id": "ie003r-3b3d5ce6f3fa72ccaf9c1ded",
+        "candidate_id": "ie003-f01-a01-b02",
+        "scenario_id": "normal",
+        "run_fingerprint": "3b3d5ce6f3fa72ccaf9c1ded83a7e2f8fb5568d1b31295bea0c57bba9fe5a212",
+        "fill_trace_fingerprint": "cd41a14d172049387b534cd01f738257cf981bc1449ea633ff3dcd729671c486",
+        "round_trip_fingerprint": "e2106b9457dbf0972d7426348f1f2bf69f764790a0195105436e9cfe5a007632",
+        "report_sha256": "cc87d0d1a37730a56bec150f22c2fcb46e257425652365b4c557b4576c33e538",
+        "report_fingerprint": "78d88366a312bf71bf443e0ac71dc25b9ab22d492c25e4bedfecdd0c5fe36dda",
+        "specification_equal": true,
+        "metrics_equal": true,
+        "canonical_report_equal": true
+      },
+      {
+        "run_id": "ie003r-463a3d40c62ccf1d352bbb0e",
+        "candidate_id": "ie003-f01-a02-b01",
+        "scenario_id": "normal",
+        "run_fingerprint": "463a3d40c62ccf1d352bbb0e978e8280fadf8067cf928fba15b053fc9d26756e",
+        "fill_trace_fingerprint": "8caa3bfcb790b75f38cd7d487a59bce759237d4bbbda359df7bba411b5bf79d7",
+        "round_trip_fingerprint": "547697e6212f8f0e3aa701697408252b78227e9607bd4b65d328cd7990fcb0bb",
+        "report_sha256": "c856c3f97361c52c75b943dd9a1d808420162903148f95fac71fa04920ee2ebb",
+        "report_fingerprint": "a5fcfe3c591e5565c6150358784709941024f461fedf46349e123e2e5a78afc2",
+        "specification_equal": true,
+        "metrics_equal": true,
+        "canonical_report_equal": true
+      }
+    ],
+    "equivalent": true
+  },
+  "intraday_exposed_003_disposition": {
+    "inspection_scope": "health-and-progress-metadata-only",
+    "classification": "active-materially-incomplete",
+    "database_exists": true,
+    "run_counts": {
+      "pending": 64,
+      "running": 1,
+      "completed": 55,
+      "failed": 0
+    },
+    "attempt_count": 57,
+    "terminal": false,
+    "valid_terminal_outcome": false,
+    "evidence_preserved": true,
+    "partial_strategy_merits_inspected": false,
+    "process_stop": {
+      "required": true,
+      "signal": "SIGTERM",
+      "confirmed": true
+    },
+    "intraday_exposed_004_required": true,
+    "action": "stop-preserve-and-supersede-for-execution-throughput"
+  },
+  "independent_review": {
+    "source_commit": "88f2e2d8696c737e90063e8a9a3578c0f46dd6a1",
+    "status": "passed",
+    "verdict": "pass",
+    "findings": [],
+    "reviewer": "codex-independent-launch-control-review-2026-08-22"
+  },
+  "scope_limit": "Health metadata only; no partial strategy merits inspected.",
+  "authority": {
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "fc0eb76457eb4fc7b752323b69cba602eb0cceb9f84f585c05f68e9fff511a0b"
+}

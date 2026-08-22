@@ -103,6 +103,20 @@ and 1 running row across 44 attempts. It was nonterminal. This query read health
 metadata only. No run specification, report, metric, or strategy merit was inspected, and no
 runtime state was changed or stopped.
 
+After the process executor merged at `88f2e2d8696c737e90063e8a9a3578c0f46dd6a1`, all seven
+quality gates passed and a consistent read-only SQLite snapshot proved exact one-worker/four-worker
+equivalence across four completed fixtures. The sequential replay took `4105.462651` seconds; four
+workers took `1253.082018` seconds, a `3.276` speedup. The snapshot database and dataset inputs
+remained byte-identical during the proof.
+
+The final health-only check found 55 completed, 0 failed, 64 pending, and 1 running leased row across
+57 attempts. At `2026-08-22T20:47:32Z`, the materially incomplete coordinator received `SIGTERM`
+and exited without escalation. All 283 runtime files remain preserved. The database SHA-256 after
+the stop is `5239fbdecc55639787efb77c5bf973f5b25feb879b7e833f1eebcc1ee16d848b`.
+This is an execution-throughput infrastructure supersession, not a strategy outcome. No partial
+strategy merit was inspected, and Exposed 003 must not be resumed, reset, deleted, retried, or
+reinterpreted.
+
 ## June disposition
 
 June 2026 is ineligible before Exposed 003 strategy execution. The metadata-only disposition is
