@@ -42,6 +42,7 @@ CAMPAIGN_V2_SURFACE = provenance._load_reviewed_surface_manifest(INTRADAY_CAMPAI
 CURRENT_V2_SURFACE_MISMATCHES = (
     "systematic_trading_lab/backtesting.py",
     "systematic_trading_lab/campaign_specs.py",
+    "systematic_trading_lab/catalog.py",
     "systematic_trading_lab/cli.py",
     "systematic_trading_lab/datasets.py",
     "systematic_trading_lab/domain.py",
@@ -156,7 +157,11 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "systematic_trading_lab/intraday_exposed_002_runner.py",
         "systematic_trading_lab/intraday_exposed_002_strategies.py",
         "systematic_trading_lab/intraday_exposed_003_plan.py",
+        "systematic_trading_lab/intraday_exposed_003_equivalence.py",
         "systematic_trading_lab/intraday_exposed_003_runner.py",
+        "systematic_trading_lab/intraday_exposed_004_plan.py",
+        "systematic_trading_lab/intraday_exposed_004_launch_control.py",
+        "systematic_trading_lab/intraday_exposed_004_runner.py",
         "systematic_trading_lab/intraday_exposure.py",
         "systematic_trading_lab/intraday_exposed_runner.py",
         "systematic_trading_lab/intraday_exposed_strategies.py",
@@ -178,6 +183,7 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "systematic_trading_lab/rapid_store.py",
         "systematic_trading_lab/rapid_strategies.py",
         "systematic_trading_lab/research_attempts.py",
+        "systematic_trading_lab/research_executor.py",
         "systematic_trading_lab/strategy_registry.py",
     }
 

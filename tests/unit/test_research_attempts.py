@@ -300,6 +300,24 @@ def test_attempt_limit_cannot_be_configured_above_three(tmp_path: Path) -> None:
         constructor(tmp_path, max_attempts=4)
 
 
+def test_campaign_can_namespace_attempt_ids_without_changing_default(tmp_path: Path) -> None:
+    custom = ResearchAttemptStore(
+        tmp_path / "custom",
+        lease_timeout=_LEASE,
+        attempt_id_prefix="ie004a-",
+    )
+    custom.reserve(_RUN_ID, _SPECIFICATION)
+    claim = custom.claim(_RUN_ID, source_sha=_SOURCE_SHA, started_at=_START)
+    assert claim.attempt_id.startswith("ie004a-")
+
+    default = _store(tmp_path / "default")
+    assert default.claim(_RUN_ID, source_sha=_SOURCE_SHA, started_at=_START).attempt_id.startswith(
+        "ra-"
+    )
+    with pytest.raises(ValueError, match="ID prefix"):
+        ResearchAttemptStore(tmp_path / "invalid", attempt_id_prefix="../escape-")
+
+
 def test_run_requires_source_commit_and_attempts_cannot_change_it(tmp_path: Path) -> None:
     store = ResearchAttemptStore(tmp_path, lease_timeout=_LEASE)
     specification = dict(_SPECIFICATION)

@@ -88,6 +88,21 @@ failures; bar-load failures are terminal data failures. A still-active lease pro
 campaign report. Final evidence records every attempt and validates its database, freeze, JSON,
 and create-only Markdown on restart.
 
+Exposed 003 itself stays on runner v1 and is not switched to process-parallel execution. The
+read-only equivalence action selects completed fixtures by configuration and scenario only, never by
+metrics, then recomputes their exact frozen specifications with one and four spawned workers. It
+requires exact specification, fill-trace, round-trip, metrics, canonical report, SHA-256, and report
+fingerprint equality and writes no Exposed 003 state:
+
+```console
+uv run trading-lab research intraday-exposed-003 equivalence --workers 4 --fixtures 4
+```
+
+The 2026-08-22 implementation-time health snapshot contained 42 completed, 0 failed, 77 pending,
+and 1 running row across 44 attempts. It was nonterminal. This query read health and progress
+metadata only. No run specification, report, metric, or strategy merit was inspected, and no
+runtime state was changed or stopped.
+
 ## June disposition
 
 June 2026 is ineligible before Exposed 003 strategy execution. The metadata-only disposition is

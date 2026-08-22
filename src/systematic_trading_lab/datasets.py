@@ -50,9 +50,9 @@ _SUPPORTED_ADJUSTMENTS = {
 
 
 class DatasetService:
-    def __init__(self, layout: StorageLayout) -> None:
+    def __init__(self, layout: StorageLayout, *, read_only: bool = False) -> None:
         self.layout = layout
-        self.catalog = DatasetCatalog(layout.catalog)
+        self.catalog = DatasetCatalog(layout.catalog, read_only=read_only)
 
     def import_from(
         self,
@@ -62,6 +62,8 @@ class DatasetService:
         requested: TimestampRange,
         universe: UniverseDefinition,
     ) -> ImportResult:
+        if self.catalog.read_only:
+            raise DatasetValidationError("read-only dataset service cannot import data")
         _require_supported_timeframe(timeframe)
         if not provider.name:
             raise DatasetValidationError("provider name is required")

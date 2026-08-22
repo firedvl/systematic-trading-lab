@@ -1,3 +1,4 @@
+import hashlib
 import json
 from collections.abc import Sequence
 from dataclasses import replace
@@ -19,6 +20,14 @@ from systematic_trading_lab.storage import StorageLayout
 from systematic_trading_lab.universe import load_research_universe
 
 UNIVERSE = load_research_universe()
+
+
+def _file_hashes(root: Path) -> dict[str, str]:
+    return {
+        path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(root.rglob("*"))
+        if path.is_file()
+    }
 
 
 def test_fixture_import_is_immutable_describable_and_rebuildable(tmp_path: Path) -> None:
@@ -79,6 +88,24 @@ def test_range_loader_reads_only_complete_requested_sessions(tmp_path: Path) -> 
         datetime(2025, 1, 9, tzinfo=UTC),
     }
     assert {bar.symbol.value for bar in bars} == {"SPY", "QQQ", "IWM", "TLT", "GLD"}
+
+
+def test_read_only_dataset_service_never_changes_catalog_or_artifacts(tmp_path: Path) -> None:
+    layout = StorageLayout(tmp_path)
+    imported = DatasetService(layout).import_from(
+        FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
+    )
+    before = _file_hashes(tmp_path)
+
+    read_only = DatasetService(layout, read_only=True)
+    assert read_only.validate(imported.dataset_id)["valid"] is True
+    assert len(read_only.load_bars(imported.dataset_id)) == 25
+    with pytest.raises(DatasetValidationError, match="read-only"):
+        read_only.import_from(
+            FixtureProvider(), fixture_symbols(), Timeframe.DAILY, fixture_request(), UNIVERSE
+        )
+
+    assert _file_hashes(tmp_path) == before
 
 
 def test_invalid_provider_data_is_rejected_with_evidence(tmp_path: Path) -> None:

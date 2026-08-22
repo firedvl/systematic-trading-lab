@@ -1,0 +1,77 @@
+{
+  "schema_version": "intraday-exposed-004-plan-independent-review-v1",
+  "review_id": "intraday-exposed-004-plan-independent-review-v1",
+  "status": "passed-before-exposed-004-implementation-or-strategy-results",
+  "review_date": "2026-08-22",
+  "review_method": "Independent read-only prospective control review of the final plan and June-disposition bytes, including exact normalized comparison with the Intraday Exposed 003 and Intraday Exposed 002 frozen designs.",
+  "reviewed_plan": {
+    "program_id": "intraday-exposed-004",
+    "path": "config/research/intraday-exposed-004-plan-v1.json",
+    "sha256": "760df9db4b9be9b2d8eecaa0287713e3e341c7437523b01d0fef47b830f43c8e",
+    "plan_fingerprint": "a122cbba4fa76ed1d65236637f52308398306d72a62b0ba4d1836792203b2ddc"
+  },
+  "reviewed_june_disposition": {
+    "path": "config/research/intraday-exposed-004-june-disposition-v1.json",
+    "sha256": "40f0ae1cf2bdc9b0e3c7f199922f9363f70950f485a4238e1372403535192027",
+    "disposition_fingerprint": "401dbb6ea9f0874e27984854988b406efc4fb99739db38dc9735a6738ef385bc",
+    "status": "ineligible-before-strategy-results"
+  },
+  "verdict": "pass",
+  "findings": [],
+  "answers": [
+    {
+      "control": "exact-exposed-003-and-002-design-binding",
+      "answer": "pass",
+      "basis": "All 60 configurations, ten families, 140 neighbor edges, five periods, cost and execution fields, stages, gates, caps, stress and delay variants, selection rules, and cohort rules are exact after normalizing campaign identities."
+    },
+    {
+      "control": "scheduling-only-change",
+      "answer": "pass",
+      "basis": "The only declared research change is bounded spawned-process scheduling within the existing discovery, walk-forward, and serious-stage barriers. Completion order cannot affect screening."
+    },
+    {
+      "control": "new-campaign-identities",
+      "answer": "pass",
+      "basis": "Program binding, runner, candidate, reservation, run, attempt, database, runtime root, run-report, final-freeze, and final-report identities are new. No Intraday Exposed 002 or 003 runtime row is imported."
+    },
+    {
+      "control": "restart-safe-worker-policy",
+      "answer": "pass",
+      "basis": "The plan keeps a three-attempt cap and expired no-result lease as the only retry path. One worker owns one claim; abrupt exit does not authorize immediate reassignment."
+    },
+    {
+      "control": "launch-control-and-equivalence",
+      "answer": "pass",
+      "basis": "Launch requires a separately reviewed hash-bound control artifact containing exact merged implementation, quality, read-only equivalence, and health-only Intraday Exposed 003 disposition evidence. Any equivalence mismatch stops launch."
+    },
+    {
+      "control": "june-and-protected-boundaries",
+      "answer": "pass",
+      "basis": "June remains ineligible with no substitute. Qualification, controlled evaluation, holdout, paper, broker-write, live, and strategic-allocation-21 authority remain false."
+    }
+  ],
+  "verification": {
+    "plan_sha256_revalidated": true,
+    "plan_fingerprint_revalidated": true,
+    "june_disposition_sha256_revalidated": true,
+    "june_disposition_fingerprint_revalidated": true,
+    "configuration_count": 60,
+    "family_count": 10,
+    "neighbor_edge_count": 140,
+    "period_count": 5,
+    "discovery_run_count": 120,
+    "normalized_candidate_design_fingerprint": "21856bb313a95e26fa483b4648eeb5e44d2cf42cb48869f1e38ebf15ff4a9466",
+    "exact_reused_section_bundle_fingerprint": "8ae0462e8fe00fcc2d6bb38fbc9f0b1adad5b59ddb6e192a7125dd09ca047899",
+    "exact_byte_rereview": true
+  },
+  "scope_limit": "The review inspected committed plans, policy, and source metadata only. It did not open .trading-lab, a runtime database, a report, a metric, market data, or a partial strategy result.",
+  "authority": {
+    "strategy_execution": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "f92b48f4d0c5e30f230af786ef3f5dbb05ad2e2bb10022332e585cd4dfbb98db"
+}
