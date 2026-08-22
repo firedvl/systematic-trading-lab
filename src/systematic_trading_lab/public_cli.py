@@ -33,6 +33,11 @@ from .intraday_exposed_004_runner import (
     intraday_exposed_004_status,
     run_intraday_exposed_004_campaign,
 )
+from .intraday_exposed_005_runner import (
+    intraday_exposed_005_plan_summary,
+    intraday_exposed_005_status,
+    run_intraday_exposed_005_campaign,
+)
 from .rapid_004 import RAPID_004_PROGRAM_ID
 from .rapid_004_runner import (
     rapid_004_plan_summary,
@@ -122,12 +127,25 @@ def research_parser() -> argparse.ArgumentParser:
     )
     intraday_exposed_004 = commands.add_parser(
         "intraday-exposed-004",
-        help="plan, run, or inspect the process-parallel Intraday Exposed 004 campaign",
+        help="inspect the aborted Intraday Exposed 004 campaign; run is disabled",
     )
     intraday_exposed_004.add_argument(
         "action", nargs="?", choices=("plan", "run", "status"), default="status"
     )
     intraday_exposed_004.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="retained for the disabled historical run action",
+    )
+    intraday_exposed_005 = commands.add_parser(
+        "intraday-exposed-005",
+        help="plan, run, or inspect the process-parallel Intraday Exposed 005 campaign",
+    )
+    intraday_exposed_005.add_argument(
+        "action", nargs="?", choices=("plan", "run", "status"), default="status"
+    )
+    intraday_exposed_005.add_argument(
         "--workers",
         type=int,
         default=4,
@@ -312,6 +330,22 @@ def _run_research(arguments: argparse.Namespace, settings: Settings) -> int:
         else:
             _print(
                 run_intraday_exposed_004_campaign(
+                    repository,
+                    settings.home,
+                    workers=arguments.workers,
+                    progress=lambda message: print(message, file=sys.stderr),
+                )
+            )
+        return 0
+    if arguments.research_command == "intraday-exposed-005":
+        repository = Path(__file__).resolve().parents[2]
+        if arguments.action == "plan":
+            _print(intraday_exposed_005_plan_summary(repository))
+        elif arguments.action == "status":
+            _print(intraday_exposed_005_status(settings.home))
+        else:
+            _print(
+                run_intraday_exposed_005_campaign(
                     repository,
                     settings.home,
                     workers=arguments.workers,

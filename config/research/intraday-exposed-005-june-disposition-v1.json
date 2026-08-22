@@ -1,0 +1,47 @@
+{
+  "schema_version": "intraday-exposed-controlled-range-disposition-v1",
+  "disposition_id": "intraday-exposed-005-june-disposition-v1",
+  "program_id": "intraday-exposed-005",
+  "status": "ineligible-before-strategy-results",
+  "starting_main": "8856a689a4767041dbfadab00f8da6907beef15d",
+  "range": {
+    "evaluation_start": "2026-06-01T13:30:00Z",
+    "evaluation_end": "2026-06-30T19:55:00Z",
+    "symbols": ["QQQ", "SPY"],
+    "timeframe": "5m"
+  },
+  "audit": {
+    "method": "Reuse of committed exposure metadata and the reviewed Intraday Exposed 003 June disposition only. No market-data or strategy-result artifact was opened.",
+    "known_exposures_path": "config/research/intraday-known-exposures-v1.json",
+    "known_exposures_sha256": "f11977e33a5ade47eeb0ad0923180eca733bc694ffef0e4e2f335936da4746aa",
+    "known_exposures_fingerprint": "0666996faabb50abce0b8959c49980e36a655ea290618bc1463342d2ab5122f9",
+    "prior_disposition_path": "config/research/intraday-exposed-003-june-disposition-v1.json",
+    "prior_disposition_sha256": "af91ca3889327a402851e652592d842b43a31d04bba4aa2efe3305d855165efa",
+    "prior_disposition_fingerprint": "2c5b84269e255a78b41f591cbcfd79a684adb6159f6172733da4219e06ce5278",
+    "conflicting_entry_id": "intraday-v2-real-market-results",
+    "conflicting_entry_range": {
+      "start": "2025-07-01",
+      "end": "2026-06-30"
+    },
+    "conflicting_entry_class": "real-market-result-observed",
+    "conclusion": "June remains exposed by committed Intraday V2 result metadata. A new scheduler and campaign identity do not restore freshness."
+  },
+  "program_effect": {
+    "exposed_research_through_may_allowed": true,
+    "june_read_allowed": false,
+    "controlled_evaluation_allowed": false,
+    "substitute_range_allowed": false,
+    "empty_cohort_action": "Close the campaign with no controlled-qualified candidate and no controlled run.",
+    "nonempty_cohort_action": "Freeze the exposed-serious cohort and blocker evidence, then stop before controlled evaluation without claiming controlled qualification."
+  },
+  "access_rule": "Do not load a June bar, quote, or strategy result for Intraday Exposed 005.",
+  "authority": {
+    "read_june": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "disposition_fingerprint": "6dad6480dc3b0379017d582bb2f29fc562f41379bb3065855c55eadf51f025dd"
+}
