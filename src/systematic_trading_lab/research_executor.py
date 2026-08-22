@@ -7,6 +7,7 @@ import queue
 from collections import deque
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from multiprocessing.reduction import ForkingPickler
 from typing import Any, cast
 
 DEFAULT_RESEARCH_WORKERS = 4
@@ -81,6 +82,7 @@ def run_process_stage[TaskT, ResultT](
     pending = deque(_TaskEnvelope(index, task) for index, task in enumerate(tasks))
     if not pending:
         return ()
+    preflight_process_stage(tasks, worker_factory=worker_factory)
 
     context = multiprocessing.get_context("spawn")
     output_queue = context.Queue()
@@ -175,11 +177,11 @@ def run_process_stage[TaskT, ResultT](
                 if slot.process.is_alive():
                     continue
                 slot.process.join()
-                envelope = slot.task
-                if envelope is not None:
+                stopped_envelope = slot.task
+                if stopped_envelope is not None:
                     failures.append(
                         ResearchProcessFailure(
-                            envelope.index,
+                            stopped_envelope.index,
                             "WorkerProcessExit",
                             "worker exited before returning its task",
                             slot.process.exitcode,
@@ -215,6 +217,27 @@ def run_process_stage[TaskT, ResultT](
     if failures:
         raise ResearchProcessError(failures)
     return tuple(results[index] for index in range(len(tasks)))
+
+
+def preflight_process_stage[TaskT, ResultT](
+    tasks: Sequence[TaskT],
+    *,
+    worker_factory: Callable[[], Callable[[TaskT], ResultT]],
+) -> None:
+    """Reject spawn-incompatible stage inputs before campaign state changes."""
+
+    try:
+        ForkingPickler.dumps(worker_factory)
+    except Exception as error:
+        raise TypeError("research process worker factory is not spawn-pickleable") from error
+    for index, task in enumerate(tasks):
+        envelope = _TaskEnvelope(index, task)
+        try:
+            ForkingPickler.dumps(envelope)
+        except Exception as error:
+            raise TypeError(
+                f"research process task {envelope.index} is not spawn-pickleable"
+            ) from error
 
 
 def _worker_main[TaskT, ResultT](

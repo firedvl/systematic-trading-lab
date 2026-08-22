@@ -1,6 +1,6 @@
 # Intraday Exposed 004 program
 
-Status: implementation, merged-main equivalence, health-only Intraday Exposed 003 disposition, and independent launch-control review complete; launch remains blocked on the launch-control PR, CI, merge, and final clean-main check.
+Status: immutable aborted launch; 120 rows reserved, zero attempts, and no strategy execution. Use Intraday Exposed 005 for the reviewed successor.
 
 Plan SHA-256: `760df9db4b9be9b2d8eecaa0287713e3e341c7437523b01d0fef47b830f43c8e`.
 Plan fingerprint: `a122cbba4fa76ed1d65236637f52308398306d72a62b0ba4d1836792203b2ddc`.
@@ -8,6 +8,27 @@ Prospective-review SHA-256: `f4d5d01a52d290374d54ab5944aee80047377e224e9ab3453e1
 Prospective-review fingerprint: `f92b48f4d0c5e30f230af786ef3f5dbb05ad2e2bb10022332e585cd4dfbb98db`.
 Launch-control SHA-256: `a5a7107d803efb468c1946b1c66244e163c29f27b7f4e1bc7ba93e045c21c5fc`.
 Launch-control fingerprint: `fc0eb76457eb4fc7b752323b69cba602eb0cceb9f84f585c05f68e9fff511a0b`.
+Launch-failure SHA-256: `e7e38498c888107b42375cd1323afd2d97068747718bf239f1605bf6c9d09a16`.
+Launch-failure fingerprint: `4c5a9a35297f6443dc354da5f08d085bc0c845379cc629a6c26f6f698865ed4a`.
+
+## Launch failure and disposition
+
+PR #159 merged the launch binding at `8856a689a4767041dbfadab00f8da6907beef15d`.
+All clean-main gates passed. The exact four-worker command then created the program binding and 120
+immutable discovery reservations, but no task crossed the spawned-process queue. Frozen
+configuration parameters and authority values retained nested `MappingProxyType` objects;
+`multiprocessing.Queue` feeder threads raised `TypeError: cannot pickle 'mappingproxy' object`.
+
+The coordinator stopped with exit code 130. The final health-only check found 120 pending, zero
+running, zero completed, zero failed, and zero attempts. No canonical report or strategy execution
+exists. The two runtime files remain preserved; database SHA-256 is
+`9961bc06bc272ab6e7f772a192fe99876a8032ff0bfbf9f830a42715a14389a1`. No run
+specification, report, metric, partial merit, June/V3 data, PAPER, broker, live, or
+`strategic-allocation-21` state was inspected for adaptation.
+
+The frozen plan's implementation-bug rule forbids silent repair and continuation. Exposed 004 must
+not be retried, rebound, reset, deleted, or reinterpreted. Its `plan` and `status` commands remain
+read-only; its `run` action fails before dataset or runtime access and names Intraday Exposed 005.
 
 ## Scope
 
@@ -99,11 +120,11 @@ No worker advances a stage or screens a result.
 The unchanged strategy still receives the exact `ie002-` source candidate. The 004 specification
 also records the corresponding `ie003-` identity for provenance without importing a 003 result.
 
-## Launch gates
+## Historical launch gates
 
-The run command remains fail closed until the reviewed launch-control artifact exists and binds the
-merged implementation source, executor, attempt store, 004 runner, full quality evidence, read-only
-equivalence evidence, and health-only Exposed 003 disposition.
+Before the failed launch, the run command remained fail closed until the reviewed launch-control
+artifact bound the merged implementation source, executor, attempt store, 004 runner, full quality
+evidence, read-only equivalence evidence, and health-only Exposed 003 disposition.
 
 The loader rejects a control artifact unless its raw SHA-256 and canonical fingerprint match fixed
 reviewed constants. It also validates the reviewed plan, current executor/attempt-store/runner file
@@ -114,12 +135,12 @@ cannot launch 004. The final clean-main commit must descend from the reviewed im
 commit, and its diff may contain only the control artifact, fixed binding constants, their test, and
 disposition documents.
 
-Before any 004 launch, the read-only Exposed 003 equivalence action must select completed canonical
+Before that 004 launch, the read-only Exposed 003 equivalence action selected completed canonical
 specifications by configuration and scenario only, run them with one and four workers, and prove
 exact equality for specification, run fingerprint, fill trace, round trips, metrics, canonical
 report bytes, SHA-256, and report fingerprint. It must also prove that the source database and
 dataset bytes did not change by comparing their SHA-256 values before and after replay. Any mismatch
-stops the workflow.
+would have stopped the workflow.
 
 Merged implementation main `88f2e2d8696c737e90063e8a9a3578c0f46dd6a1` passed all seven
 repository gates. Because Exposed 003 was still publishing progress, the live-file proof stopped
@@ -140,7 +161,7 @@ no partial strategy merit was inspected. Independent launch-control review
 uv run trading-lab research intraday-exposed-003 equivalence --workers 4 --fixtures 4
 ```
 
-Then inspect only Exposed 003 health and progress metadata:
+The workflow then inspected only Exposed 003 health and progress metadata:
 
 - Preserve a valid completed terminal outcome and do not launch 004.
 - Preserve an incomplete or invalid terminal outcome, record infrastructure supersession, and
@@ -148,12 +169,15 @@ Then inspect only Exposed 003 health and progress metadata:
 - If active and materially incomplete, stop it cleanly, preserve all evidence, record infrastructure
   supersession, then launch 004 from clean exact merged main.
 
-The eventual launch and status commands are:
+Historical read-only commands are:
 
 ```console
-uv run trading-lab research intraday-exposed-004 run --workers 4
+uv run trading-lab research intraday-exposed-004 plan
 uv run trading-lab research intraday-exposed-004 status
 ```
+
+Exposed 004 cannot launch again. The disabled historical run command is not a recovery path. See
+`docs/research-campaigns/intraday-exposed-005-program.md` for the new campaign.
 
 ## Worker-count evaluation
 

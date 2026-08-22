@@ -137,6 +137,8 @@ def test_public_wrapper_imports_local_csv_and_delegates_legacy_status(tmp_path: 
     exposed_003_status = _json(_run(home, "research", "intraday-exposed-003", "status"))
     exposed_004_plan = _json(_run(home, "research", "intraday-exposed-004", "plan"))
     exposed_004_status = _json(_run(home, "research", "intraday-exposed-004", "status"))
+    exposed_005_plan = _json(_run(home, "research", "intraday-exposed-005", "plan"))
+    exposed_005_status = _json(_run(home, "research", "intraday-exposed-005", "status"))
 
     assert imported["data_origin"] == "user-supplied"
     assert status["mode"] == "offline"
@@ -155,7 +157,12 @@ def test_public_wrapper_imports_local_csv_and_delegates_legacy_status(tmp_path: 
     assert exposed_004_plan["program_id"] == "intraday-exposed-004"
     assert exposed_004_plan["default_workers"] == 4
     assert exposed_004_status["database_exists"] is False
-    assert exposed_004_status["terminal"] is False
+    assert exposed_004_status["terminal"] is True
+    assert exposed_004_status["successor_program_id"] == "intraday-exposed-005"
+    assert exposed_005_plan["program_id"] == "intraday-exposed-005"
+    assert exposed_005_plan["default_workers"] == 4
+    assert exposed_005_status["database_exists"] is False
+    assert exposed_005_status["terminal"] is False
 
 
 def test_sweep_prints_count_before_running_every_configuration(tmp_path: Path) -> None:

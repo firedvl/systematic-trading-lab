@@ -1,0 +1,65 @@
+{
+  "schema_version": "intraday-exposed-004-launch-failure-v1",
+  "failure_id": "intraday-exposed-004-launch-failure-v1",
+  "program_id": "intraday-exposed-004",
+  "classification": "aborted-before-attempt-task-transport-failure",
+  "observed_at": "2026-08-22T21:07:30Z",
+  "source_commit": "8856a689a4767041dbfadab00f8da6907beef15d",
+  "launch": {
+    "command": "uv run trading-lab research intraday-exposed-004 run --workers 4",
+    "worker_count": 4,
+    "coordinator_exit_code": 130,
+    "stop_signal": "SIGINT",
+    "stop_confirmed": true,
+    "processes_remaining": 0
+  },
+  "failure": {
+    "error_type": "TypeError",
+    "message": "cannot pickle 'mappingproxy' object",
+    "boundary": "spawn-task-queue-serialization",
+    "cause": "Frozen run specifications retained nested MappingProxyType values and were submitted directly to multiprocessing.Queue.",
+    "strategy_logic_involved": false,
+    "data_integrity_failure": false,
+    "publication_failure": false
+  },
+  "runtime": {
+    "root": ".trading-lab/intraday-exposed-004",
+    "database": "intraday-exposed-004.sqlite3",
+    "database_sha256": "9961bc06bc272ab6e7f772a192fe99876a8032ff0bfbf9f830a42715a14389a1",
+    "file_count": 2,
+    "run_counts": {
+      "pending": 120,
+      "running": 0,
+      "completed": 0,
+      "failed": 0
+    },
+    "attempt_count": 0,
+    "canonical_report_count": 0,
+    "strategy_execution_started": false,
+    "evidence_preserved": true
+  },
+  "inspection": {
+    "scope": "health-and-process-metadata-only",
+    "run_specifications_inspected_for_adaptation": false,
+    "reports_or_metrics_inspected": false,
+    "strategy_merits_inspected": false,
+    "protected_data_accessed": false
+  },
+  "disposition": {
+    "terminal": true,
+    "action": "preserve-do-not-retry-or-rebind",
+    "reason": "The frozen 004 plan requires an independently proven implementation defect to stop and be documented before strategy execution.",
+    "successor_required": true,
+    "successor_program_id": "intraday-exposed-005",
+    "successor_rule": "Use a new program, runtime root, database, reservations, attempts, reports, and source commit; import no 004 runtime row."
+  },
+  "authority": {
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "failure_fingerprint": "4c5a9a35297f6443dc354da5f08d085bc0c845379cc629a6c26f6f698865ed4a"
+}

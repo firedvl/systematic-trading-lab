@@ -6,6 +6,8 @@ import time
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from types import MappingProxyType
+from typing import cast
 
 import pytest
 
@@ -138,6 +140,28 @@ def test_default_four_workers_claim_four_distinct_runs(tmp_path: Path) -> None:
     attempts = [store.list_attempts(task.run_id)[0] for task in tasks]
     assert len({attempt["pid"] for attempt in attempts}) == 4
     assert all(store.get(task.run_id)["status"] == "completed" for task in tasks)
+
+
+def test_unpickleable_task_is_rejected_before_workers_start(tmp_path: Path) -> None:
+    task = cast(_AttemptTask, MappingProxyType({"run_id": "never-dispatched"}))
+    with pytest.raises(TypeError, match="task 0 is not spawn-pickleable"):
+        run_process_stage(
+            (task,),
+            worker_factory=_AttemptWorkerFactory(tmp_path),
+        )
+
+    assert not any(tmp_path.iterdir())
+
+
+def test_unpickleable_worker_factory_is_rejected_before_workers_start(tmp_path: Path) -> None:
+    factory = cast(_AttemptWorkerFactory, MappingProxyType({"factory": "invalid"}))
+    with pytest.raises(TypeError, match="worker factory is not spawn-pickleable"):
+        run_process_stage(
+            (_AttemptTask("never-dispatched", 1),),
+            worker_factory=factory,
+        )
+
+    assert not any(tmp_path.iterdir())
 
 
 def test_two_process_workers_never_own_the_same_run(tmp_path: Path) -> None:
