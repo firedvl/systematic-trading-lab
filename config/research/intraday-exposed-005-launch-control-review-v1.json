@@ -1,0 +1,237 @@
+{
+  "schema_version": "intraday-exposed-005-launch-control-review-v1",
+  "review_id": "intraday-exposed-005-launch-control-review-v1",
+  "status": "passed",
+  "verdict": "pass",
+  "review_date": "2026-08-22",
+  "review_method": "Independent source, gate, equivalence, and disposition review.",
+  "reviewed_plan": {
+    "path": "config/research/intraday-exposed-005-plan-v1.json",
+    "sha256": "622d3ad769b12dad857bfe8ee60be4fa1a75b3f3d68becb9b750b323102fd811",
+    "fingerprint": "8d30af60d84f1baaa2365096b898960bef759fbafc5215eba68bb81061819ba3"
+  },
+  "implementation": {
+    "source_commit": "1d6744432ed2635ce6ae19268b64b1c89fc0017d",
+    "files": [
+      {
+        "path": "src/systematic_trading_lab/research_executor.py",
+        "sha256": "099f9ac9572aaaa640d51cb0dde50e2cba378a6ef0b2ddf9b07a63d0ed9b1b81"
+      },
+      {
+        "path": "src/systematic_trading_lab/research_attempts.py",
+        "sha256": "608d710c8fa1d7a7830bf7f82a404a5a0588a6055381d6dcc4676d2c256f5512"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_exposed_004_runner.py",
+        "sha256": "17e4c0715eb0efc3e63da676d9053795e08cb6da3ea8cd0651df145f5405a04d"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_exposed_005_plan.py",
+        "sha256": "94bb0a5b0640b40af2bd715a836520a3e1dec79a48611361159c8084d546c3f9"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_exposed_005_runner.py",
+        "sha256": "3e8e8ab94f8b05f8d335288de3c6e414d89845e8b1e9faf75c86a2499f447af3"
+      },
+      {
+        "path": "src/systematic_trading_lab/public_cli.py",
+        "sha256": "5923ada3f1d161df17df48a153a55747beaf098fdeeb22cc09d4b9d6471eb312"
+      }
+    ]
+  },
+  "quality_gates": {
+    "source_commit": "1d6744432ed2635ce6ae19268b64b1c89fc0017d",
+    "results": [
+      {
+        "command": "uv run ruff format --check .",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "164 files already formatted"
+      },
+      {
+        "command": "uv run ruff check .",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "All checks passed"
+      },
+      {
+        "command": "uv run mypy src tests",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Success: no issues found in 159 source files"
+      },
+      {
+        "command": "uv run pytest",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "825 passed, 4 skipped"
+      },
+      {
+        "command": "uv run python scripts/check_secrets.py",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Secret check passed for 298 files"
+      },
+      {
+        "command": "bash -n scripts/*.sh",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "All shell scripts passed syntax validation"
+      },
+      {
+        "command": "uv build",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Source distribution and wheel built"
+      }
+    ]
+  },
+  "equivalence": {
+    "schema_version": "intraday-exposed-003-parallel-equivalence-v1",
+    "program_id": "intraday-exposed-003",
+    "verification_source_commit": "1d6744432ed2635ce6ae19268b64b1c89fc0017d",
+    "source_database": "intraday-exposed-003/intraday-exposed-003.sqlite3",
+    "source_database_sha256": "5239fbdecc55639787efb77c5bf973f5b25feb879b7e833f1eebcc1ee16d848b",
+    "source_database_mutated": false,
+    "dataset_inputs_mutated": false,
+    "fixture_selection": "completed-specification-configuration-and-scenario-only",
+    "fixture_count": 4,
+    "worker_counts": [
+      1,
+      4
+    ],
+    "comparisons": [
+      "run-specification",
+      "run-fingerprint",
+      "fill-sequence-fingerprint",
+      "round-trip-fingerprint",
+      "metrics",
+      "canonical-report-bytes",
+      "canonical-report-sha256",
+      "report-fingerprint"
+    ],
+    "sequential_seconds": "3936.880792",
+    "parallel_seconds": "1149.137974",
+    "speedup": "3.426",
+    "fixtures": [
+      {
+        "run_id": "ie003r-9f6aa65a1b7719840e277c2c",
+        "candidate_id": "ie003-f01-a01-b01",
+        "scenario_id": "normal",
+        "run_fingerprint": "9f6aa65a1b7719840e277c2c12dea03596c0fb7bc77dea758d5e762075b337ba",
+        "fill_trace_fingerprint": "7789f9d05a6c9ca439ca86c9ce36a6999539b752be2c41cf7d94b1d108308d76",
+        "round_trip_fingerprint": "040cb75afa8ee68681db1e9e7f009df47bbaf4410b0a7f916cbfb85da6c6d1b4",
+        "report_sha256": "edf15e9c2db26eaecc17258c1b6031b3c0bfb1060321ddf2b1914d755c180f5d",
+        "report_fingerprint": "65c33f707c9794851b31535433b31c4208bc2c5457bb9613ed37eb45dc939d4f",
+        "specification_equal": true,
+        "metrics_equal": true,
+        "canonical_report_equal": true
+      },
+      {
+        "run_id": "ie003r-349420e1061004c28ec96a9b",
+        "candidate_id": "ie003-f01-a01-b01",
+        "scenario_id": "zero_cost_diagnostic",
+        "run_fingerprint": "349420e1061004c28ec96a9b93a5a980bb538a9480a196243ca64e0ba74c6560",
+        "fill_trace_fingerprint": "bcfc49543afa684f97df091eddfaf47a55759f366efe8cb409efb30dc8639db4",
+        "round_trip_fingerprint": "276d5caa6a2bfe5e070fac852e16f3a97f91e664d3c2a652d9b8ee0f7c64d421",
+        "report_sha256": "f66803fbbf8975ade00e8a51ed989462e775084da663d841e2dfb53ae19fd3a1",
+        "report_fingerprint": "473ed488a3683344ca52f28acaf730e94b088784d5e0719fe869a8050f351261",
+        "specification_equal": true,
+        "metrics_equal": true,
+        "canonical_report_equal": true
+      },
+      {
+        "run_id": "ie003r-3b3d5ce6f3fa72ccaf9c1ded",
+        "candidate_id": "ie003-f01-a01-b02",
+        "scenario_id": "normal",
+        "run_fingerprint": "3b3d5ce6f3fa72ccaf9c1ded83a7e2f8fb5568d1b31295bea0c57bba9fe5a212",
+        "fill_trace_fingerprint": "cd41a14d172049387b534cd01f738257cf981bc1449ea633ff3dcd729671c486",
+        "round_trip_fingerprint": "e2106b9457dbf0972d7426348f1f2bf69f764790a0195105436e9cfe5a007632",
+        "report_sha256": "cc87d0d1a37730a56bec150f22c2fcb46e257425652365b4c557b4576c33e538",
+        "report_fingerprint": "78d88366a312bf71bf443e0ac71dc25b9ab22d492c25e4bedfecdd0c5fe36dda",
+        "specification_equal": true,
+        "metrics_equal": true,
+        "canonical_report_equal": true
+      },
+      {
+        "run_id": "ie003r-463a3d40c62ccf1d352bbb0e",
+        "candidate_id": "ie003-f01-a02-b01",
+        "scenario_id": "normal",
+        "run_fingerprint": "463a3d40c62ccf1d352bbb0e978e8280fadf8067cf928fba15b053fc9d26756e",
+        "fill_trace_fingerprint": "8caa3bfcb790b75f38cd7d487a59bce759237d4bbbda359df7bba411b5bf79d7",
+        "round_trip_fingerprint": "547697e6212f8f0e3aa701697408252b78227e9607bd4b65d328cd7990fcb0bb",
+        "report_sha256": "c856c3f97361c52c75b943dd9a1d808420162903148f95fac71fa04920ee2ebb",
+        "report_fingerprint": "a5fcfe3c591e5565c6150358784709941024f461fedf46349e123e2e5a78afc2",
+        "specification_equal": true,
+        "metrics_equal": true,
+        "canonical_report_equal": true
+      }
+    ],
+    "equivalent": true
+  },
+  "intraday_exposed_003_disposition": {
+    "inspection_scope": "health-and-progress-metadata-only",
+    "classification": "active-materially-incomplete",
+    "database_exists": true,
+    "run_counts": {
+      "pending": 64,
+      "running": 1,
+      "completed": 55,
+      "failed": 0
+    },
+    "attempt_count": 57,
+    "terminal": false,
+    "valid_terminal_outcome": false,
+    "evidence_preserved": true,
+    "partial_strategy_merits_inspected": false,
+    "process_stop": {
+      "required": true,
+      "signal": "SIGTERM",
+      "confirmed": true
+    },
+    "intraday_exposed_005_required": true,
+    "action": "stop-preserve-and-supersede-for-execution-throughput"
+  },
+  "intraday_exposed_004_disposition": {
+    "artifact": {
+      "path": "config/research/intraday-exposed-004-launch-failure-v1.json",
+      "sha256": "e7e38498c888107b42375cd1323afd2d97068747718bf239f1605bf6c9d09a16",
+      "fingerprint": "4c5a9a35297f6443dc354da5f08d085bc0c845379cc629a6c26f6f698865ed4a"
+    },
+    "inspection_scope": "health-and-process-metadata-only",
+    "classification": "aborted-before-attempt-task-transport-failure",
+    "source_commit": "8856a689a4767041dbfadab00f8da6907beef15d",
+    "database_sha256": "9961bc06bc272ab6e7f772a192fe99876a8032ff0bfbf9f830a42715a14389a1",
+    "file_count": 2,
+    "run_counts": {
+      "pending": 120,
+      "running": 0,
+      "completed": 0,
+      "failed": 0
+    },
+    "attempt_count": 0,
+    "canonical_report_count": 0,
+    "strategy_execution_started": false,
+    "evidence_preserved": true,
+    "partial_strategy_merits_inspected": false,
+    "successor_program_id": "intraday-exposed-005",
+    "action": "preserve-do-not-retry-or-rebind"
+  },
+  "independent_review": {
+    "source_commit": "1d6744432ed2635ce6ae19268b64b1c89fc0017d",
+    "status": "passed",
+    "verdict": "pass",
+    "findings": [],
+    "reviewer": "codex-independent-intraday-exposed-005-launch-control-review-2026-08-22"
+  },
+  "scope_limit": "Health metadata only; no partial strategy merits inspected.",
+  "authority": {
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "f05a789b5e4bcc71d21485d8c95237ac29fc864013521cd7a4b1e8383fbded1d"
+}
