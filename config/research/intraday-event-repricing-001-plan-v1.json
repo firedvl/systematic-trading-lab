@@ -1,0 +1,332 @@
+{
+  "schema_version": "intraday-event-repricing-001-research-plan-v1",
+  "program_id": "intraday-event-repricing-001",
+  "status": "prospective-frozen-before-strategy-implementation-or-results",
+  "starting_main": "1113ede80481edc538c9fd2ef93307555f1dbd34",
+  "purpose": "Test whether the SPY/QQQ relative winner after a scheduled pre-open BLS release earns a positive long-only return and continues to outperform a matched laggard control over a fixed 24-bar interval, without adding shorting or leverage to the long-only research and PAPER boundary.",
+  "research_basis": {
+    "predecessor": {
+      "program_id": "intraday-event-drift-001",
+      "outcome": "no-controlled-qualified-candidate",
+      "cohort_size": 0,
+      "final_report_path": "docs/research-campaigns/intraday-event-drift-001-final-report.md",
+      "final_report_sha256": "357f3be173ae0038eb72c882a076d1795689a96ddcfa4b8545cd52f32eed6b11",
+      "runtime_database_sha256": "1b3e3f8a6449845e01789efa98859e60f88349fd09951c202236e6b0926cb193",
+      "final_report_json_sha256": "a1fc8c7569d78857cd08ccfbefbeea37a15e9caba555660168553dd0eda87124",
+      "final_freeze_sha256": "4858a1fc6f18a787a4dfb6eb58b7a6c7ede370ec776ad16c15bb3a8a2d01b931"
+    },
+    "supported_observations": [
+      "The predecessor's joint long-only opening-gap and positive-reaction rule activated at most two of ten discovery events.",
+      "Calibrated friction did not cause that rejection.",
+      "The predecessor did not test signed QQQ-minus-SPY reactions or leader-versus-laggard continuation.",
+      "Earlier every-session relative-strength and cross-asset research did not test an externally scheduled, one-entry, fixed-hold, matched-control contract."
+    ],
+    "new_hypothesis": "A scheduled macro release can reprice growth exposure and the broad market at different speeds. The signed completed-bar QQQ-minus-SPY reaction identifies the relative leader prospectively; a later leader-versus-matched-laggard result tests continuation without relying on the market's common direction.",
+    "prohibited_inferences": [
+      "Do not reuse, tune, rescue, or weaken an Intraday Event Drift 001 candidate or gate.",
+      "Do not treat the reused event schedule or pre-May bars as untouched controlled evidence.",
+      "Do not inspect relative-repricing returns before this plan and its independent review are frozen.",
+      "Do not infer release surprise, release content, or a profitable economic regime from schedule labels.",
+      "Do not add shorting, leverage, June, V3, daily 2018-2019, PAPER, broker, or live access."
+    ]
+  },
+  "inheritance": {
+    "base_plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "base_plan_review": {
+      "path": "config/research/intraday-event-drift-001-plan-independent-review-v1.json",
+      "sha256": "25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96",
+      "fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+    },
+    "inherited_exact_sections": [
+      "chronology",
+      "data",
+      "execution",
+      "frozen_dependencies",
+      "controlled_evaluation",
+      "protected_boundaries"
+    ],
+    "invariants": {
+      "symbols": ["QQQ", "SPY"],
+      "timeframe": "5m",
+      "eligible_event_count": 28,
+      "excluded_event_count": 2,
+      "period_event_counts": [10, 4, 6, 5, 3],
+      "dataset_binding_count": 4,
+      "maximum_market_timestamp": "2026-05-29T19:55:00Z",
+      "engine_version": "intraday-exposed-002-engine-v1",
+      "cost_model_id": "intraday-execution-cost-model-001-v1",
+      "default_worker_count": 4,
+      "maximum_infrastructure_attempts": 3,
+      "controlled_range_status": "none-eligible"
+    },
+    "interpretation": "Only the listed sections inherit exact base-plan bytes and meaning. The base strategy contract and its exit-at-bar-60 rule are not inherited. This plan supplies new identity, strategy mechanics, fixed hold, paired-control evidence, screens, stage budget, report fields, and runtime namespace."
+  },
+  "strategy_contract": {
+    "strategy_id": "scheduled-event-relative-leader-continuation-v1",
+    "economic_hypothesis": "After a scheduled pre-open BLS release, a sufficiently large signed QQQ-minus-SPY opening-to-reaction spread may continue for several hours because the two broad index exposures reprice at different speeds.",
+    "event_sessions_only": true,
+    "long_only": true,
+    "shorting": false,
+    "leverage": false,
+    "release_contents_available": false,
+    "consensus_or_surprise_available": false,
+    "bar_indexing": "Zero-based within each validated XNYS regular session.",
+    "reaction_measurement": "After reaction_bars=N bars fully complete, compute 10,000 * ((QQQ bar[N-1].close / QQQ bar[0].open) - (SPY bar[N-1].close / SPY bar[0].open)).",
+    "activation_rule": "Activate once when the absolute signed reaction is at least minimum_relative_reaction_bps. An exact zero or sub-threshold reaction remains flat.",
+    "leader_rule": "QQQ is the leader for a positive signed reaction and SPY is the leader for a negative signed reaction.",
+    "leader_action": "The strategy replay targets only the leader at weight 0.5 and the laggard at zero.",
+    "matched_laggard_control": "A separate immutable run targets the opposite symbol at weight 0.5 under the same signal, timestamps, cost scenario, delay, and exit. The control is required screening evidence and grants no strategy or execution authority.",
+    "arm_ids": ["leader", "laggard-control"],
+    "paired_run_invariant": "Matched leader and laggard-control runs must activate the same event IDs, name opposite symbols, and match every entry and exit decision timestamp through one cost-independent selection_trace_fingerprint. Within each candidate-period-scenario pair they must also match exact entry and exit fill timestamps, complete one opposite-symbol round trip per active event in each arm, and preserve the 24-bar fill-to-fill interval. Any mismatch is terminal before event classification or metric calculation.",
+    "fill_rule": "Use the inherited scenario's nth-later eligible bar open.",
+    "exit_rule": "For reaction_bars=N, target the active symbol flat after completed regular-session bar index N+23. Scenario delay d fills at index N+23+d, exactly 24 five-minute intervals after the entry fill at index N-1+d.",
+    "early_close_rule": "The latest N=12, delay=3 exit fills at index 38, before the known 13:00 ET early-close final bar-open index 41. The inherited mandatory flatten remains a fail-closed backstop, not a planned truncated hold.",
+    "reentry_allowed": false,
+    "maximum_entries_per_event_session": 1,
+    "context_only_or_no_event_action": "Remain flat.",
+    "parameter_rationale": "Reaction bars 3, 6, and 12 preserve short causal windows already used for timing semantics without importing their joint-drift outcomes. Thresholds 5, 10, and 20 basis points are fixed before any relative result; the lowest exceeds the calibrated severe combined two-arm round-trip displayed-spread cost by several times. A fixed 24-bar fill-to-fill hold gives a two-hour continuation interval, fits every normal and early-close session under delays 1, 2, and 3, and avoids a third search axis.",
+    "parameters": {
+      "axes": [
+        {"name": "reaction_bars", "values": [3, 6, 12]},
+        {"name": "minimum_relative_reaction_bps", "values": ["5", "10", "20"]}
+      ],
+      "fixed": {
+        "active_symbol_weight": "0.5",
+        "holding_bars": 24,
+        "reentry_allowed": false,
+        "leader_and_laggard_control_are_separate_run_specifications": true
+      },
+      "candidate_count": 9,
+      "candidate_id_format": "ier001-a{one_based_reaction_index:02d}-b{one_based_threshold_index:02d}",
+      "neighbor_rule": "Immediate neighbors differ on exactly one axis by one adjacent value and match on the other axis. Neighbor IDs are sorted ascending.",
+      "candidates": [
+        {"candidate_id": "ier001-a01-b01", "reaction_bars": 3, "minimum_relative_reaction_bps": "5", "neighbor_ids": ["ier001-a01-b02", "ier001-a02-b01"]},
+        {"candidate_id": "ier001-a01-b02", "reaction_bars": 3, "minimum_relative_reaction_bps": "10", "neighbor_ids": ["ier001-a01-b01", "ier001-a01-b03", "ier001-a02-b02"]},
+        {"candidate_id": "ier001-a01-b03", "reaction_bars": 3, "minimum_relative_reaction_bps": "20", "neighbor_ids": ["ier001-a01-b02", "ier001-a02-b03"]},
+        {"candidate_id": "ier001-a02-b01", "reaction_bars": 6, "minimum_relative_reaction_bps": "5", "neighbor_ids": ["ier001-a01-b01", "ier001-a02-b02", "ier001-a03-b01"]},
+        {"candidate_id": "ier001-a02-b02", "reaction_bars": 6, "minimum_relative_reaction_bps": "10", "neighbor_ids": ["ier001-a01-b02", "ier001-a02-b01", "ier001-a02-b03", "ier001-a03-b02"]},
+        {"candidate_id": "ier001-a02-b03", "reaction_bars": 6, "minimum_relative_reaction_bps": "20", "neighbor_ids": ["ier001-a01-b03", "ier001-a02-b02", "ier001-a03-b03"]},
+        {"candidate_id": "ier001-a03-b01", "reaction_bars": 12, "minimum_relative_reaction_bps": "5", "neighbor_ids": ["ier001-a02-b01", "ier001-a03-b02"]},
+        {"candidate_id": "ier001-a03-b02", "reaction_bars": 12, "minimum_relative_reaction_bps": "10", "neighbor_ids": ["ier001-a02-b02", "ier001-a03-b01", "ier001-a03-b03"]},
+        {"candidate_id": "ier001-a03-b03", "reaction_bars": 12, "minimum_relative_reaction_bps": "20", "neighbor_ids": ["ier001-a02-b03", "ier001-a03-b02"]}
+      ]
+    }
+  },
+  "discovery_screen": {
+    "run_all_parents_before_screening": true,
+    "gates": [
+      {"metric": "leader.normal.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "leader.zero_cost_diagnostic.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "normal.aggregate_relative_continuation_bps", "comparison": ">", "threshold": "0"},
+      {"metric": "zero_cost_diagnostic.aggregate_relative_continuation_bps", "comparison": ">", "threshold": "0"},
+      {"metric": "normal.average_relative_continuation_bps", "comparison": ">=", "threshold": "5"},
+      {"metric": "leader.normal.active_event_count", "comparison": ">=", "threshold": 4},
+      {"metric": "leader.normal.completed_round_trips", "comparison": ">=", "threshold": 4},
+      {"metric": "laggard_control.normal.completed_round_trips", "comparison": ">=", "threshold": 4},
+      {"metric": "leader.normal.max_drawdown", "comparison": "<=", "threshold": "0.05"},
+      {"metric": "leader.normal.cost_to_gross_profit", "comparison": "<=", "threshold": "0.25"},
+      {"metric": "leader.normal.average_gross_trade_edge_bps", "comparison": ">=", "threshold": "5"},
+      {"metric": "normal.positive_relative_event_concentration", "comparison": "<=", "threshold": "0.50"},
+      {"metric": "normal.positive_relative_release_class_concentration", "comparison": "<=", "threshold": "0.70"},
+      {"metric": "normal.active_direction_concentration", "comparison": "<=", "threshold": "0.75"},
+      {"metric": "normal.selection_trace_mismatch_count", "comparison": "=", "threshold": 0},
+      {"metric": "leader.normal.accounting_identity_error", "comparison": "=", "threshold": "0"},
+      {"metric": "laggard_control.normal.accounting_identity_error", "comparison": "=", "threshold": "0"}
+    ],
+    "undefined_metric_action": "fail",
+    "walk_forward_cap": 4,
+    "selection_order": [
+      "normal.aggregate_relative_continuation_bps descending",
+      "normal.positive_relative_event_concentration ascending",
+      "leader.normal.cost_to_gross_profit ascending",
+      "candidate_id ascending"
+    ]
+  },
+  "walk_forward_screen": {
+    "required_period_count": 4,
+    "require_complete_normal_zero_pairs": true,
+    "gates": [
+      {"metric": "leader.aggregate.normal.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "aggregate.normal.aggregate_relative_continuation_bps", "comparison": ">", "threshold": "0"},
+      {"metric": "joint_positive_normal_fold_count", "comparison": ">=", "threshold": 3},
+      {"metric": "final_exposed_may.leader.normal.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "final_exposed_may.normal.aggregate_relative_continuation_bps", "comparison": ">", "threshold": "0"},
+      {"metric": "final_exposed_may.leader.normal.active_event_count", "comparison": ">=", "threshold": 2},
+      {"metric": "minimum_active_events_in_joint_positive_normal_fold", "comparison": ">=", "threshold": 2},
+      {"metric": "leader.worst_normal_fold_return", "comparison": ">=", "threshold": "-0.01"},
+      {"metric": "leader.worst_normal_fold_drawdown", "comparison": "<=", "threshold": "0.05"},
+      {"metric": "leader.aggregate.normal.active_event_count", "comparison": ">=", "threshold": 10},
+      {"metric": "leader.aggregate.normal.completed_round_trips", "comparison": ">=", "threshold": 10},
+      {"metric": "laggard_control.aggregate.normal.completed_round_trips", "comparison": ">=", "threshold": 10},
+      {"metric": "leader.aggregate.normal.cost_to_gross_profit", "comparison": "<=", "threshold": "0.25"},
+      {"metric": "leader.aggregate.normal.average_gross_trade_edge_bps", "comparison": ">=", "threshold": "5"},
+      {"metric": "aggregate.normal.average_relative_continuation_bps", "comparison": ">=", "threshold": "5"},
+      {"metric": "aggregate.normal.positive_relative_event_concentration", "comparison": "<=", "threshold": "0.40"},
+      {"metric": "aggregate.normal.positive_relative_release_class_concentration", "comparison": "<=", "threshold": "0.60"},
+      {"metric": "aggregate.normal.active_direction_concentration", "comparison": "<=", "threshold": "0.70"},
+      {"metric": "aggregate.normal.selection_trace_mismatch_count", "comparison": "=", "threshold": 0}
+    ],
+    "undefined_metric_action": "fail",
+    "serious_candidate_cap": 2,
+    "selection_order": [
+      "joint_positive_normal_fold_count descending",
+      "aggregate.normal.aggregate_relative_continuation_bps descending",
+      "aggregate.normal.positive_relative_event_concentration ascending",
+      "candidate_id ascending"
+    ]
+  },
+  "serious_candidate_screen": {
+    "stress_scenarios": ["stress_a", "stress_b", "normal-delay-2", "normal-delay-3"],
+    "run_each_stress_on_all_walk_forward_periods": true,
+    "stress_rules": {
+      "each_scenario_requires_positive_leader_aggregate_return": true,
+      "each_scenario_requires_positive_aggregate_relative_continuation": true,
+      "each_scenario_requires_at_least_three_joint_positive_folds": true,
+      "minimum_leader_normal_profit_retention": {
+        "stress_a": "0.50",
+        "stress_b": "0.25",
+        "normal-delay-2": "0.50",
+        "normal-delay-3": "0.25"
+      },
+      "minimum_normal_relative_continuation_retention": {
+        "stress_a": "0.50",
+        "stress_b": "0.25",
+        "normal-delay-2": "0.50",
+        "normal-delay-3": "0.25"
+      }
+    },
+    "neighbor_scenarios": ["normal", "zero_cost_diagnostic"],
+    "run_each_immediate_neighbor_on_all_walk_forward_periods": true,
+    "positive_relative_neighbor": "An immediate neighbor whose aggregate Normal leader return and aggregate Normal relative continuation are both strictly positive.",
+    "neighbor_topology": "The exact 0.75 positive-relative-neighbor gate requires corners to pass 2/2, edges 3/3, and the center 3/4. Do not round a lower exact fraction upward.",
+    "neighbor_gates": [
+      {"metric": "positive_relative_neighbor_fraction", "comparison": ">=", "threshold": "0.75"},
+      {"metric": "median_neighbor_leader_normal_profit_retention", "comparison": ">=", "threshold": "0.60"},
+      {"metric": "median_neighbor_relative_continuation_retention", "comparison": ">=", "threshold": "0.60"}
+    ],
+    "undefined_metric_action": "fail"
+  },
+  "stage_rules": {
+    "barrier_after_each_stage": true,
+    "complete_stage_before_merit_read": true,
+    "screen_in_frozen_specification_order": true,
+    "no_partial_result_adaptation": true,
+    "no_gate_change_after_first_reservation": true,
+    "matched_arms_share_one_candidate_identity_and_use_distinct_run_specifications": true,
+    "reuse_existing_candidate_period_arm_scenario_evidence_in_later_screens": true,
+    "zero_cost_diagnostic_only": true,
+    "final_cohort_minimum": 0,
+    "final_cohort_maximum": 2,
+    "final_cohort_rule": "Freeze every serious candidate that passes every frozen stress and neighbor gate simultaneously, sorted by candidate_id. Do not result-rank or discard an all-gate survivor.",
+    "empty_cohort_action": "Close as immutable negative exposed evidence and start only a separately frozen hypothesis.",
+    "nonempty_cohort_action": "Freeze all survivors simultaneously and wait for future untouched data. Do not create a controlled plan for June or substitute another exposed range."
+  },
+  "search_budget": {
+    "unit": "One immutable run specification contains one strategy arm, candidate, period, and cost/delay scenario.",
+    "discovery_maximum": {"run_specifications": 36, "formula": "9 candidates * 2 arms * 2 scenarios"},
+    "walk_forward_maximum": {"run_specifications": 64, "formula": "4 candidates * 4 periods * 2 arms * 2 scenarios"},
+    "stress_and_delay_maximum": {"run_specifications": 64, "formula": "2 candidates * 4 periods * 2 arms * 4 scenarios"},
+    "immediate_neighbor_maximum": {"run_specifications": 80, "formula": "5 additional deduplicated neighbors * 4 periods * 2 arms * 2 scenarios"},
+    "total_maximum_run_specifications": 244,
+    "maximum_total_attempts": 732,
+    "budget_invariant": "The runner must deduplicate exact candidate-period-arm-scenario identities, reuse prior matching evidence, and reject a reservation that would exceed 244 specifications. The three-attempt ceiling permits at most 732 attempts and remains infrastructure recovery, not additional research search."
+  },
+  "report_contract": {
+    "leader_and_control": "Store each arm as its own immutable report with complete metrics and deterministic selection, decision, transition, fill, round-trip, and fee-ledger fingerprints.",
+    "required_relative_fields": [
+      "aggregate_relative_continuation_bps",
+      "average_relative_continuation_bps",
+      "relative_continuation_by_event",
+      "positive_relative_event_concentration",
+      "positive_relative_release_class_concentration",
+      "active_direction_counts",
+      "active_direction_concentration",
+      "selection_trace_mismatch_count",
+      "paired_fill_mismatch_count"
+    ],
+    "active_event": "One eligible event where both paired runs complete exactly one same-session round trip on opposite symbols with matching entry and exit decision timestamps, matching entry and exit fill timestamps, and a 24-bar fill-to-fill interval in each arm.",
+    "relative_continuation_by_event": "For matching market entry and exit timestamps, 10,000 * ((leader exit market price / leader entry market price) - (laggard exit market price / laggard entry market price)).",
+    "aggregate_relative_continuation_bps": "Sum relative_continuation_by_event across the matched active-event ledger.",
+    "average_relative_continuation_bps": "Arithmetic mean of relative_continuation_by_event; undefined when no event activates.",
+    "net_arm_difference": "Report leader net return minus laggard-control net return only as a labeled long-arm comparison. Never call it dollar-neutral pair P&L because laggard long costs do not represent a short leg.",
+    "active_direction_concentration": "Maximum of QQQ-led and SPY-led active-event counts divided by active_event_count; undefined when no event activates.",
+    "selection_trace_fingerprint": "Fingerprint event ID, candidate parameters, signed reaction, active flag, leader, laggard, entry decision timestamp, and exit decision timestamp. It excludes arm, cost, fill prices, fees, and scenario delay.",
+    "paired_control_identity": "Selection-trace fingerprints must match across both arms and every scenario. Exact fill timestamps must match across arms within the same candidate, period, and scenario. Within one arm, Normal and zero-cost decision traces must also match. Any selection, fill, opposite-symbol, round-trip-count, or 24-bar interval mismatch is terminal.",
+    "metric_definitions": {
+      "arm_report_metrics": "Each arm retains the inherited engine's exact total-return, net-profit, drawdown, completed-round-trip, cost-to-gross-profit, average-gross-trade-edge, event-ledger, fee, and accounting definitions. The only arm-level event change is one required round trip instead of Event Drift's joint two-symbol pair.",
+      "pairing_key": "Pair exactly one leader and one laggard-control report with equal candidate_id, period_id, and scenario_id. A missing, duplicate, extra, failed, or identity-mismatched arm is terminal.",
+      "relative_continuation_by_event": "For one matched active event, 10,000 * ((leader exit market price / leader entry market price) - (laggard exit market price / laggard entry market price)). Entry and exit market timestamps must match across arms. Inactive matched events contribute zero.",
+      "aggregate_relative_continuation_bps": "Sum relative_continuation_by_event across matched events in frozen event order.",
+      "average_relative_continuation_bps": "aggregate_relative_continuation_bps divided by active_event_count; undefined when active_event_count is zero.",
+      "positive_relative_event_concentration": "Maximum strictly positive relative_continuation_by_event divided by the sum of all strictly positive event values; undefined when no event value is positive.",
+      "positive_relative_release_class_concentration": "First sum relative_continuation_by_event by each of the three fixed release names, including inactive-event zeros. Then divide the largest strictly positive release-class sum by the sum of all strictly positive release-class sums; undefined when no release-class sum is positive.",
+      "active_direction_counts": "Count matched active events by leader symbol QQQ and SPY from the selection trace.",
+      "active_direction_concentration": "Maximum QQQ-led or SPY-led active-event count divided by active_event_count; undefined when active_event_count is zero.",
+      "joint_positive_fold": "A fold is joint-positive only when the leader arm's net_profit_loss and total_return are both strictly positive and that fold's aggregate_relative_continuation_bps is strictly positive.",
+      "joint_positive_normal_fold_count": "Count the four Normal folds satisfying joint_positive_fold.",
+      "minimum_active_events_in_joint_positive_normal_fold": "Minimum leader active_event_count among Normal folds satisfying joint_positive_fold; undefined when no Normal fold is joint-positive.",
+      "leader_normal_profit_retention": "Scenario aggregate leader net_profit_loss divided by base Normal aggregate leader net_profit_loss over the same four periods; undefined when the Normal denominator is not strictly positive.",
+      "normal_relative_continuation_retention": "Scenario aggregate_relative_continuation_bps divided by base Normal aggregate_relative_continuation_bps over the same four periods; undefined when the Normal denominator is not strictly positive.",
+      "positive_relative_neighbor": "An immediate neighbor is positive only when its four-period aggregate Normal leader net_profit_loss and aggregate_relative_continuation_bps are both strictly positive.",
+      "positive_relative_neighbor_fraction": "Count positive_relative_neighbor values divided by the exact immediate-neighbor count; compare the exact rational value without rounding.",
+      "neighbor_leader_normal_profit_retention": "Neighbor four-period aggregate Normal leader net_profit_loss divided by the positive base candidate four-period aggregate Normal leader net_profit_loss; undefined when the base denominator is not strictly positive.",
+      "neighbor_relative_continuation_retention": "Neighbor four-period aggregate Normal aggregate_relative_continuation_bps divided by the positive base candidate four-period aggregate Normal aggregate_relative_continuation_bps; undefined when the base denominator is not strictly positive.",
+      "median_neighbor_retention": "Use statistics.median over the complete sorted immediate-neighbor retention set. For an even count, average the two middle values. A missing or undefined neighbor retention makes the gate undefined and failing.",
+      "selection_trace_mismatch_count": "Count paired arm or cross-scenario selection-trace mismatches. Any positive count is terminal before screening.",
+      "paired_fill_mismatch_count": "Count within-scenario paired events with unequal fill timestamps, non-opposite symbols, a round-trip count other than one per arm, or a fill-to-fill interval other than 24 bars. Any positive count is terminal before screening.",
+      "fold_aggregation": "Concatenate matched event ledgers in the plan's four frozen period order. Period and event IDs must be disjoint. Sum leader and control P&L, costs, returns under the inherited aggregation convention, and relative-continuation bps; recompute concentrations from the concatenated event values rather than averaging fold concentrations.",
+      "undefined_action": "Every undefined metric named by a gate fails that gate."
+    },
+    "aggregate_rule": "Pair exact arm reports, concatenate matched event ledgers in frozen period order, recompute every concentration and relative field, and never average fold concentrations.",
+    "authority": "The paired control is exposed diagnostic evidence. It cannot grant qualification, controlled evaluation, holdout, PAPER, broker-write, live, or promotion authority."
+  },
+  "runtime": {
+    "namespace": "intraday-event-repricing-001",
+    "database": "intraday-event-repricing-001.sqlite3",
+    "run_id_prefix": "ier001r-",
+    "attempt_id_prefix": "ier001a-",
+    "executor": "bounded-process-spawn-v1",
+    "default_worker_count": 4,
+    "lease_timeout_seconds": 300,
+    "heartbeat_interval_seconds": 60,
+    "maximum_infrastructure_attempts": 3,
+    "retryable_failure": "expired no-result infrastructure lease only",
+    "create_only_artifacts": true,
+    "campaign_lock": true,
+    "sqlite_busy_timeout_seconds": 30,
+    "sqlite_journal_mode": "delete",
+    "implementation_gate": "Merge this plan and its finding-free independent review. Then implement the strict inherited-plan loader, paired strategy/report, budget enforcement, runner, CLI, and tests on a separate branch. Bind exact merged implementation main and a finding-free launch-control review before the first reservation."
+  },
+  "protected_boundaries": {
+    "june_market_data_or_results": false,
+    "intraday_v3_data_or_results": false,
+    "daily_2018_2019_data_or_results": false,
+    "paper_or_broker_state": false,
+    "strategic_allocation_21": false,
+    "live_execution": false,
+    "maximum_market_timestamp": "2026-05-29T19:55:00Z",
+    "partial_result_adaptation": false
+  },
+  "controlled_evaluation": {
+    "range_status": "none-eligible",
+    "june_read": false,
+    "substitute_range": false,
+    "controlled_plan_creation": false,
+    "empty_cohort_action": "Close as immutable negative exposed evidence and start only a separately frozen hypothesis.",
+    "nonempty_cohort_action": "Freeze every all-gate exposed-serious survivor simultaneously and wait for future untouched data. Do not rank, tune, discard, or claim controlled qualification."
+  },
+  "authority": {
+    "strategy_results": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "plan_fingerprint": "2f98e0cc4565435c9974f65791fd830f7fb9509730f31872f97d77484c00c489"
+}
