@@ -1,0 +1,542 @@
+{
+  "schema_version": "scheduled-event-source-evidence-v1",
+  "evidence_id": "intraday-event-calendar-001-source-evidence-v1",
+  "status": "prospective-source-evidence-before-strategy-implementation-or-results",
+  "assembled_at": "2026-08-23T20:08:16Z",
+  "purpose": "Bind causal, content-addressed source evidence or a transparent source-causality exclusion for every BLS calendar row without using release values, surprises, market data, or strategy results.",
+  "scope": {
+    "publisher": "U.S. Bureau of Labor Statistics",
+    "release_names": [
+      "Consumer Price Index",
+      "Employment Situation",
+      "Producer Price Index"
+    ],
+    "first_inclusive_date": "2025-07-01",
+    "last_inclusive_date": "2026-05-29",
+    "event_count": 30
+  },
+  "methodology": {
+    "schedule_rule": "Use an Internet Archive raw replay of the official BLS annual schedule only when its capture timestamp is before the same-date 09:30 ET XNYS open and its exact 08:30 row matches the frozen event.",
+    "occurrence_rule": "A dated official release header without an independently time-bound pre-open capture may corroborate occurrence but cannot establish causal eligibility; retain it only as excluded source evidence.",
+    "canonical_excerpt_rule": "Join the exact visible date, time, and description cells with space-pipe-space; the occurrence excerpt joins only its embargo timestamp, release heading, and last-modified date.",
+    "internet_archive_role": "The independent capture timestamp and CDX digest corroborate what the official BLS origin served. The evidence also stores and hashes each canonical relevant excerpt.",
+    "release_values_surprises_consensus_or_revisions_used": false,
+    "market_data_or_strategy_results_used": false,
+    "future_runtime_rule": "Any later controlled or PAPER protocol needs a new same-day occurrence check; this historical source evidence grants no runtime authority."
+  },
+  "snapshots": [
+    {
+      "snapshot_id": "bls-schedule-2025-20250701050142",
+      "official_url": "https://www.bls.gov/schedule/2025/home.htm",
+      "archive_url": "https://web.archive.org/web/20250701050142id_/https://www.bls.gov/schedule/2025/home.htm",
+      "capture_timestamp_utc": "2025-07-01T05:01:42Z",
+      "cdx_digest": "XYTYWYWACZVGWFTUUQXZKXET3O43FK7O",
+      "decompressed_response_sha256": "bbd5d9c767da7c856cd2cb894c514013f87cdf2a1e90ddc1535d34436f692653"
+    },
+    {
+      "snapshot_id": "bls-schedule-2025-20250714184553",
+      "official_url": "https://www.bls.gov/schedule/2025/home.htm",
+      "archive_url": "https://web.archive.org/web/20250714184553id_/https://www.bls.gov/schedule/2025/home.htm",
+      "capture_timestamp_utc": "2025-07-14T18:45:53Z",
+      "cdx_digest": "XYTYWYWACZVGWFTUUQXZKXET3O43FK7O",
+      "decompressed_response_sha256": "bbd5d9c767da7c856cd2cb894c514013f87cdf2a1e90ddc1535d34436f692653"
+    },
+    {
+      "snapshot_id": "bls-schedule-2025-20250725232850",
+      "official_url": "https://www.bls.gov/schedule/2025/home.htm",
+      "archive_url": "https://web.archive.org/web/20250725232850id_/https://www.bls.gov/schedule/2025/home.htm",
+      "capture_timestamp_utc": "2025-07-25T23:28:50Z",
+      "cdx_digest": "4DTX3MLVRY4ZLWIQ5W3U2JPI6E4YHENC",
+      "decompressed_response_sha256": "b34a69e944777510466fe6980236b3e4fc283390dfef81c84e1d6c790da10ea8"
+    },
+    {
+      "snapshot_id": "bls-schedule-2025-20250811193428",
+      "official_url": "https://www.bls.gov/schedule/2025/home.htm",
+      "archive_url": "https://web.archive.org/web/20250811193428id_/https://www.bls.gov/schedule/2025/home.htm",
+      "capture_timestamp_utc": "2025-08-11T19:34:28Z",
+      "cdx_digest": "6Z7DCSMBX6ZLWQUTSVUR6ERKQCD4BHHS",
+      "decompressed_response_sha256": "e3a1025e481625ae6502e7b48cc918f9430c23b6ca038131cca0527906522c77"
+    },
+    {
+      "snapshot_id": "bls-schedule-2025-20250822211227",
+      "official_url": "https://www.bls.gov/schedule/2025/home.htm",
+      "archive_url": "https://web.archive.org/web/20250822211227id_/https://www.bls.gov/schedule/2025/home.htm",
+      "capture_timestamp_utc": "2025-08-22T21:12:27Z",
+      "cdx_digest": "X65X3SNV2IIUD5PUYOKZVBH4FSBDO6LZ",
+      "decompressed_response_sha256": "e3a1025e481625ae6502e7b48cc918f9430c23b6ca038131cca0527906522c77"
+    },
+    {
+      "snapshot_id": "bls-schedule-2025-20250910070718",
+      "official_url": "https://www.bls.gov/schedule/2025/home.htm",
+      "archive_url": "https://web.archive.org/web/20250910070718id_/https://www.bls.gov/schedule/2025/home.htm",
+      "capture_timestamp_utc": "2025-09-10T07:07:18Z",
+      "cdx_digest": "X65X3SNV2IIUD5PUYOKZVBH4FSBDO6LZ",
+      "decompressed_response_sha256": "e3a1025e481625ae6502e7b48cc918f9430c23b6ca038131cca0527906522c77"
+    },
+    {
+      "snapshot_id": "bls-schedule-2025-20251023210558",
+      "official_url": "https://www.bls.gov/schedule/2025/home.htm",
+      "archive_url": "https://web.archive.org/web/20251023210558id_/https://www.bls.gov/schedule/2025/home.htm",
+      "capture_timestamp_utc": "2025-10-23T21:05:58Z",
+      "cdx_digest": "6K7XS67BLSWCCVEDY6LY7GT5M4DTID7L",
+      "decompressed_response_sha256": "7c13896648a4b1f31e60a045e5a24c989fcbbeced2b983a1d5fd92124d29c716"
+    },
+    {
+      "snapshot_id": "bls-schedule-2025-20251116071556",
+      "official_url": "https://www.bls.gov/schedule/2025/home.htm",
+      "archive_url": "https://web.archive.org/web/20251116071556id_/https://www.bls.gov/schedule/2025/home.htm",
+      "capture_timestamp_utc": "2025-11-16T07:15:56Z",
+      "cdx_digest": "4WMPNVJDQU4BWS2HQIEGNCN4ONYCGELF",
+      "decompressed_response_sha256": "0b5abfbd77680d8af5ae06fbc075c413988535f3422b741ded2eac7bea3cc00b"
+    },
+    {
+      "snapshot_id": "bls-schedule-2025-20251121185147",
+      "official_url": "https://www.bls.gov/schedule/2025/home.htm",
+      "archive_url": "https://web.archive.org/web/20251121185147id_/https://www.bls.gov/schedule/2025/home.htm",
+      "capture_timestamp_utc": "2025-11-21T18:51:47Z",
+      "cdx_digest": "LAKU7J53UAKVE7PMZT3EYDZ6KQ7KATJR",
+      "decompressed_response_sha256": "d59905a8847724114d8f098f2b1409ab2a3874b15d60d6d3b728bb71193a2671"
+    },
+    {
+      "snapshot_id": "bls-schedule-2025-20251214011318",
+      "official_url": "https://www.bls.gov/schedule/2025/home.htm",
+      "archive_url": "https://web.archive.org/web/20251214011318id_/https://www.bls.gov/schedule/2025/home.htm",
+      "capture_timestamp_utc": "2025-12-14T01:13:18Z",
+      "cdx_digest": "WJ2CZLBGG5VEQTMYUVU4Z3HSA7X7EDU5",
+      "decompressed_response_sha256": "6dc386e51bc9f47e49717b192dcf22eeef2e756dd686ab376dc84b3f509cb147"
+    },
+    {
+      "snapshot_id": "bls-schedule-2025-20251217084506",
+      "official_url": "https://www.bls.gov/schedule/2025/home.htm",
+      "archive_url": "https://web.archive.org/web/20251217084506id_/https://www.bls.gov/schedule/2025/home.htm",
+      "capture_timestamp_utc": "2025-12-17T08:45:06Z",
+      "cdx_digest": "WJ2CZLBGG5VEQTMYUVU4Z3HSA7X7EDU5",
+      "decompressed_response_sha256": "6dc386e51bc9f47e49717b192dcf22eeef2e756dd686ab376dc84b3f509cb147"
+    },
+    {
+      "snapshot_id": "bls-schedule-2026-20260108200143",
+      "official_url": "https://www.bls.gov/schedule/2026/home.htm",
+      "archive_url": "https://web.archive.org/web/20260108200143id_/https://www.bls.gov/schedule/2026/home.htm",
+      "capture_timestamp_utc": "2026-01-08T20:01:43Z",
+      "cdx_digest": "IHNN3KAN27Y3PVHGWFUQBEYXLAXUTAWW",
+      "decompressed_response_sha256": "cdc73e4c25ca4fb308a0ded3a1f2a00c157ebceb003c5f301d2839e78cd2cf62"
+    },
+    {
+      "snapshot_id": "bls-schedule-2026-20260112203418",
+      "official_url": "https://www.bls.gov/schedule/2026/home.htm",
+      "archive_url": "https://web.archive.org/web/20260112203418id_/https://www.bls.gov/schedule/2026/home.htm",
+      "capture_timestamp_utc": "2026-01-12T20:34:18Z",
+      "cdx_digest": "I2MQCZLKY5CRS45URDQQY4NBA6PH4OKV",
+      "decompressed_response_sha256": "c8588c95815f02baa82ba225598d5a715f92d4dce4dd449bb5ed2764bc36d093"
+    },
+    {
+      "snapshot_id": "bls-schedule-2026-20260122224800",
+      "official_url": "https://www.bls.gov/schedule/2026/home.htm",
+      "archive_url": "https://web.archive.org/web/20260122224800id_/https://www.bls.gov/schedule/2026/home.htm",
+      "capture_timestamp_utc": "2026-01-22T22:48:00Z",
+      "cdx_digest": "5BIEHFP2RS2SYSVRPQKZXO62R4AV4LD7",
+      "decompressed_response_sha256": "d378bee4ae344e42abbd75b3981ebd9b39138e9d2327e17de9622ad45d6dfd54"
+    },
+    {
+      "snapshot_id": "bls-schedule-2026-20260212073339",
+      "official_url": "https://www.bls.gov/schedule/2026/home.htm",
+      "archive_url": "https://web.archive.org/web/20260212073339id_/https://www.bls.gov/schedule/2026/home.htm",
+      "capture_timestamp_utc": "2026-02-12T07:33:39Z",
+      "cdx_digest": "BX47MKNCVBUEZV55TDZ347L33IU2M7JA",
+      "decompressed_response_sha256": "63ed1ac3948918185ebc367c3d772a71c05b3c5b693d0493805a19f2277d834f"
+    },
+    {
+      "snapshot_id": "bls-schedule-2026-20260213183403",
+      "official_url": "https://www.bls.gov/schedule/2026/home.htm",
+      "archive_url": "https://web.archive.org/web/20260213183403id_/https://www.bls.gov/schedule/2026/home.htm",
+      "capture_timestamp_utc": "2026-02-13T18:34:03Z",
+      "cdx_digest": "EEEHC5PQJLFOOCZ3KY2ELKQ42IEUGVQD",
+      "decompressed_response_sha256": "d670b346039bad83e2240b3037e5cdea4e38b6368131ffb852c44f8203c0d09d"
+    },
+    {
+      "snapshot_id": "bls-schedule-2026-20260313173429",
+      "official_url": "https://www.bls.gov/schedule/2026/home.htm",
+      "archive_url": "https://web.archive.org/web/20260313173429id_/https://www.bls.gov/schedule/2026/home.htm",
+      "capture_timestamp_utc": "2026-03-13T17:34:29Z",
+      "cdx_digest": "XIFS2H5SGNZPKVGRVYGTDQFYRVLOAGBV",
+      "decompressed_response_sha256": "f42200dac90b3d888298101afe9ff12d2d4609f676aa48aa11f2c290619263c5"
+    },
+    {
+      "snapshot_id": "bls-schedule-2026-20260402161856",
+      "official_url": "https://www.bls.gov/schedule/2026/home.htm",
+      "archive_url": "https://web.archive.org/web/20260402161856id_/https://www.bls.gov/schedule/2026/home.htm",
+      "capture_timestamp_utc": "2026-04-02T16:18:56Z",
+      "cdx_digest": "LPA26C3A3XWCU2FUH7OIROEH4C6U5NWR",
+      "decompressed_response_sha256": "556e16258de84eb5a12ae1709b81ca5dd9ac4789d8b72a212767254bf9aa33d1"
+    },
+    {
+      "snapshot_id": "bls-schedule-2026-20260502122238",
+      "official_url": "https://www.bls.gov/schedule/2026/home.htm",
+      "archive_url": "https://web.archive.org/web/20260502122238id_/https://www.bls.gov/schedule/2026/home.htm",
+      "capture_timestamp_utc": "2026-05-02T12:22:38Z",
+      "cdx_digest": "VZZD5CAI4M223L7JYCBXV6PXOSB6GTYA",
+      "decompressed_response_sha256": "370920ab33cde8e11872b08a955cb7c02f61fcf809f850baa7e0bb054a76c2a8"
+    },
+    {
+      "snapshot_id": "bls-schedule-2026-20260510142520",
+      "official_url": "https://www.bls.gov/schedule/2026/home.htm",
+      "archive_url": "https://web.archive.org/web/20260510142520id_/https://www.bls.gov/schedule/2026/home.htm",
+      "capture_timestamp_utc": "2026-05-10T14:25:20Z",
+      "cdx_digest": "AXDSRIMSD6HUYBBRUZTKX4XYJQAMJ44R",
+      "decompressed_response_sha256": "6c22dd99d07ad177c9cd328661d7bbe558fa7df156d04493d908cc5767b06461"
+    }
+  ],
+  "event_evidence": [
+    {
+      "event_id": "bls-empsit-2025-07-03",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20250701050142",
+      "cdx_digest": "XYTYWYWACZVGWFTUUQXZKXET3O43FK7O",
+      "official_row_excerpt": "Thursday, July 03, 2025 | 08:30 AM | Employment Situation for June 2025",
+      "excerpt_sha256": "d871845fcafd2077559541be3d6ba4c857703ff84cf891073cba0e0084b0164c",
+      "scheduled_utc": "2025-07-03T12:30:00Z",
+      "xnys_open_utc": "2025-07-03T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-cpi-2025-07-15",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20250714184553",
+      "cdx_digest": "XYTYWYWACZVGWFTUUQXZKXET3O43FK7O",
+      "official_row_excerpt": "Tuesday, July 15, 2025 | 08:30 AM | Consumer Price Index for June 2025",
+      "excerpt_sha256": "2b22a7ec597c4b0c9ca10ba509420e62d221d004ea21783b8a32b39bfc5e508c",
+      "scheduled_utc": "2025-07-15T12:30:00Z",
+      "xnys_open_utc": "2025-07-15T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-ppi-2025-07-16",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20250714184553",
+      "cdx_digest": "XYTYWYWACZVGWFTUUQXZKXET3O43FK7O",
+      "official_row_excerpt": "Wednesday, July 16, 2025 | 08:30 AM | Producer Price Index for June 2025",
+      "excerpt_sha256": "58e5793311b2a759cd97c70bb60c7eabb9d33fcea5b5b6bd0e24c69642a485fd",
+      "scheduled_utc": "2025-07-16T12:30:00Z",
+      "xnys_open_utc": "2025-07-16T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-empsit-2025-08-01",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20250725232850",
+      "cdx_digest": "4DTX3MLVRY4ZLWIQ5W3U2JPI6E4YHENC",
+      "official_row_excerpt": "Friday, August 1, 2025 | 08:30 AM | Employment Situation for July 2025",
+      "excerpt_sha256": "5899fe3582e2f91a1d49041e8130950333a981ce75b0386f4318b69e21ae1d8b",
+      "scheduled_utc": "2025-08-01T12:30:00Z",
+      "xnys_open_utc": "2025-08-01T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-cpi-2025-08-12",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20250811193428",
+      "cdx_digest": "6Z7DCSMBX6ZLWQUTSVUR6ERKQCD4BHHS",
+      "official_row_excerpt": "Tuesday, August 12, 2025 | 08:30 AM | Consumer Price Index for July 2025",
+      "excerpt_sha256": "fe2ac732ec2e2830a04655e266424887276dd7c3c1713908358fdd710abb325a",
+      "scheduled_utc": "2025-08-12T12:30:00Z",
+      "xnys_open_utc": "2025-08-12T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-ppi-2025-08-14",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20250811193428",
+      "cdx_digest": "6Z7DCSMBX6ZLWQUTSVUR6ERKQCD4BHHS",
+      "official_row_excerpt": "Thursday, August 14, 2025 | 08:30 AM | Producer Price Index for July 2025",
+      "excerpt_sha256": "b0078d537046b976f50472395d3035c0b75fd96152dec68b5c6ae8bf40924460",
+      "scheduled_utc": "2025-08-14T12:30:00Z",
+      "xnys_open_utc": "2025-08-14T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-empsit-2025-09-05",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20250822211227",
+      "cdx_digest": "X65X3SNV2IIUD5PUYOKZVBH4FSBDO6LZ",
+      "official_row_excerpt": "Friday, September 5, 2025 | 08:30 AM | Employment Situation for August 2025",
+      "excerpt_sha256": "59b78247e27891a4e5ce10cd4f0a39e24daf0e467e3d531dbbd1ea4c11ab6abe",
+      "scheduled_utc": "2025-09-05T12:30:00Z",
+      "xnys_open_utc": "2025-09-05T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-ppi-2025-09-10",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20250910070718",
+      "cdx_digest": "X65X3SNV2IIUD5PUYOKZVBH4FSBDO6LZ",
+      "official_row_excerpt": "Wednesday, September 10, 2025 | 08:30 AM | Producer Price Index for August 2025",
+      "excerpt_sha256": "c6e1be6a162797dd6d418b8f20bbf70cbe4dc2de16a120d9616d933e36f03636",
+      "scheduled_utc": "2025-09-10T12:30:00Z",
+      "xnys_open_utc": "2025-09-10T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-cpi-2025-09-11",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20250910070718",
+      "cdx_digest": "X65X3SNV2IIUD5PUYOKZVBH4FSBDO6LZ",
+      "official_row_excerpt": "Thursday, September 11, 2025 | 08:30 AM | Consumer Price Index for August 2025",
+      "excerpt_sha256": "80eb17fdb752b325cfa3ec8b00275e3bfd0def0f5696ec59672c0e546d6f6199",
+      "scheduled_utc": "2025-09-11T12:30:00Z",
+      "xnys_open_utc": "2025-09-11T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-cpi-2025-10-24",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20251023210558",
+      "cdx_digest": "6K7XS67BLSWCCVEDY6LY7GT5M4DTID7L",
+      "official_row_excerpt": "Friday, October 24, 2025 | 08:30 AM | Consumer Price Index for September 2025",
+      "excerpt_sha256": "6be881d08703d67ab76eef3b932edf3cc72d8e68b5cad7ca49a7da722a847491",
+      "scheduled_utc": "2025-10-24T12:30:00Z",
+      "xnys_open_utc": "2025-10-24T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-empsit-2025-11-20",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20251116071556",
+      "cdx_digest": "4WMPNVJDQU4BWS2HQIEGNCN4ONYCGELF",
+      "official_row_excerpt": "Thursday, November 20, 2025 | 08:30 AM | Employment Situation for September 2025",
+      "excerpt_sha256": "1fac31535637c8724dc70531cdff362a205840323fcc177181ce09c2031c0d51",
+      "scheduled_utc": "2025-11-20T13:30:00Z",
+      "xnys_open_utc": "2025-11-20T14:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-ppi-2025-11-25",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20251121185147",
+      "cdx_digest": "LAKU7J53UAKVE7PMZT3EYDZ6KQ7KATJR",
+      "official_row_excerpt": "Tuesday, November 25, 2025 | 08:30 AM | Producer Price Index for September 2025",
+      "excerpt_sha256": "6774195f21b1ade493e556e05273a3455aa02b83377cf8e0a5e9e2dc15e6d5bc",
+      "scheduled_utc": "2025-11-25T13:30:00Z",
+      "xnys_open_utc": "2025-11-25T14:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-empsit-2025-12-16",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20251214011318",
+      "cdx_digest": "WJ2CZLBGG5VEQTMYUVU4Z3HSA7X7EDU5",
+      "official_row_excerpt": "Tuesday, December 16, 2025 | 08:30 AM | Employment Situation for November 2025",
+      "excerpt_sha256": "548779515fc5ee2cc7d32702a97780637dcbda3a1a5524d50aaa279e4fb519be",
+      "scheduled_utc": "2025-12-16T13:30:00Z",
+      "xnys_open_utc": "2025-12-16T14:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-cpi-2025-12-18",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2025-20251217084506",
+      "cdx_digest": "WJ2CZLBGG5VEQTMYUVU4Z3HSA7X7EDU5",
+      "official_row_excerpt": "Thursday, December 18, 2025 | 08:30 AM | Consumer Price Index for November 2025",
+      "excerpt_sha256": "e89cd3f150f4fa72510621dc8a3302a929f1ecc0517bf07e0b81e1bc46de63c5",
+      "scheduled_utc": "2025-12-18T13:30:00Z",
+      "xnys_open_utc": "2025-12-18T14:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-empsit-2026-01-09",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260108200143",
+      "cdx_digest": "IHNN3KAN27Y3PVHGWFUQBEYXLAXUTAWW",
+      "official_row_excerpt": "Friday, January 9, 2026 | 08:30 AM | Employment Situation for December 2025",
+      "excerpt_sha256": "87ec4eb0a05023975126c85aab05422160646228be4d7d83af1db908c814ecbd",
+      "scheduled_utc": "2026-01-09T13:30:00Z",
+      "xnys_open_utc": "2026-01-09T14:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-cpi-2026-01-13",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260112203418",
+      "cdx_digest": "I2MQCZLKY5CRS45URDQQY4NBA6PH4OKV",
+      "official_row_excerpt": "Tuesday, January 13, 2026 | 08:30 AM | Consumer Price Index for December 2025",
+      "excerpt_sha256": "b5bdeca1d5e3ceaa703f78ae5bfa397a1c1b68510a9f4621d6a0bead68fc3861",
+      "scheduled_utc": "2026-01-13T13:30:00Z",
+      "xnys_open_utc": "2026-01-13T14:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-ppi-2026-01-14",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260112203418",
+      "cdx_digest": "I2MQCZLKY5CRS45URDQQY4NBA6PH4OKV",
+      "official_row_excerpt": "Wednesday, January 14, 2026 | 08:30 AM | Producer Price Index for November 2025",
+      "excerpt_sha256": "229ba58de7770914360016fac3780bebac4dcc2e4957e4a5340d34fc45247169",
+      "scheduled_utc": "2026-01-14T13:30:00Z",
+      "xnys_open_utc": "2026-01-14T14:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-ppi-2026-01-30",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260122224800",
+      "cdx_digest": "5BIEHFP2RS2SYSVRPQKZXO62R4AV4LD7",
+      "official_row_excerpt": "Friday, January 30, 2026 | 08:30 AM | Producer Price Index for December 2025",
+      "excerpt_sha256": "9759ecc61c0c8eca1da2f660234312005b3f83ffe28370b7130f27c9eebce5da",
+      "scheduled_utc": "2026-01-30T13:30:00Z",
+      "xnys_open_utc": "2026-01-30T14:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-empsit-2026-02-11",
+      "proof_type": "official-release-occurrence-not-independently-time-bound",
+      "official_url": "https://www.bls.gov/news.release/archives/empsit_02112026.htm",
+      "page_title": "Employment Situation News Release - 2026 M01 Results",
+      "retrieval_transport": "read-only interactive browser",
+      "official_excerpt": "Transmission of material in this news release is embargoed until USDL-26-0169 | 8:30 a.m. (ET) Wednesday, February 11, 2026 | THE EMPLOYMENT SITUATION -- JANUARY 2026 | Last Modified Date: February 11, 2026",
+      "excerpt_sha256": "20c276a7ecb972dca479e0f07d422928219324514bbe6d59520e0653dd8adfb8",
+      "scheduled_utc": "2026-02-11T13:30:00Z",
+      "xnys_open_utc": "2026-02-11T14:30:00Z",
+      "calendar_disposition": "excluded-source-causality-unproven",
+      "release_content_or_market_result_used": false
+    },
+    {
+      "event_id": "bls-cpi-2026-02-13",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260212073339",
+      "cdx_digest": "BX47MKNCVBUEZV55TDZ347L33IU2M7JA",
+      "official_row_excerpt": "Friday, February 13, 2026 | 08:30 AM | Consumer Price Index for January 2026",
+      "excerpt_sha256": "8fb8124c822ec070da6d8ceceab18982d6eb5a6213187f6b232dcb1f7ae2cfa4",
+      "scheduled_utc": "2026-02-13T13:30:00Z",
+      "xnys_open_utc": "2026-02-13T14:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-ppi-2026-02-27",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260213183403",
+      "cdx_digest": "EEEHC5PQJLFOOCZ3KY2ELKQ42IEUGVQD",
+      "official_row_excerpt": "Friday, February 27, 2026 | 08:30 AM | Producer Price Index for January 2026",
+      "excerpt_sha256": "4ef9a25e60e5747d607e5ec18e8d6a2507659f09fb89dc0c611b7e6521725580",
+      "scheduled_utc": "2026-02-27T13:30:00Z",
+      "xnys_open_utc": "2026-02-27T14:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-empsit-2026-03-06",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260213183403",
+      "cdx_digest": "EEEHC5PQJLFOOCZ3KY2ELKQ42IEUGVQD",
+      "official_row_excerpt": "Friday, March 6, 2026 | 08:30 AM | Employment Situation for February 2026",
+      "excerpt_sha256": "7aa69a12b3bc7e87dc2c922de1d648255a6c9a6465ba24e2f7d12c317a4e1f2a",
+      "scheduled_utc": "2026-03-06T13:30:00Z",
+      "xnys_open_utc": "2026-03-06T14:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-cpi-2026-03-11",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260213183403",
+      "cdx_digest": "EEEHC5PQJLFOOCZ3KY2ELKQ42IEUGVQD",
+      "official_row_excerpt": "Wednesday, March 11, 2026 | 08:30 AM | Consumer Price Index for February 2026",
+      "excerpt_sha256": "6c6054a49d69a6ca6da985263e967ae0261cc49035db582d658fe7b3dd81dcc0",
+      "scheduled_utc": "2026-03-11T12:30:00Z",
+      "xnys_open_utc": "2026-03-11T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-ppi-2026-03-18",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260313173429",
+      "cdx_digest": "XIFS2H5SGNZPKVGRVYGTDQFYRVLOAGBV",
+      "official_row_excerpt": "Wednesday, March 18, 2026 | 08:30 AM | Producer Price Index for February 2026",
+      "excerpt_sha256": "13f7ab73063aa59bd2f966ff5da63ee03436962a338d88ad1872e1c8283da84a",
+      "scheduled_utc": "2026-03-18T12:30:00Z",
+      "xnys_open_utc": "2026-03-18T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-empsit-2026-04-03",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260402161856",
+      "cdx_digest": "LPA26C3A3XWCU2FUH7OIROEH4C6U5NWR",
+      "official_row_excerpt": "Friday, April 3, 2026 | 08:30 AM | Employment Situation for March 2026",
+      "excerpt_sha256": "6c6b4fd34ae363121f91c8b0afe7a0bfc6fa752526f6a426b868d2c4255ebaf6",
+      "scheduled_utc": "2026-04-03T12:30:00Z",
+      "xnys_open_utc": null,
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-cpi-2026-04-10",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260402161856",
+      "cdx_digest": "LPA26C3A3XWCU2FUH7OIROEH4C6U5NWR",
+      "official_row_excerpt": "Friday, April 10, 2026 | 08:30 AM | Consumer Price Index for March 2026",
+      "excerpt_sha256": "d2890bec3357d25cf4f90e7c303cc573fb2e102cb2645c70b730edce3ed095f7",
+      "scheduled_utc": "2026-04-10T12:30:00Z",
+      "xnys_open_utc": "2026-04-10T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-ppi-2026-04-14",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260402161856",
+      "cdx_digest": "LPA26C3A3XWCU2FUH7OIROEH4C6U5NWR",
+      "official_row_excerpt": "Tuesday, April 14, 2026 | 08:30 AM | Producer Price Index for March 2026",
+      "excerpt_sha256": "e47909a2dab3e159c0349bc4d58a92878fe746caf7769b96b91a80c25f6df987",
+      "scheduled_utc": "2026-04-14T12:30:00Z",
+      "xnys_open_utc": "2026-04-14T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-empsit-2026-05-08",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260502122238",
+      "cdx_digest": "VZZD5CAI4M223L7JYCBXV6PXOSB6GTYA",
+      "official_row_excerpt": "Friday, May 08, 2026 | 08:30 AM | Employment Situation for April 2026",
+      "excerpt_sha256": "c189c8cf65e60a931ad637b9f970581aa45369d1c71011ce6a55fac1949c4c12",
+      "scheduled_utc": "2026-05-08T12:30:00Z",
+      "xnys_open_utc": "2026-05-08T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-cpi-2026-05-12",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260510142520",
+      "cdx_digest": "AXDSRIMSD6HUYBBRUZTKX4XYJQAMJ44R",
+      "official_row_excerpt": "Tuesday, May 12, 2026 | 08:30 AM | Consumer Price Index for April 2026",
+      "excerpt_sha256": "5bb7b3e47d424634d06b2059ae698e2127ea493bcdb346402cc03402ab173b6c",
+      "scheduled_utc": "2026-05-12T12:30:00Z",
+      "xnys_open_utc": "2026-05-12T13:30:00Z",
+      "source_capture_before_boundary": true
+    },
+    {
+      "event_id": "bls-ppi-2026-05-13",
+      "proof_type": "archived-official-schedule-before-market-open",
+      "source_snapshot_id": "bls-schedule-2026-20260510142520",
+      "cdx_digest": "AXDSRIMSD6HUYBBRUZTKX4XYJQAMJ44R",
+      "official_row_excerpt": "Wednesday, May 13, 2026 | 08:30 AM | Producer Price Index for April 2026",
+      "excerpt_sha256": "62bacd3306f2439233fec3776537fc01a4f43a12a1013909810f023d62805e1e",
+      "scheduled_utc": "2026-05-13T12:30:00Z",
+      "xnys_open_utc": "2026-05-13T13:30:00Z",
+      "source_capture_before_boundary": true
+    }
+  ],
+  "counts": {
+    "schedule_snapshot_events": 29,
+    "official_occurrence_events": 1,
+    "source_snapshots": 20,
+    "eligible_events": 28,
+    "excluded_source_causality_events": 1,
+    "excluded_xnys_closed_events": 1
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_results": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "evidence_fingerprint": "6616ed631b3d7e8e727b8cde85bf26e4c2cb5800812db745c327a71bf62192fd"
+}
