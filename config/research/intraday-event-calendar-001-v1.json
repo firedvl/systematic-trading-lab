@@ -1,0 +1,422 @@
+{
+  "schema_version": "scheduled-event-calendar-v1",
+  "calendar_id": "intraday-event-calendar-001-v1",
+  "status": "prospective-frozen-before-strategy-implementation-or-results",
+  "purpose": "Bind every causally evidenced BLS CPI, PPI, and Employment Situation release occurrence at 08:30 ET in the exposed July 2025 through May 2026 market-data window and transparently exclude rows without pre-open source proof, without using release contents or market outcomes.",
+  "retrieved_at": "2026-08-23T19:38:21Z",
+  "selection": {
+    "agency": "U.S. Bureau of Labor Statistics",
+    "included_release_names": [
+      "Consumer Price Index",
+      "Employment Situation",
+      "Producer Price Index"
+    ],
+    "required_release_time_local": "08:30:00",
+    "source_timezone": "America/New_York",
+    "first_inclusive_date": "2025-07-01",
+    "last_inclusive_date": "2026-05-29",
+    "include_rule": "Include every exact official calendar row whose release name is in the fixed list, whose scheduled time is 08:30 ET, whose date is inside the fixed exposed range, and whose bound archived official source proves the schedule was public before the same-date 09:30 ET XNYS open.",
+    "xnys_rule": "Map an event only to the same civil-date XNYS session. Exclude an event when XNYS is closed; do not carry it to a later session.",
+    "source_evidence_rule": "Require one content-addressed archived official schedule row captured before the XNYS open. Exclude a row when only a later official occurrence header exists.",
+    "event_content_used": false,
+    "market_data_or_results_used": false,
+    "release_class_selected_from_returns": false
+  },
+  "sources": [
+    {
+      "url": "https://www.bls.gov/schedule/2025/home.htm",
+      "title": "Schedule of Selected Releases 2025",
+      "publisher": "U.S. Bureau of Labor Statistics",
+      "retrieved_at": "2026-08-23T19:35:00Z",
+      "transport": "read-only interactive browser",
+      "relevant_event_count": 14
+    },
+    {
+      "url": "https://www.bls.gov/schedule/2026/home.htm",
+      "title": "Schedule of Selected Releases 2026",
+      "publisher": "U.S. Bureau of Labor Statistics",
+      "retrieved_at": "2026-08-23T19:36:00Z",
+      "transport": "read-only interactive browser",
+      "relevant_event_count": 16
+    }
+  ],
+  "source_evidence": {
+    "path": "config/research/intraday-event-calendar-001-source-evidence-v1.json",
+    "evidence_id": "intraday-event-calendar-001-source-evidence-v1",
+    "sha256": "c5f1ab34c92b10ac9c75d86a3c33c9f2a445eed022a48697edaa7dfd9eabee0a",
+    "fingerprint": "6616ed631b3d7e8e727b8cde85bf26e4c2cb5800812db745c327a71bf62192fd",
+    "event_count": 30,
+    "schedule_snapshot_event_count": 29,
+    "official_occurrence_event_count": 1,
+    "independent_review_required": true
+  },
+  "causal_boundary": {
+    "calendar_role": "The calendar supplies only release identity and scheduled timestamp.",
+    "content_role": "Release values, surprises, revisions, headlines, and consensus estimates are unavailable to the strategy.",
+    "earliest_market_observation": "The strategy may first observe the same-day 09:30 ET XNYS bar open, at least 60 minutes after the scheduled release.",
+    "decision_rule": "A decision may occur only after the fixed number of completed regular-session reaction bars.",
+    "historical_causality": "Twenty-nine rows bind archived official BLS annual-page captures from before the relevant boundary. The February 11, 2026 Employment Situation row binds only a later official occurrence header, so its pre-open source causality is unproven and it is excluded.",
+    "annual_page_limit": "The post-event annual pages enumerate the source set but do not establish causality alone; every row must match the separate content-addressed source-evidence artifact.",
+    "future_runtime_limit": "This historical calendar grants no future runtime authority. Any controlled or PAPER protocol needs a new same-day occurrence check."
+  },
+  "counts": {
+    "source_events": 30,
+    "eligible_events": 28,
+    "excluded_events": 2,
+    "eligible_by_period": {
+      "discovery-2025-07-through-10": 10,
+      "walk-forward-2025-11-through-12": 4,
+      "walk-forward-2026-01-through-02": 6,
+      "walk-forward-2026-03-through-04": 5,
+      "final-exposed-2026-05": 3
+    },
+    "eligible_by_release": {
+      "Consumer Price Index": 10,
+      "Employment Situation": 8,
+      "Producer Price Index": 10
+    }
+  },
+  "events": [
+    {
+      "event_id": "bls-empsit-2025-07-03",
+      "release_name": "Employment Situation",
+      "reference_period": "June 2025",
+      "scheduled_local": "2025-07-03T08:30:00-04:00",
+      "scheduled_utc": "2025-07-03T12:30:00Z",
+      "xnys_session": "2025-07-03",
+      "session_open_utc": "2025-07-03T13:30:00Z",
+      "session_close_utc": "2025-07-03T17:00:00Z",
+      "disposition": "eligible-early-close"
+    },
+    {
+      "event_id": "bls-cpi-2025-07-15",
+      "release_name": "Consumer Price Index",
+      "reference_period": "June 2025",
+      "scheduled_local": "2025-07-15T08:30:00-04:00",
+      "scheduled_utc": "2025-07-15T12:30:00Z",
+      "xnys_session": "2025-07-15",
+      "session_open_utc": "2025-07-15T13:30:00Z",
+      "session_close_utc": "2025-07-15T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-ppi-2025-07-16",
+      "release_name": "Producer Price Index",
+      "reference_period": "June 2025",
+      "scheduled_local": "2025-07-16T08:30:00-04:00",
+      "scheduled_utc": "2025-07-16T12:30:00Z",
+      "xnys_session": "2025-07-16",
+      "session_open_utc": "2025-07-16T13:30:00Z",
+      "session_close_utc": "2025-07-16T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-empsit-2025-08-01",
+      "release_name": "Employment Situation",
+      "reference_period": "July 2025",
+      "scheduled_local": "2025-08-01T08:30:00-04:00",
+      "scheduled_utc": "2025-08-01T12:30:00Z",
+      "xnys_session": "2025-08-01",
+      "session_open_utc": "2025-08-01T13:30:00Z",
+      "session_close_utc": "2025-08-01T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-cpi-2025-08-12",
+      "release_name": "Consumer Price Index",
+      "reference_period": "July 2025",
+      "scheduled_local": "2025-08-12T08:30:00-04:00",
+      "scheduled_utc": "2025-08-12T12:30:00Z",
+      "xnys_session": "2025-08-12",
+      "session_open_utc": "2025-08-12T13:30:00Z",
+      "session_close_utc": "2025-08-12T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-ppi-2025-08-14",
+      "release_name": "Producer Price Index",
+      "reference_period": "July 2025",
+      "scheduled_local": "2025-08-14T08:30:00-04:00",
+      "scheduled_utc": "2025-08-14T12:30:00Z",
+      "xnys_session": "2025-08-14",
+      "session_open_utc": "2025-08-14T13:30:00Z",
+      "session_close_utc": "2025-08-14T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-empsit-2025-09-05",
+      "release_name": "Employment Situation",
+      "reference_period": "August 2025",
+      "scheduled_local": "2025-09-05T08:30:00-04:00",
+      "scheduled_utc": "2025-09-05T12:30:00Z",
+      "xnys_session": "2025-09-05",
+      "session_open_utc": "2025-09-05T13:30:00Z",
+      "session_close_utc": "2025-09-05T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-ppi-2025-09-10",
+      "release_name": "Producer Price Index",
+      "reference_period": "August 2025",
+      "scheduled_local": "2025-09-10T08:30:00-04:00",
+      "scheduled_utc": "2025-09-10T12:30:00Z",
+      "xnys_session": "2025-09-10",
+      "session_open_utc": "2025-09-10T13:30:00Z",
+      "session_close_utc": "2025-09-10T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-cpi-2025-09-11",
+      "release_name": "Consumer Price Index",
+      "reference_period": "August 2025",
+      "scheduled_local": "2025-09-11T08:30:00-04:00",
+      "scheduled_utc": "2025-09-11T12:30:00Z",
+      "xnys_session": "2025-09-11",
+      "session_open_utc": "2025-09-11T13:30:00Z",
+      "session_close_utc": "2025-09-11T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-cpi-2025-10-24",
+      "release_name": "Consumer Price Index",
+      "reference_period": "September 2025",
+      "scheduled_local": "2025-10-24T08:30:00-04:00",
+      "scheduled_utc": "2025-10-24T12:30:00Z",
+      "xnys_session": "2025-10-24",
+      "session_open_utc": "2025-10-24T13:30:00Z",
+      "session_close_utc": "2025-10-24T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-empsit-2025-11-20",
+      "release_name": "Employment Situation",
+      "reference_period": "September 2025",
+      "scheduled_local": "2025-11-20T08:30:00-05:00",
+      "scheduled_utc": "2025-11-20T13:30:00Z",
+      "xnys_session": "2025-11-20",
+      "session_open_utc": "2025-11-20T14:30:00Z",
+      "session_close_utc": "2025-11-20T21:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-ppi-2025-11-25",
+      "release_name": "Producer Price Index",
+      "reference_period": "September 2025",
+      "scheduled_local": "2025-11-25T08:30:00-05:00",
+      "scheduled_utc": "2025-11-25T13:30:00Z",
+      "xnys_session": "2025-11-25",
+      "session_open_utc": "2025-11-25T14:30:00Z",
+      "session_close_utc": "2025-11-25T21:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-empsit-2025-12-16",
+      "release_name": "Employment Situation",
+      "reference_period": "November 2025",
+      "scheduled_local": "2025-12-16T08:30:00-05:00",
+      "scheduled_utc": "2025-12-16T13:30:00Z",
+      "xnys_session": "2025-12-16",
+      "session_open_utc": "2025-12-16T14:30:00Z",
+      "session_close_utc": "2025-12-16T21:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-cpi-2025-12-18",
+      "release_name": "Consumer Price Index",
+      "reference_period": "November 2025",
+      "scheduled_local": "2025-12-18T08:30:00-05:00",
+      "scheduled_utc": "2025-12-18T13:30:00Z",
+      "xnys_session": "2025-12-18",
+      "session_open_utc": "2025-12-18T14:30:00Z",
+      "session_close_utc": "2025-12-18T21:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-empsit-2026-01-09",
+      "release_name": "Employment Situation",
+      "reference_period": "December 2025",
+      "scheduled_local": "2026-01-09T08:30:00-05:00",
+      "scheduled_utc": "2026-01-09T13:30:00Z",
+      "xnys_session": "2026-01-09",
+      "session_open_utc": "2026-01-09T14:30:00Z",
+      "session_close_utc": "2026-01-09T21:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-cpi-2026-01-13",
+      "release_name": "Consumer Price Index",
+      "reference_period": "December 2025",
+      "scheduled_local": "2026-01-13T08:30:00-05:00",
+      "scheduled_utc": "2026-01-13T13:30:00Z",
+      "xnys_session": "2026-01-13",
+      "session_open_utc": "2026-01-13T14:30:00Z",
+      "session_close_utc": "2026-01-13T21:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-ppi-2026-01-14",
+      "release_name": "Producer Price Index",
+      "reference_period": "November 2025",
+      "scheduled_local": "2026-01-14T08:30:00-05:00",
+      "scheduled_utc": "2026-01-14T13:30:00Z",
+      "xnys_session": "2026-01-14",
+      "session_open_utc": "2026-01-14T14:30:00Z",
+      "session_close_utc": "2026-01-14T21:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-ppi-2026-01-30",
+      "release_name": "Producer Price Index",
+      "reference_period": "December 2025",
+      "scheduled_local": "2026-01-30T08:30:00-05:00",
+      "scheduled_utc": "2026-01-30T13:30:00Z",
+      "xnys_session": "2026-01-30",
+      "session_open_utc": "2026-01-30T14:30:00Z",
+      "session_close_utc": "2026-01-30T21:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-empsit-2026-02-11",
+      "release_name": "Employment Situation",
+      "reference_period": "January 2026",
+      "scheduled_local": "2026-02-11T08:30:00-05:00",
+      "scheduled_utc": "2026-02-11T13:30:00Z",
+      "xnys_session": "2026-02-11",
+      "session_open_utc": "2026-02-11T14:30:00Z",
+      "session_close_utc": "2026-02-11T21:00:00Z",
+      "disposition": "excluded-source-causality-unproven"
+    },
+    {
+      "event_id": "bls-cpi-2026-02-13",
+      "release_name": "Consumer Price Index",
+      "reference_period": "January 2026",
+      "scheduled_local": "2026-02-13T08:30:00-05:00",
+      "scheduled_utc": "2026-02-13T13:30:00Z",
+      "xnys_session": "2026-02-13",
+      "session_open_utc": "2026-02-13T14:30:00Z",
+      "session_close_utc": "2026-02-13T21:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-ppi-2026-02-27",
+      "release_name": "Producer Price Index",
+      "reference_period": "January 2026",
+      "scheduled_local": "2026-02-27T08:30:00-05:00",
+      "scheduled_utc": "2026-02-27T13:30:00Z",
+      "xnys_session": "2026-02-27",
+      "session_open_utc": "2026-02-27T14:30:00Z",
+      "session_close_utc": "2026-02-27T21:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-empsit-2026-03-06",
+      "release_name": "Employment Situation",
+      "reference_period": "February 2026",
+      "scheduled_local": "2026-03-06T08:30:00-05:00",
+      "scheduled_utc": "2026-03-06T13:30:00Z",
+      "xnys_session": "2026-03-06",
+      "session_open_utc": "2026-03-06T14:30:00Z",
+      "session_close_utc": "2026-03-06T21:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-cpi-2026-03-11",
+      "release_name": "Consumer Price Index",
+      "reference_period": "February 2026",
+      "scheduled_local": "2026-03-11T08:30:00-04:00",
+      "scheduled_utc": "2026-03-11T12:30:00Z",
+      "xnys_session": "2026-03-11",
+      "session_open_utc": "2026-03-11T13:30:00Z",
+      "session_close_utc": "2026-03-11T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-ppi-2026-03-18",
+      "release_name": "Producer Price Index",
+      "reference_period": "February 2026",
+      "scheduled_local": "2026-03-18T08:30:00-04:00",
+      "scheduled_utc": "2026-03-18T12:30:00Z",
+      "xnys_session": "2026-03-18",
+      "session_open_utc": "2026-03-18T13:30:00Z",
+      "session_close_utc": "2026-03-18T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-empsit-2026-04-03",
+      "release_name": "Employment Situation",
+      "reference_period": "March 2026",
+      "scheduled_local": "2026-04-03T08:30:00-04:00",
+      "scheduled_utc": "2026-04-03T12:30:00Z",
+      "xnys_session": null,
+      "session_open_utc": null,
+      "session_close_utc": null,
+      "disposition": "excluded-xnys-closed"
+    },
+    {
+      "event_id": "bls-cpi-2026-04-10",
+      "release_name": "Consumer Price Index",
+      "reference_period": "March 2026",
+      "scheduled_local": "2026-04-10T08:30:00-04:00",
+      "scheduled_utc": "2026-04-10T12:30:00Z",
+      "xnys_session": "2026-04-10",
+      "session_open_utc": "2026-04-10T13:30:00Z",
+      "session_close_utc": "2026-04-10T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-ppi-2026-04-14",
+      "release_name": "Producer Price Index",
+      "reference_period": "March 2026",
+      "scheduled_local": "2026-04-14T08:30:00-04:00",
+      "scheduled_utc": "2026-04-14T12:30:00Z",
+      "xnys_session": "2026-04-14",
+      "session_open_utc": "2026-04-14T13:30:00Z",
+      "session_close_utc": "2026-04-14T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-empsit-2026-05-08",
+      "release_name": "Employment Situation",
+      "reference_period": "April 2026",
+      "scheduled_local": "2026-05-08T08:30:00-04:00",
+      "scheduled_utc": "2026-05-08T12:30:00Z",
+      "xnys_session": "2026-05-08",
+      "session_open_utc": "2026-05-08T13:30:00Z",
+      "session_close_utc": "2026-05-08T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-cpi-2026-05-12",
+      "release_name": "Consumer Price Index",
+      "reference_period": "April 2026",
+      "scheduled_local": "2026-05-12T08:30:00-04:00",
+      "scheduled_utc": "2026-05-12T12:30:00Z",
+      "xnys_session": "2026-05-12",
+      "session_open_utc": "2026-05-12T13:30:00Z",
+      "session_close_utc": "2026-05-12T20:00:00Z",
+      "disposition": "eligible"
+    },
+    {
+      "event_id": "bls-ppi-2026-05-13",
+      "release_name": "Producer Price Index",
+      "reference_period": "April 2026",
+      "scheduled_local": "2026-05-13T08:30:00-04:00",
+      "scheduled_utc": "2026-05-13T12:30:00Z",
+      "xnys_session": "2026-05-13",
+      "session_open_utc": "2026-05-13T13:30:00Z",
+      "session_close_utc": "2026-05-13T20:00:00Z",
+      "disposition": "eligible"
+    }
+  ],
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_results": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "calendar_fingerprint": "9992ee0a430abc0b59f49f6dd9e5178ff22d13a9dec5ad5de1d8578896ed2a78"
+}

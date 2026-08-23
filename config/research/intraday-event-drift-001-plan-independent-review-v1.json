@@ -1,0 +1,95 @@
+{
+  "schema_version": "intraday-event-drift-001-plan-independent-review-v1",
+  "review_id": "intraday-event-drift-001-plan-independent-review-v1",
+  "status": "passed-before-implementation-or-strategy-results",
+  "review_date": "2026-08-23",
+  "review_method": "Independent prospective semantic and control review of the exact source-evidence, event-calendar, and research-plan bytes, including local fingerprint, excerpt-digest, XNYS, chronology, candidate-graph, engine-compatibility, report-contract, executor, and authority checks.",
+  "reviewed_source_evidence": {
+    "path": "config/research/intraday-event-calendar-001-source-evidence-v1.json",
+    "evidence_id": "intraday-event-calendar-001-source-evidence-v1",
+    "sha256": "c5f1ab34c92b10ac9c75d86a3c33c9f2a445eed022a48697edaa7dfd9eabee0a",
+    "evidence_fingerprint": "6616ed631b3d7e8e727b8cde85bf26e4c2cb5800812db745c327a71bf62192fd"
+  },
+  "reviewed_calendar": {
+    "path": "config/research/intraday-event-calendar-001-v1.json",
+    "calendar_id": "intraday-event-calendar-001-v1",
+    "sha256": "fa413a30234c6b82394fcdbf99df94aa31ae38e2df12d58296bcbc03162a34ee",
+    "calendar_fingerprint": "9992ee0a430abc0b59f49f6dd9e5178ff22d13a9dec5ad5de1d8578896ed2a78"
+  },
+  "reviewed_plan": {
+    "path": "config/research/intraday-event-drift-001-plan-v1.json",
+    "program_id": "intraday-event-drift-001",
+    "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+    "plan_fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+  },
+  "verdict": "pass",
+  "findings": [],
+  "answers": [
+    {
+      "control": "source-causality-and-calendar-eligibility",
+      "answer": "pass",
+      "basis": "All 30 evidence and calendar IDs match one-to-one. Twenty-eight eligible archived captures precede the same-date XNYS open. The February 11 row is excluded because its official occurrence header is not independently time-bound before open, and the April 3 row is excluded because XNYS was closed."
+    },
+    {
+      "control": "chronology-and-context-boundaries",
+      "answer": "pass",
+      "basis": "The five eligible-event counts reconcile to 10, 4, 6, 5, and 3. Context reads are explicit, context-only inputs use null evaluation ranges, evaluation ends at 2026-05-29, and June and V3 remain unavailable."
+    },
+    {
+      "control": "strategy-and-engine-semantics",
+      "answer": "pass",
+      "basis": "The plan binds completed reaction bars, prior-session close, joint SPY/QQQ entry and exit timestamps, nth-later bar-open fills, exit at 60+d, and the existing early-close final-bar-open flatten. These rules are compatible with the named engine."
+    },
+    {
+      "control": "candidate-grid-and-neighbors",
+      "answer": "pass",
+      "basis": "The explicit nine-candidate 3 by 3 grid matches its one-based expansion rule. All 12 undirected immediate-neighbor edges are complete, symmetric, and sorted."
+    },
+    {
+      "control": "report-accounting-and-paired-traces",
+      "answer": "pass",
+      "basis": "Event P&L, daily fees, concentrations, aggregates, exact neighbor fractions, and seven-field dataset inputs are deterministic. Normal and zero-cost decision traces must match for parent and neighbor runs."
+    },
+    {
+      "control": "screens-and-cohort-freeze",
+      "answer": "pass",
+      "basis": "Discovery, walk-forward, stress, delay, and neighbor gates are fixed before execution. Scenario-positive folds are defined consistently, stage barriers prevent partial adaptation, and every all-gate survivor freezes simultaneously up to the predeclared cap of two."
+    },
+    {
+      "control": "restart-safe-parallel-execution",
+      "answer": "pass",
+      "basis": "The four-worker spawned executor, one-claim workers, stage barriers, leases, heartbeats, three-attempt cap, retry classification, create-only publication, short SQLite transactions, and terminal failure classes match the existing restart-safe infrastructure."
+    },
+    {
+      "control": "authority-and-launch-boundary",
+      "answer": "pass",
+      "basis": "The artifacts grant no strategy execution, controlled evaluation, holdout, PAPER, broker-write, or live authority. Implementation must merge separately and receive an exact merged-main launch review before the first reservation."
+    }
+  ],
+  "verification": {
+    "source_evidence_sha256_revalidated": true,
+    "source_evidence_fingerprint_revalidated": true,
+    "calendar_sha256_revalidated": true,
+    "calendar_fingerprint_revalidated": true,
+    "plan_sha256_revalidated": true,
+    "plan_fingerprint_revalidated": true,
+    "canonical_excerpt_hashes_revalidated": 30,
+    "source_event_count": 30,
+    "eligible_event_count": 28,
+    "excluded_event_count": 2,
+    "period_count": 5,
+    "candidate_count": 9,
+    "undirected_neighbor_edge_count": 12,
+    "exact_byte_rereview": true
+  },
+  "scope_limit": "The review revalidated the local artifacts, hashes, temporal metadata, XNYS mapping, source-excerpt digests, plan semantics, and repository compatibility. It did not re-fetch Internet Archive or BLS pages and did not open .trading-lab, market bars, runtime databases, reports, metrics, partial strategy results, protected data, PAPER state, or broker state.",
+  "authority": {
+    "strategy_execution": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+}
