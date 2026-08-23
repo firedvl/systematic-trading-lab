@@ -1,6 +1,8 @@
 # Intraday Exposed 005 program
 
-Status: prospective plan and review frozen; implementation not yet launch-authorized.
+Status: terminal negative result; empty final cohort and no controlled evaluation.
+
+Closeout: [Intraday Exposed 005 final report](intraday-exposed-005-final-report.md).
 
 Plan SHA-256: `622d3ad769b12dad857bfe8ee60be4fa1a75b3f3d68becb9b750b323102fd811`.
 Plan fingerprint: `8d30af60d84f1baaa2365096b898960bef759fbafc5215eba68bb81061819ba3`.
@@ -106,9 +108,10 @@ four, a `3.426` speedup. Every specification, fingerprint, fill sequence, round 
 canonical report, report hash, and report fingerprint matched. Source database and dataset inputs
 remained byte-identical.
 
-The binding change alters only the control artifact, fixed binding constants, their tests, and
-listed state documents. Launch requires a clean commit where `HEAD`, local `main`, and
-`origin/main` match. Any mismatch stops before runtime state.
+The binding change altered only the control artifact, fixed binding constants, their tests, and
+listed state documents. Launch required a clean commit where `HEAD`, local `main`, and
+`origin/main` matched. The campaign ran from exact merged main
+`789d0f260a43555e5ef2d62e4e74e626b6c4e933`.
 
 ## Worker-count evaluation
 
@@ -120,25 +123,18 @@ separate reviewed infrastructure decision.
 
 ## Commands
 
-Plan and health status remain available without runtime authority:
+Plan and terminal status remain available without runtime authority:
 
 ```console
 uv run trading-lab research intraday-exposed-005 plan
 uv run trading-lab research intraday-exposed-005 status
 ```
 
-After every launch gate passes on clean merged main, use exactly:
-
-```console
-uv run trading-lab research intraday-exposed-005 run --workers 4
-uv run trading-lab research intraday-exposed-005 status
-```
-
-Status inspection is limited to health and progress metadata. Do not inspect partial strategy
-merits to change the campaign.
+The campaign is terminal and its runtime is immutable. Do not launch, reset, retry, or delete it.
 
 ## Boundaries
 
-June remains ineligible and unread. No substitute controlled range exists. The program has no
-qualification, protected-holdout, PAPER, broker-write, live, V3, or `strategic-allocation-21`
-authority.
+June remains ineligible and unread. No substitute controlled range exists. All 272 required runs
+completed across 284 attempts, the final cohort froze empty, and no controlled evaluation occurred.
+The program has no qualification, protected-holdout, PAPER, broker-write, live, V3, or
+`strategic-allocation-21` authority.
