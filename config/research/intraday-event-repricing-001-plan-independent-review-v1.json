@@ -1,0 +1,95 @@
+{
+  "schema_version": "intraday-event-repricing-001-plan-independent-review-v1",
+  "review_id": "intraday-event-repricing-001-plan-independent-review-v1",
+  "status": "passed-before-strategy-implementation-or-results",
+  "review_date": "2026-08-23",
+  "review_method": "Independent prospective exact-byte rereview of the corrected plan, its inherited Event Drift controls, gate mathematics, paired-arm evidence, candidate graph, search budget, executor compatibility, and false-authority boundaries.",
+  "reviewed_plan": {
+    "program_id": "intraday-event-repricing-001",
+    "path": "config/research/intraday-event-repricing-001-plan-v1.json",
+    "sha256": "f24cae1372f346be02c0079b931c77d5efb5105a06cf26631b783010851bd8b8",
+    "plan_fingerprint": "2f98e0cc4565435c9974f65791fd830f7fb9509730f31872f97d77484c00c489"
+  },
+  "reviewed_inheritance": {
+    "base_plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "plan_fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "base_plan_review": {
+      "path": "config/research/intraday-event-drift-001-plan-independent-review-v1.json",
+      "sha256": "25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96",
+      "review_fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+    }
+  },
+  "verdict": "pass",
+  "findings": [],
+  "answers": [
+    {
+      "control": "exact-inheritance",
+      "answer": "pass",
+      "basis": "The complete controlled-evaluation and protected-boundary sections equal the base plan, including both cohort actions. Chronology, data, execution, and frozen dependencies remain exact reference-only inheritance."
+    },
+    {
+      "control": "gate-mathematics",
+      "answer": "pass",
+      "basis": "The plan fixes each required numerator, denominator, aggregation order, positivity predicate, concentration, fold, retention, exact neighbor fraction, even-count median, and undefined-metric action."
+    },
+    {
+      "control": "paired-arm-validity",
+      "answer": "pass",
+      "basis": "Before event classification, the leader and laggard-control arms must use opposite symbols, complete one round trip each, match entry and exit decision and fill timestamps, and preserve exactly 24 fill-to-fill bars. Any mismatch is terminal."
+    },
+    {
+      "control": "distinct-causal-strategy",
+      "answer": "pass",
+      "basis": "The signed completed-bar QQQ-minus-SPY design is distinct from Event Drift, remains long-only and unlevered, permits one event-session entry with no reentry, and fits every frozen delay and early-close boundary."
+    },
+    {
+      "control": "candidate-graph-and-budget",
+      "answer": "pass",
+      "basis": "The nine Cartesian candidates form 12 symmetric undirected immediate-neighbor edges. The fixed stage ceilings sum to 244 run specifications and 732 maximum infrastructure attempts."
+    },
+    {
+      "control": "restart-safe-parallel-execution",
+      "answer": "pass",
+      "basis": "The four-worker spawned executor, stage barriers, one-claim workers, 300-second leases, 60-second heartbeats, create-only reports, three-attempt ceiling, and expired-no-result-only retry rule match existing controls."
+    },
+    {
+      "control": "authority-and-launch-boundary",
+      "answer": "pass",
+      "basis": "June, V3, daily 2018-2019, PAPER and broker state, strategic-allocation-21, live execution, and partial-result adaptation remain unavailable. Implementation must merge separately and pass a finding-free exact-main launch review before the first reservation."
+    }
+  ],
+  "verification": {
+    "plan_sha256_revalidated": true,
+    "plan_fingerprint_revalidated": true,
+    "duplicate_json_key_count": 0,
+    "base_plan_sha256_and_fingerprint_revalidated": true,
+    "base_review_sha256_and_fingerprint_revalidated": true,
+    "inherited_dependency_artifact_count_revalidated": 6,
+    "source_event_count": 30,
+    "eligible_event_count": 28,
+    "excluded_event_count": 2,
+    "period_count": 5,
+    "candidate_count": 9,
+    "undirected_neighbor_edge_count": 12,
+    "discovery_gate_count": 17,
+    "walk_forward_gate_count": 19,
+    "stress_scenario_count": 4,
+    "neighbor_gate_count": 3,
+    "maximum_run_specifications": 244,
+    "maximum_infrastructure_attempts": 732,
+    "exact_byte_rereview": true
+  },
+  "scope_limit": "Read-only repository review only. The review did not access .trading-lab, market bars or results, V3, daily 2018-2019, PAPER, broker, or live state; run a strategy, replay, or worker; or use the network. Synthetic one-worker and four-worker equivalence remains a launch-control obligation after implementation.",
+  "authority": {
+    "strategy_execution": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "2351e230df1f6618247bbd91bed19ac6444baf09b8573ced2af9c6f937513ab5"
+}
