@@ -1,0 +1,217 @@
+{
+  "schema_version": "intraday-event-drift-001-launch-control-review-v1",
+  "review_id": "intraday-event-drift-001-launch-control-review-v1",
+  "status": "passed",
+  "verdict": "pass",
+  "review_date": "2026-08-23",
+  "review_method": "Independent exact implementation, gate, synthetic equivalence, and authority review.",
+  "reviewed_inputs": {
+    "plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "calendar": {
+      "path": "config/research/intraday-event-calendar-001-v1.json",
+      "sha256": "fa413a30234c6b82394fcdbf99df94aa31ae38e2df12d58296bcbc03162a34ee",
+      "fingerprint": "9992ee0a430abc0b59f49f6dd9e5178ff22d13a9dec5ad5de1d8578896ed2a78"
+    },
+    "source_evidence": {
+      "path": "config/research/intraday-event-calendar-001-source-evidence-v1.json",
+      "sha256": "c5f1ab34c92b10ac9c75d86a3c33c9f2a445eed022a48697edaa7dfd9eabee0a",
+      "fingerprint": "6616ed631b3d7e8e727b8cde85bf26e4c2cb5800812db745c327a71bf62192fd"
+    },
+    "plan_review": {
+      "path": "config/research/intraday-event-drift-001-plan-independent-review-v1.json",
+      "sha256": "25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96",
+      "fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+    }
+  },
+  "implementation": {
+    "source_commit": "735b990c6c857d06f8db900f367f10a0c10e5dbf",
+    "files": [
+      {
+        "path": "src/systematic_trading_lab/research_attempts.py",
+        "sha256": "608d710c8fa1d7a7830bf7f82a404a5a0588a6055381d6dcc4676d2c256f5512"
+      },
+      {
+        "path": "src/systematic_trading_lab/research_executor.py",
+        "sha256": "099f9ac9572aaaa640d51cb0dde50e2cba378a6ef0b2ddf9b07a63d0ed9b1b81"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_exposed_002_engine.py",
+        "sha256": "bf62f6661b0beb2ac57b83668412b90a17255fd176fa559966ec0f5a64032c66"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_drift_001_plan.py",
+        "sha256": "28b5d1979361a9bbd518e2482ecfaef7a1f2e4cb0dea16a7e5f901b578a03f36"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_drift_001_strategies.py",
+        "sha256": "c1a34449d1f237108870b8f69c4f5aba3732ddad4c69c173633bdf4cec959301"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_drift_001_runner.py",
+        "sha256": "5b7231347f08276db1589deb9bb599312590326cbf6bd6d4c3bc88e13f5ebd38"
+      },
+      {
+        "path": "src/systematic_trading_lab/public_cli.py",
+        "sha256": "6b96a9605291335724415c9e5a812d42e51b53571cd9b1e85679629842e47fca"
+      }
+    ]
+  },
+  "quality_gates": {
+    "source_commit": "735b990c6c857d06f8db900f367f10a0c10e5dbf",
+    "results": [
+      {
+        "command": "uv run ruff format --check .",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "171 files already formatted"
+      },
+      {
+        "command": "uv run ruff check .",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "All checks passed"
+      },
+      {
+        "command": "uv run mypy src tests",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Success: no issues found in 166 source files"
+      },
+      {
+        "command": "uv run pytest",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "843 passed, 4 skipped"
+      },
+      {
+        "command": "uv run python scripts/check_secrets.py",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Secret check passed for 312 files"
+      },
+      {
+        "command": "bash -n scripts/*.sh",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "All shell scripts passed syntax validation"
+      },
+      {
+        "command": "uv build",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Source distribution and wheel built"
+      }
+    ]
+  },
+  "equivalence": {
+    "schema_version": "intraday-event-drift-001-parallel-equivalence-v1",
+    "program_id": "intraday-event-drift-001",
+    "verification_source_commit": "735b990c6c857d06f8db900f367f10a0c10e5dbf",
+    "fixture_kind": "synthetic-non-protected-five-minute-bars",
+    "protected_inputs_accessed": false,
+    "worker_counts": [
+      1,
+      4
+    ],
+    "comparisons": [
+      "run-specification",
+      "run-fingerprint",
+      "decision-trace-fingerprint",
+      "fill-trace-fingerprint",
+      "round-trip-fingerprint",
+      "metrics",
+      "event-ledger",
+      "canonical-report-bytes",
+      "canonical-report-sha256",
+      "report-fingerprint"
+    ],
+    "fixture_count": 4,
+    "sequential_seconds": "0.797170",
+    "parallel_seconds": "0.723821",
+    "speedup": "1.101336",
+    "fixtures": [
+      {
+        "run_id": "ied001r-3f93a628b9125f3e24ea8270",
+        "candidate_id": "ied001-a01-b01",
+        "scenario_id": "normal",
+        "run_fingerprint": "3f93a628b9125f3e24ea8270e2325969bc4fe49da7625846d278aee913ee3904",
+        "decision_trace_fingerprint": "f2138b6670b3e4e3d69fb99ad7327da2f21e1ec30769800c3947ae4091f64fff",
+        "fill_trace_fingerprint": "359b9792c357d3352784d9d30c2101f19ed7b19b9793101a6acde418bddebd54",
+        "round_trip_fingerprint": "0178cde92e83fdaedc24059c14edd07860de080ad8b685920d857b3367385f3e",
+        "report_sha256": "73f19186328094b73a9575ca149605ec9dcaf80ddec78578f5794788cd7874d6",
+        "report_fingerprint": "71d47cb3f21d1f47b7346ea01c9311d77c041655383146d6fca740b95d7e2353",
+        "specification_equal": true,
+        "metrics_equal": true,
+        "event_ledger_equal": true,
+        "canonical_report_equal": true
+      },
+      {
+        "run_id": "ied001r-67f3767e35ccf49d470e8d8f",
+        "candidate_id": "ied001-a02-b02",
+        "scenario_id": "zero_cost_diagnostic",
+        "run_fingerprint": "67f3767e35ccf49d470e8d8fdc2bb3c31ed61b5764da09e67eee6a2c2585c53b",
+        "decision_trace_fingerprint": "b5034a9d4520688ef9068b95079afbd79decf071a447eded8d794aa32f825370",
+        "fill_trace_fingerprint": "60fdca27472f51b4cc341c5defc228968129cfe108421fd88051388ccd166a45",
+        "round_trip_fingerprint": "6268df96389c61f8010e779c4417f93d11918a3e443c5368ca9ed3851ed764a4",
+        "report_sha256": "d020a790f59e50fd08d1e39268dc58123bf49cbe3d30b9644622b8127b29d400",
+        "report_fingerprint": "9863f1d9edea544934a04fae229d347583be368c2b5eaa9e6205cb2d1c4feea6",
+        "specification_equal": true,
+        "metrics_equal": true,
+        "event_ledger_equal": true,
+        "canonical_report_equal": true
+      },
+      {
+        "run_id": "ied001r-003b94f1a2a61c2a61859993",
+        "candidate_id": "ied001-a03-b03",
+        "scenario_id": "stress_a",
+        "run_fingerprint": "003b94f1a2a61c2a61859993717a743ef10e6f0b6a44ac2ff36e8e42b215f8e2",
+        "decision_trace_fingerprint": "b865a458e9ab562a5543514b987877079377985b446d7ea56626608723909abe",
+        "fill_trace_fingerprint": "15307720695980f5e0d350d01f073c3629992f30bf569dc89ff04dd81dcf2279",
+        "round_trip_fingerprint": "cb24856656b2a8df5e149a04d024afd405e913153231c9fa480b3a4a323bb3f4",
+        "report_sha256": "86bb0cfcb7c5bd3518d7d87a024ad78ff73c231d45c39315d5a8de52fcda2367",
+        "report_fingerprint": "94ee396701128c1fa47cfc856063edaef0905d000c3cdaa27a69c5d2f59f54c8",
+        "specification_equal": true,
+        "metrics_equal": true,
+        "event_ledger_equal": true,
+        "canonical_report_equal": true
+      },
+      {
+        "run_id": "ied001r-52b16ea0e25a2d720514f2b8",
+        "candidate_id": "ied001-a01-b03",
+        "scenario_id": "normal-delay-3",
+        "run_fingerprint": "52b16ea0e25a2d720514f2b84b7c586b560c6f731392307ac4d1e5a96018dcbd",
+        "decision_trace_fingerprint": "51649d405bc63970a944b480eb66d1894bd0f721705e1f36c5d7e02a7df081c4",
+        "fill_trace_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "round_trip_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "report_sha256": "45077e056cb88f80f634c1f7a86ed1961e6fb86434e9a8426b9b96aef1e1ffae",
+        "report_fingerprint": "d5ceedf6912afc8a6dada2466e5ae911922d9a3e6a443df47ca34724370ad6a6",
+        "specification_equal": true,
+        "metrics_equal": true,
+        "event_ledger_equal": true,
+        "canonical_report_equal": true
+      }
+    ],
+    "equivalent": true
+  },
+  "independent_review": {
+    "source_commit": "735b990c6c857d06f8db900f367f10a0c10e5dbf",
+    "status": "passed",
+    "verdict": "pass",
+    "findings": [],
+    "reviewer": "codex-independent-launch-control-reviewer-v1"
+  },
+  "scope_limit": "Synthetic non-protected fixtures and source controls only; no market, protected, PAPER, broker, SA21, or live state accessed.",
+  "authority": {
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "fe807901b40109c192a93c73e9affa694ef861fb48f5aca8ac2b0570997ae845"
+}

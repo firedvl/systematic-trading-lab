@@ -15,6 +15,10 @@ import systematic_trading_lab.intraday_event_drift_001_runner as runner_module
 from systematic_trading_lab.calendar import expected_bar_timestamps
 from systematic_trading_lab.domain import OHLCVBar, Symbol, Timeframe
 from systematic_trading_lab.fingerprints import fingerprint
+from systematic_trading_lab.intraday_event_drift_001_launch_control import (
+    REVIEWED_LAUNCH_CONTROL_FINGERPRINT,
+    REVIEWED_LAUNCH_CONTROL_SHA256,
+)
 from systematic_trading_lab.intraday_event_drift_001_plan import (
     CALENDAR_FINGERPRINT,
     CALENDAR_RELATIVE_PATH,
@@ -44,7 +48,6 @@ from systematic_trading_lab.intraday_event_drift_001_runner import (
     _run_report,
     intraday_event_drift_001_plan_summary,
     intraday_event_drift_001_status,
-    run_intraday_event_drift_001_campaign,
 )
 from systematic_trading_lab.intraday_event_drift_001_strategies import (
     ScheduledBroadIndexPositiveDriftStrategy,
@@ -198,7 +201,7 @@ def _write_launch_review(
     )
 
 
-def test_plan_status_and_cli_are_read_only_while_launch_control_is_unbound(
+def test_plan_status_and_cli_are_read_only_after_launch_control_is_bound(
     tmp_path: Path,
 ) -> None:
     plan = intraday_event_drift_001_plan_summary(_REPOSITORY)
@@ -209,16 +212,24 @@ def test_plan_status_and_cli_are_read_only_while_launch_control_is_unbound(
     assert plan["discovery_run_count"] == 18
     assert plan["eligible_event_count"] == 28
     assert plan["default_workers"] == 4
-    assert plan["status"] == "implementation-launch-review-pending"
-    assert plan["launch_control_bound"] is False
+    assert plan["status"] == "launch-control-bound"
+    assert plan["launch_control_bound"] is True
     assert status["database_exists"] is False
     assert arguments.workers == 6
     assert not any(cast(Mapping[str, bool], status["authority"]).values())
     assert not (tmp_path / PROGRAM_ID).exists()
-
-    with pytest.raises(ValueError, match="launch control review is not hash-bound"):
-        run_intraday_event_drift_001_campaign(_REPOSITORY, tmp_path)
-    assert not (tmp_path / PROGRAM_ID).exists()
+    assert REVIEWED_LAUNCH_CONTROL_SHA256 == (
+        "d436c4eb29aa2148faa98c5b0143dfaf5df0296d9be23671d98d2cee4b3e4f80"
+    )
+    assert (
+        REVIEWED_LAUNCH_CONTROL_FINGERPRINT
+        == "fe807901b40109c192a93c73e9affa694ef861fb48f5aca8ac2b0570997ae845"
+    )
+    loaded = runner_module._load_launch_control(
+        _REPOSITORY,
+        source_commit="735b990c6c857d06f8db900f367f10a0c10e5dbf",
+    )
+    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
 
 
 def test_launch_control_requires_exact_finding_free_review(

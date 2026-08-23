@@ -1,7 +1,7 @@
 # Intraday Event Drift 001 program
 
-Status: prospectively frozen, independently reviewed, and implemented; launch control and execution
-have not started.
+Status: prospectively frozen, independently reviewed, implemented, and launch-controlled;
+execution has not started.
 
 Source-evidence SHA-256: `c5f1ab34c92b10ac9c75d86a3c33c9f2a445eed022a48697edaa7dfd9eabee0a`.
 Source-evidence fingerprint: `6616ed631b3d7e8e727b8cde85bf26e4c2cb5800812db745c327a71bf62192fd`.
@@ -11,6 +11,8 @@ Plan SHA-256: `c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c`
 Plan fingerprint: `73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838`.
 Review SHA-256: `25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96`.
 Review fingerprint: `0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077`.
+Launch-control SHA-256: `d436c4eb29aa2148faa98c5b0143dfaf5df0296d9be23671d98d2cee4b3e4f80`.
+Launch-control fingerprint: `fe807901b40109c192a93c73e9affa694ef861fb48f5aca8ac2b0570997ae845`.
 
 ## Why this program exists
 
@@ -95,10 +97,15 @@ Only an expired no-result infrastructure lease may retry. Candidate, data, calen
 and exhausted-attempt failures are terminal.
 
 The implementation adds strict loaders, the event strategy, report attribution, runner, CLI,
-recovery tests, and one-worker versus four-worker deterministic equivalence. Its launch-control
-hashes remain intentionally unbound. It has created no reservation, runtime database, market-data
-read, report, or strategy result. Launch requires a second review bound to the exact merged
-implementation main before the first reservation.
+recovery tests, and one-worker versus four-worker deterministic equivalence. The launch-control
+artifact binds exact implementation main `735b990c6c857d06f8db900f367f10a0c10e5dbf`, seven passing
+quality gates, exact implementation-file hashes, four synthetic non-protected fixtures, and a
+finding-free independent review. The fixture comparison matched every specification, identity,
+decision trace, fill trace, round trip, metric, event ledger, canonical report byte, report hash,
+and report fingerprint. Its one-worker and four-worker times were `0.797170` and `0.723821`
+seconds; these small synthetic timings prove equivalence, not campaign throughput. It has created no
+reservation, runtime database, market-data read, report, or strategy result. Launch requires the
+binding change to merge and clean local `HEAD`, `main`, and `origin/main` to match.
 
 ## Boundaries
 
