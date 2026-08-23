@@ -1,7 +1,6 @@
 # Intraday Event Drift 001 program
 
-Status: prospectively frozen, independently reviewed, implemented, and launch-controlled;
-execution has not started.
+Status: complete negative exposed result; no candidate advanced past discovery.
 
 Source-evidence SHA-256: `c5f1ab34c92b10ac9c75d86a3c33c9f2a445eed022a48697edaa7dfd9eabee0a`.
 Source-evidence fingerprint: `6616ed631b3d7e8e727b8cde85bf26e4c2cb5800812db745c327a71bf62192fd`.
@@ -13,6 +12,9 @@ Review SHA-256: `25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df9
 Review fingerprint: `0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077`.
 Launch-control SHA-256: `d436c4eb29aa2148faa98c5b0143dfaf5df0296d9be23671d98d2cee4b3e4f80`.
 Launch-control fingerprint: `fe807901b40109c192a93c73e9affa694ef861fb48f5aca8ac2b0570997ae845`.
+Runtime database SHA-256: `1b3e3f8a6449845e01789efa98859e60f88349fd09951c202236e6b0926cb193`.
+Final-report JSON SHA-256: `a1fc8c7569d78857cd08ccfbefbeea37a15e9caba555660168553dd0eda87124`.
+Final-freeze SHA-256: `4858a1fc6f18a787a4dfb6eb58b7a6c7ede370ec776ad16c15bb3a8a2d01b931`.
 
 ## Why this program exists
 
@@ -104,8 +106,11 @@ finding-free independent review. The fixture comparison matched every specificat
 decision trace, fill trace, round trip, metric, event ledger, canonical report byte, report hash,
 and report fingerprint. Its one-worker and four-worker times were `0.797170` and `0.723821`
 seconds; these small synthetic timings prove equivalence, not campaign throughput. It has created no
-reservation, runtime database, market-data read, report, or strategy result. Launch requires the
-binding change to merge and clean local `HEAD`, `main`, and `origin/main` to match.
+reservation or market-data read before its binding merged. The exact four-worker command then ran
+from source commit `6cce913be06c270477da1ad0eede665cf039593b`. All 18 discovery runs completed
+once with no failure or retry. No parent passed every discovery gate, so later stages contained no
+work and the cohort froze empty. The formal closeout is
+`docs/research-campaigns/intraday-event-drift-001-final-report.md`.
 
 ## Boundaries
 
