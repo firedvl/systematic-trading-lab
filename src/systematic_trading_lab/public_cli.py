@@ -15,6 +15,11 @@ from . import __version__
 from .config import ConfigurationError, Settings, load_dotenv, load_settings
 from .domain import TradingMode
 from .fingerprints import canonicalize
+from .intraday_event_drift_001_runner import (
+    intraday_event_drift_001_plan_summary,
+    intraday_event_drift_001_status,
+    run_intraday_event_drift_001_campaign,
+)
 from .intraday_exposed_002_runner import (
     intraday_exposed_002_plan_summary,
     intraday_exposed_002_status,
@@ -146,6 +151,19 @@ def research_parser() -> argparse.ArgumentParser:
         "action", nargs="?", choices=("plan", "run", "status"), default="status"
     )
     intraday_exposed_005.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="bounded worker processes used within each research stage",
+    )
+    intraday_event_drift_001 = commands.add_parser(
+        "intraday-event-drift-001",
+        help="plan, run, or inspect the frozen Intraday Event Drift 001 campaign",
+    )
+    intraday_event_drift_001.add_argument(
+        "action", nargs="?", choices=("plan", "run", "status"), default="status"
+    )
+    intraday_event_drift_001.add_argument(
         "--workers",
         type=int,
         default=4,
@@ -346,6 +364,22 @@ def _run_research(arguments: argparse.Namespace, settings: Settings) -> int:
         else:
             _print(
                 run_intraday_exposed_005_campaign(
+                    repository,
+                    settings.home,
+                    workers=arguments.workers,
+                    progress=lambda message: print(message, file=sys.stderr),
+                )
+            )
+        return 0
+    if arguments.research_command == "intraday-event-drift-001":
+        repository = Path(__file__).resolve().parents[2]
+        if arguments.action == "plan":
+            _print(intraday_event_drift_001_plan_summary(repository))
+        elif arguments.action == "status":
+            _print(intraday_event_drift_001_status(settings.home))
+        else:
+            _print(
+                run_intraday_event_drift_001_campaign(
                     repository,
                     settings.home,
                     workers=arguments.workers,

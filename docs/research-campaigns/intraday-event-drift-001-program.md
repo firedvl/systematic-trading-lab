@@ -1,7 +1,7 @@
 # Intraday Event Drift 001 program
 
-Status: prospectively frozen and independently reviewed; implementation and execution have not
-started.
+Status: prospectively frozen, independently reviewed, and implemented; launch control and execution
+have not started.
 
 Source-evidence SHA-256: `c5f1ab34c92b10ac9c75d86a3c33c9f2a445eed022a48697edaa7dfd9eabee0a`.
 Source-evidence fingerprint: `6616ed631b3d7e8e727b8cde85bf26e4c2cb5800812db745c327a71bf62192fd`.
@@ -88,16 +88,17 @@ predeclared maximum of two. No result ranking may discard an all-gate survivor.
 
 ## Execution and recovery boundary
 
-The future runner must reuse the existing bounded `spawn` executor with four workers. One worker
+The runner reuses the existing bounded `spawn` executor with four workers. One worker
 owns one claimed run. The plan keeps 300-second leases, 60-second heartbeats, three maximum
 infrastructure attempts, create-only publication, stage barriers, and short SQLite transactions.
 Only an expired no-result infrastructure lease may retry. Candidate, data, calendar, publication,
 and exhausted-attempt failures are terminal.
 
-This planning change creates no reservation, runtime database, report, or strategy result. A
-separate branch must implement strict loaders, the event strategy, report attribution, runner, CLI,
-recovery tests, and one-worker versus four-worker deterministic equivalence. Launch then requires a
-second review bound to the exact merged implementation main before the first reservation.
+The implementation adds strict loaders, the event strategy, report attribution, runner, CLI,
+recovery tests, and one-worker versus four-worker deterministic equivalence. Its launch-control
+hashes remain intentionally unbound. It has created no reservation, runtime database, market-data
+read, report, or strategy result. Launch requires a second review bound to the exact merged
+implementation main before the first reservation.
 
 ## Boundaries
 

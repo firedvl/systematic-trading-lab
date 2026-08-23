@@ -638,7 +638,7 @@ def test_launch_control_accepts_only_hash_bound_complete_review(
     assert loaded["implementation"] == value["implementation"]
 
 
-def test_repository_launch_control_is_hash_bound_after_review() -> None:
+def test_repository_launch_control_blocks_post_review_source_changes() -> None:
     assert (_REPOSITORY / runner_module.LAUNCH_CONTROL_RELATIVE_PATH).is_file()
     assert (
         REVIEWED_LAUNCH_CONTROL_SHA256
@@ -648,11 +648,11 @@ def test_repository_launch_control_is_hash_bound_after_review() -> None:
         REVIEWED_LAUNCH_CONTROL_FINGERPRINT
         == "f05a789b5e4bcc71d21485d8c95237ac29fc864013521cd7a4b1e8383fbded1d"
     )
-    loaded = _load_launch_control(
-        _REPOSITORY,
-        source_commit="1d6744432ed2635ce6ae19268b64b1c89fc0017d",
-    )
-    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
+    with pytest.raises(ValueError, match="launch implementation file differs"):
+        _load_launch_control(
+            _REPOSITORY,
+            source_commit="1d6744432ed2635ce6ae19268b64b1c89fc0017d",
+        )
 
 
 def test_launch_control_rejects_minimal_fake_pass(
