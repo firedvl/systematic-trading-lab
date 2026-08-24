@@ -1,0 +1,155 @@
+{
+  "schema_version": "intraday-fed-policy-absorption-001-plan-calendar-independent-review-v1",
+  "review_id": "intraday-fed-policy-absorption-001-plan-calendar-independent-review-v1",
+  "reviewer": {
+    "reviewer_id": "/root/campaign3_plan_calendar_review",
+    "role": "independent-read-only-control-correctness-reviewer",
+    "reviewed_at": "2026-08-24T20:53:02Z"
+  },
+  "scope": {
+    "reviewed": "Campaign 3 prospective plan, V2 clean-room attestation and its eight allowed inputs, preserved V1 and V2 failures, and directly bound non-result dependencies.",
+    "excluded": [
+      ".trading-lab",
+      "market bars or results",
+      "June 2026",
+      "Intraday V3 A/B/C",
+      "daily 2018-2019",
+      "protected results",
+      "PAPER, broker, or live state",
+      "credentials",
+      "strategic-allocation-21"
+    ]
+  },
+  "reviewed_inputs": {
+    "plan": {
+      "path": "config/research/intraday-fed-policy-absorption-001-plan-v1.json",
+      "sha256": "a3cd20e325f2e9eb6bc794df7a93db3763dab8e55d2fc1e02816a8480907c111",
+      "fingerprint": "99d03036512b3a8b03f38774e05779982379b1e956906a2ee36f612b52f20140"
+    },
+    "attestation": {
+      "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-pre-design-attestation-v2.json",
+      "sha256": "f95c19237ec9e4f6d854fe6f4fe5aa31ba289f962e1d302ef679f73667256b47",
+      "fingerprint": "174dae849dd5d20c0e2775d798b855d54e07030a140872a029b748741ea2467e"
+    },
+    "autonomous_program": {
+      "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+      "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9",
+      "fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f"
+    },
+    "autonomous_program_review": {
+      "path": "config/research/intraday-autonomous-research-001-program-independent-review-v1.json",
+      "sha256": "1731794543d13306f34462016d376966d47ae8354fa337144889c7bea5c738db",
+      "fingerprint": "50424b9e5c07a95351af93e560859293768e34959d01f816f0f63042302497c0"
+    },
+    "source_state": {
+      "path": "docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-005.json",
+      "sha256": "cd68f08b0b95839d41672a5df024e8867759911830f28d0a3d255c61c2643883",
+      "fingerprint": "c6eaa1acc6af58af2d0f4a937c89ad95690ee8743ec998526b5f16ebdf7ea9af"
+    },
+    "calendar": {
+      "path": "config/research/intraday-fed-policy-absorption-001-calendar-v1.json",
+      "sha256": "8bcfd05031b44e2c31861c43aa2b8130d609c82fca9aeec10804809c37a01c97",
+      "fingerprint": "54c937bbb42703213efdf14dc4becb50bc0f757bb6f16388254550e12f0c93ba"
+    },
+    "source_evidence": {
+      "path": "config/research/intraday-fed-policy-absorption-001-source-evidence-v1.json",
+      "sha256": "1d72b74a04eadba87eb178fd7d67dc644c18d31b926f78e7a48f6f9c38f012c8",
+      "fingerprint": "ed4dc2c9f638a4ef04da7d292732ee653d0040a5c844a54f90efc588d3005a7b"
+    },
+    "execution_cost_model": {
+      "path": "config/research/intraday-execution-cost-model-001-v1.json",
+      "sha256": "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af",
+      "fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4"
+    },
+    "execution_cost_review": {
+      "path": "config/research/intraday-execution-cost-model-001-independent-review-v1.json",
+      "sha256": "fb197856b9229349e5de4bca742f328a8f1e5e53f9558dfd7324744e91a795aa",
+      "fingerprint": "8ade5190bb64330af037f88bf0911ed3cdb04578ca7a6d6e27a5fa6d651349b2"
+    },
+    "preplan_failure_v1": {
+      "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-preplan-control-failure-v1.json",
+      "sha256": "364aa03c8b68beecb205ffe37f97fa0e68c1980dc4670ae010bdd65ac488ed4e",
+      "fingerprint": "e2a8919220b5ef409e9a2eb6ddfe33a65809ebf62e953c0c7554e42b800ba56e"
+    },
+    "preplan_failure_v2": {
+      "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-preplan-control-failure-v2.json",
+      "sha256": "9c3840f1992facb24b5acbbd406e33a9c984a75e47621da88bc7f5dfbab90a76",
+      "fingerprint": "80ab56bf4b4158f92aef4b099c1f51c68f29f4f7fcf4b62f1cc3f84090bad640"
+    }
+  },
+  "answers": [
+    {
+      "control": "input-integrity",
+      "answer": "pass",
+      "basis": "Every reviewed JSON file parsed without duplicate keys; canonical preimage fingerprints and raw SHA-256 bindings match."
+    },
+    {
+      "control": "clean-design-provenance",
+      "answer": "pass",
+      "basis": "The plan binds V2, all eight V2 allowed inputs, revision 5, and starting main 0d53fa654f72ebeb262a28713dec6254e87e169a. Those exact allowed-input bytes exist at that commit."
+    },
+    {
+      "control": "calendar",
+      "answer": "pass",
+      "basis": "Fifteen unique full XNYS sessions contain eight minutes and seven statements in period counts 6/3/2/3/1. Every row is 14:00 New York with indices 53/54/77. Calendar and source-evidence event IDs, classes, and UTC timestamps form an exact bijection. Selection remains indivisible and non-result-based."
+    },
+    {
+      "control": "strategy-and-timing",
+      "answer": "pass",
+      "basis": "Parent order is 2/4/6 horizons by 8/16/24 Decimal floors. Completed-bar reaction, equality activation, decision timing, 1/2/3-bar entry delays, index-74 exit decision, and 75/76/77 exit fills agree."
+    },
+    {
+      "control": "execution-and-accounting",
+      "answer": "pass",
+      "basis": "Stored provider-adjusted opens are explicit; all six scenario mappings match the frozen model; fee aggregation and upward-cent rounding agree; joint 0.5/0.5 legs are atomic; flat-at-close and exact Decimal-50 reconciliation are required."
+    },
+    {
+      "control": "trace-separation",
+      "answer": "pass",
+      "basis": "Cross-scenario traces exclude scenario, cost, delay, fill index, fills, later prices, exit, P&L, and their own hash. Execution traces are scenario-specific and exclude their own hash. Equality applies only to cross-scenario traces."
+    },
+    {
+      "control": "screens-and-selection",
+      "answer": "pass",
+      "basis": "Discovery, walk-forward, combined, stress/delay, and four-neighbor gates are frozen; undefined metrics fail; selection uses immutable parent order rather than result ranking."
+    },
+    {
+      "control": "neighbor-and-budget",
+      "answer": "pass",
+      "basis": "Each selected parent has four in-domain immediate neighbors in the 1..7 by 4..28 lattice. Run arithmetic is 18 + 24 + 16 + 32 = 90; maximum attempts is 270."
+    },
+    {
+      "control": "failure-runtime-and-authority",
+      "answer": "pass",
+      "basis": "Retry is limited to identical expired-no-result work within three attempts. Deterministic failures cannot be relabeled infrastructure. Protected inputs and execution, market-data, qualification, PAPER, broker-write, and live authority remain false."
+    }
+  ],
+  "findings": [],
+  "verification": {
+    "structural_checks_passed": 29,
+    "calendar_events": 15,
+    "unique_event_ids": 15,
+    "unique_sessions": 15,
+    "calendar_source_evidence_rows": 15,
+    "parents": 9,
+    "scenarios": 6,
+    "neighbors_per_parent": 4,
+    "run_specifications": 90,
+    "maximum_attempts": 270,
+    "checks_performed": [
+      "strict duplicate-key JSON parsing",
+      "raw SHA-256 and canonical fingerprint recomputation",
+      "starting-main exact-byte verification",
+      "calendar and source-evidence bijection and count checks",
+      "grid, timing, scenario, trace, authority, and budget consistency checks"
+    ]
+  },
+  "assumptions_and_uncertainty": [
+    "This verifies source-bound artifacts and internal contracts, not a future implementation.",
+    "Clean-room provenance is verified from the V2 packet, exact source-commit bindings, and stated controls; subjective planner history cannot be independently reconstructed beyond those records."
+  ],
+  "verdict": "pass",
+  "status": "finding-free-before-implementation-reservation-market-data-read-or-results",
+  "fingerprint_contract": "Remove the top-level review_fingerprint field, canonicalize with systematic_trading_lab.fingerprints.canonical_json, and take SHA-256 of those UTF-8 bytes.",
+  "review_fingerprint": "831e85f7e7228652f06d4b5bbe1b3822333d0e53e1ce2d97852ede1a24a262aa"
+}
