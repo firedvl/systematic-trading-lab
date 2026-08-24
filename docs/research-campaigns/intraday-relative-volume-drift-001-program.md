@@ -1,8 +1,9 @@
 # Intraday Relative-Volume Drift 001 program
 
-Status: prospective plan, implementation, and exact-main launch control reviewed before strategy
-execution or results. The launch binding awaits merge and exact bound-main verification. No market
-data or strategy result has been read under this campaign.
+Status: terminal exposed research. The exact four-worker launch from source main
+`551c891585c176016e9f98a20586957d1bfdca61` completed once and froze an empty cohort. Independent
+terminal and exact-postmortem review found no issue. Do not rerun, retune, rescue, or reinterpret
+this campaign.
 
 Program ID: `intraday-relative-volume-drift-001`.
 
@@ -125,9 +126,48 @@ launch review found no issue and accessed no protected input. Its exact artifact
 reviewed inputs, implementation hashes, gates, equivalence evidence, reviewer, scope, and false
 authorities.
 
-The launch-control artifact, binding constants, regression test, and durable state must merge before
-exact bound-main verification. Until clean synchronized main accepts the full binding, construction
-fails before runtime creation, reservation, market-data read, or result.
+The launch-control artifact, binding constants, regression test, and durable state merged before
+the exact four-worker launch. Clean synchronized main accepted the full binding before runtime
+creation, reservation, market-data read, or result.
+
+## Terminal result and postmortem
+
+All 18 discovery specifications completed on attempt 1. No run failed, retried, remained pending,
+or retained an active lease. The campaign had 217 heartbeat events. Walk-forward, stress, delay,
+and neighbor stages did not open because none of the nine parents passed discovery.
+
+Runtime database SHA-256:
+`8d9fb50dd25f022ed69580bdc90201c47e05e7bf730d84900de04030217a200a`.
+
+Final-report SHA-256/fingerprint:
+`7c271ace238d0871a0654edc790ff301ce9600e64b2765baaea4dc2ac4be0ade` /
+`87d94ce8ce0bc30782e5a4ea3c07375c45cf61baab1d07049860fbabbb283f34`.
+
+Final-freeze SHA-256/fingerprint:
+`fda9aa99ff0b456419c5d90205dc890bc612ee43974aac24a33eedf67d8f7f30` /
+`3374f9206bf446bb321e1baa0117c867fc325d6e0fa8c992158ca545af57ba1b`.
+
+The 1.2-floor candidates at horizons 8, 16, and 24 produced positive Normal returns. The strongest
+row, `irvd001-a02-b01`, returned `0.878023%`, averaged `15.106` gross basis points per trade, and
+had a `2.299%` cost-to-gross-profit ratio. It still activated only six sessions, completed 12 round
+trips, and concentrated all positive profit in one participation bucket. Every parent failed the
+minimum 12 active sessions, 24 round trips, and participation-bucket concentration gates. Friction
+reduced positive returns but did not cause the common rejection. Later-stage stability, delay,
+stress, neighbor, and regime evidence does not exist and must not be inferred.
+
+Postmortem SHA-256/fingerprint:
+`e1bb5f7dc8a3353219c3a9a0c93dec62938c314b1281a4eca34e37ad7b13c638` /
+`5738b8bc93fb9fa24e086651bf673ed35b83232450e1e171795723b29cd65d56`.
+
+Independent postmortem-review SHA-256/fingerprint:
+`21e83c4c180e160ad7760bde12089b6a167c01154b2ad890e824a22eb7ea4fc9` /
+`6b2b632e298a1faaa86b01667d97bd7124b2c1b6f9dc0f2239232272a33c61b0`.
+
+Immutable state revision 5 binds revision 4 and every terminal artifact at SHA-256/fingerprint
+`cd68f08b0b95839d41672a5df024e8867759911830f28d0a3d255c61c2643883` /
+`c6eaa1acc6af58af2d0f4a937c89ad95690ee8743ec998526b5f16ebdf7ea9af`. Campaign 2 consumed 18
+specifications. Campaign 3 is the only remaining campaign and must freeze independently before any
+reservation or strategy result. Campaign 4 remains prohibited.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, credentials, and live data remain prohibited. Every authority field is

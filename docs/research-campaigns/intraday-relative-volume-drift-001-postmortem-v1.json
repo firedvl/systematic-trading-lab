@@ -1,0 +1,342 @@
+{
+  "assessed_at": "2026-08-24T17:55:18Z",
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "live_execution": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "research_qualification": false,
+    "strategy_results": false
+  },
+  "candidate_ledger": [
+    {
+      "active_sessions": 5,
+      "average_gross_trade_edge_bps": "3.89286555766593949273507717",
+      "average_holding_bars": "24",
+      "candidate_id": "irvd001-a01-b01",
+      "completed_round_trips": 10,
+      "cost_to_gross_profit": "0.06402127424884934226578441934",
+      "failed_gates": [
+        "normal.active_session_count",
+        "normal.completed_round_trips",
+        "normal.average_gross_trade_edge_bps",
+        "normal.positive_profit_symbol_concentration",
+        "normal.positive_profit_session_concentration",
+        "normal.positive_profit_participation_bucket_concentration"
+      ],
+      "maximum_drawdown": "0.001282638843387703621806997308",
+      "minimum_joint_relative_volume": "1.2",
+      "normal_total_return": "0.001709081776738399063690549",
+      "normal_turnover": "10.01379257551669969735391699",
+      "observation_horizon_bars": 8,
+      "positive_profit_participation_bucket_concentration": "0.7517766734455819441639028891",
+      "positive_profit_session_concentration": "0.5774631550287944613179166326",
+      "positive_profit_symbol_concentration": "1",
+      "zero_cost_total_return": "0.001945247512268488925674321"
+    },
+    {
+      "active_sessions": 2,
+      "average_gross_trade_edge_bps": "6.885261008812929831588724668",
+      "average_holding_bars": "24",
+      "candidate_id": "irvd001-a01-b02",
+      "completed_round_trips": 4,
+      "cost_to_gross_profit": "0.06017610951164996994925736381",
+      "failed_gates": [
+        "normal.active_session_count",
+        "normal.completed_round_trips",
+        "normal.positive_profit_symbol_concentration",
+        "normal.positive_profit_session_concentration",
+        "normal.positive_profit_participation_bucket_concentration"
+      ],
+      "maximum_drawdown": "0",
+      "minimum_joint_relative_volume": "1.5",
+      "normal_total_return": "0.001282838999902465011229443",
+      "normal_turnover": "4.003514718439023354235250437",
+      "observation_horizon_bars": 8,
+      "positive_profit_participation_bucket_concentration": "1",
+      "positive_profit_session_concentration": "0.8599977540754272248532601686",
+      "positive_profit_symbol_concentration": "1",
+      "zero_cost_total_return": "0.001377312878685820034776051"
+    },
+    {
+      "active_sessions": 0,
+      "average_gross_trade_edge_bps": null,
+      "average_holding_bars": null,
+      "candidate_id": "irvd001-a01-b03",
+      "completed_round_trips": 0,
+      "cost_to_gross_profit": null,
+      "failed_gates": [
+        "normal.total_return",
+        "zero_cost_diagnostic.total_return",
+        "normal.active_session_count",
+        "normal.completed_round_trips",
+        "normal.cost_to_gross_profit",
+        "normal.average_gross_trade_edge_bps",
+        "normal.positive_profit_symbol_concentration",
+        "normal.positive_profit_session_concentration",
+        "normal.positive_profit_participation_bucket_concentration"
+      ],
+      "maximum_drawdown": "0",
+      "minimum_joint_relative_volume": "2",
+      "normal_total_return": "0",
+      "normal_turnover": "0",
+      "observation_horizon_bars": 8,
+      "positive_profit_participation_bucket_concentration": null,
+      "positive_profit_session_concentration": null,
+      "positive_profit_symbol_concentration": null,
+      "zero_cost_total_return": "0"
+    },
+    {
+      "active_sessions": 6,
+      "average_gross_trade_edge_bps": "15.10599532057095564160152021",
+      "average_holding_bars": "24",
+      "candidate_id": "irvd001-a02-b01",
+      "completed_round_trips": 12,
+      "cost_to_gross_profit": "0.0229916953519193135359298971",
+      "failed_gates": [
+        "normal.active_session_count",
+        "normal.completed_round_trips",
+        "normal.positive_profit_session_concentration",
+        "normal.positive_profit_participation_bucket_concentration"
+      ],
+      "maximum_drawdown": "0.001936253953226428938055518015",
+      "minimum_joint_relative_volume": "1.2",
+      "normal_total_return": "0.008780227193939366091279053",
+      "normal_turnover": "12.01414325677143095724451841",
+      "observation_horizon_bars": 16,
+      "positive_profit_participation_bucket_concentration": "1",
+      "positive_profit_session_concentration": "0.6608801884635024004907485881",
+      "positive_profit_symbol_concentration": "0.5126208822255810992015461468",
+      "zero_cost_total_return": "0.0090656455644559641662895"
+    },
+    {
+      "active_sessions": 1,
+      "average_gross_trade_edge_bps": "-18.89235074978559140020074946",
+      "average_holding_bars": "24",
+      "candidate_id": "irvd001-a02-b02",
+      "completed_round_trips": 2,
+      "cost_to_gross_profit": null,
+      "failed_gates": [
+        "normal.total_return",
+        "zero_cost_diagnostic.total_return",
+        "normal.active_session_count",
+        "normal.completed_round_trips",
+        "normal.cost_to_gross_profit",
+        "normal.average_gross_trade_edge_bps",
+        "normal.positive_profit_symbol_concentration",
+        "normal.positive_profit_session_concentration",
+        "normal.positive_profit_participation_bucket_concentration"
+      ],
+      "maximum_drawdown": "0.0019362733909805019128338149",
+      "minimum_joint_relative_volume": "1.5",
+      "normal_total_return": "-0.0019362733909805019128338149",
+      "normal_turnover": "1.998076297832152605122154588",
+      "observation_horizon_bars": 16,
+      "positive_profit_participation_bucket_concentration": null,
+      "positive_profit_session_concentration": null,
+      "positive_profit_symbol_concentration": null,
+      "zero_cost_total_return": "-0.0018892350749785591400200749"
+    },
+    {
+      "active_sessions": 0,
+      "average_gross_trade_edge_bps": null,
+      "average_holding_bars": null,
+      "candidate_id": "irvd001-a02-b03",
+      "completed_round_trips": 0,
+      "cost_to_gross_profit": null,
+      "failed_gates": [
+        "normal.total_return",
+        "zero_cost_diagnostic.total_return",
+        "normal.active_session_count",
+        "normal.completed_round_trips",
+        "normal.cost_to_gross_profit",
+        "normal.average_gross_trade_edge_bps",
+        "normal.positive_profit_symbol_concentration",
+        "normal.positive_profit_session_concentration",
+        "normal.positive_profit_participation_bucket_concentration"
+      ],
+      "maximum_drawdown": "0",
+      "minimum_joint_relative_volume": "2",
+      "normal_total_return": "0",
+      "normal_turnover": "0",
+      "observation_horizon_bars": 16,
+      "positive_profit_participation_bucket_concentration": null,
+      "positive_profit_session_concentration": null,
+      "positive_profit_symbol_concentration": null,
+      "zero_cost_total_return": "0"
+    },
+    {
+      "active_sessions": 5,
+      "average_gross_trade_edge_bps": "11.02141029703992945912433754",
+      "average_holding_bars": "24",
+      "candidate_id": "irvd001-a03-b01",
+      "completed_round_trips": 10,
+      "cost_to_gross_profit": "0.03765464794953645206889745234",
+      "failed_gates": [
+        "normal.active_session_count",
+        "normal.completed_round_trips",
+        "normal.positive_profit_participation_bucket_concentration"
+      ],
+      "maximum_drawdown": "0.0007069310429411515720073362197",
+      "minimum_joint_relative_volume": "1.2",
+      "normal_total_return": "0.005281500081761021996180041",
+      "normal_turnover": "10.02829537164926086365511531",
+      "observation_horizon_bars": 24,
+      "positive_profit_participation_bucket_concentration": "1",
+      "positive_profit_session_concentration": "0.4450783629657681040393766431",
+      "positive_profit_symbol_concentration": "0.5093696427219413239697612354",
+      "zero_cost_total_return": "0.005518540290955282012735839"
+    },
+    {
+      "active_sessions": 1,
+      "average_gross_trade_edge_bps": "-1.951666934112963557196660658",
+      "average_holding_bars": "24",
+      "candidate_id": "irvd001-a03-b02",
+      "completed_round_trips": 2,
+      "cost_to_gross_profit": "0.5014971929818185994178816817",
+      "failed_gates": [
+        "normal.total_return",
+        "zero_cost_diagnostic.total_return",
+        "normal.active_session_count",
+        "normal.completed_round_trips",
+        "normal.cost_to_gross_profit",
+        "normal.average_gross_trade_edge_bps",
+        "normal.positive_profit_symbol_concentration",
+        "normal.positive_profit_session_concentration",
+        "normal.positive_profit_participation_bucket_concentration"
+      ],
+      "maximum_drawdown": "0.0002422589070397072206311319",
+      "minimum_joint_relative_volume": "1.5",
+      "normal_total_return": "-0.0002422589070397072206311319",
+      "normal_turnover": "1.999770337168401517798213088",
+      "observation_horizon_bars": 24,
+      "positive_profit_participation_bucket_concentration": null,
+      "positive_profit_session_concentration": null,
+      "positive_profit_symbol_concentration": "1",
+      "zero_cost_total_return": "-0.0001951666934112963557196661"
+    },
+    {
+      "active_sessions": 0,
+      "average_gross_trade_edge_bps": null,
+      "average_holding_bars": null,
+      "candidate_id": "irvd001-a03-b03",
+      "completed_round_trips": 0,
+      "cost_to_gross_profit": null,
+      "failed_gates": [
+        "normal.total_return",
+        "zero_cost_diagnostic.total_return",
+        "normal.active_session_count",
+        "normal.completed_round_trips",
+        "normal.cost_to_gross_profit",
+        "normal.average_gross_trade_edge_bps",
+        "normal.positive_profit_symbol_concentration",
+        "normal.positive_profit_session_concentration",
+        "normal.positive_profit_participation_bucket_concentration"
+      ],
+      "maximum_drawdown": "0",
+      "minimum_joint_relative_volume": "2",
+      "normal_total_return": "0",
+      "normal_turnover": "0",
+      "observation_horizon_bars": 24,
+      "positive_profit_participation_bucket_concentration": null,
+      "positive_profit_session_concentration": null,
+      "positive_profit_symbol_concentration": null,
+      "zero_cost_total_return": "0"
+    }
+  ],
+  "disposition": {
+    "campaign_4_permitted": false,
+    "cohort_size": 0,
+    "controlled_evaluation_performed": false,
+    "next_action": "Advance unchanged to prospectively frozen Campaign 3 only after this postmortem and its independent review are bound by state revision 5.",
+    "outcome": "no-controlled-qualified-candidate",
+    "rerun_permitted": false,
+    "retroactive_qualification_permitted": false
+  },
+  "findings": {
+    "chronology_and_robustness": "Only discovery ran. Walk-forward, stress, delay, immediate-neighbor, chronological-stability, parameter-stability, and regime-stability evidence does not exist and must not be inferred.",
+    "concentration": "Every candidate failed the participation-bucket concentration gate. Eight of nine failed or had undefined session concentration, and seven of nine failed or had undefined symbol concentration.",
+    "cost_sensitivity": "Normal and zero-cost decisions matched. Four candidates were positive under both scenarios, two were negative under both, and three were inactive. Friction reduced positive returns but did not create the rejection; sparse and concentrated evidence dominated.",
+    "gross_signal": "The 1.2-floor candidates at horizons 8, 16, and 24 produced positive Normal returns. The 16-bar candidate had the strongest observed discovery return and gross edge, but no row passed the frozen activity and concentration gates.",
+    "holding_time_and_turnover": "Every active session held exactly 24 bars. Turnover followed activation count; the campaign did not reach any delay comparison.",
+    "sample_size": "Each parent had 87 discovery sessions, of which 10 were causal lookback-ineligible and 77 signal-eligible. Active counts ranged from zero to six against the frozen minimum of 12; round trips ranged from zero to 12 against 24.",
+    "transaction_costs": "Positive rows had cost-to-gross-profit ratios from 0.0229916953519193135359298971 to 0.06402127424884934226578441934. The sparse negative 24-bar/1.5 row had a ratio of 0.5014971929818185994178816817. Costs were not the common rejection mechanism.",
+    "unreached_analyses": [
+      "execution-delay sensitivity",
+      "walk-forward stability",
+      "stress retention",
+      "parameter-neighbor stability",
+      "regime dependence",
+      "event or release concentration"
+    ]
+  },
+  "method": "Read-only exact-byte validation and descriptive analysis of the immutable terminal database, canonical final report, final freeze, and all 18 canonical discovery reports. No strategy rerun or new market-data read.",
+  "postmortem_fingerprint": "5738b8bc93fb9fa24e086651bf673ed35b83232450e1e171795723b29cd65d56",
+  "postmortem_id": "intraday-relative-volume-drift-001-postmortem-v1",
+  "program_id": "intraday-relative-volume-drift-001",
+  "protected_access": {
+    "daily_2018_2019_data_or_results": false,
+    "intraday_v3_data_or_results": false,
+    "june_market_data_or_results": false,
+    "live_execution": false,
+    "paper_or_broker_state": false,
+    "partial_result_adaptation": false,
+    "strategic_allocation_21": false
+  },
+  "reviewed_inputs": {
+    "final_freeze": {
+      "fingerprint": "3374f9206bf446bb321e1baa0117c867fc325d6e0fa8c992158ca545af57ba1b",
+      "path": ".trading-lab/intraday-relative-volume-drift-001/final-freeze.json",
+      "sha256": "fda9aa99ff0b456419c5d90205dc890bc612ee43974aac24a33eedf67d8f7f30"
+    },
+    "final_report": {
+      "fingerprint": "87d94ce8ce0bc30782e5a4ea3c07375c45cf61baab1d07049860fbabbb283f34",
+      "path": ".trading-lab/intraday-relative-volume-drift-001/final-report.json",
+      "sha256": "7c271ace238d0871a0654edc790ff301ce9600e64b2765baaea4dc2ac4be0ade"
+    },
+    "launch_control": {
+      "fingerprint": "3b6c46f924ab94557f5235bf26650c1b8bf6f836b0f55bb590e63c1bba86717f",
+      "path": "config/research/intraday-relative-volume-drift-001-launch-control-review-v1.json",
+      "sha256": "51159d51aff6b11b9fee9c5c5bacfa3ac3ceaa93c17259b493aeb794d0b5e655"
+    },
+    "plan": {
+      "fingerprint": "699a41c4cf6dd38826361b9b7ad35cfb2869a5e59e73f0983bf27fbf9a63e111",
+      "path": "config/research/intraday-relative-volume-drift-001-plan-v1.json",
+      "sha256": "bc3731b5976fbf7ddb39d275a373ddec7a0678daefbbd1e745a0b0504833b518"
+    },
+    "runtime_database": {
+      "path": ".trading-lab/intraday-relative-volume-drift-001/intraday-relative-volume-drift-001.sqlite3",
+      "sha256": "8d9fb50dd25f022ed69580bdc90201c47e05e7bf730d84900de04030217a200a"
+    },
+    "source_state": {
+      "fingerprint": "69d8e113bea81e9bde27b34c3cf7909eea2cafed743a7238823e5a627ae3ff0b",
+      "path": "docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-004.json",
+      "sha256": "6aa4f195b408e037dd11333f79d9f1b829ea01c12ac233b5b781866eb9ff1551"
+    }
+  },
+  "runtime_integrity": {
+    "active_campaign_process": false,
+    "active_lease_count": 0,
+    "attempt_1_count": 18,
+    "completed_attempt_count": 18,
+    "completed_run_count": 18,
+    "failed_run_count": 0,
+    "heartbeat_event_count": 217,
+    "pending_run_count": 0,
+    "publication_conflict_count": 0,
+    "quick_check": "ok",
+    "retried_run_count": 0,
+    "running_run_count": 0,
+    "source_commit": "551c891585c176016e9f98a20586957d1bfdca61"
+  },
+  "schema_version": "intraday-relative-volume-drift-001-postmortem-v1",
+  "stage_accounting": {
+    "discovery_run_specifications": 18,
+    "immediate_neighbor_run_specifications": 0,
+    "maximum_campaign_run_specifications": 90,
+    "stress_and_delay_run_specifications": 0,
+    "total_run_specifications": 18,
+    "walk_forward_run_specifications": 0
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "live_execution": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "research_qualification": false,
+    "strategy_results": false
+  },
+  "findings": [],
+  "protected_access": {
+    "daily_2018_2019_data_or_results": false,
+    "intraday_v3_data_or_results": false,
+    "june_market_data_or_results": false,
+    "live_execution": false,
+    "paper_or_broker_state": false,
+    "partial_result_adaptation": false,
+    "strategic_allocation_21": false
+  },
+  "review_fingerprint": "6b2b632e298a1faaa86b01667d97bd7124b2c1b6f9dc0f2239232272a33c61b0",
+  "review_id": "intraday-relative-volume-drift-001-postmortem-independent-review-v1",
+  "review_method": "Independent read-only process, lock, SQLite, canonical-report, dataset-identity, source-lineage, terminal-screen, control, and exact-postmortem review.",
+  "reviewed_at": "2026-08-24T17:59:47Z",
+  "reviewed_inputs": {
+    "final_freeze": {
+      "fingerprint": "3374f9206bf446bb321e1baa0117c867fc325d6e0fa8c992158ca545af57ba1b",
+      "path": ".trading-lab/intraday-relative-volume-drift-001/final-freeze.json",
+      "sha256": "fda9aa99ff0b456419c5d90205dc890bc612ee43974aac24a33eedf67d8f7f30"
+    },
+    "final_report": {
+      "fingerprint": "87d94ce8ce0bc30782e5a4ea3c07375c45cf61baab1d07049860fbabbb283f34",
+      "path": ".trading-lab/intraday-relative-volume-drift-001/final-report.json",
+      "sha256": "7c271ace238d0871a0654edc790ff301ce9600e64b2765baaea4dc2ac4be0ade"
+    },
+    "postmortem": {
+      "fingerprint": "5738b8bc93fb9fa24e086651bf673ed35b83232450e1e171795723b29cd65d56",
+      "path": "docs/research-campaigns/intraday-relative-volume-drift-001-postmortem-v1.json",
+      "sha256": "e1bb5f7dc8a3353219c3a9a0c93dec62938c314b1281a4eca34e37ad7b13c638"
+    },
+    "runtime_database": {
+      "path": ".trading-lab/intraday-relative-volume-drift-001/intraday-relative-volume-drift-001.sqlite3",
+      "sha256": "8d9fb50dd25f022ed69580bdc90201c47e05e7bf730d84900de04030217a200a"
+    }
+  },
+  "reviewer": {
+    "reviewer_id": "codex-independent-intraday-relative-volume-drift-001-postmortem-review-2026-08-24-r2",
+    "role": "independent-terminal-auditor-and-postmortem-reviewer"
+  },
+  "schema_version": "intraday-relative-volume-drift-001-postmortem-independent-review-v1",
+  "scope_limit": "Read-only Campaign 2 source, immutable runtime evidence, exposed physical dataset identities, and exact postmortem. Protected-boundary conclusions rely on frozen instrumentation and prior launch review; no retrospective OS-level access tracing, credential inspection, protected market-data access, PAPER/broker mutation, or live action occurred.",
+  "status": "passed",
+  "verdict": "pass",
+  "verification": {
+    "active_campaign_process": false,
+    "active_lease_count": 0,
+    "all_authority_fields_false": true,
+    "all_candidate_rows_and_gate_classifications_match": true,
+    "all_protected_access_fields_false": true,
+    "canonical_report_blob_and_file_bytes_match": true,
+    "completed_attempt_count": 18,
+    "completed_run_count": 18,
+    "dataset_identity_count": 4,
+    "dataset_identities_revalidated": true,
+    "discovery_run_specification_count": 18,
+    "failed_run_count": 0,
+    "heartbeat_event_count": 217,
+    "later_stage_run_specification_count": 0,
+    "normal_zero_cost_decision_trace_pairs_match": 9,
+    "normal_zero_cost_signal_trace_pairs_match": 9,
+    "pending_run_count": 0,
+    "postmortem_exact_bytes_verified": true,
+    "postmortem_fingerprint_verified": true,
+    "postmortem_interpretation_limited_to_reached_evidence": true,
+    "publication_conflict_count": 0,
+    "quick_check": "ok",
+    "recomputed_cohort_size": 0,
+    "retried_run_count": 0,
+    "running_run_count": 0,
+    "runtime_source_commit": "551c891585c176016e9f98a20586957d1bfdca61",
+    "source_lineage_verified": true
+  }
+}

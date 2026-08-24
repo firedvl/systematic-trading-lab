@@ -1,0 +1,106 @@
+{
+  "active_campaign_id": "intraday-fed-policy-absorption-001",
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "live_execution": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "research_qualification": false,
+    "strategy_execution": false
+  },
+  "campaign_1_unused_specifications_transferable": false,
+  "campaign_2_unused_specifications_transferable": false,
+  "campaign_dispositions": {
+    "intraday-fed-policy-absorption-001": "planning-authorized-no-plan",
+    "intraday-relative-volume-drift-001": "terminal-empty-after-independent-postmortem-review",
+    "intraday-spy-qqq-lead-lag-001": "terminal-empty-after-reviewed-reassessment"
+  },
+  "campaign_plan": null,
+  "campaign_plan_review": null,
+  "campaign_terminal_evidence": {
+    "campaign_id": "intraday-relative-volume-drift-001",
+    "cohort_size": 0,
+    "completed_attempts": 18,
+    "completed_run_specifications": 18,
+    "final_freeze": {
+      "fingerprint": "3374f9206bf446bb321e1baa0117c867fc325d6e0fa8c992158ca545af57ba1b",
+      "path": ".trading-lab/intraday-relative-volume-drift-001/final-freeze.json",
+      "sha256": "fda9aa99ff0b456419c5d90205dc890bc612ee43974aac24a33eedf67d8f7f30"
+    },
+    "final_report": {
+      "fingerprint": "87d94ce8ce0bc30782e5a4ea3c07375c45cf61baab1d07049860fbabbb283f34",
+      "path": ".trading-lab/intraday-relative-volume-drift-001/final-report.json",
+      "sha256": "7c271ace238d0871a0654edc790ff301ce9600e64b2765baaea4dc2ac4be0ade"
+    },
+    "independent_review": {
+      "fingerprint": "6b2b632e298a1faaa86b01667d97bd7124b2c1b6f9dc0f2239232272a33c61b0",
+      "path": "docs/research-campaigns/intraday-relative-volume-drift-001-postmortem-independent-review-v1.json",
+      "sha256": "21e83c4c180e160ad7760bde12089b6a167c01154b2ad890e824a22eb7ea4fc9",
+      "verdict": "pass"
+    },
+    "infrastructure_retries": 0,
+    "later_stage_run_specifications": 0,
+    "launch_control": {
+      "fingerprint": "3b6c46f924ab94557f5235bf26650c1b8bf6f836b0f55bb590e63c1bba86717f",
+      "path": "config/research/intraday-relative-volume-drift-001-launch-control-review-v1.json",
+      "sha256": "51159d51aff6b11b9fee9c5c5bacfa3ac3ceaa93c17259b493aeb794d0b5e655"
+    },
+    "postmortem": {
+      "disposition": "terminal-empty-after-complete-discovery-screen",
+      "fingerprint": "5738b8bc93fb9fa24e086651bf673ed35b83232450e1e171795723b29cd65d56",
+      "path": "docs/research-campaigns/intraday-relative-volume-drift-001-postmortem-v1.json",
+      "sha256": "e1bb5f7dc8a3353219c3a9a0c93dec62938c314b1281a4eca34e37ad7b13c638"
+    },
+    "runtime_database": {
+      "path": ".trading-lab/intraday-relative-volume-drift-001/intraday-relative-volume-drift-001.sqlite3",
+      "sha256": "8d9fb50dd25f022ed69580bdc90201c47e05e7bf730d84900de04030217a200a"
+    },
+    "runtime_source_commit": "551c891585c176016e9f98a20586957d1bfdca61"
+  },
+  "completed_campaigns": [
+    "intraday-spy-qqq-lead-lag-001",
+    "intraday-relative-volume-drift-001"
+  ],
+  "current_campaign_index": 3,
+  "global_numerical_headroom": 234,
+  "next_action": "Acquire and hash only official Federal Reserve publication date-and-time metadata, freeze Campaign 3's exact calendar and plan against this revision, and obtain finding-free independent review before implementation, reservation, market-data read, or result.",
+  "phase": "campaign-2-terminal-reviewed-campaign-3-planning-authorized",
+  "previous_state": {
+    "fingerprint": "69d8e113bea81e9bde27b34c3cf7909eea2cafed743a7238823e5a627ae3ff0b",
+    "path": "docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-004.json",
+    "sha256": "6aa4f195b408e037dd11333f79d9f1b829ea01c12ac233b5b781866eb9ff1551",
+    "state_revision": 4
+  },
+  "program_id": "intraday-autonomous-research-001",
+  "program_plan": {
+    "fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f",
+    "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+    "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9"
+  },
+  "remaining_permitted_campaign_capacity": 90,
+  "remaining_prospectively_permitted_campaigns": [
+    "intraday-fed-policy-absorption-001"
+  ],
+  "run_specifications_consumed": 36,
+  "run_specifications_remaining": 234,
+  "schema_version": "intraday-autonomous-research-program-state-v2",
+  "state_fingerprint": "c6eaa1acc6af58af2d0f4a937c89ad95690ee8743ec998526b5f16ebdf7ea9af",
+  "state_revision": 5,
+  "state_transition_contract": {
+    "authority_change_rule": "No state revision can grant qualification, controlled, protected, PAPER, broker-write, or live authority; those require separate policy-valid artifacts outside this exposed program.",
+    "campaign_result_transition_rule": "A terminal campaign transition must bind its exact runtime database, canonical final report, final freeze, post-campaign review, and consumed specification count before advancing or stopping.",
+    "immutable_revision_artifacts": true,
+    "next_revision_rule": "Publish docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-{state_revision:03d}.json with state_revision incremented by one and an exact previous_state path/SHA/revision binding.",
+    "source_state_mutation": false
+  },
+  "stop_conditions": [
+    "nonempty all-gate exposed cohort",
+    "nonempty all-gate cohort requiring future untouched data",
+    "three terminal completed successor campaigns",
+    "270 immutable run specifications",
+    "research-integrity or protected-control failure",
+    "PAPER broker-write authorization boundary",
+    "any live-money action"
+  ]
+}

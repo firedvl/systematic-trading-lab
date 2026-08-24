@@ -1,8 +1,8 @@
 # Intraday Autonomous Research 001 program
 
-Status: Campaign 1 is terminal with an independently reassessed empty cohort. Campaign 2's exact
-prospective plan, implementation, and exact-main launch control passed independent review. The
-launch binding awaits merge and exact bound-main verification.
+Status: Campaigns 1 and 2 are terminal with independently reviewed empty cohorts. Immutable state
+revision 5 permits prospective planning for Campaign 3, the program's final campaign. Campaign 4
+remains prohibited.
 
 Program ID: `intraday-autonomous-research-001`.
 
@@ -44,8 +44,8 @@ Campaign 2 launch-control SHA-256/fingerprint:
 `3b6c46f924ab94557f5235bf26650c1b8bf6f836b0f55bb590e63c1bba86717f`.
 
 Current immutable state revision SHA-256/fingerprint:
-`6aa4f195b408e037dd11333f79d9f1b829ea01c12ac233b5b781866eb9ff1551` /
-`69d8e113bea81e9bde27b34c3cf7909eea2cafed743a7238823e5a627ae3ff0b`.
+`cd68f08b0b95839d41672a5df024e8867759911830f28d0a3d255c61c2643883` /
+`c6eaa1acc6af58af2d0f4a937c89ad95690ee8743ec998526b5f16ebdf7ea9af`.
 
 ## Campaign 1 disposition
 
@@ -73,7 +73,7 @@ Campaign 1 consumed 18 specifications. The program has 252 units of numerical he
 the 180 specifications reserved for Campaigns 2 and 3 remain usable. Campaign 1's unused 72 cannot
 transfer.
 
-## Campaign 2 prospective freeze
+## Campaign 2 disposition
 
 Campaign 2 fixes `8/16/24` completed-bar horizons, joint relative-volume floors `1.2/1.5/2`, a
 15-basis-point return floor for both symbols, and the exact median of the same cumulative-volume
@@ -90,18 +90,31 @@ state and dependency bindings, non-adaptation rule, protected boundaries, and fa
 found no issue. State revision 4 binds revision 3, the plan, and its review while preserving Campaign
 1 terminal evidence.
 
-Implementation main contains the campaign-owned strategy, runner, reports, CLI, launch-disabled
-binding, and focused tests. It uses the existing engine, attempt store, executor, cost model, and
-frozen data plumbing unchanged. It strictly validates canonical Decimal strings at every screen,
-enforces the `18/24/16/32` stage ceilings, and rebuilds every reached gate and the final cohort from
-canonical reports. Independent implementation review found one noncanonical-string gap, verified
-its fix, and closed with no findings.
+Implementation main contains the campaign-owned strategy, runner, reports, CLI, binding, and focused
+tests. It uses the existing engine, attempt store, executor, cost model, and frozen data plumbing
+unchanged. It strictly validates canonical Decimal strings at every screen, enforces the
+`18/24/16/32` stage ceilings, and rebuilds every reached gate and the final cohort from canonical
+reports. Independent implementation and exact-main launch reviews closed with no findings.
 
-Implementation main passed all seven repository gates, including 1,039 tests with four skips. Fresh
-four-fixture equivalence took `13.477235` seconds with one worker and `4.147198` seconds with four,
-a `3.249721` speedup, with byte-identical canonical reports and no protected input. Independent
-launch review found no issue. No Campaign 2 market data, reservation, attempt, or result exists. The
-launch binding must merge and pass exact bound-main verification before launch.
+The exact four-worker launch from source main `551c891585c176016e9f98a20586957d1bfdca61`
+completed all 18 discovery specifications on attempt 1, with zero failure, retry, pending row,
+running row, active lease, or later-stage run. Four parents had positive Normal and zero-cost
+returns, but every parent failed the frozen 12-session, 24-round-trip, and participation-bucket
+concentration gates. The strongest row returned `0.878023%` under Normal costs with `15.106` gross
+basis points per trade, but it activated six sessions and concentrated all positive profit in one
+participation bucket. The cohort froze empty.
+
+Runtime database, final-report, and final-freeze SHA-256 values are
+`8d9fb50dd25f022ed69580bdc90201c47e05e7bf730d84900de04030217a200a`,
+`7c271ace238d0871a0654edc790ff301ce9600e64b2765baaea4dc2ac4be0ade`, and
+`fda9aa99ff0b456419c5d90205dc890bc612ee43974aac24a33eedf67d8f7f30`.
+Postmortem SHA-256/fingerprint is
+`e1bb5f7dc8a3353219c3a9a0c93dec62938c314b1281a4eca34e37ad7b13c638` /
+`5738b8bc93fb9fa24e086651bf673ed35b83232450e1e171795723b29cd65d56`.
+Independent review SHA-256/fingerprint is
+`21e83c4c180e160ad7760bde12089b6a167c01154b2ad890e824a22eb7ea4fc9` /
+`6b2b632e298a1faaa86b01667d97bd7124b2c1b6f9dc0f2239232272a33c61b0` and has no findings.
+Campaign 2 consumed 18 specifications. Its unused 72 cannot transfer.
 
 ## Purpose and bound
 
@@ -148,10 +161,10 @@ If all three campaigns close empty, the program is exhausted. The closeout must 
 gate failures and decide whether the SPY/QQQ five-minute domain is exhausted. It cannot invent
 Campaign 4.
 
-Program state changes use immutable chained revisions. Revision 4 binds revision 3, Campaign 2's
-exact plan and review, Campaign 1's preserved terminal evidence, and 18 consumed specifications.
-Campaign 2 implementation must not read market data or reserve a run until its separate exact-main
-launch control passes. A later revision must bind the immediately preceding state and the exact
-evidence that justifies the transition.
+Program state changes use immutable chained revisions. Revision 5 binds revision 4, Campaign 2's
+exact runtime database, final report, final freeze, postmortem, independent review, and 18 newly
+consumed specifications. Across Campaigns 1 and 2, 36 specifications are consumed. Only the 90
+specifications reserved for Campaign 3 remain usable. Campaign 3 must bind revision 5 and pass its
+own prospective plan review before implementation, reservation, market-data read, or result.
 
 Historical simulation does not establish future profitability or trading authority.
