@@ -1,0 +1,533 @@
+{
+  "schema_version": "intraday-event-opening-breakout-001-research-plan-v1",
+  "program_id": "intraday-event-opening-breakout-001",
+  "status": "prospective-frozen-before-strategy-implementation-or-results",
+  "starting_main": "b268b5d8e8eb1abb7334458b2abf554b7f0809f2",
+  "purpose": "Test whether a close-confirmed SPY breakout after the first 30 minutes of a scheduled pre-open BLS event session continues to a fixed noon exit, without using relative ranking, direction inversion, shorting, leverage, or protected data.",
+  "research_basis": {
+    "predecessor": {
+      "program_id": "intraday-event-repricing-001",
+      "outcome": "no-controlled-qualified-candidate",
+      "cohort_size": 0,
+      "final_report_path": "docs/research-campaigns/intraday-event-repricing-001-final-report.md",
+      "final_report_sha256": "f97f2211885dba005ad92a1243ec7dc2fb0dad29eba92b4959446dbb3974476b",
+      "runtime_database_sha256": "af9ba44a82c48f58de283b63b056f04a6b0ab8adfc8f536c8f7a5cb3f9bb226a",
+      "final_report_json_sha256": "ce6c763e71487d16ba75518836c9788f9ef8be7921a55bffa48eb0580f1bfc9e",
+      "final_freeze_sha256": "f763259d540ae8a29de983cf9e0d0d382cc37ef078a4c485e02b43f859285163"
+    },
+    "supported_observations": [
+      "Event Repricing 001 closed the exact signed QQQ-minus-SPY leader-continuation contract; its numeric results do not select this plan's parameters.",
+      "Event Drift 001 closed a joint-positive opening-gap and reaction contract; it did not test a later close-confirmed SPY opening-range breakout.",
+      "Earlier every-session opening-range research did not isolate causally established scheduled pre-open BLS event sessions with one entry and a fixed noon exit.",
+      "The existing calibrated SPY execution model supports prospective buffers that are several times its severe displayed-spread round-trip cost."
+    ],
+    "new_hypothesis": "A scheduled pre-open macro release can concentrate price discovery into the opening auction. A SPY close above the completed first-30-minute range during the next 30 minutes may mark continued broad-market repricing through noon.",
+    "prohibited_inferences": [
+      "Do not invert, retune, rescue, or rerun an Intraday Event Repricing 001 candidate or gate.",
+      "Do not use Event Repricing return, reaction, concentration, or activation values to choose any numeric input in this plan.",
+      "Do not reuse Event Drift's joint opening-gap or joint reaction rule.",
+      "Do not treat the reused event schedule or pre-May bars as untouched controlled evidence.",
+      "Do not inspect opening-breakout returns before this plan and its independent review are frozen.",
+      "Do not add shorting, leverage, June, V3, daily 2018-2019, PAPER, broker, or live access."
+    ]
+  },
+  "inheritance": {
+    "base_plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "base_plan_review": {
+      "path": "config/research/intraday-event-drift-001-plan-independent-review-v1.json",
+      "sha256": "25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96",
+      "fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+    },
+    "inherited_exact_sections": [
+      "chronology",
+      "data",
+      "execution",
+      "frozen_dependencies",
+      "controlled_evaluation",
+      "protected_boundaries"
+    ],
+    "invariants": {
+      "symbols": [
+        "QQQ",
+        "SPY"
+      ],
+      "timeframe": "5m",
+      "eligible_event_count": 28,
+      "excluded_event_count": 2,
+      "period_event_counts": [
+        10,
+        4,
+        6,
+        5,
+        3
+      ],
+      "dataset_binding_count": 4,
+      "maximum_market_timestamp": "2026-05-29T19:55:00Z",
+      "engine_version": "intraday-exposed-002-engine-v1",
+      "cost_model_id": "intraday-execution-cost-model-001-v1",
+      "default_worker_count": 4,
+      "maximum_infrastructure_attempts": 3,
+      "controlled_range_status": "none-eligible"
+    },
+    "interpretation": "Only the listed sections inherit exact base-plan bytes and meaning. Event Drift strategy mechanics, candidates, reactions, opening-gap rule, exit, screens, runtime, and reports are not inherited. This plan supplies a new SPY-only signal, candidates, gates, budget, evidence, and namespace. QQQ remains zero-weight and signal-ineligible; it stays in the inherited complete-universe dataset and report benchmarks only."
+  },
+  "strategy_contract": {
+    "strategy_id": "scheduled-event-spy-opening-breakout-v1",
+    "economic_hypothesis": "After a scheduled pre-open BLS release, a close-confirmed SPY breakout above the completed opening auction range may continue through noon because broad-market information is still being absorbed.",
+    "event_sessions_only": true,
+    "long_only": true,
+    "shorting": false,
+    "leverage": false,
+    "release_contents_available": false,
+    "consensus_or_surprise_available": false,
+    "bar_indexing": "Zero-based within each validated XNYS regular session.",
+    "opening_range": "After bars 0 through 5 fully complete at 10:00 ET, set opening_range_high to the maximum SPY high across those six bars. The range never changes later in the session.",
+    "breakout_threshold": "opening_range_high * (1 + breakout_buffer_bps / 10,000).",
+    "monitoring_rule": "Inspect SPY closes only after completed bars 6 through 11, from 10:05 through 10:30 ET. Activate at the first close greater than or equal to the frozen breakout threshold. A high-only breach, an earlier opening-range value, or a later close does not activate.",
+    "entry_rule": "After the first qualifying completed close, target SPY at weight 0.5 and QQQ at zero. The inherited scenario delay fills at bar index breakout_bar_index+d, where d is 1, 2, or 3.",
+    "exit_rule": "Target SPY flat after completed bar index 29. Scenario delay d fills at bar index 29+d, at 12:00, 12:05, or 12:10 ET. QQQ remains flat for the full run.",
+    "early_close_rule": "The latest delay-3 exit fills at index 32, before the known 13:00 ET early-close final bar-open index 41. Mandatory engine flatten remains a fail-closed backstop, not a planned exit.",
+    "one_entry_invariant": "An active event must complete exactly one SPY same-session round trip and zero QQQ fills or round trips. Any resize, reentry, QQQ trade, entry outside the frozen monitoring window, or exit outside the frozen decision contract is terminal.",
+    "reentry_allowed": false,
+    "maximum_entries_per_event_session": 1,
+    "context_only_or_no_event_action": "Remain flat.",
+    "parameter_rationale": "Six opening bars and six monitoring bars use fixed 30-minute clock blocks, not prior campaign outputs. Buffers 2, 4, and 8 basis points form a prospective doubling sequence; the 2-basis-point floor exceeds four times the calibrated severe SPY two-fill displayed-spread cost of 0.44 basis points. Bar 29 fixes a noon decision boundary and avoids a holding-period search axis.",
+    "parameters": {
+      "axes": [
+        {
+          "name": "breakout_buffer_bps",
+          "values": [
+            "2",
+            "4",
+            "8"
+          ]
+        }
+      ],
+      "fixed": {
+        "active_symbol": "SPY",
+        "active_symbol_weight": "0.5",
+        "qqq_target_weight": "0",
+        "opening_range_bars": 6,
+        "monitor_start_bar_index": 6,
+        "monitor_end_bar_index": 11,
+        "exit_bar_index": 29,
+        "close_confirmation": true,
+        "reentry_allowed": false
+      },
+      "candidate_count": 3,
+      "candidate_id_format": "ieb001-a{one_based_buffer_index:02d}",
+      "neighbor_rule": "Immediate neighbors use the adjacent buffer value. Neighbor IDs are sorted ascending and the graph is symmetric.",
+      "candidates": [
+        {
+          "candidate_id": "ieb001-a01",
+          "breakout_buffer_bps": "2",
+          "neighbor_ids": [
+            "ieb001-a02"
+          ]
+        },
+        {
+          "candidate_id": "ieb001-a02",
+          "breakout_buffer_bps": "4",
+          "neighbor_ids": [
+            "ieb001-a01",
+            "ieb001-a03"
+          ]
+        },
+        {
+          "candidate_id": "ieb001-a03",
+          "breakout_buffer_bps": "8",
+          "neighbor_ids": [
+            "ieb001-a02"
+          ]
+        }
+      ]
+    }
+  },
+  "discovery_screen": {
+    "run_all_parents_before_screening": true,
+    "gates": [
+      {
+        "metric": "normal.total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "zero_cost_diagnostic.total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "normal.active_event_count",
+        "comparison": ">=",
+        "threshold": 4
+      },
+      {
+        "metric": "normal.completed_round_trips",
+        "comparison": ">=",
+        "threshold": 4
+      },
+      {
+        "metric": "normal.max_drawdown",
+        "comparison": "<=",
+        "threshold": "0.05"
+      },
+      {
+        "metric": "normal.cost_to_gross_profit",
+        "comparison": "<=",
+        "threshold": "0.25"
+      },
+      {
+        "metric": "normal.average_gross_trade_edge_bps",
+        "comparison": ">=",
+        "threshold": "5"
+      },
+      {
+        "metric": "normal.positive_profit_event_concentration",
+        "comparison": "<=",
+        "threshold": "0.50"
+      },
+      {
+        "metric": "normal.positive_profit_release_class_concentration",
+        "comparison": "<=",
+        "threshold": "0.70"
+      },
+      {
+        "metric": "normal.signal_trace_mismatch_count",
+        "comparison": "=",
+        "threshold": 0
+      },
+      {
+        "metric": "normal.accounting_identity_error",
+        "comparison": "=",
+        "threshold": "0"
+      }
+    ],
+    "undefined_metric_action": "fail",
+    "walk_forward_cap": 2,
+    "selection_order": [
+      "normal.total_return descending",
+      "normal.positive_profit_event_concentration ascending",
+      "normal.cost_to_gross_profit ascending",
+      "candidate_id ascending"
+    ]
+  },
+  "walk_forward_screen": {
+    "required_period_count": 4,
+    "require_complete_normal_zero_pairs": true,
+    "gates": [
+      {
+        "metric": "aggregate.normal.total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "aggregate.zero_cost_diagnostic.total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "positive_normal_fold_count",
+        "comparison": ">=",
+        "threshold": 3
+      },
+      {
+        "metric": "final_exposed_may.normal.total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "final_exposed_may.normal.active_event_count",
+        "comparison": ">=",
+        "threshold": 2
+      },
+      {
+        "metric": "minimum_active_events_in_positive_normal_fold",
+        "comparison": ">=",
+        "threshold": 2
+      },
+      {
+        "metric": "worst_normal_fold_return",
+        "comparison": ">=",
+        "threshold": "-0.01"
+      },
+      {
+        "metric": "worst_normal_fold_drawdown",
+        "comparison": "<=",
+        "threshold": "0.05"
+      },
+      {
+        "metric": "aggregate.normal.active_event_count",
+        "comparison": ">=",
+        "threshold": 10
+      },
+      {
+        "metric": "aggregate.normal.completed_round_trips",
+        "comparison": ">=",
+        "threshold": 10
+      },
+      {
+        "metric": "aggregate.normal.cost_to_gross_profit",
+        "comparison": "<=",
+        "threshold": "0.25"
+      },
+      {
+        "metric": "aggregate.normal.average_gross_trade_edge_bps",
+        "comparison": ">=",
+        "threshold": "5"
+      },
+      {
+        "metric": "aggregate.normal.positive_profit_event_concentration",
+        "comparison": "<=",
+        "threshold": "0.40"
+      },
+      {
+        "metric": "aggregate.normal.positive_profit_release_class_concentration",
+        "comparison": "<=",
+        "threshold": "0.60"
+      },
+      {
+        "metric": "aggregate.normal.signal_trace_mismatch_count",
+        "comparison": "=",
+        "threshold": 0
+      },
+      {
+        "metric": "aggregate.normal.accounting_identity_error",
+        "comparison": "=",
+        "threshold": "0"
+      }
+    ],
+    "undefined_metric_action": "fail",
+    "serious_candidate_cap": 1,
+    "selection_order": [
+      "positive_normal_fold_count descending",
+      "aggregate.normal.total_return descending",
+      "aggregate.normal.positive_profit_event_concentration ascending",
+      "candidate_id ascending"
+    ]
+  },
+  "serious_candidate_screen": {
+    "stress_scenarios": [
+      "stress_a",
+      "stress_b",
+      "normal-delay-2",
+      "normal-delay-3"
+    ],
+    "run_each_stress_on_all_walk_forward_periods": true,
+    "stress_gates": [
+      {
+        "metric": "stress_a.aggregate_total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "stress_a.positive_fold_count",
+        "comparison": ">=",
+        "threshold": 3
+      },
+      {
+        "metric": "stress_a.normal_profit_retention",
+        "comparison": ">=",
+        "threshold": "0.50"
+      },
+      {
+        "metric": "stress_b.aggregate_total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "stress_b.positive_fold_count",
+        "comparison": ">=",
+        "threshold": 3
+      },
+      {
+        "metric": "stress_b.normal_profit_retention",
+        "comparison": ">=",
+        "threshold": "0.25"
+      },
+      {
+        "metric": "normal-delay-2.aggregate_total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "normal-delay-2.positive_fold_count",
+        "comparison": ">=",
+        "threshold": 3
+      },
+      {
+        "metric": "normal-delay-2.normal_profit_retention",
+        "comparison": ">=",
+        "threshold": "0.50"
+      },
+      {
+        "metric": "normal-delay-3.aggregate_total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "normal-delay-3.positive_fold_count",
+        "comparison": ">=",
+        "threshold": 3
+      },
+      {
+        "metric": "normal-delay-3.normal_profit_retention",
+        "comparison": ">=",
+        "threshold": "0.25"
+      }
+    ],
+    "cross_scenario_signal_trace_rule": "Every scenario for one candidate-period must have the same signal_trace_fingerprint. Any mismatch is terminal before screening.",
+    "neighbor_scenarios": [
+      "normal",
+      "zero_cost_diagnostic"
+    ],
+    "run_each_immediate_neighbor_on_all_walk_forward_periods": true,
+    "positive_neighbor": "An immediate neighbor whose four-period aggregate Normal and zero-cost net profit and total return are all strictly positive.",
+    "neighbor_topology": "The exact 1.0 joint-positive-neighbor gate requires every immediate neighbor to pass. Corners require 1/1 and the center requires 2/2; no rounding is permitted.",
+    "neighbor_gates": [
+      {
+        "metric": "joint_positive_neighbor_fraction",
+        "comparison": ">=",
+        "threshold": "1"
+      },
+      {
+        "metric": "median_neighbor_normal_profit_retention",
+        "comparison": ">=",
+        "threshold": "0.60"
+      }
+    ],
+    "undefined_metric_action": "fail"
+  },
+  "stage_rules": {
+    "barrier_after_each_stage": true,
+    "complete_stage_before_merit_read": true,
+    "screen_in_frozen_specification_order": true,
+    "no_partial_result_adaptation": true,
+    "no_gate_change_after_first_reservation": true,
+    "reuse_existing_candidate_period_scenario_evidence_in_later_screens": true,
+    "zero_cost_diagnostic_only": true,
+    "final_cohort_minimum": 0,
+    "final_cohort_maximum": 1,
+    "final_cohort_rule": "Freeze the serious candidate only if it passes every frozen stress and neighbor gate. Do not result-rank, substitute a neighbor, or change a parameter.",
+    "empty_cohort_action": "Close as immutable negative exposed evidence and start only a separately frozen hypothesis.",
+    "nonempty_cohort_action": "Freeze the survivor and wait for future untouched data. Do not create a controlled plan for June or substitute another exposed range."
+  },
+  "search_budget": {
+    "unit": "One immutable run specification contains one candidate, period, and cost or delay scenario.",
+    "discovery_maximum": {
+      "run_specifications": 6,
+      "formula": "3 candidates * 2 scenarios"
+    },
+    "walk_forward_maximum": {
+      "run_specifications": 16,
+      "formula": "2 candidates * 4 periods * 2 scenarios"
+    },
+    "stress_and_delay_maximum": {
+      "run_specifications": 16,
+      "formula": "1 candidate * 4 periods * 4 scenarios"
+    },
+    "immediate_neighbor_maximum": {
+      "run_specifications": 8,
+      "formula": "at most 1 additional neighbor * 4 periods * 2 scenarios after exact evidence reuse"
+    },
+    "total_maximum_run_specifications": 46,
+    "maximum_total_attempts": 138,
+    "budget_invariant": "The runner must identify runs only by candidate-period-scenario, deduplicate those identities, reuse exact matching evidence, and reject any reservation that would exceed 46 specifications. The three-attempt ceiling permits at most 138 attempts and remains infrastructure recovery, not added search."
+  },
+  "report_contract": {
+    "required_event_fields": [
+      "eligible_event_count",
+      "active_event_count",
+      "event_activation_fraction",
+      "event_ledger",
+      "event_net_profit_loss",
+      "positive_profit_event_concentration",
+      "release_class_net_profit_loss",
+      "positive_profit_release_class_concentration",
+      "signal_trace_fingerprint",
+      "signal_trace_mismatch_count"
+    ],
+    "active_event": "One eligible event with exactly one completed SPY same-session round trip, zero QQQ fills and round trips, a first close-confirmed breakout at a completed bar index from 6 through 11, and an exit decision after completed bar index 29.",
+    "signal_trace_fingerprint": "Fingerprint event ID, candidate buffer, opening_range_high, breakout_threshold, active flag, first breakout bar index, breakout decision timestamp, and exit decision timestamp. It excludes cost, delay, fill price, slippage, fee, and scenario.",
+    "signal_trace_identity": "Normal, zero-cost, stress, and isolated-delay reports for the same candidate-period must have equal signal_trace_fingerprint values. A mismatch, QQQ trade, missing or duplicate event, or signal outside the frozen bars is terminal before screening.",
+    "event_ledger_row": "Record event_id, release_name, scheduled_utc, xnys_session, active, opening_range_high, breakout_buffer_bps, breakout_threshold, breakout_bar_index, breakout_decision_timestamp, entry_fill_timestamp, exit_decision_timestamp, exit_fill_timestamp, gross_profit_loss, adverse_slippage, regulatory_fees, and net_profit_loss. Inactive events retain opening range and threshold but use null breakout, entry, and exit fields and zero P&L.",
+    "metric_definitions": {
+      "event_activation_fraction": "active_event_count / eligible_event_count; undefined when the denominator is zero.",
+      "event_net_profit_loss": "For an active event, SPY gross profit minus every event fill's adverse slippage and the exact allocated account-day regulatory fees; zero for an inactive event.",
+      "release_class_net_profit_loss": "Sum event net P&L by the three fixed release names, including inactive-event zeros.",
+      "positive_concentration": "For event or release-class net P&L values, maximum strictly positive value divided by the sum of strictly positive values; undefined when no value is positive.",
+      "positive_fold": "A fold whose net_profit_loss and total_return in that scenario are both strictly positive.",
+      "positive_normal_fold_count": "Count the four Normal folds satisfying positive_fold.",
+      "minimum_active_events_in_positive_normal_fold": "Minimum Normal active_event_count among positive Normal folds; undefined when none is positive.",
+      "stress_profit_retention": "Scenario aggregate net P&L divided by base Normal aggregate net P&L over the same periods; undefined unless the Normal denominator is strictly positive.",
+      "positive_neighbor": "A neighbor whose four-period aggregate Normal and zero-cost net_profit_loss and total_return are all strictly positive.",
+      "joint_positive_neighbor_fraction": "Count positive neighbors divided by the exact immediate-neighbor count without rounding.",
+      "neighbor_normal_profit_retention": "Neighbor four-period aggregate Normal net P&L divided by the positive base candidate Normal net P&L.",
+      "median_neighbor_normal_profit_retention": "Use statistics.median over every immediate-neighbor retention. A missing or undefined value makes the gate undefined and failing.",
+      "fold_aggregation": "Concatenate event ledgers in frozen period order. Period and event IDs must be disjoint. Sum returns under the inherited convention, gross P&L, friction, and net P&L, then recompute concentrations from the concatenated event values rather than averaging fold concentrations.",
+      "accounting_identity": "gross_profit_loss - execution_friction = net_profit_loss within the frozen accounting precision.",
+      "undefined_action": "Every undefined metric named by a gate fails that gate."
+    },
+    "required_identity_fields": [
+      "event_calendar_sha256",
+      "event_calendar_fingerprint",
+      "event_source_evidence_sha256",
+      "event_source_evidence_fingerprint",
+      "plan_sha256",
+      "plan_fingerprint",
+      "dataset_inputs",
+      "cost_model_fingerprint",
+      "source_commit"
+    ],
+    "benchmark_references": "Retain inherited cash, SPY-continuous, QQQ-continuous, and fixed-50/50 report-only benchmarks over evaluation bars. They are not gates and grant no authority.",
+    "authority": "Every report and aggregate is exposed research evidence only. No result can grant qualification, controlled evaluation, holdout, PAPER, broker-write, live, or promotion authority."
+  },
+  "runtime": {
+    "namespace": "intraday-event-opening-breakout-001",
+    "database": "intraday-event-opening-breakout-001.sqlite3",
+    "run_id_prefix": "ieb001r-",
+    "attempt_id_prefix": "ieb001a-",
+    "executor": "bounded-process-spawn-v1",
+    "default_worker_count": 4,
+    "lease_timeout_seconds": 300,
+    "heartbeat_interval_seconds": 60,
+    "maximum_infrastructure_attempts": 3,
+    "retryable_failure": "expired no-result infrastructure lease only",
+    "create_only_artifacts": true,
+    "campaign_lock": true,
+    "sqlite_busy_timeout_seconds": 30,
+    "sqlite_journal_mode": "delete",
+    "implementation_gate": "Merge this plan and its finding-free independent review. Then implement the strict inherited-plan loader, SPY-only strategy and event report, 46-run budget, spawned runner, CLI, and tests on a separate branch. Bind exact merged implementation main and a finding-free launch-control review before the first reservation."
+  },
+  "controlled_evaluation": {
+    "range_status": "none-eligible",
+    "june_read": false,
+    "substitute_range": false,
+    "controlled_plan_creation": false,
+    "empty_cohort_action": "Close as immutable negative exposed evidence and start only a separately frozen hypothesis.",
+    "nonempty_cohort_action": "Freeze every all-gate exposed-serious survivor simultaneously and wait for future untouched data. Do not rank, tune, discard, or claim controlled qualification."
+  },
+  "protected_boundaries": {
+    "june_market_data_or_results": false,
+    "intraday_v3_data_or_results": false,
+    "daily_2018_2019_data_or_results": false,
+    "paper_or_broker_state": false,
+    "strategic_allocation_21": false,
+    "live_execution": false,
+    "maximum_market_timestamp": "2026-05-29T19:55:00Z",
+    "partial_result_adaptation": false
+  },
+  "authority": {
+    "strategy_results": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "plan_fingerprint": "3164757c9f91a1318d48607b24bdaa1c4f3e5439a9657d1b31b0cc32d8163b68"
+}
