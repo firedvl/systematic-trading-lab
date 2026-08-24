@@ -20,6 +20,10 @@ from systematic_trading_lab.intraday_event_drift_001_runner import _dataset_bind
 from systematic_trading_lab.intraday_event_repricing_001_cli import (
     event_repricing_parser,
 )
+from systematic_trading_lab.intraday_event_repricing_001_launch_control import (
+    REVIEWED_LAUNCH_CONTROL_FINGERPRINT,
+    REVIEWED_LAUNCH_CONTROL_SHA256,
+)
 from systematic_trading_lab.intraday_event_repricing_001_plan import (
     PLAN_FINGERPRINT,
     PLAN_RELATIVE_PATH,
@@ -64,7 +68,7 @@ def _runner() -> IntradayEventRepricing001Runner:
     return runner
 
 
-def test_plan_status_cli_and_unbound_run_fail_closed_without_runtime_write(
+def test_plan_status_cli_and_bound_launch_control_are_read_only_without_runtime_write(
     tmp_path: Path,
 ) -> None:
     plan = intraday_event_repricing_001_plan_summary(_REPOSITORY)
@@ -75,11 +79,31 @@ def test_plan_status_cli_and_unbound_run_fail_closed_without_runtime_write(
     assert plan["discovery_run_specification_count"] == 36
     assert plan["maximum_run_specifications"] == 244
     assert plan["maximum_attempts"] == 732
-    assert plan["status"] == "implementation-launch-review-pending"
+    assert plan["status"] == "launch-control-bound"
+    assert plan["launch_control_bound"] is True
     assert status["database_exists"] is False
     assert arguments.workers == 6
     assert not any(cast(dict[str, bool], status["authority"]).values())
     assert not (tmp_path / PROGRAM_ID).exists()
+    assert REVIEWED_LAUNCH_CONTROL_SHA256 == (
+        "11572b8f61d797b2a664866eb88d8b39be2ae07cbb57f9891899725b0a7293c2"
+    )
+    assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
+        "3d35f8d088e11ad6f07d81015c1b037b457e00b824ea908f37cef64a8fbf4a6b"
+    )
+    loaded = runner_module._load_launch_control(
+        _REPOSITORY,
+        source_commit="94bc182efe952839d7e3384ea8a148554dd0149d",
+    )
+    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
+
+
+def test_unbound_launch_control_fails_before_runtime_write(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(runner_module, "REVIEWED_LAUNCH_CONTROL_SHA256", None)
+    monkeypatch.setattr(runner_module, "REVIEWED_LAUNCH_CONTROL_FINGERPRINT", None)
+
     with pytest.raises(ValueError, match="launch control is not hash-bound"):
         IntradayEventRepricing001Runner(_REPOSITORY, tmp_path)
     assert not (tmp_path / PROGRAM_ID).exists()
