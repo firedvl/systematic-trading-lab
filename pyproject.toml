@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-trading-lab = "systematic_trading_lab.intraday_event_prior_low_rejection_001_cli:main"
+trading-lab = "systematic_trading_lab.intraday_spy_qqq_lead_lag_001_cli:main"
 
 [dependency-groups]
 dev = [

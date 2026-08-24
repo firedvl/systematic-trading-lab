@@ -1,7 +1,7 @@
 # Intraday SPY-QQQ Lead-Lag 001 program
 
-Status: exact prospective plan independently reviewed before strategy implementation or results.
-No strategy, runner, reservation, market-data read, or result exists.
+Status: implementation complete after the independently reviewed prospective plan. Launch control
+remains unbound. No reservation, market-data read, runtime directory, or result exists.
 
 Program ID: `intraday-spy-qqq-lead-lag-001`.
 
@@ -73,8 +73,11 @@ Immutable state revision 2 binds the exact program, Campaign 1 plan, and review 
 `f74bc4ad3d0d30560ed0eb4718fc00739121849fb503e8045a01d8bc63907a0f`. Future transitions must
 publish a new chained revision; the original state file cannot be mutated.
 
-Implementation, synthetic one-worker/four-worker equivalence, exact merged-main launch control,
-and finding-free launch review remain required before the first reservation or result.
+The separate strategy, runner, CLI, launch-control stub, and focused tests implement the frozen
+contract. A fresh independent patch review found no material correctness, boundary, restart, or
+test-coverage issue. Full repository gates, synthetic one-worker/four-worker equivalence, an
+implementation merge, exact merged-main launch control, and finding-free launch review remain
+required before the first reservation or result.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, and live data remain prohibited. Every authority field is false.
