@@ -174,6 +174,7 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "systematic_trading_lab/intraday_spy_qqq_lead_lag_001_plan.py",
         "systematic_trading_lab/intraday_spy_qqq_lead_lag_001_cli.py",
         "systematic_trading_lab/intraday_spy_qqq_lead_lag_001_launch_control.py",
+        "systematic_trading_lab/intraday_spy_qqq_lead_lag_001_reassessment.py",
         "systematic_trading_lab/intraday_spy_qqq_lead_lag_001_runner.py",
         "systematic_trading_lab/intraday_spy_qqq_lead_lag_001_strategies.py",
         "systematic_trading_lab/intraday_execution_cost_model.py",
