@@ -32,7 +32,8 @@ Start with the research path. Open the controlled campaign and paper documents o
 - [Intraday Exposed 005 final report](research-campaigns/intraday-exposed-005-final-report.md) — completed parallel campaign, empty cohort, postmortem, and evidence hashes
 - [Intraday Event Drift 001 program](research-campaigns/intraday-event-drift-001-program.md) — prospective scheduled-BLS-event hypothesis, fixed candidates, source evidence, and launch boundary
 - [Intraday Event Drift 001 final report](research-campaigns/intraday-event-drift-001-final-report.md) — completed negative event campaign, discovery postmortem, performance, and immutable evidence hashes
-- [Intraday Event Repricing 001 program](research-campaigns/intraday-event-repricing-001-program.md) — prospective scheduled-event relative leader and matched-laggard control plan
+- [Intraday Event Repricing 001 program](research-campaigns/intraday-event-repricing-001-program.md) — frozen scheduled-event relative leader and matched-laggard contract
+- [Intraday Event Repricing 001 final report](research-campaigns/intraday-event-repricing-001-final-report.md) — completed negative campaign, paired-signal postmortem, and immutable evidence hashes
 - [Intraday Execution Calibration 001](research-campaigns/intraday-execution-calibration-001.md) — prospective SPY/QQQ quote method, old-cost audit, and current Alpaca fee facts
 - [Rapid-004 expanded-universe final report](research-campaigns/rapid-004-final-report.md) — closed 37-ETF A–U campaign, empty exposed cohort, and evidence hashes
 - [Rapid-003 bounded strategy program](research-campaigns/rapid-003-bounded-strategy-program.md) — closed family ledger, exposed screen, and final report
