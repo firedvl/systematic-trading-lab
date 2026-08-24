@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-23 — Extend the CLI without changing hash-bound campaign source
+
+- Decision: route the `trading-lab` console entry point through the Intraday Event Repricing 001 wrapper. The wrapper handles only `research intraday-event-repricing-001` and delegates every other argument unchanged to `public_cli.main`.
+- Context: Event Drift launch control binds the exact `public_cli.py` bytes. Adding the new command there would invalidate its immutable source check even though the closed campaign must remain reproducible.
+- Consequences: `public_cli.py` keeps SHA-256 `6b96a9605291335724415c9e5a812d42e51b53571cd9b1e85679629842e47fca`. Existing commands retain the same parser and dispatch. Event Repricing launch control must bind the wrapper with its other implementation files before the first reservation.
+- Revisit when: a separately reviewed versioned command registry can preserve past campaign identities without binding one shared mutable CLI file.
+
 ## 2026-08-22 — Preserve the aborted Exposed 004 launch and rekey recovery as Exposed 005
 
 - Decision: close `intraday-exposed-004` as immutable pre-attempt infrastructure evidence and use `intraday-exposed-005` for the corrected clean campaign. Canonicalize each 005 run specification before reservation and process dispatch. Make the generic spawned-process executor preflight every task with the spawn pickler before it starts workers.
