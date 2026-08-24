@@ -2462,10 +2462,17 @@ def verify_intraday_event_opening_breakout_001_parallel_equivalence(
 def intraday_event_opening_breakout_001_plan_summary(repository: Path) -> dict[str, object]:
     repository = repository.resolve()
     plan = load_intraday_event_opening_breakout_001_plan(repository)
-    launch_bound = (
+    launch_bound = False
+    if (
         REVIEWED_LAUNCH_CONTROL_SHA256 is not None
         and REVIEWED_LAUNCH_CONTROL_FINGERPRINT is not None
-    )
+    ):
+        try:
+            _load_launch_control(repository, source_commit=_source_commit(repository))
+        except ValueError:
+            pass
+        else:
+            launch_bound = True
     return {
         "program_id": PROGRAM_ID,
         "status": "launch-reviewed-ready" if launch_bound else "implementation-awaiting-review",
