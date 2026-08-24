@@ -1,0 +1,252 @@
+{
+  "schema_version": "intraday-autonomous-research-program-v1",
+  "program_id": "intraday-autonomous-research-001",
+  "status": "prospective-frozen-before-any-successor-strategy-implementation-or-results",
+  "starting_main": "8db080d51971d360c3d3a979664c23cdc144abfa",
+  "purpose": "Run one bounded sequence of three distinct exposed intraday hypotheses, stop on the first serious survivor or after the third terminal empty cohort, and preserve every protected boundary while determining whether another SPY/QQQ five-minute mechanism merits future untouched evaluation.",
+  "research_basis": {
+    "complete_exposed_evidence": [
+      {
+        "path": "docs/research-campaigns/intraday-campaign-v2-postmortem.md",
+        "sha256": "7fe9fbc83a7a92954002bac5c3090fda6efc9c03a801bdd1fbff19e09f873f5c",
+        "disposition": "The one-bar momentum and 12-bar moving-average contracts failed all 12 research qualification groups; repeated exact-weight scheduling and friction dominated the recorded V2 implementation."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-exposed-001-final-report.md",
+        "sha256": "1ea6edb42b4d560dcdaee835172bd5614195f2a48dbf4bd61a9ab299689612ea",
+        "disposition": "A 325-parent price, volatility, volume-filtered breakout, VWAP, relative-strength, and combination search ended empty; most apparent gross edge did not survive costs or chronology."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-exposed-002-terminal-report.md",
+        "sha256": "e010a4fda5f40f778557a8164690248cbc158a806e0c30aac7f4ffd728d3926d",
+        "disposition": "The campaign completed four of 120 discovery rows, then closed terminally interrupted under its frozen no-retry rule. Its partial rows remain exposed evidence but cannot support merit inference, adaptation, resumption, or a qualification outcome."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-exposed-005-final-report.md",
+        "sha256": "c386eac54fec83f585b534edf9dbd386551053764330d58ccd64fa69ab3113de",
+        "disposition": "A sparse 60-parent program found one serious trend-pullback candidate, but it failed the exact immediate-neighbor gate and cannot be rescued, rounded, or retuned."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-event-drift-001-final-report.md",
+        "sha256": "357f3be173ae0038eb72c882a076d1795689a96ddcfa4b8545cd52f32eed6b11",
+        "disposition": "Joint long-only drift after scheduled pre-open BLS releases activated too rarely and too concentratively; friction did not cause the rejection."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-event-repricing-001-final-report.md",
+        "sha256": "f97f2211885dba005ad92a1243ec7dc2fb0dad29eba92b4959446dbb3974476b",
+        "disposition": "BLS-session signed QQQ-minus-SPY leader continuation failed at all nine parent points; the result must not be inverted into a rescue campaign."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-event-opening-breakout-001-final-report.md",
+        "sha256": "5b3168acdc31376636577c17e2a29afc51fe562e374278af427dfc3f1719bc89",
+        "disposition": "Scheduled-event SPY opening-range continuation had positive low-buffer points but insufficient gross edge, activity, or event diversification."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-event-prior-low-rejection-001-program.md",
+        "sha256": "40fb4548988d16e7bf78a338f902fc952e2817672f610989bc390490d5d91d71",
+        "disposition": "Scheduled-event SPY prior-low rejection completed six runs once and froze empty after all three candidates failed discovery."
+      }
+    ],
+    "supported_conclusion": "The existing domain has rejected broad high-turnover price rules, ten sparse price-event families, and four BLS-session mechanisms. Three still-distinct questions remain defensible: fixed SPY-to-QQQ catch-up, same-clock relative-volume participation drift, and late-session absorption after official Federal Reserve policy publications.",
+    "why_further_research_is_justified": "None of the completed campaigns tested a fixed early-session SPY leader followed by a delayed QQQ catch-up, a same-clock cross-session relative-volume state without an opening-range breakout, or post-14:00 Federal Reserve policy-publication absorption. Each proposed trade is sparse, state-changing only, multi-hour, long-only, and uses a gross-move floor far above the frozen small-order spread model.",
+    "inference_limit": "All permitted price and volume bars are already exposed. The program can reject or freeze exposed-serious candidates, but it cannot establish controlled qualification, future profitability, PAPER readiness, or broker authority."
+  },
+  "fingerprint_contract": "Remove the top-level program_fingerprint field, canonicalize with systematic_trading_lab.fingerprints.canonical_json (UTF-8, sorted object keys, compact separators), and take SHA-256 of those bytes.",
+  "program_bounds": {
+    "maximum_campaigns": 3,
+    "maximum_total_run_specifications": 270,
+    "maximum_run_specifications_per_campaign": 90,
+    "maximum_infrastructure_attempts_per_run": 3,
+    "infrastructure_attempts_are_not_search_specifications": true,
+    "default_worker_count": 4,
+    "worker_count_change_after_campaign_freeze": false,
+    "new_parameter_axis_after_program_freeze": false,
+    "new_campaign_after_program_exhaustion": false
+  },
+  "shared_data": {
+    "price_volume_base_plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "permitted_dataset_ids": [
+      "0a307dd767283d8f268c10b372c416abc49ac555cb242bf612f0b485be518363",
+      "074e66c2260f576d6c1765295db93b5e22fb4753dc8f9912ef6f5be7fa937479",
+      "1b1b5b1179a84522d6827827a6143a547321ef8b49262cdfb4d6a81885f647ed",
+      "4afa60f29ea266ec8b60be9d9600132f8cff4207e846443c65afd3bb5c497a19"
+    ],
+    "symbols": [
+      "QQQ",
+      "SPY"
+    ],
+    "timeframe": "5m",
+    "provider": "alpaca-historical-v2",
+    "feed": "iex",
+    "timestamp_policy": "bar-open-utc-v1",
+    "calendar_policy": "XNYS-regular-session-bars-v1",
+    "maximum_market_timestamp": "2026-05-29T19:55:00Z",
+    "new_price_or_volume_data_acquisition": false,
+    "federal_reserve_metadata_exception": "Campaign 3 may acquire only official public Federal Reserve publication dates and release timestamps. It must hash the raw source evidence and freeze an eligibility disposition before any strategy reservation. This exception cannot acquire prices, returns, forecasts, decisions, statement contents, or protected data.",
+    "prohibited_data": [
+      "June 2026 market data or results",
+      "Intraday V3 Validation A, B, or C data or results",
+      "daily 2018-01-02 through 2019-12-31 data or results",
+      "protected campaign results",
+      "PAPER or broker state",
+      "strategic-allocation-21 state",
+      "live market or execution data"
+    ]
+  },
+  "shared_execution": {
+    "engine_version": "intraday-exposed-002-engine-v1",
+    "cost_model": {
+      "path": "config/research/intraday-execution-cost-model-001-v1.json",
+      "sha256": "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af",
+      "fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4"
+    },
+    "normal_delay_bars": 1,
+    "stress_scenarios": [
+      "stress_a",
+      "stress_b",
+      "normal-delay-2",
+      "normal-delay-3"
+    ],
+    "zero_cost_use": "diagnostic-only",
+    "completed_bar_only": true,
+    "state_changes_only": true,
+    "one_entry_per_symbol_per_session": true,
+    "long_only": true,
+    "leverage": false,
+    "flat_at_close": true,
+    "restart_contract": "research-attempts-v1",
+    "parallel_contract": "bounded-local-spawn-v1"
+  },
+  "shared_chronology": {
+    "source": "Inherit the exact five exposed periods, context ranges, dataset intersections, and context-only-session rule from the price_volume_base_plan.",
+    "discovery": "2025-07-01 through 2025-10-31",
+    "walk_forward": [
+      "2025-11-03 through 2025-12-31",
+      "2026-01-02 through 2026-02-27",
+      "2026-03-02 through 2026-04-30",
+      "2026-05-01 through 2026-05-29"
+    ],
+    "stage_barrier": true,
+    "complete_stage_before_merit_read": true,
+    "partial_result_adaptation": false
+  },
+  "campaigns": [
+    {
+      "index": 1,
+      "campaign_id": "intraday-spy-qqq-lead-lag-001",
+      "hypothesis": "On an ordinary session, a positive early SPY impulse that QQQ has not yet matched can represent faster price discovery in the broader, more liquid index ETF; QQQ may catch up over a fixed multi-hour hold.",
+      "economic_mechanism": "fixed-leader cross-asset information transmission",
+      "prospective_candidate_envelope": "Exactly nine parents: three fixed early-session observation horizons crossed with three positive SPY impulse floors. A fixed non-result-derived QQQ under-response rule, one QQQ half-weight entry, one fixed 24-bar hold, and no reentry. The exact values and symmetric two-axis neighbor graph must freeze in the campaign plan. Because the contract can trade only QQQ, the plan must mark symbol-profit concentration structurally inapplicable and replace it with disqualifying session, period, and signal-bucket concentration gates; it cannot treat a mechanically 100% QQQ share as diversified or silently pass a multi-symbol gate.",
+      "distinct_from_prior_work": "No BLS event filter, leader ranking, paired laggard control, opening-range breakout, simultaneous SPY/QQQ confirmation, relative-strength rotation, or inversion of Event Repricing is allowed. SPY is always the causal leader and only QQQ can trade.",
+      "maximum_parent_candidates": 9,
+      "maximum_run_specifications": 90,
+      "permitted_data": "shared exposed SPY/QQQ five-minute OHLCV only",
+      "extra_data": "none"
+    },
+    {
+      "index": 2,
+      "campaign_id": "intraday-relative-volume-drift-001",
+      "hypothesis": "When both SPY and QQQ show a positive early return with unusually high cumulative volume relative to the same clock interval in prior complete sessions, broad institutional participation may continue over a fixed multi-hour hold.",
+      "economic_mechanism": "same-clock participation shock and gradual order-flow absorption",
+      "prospective_candidate_envelope": "Exactly nine parents: three fixed early-session observation horizons crossed with three cumulative relative-volume floors. The cross-session lookback, positive return floor, same-clock estimator, joint half-weight entry, fixed 24-bar hold, and no-reentry rule must freeze in the campaign plan.",
+      "distinct_from_prior_work": "No opening-range high, breakout, current-bar versus recent-bar volume test, VWAP rule, trend-pullback recovery, or parameter reuse from prior volume-filtered strategies is allowed. Volume must be compared with the same cumulative clock interval across prior complete sessions before any price breakout condition.",
+      "maximum_parent_candidates": 9,
+      "maximum_run_specifications": 90,
+      "permitted_data": "shared exposed SPY/QQQ five-minute OHLCV only",
+      "extra_data": "none"
+    },
+    {
+      "index": 3,
+      "campaign_id": "intraday-fed-policy-absorption-001",
+      "hypothesis": "After an officially scheduled 14:00 New York Federal Reserve policy statement or meeting-minutes publication, a jointly positive completed-bar SPY/QQQ reaction may continue into the close while institutions absorb policy information.",
+      "economic_mechanism": "scheduled late-session monetary-policy information absorption",
+      "prospective_candidate_envelope": "At most nine parents: three fixed post-publication observation horizons crossed with three joint positive reaction floors. The eligible publication classes, exact official calendar, minimum event count, event-time rule, joint half-weight entry, close-safe exit, and no-reentry rule must freeze before any strategy reservation. If the frozen official calendar misses the campaign's sample floor, close the campaign before strategy execution without widening the calendar.",
+      "distinct_from_prior_work": "No pre-open BLS event, opening gap, prior-session level, QQQ-minus-SPY rank, leader/laggard arm, surprise value, statement contents, FOMC decision value, or inversion of a prior result is allowed. This is a different information source, publication clock, and holding horizon.",
+      "maximum_parent_candidates": 9,
+      "maximum_run_specifications": 90,
+      "permitted_data": "shared exposed SPY/QQQ five-minute OHLCV plus pre-frozen official Federal Reserve publication metadata",
+      "extra_data": "official date-and-time metadata only; no market outcomes or release contents"
+    }
+  ],
+  "campaign_plan_requirements": {
+    "freeze_before_implementation_or_results": true,
+    "independent_control_review_before_implementation_or_results": true,
+    "exact_plan_fields": [
+      "program ID and campaign index",
+      "economic mechanism",
+      "causal strategy contract",
+      "candidate IDs, exact values, and symmetric neighbors",
+      "maximum 90 immutable run specifications",
+      "exact datasets and fingerprints",
+      "chronology and context semantics",
+      "execution, costs, and delay assumptions",
+      "discovery, walk-forward, stress, delay, and neighbor gates",
+      "activity, edge, cost, drawdown, concentration, and accounting gates",
+      "cohort rule and terminal dispositions",
+      "maximum three infrastructure attempts",
+      "four-worker default",
+      "false authority and protected-access fields"
+    ],
+    "stage_envelope": {
+      "parent_candidate_count": 9,
+      "discovery_scenarios_per_parent": 2,
+      "discovery_maximum": 18,
+      "walk_forward_candidate_cap": 3,
+      "walk_forward_period_count": 4,
+      "walk_forward_scenarios_per_candidate_period": 2,
+      "walk_forward_maximum": 24,
+      "serious_candidate_cap": 1,
+      "stress_scenario_count": 4,
+      "stress_period_count": 4,
+      "stress_and_delay_maximum": 16,
+      "maximum_immediate_neighbors_per_serious_candidate": 4,
+      "neighbor_period_count": 4,
+      "neighbor_scenarios_per_period": 2,
+      "immediate_neighbor_maximum": 32,
+      "total_maximum": 90
+    },
+    "undefined_required_metric_action": "fail",
+    "result_ranking_after_serious_screen": false,
+    "parameter_substitution": false,
+    "direct_rescue": false,
+    "gate_weakening": false
+  },
+  "transition_rules": {
+    "start": "Freeze and independently review Campaign 1's exact plan before its strategy implementation or any return observation.",
+    "empty_terminal_campaign": "After validating terminal evidence and a finding-free post-campaign audit, update durable program state and advance to the next predeclared campaign without using the completed campaign to change that campaign's mechanism, axes, budget, data, or gates.",
+    "serious_survivor": "Freeze all all-gate survivors simultaneously, stop later campaigns, and record WAITING FOR FUTURE UNTOUCHED DATA because the shared exposed domain has no eligible controlled range.",
+    "pre_execution_implementation_failure": "If zero reservations, attempts, canonical reports, and strategy observations exist, preserve the failure, fix the plumbing under the same campaign identity, regenerate source-bound review evidence, and relaunch only when policy permits.",
+    "post_observation_semantic_change": "Stop the program for a research-integrity review. Do not mutate the campaign, spend a later campaign identity on a repair, or design a replacement from observed results.",
+    "data_or_control_failure": "Fail closed and stop unless the exact frozen campaign plan already defines a non-adaptive terminal disposition that permits advancing.",
+    "program_exhaustion": "After Campaign 3 closes without an all-gate survivor, produce a cross-campaign synthesis and stop. Campaign 4 is prohibited."
+  },
+  "global_stopping_rules": [
+    "Stop immediately when any campaign freezes a nonempty all-gate exposed cohort.",
+    "Stop after three terminal completed successor campaigns or 270 immutable run specifications, whichever comes first.",
+    "Stop on protected-data access, stale source binding, unresolved publication conflict, result-driven adaptation, or any authority escalation.",
+    "Stop before any controlled evaluation because no eligible untouched range exists in the shared data.",
+    "Stop before any PAPER broker write or live action."
+  ],
+  "prohibited_adaptation": [
+    "Do not relaunch, rerun, invert, rescue, round, retune, or weaken any terminal predecessor candidate or gate.",
+    "Do not use a partial or terminal result from Campaign N to alter Campaign N+1.",
+    "Do not add a parameter value, candidate, data range, event class, strategy arm, benchmark exception, gate exception, or result-driven retry after this program freezes. Only the frozen research-attempts-v1 expired no-result infrastructure recovery may repeat an immutable run within its three-attempt ceiling.",
+    "Do not convert exposed data into controlled evidence or choose a substitute holdout.",
+    "Do not access June, V3, daily 2018-2019, protected results, PAPER/broker state, strategic-allocation-21, or live data.",
+    "Do not infer research qualification, controlled qualification, PAPER readiness, broker authority, or future profitability from an exposed survivor."
+  ],
+  "authority": {
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "program_fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f"
+}

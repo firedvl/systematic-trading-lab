@@ -1,0 +1,45 @@
+{
+  "schema_version": "intraday-autonomous-research-program-state-v1",
+  "program_id": "intraday-autonomous-research-001",
+  "program_plan": {
+    "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+    "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9",
+    "fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f"
+  },
+  "state_revision": 1,
+  "phase": "program-plan-reviewed-campaign-1-plan-pending",
+  "current_campaign_index": 1,
+  "active_campaign_id": null,
+  "completed_campaigns": [],
+  "campaign_dispositions": {
+    "intraday-fed-policy-absorption-001": "not-started",
+    "intraday-relative-volume-drift-001": "not-started",
+    "intraday-spy-qqq-lead-lag-001": "plan-not-yet-frozen"
+  },
+  "remaining_prospectively_permitted_campaigns": [
+    "intraday-spy-qqq-lead-lag-001",
+    "intraday-relative-volume-drift-001",
+    "intraday-fed-policy-absorption-001"
+  ],
+  "run_specifications_consumed": 0,
+  "run_specifications_remaining": 270,
+  "next_action": "Freeze and independently review Campaign 1's exact plan before strategy implementation or results.",
+  "stop_conditions": [
+    "nonempty all-gate exposed cohort",
+    "nonempty all-gate cohort requiring future untouched data",
+    "three terminal completed successor campaigns",
+    "270 immutable run specifications",
+    "research-integrity or protected-control failure",
+    "PAPER broker-write authorization boundary",
+    "any live-money action"
+  ],
+  "authority": {
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  }
+}

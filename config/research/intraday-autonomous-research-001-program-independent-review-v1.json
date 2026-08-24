@@ -1,0 +1,55 @@
+{
+  "schema_version": "intraday-autonomous-research-program-independent-review-v1",
+  "review_id": "intraday-autonomous-research-001-program-independent-review-v1",
+  "status": "passed-before-successor-strategy-implementation-or-results",
+  "verdict": "pass",
+  "reviewed_program": {
+    "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+    "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9",
+    "program_fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f",
+    "program_id": "intraday-autonomous-research-001"
+  },
+  "reviewed_state": {
+    "path": "docs/research-campaigns/intraday-autonomous-research-001-state.json",
+    "sha256": "8ef652046442ce7adfcd474d8effe610738a2a00e29fc97ceae3d4110ae2981a"
+  },
+  "findings": [],
+  "authority": {
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "verification": {
+    "complete_exposed_evidence_binding_count": 8,
+    "frozen_dependency_binding_count": 2,
+    "dataset_binding_count": 4,
+    "campaign_count": 3,
+    "parent_cap_per_campaign": 9,
+    "spec_cap_per_campaign": 90,
+    "global_spec_cap": 270,
+    "stage_run_specifications": {
+      "discovery": 18,
+      "walk_forward": 24,
+      "stress_and_delay": 16,
+      "immediate_neighbor": 32,
+      "total": 90
+    },
+    "maximum_infrastructure_attempts": 3,
+    "default_worker_count": 4,
+    "prohibited_data_category_count": 7,
+    "canonical_fingerprint_verified": true,
+    "state_plan_binding_verified": true,
+    "exact_byte_rereview": true,
+    "review_scope": "Read-only control review of the frozen meta-program, its exact evidence hashes, transition rules, stage arithmetic, authority fields, protected-data boundaries, and durable state binding. No market data, strategy returns, protected results, broker state, or execution authority was accessed."
+  },
+  "reviewer": {
+    "role": "independent-control-reviewer",
+    "reviewed_at": "2026-08-24T07:20:58Z"
+  },
+  "review_fingerprint": "50424b9e5c07a95351af93e560859293768e34959d01f816f0f63042302497c0"
+}
