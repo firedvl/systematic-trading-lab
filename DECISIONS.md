@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Freeze Campaign 2 as joint same-clock relative-volume drift
+
+- Decision: freeze `intraday-relative-volume-drift-001` with nine parents crossing `8/16/24` completed-bar horizons and joint relative-volume floors `1.2/1.5/2`. Require both SPY and QQQ to return at least 15 basis points, compare each cumulative-volume prefix with the exact median from ten strictly prior complete sessions, target each symbol at one-half, and hold for 24 five-minute intervals with no resize or reentry.
+- Context: the autonomous program prospectively predeclared same-clock participation drift as Campaign 2 before Campaign 1 ran. Prior work tested opening-range, VWAP, current-versus-recent-bar volume, pullback, event, and relative-rank mechanisms, but not this joint cross-session participation state. Campaign 1 results did not alter the design.
+- Consequences: the exact plan and finding-free review bind four exposed read-only datasets through May 29, 2026, revision 3, the calibrated cost model, 90 specifications, strict canonical Decimal-string decoding, terminal gate recomputation, and false authorities. Revision 4 preserves Campaign 1 terminal evidence and records Campaign 2 as plan-reviewed and implementation-pending. Horizons 16 and 24 remain flat on early closes because maximum-delay capacity is applied uniformly. No market data or strategy result was read while freezing the plan.
+- Revisit when: never after a Campaign 2 result. A pre-reservation plumbing defect may be repaired under the frozen policy; a semantic change after observation stops the program. An empty finding-free campaign advances only to predeclared Campaign 3, and Campaign 4 remains prohibited.
+
 ## 2026-08-24 — Close Campaign 1 through immutable read-only reassessment
 
 - Decision: preserve `intraday-spy-qqq-lead-lag-001` runtime evidence unchanged, bind a campaign-specific read-only reassessment and finding-free independent review, and accept the empty cohort as invariant. Do not rerun the campaign or repair its historical report, freeze, or runner in place.

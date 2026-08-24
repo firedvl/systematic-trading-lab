@@ -1,7 +1,7 @@
 # Intraday Autonomous Research 001 program
 
-Status: Campaign 1 is terminal with an independently reassessed empty cohort. Campaign 2's
-prospective plan is pending.
+Status: Campaign 1 is terminal with an independently reassessed empty cohort. Campaign 2's exact
+prospective plan passed independent review and is implementation-pending.
 
 Program ID: `intraday-autonomous-research-001`.
 
@@ -23,13 +23,21 @@ Campaign 1 review SHA-256/fingerprint:
 `71b60c8d4b900bb4ad1cb8c737fe26927b0365c7314aff5d64c688ffea6b6a07` /
 `b0f14d7fe31f509300b1f5bedce4dcf6b94edba476efc8ed0b9f9fea351fe5d6`.
 
+Campaign 2 plan SHA-256/fingerprint:
+`bc3731b5976fbf7ddb39d275a373ddec7a0678daefbbd1e745a0b0504833b518` /
+`699a41c4cf6dd38826361b9b7ad35cfb2869a5e59e73f0983bf27fbf9a63e111`.
+
+Campaign 2 review SHA-256/fingerprint:
+`c934369f1cdebeb99613a0ea0e5396c30ff5771c7ee2d92b380d4ca92b5a5611` /
+`0fb04bfd40cd028355dd8bf4594093cb5bb0707945eeebf867cccab51d994946`.
+
 Campaign 1 launch-control SHA-256/fingerprint:
 `26d1ef10abb3b2ef063dec1bc5931b0c667c2698bc983c7c9e3a3e58ca01e863` /
 `b69466bfe3ed67d8e539a6e772341f2fbb7a7bddcdefa4bcee04e336c73c446e`.
 
 Current immutable state revision SHA-256/fingerprint:
-`7d35eeaf7f079033d1ce2f396088754ce5de22f829c88e3a884757672feef6a2` /
-`7f35e0876c2398589b37b7a34d924e3a7a2d588f86f16102c5f2f4080b20d81e`.
+`6aa4f195b408e037dd11333f79d9f1b829ea01c12ac233b5b781866eb9ff1551` /
+`69d8e113bea81e9bde27b34c3cf7909eea2cafed743a7238823e5a627ae3ff0b`.
 
 ## Campaign 1 disposition
 
@@ -56,6 +64,23 @@ disposition therefore remain valid.
 Campaign 1 consumed 18 specifications. The program has 252 units of numerical headroom, but only
 the 180 specifications reserved for Campaigns 2 and 3 remain usable. Campaign 1's unused 72 cannot
 transfer.
+
+## Campaign 2 prospective freeze
+
+Campaign 2 fixes `8/16/24` completed-bar horizons, joint relative-volume floors `1.2/1.5/2`, a
+15-basis-point return floor for both symbols, and the exact median of the same cumulative-volume
+prefix from ten strictly prior complete sessions. An active session targets SPY and QQQ at `0.5`
+each for one fixed 24-bar hold with no resize or reentry.
+
+Maximum-delay hold capacity is applied before the signal in every scenario. Horizon 8 can trade on
+early closes; horizons 16 and 24 remain flat. Reports must strictly decode canonical Decimal strings
+before all screens and must recompute reached-stage gates and cohort identity at terminal validation.
+The campaign remains capped at 90 specifications and 270 attempts.
+
+Independent review revalidated the exact bytes, causal estimator, chronology, graph, gates, budget,
+state and dependency bindings, non-adaptation rule, protected boundaries, and false authorities. It
+found no issue. State revision 4 binds revision 3, the plan, and its review while preserving Campaign
+1 terminal evidence. No Campaign 2 market data, reservation, attempt, or result exists.
 
 ## Purpose and bound
 
@@ -102,10 +127,10 @@ If all three campaigns close empty, the program is exhausted. The closeout must 
 gate failures and decide whether the SPY/QQQ five-minute domain is exhausted. It cannot invent
 Campaign 4.
 
-Program state changes use immutable chained revisions. Revision 3 binds revision 2, Campaign 1's
-exact runtime database, final report, final freeze, reassessment, independent review, and 18
-consumed specifications. Campaign 2 must freeze and pass independent review without adapting from
-Campaign 1. A later revision must bind the immediately preceding state and the exact evidence that
-justifies the transition.
+Program state changes use immutable chained revisions. Revision 4 binds revision 3, Campaign 2's
+exact plan and review, Campaign 1's preserved terminal evidence, and 18 consumed specifications.
+Campaign 2 implementation must not read market data or reserve a run until its separate exact-main
+launch control passes. A later revision must bind the immediately preceding state and the exact
+evidence that justifies the transition.
 
 Historical simulation does not establish future profitability or trading authority.
