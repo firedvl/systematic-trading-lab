@@ -1,6 +1,6 @@
 # Intraday Event Repricing 001 program
 
-Status: inherited data-plumbing repair reviewed and launch-control bound; no reservation or result exists.
+Status: complete negative exposed result; no candidate advanced past discovery.
 
 Plan SHA-256: `f24cae1372f346be02c0079b931c77d5efb5105a06cf26631b783010851bd8b8`.
 Plan fingerprint: `2f98e0cc4565435c9974f65791fd830f7fb9509730f31872f97d77484c00c489`.
@@ -8,6 +8,9 @@ Review SHA-256: `0c17f683d21e0e365a730f6e267029d5be64eb62691e1a3bbacf6ead678048c
 Review fingerprint: `2351e230df1f6618247bbd91bed19ac6444baf09b8573ced2af9c6f937513ab5`.
 Launch-control SHA-256: `5605cd28ddb1e3d1851aeab20ec415f9680e9fdf2a28e17aad0439fb24204794`.
 Launch-control fingerprint: `910a4764efde8cecb6c17be24c04c863ed9c910d9279ab57cec3219a951db2c2`.
+Runtime database SHA-256: `af9ba44a82c48f58de283b63b056f04a6b0ab8adfc8f536c8f7a5cb3f9bb226a`.
+Final-report JSON SHA-256: `ce6c763e71487d16ba75518836c9788f9ef8be7921a55bffa48eb0580f1bfc9e`.
+Final-freeze SHA-256: `f763259d540ae8a29de983cf9e0d0d382cc37ef078a4c485e02b43f859285163`.
 
 ## Purpose
 
@@ -127,12 +130,17 @@ receive the inherited payload explicitly. Repaired source main
 `5454fb0b075fe29bbc1f1a96f08988ce847fea95` passed all seven quality gates, 881 tests with four
 skips, four-fixture one-worker/four-worker equivalence in `0.896970` / `0.773657` seconds, and a
 finding-free independent launch review. The launch-control artifact and constants bind that exact
-evidence. Runtime lineage permits only the reviewed launch artifact, constants, tests, and status
-documents to change before clean exact-main execution.
+evidence. Runtime lineage permitted only the reviewed launch artifact, constants, tests, and status
+documents to change before clean exact-main execution. The exact four-worker command then ran from
+source commit `9d228e954cf0d007c6de902aabbe3ea8ddff4d70`. All 36 discovery specifications
+completed once with no failure or retry. Every parent failed the frozen relative-continuation gate,
+so later stages contained no work and the cohort froze empty. The formal closeout is
+`docs/research-campaigns/intraday-event-repricing-001-final-report.md`. This terminal campaign must
+not be relaunched, reset, retuned, or reinterpreted.
 
 June, Intraday V3, daily 2018–2019, PAPER/broker state, `strategic-allocation-21`, and live execution
 remain untouched. The reused pre-May bars are exposed research data, not controlled evidence. A
-nonempty cohort must freeze and wait for future untouched data; it cannot use June or a substitute
-range.
+nonempty cohort would have frozen and waited for future untouched data; June and substitute ranges
+remain ineligible. No controlled evaluation or qualification occurred.
 
 Historical and simulated results do not establish future profitability.
