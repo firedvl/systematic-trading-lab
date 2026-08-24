@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sqlite3
 import subprocess
 import time
@@ -209,6 +210,24 @@ _AUTHORITY = MappingProxyType(
 )
 
 
+def _require_non_broker_environment(
+    environment: Mapping[str, str] | None = None,
+) -> None:
+    values = os.environ if environment is None else environment
+    forbidden = tuple(
+        sorted(
+            name
+            for name, value in values.items()
+            if value and name.startswith(("APCA_", "TRADING_LAB_PAPER_"))
+        )
+    )
+    if forbidden:
+        raise ValueError(
+            "Intraday Event Repricing 001 rejects broker credentials and paper-write opt-in: "
+            + ", ".join(forbidden)
+        )
+
+
 class _CoordinatorValidationError(ValueError):
     """Terminal validation failure over already-completed canonical runs."""
 
@@ -297,6 +316,7 @@ class _Worker:
         runtime_root: Path,
         source_commit: str,
     ) -> None:
+        _require_non_broker_environment()
         self.repository = repository.resolve()
         self.data_home = data_home.resolve()
         self.source_commit = source_commit
@@ -311,6 +331,7 @@ class _Worker:
         self.attempt_store = IntradayEventRepricing001Store(runtime_root)
 
     def __call__(self, specification: Mapping[str, object]) -> str:
+        _require_non_broker_environment()
         run_id = _run_id(specification)
         claim = self.attempt_store.claim(run_id, source_sha=self.source_commit)
         context = _mapping(specification.get("context"), "run context")
@@ -400,6 +421,7 @@ class IntradayEventRepricing001Runner:
         progress: Callable[[str], None] | None = None,
         data_service: DatasetService | None = None,
     ) -> None:
+        _require_non_broker_environment()
         if isinstance(workers, bool) or workers < 1:
             raise ValueError("research worker count must be a positive integer")
         self.repository = repository.resolve()
@@ -565,6 +587,7 @@ class IntradayEventRepricing001Runner:
         specifications = _deduplicate_specifications(specifications)
         if not specifications:
             return
+        _require_non_broker_environment()
         worker_factory = _WorkerFactory(
             self.repository,
             self.data_home,
@@ -2541,6 +2564,7 @@ class _EquivalenceWorkerFactory:
 
 class _EquivalenceWorker:
     def __init__(self, repository: Path) -> None:
+        _require_non_broker_environment()
         self.repository = repository.resolve()
         self.plan = load_intraday_event_repricing_001_plan(self.repository)
         self.cost_model = load_intraday_execution_cost_model(self.repository)
@@ -2548,6 +2572,7 @@ class _EquivalenceWorker:
         self.bars = _synthetic_equivalence_bars()
 
     def __call__(self, task: Mapping[str, object]) -> Mapping[str, object]:
+        _require_non_broker_environment()
         context = _mapping(task.get("context"), "equivalence context")
         candidate_id = _text(context, "candidate_id")
         scenario_id = _text(context, "scenario_id")
@@ -2707,6 +2732,7 @@ def _synthetic_specification(
 
 
 def _parallel_equivalence(repository: Path, *, source_commit: str) -> dict[str, object]:
+    _require_non_broker_environment()
     plan = load_intraday_event_repricing_001_plan(repository.resolve())
     choices = (
         (plan.configurations[0], "normal"),

@@ -103,6 +103,9 @@ store, four-worker spawned executor, one-claim workers, stage barriers, leases, 
 create-only reports, and terminal deterministic failure classes. Each arm has its own immutable run
 and report. A cost-independent selection trace binds event, parameters, signed reaction, active
 flag, direction, and decision times across both arms and every scenario. A mismatch is terminal.
+Runner and worker initialization and every worker task claim reject populated `APCA_*` and
+`TRADING_LAB_PAPER_*` environment variables before source, data, runtime, or worker access, so
+spawned research workers cannot inherit broker credentials or PAPER write opt-in.
 
 Only an expired no-result infrastructure lease may retry. Any candidate, data, calendar,
 selection-trace, accounting, publication, or exhausted-attempt failure remains terminal. Existing

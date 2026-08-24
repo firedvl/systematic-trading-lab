@@ -37,6 +37,7 @@ from systematic_trading_lab.intraday_event_repricing_001_runner import (
     _deduplicate_specifications,
     _pair_reports,
     _parallel_equivalence,
+    _require_non_broker_environment,
     _run_id,
     _stress_gates,
     intraday_event_repricing_001_plan_summary,
@@ -81,6 +82,81 @@ def test_plan_status_cli_and_unbound_run_fail_closed_without_runtime_write(
     assert not (tmp_path / PROGRAM_ID).exists()
     with pytest.raises(ValueError, match="launch control is not hash-bound"):
         IntradayEventRepricing001Runner(_REPOSITORY, tmp_path)
+    assert not (tmp_path / PROGRAM_ID).exists()
+
+
+def test_broker_environment_fails_before_runtime_or_worker_start(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started = False
+
+    def unexpected_start(*_args: object, **_kwargs: object) -> tuple[object, ...]:
+        nonlocal started
+        started = True
+        return ()
+
+    monkeypatch.setenv("APCA_API_SECRET_KEY", "must-not-reach-research-worker")
+    monkeypatch.setattr(runner_module, "run_process_stage", unexpected_start)
+
+    with pytest.raises(ValueError, match="rejects broker credentials") as error:
+        IntradayEventRepricing001Runner(_REPOSITORY, tmp_path)
+
+    assert "APCA_API_SECRET_KEY" in str(error.value)
+    assert "must-not-reach-research-worker" not in str(error.value)
+    assert started is False
+    assert not (tmp_path / PROGRAM_ID).exists()
+    isolated = _runner()
+    specification = isolated._specification(
+        isolated.plan.configurations[0],
+        isolated.plan.periods[0],
+        "leader",
+        "normal",
+    )
+    with pytest.raises(ValueError, match="rejects broker credentials"):
+        isolated._execute((specification,))
+    assert started is False
+    with pytest.raises(ValueError, match="paper-write opt-in"):
+        _require_non_broker_environment({"TRADING_LAB_PAPER_ACTIVATION_ID": "value"})
+
+
+def test_broker_environment_fails_inside_direct_workers(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    loaded_plan = False
+
+    def unexpected_plan_load(*_args: object, **_kwargs: object) -> object:
+        nonlocal loaded_plan
+        loaded_plan = True
+        raise AssertionError("worker loaded its plan")
+
+    monkeypatch.setattr(
+        runner_module,
+        "load_intraday_event_repricing_001_plan",
+        unexpected_plan_load,
+    )
+    monkeypatch.setenv("APCA_API_KEY_ID", "must-not-reach-research-worker")
+    worker_factory = runner_module._WorkerFactory(
+        _REPOSITORY,
+        tmp_path,
+        tmp_path / PROGRAM_ID,
+        _SOURCE,
+    )
+
+    with pytest.raises(ValueError, match="APCA_API_KEY_ID"):
+        worker_factory()
+    with pytest.raises(ValueError, match="APCA_API_KEY_ID"):
+        object.__new__(runner_module._Worker)({})
+
+    monkeypatch.delenv("APCA_API_KEY_ID")
+    monkeypatch.setenv("TRADING_LAB_PAPER_CODE_COMMIT", "must-not-reach-research-worker")
+    equivalence_factory = runner_module._EquivalenceWorkerFactory(_REPOSITORY)
+
+    with pytest.raises(ValueError, match="TRADING_LAB_PAPER_CODE_COMMIT"):
+        equivalence_factory()
+    with pytest.raises(ValueError, match="TRADING_LAB_PAPER_CODE_COMMIT"):
+        object.__new__(runner_module._EquivalenceWorker)({})
+
+    assert loaded_plan is False
     assert not (tmp_path / PROGRAM_ID).exists()
 
 
