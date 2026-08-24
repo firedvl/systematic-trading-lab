@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-23 — Close Event Opening Breakout without weakening sparse-evidence gates
+
+- Decision: freeze Intraday Event Opening Breakout 001 with an empty cohort and preserve its activity, gross-edge, and event-concentration failures as the result.
+- Context: the 2- and 4-basis-point candidates had positive exposed returns, but one lacked the minimum gross edge and both lacked diversified evidence. The 8-basis-point candidate was negative and activated once. Calibrated friction did not cause these failures.
+- Consequences: no walk-forward, stress, delay, neighbor, controlled, qualification, PAPER, or broker stage opens. The campaign cannot be relaunched, retuned, or rescued by weaker gates. Any successor must freeze a structurally different claim before implementation or results.
+- Revisit when: never for this campaign. Future untouched data may evaluate only a separately frozen exposed survivor; this campaign has none.
+
 ## 2026-08-23 — Derive Opening Breakout launch readiness from full validation
 
 - Decision: report Intraday Event Opening Breakout 001 as launchable only when the complete launch-control loader accepts the artifact, implementation hashes, quality evidence, equivalence evidence, independent review, clean source identity, and source lineage.
