@@ -350,8 +350,9 @@ class IntradayExposed002Runner:
             "authority": _AUTHORITY,
         }
 
-    def _verify_datasets(self) -> None:
-        data = _mapping(self.plan.payload.get("data"), "plan data")
+    def _verify_datasets(self, plan_payload: Mapping[str, Any] | None = None) -> None:
+        payload = self.plan.payload if plan_payload is None else plan_payload
+        data = _mapping(payload.get("data"), "plan data")
         for binding in self.datasets:
             service = self.data_by_dataset[binding.dataset_id]
             manifest = service.describe(binding.dataset_id)

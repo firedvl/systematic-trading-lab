@@ -116,6 +116,7 @@ _LAUNCH_CONTROL_FILES = (
     "src/systematic_trading_lab/research_attempts.py",
     "src/systematic_trading_lab/research_executor.py",
     "src/systematic_trading_lab/intraday_exposed_002_engine.py",
+    "src/systematic_trading_lab/intraday_exposed_002_runner.py",
     "src/systematic_trading_lab/intraday_event_repricing_001_plan.py",
     "src/systematic_trading_lab/intraday_event_repricing_001_strategies.py",
     "src/systematic_trading_lab/intraday_event_repricing_001_runner.py",
@@ -325,7 +326,7 @@ class _Worker:
         self.cost_model = load_intraday_execution_cost_model(self.repository)
         self.datasets = _dataset_bindings(self.base_plan.payload)
         self.data_by_dataset = _read_only_dataset_services(self.data_home, self.datasets)
-        IntradayExposed002Runner._verify_datasets(cast(Any, self))
+        IntradayExposed002Runner._verify_datasets(cast(Any, self), self.base_plan.payload)
         self.scenarios = _scenarios(self.cost_model)
         self._bar_cache: dict[str, tuple[Any, ...]] = {}
         self.attempt_store = IntradayEventRepricing001Store(runtime_root)
@@ -453,7 +454,7 @@ class IntradayEventRepricing001Runner:
         self.attempt_store.bind(self._program_binding())
 
     def _verify_datasets(self) -> None:
-        IntradayExposed002Runner._verify_datasets(cast(Any, self))
+        IntradayExposed002Runner._verify_datasets(cast(Any, self), self.base_plan.payload)
 
     def run(self) -> dict[str, object]:
         with _exclusive_file_lock(self.runtime_root / "campaign.lock"):
@@ -2857,12 +2858,14 @@ def verify_intraday_event_repricing_001_parallel_equivalence(
 
 
 def intraday_event_repricing_001_plan_summary(repository: Path) -> dict[str, object]:
-    plan = load_intraday_event_repricing_001_plan(repository.resolve())
-    launch_control_bound = (
-        REVIEWED_LAUNCH_CONTROL_SHA256 is not None
-        and REVIEWED_LAUNCH_CONTROL_FINGERPRINT is not None
-        and (repository / LAUNCH_CONTROL_RELATIVE_PATH).is_file()
-    )
+    repository = repository.resolve()
+    plan = load_intraday_event_repricing_001_plan(repository)
+    try:
+        _load_launch_control(repository, source_commit=_source_commit(repository))
+    except ValueError:
+        launch_control_bound = False
+    else:
+        launch_control_bound = True
     return {
         "program_id": PROGRAM_ID,
         "status": (
