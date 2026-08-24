@@ -1,10 +1,17 @@
 # Architecture decisions
 
+## 2026-08-23 — Derive Opening Breakout launch readiness from full validation
+
+- Decision: report Intraday Event Opening Breakout 001 as launchable only when the complete launch-control loader accepts the artifact, implementation hashes, quality evidence, equivalence evidence, independent review, clean source identity, and source lineage.
+- Context: the first exact-main review found that non-null binding constants alone could make the read-only plan surface report ready even when the artifact was missing, changed, or stale. The run path still failed closed, but the operator-facing prelaunch signal was wrong.
+- Consequences: missing, hash-mismatched, or stale launch evidence leaves both `launchable` and `launch_control_bound` false. Exact implementation main `017a7cbd91a151fbdc0ddf80f5f580f0c3f9eb34` passed the corrected finding-free review; launch-control SHA-256/fingerprint `dc42631f93e0e9dd91ad2b9c22f743a1a257a890bb709cf6256b62e8877cda9e` / `871b06339bf1d26900dec25b818ba37f51a30f4091a9ad42e2d8f48b2e79dc62` bind it without granting qualification, controlled, PAPER, broker-write, or live authority.
+- Revisit when: a versioned common launch-state API replaces campaign-specific plan summaries while preserving the same fail-closed evidence contract.
+
 ## 2026-08-23 — Give Event Opening Breakout one exact three-field run identity
 
 - Decision: identify each Intraday Event Opening Breakout 001 run only by candidate, period, and scenario. Use one campaign-owned runner and event ledger while reusing the existing five-minute engine, attempt store, spawned executor, cost model, and explicit Event Drift base payload.
 - Context: discovery, walk-forward, stress, and neighbor screens can request the same evidence. Including a stage or base candidate in identity would duplicate work and break the frozen 46-specification limit. Reusing a prior campaign runner would also carry campaign-specific arms, reports, gates, and source bindings.
-- Consequences: exact matching evidence is reserved once and reused across stages. The runner recomputes event and release-class accounting from its ledger, requires equal signals across cost and delay scenarios, rejects broker state in coordinator and workers, and leaves launch control unbound until exact merged-main review. It adds no qualification, controlled, holdout, PAPER, broker-write, live, or promotion authority.
+- Consequences: exact matching evidence is reserved once and reused across stages. The runner recomputes event and release-class accounting from its ledger, requires equal signals across cost and delay scenarios, rejects broker state in coordinator and workers, and requires exact merged-main review before launch control binds. It adds no qualification, controlled, holdout, PAPER, broker-write, live, or promotion authority.
 - Revisit when: never within this campaign after its first reservation. A different identity, screen, strategy, or protected-data rule requires a new prospective campaign.
 
 ## 2026-08-23 — Chain campaign CLI wrappers without changing historical source
