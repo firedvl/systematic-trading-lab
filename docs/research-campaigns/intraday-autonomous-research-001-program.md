@@ -1,7 +1,7 @@
 # Intraday Autonomous Research 001 program
 
-Status: Campaign 1's exact plan and independent review are frozen. No successor strategy has been
-implemented or run.
+Status: Campaign 1's exact plan and independent review are frozen. Its implementation and focused
+repair are merged, but launch control remains unbound and no successor campaign has run.
 
 Program ID: `intraday-autonomous-research-001`.
 
