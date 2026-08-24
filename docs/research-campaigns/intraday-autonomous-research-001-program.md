@@ -1,8 +1,7 @@
 # Intraday Autonomous Research 001 program
 
-Status: Campaign 1's exact plan and independent review are frozen. Its launch-control artifact
-binds reviewed implementation main `c987371b6a1b632b8fa7930ff2ac11192e4b5000`; no successor
-campaign has run.
+Status: Campaign 1 is terminal with an independently reassessed empty cohort. Campaign 2's
+prospective plan is pending.
 
 Program ID: `intraday-autonomous-research-001`.
 
@@ -29,8 +28,34 @@ Campaign 1 launch-control SHA-256/fingerprint:
 `b69466bfe3ed67d8e539a6e772341f2fbb7a7bddcdefa4bcee04e336c73c446e`.
 
 Current immutable state revision SHA-256/fingerprint:
-`f74bc4ad3d0d30560ed0eb4718fc00739121849fb503e8045a01d8bc63907a0f` /
-`a9be74e854942eaeea0cc65f67dca2c920a66d0e402e17452670543bb55b2058`.
+`7d35eeaf7f079033d1ce2f396088754ce5de22f829c88e3a884757672feef6a2` /
+`7f35e0876c2398589b37b7a34d924e3a7a2d588f86f16102c5f2f4080b20d81e`.
+
+## Campaign 1 disposition
+
+The four-worker Campaign 1 launch from source main
+`a8093f24fba142c2817311bbd3c30656b981b15c` completed all 18 discovery specifications once. It
+had no failure, retry, pending row, running row, active lease, or later-stage run.
+
+Post-campaign audit found a screening defect: canonical JSON stored `Decimal` metrics as strings,
+but the historical discovery screen kept only `Decimal`, integer, or null values. The runtime
+database, final report, and final freeze remain unchanged. Their SHA-256 values are
+`fca67d95832a6fad87f29ef68ce56238a0f9d8d2e02e8d331aece63e4e9e8908`,
+`d44f9390db7f8882f7375afbfd40607ce51d89d6a7537431e01c9cfd9b6b6608`, and
+`62c2301cde8e72d80f39159b3d38da156e92801afdd70e554356b806cac37d2c`.
+
+The isolated read-only reassessment has SHA-256/fingerprint
+`597d7229e1a4a9616fbe418c12b6ad8053cd2ca0f3bae538184ec428b8a50cad` /
+`a06e1c83980f6968dba678fb4a0b71b25f73f542e58d01c09ee5144e89b60e6f`. Its independent review
+has SHA-256/fingerprint `8e45148b7711c667dcc1f4190d2820e28632e0f6c0435d36af86b1f43cf83a0e` /
+`ddaf06bfb1121dd194d99d20d8c29a48787f320dfebeb33d5fe8b0f67cade7a9` and no findings.
+Corrected Normal active-session counts are `3, 1, 0, 0, 0, 0, 2, 1, 0`; every parent fails the
+frozen minimum of 12 and the paired round-trip gate. The empty cohort and zero later-stage
+disposition therefore remain valid.
+
+Campaign 1 consumed 18 specifications. The program has 252 units of numerical headroom, but only
+the 180 specifications reserved for Campaigns 2 and 3 remain usable. Campaign 1's unused 72 cannot
+transfer.
 
 ## Purpose and bound
 
@@ -77,8 +102,10 @@ If all three campaigns close empty, the program is exhausted. The closeout must 
 gate failures and decide whether the SPY/QQQ five-minute domain is exhausted. It cannot invent
 Campaign 4.
 
-Program state changes use immutable chained revisions. Revision 2 binds the reviewed Campaign 1
-plan while preserving revision 1 unchanged. A later revision must bind the immediately preceding
-state and the exact campaign evidence that justifies the transition.
+Program state changes use immutable chained revisions. Revision 3 binds revision 2, Campaign 1's
+exact runtime database, final report, final freeze, reassessment, independent review, and 18
+consumed specifications. Campaign 2 must freeze and pass independent review without adapting from
+Campaign 1. A later revision must bind the immediately preceding state and the exact evidence that
+justifies the transition.
 
 Historical simulation does not establish future profitability or trading authority.

@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Close Campaign 1 through immutable read-only reassessment
+
+- Decision: preserve `intraday-spy-qqq-lead-lag-001` runtime evidence unchanged, bind a campaign-specific read-only reassessment and finding-free independent review, and accept the empty cohort as invariant. Do not rerun the campaign or repair its historical report, freeze, or runner in place.
+- Context: all 18 discovery specifications completed once, but canonical JSON reloaded `Decimal` metrics as strings while the historical screen kept only `Decimal`, integer, or null values. Eight decimal-based gates appeared as `observed: null`. Independent recomputation restored all 11 frozen gates from the exact 18 reports. Normal active-session counts were `3, 1, 0, 0, 0, 0, 2, 1, 0`, so every parent still failed the frozen minimum of 12 and the matching round-trip gate.
+- Consequences: the runtime database, final report, and final freeze remain historical byte-valid evidence with SHA-256 `fca67d95832a6fad87f29ef68ce56238a0f9d8d2e02e8d331aece63e4e9e8908`, `d44f9390db7f8882f7375afbfd40607ce51d89d6a7537431e01c9cfd9b6b6608`, and `62c2301cde8e72d80f39159b3d38da156e92801afdd70e554356b806cac37d2c`. Reassessment SHA-256/fingerprint is `597d7229e1a4a9616fbe418c12b6ad8053cd2ca0f3bae538184ec428b8a50cad` / `a06e1c83980f6968dba678fb4a0b71b25f73f542e58d01c09ee5144e89b60e6f`; review SHA-256/fingerprint is `8e45148b7711c667dcc1f4190d2820e28632e0f6c0435d36af86b1f43cf83a0e` / `ddaf06bfb1121dd194d99d20d8c29a48787f320dfebeb33d5fe8b0f67cade7a9`. State revision 3 records 18 consumed specifications, 252 units of global numerical headroom, and only 180 usable specifications for Campaigns 2 and 3; Campaign 1's unused 72 cannot transfer. No qualification, controlled, protected, PAPER, broker-write, or live authority opened.
+- Revisit when: never for Campaign 1. Campaign 2 must freeze and pass independent review without adapting from this result; Campaign 4 remains prohibited.
+
 ## 2026-08-24 — Bind Campaign 1 launch control to exact reviewed main
 
 - Decision: bind `intraday-spy-qqq-lead-lag-001` to implementation main `c987371b6a1b632b8fa7930ff2ac11192e4b5000` after all seven repository gates, four-fixture synthetic one-worker/four-worker equivalence, and a finding-free independent launch review. The launch-control artifact has SHA-256 `26d1ef10abb3b2ef063dec1bc5931b0c667c2698bc983c7c9e3a3e58ca01e863` and fingerprint `b69466bfe3ed67d8e539a6e772341f2fbb7a7bddcdefa4bcee04e336c73c446e`.
