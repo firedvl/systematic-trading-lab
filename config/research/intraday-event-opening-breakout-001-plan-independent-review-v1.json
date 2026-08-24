@@ -1,0 +1,97 @@
+{
+  "schema_version": "intraday-event-opening-breakout-001-plan-independent-review-v1",
+  "review_id": "intraday-event-opening-breakout-001-plan-independent-review-v1",
+  "status": "passed-before-strategy-implementation-or-results",
+  "review_date": "2026-08-23",
+  "review_method": "Independent prospective exact-byte review of the frozen plan, predecessor closeout, inherited Event Drift controls, SPY-only engine feasibility, gate mathematics, candidate graph, search budget, executor compatibility, and false-authority boundaries.",
+  "reviewed_plan": {
+    "program_id": "intraday-event-opening-breakout-001",
+    "path": "config/research/intraday-event-opening-breakout-001-plan-v1.json",
+    "sha256": "73ea48a3e2c250db93aca0c7ebef16b5480e118ab9577684089147bb318dfd27",
+    "plan_fingerprint": "3164757c9f91a1318d48607b24bdaa1c4f3e5439a9657d1b31b0cc32d8163b68"
+  },
+  "reviewed_inheritance": {
+    "base_plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "plan_fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "base_plan_review": {
+      "path": "config/research/intraday-event-drift-001-plan-independent-review-v1.json",
+      "sha256": "25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96",
+      "review_fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+    }
+  },
+  "verdict": "pass",
+  "findings": [],
+  "answers": [
+    {
+      "control": "exact-inheritance",
+      "answer": "pass",
+      "basis": "The plan and review hashes, six frozen dependency pairs, chronology, data, execution, controlled-evaluation disposition, and protected boundaries match Event Drift. Event Drift strategy mechanics and results do not carry forward."
+    },
+    {
+      "control": "gate-mathematics",
+      "answer": "pass",
+      "basis": "The plan fixes each required numerator, denominator, fold aggregation, positivity rule, concentration, retention, exact neighbor fraction, median, accounting identity, and undefined-metric action."
+    },
+    {
+      "control": "spy-only-engine-feasibility",
+      "answer": "pass",
+      "basis": "Completed-bar decisions, delayed fills, binary zero or 0.5 targets, mandatory session flattening, and one-entry state support the planned SPY round trip. QQQ remains a complete-universe zero target and cannot enter the signal."
+    },
+    {
+      "control": "distinct-causal-strategy",
+      "answer": "pass",
+      "basis": "The SPY own-price opening-range design has no QQQ-minus-SPY rank, leader or laggard arm, direction inversion, opening-gap floor, shorting, leverage, resize, or reentry. Repricing results supplied no numeric plan input."
+    },
+    {
+      "control": "candidate-graph-and-budget",
+      "answer": "pass",
+      "basis": "The three ordered candidates form two symmetric undirected immediate-neighbor edges. The fixed stage ceilings sum to 46 run specifications and 138 maximum infrastructure attempts."
+    },
+    {
+      "control": "restart-safe-parallel-execution",
+      "answer": "pass",
+      "basis": "The four-worker spawned executor, stage barriers, one-claim workers, 300-second leases, 60-second heartbeats, create-only reports, three-attempt ceiling, and expired-no-result-only retry rule match existing controls."
+    },
+    {
+      "control": "authority-and-launch-boundary",
+      "answer": "pass",
+      "basis": "June, V3, daily 2018-2019, PAPER and broker state, strategic-allocation-21, live execution, and partial-result adaptation remain unavailable. Implementation must merge separately and pass a finding-free exact-main launch review before the first reservation."
+    }
+  ],
+  "verification": {
+    "plan_sha256_revalidated": true,
+    "plan_fingerprint_revalidated": true,
+    "duplicate_json_key_count": 0,
+    "predecessor_closeout_sha256_and_outcome_revalidated": true,
+    "base_plan_sha256_and_fingerprint_revalidated": true,
+    "base_review_sha256_and_fingerprint_revalidated": true,
+    "inherited_dependency_artifact_count_revalidated": 6,
+    "source_event_count": 30,
+    "eligible_event_count": 28,
+    "excluded_event_count": 2,
+    "period_count": 5,
+    "candidate_count": 3,
+    "undirected_neighbor_edge_count": 2,
+    "discovery_gate_count": 11,
+    "walk_forward_gate_count": 16,
+    "stress_scenario_count": 4,
+    "stress_gate_count": 12,
+    "neighbor_gate_count": 2,
+    "maximum_run_specifications": 46,
+    "maximum_infrastructure_attempts": 138,
+    "exact_byte_rereview": true
+  },
+  "scope_limit": "Read-only repository review only. The review did not access .trading-lab, market bars or results, V3, daily 2018-2019, PAPER, broker, or live state; run a strategy, replay, or worker; or use the network. Synthetic one-worker and four-worker equivalence remains a launch-control obligation after implementation.",
+  "authority": {
+    "strategy_execution": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "92f20b1648dba189130c0980e427e1364d0f7fecb8f52166ddc933ac165db540"
+}
