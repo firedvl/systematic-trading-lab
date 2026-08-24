@@ -209,6 +209,16 @@ _AUTHORITY = MappingProxyType(
 )
 
 
+class _CoordinatorValidationError(ValueError):
+    """Terminal validation failure over already-completed canonical runs."""
+
+    def __init__(self, classification: str, run_ids: Sequence[str], cause: str) -> None:
+        self.classification = classification
+        self.run_ids = tuple(sorted(set(run_ids)))
+        self.cause = cause
+        super().__init__(cause)
+
+
 class IntradayEventRepricing001Store(IntradayEventDrift001Store):
     """Campaign view over the generic append-only attempt store."""
 
@@ -438,6 +448,16 @@ class IntradayEventRepricing001Runner:
                 cohort = self._select_cohort(serious)
                 freeze = self._freeze(discovery, walk_forward, serious, cohort)
                 final = self._final_report(discovery, walk_forward, serious, cohort, freeze)
+            except _CoordinatorValidationError as error:
+                rows = self.attempt_store.list_runs()
+                running = tuple(row for row in rows if row["status"] == "running")
+                if running:
+                    raise
+                failed = tuple(row for row in rows if row["status"] == "failed")
+                final = self._terminal_interruption_report(
+                    failed,
+                    coordinator_failure=error,
+                )
             except Exception:
                 rows = self.attempt_store.list_runs()
                 failed = tuple(row for row in rows if row["status"] == "failed")
@@ -650,7 +670,15 @@ class IntradayEventRepricing001Runner:
     ) -> tuple[Mapping[str, Any], Mapping[str, Any], Mapping[str, object]]:
         leader = self._report_for(candidate_id, period_id, "leader", scenario_id)
         control = self._report_for(candidate_id, period_id, "laggard-control", scenario_id)
-        return leader, control, _pair_reports(leader, control)
+        try:
+            pair = _pair_reports(leader, control)
+        except Exception as error:
+            raise _CoordinatorValidationError(
+                "paired-report-validation",
+                (_text(leader, "run_id"), _text(control, "run_id")),
+                f"{type(error).__name__}: {error}",
+            ) from error
+        return leader, control, pair
 
     def _normal_zero_pairs(
         self, candidate_id: str, period_id: str
@@ -668,9 +696,17 @@ class IntradayEventRepricing001Runner:
             ) or left_evidence.get("decision_trace_fingerprint") != right_evidence.get(
                 "decision_trace_fingerprint"
             ):
-                raise ValueError("Event Repricing 001 cross-scenario traces differ")
+                raise _CoordinatorValidationError(
+                    "cross-scenario-trace-validation",
+                    tuple(_text(report, "run_id") for report in normal[:2] + zero[:2]),
+                    "ValueError: Event Repricing 001 cross-scenario traces differ",
+                )
         if normal[2]["selection_trace_fingerprint"] != zero[2]["selection_trace_fingerprint"]:
-            raise ValueError("Event Repricing 001 paired scenario selection differs")
+            raise _CoordinatorValidationError(
+                "cross-scenario-trace-validation",
+                tuple(_text(report, "run_id") for report in normal[:2] + zero[:2]),
+                "ValueError: Event Repricing 001 paired scenario selection differs",
+            )
         return normal, zero
 
     def _require_no_failures(self) -> None:
@@ -1013,12 +1049,11 @@ class IntradayEventRepricing001Runner:
             base_pair = _mapping(base.get("normal_pair_aggregate"), "base pair aggregate")
             base_profit = Decimal(str(base_leader["net_profit_loss"]))
             base_relative = Decimal(str(base_pair["aggregate_relative_continuation_bps"]))
-            base_selection = tuple(
-                self._scenario_pair(candidate_id, period.period_id, "normal")[2][
-                    "selection_trace_fingerprint"
-                ]
+            base_pairs = tuple(
+                self._scenario_pair(candidate_id, period.period_id, "normal")[2]
                 for period in periods
             )
+            base_selection = tuple(pair["selection_trace_fingerprint"] for pair in base_pairs)
             stress_values: dict[str, Decimal | int | None] = {}
             stress_runs: list[dict[str, object]] = []
             for scenario_id in stress_scenarios:
@@ -1031,8 +1066,17 @@ class IntradayEventRepricing001Runner:
                         candidate_id, period.period_id, scenario_id
                     )
                     if pair["selection_trace_fingerprint"] != base_selection[period_index]:
-                        raise ValueError(
-                            "Event Repricing 001 stress selection trace differs from Normal"
+                        base_pair = base_pairs[period_index]
+                        raise _CoordinatorValidationError(
+                            "cross-scenario-trace-validation",
+                            (
+                                _text(leader, "run_id"),
+                                _text(control, "run_id"),
+                                _text(base_pair, "leader_run_id"),
+                                _text(base_pair, "laggard_control_run_id"),
+                            ),
+                            "ValueError: Event Repricing 001 stress selection trace differs "
+                            "from Normal",
                         )
                     stress_leaders.append(leader)
                     stress_controls.append(control)
@@ -1303,7 +1347,10 @@ class IntradayEventRepricing001Runner:
         return self._publish_final_report(payload)
 
     def _terminal_interruption_report(
-        self, failed: Sequence[Mapping[str, object]]
+        self,
+        failed: Sequence[Mapping[str, object]],
+        *,
+        coordinator_failure: _CoordinatorValidationError | None = None,
     ) -> Mapping[str, Any]:
         runs = self.attempt_store.list_runs()
         histories = [
@@ -1336,6 +1383,15 @@ class IntradayEventRepricing001Runner:
             },
             "cohort": [],
             "terminal_failures": [_run_evidence(row) for row in failed],
+            "coordinator_failure": (
+                None
+                if coordinator_failure is None
+                else {
+                    "classification": coordinator_failure.classification,
+                    "affected_run_ids": list(coordinator_failure.run_ids),
+                    "cause": coordinator_failure.cause,
+                }
+            ),
             "attempt_summary": _attempt_summary(runs, histories),
             "attempt_histories": histories,
             "runtime_database": {

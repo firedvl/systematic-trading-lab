@@ -256,6 +256,68 @@ def test_pair_validation_precedes_metrics_and_uses_market_price_continuation() -
             _pair_reports(leader, changed)
 
 
+def test_pair_mismatch_freezes_create_only_terminal_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runner = _runner()
+    runner.runtime_root = tmp_path / PROGRAM_ID
+    runner.attempt_store = IntradayEventRepricing001Store(runner.runtime_root)
+    runner.store = runner.attempt_store
+    runner.workers = 4
+    runner.progress = lambda _message: None
+    candidate = runner.plan.configurations[0]
+    period = runner.plan.periods[0]
+    specifications = tuple(
+        runner._specification(candidate, period, arm, "normal") for arm in runner_module._ARMS
+    )
+    runner.attempt_store.reserve(specifications)
+    reports: dict[str, dict[str, Any]] = {}
+    for specification, arm in zip(specifications, runner_module._ARMS, strict=True):
+        run_id = _run_id(specification)
+        claim = runner.attempt_store.claim(run_id, source_sha=_SOURCE)
+        runner.attempt_store.publish(
+            claim,
+            Path("run-reports") / f"{run_id}.json",
+            b"{}\n",
+            report_fingerprint="0" * 64,
+        )
+        report = _arm_report(arm)
+        report["run_id"] = run_id
+        cast(dict[str, object], report["specification"])["context"] = dict(
+            cast(dict[str, object], specification["context"])
+        )
+        reports[arm] = report
+    reports["laggard-control"]["details"]["selection_trace_fingerprint"] = "b" * 64
+
+    monkeypatch.setattr(
+        runner,
+        "_report_for",
+        lambda _candidate, _period, arm, _scenario: reports[arm],
+    )
+    monkeypatch.setattr(
+        runner,
+        "_run_discovery",
+        lambda: runner._scenario_pair(candidate.candidate_id, period.period_id, "normal"),
+    )
+
+    result = runner.run()
+    report_path = runner.runtime_root / "final-report.json"
+    first_bytes = report_path.read_bytes()
+    report = cast(dict[str, Any], json.loads(first_bytes))
+    failure = cast(dict[str, Any], report["coordinator_failure"])
+
+    assert result["outcome"] == "terminally-interrupted"
+    assert failure == {
+        "affected_run_ids": sorted(_run_id(value) for value in specifications),
+        "cause": "ValueError: Event Repricing 001 paired selection traces differ",
+        "classification": "paired-report-validation",
+    }
+    assert report["terminal_failures"] == []
+    assert all(row["status"] == "completed" for row in runner.attempt_store.list_runs())
+    assert runner.run()["outcome"] == "terminally-interrupted"
+    assert report_path.read_bytes() == first_bytes
+
+
 def test_pair_aggregation_recomputes_exact_fractions_and_concentrations() -> None:
     pairs = (
         {
