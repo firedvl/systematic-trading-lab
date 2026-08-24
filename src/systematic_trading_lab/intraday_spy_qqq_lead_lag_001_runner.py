@@ -651,6 +651,16 @@ class IntradaySpyQqqLeadLag001Runner:
                 (_text(normal, "run_id"), _text(zero, "run_id")),
                 "ValueError: SPY-QQQ Lead-Lag 001 paired signal trace differs",
             )
+        normal_execution = _mapping(normal.get("execution_evidence"), "normal execution evidence")
+        zero_execution = _mapping(zero.get("execution_evidence"), "zero-cost execution evidence")
+        if _text(normal_execution, "decision_trace_fingerprint") != _text(
+            zero_execution, "decision_trace_fingerprint"
+        ):
+            raise _CoordinatorValidationError(
+                "cross-scenario-decision-validation",
+                (_text(normal, "run_id"), _text(zero, "run_id")),
+                "ValueError: SPY-QQQ Lead-Lag 001 paired decision trace differs",
+            )
         return normal, zero
 
     def _require_no_failures(self) -> None:

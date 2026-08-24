@@ -246,6 +246,35 @@ def test_synthetic_session_contract_and_parallel_equivalence() -> None:
         assert fixture["canonical_report_equal"] is True
 
 
+def test_normal_zero_pair_rejects_decision_trace_mismatch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runner = object.__new__(IntradaySpyQqqLeadLag001Runner)
+    reports = {
+        "normal": {
+            "run_id": "normal-run",
+            "lead_signal_trace_fingerprint": "f" * 64,
+            "execution_evidence": {"decision_trace_fingerprint": "a" * 64},
+        },
+        "zero_cost_diagnostic": {
+            "run_id": "zero-run",
+            "lead_signal_trace_fingerprint": "f" * 64,
+            "execution_evidence": {"decision_trace_fingerprint": "b" * 64},
+        },
+    }
+    monkeypatch.setattr(
+        runner,
+        "_report_for",
+        lambda _candidate_id, _period_id, scenario_id: reports[scenario_id],
+    )
+
+    with pytest.raises(ValueError, match="paired decision trace differs") as error:
+        runner._normal_zero("isqlll001-a01-b01", "discovery-2025-07-through-10")
+
+    assert cast(Any, error.value).classification == "cross-scenario-decision-validation"
+    assert cast(Any, error.value).run_ids == ("normal-run", "zero-run")
+
+
 def test_deterministic_coordinator_error_becomes_terminal_evidence(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
