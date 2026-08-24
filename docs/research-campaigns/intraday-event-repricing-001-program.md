@@ -1,6 +1,6 @@
 # Intraday Event Repricing 001 program
 
-Status: prospectively frozen and independently reviewed before implementation or strategy results.
+Status: implementation complete; exact-main launch review pending before any reservation or result.
 
 Plan SHA-256: `f24cae1372f346be02c0079b931c77d5efb5105a06cf26631b783010851bd8b8`.
 Plan fingerprint: `2f98e0cc4565435c9974f65791fd830f7fb9509730f31872f97d77484c00c489`.
@@ -98,7 +98,7 @@ freezes simultaneously; zero survivors remains valid.
 
 ## Execution and recovery controls
 
-The implementation must reuse the existing long-only Exposed 002 engine, restart-safe attempt
+The implementation reuses the existing long-only Exposed 002 engine, restart-safe attempt
 store, four-worker spawned executor, one-claim workers, stage barriers, leases, heartbeats,
 create-only reports, and terminal deterministic failure classes. Each arm has its own immutable run
 and report. A cost-independent selection trace binds event, parameters, signed reaction, active
@@ -110,11 +110,12 @@ Event Drift and Exposed runtimes do not change.
 
 ## Launch and authority boundary
 
-This plan grants no strategy execution. After the reviewed plan merges, a separate branch must
-implement the strict inherited-plan loader, strategy arms,
-selection trace, paired report,
-budget enforcement, runner, CLI, and focused tests. That implementation must merge to clean exact
-main and receive a finding-free hash-bound launch review before the first reservation.
+This plan grants no strategy execution. The implementation adds the strict inherited-plan loader,
+strategy arms, selection trace, paired report, budget enforcement, runner, CLI, and focused tests.
+It routes the console entry point through a small campaign wrapper so the immutable Event Drift
+`public_cli.py` launch hash remains unchanged; every other command delegates to the existing CLI.
+The implementation must merge to clean exact main and receive a finding-free hash-bound launch
+review before the first reservation. The launch-control constants remain unset until that review.
 
 June, Intraday V3, daily 2018–2019, PAPER/broker state, `strategic-allocation-21`, and live execution
 remain untouched. The reused pre-May bars are exposed research data, not controlled evidence. A
