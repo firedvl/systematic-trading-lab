@@ -21,6 +21,10 @@ from systematic_trading_lab.intraday_event_drift_001_runner import _dataset_bind
 from systematic_trading_lab.intraday_event_opening_breakout_001_cli import (
     event_opening_breakout_parser,
 )
+from systematic_trading_lab.intraday_event_opening_breakout_001_launch_control import (
+    REVIEWED_LAUNCH_CONTROL_FINGERPRINT,
+    REVIEWED_LAUNCH_CONTROL_SHA256,
+)
 from systematic_trading_lab.intraday_event_opening_breakout_001_plan import (
     PLAN_FINGERPRINT,
     PLAN_RELATIVE_PATH,
@@ -52,6 +56,7 @@ from systematic_trading_lab.intraday_exposed_002_runner import (
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _SOURCE = "0" * 40
+_IMPLEMENTATION_SOURCE = "017a7cbd91a151fbdc0ddf80f5f580f0c3f9eb34"
 
 
 def _allow_unreviewed_test_source(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -77,7 +82,12 @@ def _runner() -> IntradayEventOpeningBreakout001Runner:
     return runner
 
 
-def test_plan_status_cli_and_unbound_launch_are_read_only(tmp_path: Path) -> None:
+def test_plan_status_cli_and_unbound_launch_are_read_only(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(runner_module, "REVIEWED_LAUNCH_CONTROL_SHA256", None)
+    monkeypatch.setattr(runner_module, "REVIEWED_LAUNCH_CONTROL_FINGERPRINT", None)
     plan = intraday_event_opening_breakout_001_plan_summary(_REPOSITORY)
     status = intraday_event_opening_breakout_001_status(tmp_path)
     arguments = event_opening_breakout_parser().parse_args(("run", "--workers", "6"))
@@ -96,6 +106,24 @@ def test_plan_status_cli_and_unbound_launch_are_read_only(tmp_path: Path) -> Non
     with pytest.raises(ValueError, match="launch control is not hash-bound"):
         IntradayEventOpeningBreakout001Runner(_REPOSITORY, tmp_path)
     assert not (tmp_path / PROGRAM_ID).exists()
+
+
+def test_reviewed_launch_control_binds_exact_implementation() -> None:
+    path = _REPOSITORY / runner_module.LAUNCH_CONTROL_RELATIVE_PATH
+    raw = path.read_bytes()
+    review = cast(dict[str, Any], json.loads(raw))
+    stored = cast(str, review.pop("review_fingerprint"))
+
+    assert hashlib.sha256(raw).hexdigest() == REVIEWED_LAUNCH_CONTROL_SHA256
+    assert stored == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
+    assert fingerprint(review) == stored
+    loaded = runner_module._load_launch_control(
+        _REPOSITORY,
+        source_commit=_IMPLEMENTATION_SOURCE,
+    )
+    assert cast(Mapping[str, object], loaded["implementation"])["source_commit"] == (
+        _IMPLEMENTATION_SOURCE
+    )
 
 
 @pytest.mark.parametrize(
