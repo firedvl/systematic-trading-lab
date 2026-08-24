@@ -176,7 +176,7 @@ def test_cli_delegates_every_other_command_to_the_existing_chain(
     assert cli_module.main(("research", "list-strategies")) == 17
     assert received == ("research", "list-strategies")
     assert (
-        'trading-lab = "systematic_trading_lab.intraday_event_prior_low_rejection_001_cli:main"'
+        'trading-lab = "systematic_trading_lab.intraday_spy_qqq_lead_lag_001_cli:main"'
         in (_REPOSITORY / "pyproject.toml").read_text()
     )
 
