@@ -358,7 +358,9 @@ class _Worker:
                     arm,
                 )
                 failure_class = "data"
-                bars = IntradayExposed002Runner._bars(cast(Any, self), cast(Any, period))
+                bars = IntradayExposed002Runner._bars(
+                    cast(Any, self), cast(Any, period), self.base_plan.payload
+                )
                 failure_class = "candidate"
                 result = IntradayExposed002Engine(
                     Decimal(str(self.base_plan.payload["execution"]["initial_cash"])),

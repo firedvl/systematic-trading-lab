@@ -14,6 +14,7 @@ import pytest
 
 import systematic_trading_lab.intraday_event_repricing_001_runner as runner_module
 import systematic_trading_lab.intraday_exposed_002_runner as exposed_runner_module
+from systematic_trading_lab.domain import OHLCVBar, Symbol, TimestampRange
 from systematic_trading_lab.fingerprints import fingerprint
 from systematic_trading_lab.intraday_event_drift_001_plan import (
     load_intraday_event_drift_001_plan,
@@ -112,6 +113,21 @@ class _FrozenDatasetService:
         return deepcopy(self.validations[dataset_id])
 
 
+class _RangeDatasetService:
+    def __init__(self, bars: tuple[OHLCVBar, ...]) -> None:
+        self.bars = bars
+        self.calls: list[tuple[str, dict[str, object]]] = []
+
+    def load_bars_range(
+        self,
+        dataset_id: str,
+        requested: TimestampRange,
+        **identity: object,
+    ) -> tuple[OHLCVBar, ...]:
+        self.calls.append((dataset_id, identity))
+        return tuple(bar for bar in self.bars if requested.start <= bar.timestamp <= requested.end)
+
+
 def _frozen_dataset_service(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -155,6 +171,21 @@ def _set_nested(value: dict[str, object], path: tuple[str, ...], replacement: ob
     for key in path[:-1]:
         target = cast(dict[str, object], target[key])
     target[path[-1]] = replacement
+
+
+def _boundary_bars(period: Any) -> tuple[OHLCVBar, ...]:
+    return tuple(
+        OHLCVBar(
+            Symbol("QQQ"),
+            timestamp,
+            Decimal("100"),
+            Decimal("100"),
+            Decimal("100"),
+            Decimal("100"),
+            1_000,
+        )
+        for timestamp in (period.context_start, period.evaluation_end)
+    )
 
 
 def _runner() -> IntradayEventRepricing001Runner:
@@ -266,6 +297,58 @@ def test_worker_constructs_from_inherited_dataset_contract(
     assert "data" not in worker.plan.payload
     assert worker.base_plan.payload["data"]["feed"] == "iex"
     assert worker.attempt_store.list_runs() == ()
+
+
+def test_worker_task_loads_bars_from_inherited_dataset_contract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runner = _runner()
+    period = runner.plan.periods[0]
+    bars = _boundary_bars(period)
+    service = _RangeDatasetService(bars)
+    runner.runtime_root = tmp_path / PROGRAM_ID
+    runner.attempt_store = IntradayEventRepricing001Store(runner.runtime_root)
+    specification = runner._specification(runner.plan.configurations[0], period, "leader", "normal")
+    runner.attempt_store.reserve((specification,))
+
+    worker = runner_module._Worker.__new__(runner_module._Worker)
+    worker.repository = runner.repository
+    worker.data_home = tmp_path
+    worker.source_commit = runner.source_commit
+    worker.plan = runner.plan
+    worker.base_plan = runner.base_plan
+    worker.cost_model = runner.cost_model
+    worker.datasets = runner.datasets
+    worker.data_by_dataset = {binding.dataset_id: cast(Any, service) for binding in worker.datasets}
+    worker.scenarios = runner.scenarios
+    worker._bar_cache = {}
+    worker.attempt_store = runner.attempt_store
+
+    class _Engine:
+        def __init__(self, *_args: object) -> None:
+            pass
+
+        def run(self, loaded: tuple[OHLCVBar, ...], _strategy: object) -> object:
+            assert loaded == bars
+            return object()
+
+    monkeypatch.setattr(runner_module, "IntradayExposed002Engine", _Engine)
+    monkeypatch.setattr(
+        runner_module,
+        "_run_report",
+        lambda *_args: {"report_fingerprint": "f" * 64},
+    )
+
+    worker(specification)
+
+    inherited = cast(Mapping[str, object], worker.base_plan.payload["data"])
+    assert service.calls
+    assert all(
+        identity["expected_universe_id"] == inherited["universe_id"]
+        and identity["expected_universe_fingerprint"] == inherited["universe_fingerprint"]
+        for _dataset_id, identity in service.calls
+    )
+    assert runner.attempt_store.get(_run_id(specification))["status"] == "completed"
 
 
 @pytest.mark.parametrize(
@@ -393,6 +476,30 @@ def test_exposed_002_dataset_verification_keeps_its_local_plan_contract(
     )
 
     IntradayExposed002Runner._verify_datasets(cast(Any, target))
+
+
+def test_exposed_002_bar_loading_keeps_its_local_plan_contract() -> None:
+    plan = load_intraday_exposed_002_plan(_REPOSITORY)
+    period = plan.periods[0]
+    bars = _boundary_bars(period)
+    service = _RangeDatasetService(bars)
+    bindings = exposed_runner_module._dataset_bindings(plan)
+    target = SimpleNamespace(
+        plan=plan,
+        datasets=bindings,
+        data_by_dataset={binding.dataset_id: service for binding in bindings},
+        _bar_cache={},
+    )
+
+    assert IntradayExposed002Runner._bars(cast(Any, target), period) == bars
+
+    local = cast(Mapping[str, object], plan.payload["data"])
+    assert service.calls
+    assert all(
+        identity["expected_universe_id"] == local["universe_id"]
+        and identity["expected_universe_fingerprint"] == local["universe_fingerprint"]
+        for _dataset_id, identity in service.calls
+    )
 
 
 def test_broker_environment_fails_before_runtime_or_worker_start(

@@ -441,12 +441,17 @@ class IntradayExposed002Runner:
                 "no retry is allowed"
             )
 
-    def _bars(self, period: Exposed002Period) -> tuple[OHLCVBar, ...]:
+    def _bars(
+        self,
+        period: Exposed002Period,
+        plan_payload: Mapping[str, Any] | None = None,
+    ) -> tuple[OHLCVBar, ...]:
         cached = self._bar_cache.get(period.period_id)
         if cached is not None:
             return cached
         bars: list[OHLCVBar] = []
-        data = _mapping(self.plan.payload.get("data"), "plan data")
+        payload = self.plan.payload if plan_payload is None else plan_payload
+        data = _mapping(payload.get("data"), "plan data")
         for binding in self.datasets:
             start = max(binding.start, period.context_start)
             end = min(binding.end, period.evaluation_end)
