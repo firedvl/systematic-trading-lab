@@ -1,0 +1,878 @@
+{
+  "schema_version": "intraday-spy-qqq-lead-lag-001-research-plan-v1",
+  "program_id": "intraday-spy-qqq-lead-lag-001",
+  "autonomous_program": {
+    "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+    "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9",
+    "fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f",
+    "campaign_index": 1,
+    "maximum_run_specifications": 90
+  },
+  "program_state_source": {
+    "path": "docs/research-campaigns/intraday-autonomous-research-001-state.json",
+    "sha256": "8ef652046442ce7adfcd474d8effe610738a2a00e29fc97ceae3d4110ae2981a",
+    "state_revision": 1,
+    "successor_state_rule": "Never mutate this source-state artifact. Each meaningful transition publishes a new immutable state-v2-revision-N artifact that binds this source state or the immediately preceding revision plus exact campaign evidence; future loaders follow the reviewed chain."
+  },
+  "status": "prospective-frozen-before-strategy-implementation-or-results",
+  "starting_main": "4bb7615bcb508db114d11904d07dc202fe135e99",
+  "purpose": "Test whether a fixed early SPY impulse followed by a bounded QQQ under-response predicts a QQQ catch-up over a fixed multi-hour hold on ordinary XNYS sessions.",
+  "research_basis": {
+    "complete_exposed_evidence": [
+      {
+        "path": "docs/research-campaigns/intraday-campaign-v2-postmortem.md",
+        "sha256": "7fe9fbc83a7a92954002bac5c3090fda6efc9c03a801bdd1fbff19e09f873f5c",
+        "disposition": "The one-bar momentum and 12-bar moving-average contracts failed all 12 research qualification groups; repeated exact-weight scheduling and friction dominated the recorded V2 implementation."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-exposed-001-final-report.md",
+        "sha256": "1ea6edb42b4d560dcdaee835172bd5614195f2a48dbf4bd61a9ab299689612ea",
+        "disposition": "A 325-parent price, volatility, volume-filtered breakout, VWAP, relative-strength, and combination search ended empty; most apparent gross edge did not survive costs or chronology."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-exposed-002-terminal-report.md",
+        "sha256": "e010a4fda5f40f778557a8164690248cbc158a806e0c30aac7f4ffd728d3926d",
+        "disposition": "The campaign completed four of 120 discovery rows, then closed terminally interrupted under its frozen no-retry rule. Its partial rows remain exposed evidence but cannot support merit inference, adaptation, resumption, or a qualification outcome."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-exposed-005-final-report.md",
+        "sha256": "c386eac54fec83f585b534edf9dbd386551053764330d58ccd64fa69ab3113de",
+        "disposition": "A sparse 60-parent program found one serious trend-pullback candidate, but it failed the exact immediate-neighbor gate and cannot be rescued, rounded, or retuned."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-event-drift-001-final-report.md",
+        "sha256": "357f3be173ae0038eb72c882a076d1795689a96ddcfa4b8545cd52f32eed6b11",
+        "disposition": "Joint long-only drift after scheduled pre-open BLS releases activated too rarely and too concentratively; friction did not cause the rejection."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-event-repricing-001-final-report.md",
+        "sha256": "f97f2211885dba005ad92a1243ec7dc2fb0dad29eba92b4959446dbb3974476b",
+        "disposition": "BLS-session signed QQQ-minus-SPY leader continuation failed at all nine parent points; the result must not be inverted into a rescue campaign."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-event-opening-breakout-001-final-report.md",
+        "sha256": "5b3168acdc31376636577c17e2a29afc51fe562e374278af427dfc3f1719bc89",
+        "disposition": "Scheduled-event SPY opening-range continuation had positive low-buffer points but insufficient gross edge, activity, or event diversification."
+      },
+      {
+        "path": "docs/research-campaigns/intraday-event-prior-low-rejection-001-program.md",
+        "sha256": "40fb4548988d16e7bf78a338f902fc952e2817672f610989bc390490d5d91d71",
+        "disposition": "Scheduled-event SPY prior-low rejection completed six runs once and froze empty after all three candidates failed discovery."
+      }
+    ],
+    "supported_observations": [
+      "Completed price-only and scheduled-event families have not tested a fixed SPY leader with a separately traded QQQ catch-up on ordinary sessions.",
+      "The proposed contract uses one state-changing entry, a multi-hour hold, and a gross-move floor before calibrated friction; it does not depend on a generic breakout or event filter.",
+      "The exposed domain remains suitable for bounded hypothesis rejection, but all reused bars and any result are exposed evidence and cannot establish controlled qualification."
+    ],
+    "new_hypothesis": "SPY can incorporate broad-index information before QQQ. When SPY has a positive completed-bar impulse and QQQ has returned no more than half as much, QQQ may catch up over the next fixed 24 bars.",
+    "novelty_boundary": "SPY is always the fixed feature source and signal-only leader; QQQ is the only traded symbol. No BLS filter, event calendar, leader selection, matched laggard, simultaneous confirmation, opening-range breakout, relative-rank rotation, or result inversion is allowed.",
+    "prohibited_inferences": [
+      "Do not inspect or use Campaign 1 returns to change Campaign 2 or Campaign 3.",
+      "Do not invert, retune, rescue, rerun, or weaken any predecessor campaign or this campaign.",
+      "Do not expand the two parameter axes, change the fixed under-response ratio, alter the hold, or substitute a neighbor after any result.",
+      "Do not treat symbol concentration as passed; it is structurally inapplicable because SPY is signal-only and QQQ is the sole traded symbol.",
+      "Do not access June 2026, Intraday V3, daily 2018-2019, protected results, PAPER or broker state, strategic-allocation-21, or live data."
+    ]
+  },
+  "inheritance": {
+    "base_plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "base_plan_review": {
+      "path": "config/research/intraday-event-drift-001-plan-independent-review-v1.json",
+      "sha256": "25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96",
+      "fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+    },
+    "invariants": {
+      "symbols": [
+        "QQQ",
+        "SPY"
+      ],
+      "timeframe": "5m",
+      "dataset_binding_count": 4,
+      "period_session_counts": [
+        87,
+        41,
+        39,
+        43,
+        20
+      ],
+      "maximum_market_timestamp": "2026-05-29T19:55:00Z",
+      "engine_version": "intraday-exposed-002-engine-v1",
+      "cost_model_id": "intraday-execution-cost-model-001-v1",
+      "default_worker_count": 4,
+      "maximum_infrastructure_attempts": 3,
+      "controlled_range_status": "none-eligible"
+    },
+    "interpretation": "The base artifacts are byte-bound dependencies for shared data identity, execution safeguards, and protected disposition. Campaign 1 owns and freezes its ordinary-session chronology, exact dataset intersections, strategy mechanics, candidate graph, gates, runtime, and reports. The base BLS event calendar, event chronology, event mechanics, candidate values, screens, and results are not inherited and are not used.",
+    "bound_base_artifacts": [
+      "data identity and read eligibility",
+      "execution cost model and session safeguards",
+      "protected-data and controlled-evaluation disposition"
+    ],
+    "campaign_owned_sections": [
+      "chronology",
+      "data read intersections",
+      "strategy contract",
+      "screens and stage rules",
+      "runtime and reporting"
+    ]
+  },
+  "data": {
+    "symbols": [
+      "QQQ",
+      "SPY"
+    ],
+    "timeframe": "5m",
+    "provider": "alpaca-historical-v2",
+    "feed": "iex",
+    "adjustment_policy": "provider-adjusted-all-v1",
+    "calendar_policy": "XNYS-regular-session-bars-v1",
+    "timestamp_policy": "bar-open-utc-v1",
+    "universe_id": "liquid-etfs-intraday-5m-v1",
+    "universe_fingerprint": "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9",
+    "reuse_existing_read_only_datasets": true,
+    "new_market_data_acquisition": false,
+    "dataset_bindings": [
+      {
+        "dataset_id": "0a307dd767283d8f268c10b372c416abc49ac555cb242bf612f0b485be518363",
+        "fingerprint": "166722d26f52ca344abf38c35e56e9c6496c1fd7444affa5218495091aaee01e",
+        "raw_fingerprint": "249f23deb77c2a4488d7cdde058b538d8431f1dde912a483d80a5d5f73605d3d",
+        "allowed_read_start": "2025-07-01T13:30:00Z",
+        "allowed_read_end": "2025-12-31T20:55:00Z"
+      },
+      {
+        "dataset_id": "074e66c2260f576d6c1765295db93b5e22fb4753dc8f9912ef6f5be7fa937479",
+        "fingerprint": "d74ba8fefd3ac0f46cb86f155212f5d5eecef286d5d411847c952f6ab60e8437",
+        "raw_fingerprint": "b08465f9fdd726cf0e9669836e510bd181dd0eae3771fa80da63c2c820f104d5",
+        "allowed_read_start": "2026-01-02T14:30:00Z",
+        "allowed_read_end": "2026-02-27T20:55:00Z"
+      },
+      {
+        "dataset_id": "1b1b5b1179a84522d6827827a6143a547321ef8b49262cdfb4d6a81885f647ed",
+        "fingerprint": "bbff4ec9c8992d088a2a85cf35196d20b0b30328d9d5e287540b8e73e907c470",
+        "raw_fingerprint": "b21dc4074f31b1ba8cbc15f1767f76aa1287b5d128310f20c9b5ea002ea3609a",
+        "allowed_read_start": "2026-03-02T14:30:00Z",
+        "allowed_read_end": "2026-04-30T19:55:00Z"
+      },
+      {
+        "dataset_id": "4afa60f29ea266ec8b60be9d9600132f8cff4207e846443c65afd3bb5c497a19",
+        "fingerprint": "d34de04b0045967396266bfba7c3427b5fac949d5e1800c0d5fe5b3fc454e29c",
+        "raw_fingerprint": "9c0fa665f1afcf9f5355758d5dfe17b49e090671812132cc00612d337b96f5a5",
+        "raw_sha256": "e5fd2680c7915f4673e1735f860473c37e32ceaa57f7876111310d0ac5c87ad2",
+        "manifest_sha256": "027714eeb34f274c6b887c1fefecdd72b18d24ef505a906a9d5137bdc8e2ee5f",
+        "bars_sha256": "74ce7f13971564b4d7d42e0e7adfc1811ed026498cbed9fac7e79864d1afdb44",
+        "allowed_read_start": "2026-05-01T13:30:00Z",
+        "allowed_read_end": "2026-05-29T19:55:00Z"
+      }
+    ],
+    "full_dataset_validation_before_reservation": true,
+    "maximum_read_end": "2026-05-29T19:55:00Z",
+    "artifact_containing_june_allowed": false,
+    "run_dataset_input_rule": "Sort bindings by allowed_read_start. Include each binding that intersects context_start through evaluation_end. Each entry has exactly dataset_id, fingerprint, raw_fingerprint, read_start=max(context_start, allowed_read_start), read_end=min(evaluation_end, allowed_read_end), evaluation_read_start=max(evaluation_start, allowed_read_start), and evaluation_read_end=min(evaluation_end, allowed_read_end). Set both evaluation fields to null when the binding does not intersect the evaluation range."
+  },
+  "chronology": {
+    "source": "Campaign-owned ordinary-session chronology. The period boundaries and exposed data identities match the bound base artifacts, while this plan independently freezes the five periods, context lookbacks, signal eligibility, and hold-capacity rules; no Event Drift event chronology is inherited.",
+    "periods": [
+      {
+        "period_id": "discovery-2025-07-through-10",
+        "context_start": "2025-07-01T13:30:00Z",
+        "evaluation_start": "2025-07-01T13:30:00Z",
+        "evaluation_end": "2025-10-31T19:55:00Z",
+        "session_count": 87
+      },
+      {
+        "period_id": "walk-forward-2025-11-through-12",
+        "context_start": "2025-10-20T13:30:00Z",
+        "evaluation_start": "2025-11-03T14:30:00Z",
+        "evaluation_end": "2025-12-31T20:55:00Z",
+        "session_count": 41
+      },
+      {
+        "period_id": "walk-forward-2026-01-through-02",
+        "context_start": "2025-12-17T14:30:00Z",
+        "evaluation_start": "2026-01-02T14:30:00Z",
+        "evaluation_end": "2026-02-27T20:55:00Z",
+        "session_count": 39
+      },
+      {
+        "period_id": "walk-forward-2026-03-through-04",
+        "context_start": "2026-02-13T14:30:00Z",
+        "evaluation_start": "2026-03-02T14:30:00Z",
+        "evaluation_end": "2026-04-30T19:55:00Z",
+        "session_count": 43
+      },
+      {
+        "period_id": "final-exposed-2026-05",
+        "context_start": "2026-04-17T13:30:00Z",
+        "evaluation_start": "2026-05-01T13:30:00Z",
+        "evaluation_end": "2026-05-29T19:55:00Z",
+        "session_count": 20
+      }
+    ],
+    "period_order": [
+      "discovery-2025-07-through-10",
+      "walk-forward-2025-11-through-12",
+      "walk-forward-2026-01-through-02",
+      "walk-forward-2026-03-through-04",
+      "final-exposed-2026-05"
+    ],
+    "context_only_session_rule": "Context-only sessions before each evaluation range may supply completed prior history but are signal-ineligible, remain flat, and do not enter P&L, fees, benchmarks, or gates.",
+    "ordinary_session_rule": "Every complete validated XNYS regular session in the evaluation range is signal-eligible except a session lacking enough validated bars for the candidate horizon, fixed 24-bar hold, and maximum three-bar delay; such a session remains flat and is recorded as hold-capacity-ineligible.",
+    "maximum_market_timestamp": "2026-05-29T19:55:00Z",
+    "inference_limit": "The five exposed periods support bounded hypothesis triage only. They do not establish statistical qualification, future profitability, controlled evaluation, or PAPER readiness."
+  },
+  "frozen_dependencies": {
+    "base_plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "base_plan_review": {
+      "path": "config/research/intraday-event-drift-001-plan-independent-review-v1.json",
+      "sha256": "25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96",
+      "fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+    },
+    "execution_cost_model": {
+      "path": "config/research/intraday-execution-cost-model-001-v1.json",
+      "sha256": "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af",
+      "fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4"
+    },
+    "execution_cost_review": {
+      "path": "config/research/intraday-execution-cost-model-001-independent-review-v1.json",
+      "sha256": "fb197856b9229349e5de4bca742f328a8f1e5e53f9558dfd7324744e91a795aa",
+      "fingerprint": "8ade5190bb64330af037f88bf0911ed3cdb04578ca7a6d6e27a5fa6d651349b2",
+      "verdict": "pass"
+    },
+    "june_disposition": {
+      "path": "config/research/intraday-exposed-005-june-disposition-v1.json",
+      "sha256": "af6aea5e8d7bd8360aa6af4ddc31e1e67a1be48476f6c8ab13197fe12515b3c0",
+      "fingerprint": "6dad6480dc3b0379017d582bb2f29fc562f41379bb3065855c55eadf51f025dd",
+      "range_status": "ineligible"
+    },
+    "autonomous_program_review": {
+      "path": "config/research/intraday-autonomous-research-001-program-independent-review-v1.json",
+      "sha256": "1731794543d13306f34462016d376966d47ae8354fa337144889c7bea5c738db",
+      "fingerprint": "50424b9e5c07a95351af93e560859293768e34959d01f816f0f63042302497c0",
+      "state_sha256": "8ef652046442ce7adfcd474d8effe610738a2a00e29fc97ceae3d4110ae2981a",
+      "verdict": "pass"
+    }
+  },
+  "strategy_contract": {
+    "strategy_id": "intraday-spy-qqq-fixed-leader-catchup-v1",
+    "economic_mechanism": "fixed-leader cross-asset information transmission",
+    "economic_hypothesis": "A positive early SPY impulse that QQQ has not yet matched may represent faster price discovery in the broader index ETF; QQQ may catch up during a fixed multi-hour hold.",
+    "ordinary_sessions_only": true,
+    "feature_source_symbol": "SPY",
+    "traded_symbol": "QQQ",
+    "signal_only_symbol": "SPY",
+    "long_only": true,
+    "shorting": false,
+    "leverage": false,
+    "relative_rank_or_leader_selection": false,
+    "opening_range_breakout": false,
+    "event_filter": false,
+    "release_contents_available": false,
+    "consensus_or_surprise_available": false,
+    "bar_indexing": "Zero-based within each validated XNYS regular session.",
+    "observation_rule": "Require one complete, timestamp-aligned SPY/QQQ pair for every regular-session bar index 0 through h-1; a missing, duplicate, nonconsecutive, or misaligned bar is a terminal data failure. After h bars complete, where h is 6, 12, or 18, compute each symbol return as 10,000 * (bar[h-1].close / bar[0].open - 1). Activate only when SPY return is greater than or equal to the candidate floor, QQQ return is greater than or equal to zero, and QQQ return is less than or equal to 0.5 times SPY return; equality passes every inclusive boundary. Under-response ratio is QQQ return / SPY return and is defined because a passing SPY floor is strictly positive.",
+    "entry_rule": "After bar h-1 completes, target SPY at zero and QQQ at weight 0.5. Normal delay 1 fills QQQ at bar h open. No SPY order is created; SPY remains signal-only.",
+    "exit_rule": "After completed bar h+23, target both symbols flat. For every delay d in 1, 2, or 3, entry fills at bar h-1+d open and exit fills at bar h+23+d open, exactly 24 five-minute bar intervals after that scenario's entry fill. The decision bars do not move with delay.",
+    "hold_bars": 24,
+    "early_close_rule": "A session is hold-capacity-ineligible when it lacks bar h+23+3. It remains flat rather than shortening the frozen hold. Mandatory flat-at-close remains a fail-closed backstop for an already active trade.",
+    "one_entry_invariant": "An active session has exactly one QQQ round trip, zero SPY fills, one entry, one exit, no resize, and no reentry. Any partial, duplicate, mismatched, or outside-contract outcome is a terminal deterministic failure.",
+    "no_signal_action": "Remain flat.",
+    "negative_or_excess_qqq_action": "Remain flat when SPY is below its floor, QQQ is negative, or QQQ exceeds half the SPY return.",
+    "signal_buckets": [
+      {
+        "bucket_id": "under-response-0-to-1-6",
+        "lower_inclusive": "0",
+        "upper_exclusive": "0.1666666666666666666666666667"
+      },
+      {
+        "bucket_id": "under-response-1-6-to-1-3",
+        "lower_inclusive": "0.1666666666666666666666666667",
+        "upper_exclusive": "0.3333333333333333333333333333"
+      },
+      {
+        "bucket_id": "under-response-1-3-to-1-2",
+        "lower_inclusive": "0.3333333333333333333333333333",
+        "upper_inclusive": "0.5"
+      }
+    ],
+    "signal_trace_rule": "Fingerprint session date, candidate parameters, completed SPY and QQQ returns, predicate result, under-response bucket or inactive reason code, entry decision timestamp, and planned exit decision timestamp. Exclude scenario, fills, prices after the signal, costs, fees, and returns after entry.",
+    "parameter_rationale": "Six, twelve, and eighteen completed five-minute bars represent 30, 60, and 90 minutes. Ten, twenty, and forty basis points are a sparse doubling scale above the calibrated small-order friction. The 0.5 under-response cap and 24-bar hold are fixed mechanism terms, not searched axes.",
+    "parameters": {
+      "axes": [
+        {
+          "name": "observation_horizon_bars",
+          "values": [
+            6,
+            12,
+            18
+          ]
+        },
+        {
+          "name": "minimum_spy_impulse_bps",
+          "values": [
+            "10",
+            "20",
+            "40"
+          ]
+        }
+      ],
+      "fixed": {
+        "qqq_under_response_ratio_min": "0",
+        "qqq_under_response_ratio_max": "0.5",
+        "qqq_target_weight": "0.5",
+        "spy_target_weight": "0",
+        "hold_bars": 24,
+        "maximum_entries_per_session": 1,
+        "reentry_allowed": false,
+        "resize_allowed": false
+      },
+      "candidate_count": 9,
+      "indexing_rule": "Axis indices are one-based. Expand observation_horizon_bars in listed order as the outer axis and minimum_spy_impulse_bps in listed order as the inner axis.",
+      "candidate_id_format": "isqlll001-a{one_based_horizon_index:02d}-b{one_based_floor_index:02d}",
+      "neighbor_rule": "Immediate neighbors differ on exactly one axis by one adjacent listed value and match on the other axis. IDs are sorted ascending and the graph is symmetric.",
+      "candidates": [
+        {
+          "candidate_id": "isqlll001-a01-b01",
+          "observation_horizon_bars": 6,
+          "minimum_spy_impulse_bps": "10",
+          "neighbor_ids": [
+            "isqlll001-a01-b02",
+            "isqlll001-a02-b01"
+          ]
+        },
+        {
+          "candidate_id": "isqlll001-a01-b02",
+          "observation_horizon_bars": 6,
+          "minimum_spy_impulse_bps": "20",
+          "neighbor_ids": [
+            "isqlll001-a01-b01",
+            "isqlll001-a01-b03",
+            "isqlll001-a02-b02"
+          ]
+        },
+        {
+          "candidate_id": "isqlll001-a01-b03",
+          "observation_horizon_bars": 6,
+          "minimum_spy_impulse_bps": "40",
+          "neighbor_ids": [
+            "isqlll001-a01-b02",
+            "isqlll001-a02-b03"
+          ]
+        },
+        {
+          "candidate_id": "isqlll001-a02-b01",
+          "observation_horizon_bars": 12,
+          "minimum_spy_impulse_bps": "10",
+          "neighbor_ids": [
+            "isqlll001-a01-b01",
+            "isqlll001-a02-b02",
+            "isqlll001-a03-b01"
+          ]
+        },
+        {
+          "candidate_id": "isqlll001-a02-b02",
+          "observation_horizon_bars": 12,
+          "minimum_spy_impulse_bps": "20",
+          "neighbor_ids": [
+            "isqlll001-a01-b02",
+            "isqlll001-a02-b01",
+            "isqlll001-a02-b03",
+            "isqlll001-a03-b02"
+          ]
+        },
+        {
+          "candidate_id": "isqlll001-a02-b03",
+          "observation_horizon_bars": 12,
+          "minimum_spy_impulse_bps": "40",
+          "neighbor_ids": [
+            "isqlll001-a01-b03",
+            "isqlll001-a02-b02",
+            "isqlll001-a03-b03"
+          ]
+        },
+        {
+          "candidate_id": "isqlll001-a03-b01",
+          "observation_horizon_bars": 18,
+          "minimum_spy_impulse_bps": "10",
+          "neighbor_ids": [
+            "isqlll001-a02-b01",
+            "isqlll001-a03-b02"
+          ]
+        },
+        {
+          "candidate_id": "isqlll001-a03-b02",
+          "observation_horizon_bars": 18,
+          "minimum_spy_impulse_bps": "20",
+          "neighbor_ids": [
+            "isqlll001-a02-b02",
+            "isqlll001-a03-b01",
+            "isqlll001-a03-b03"
+          ]
+        },
+        {
+          "candidate_id": "isqlll001-a03-b03",
+          "observation_horizon_bars": 18,
+          "minimum_spy_impulse_bps": "40",
+          "neighbor_ids": [
+            "isqlll001-a02-b03",
+            "isqlll001-a03-b02"
+          ]
+        }
+      ]
+    }
+  },
+  "execution": {
+    "engine_version": "intraday-exposed-002-engine-v1",
+    "initial_cash": "100000",
+    "currency": "USD",
+    "position_policy": "long-only-fixed-half-weight-no-resize-v1",
+    "maximum_gross_weight": "1",
+    "decision_semantics": "completed-five-minute-bar-only-v1",
+    "fill_semantics": "nth-later-eligible-bar-open-v1",
+    "pending_order_policy": "fifo-no-supersession-session-close-cancel-v1",
+    "session_policy": "XNYS-regular-session-flat-at-close-v1",
+    "fractional_shares": true,
+    "market_impact_model": null,
+    "scenarios": [
+      "normal",
+      "stress_a",
+      "stress_b",
+      "zero_cost_diagnostic",
+      "normal-delay-2",
+      "normal-delay-3"
+    ],
+    "zero_cost_authority": false,
+    "paired_normal_zero_cost_decision_trace": "For every candidate-period Normal and zero_cost_diagnostic pair, including immediate-neighbor runs, require equal execution_evidence.decision_trace_fingerprint values. A mismatch is a terminal deterministic failure."
+  },
+  "report_contract": {
+    "required_session_fields": [
+      "session_count",
+      "signal_eligible_session_count",
+      "hold_capacity_ineligible_session_count",
+      "active_session_count",
+      "completed_round_trips",
+      "session_ledger",
+      "session_disposition_counts",
+      "positive_profit_session_concentration",
+      "positive_profit_period_concentration",
+      "signal_bucket_net_profit_loss",
+      "positive_profit_signal_bucket_concentration",
+      "lead_signal_trace_fingerprint",
+      "signal_trace_mismatch_count"
+    ],
+    "symbol_concentration_disposition": "not-applicable-by-design: SPY is signal-only and QQQ is the sole traded symbol; do not silently pass a multi-symbol concentration gate.",
+    "session_observation_unit": "One ordinary XNYS session. SPY and QQQ bars in that session are one causal observation; SPY is not a second trade observation.",
+    "session_ledger_row": "Record every evaluated ordinary-session date, disposition code, signal-eligible flag, hold-capacity flag, observation horizon, SPY return, QQQ return, nullable under-response ratio, nullable signal bucket, active flag, entry decision/fill timestamps, exit decision/fill timestamps, QQQ fill count, SPY fill count, completed round trips, gross P&L, adverse slippage, regulatory fees, execution friction, and net P&L. Under-response ratio and signal bucket are null when SPY is below its strictly positive candidate floor or the session is hold-capacity-ineligible; do not divide by a nonpositive return or fabricate a bucket. Inactive and ineligible sessions retain causal feature or reason-code evidence and zero P&L; context-only sessions are excluded.",
+    "session_disposition_codes": [
+      "active",
+      "inactive-spy-below-floor",
+      "inactive-qqq-negative",
+      "inactive-qqq-over-response",
+      "hold-capacity-ineligible"
+    ],
+    "session_reconciliation_rule": "Every evaluated session has exactly one disposition. Active sessions alone may have two QQQ fills and one completed round trip. Inactive and ineligible sessions have zero orders, fills, fees, friction, and P&L. Aggregate counts and P&L must equal the ledger sums exactly.",
+    "active_session": "A signal-eligible session with exactly one completed QQQ round trip, zero SPY fills, matching signal trace across scenarios, and the frozen entry and exit decisions.",
+    "session_profit_concentration": "Maximum strictly positive session net P&L divided by the sum of strictly positive session net P&L; undefined when no session is positive.",
+    "period_profit_concentration": "Maximum strictly positive period aggregate net P&L divided by the sum of strictly positive period aggregate net P&L; undefined when no period is positive.",
+    "signal_bucket_profit_concentration": "Maximum strictly positive signal-bucket net P&L divided by the sum of strictly positive signal-bucket net P&L; undefined when no bucket is positive. Buckets are fixed before results.",
+    "lead_signal_trace_fingerprint": "Fingerprint the cost-independent signal trace defined by the strategy contract. Normal, zero-cost, stress, delay, and immediate-neighbor reports for the same candidate-period must match exactly.",
+    "required_identity_fields": [
+      "plan_sha256",
+      "plan_fingerprint",
+      "autonomous_program_sha256",
+      "autonomous_program_fingerprint",
+      "dataset_inputs",
+      "cost_model_fingerprint",
+      "source_commit"
+    ],
+    "dataset_inputs": "Ordered exact entries derived from the campaign-owned data binding and period intersection; each has dataset_id, fingerprint, raw_fingerprint, read_start, read_end, evaluation_read_start, and evaluation_read_end.",
+    "required_accounting_equation": "gross_profit_loss - execution_friction = net_profit_loss",
+    "aggregate_definitions": {
+      "fold_combination": "Concatenate session ledgers in frozen period order; periods and session dates must be disjoint.",
+      "aggregate_total_return": "Sum fold total returns under the inherited Exposed 002 aggregation convention.",
+      "aggregate_profit_and_cost": "Sum fold gross P&L, execution friction, and net P&L, then recheck the accounting equation.",
+      "positive_fold": "A fold whose net P&L and total return in the named scenario are both strictly positive.",
+      "positive_normal_fold_count": "Count positive Normal folds.",
+      "minimum_active_sessions_in_positive_normal_fold": "Minimum Normal active_session_count among positive Normal folds; undefined if none are positive.",
+      "aggregate_signal_trace_mismatch_count": "Sum the per-period signal_trace_mismatch_count values across every required Normal/zero-cost pair; any missing pair is terminal and the required aggregate value is zero.",
+      "stress_profit_retention": "Scenario aggregate net P&L divided by base Normal aggregate net P&L; undefined unless the base is positive.",
+      "joint_positive_neighbor_fraction": "Count immediate neighbors with strictly positive aggregate Normal and zero-cost total return and net P&L divided by the exact neighbor count; no rounding.",
+      "median_neighbor_normal_profit_retention": "Median of each neighbor aggregate Normal net P&L divided by the positive base aggregate Normal net P&L.",
+      "neighbor_signal_trace_mismatch_count": "Sum signal_trace_mismatch_count over every required immediate-neighbor period pair after identity deduplication; any missing pair is terminal and the required value is zero."
+    },
+    "benchmark_references": {
+      "scope": "Evaluation bars only; context bars are excluded.",
+      "cash": "Return fixed at zero.",
+      "spy_continuous": "SPY last evaluation close / SPY first evaluation open - 1, before costs.",
+      "qqq_continuous": "QQQ last evaluation close / QQQ first evaluation open - 1, before costs.",
+      "fixed_50_50_continuous": "Arithmetic mean of SPY and QQQ continuous returns.",
+      "authority": "Report-only references; never selection gates or authority."
+    }
+  },
+  "discovery_screen": {
+    "run_all_parents_before_screening": true,
+    "gates": [
+      {
+        "metric": "normal.total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "zero_cost_diagnostic.total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "normal.active_session_count",
+        "comparison": ">=",
+        "threshold": 12
+      },
+      {
+        "metric": "normal.completed_round_trips",
+        "comparison": ">=",
+        "threshold": 12
+      },
+      {
+        "metric": "normal.max_drawdown",
+        "comparison": "<=",
+        "threshold": "0.05"
+      },
+      {
+        "metric": "normal.cost_to_gross_profit",
+        "comparison": "<=",
+        "threshold": "0.25"
+      },
+      {
+        "metric": "normal.average_gross_trade_edge_bps",
+        "comparison": ">=",
+        "threshold": "5"
+      },
+      {
+        "metric": "normal.positive_profit_session_concentration",
+        "comparison": "<=",
+        "threshold": "0.50"
+      },
+      {
+        "metric": "normal.positive_profit_signal_bucket_concentration",
+        "comparison": "<=",
+        "threshold": "0.70"
+      },
+      {
+        "metric": "normal.signal_trace_mismatch_count",
+        "comparison": "=",
+        "threshold": 0
+      },
+      {
+        "metric": "normal.accounting_identity_error",
+        "comparison": "=",
+        "threshold": "0"
+      }
+    ],
+    "undefined_metric_action": "fail",
+    "walk_forward_cap": 3,
+    "selection_order": [
+      "normal.total_return descending",
+      "normal.positive_profit_session_concentration ascending",
+      "normal.cost_to_gross_profit ascending",
+      "candidate_id ascending"
+    ]
+  },
+  "walk_forward_screen": {
+    "required_period_count": 4,
+    "require_complete_normal_zero_pairs": true,
+    "gates": [
+      {
+        "metric": "aggregate.normal.total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "aggregate.zero_cost_diagnostic.total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "positive_normal_fold_count",
+        "comparison": ">=",
+        "threshold": 3
+      },
+      {
+        "metric": "final_exposed_may.normal.total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "final_exposed_may.normal.active_session_count",
+        "comparison": ">=",
+        "threshold": 4
+      },
+      {
+        "metric": "minimum_active_sessions_in_positive_normal_fold",
+        "comparison": ">=",
+        "threshold": 4
+      },
+      {
+        "metric": "worst_normal_fold_return",
+        "comparison": ">=",
+        "threshold": "-0.01"
+      },
+      {
+        "metric": "worst_normal_fold_drawdown",
+        "comparison": "<=",
+        "threshold": "0.05"
+      },
+      {
+        "metric": "aggregate.normal.active_session_count",
+        "comparison": ">=",
+        "threshold": 30
+      },
+      {
+        "metric": "aggregate.normal.completed_round_trips",
+        "comparison": ">=",
+        "threshold": 30
+      },
+      {
+        "metric": "aggregate.normal.cost_to_gross_profit",
+        "comparison": "<=",
+        "threshold": "0.25"
+      },
+      {
+        "metric": "aggregate.normal.average_gross_trade_edge_bps",
+        "comparison": ">=",
+        "threshold": "5"
+      },
+      {
+        "metric": "aggregate.normal.positive_profit_session_concentration",
+        "comparison": "<=",
+        "threshold": "0.40"
+      },
+      {
+        "metric": "aggregate.normal.positive_profit_period_concentration",
+        "comparison": "<=",
+        "threshold": "0.60"
+      },
+      {
+        "metric": "aggregate.normal.positive_profit_signal_bucket_concentration",
+        "comparison": "<=",
+        "threshold": "0.60"
+      },
+      {
+        "metric": "aggregate.normal.signal_trace_mismatch_count",
+        "comparison": "=",
+        "threshold": 0
+      },
+      {
+        "metric": "aggregate.normal.accounting_identity_error",
+        "comparison": "=",
+        "threshold": "0"
+      }
+    ],
+    "undefined_metric_action": "fail",
+    "serious_candidate_cap": 1,
+    "selection_order": [
+      "positive_normal_fold_count descending",
+      "aggregate.normal.total_return descending",
+      "aggregate.normal.positive_profit_session_concentration ascending",
+      "candidate_id ascending"
+    ]
+  },
+  "serious_candidate_screen": {
+    "stress_scenarios": [
+      "stress_a",
+      "stress_b",
+      "normal-delay-2",
+      "normal-delay-3"
+    ],
+    "run_each_stress_on_all_walk_forward_periods": true,
+    "stress_gates": [
+      {
+        "metric": "stress_a.aggregate_total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "stress_a.positive_fold_count",
+        "comparison": ">=",
+        "threshold": 3
+      },
+      {
+        "metric": "stress_a.normal_profit_retention",
+        "comparison": ">=",
+        "threshold": "0.50"
+      },
+      {
+        "metric": "stress_b.aggregate_total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "stress_b.positive_fold_count",
+        "comparison": ">=",
+        "threshold": 3
+      },
+      {
+        "metric": "stress_b.normal_profit_retention",
+        "comparison": ">=",
+        "threshold": "0.25"
+      },
+      {
+        "metric": "normal-delay-2.aggregate_total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "normal-delay-2.positive_fold_count",
+        "comparison": ">=",
+        "threshold": 3
+      },
+      {
+        "metric": "normal-delay-2.normal_profit_retention",
+        "comparison": ">=",
+        "threshold": "0.50"
+      },
+      {
+        "metric": "normal-delay-3.aggregate_total_return",
+        "comparison": ">",
+        "threshold": "0"
+      },
+      {
+        "metric": "normal-delay-3.positive_fold_count",
+        "comparison": ">=",
+        "threshold": 3
+      },
+      {
+        "metric": "normal-delay-3.normal_profit_retention",
+        "comparison": ">=",
+        "threshold": "0.25"
+      }
+    ],
+    "cross_scenario_signal_trace_rule": "Every scenario for one candidate-period must have the same lead_signal_trace_fingerprint; mismatch is terminal before screening.",
+    "neighbor_scenarios": [
+      "normal",
+      "zero_cost_diagnostic"
+    ],
+    "run_each_immediate_neighbor_on_all_walk_forward_periods": true,
+    "neighbor_topology": "Run every applicable immediate neighbor of the one serious candidate, at most four neighbors, across all four walk-forward periods and both neighbor scenarios. Require an exact 1.0 joint-positive-neighbor fraction; corners need 2/2, edges 3/3, and the center 4/4. No rounding.",
+    "neighbor_gates": [
+      {
+        "metric": "joint_positive_neighbor_fraction",
+        "comparison": ">=",
+        "threshold": "1"
+      },
+      {
+        "metric": "median_neighbor_normal_profit_retention",
+        "comparison": ">=",
+        "threshold": "0.60"
+      },
+      {
+        "metric": "neighbor_signal_trace_mismatch_count",
+        "comparison": "=",
+        "threshold": 0
+      }
+    ],
+    "undefined_metric_action": "fail"
+  },
+  "stage_rules": {
+    "barrier_after_each_stage": true,
+    "complete_stage_before_merit_read": true,
+    "screen_in_frozen_specification_order": true,
+    "no_partial_result_adaptation": true,
+    "no_gate_change_after_first_reservation": true,
+    "reuse_existing_candidate_period_scenario_evidence_in_later_screens": true,
+    "run_identity_fields": [
+      "candidate_id",
+      "period_id",
+      "scenario_id"
+    ],
+    "run_identity_and_deduplication_rule": "Canonical run identity is the exact tuple candidate_id, period_id, scenario_id. Reserve each identity at most once. Neighbor evaluation reuses an already completed identical walk-forward Normal or zero-cost row and reserves only missing identities; unused budget remains unused.",
+    "zero_cost_diagnostic_only": true,
+    "final_cohort_minimum": 0,
+    "final_cohort_maximum": 1,
+    "final_cohort_rule": "Freeze the one serious candidate only if it passes every frozen stress and every applicable immediate-neighbor gate simultaneously. Do not rank, substitute, or discard an all-gate survivor.",
+    "empty_cohort_action": "Close as immutable negative exposed evidence and advance only to Campaign 2 under the already frozen autonomous program.",
+    "nonempty_cohort_action": "Freeze the survivor and stop the autonomous program while waiting for future untouched data; do not create a controlled plan for exposed bars."
+  },
+  "search_budget": {
+    "unit": "One immutable run specification contains one candidate, period, and cost or delay scenario.",
+    "discovery_maximum": {
+      "run_specifications": 18,
+      "formula": "9 candidates * 2 scenarios"
+    },
+    "walk_forward_maximum": {
+      "run_specifications": 24,
+      "formula": "at most 3 candidates * 4 periods * 2 scenarios"
+    },
+    "stress_and_delay_maximum": {
+      "run_specifications": 16,
+      "formula": "1 serious candidate * 4 periods * 4 scenarios"
+    },
+    "immediate_neighbor_maximum": {
+      "run_specifications": 32,
+      "formula": "at most 4 immediate neighbors * 4 periods * 2 scenarios"
+    },
+    "total_maximum_run_specifications": 90,
+    "maximum_total_attempts": 270,
+    "budget_invariant": "The runner reserves exactly the frozen candidate-period-scenario identities, deduplicates later-stage evidence, rejects any reservation above 90, and treats the three-attempt infrastructure ceiling as recovery rather than search expansion."
+  },
+  "runtime": {
+    "namespace": "intraday-spy-qqq-lead-lag-001",
+    "database": "intraday-spy-qqq-lead-lag-001.sqlite3",
+    "run_id_prefix": "isqlll001r-",
+    "attempt_id_prefix": "isqlll001a-",
+    "executor": "bounded-process-spawn-v1",
+    "default_worker_count": 4,
+    "lease_timeout_seconds": 300,
+    "heartbeat_interval_seconds": 60,
+    "maximum_infrastructure_attempts": 3,
+    "retryable_failure": "expired no-result infrastructure lease only",
+    "terminal_failures": [
+      "candidate exception",
+      "data-integrity failure",
+      "signal-trace mismatch",
+      "accounting failure",
+      "publication conflict",
+      "exhausted infrastructure attempts"
+    ],
+    "create_only_artifacts": true,
+    "campaign_lock": true,
+    "sqlite_busy_timeout_seconds": 30,
+    "sqlite_journal_mode": "delete",
+    "implementation_gate": "Merge this exact plan and its finding-free independent review. Then implement the campaign-owned strict loader, ordinary-session SPY-feature/QQQ-trade strategy, session and signal-bucket report, 90-spec stage runner, CLI, and tests on a separate branch. Bind the exact merged implementation main and a finding-free launch-control review before the first reservation."
+  },
+  "controlled_evaluation": {
+    "range_status": "none-eligible",
+    "june_read": false,
+    "substitute_range": false,
+    "controlled_plan_creation": false,
+    "empty_cohort_action": "Close as immutable exposed evidence and advance only under the autonomous program transition rule.",
+    "nonempty_cohort_action": "Freeze the exposed survivor and wait for future untouched data. No controlled evaluation or qualification is authorized."
+  },
+  "protected_boundaries": {
+    "june_market_data_or_results": false,
+    "intraday_v3_data_or_results": false,
+    "daily_2018_2019_data_or_results": false,
+    "paper_or_broker_state": false,
+    "strategic_allocation_21": false,
+    "live_execution": false,
+    "maximum_market_timestamp": "2026-05-29T19:55:00Z",
+    "partial_result_adaptation": false
+  },
+  "authority": {
+    "strategy_results": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "plan_fingerprint": "177fad36b3911b89a4938cdfe130a6eda81d22bd1d19e448ab7d11b46326a51a"
+}

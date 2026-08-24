@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Freeze Campaign 1 as fixed SPY-to-QQQ catch-up
+
+- Decision: freeze `intraday-spy-qqq-lead-lag-001` with nine parents crossing 6/12/18 completed-bar SPY observation horizons and 10/20/40-basis-point SPY floors. SPY stays signal-only; QQQ is the sole half-weight trade and must be nonnegative but no more than half the SPY return. Use one fixed 24-interval hold, no resize or reentry, and a 90-specification cap.
+- Context: the reviewed autonomous program permits fixed-leader cross-asset transmission first. Prior campaigns did not test a predetermined SPY feature source followed by a QQQ-only catch-up on every eligible ordinary session. A fixed single-symbol trade makes symbol-profit concentration structurally inapplicable.
+- Consequences: session, period, and prospectively fixed under-response-bucket concentration gates replace symbol concentration. Every ordinary session remains in a reconciled ledger; Normal, zero-cost, stress, and delay scenarios must preserve the same causal signal trace. The plan binds only the four exposed read-only datasets through May 29, 2026. Its exact plan and finding-free review precede implementation and results. Program state now advances through immutable chained artifacts instead of mutating the revision-1 source state. All authority fields remain false.
+- Revisit when: never after a Campaign 1 result. An implementation defect before any reservation may be repaired under the frozen pre-execution policy; a semantic change after observation stops the program for review.
+
 ## 2026-08-24 — Freeze a three-campaign intraday autonomous research program
 
 - Decision: permit exactly three new successor campaigns in a fixed order: `intraday-spy-qqq-lead-lag-001`, `intraday-relative-volume-drift-001`, and `intraday-fed-policy-absorption-001`. Cap each campaign at 9 parents and 90 immutable run specifications, and cap the program at 270. Stop on the first all-gate cohort or after the third terminal empty cohort. Do not create Campaign 4.
