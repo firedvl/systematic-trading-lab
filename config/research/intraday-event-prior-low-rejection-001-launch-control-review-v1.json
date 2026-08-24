@@ -1,0 +1,300 @@
+{
+  "schema_version": "intraday-event-prior-low-rejection-001-launch-control-review-v1",
+  "review_id": "intraday-event-prior-low-rejection-001-launch-control-review-v1",
+  "status": "passed",
+  "verdict": "pass",
+  "review_date": "2026-08-24",
+  "review_method": "Independent exact-main source, gate, synthetic equivalence, credential-boundary, and authority review.",
+  "reviewed_inputs": {
+    "plan": {
+      "path": "config/research/intraday-event-prior-low-rejection-001-plan-v1.json",
+      "sha256": "2fe0339f498854a76a5fc4f52110290ca379117bad7387c2b0d87854ccadff41",
+      "fingerprint": "ab4508dd2e70231b5d169bcf2a1bcbdc691abf1615764bacc463ebdab67bfbc6"
+    },
+    "plan_review": {
+      "path": "config/research/intraday-event-prior-low-rejection-001-plan-independent-review-v1.json",
+      "sha256": "7c95767fae24004831c12941355fd80342f44a0bd47aed592e23c7419ff91928",
+      "fingerprint": "efa539340aa87ab1940ba40414d565027f034689d7cdc6b89853883815aa3c41"
+    },
+    "base_plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "base_plan_review": {
+      "path": "config/research/intraday-event-drift-001-plan-independent-review-v1.json",
+      "sha256": "25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96",
+      "fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+    },
+    "calendar": {
+      "path": "config/research/intraday-event-calendar-001-v1.json",
+      "sha256": "fa413a30234c6b82394fcdbf99df94aa31ae38e2df12d58296bcbc03162a34ee",
+      "fingerprint": "9992ee0a430abc0b59f49f6dd9e5178ff22d13a9dec5ad5de1d8578896ed2a78"
+    },
+    "source_evidence": {
+      "path": "config/research/intraday-event-calendar-001-source-evidence-v1.json",
+      "sha256": "c5f1ab34c92b10ac9c75d86a3c33c9f2a445eed022a48697edaa7dfd9eabee0a",
+      "fingerprint": "6616ed631b3d7e8e727b8cde85bf26e4c2cb5800812db745c327a71bf62192fd"
+    }
+  },
+  "implementation": {
+    "source_commit": "2b45028a9d1b17cde4eba5ee18837861a7a15620",
+    "files": [
+      {
+        "path": "src/systematic_trading_lab/backtesting.py",
+        "sha256": "6e376d6d17da069f797b88e358fbbbfafb2a7be91bd76fd1e9f272ac5d95729f"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "1278d090ea15c518601b9db5b3460de700333508d19b32a6e03e59e531fdeea1"
+      },
+      {
+        "path": "src/systematic_trading_lab/datasets.py",
+        "sha256": "2b0e7fe5ec7ff530da115f4f5f1c7d3bf024a7f79120e4e4b209769cad87da2b"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/storage.py",
+        "sha256": "d18f7f7e27d76f5979eecdc2790ddc2259b5afd7651f150c74d25fd913d9c07c"
+      },
+      {
+        "path": "src/systematic_trading_lab/strategies.py",
+        "sha256": "4be05a18badf460f60016f9401206d5dcf3c89ea270835991f11aae3754085af"
+      },
+      {
+        "path": "src/systematic_trading_lab/research_attempts.py",
+        "sha256": "608d710c8fa1d7a7830bf7f82a404a5a0588a6055381d6dcc4676d2c256f5512"
+      },
+      {
+        "path": "src/systematic_trading_lab/research_executor.py",
+        "sha256": "099f9ac9572aaaa640d51cb0dde50e2cba378a6ef0b2ddf9b07a63d0ed9b1b81"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_execution_cost_model.py",
+        "sha256": "7d03b674a5ea5c3978a63c62dd34d73e855b0c35bf5655a8c61e60d59a5f9dd6"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_exposed_002_engine.py",
+        "sha256": "bf62f6661b0beb2ac57b83668412b90a17255fd176fa559966ec0f5a64032c66"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_exposed_002_runner.py",
+        "sha256": "d0b8b7d7a6460f42d987ee9587939dafb88e1e8e7aa12aa4edc1097d6c90eb05"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_drift_001_plan.py",
+        "sha256": "28b5d1979361a9bbd518e2482ecfaef7a1f2e4cb0dea16a7e5f901b578a03f36"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_drift_001_runner.py",
+        "sha256": "5b7231347f08276db1589deb9bb599312590326cbf6bd6d4c3bc88e13f5ebd38"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_prior_low_rejection_001_plan.py",
+        "sha256": "9373eb0f5e28206b76fa030a6baa5468028d0ae14140baebd63485887a2e1d07"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_prior_low_rejection_001_strategies.py",
+        "sha256": "64afbbb47d823467cbf0a6ea1f6751e4cfdc8c4516dd7318ab438c90f4a52812"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_prior_low_rejection_001_runner.py",
+        "sha256": "20a477bb225499c7631a26aa9226b2649725bd88637fc309345ae69bffdfe92d"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_prior_low_rejection_001_cli.py",
+        "sha256": "929ca5f516cabca46706a8b6f4ee727c06da675d78ca231d69b140e08f3771ca"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_opening_breakout_001_cli.py",
+        "sha256": "2a988c9d08c669cfbddd9ae789cd224cf1ce7b4b07721de34b22c645293dd428"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_repricing_001_cli.py",
+        "sha256": "11da13a4a07eb3d3ff60ad36fbe501f724cf56f89eccf0507dfabca546accbf6"
+      },
+      {
+        "path": "src/systematic_trading_lab/public_cli.py",
+        "sha256": "6b96a9605291335724415c9e5a812d42e51b53571cd9b1e85679629842e47fca"
+      },
+      {
+        "path": "pyproject.toml",
+        "sha256": "5f19d0124b318be956dcaf9424311286aeb7910c95e3ec473b4cedea3cc28e22"
+      }
+    ]
+  },
+  "quality_gates": {
+    "source_commit": "2b45028a9d1b17cde4eba5ee18837861a7a15620",
+    "results": [
+      {
+        "command": "uv run ruff format --check .",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "195 files already formatted"
+      },
+      {
+        "command": "uv run ruff check .",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "All checks passed"
+      },
+      {
+        "command": "uv run mypy src tests",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Success: no issues found in 190 source files"
+      },
+      {
+        "command": "uv run pytest",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "929 passed, 4 skipped"
+      },
+      {
+        "command": "uv run python scripts/check_secrets.py",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "secret check passed (351 files scanned)"
+      },
+      {
+        "command": "bash -n scripts/*.sh",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "All shell scripts passed syntax validation"
+      },
+      {
+        "command": "uv build",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Source distribution and wheel built"
+      }
+    ]
+  },
+  "equivalence": {
+    "schema_version": "intraday-event-prior-low-rejection-001-parallel-equivalence-v1",
+    "program_id": "intraday-event-prior-low-rejection-001",
+    "verification_source_commit": "2b45028a9d1b17cde4eba5ee18837861a7a15620",
+    "fixture_kind": "synthetic-non-protected-spy-prior-low-rejection-five-minute-bars",
+    "protected_inputs_accessed": false,
+    "worker_counts": [
+      1,
+      4
+    ],
+    "comparisons": [
+      "run-specification",
+      "run-fingerprint",
+      "signal-trace-fingerprint",
+      "decision-trace-fingerprint",
+      "fill-trace-fingerprint",
+      "round-trip-fingerprint",
+      "metrics",
+      "event-ledger",
+      "canonical-report-bytes",
+      "canonical-report-sha256",
+      "report-fingerprint"
+    ],
+    "fixture_count": 4,
+    "sequential_seconds": "1.976148",
+    "parallel_seconds": "1.810713",
+    "speedup": "1.091365",
+    "fixtures": [
+      {
+        "candidate_id": "ieplr001-a01",
+        "scenario_id": "normal",
+        "run_id": "ieplr001r-b83df8f9841302a16310745e",
+        "run_fingerprint": "287ec8b3756780a1f0f72e052f5a0673d0b44a72ca3716976e22aa5d9923f3bd",
+        "signal_trace_fingerprint": "b3802dfb65ab9c0d249bcc6277c6a5052f55b864473f192335e0d2fab58607d8",
+        "decision_trace_fingerprint": "f43c19811f1fbeb64eb22b501b92aee0614821b786cb4d76f63ff1efa5d50284",
+        "fill_trace_fingerprint": "4263a5eb06e6d3f0ea0328a9030679021974d68dca65b4bfc0b41e9a7c9ee56a",
+        "round_trip_fingerprint": "374feba705ae1ffe6b72fd7832548b2897004b60c1b471fa4213da3eaa08fce6",
+        "event_ledger_fingerprint": "3ac23a261cb23cd79a897bdc6412dd8c9172695496a17f368ed3d26e4dbc3139",
+        "report_sha256": "de6a5ee7e50002cad8153ec9efbadd557b2874207103f95512c70f130294d5d4",
+        "report_fingerprint": "2a4f146fa80e6c4daca2830740f4f26d01a5735a8ebf3a58c4dfed866a428b9b",
+        "specification_equal": true,
+        "report_equal": true,
+        "event_ledger_equal": true,
+        "canonical_report_equal": true
+      },
+      {
+        "candidate_id": "ieplr001-a02",
+        "scenario_id": "zero_cost_diagnostic",
+        "run_id": "ieplr001r-0179b5f14f0468570dc5bee4",
+        "run_fingerprint": "eb890690fcf0043e1838f39a1bb165e0e08df9ffd4c533abbb570d4c27d210af",
+        "signal_trace_fingerprint": "e25175b653e3989dd9134b0b983aedf6e26c4168f2139b00c32b4c3376f8a356",
+        "decision_trace_fingerprint": "b89d4de32804c7cad282d6658718e5aa6b7f13684631b1d40428dfed096b9de9",
+        "fill_trace_fingerprint": "6cbf775923f609a49ac2dc9640f4c201b4888a9f6cd8e4adb457a47438b72b22",
+        "round_trip_fingerprint": "e8f401109155bd99aba003260f84ddd6141cef5ea0324a96857949b9d88478c7",
+        "event_ledger_fingerprint": "9cbf8b82fdc5a361f79fd345a150556584337a0b46717e498526da2b2cb9e873",
+        "report_sha256": "9750888763f3c4be69f66f7ba8f0fc02561c2ecdc89460350aba23e21cda2e20",
+        "report_fingerprint": "47d51bd7d636f665b31139b26b88a55badd8c6de10eaf27b8c227e7ae0bc63ae",
+        "specification_equal": true,
+        "report_equal": true,
+        "event_ledger_equal": true,
+        "canonical_report_equal": true
+      },
+      {
+        "candidate_id": "ieplr001-a03",
+        "scenario_id": "stress_a",
+        "run_id": "ieplr001r-e6fe75d9e226cb6cdd13b1be",
+        "run_fingerprint": "5f0eb610811dfe9f09c519513006bac4150e8017913da3120790173ff5619f8f",
+        "signal_trace_fingerprint": "dd4415b8c7bc4cf25387fce0ecf3ca5efd4b1262f8d86efdb07f0a562511386d",
+        "decision_trace_fingerprint": "29ea8e21e74c1c842b10c86233de5bd18e2bd043f999a1e0030cd4307aed6a9f",
+        "fill_trace_fingerprint": "c1a73a04f4d0d6f6205d2ae0aba1e3d3924055d354368f7aa8a29d2dc637fb55",
+        "round_trip_fingerprint": "2189546a413936db87a0485f50439008d879708173ee03e9553507b63498640a",
+        "event_ledger_fingerprint": "4a7791c911463d861c89e0e518d846ffff7c947baacbbce4663c1b1f60905f64",
+        "report_sha256": "a6aafd76c25bed98ed2fd4a8df266d06a377d811a2d75e66c95a0add0d991782",
+        "report_fingerprint": "0d185f38df9cad5c163ca80e301bda81da162a23079a8b1a4e0b2dc5aefd597c",
+        "specification_equal": true,
+        "report_equal": true,
+        "event_ledger_equal": true,
+        "canonical_report_equal": true
+      },
+      {
+        "candidate_id": "ieplr001-a01",
+        "scenario_id": "normal-delay-3",
+        "run_id": "ieplr001r-19105495693c5ec01e106ce3",
+        "run_fingerprint": "c89a501a47ec1b2d7a67cc8ab726e5a849cc8dd924d752dbc93249a569197353",
+        "signal_trace_fingerprint": "b3802dfb65ab9c0d249bcc6277c6a5052f55b864473f192335e0d2fab58607d8",
+        "decision_trace_fingerprint": "616970e3053a97b258450afbd8413a9065c78e114fe7d58946db9c960713e303",
+        "fill_trace_fingerprint": "da98b7119452463d7aa91a32355981b99297bcc1e3b92317ec7e92a119747abe",
+        "round_trip_fingerprint": "ab2b98f5d56cd88341a3843cb8fa2a7edfd834f79961ae191ab8ea19af7c55aa",
+        "event_ledger_fingerprint": "0134922db00381724838b295c7225dd76475de1ff88ac9de1801a4ec1bacfa29",
+        "report_sha256": "5411e9b7d1f40fdeb025509a168c869c761b048d1bba04646f13b5641498fe53",
+        "report_fingerprint": "bada12d4ada448f993762dde889d98acd5102d43221678999208a155e8803fbf",
+        "specification_equal": true,
+        "report_equal": true,
+        "event_ledger_equal": true,
+        "canonical_report_equal": true
+      }
+    ],
+    "equivalent": true
+  },
+  "independent_review": {
+    "source_commit": "2b45028a9d1b17cde4eba5ee18837861a7a15620",
+    "status": "passed",
+    "verdict": "pass",
+    "findings": [],
+    "reviewer": "independent-exact-main-implementation-review"
+  },
+  "scope_limit": "Read-only exact-main review and synthetic non-protected equivalence only; no market data, runtime, June, V3, protected holdout, PAPER, broker, or live state was accessed.",
+  "authority": {
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "17d1ad7207bbc76264a2762f288e71f6445a7088e4d238aac004ada94b5214d1"
+}

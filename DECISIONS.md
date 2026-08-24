@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Bind Prior-Low Rejection launch control to exact reviewed main
+
+- Decision: bind Intraday Event Prior-Low Rejection 001 to implementation main `2b45028a9d1b17cde4eba5ee18837861a7a15620` after a finding-free exact-main review, all seven quality gates, and synthetic one-worker/four-worker byte equivalence. The launch artifact is SHA-256 `ac9cc921e6b60592bfd8dcc9181ff44126d63a929867566bb9aecd1c2a043d0a` with fingerprint `17d1ad7207bbc76264a2762f288e71f6445a7088e4d238aac004ada94b5214d1`.
+- Context: the campaign implementation and frozen plan were complete, but the unbound surface correctly rejected construction. The review covered only non-protected synthetic inputs and source lineage; no market data or runtime state existed.
+- Consequences: the runner is launchable only when the exact artifact, source hashes, quality evidence, equivalence evidence, independent review, and allowed post-review lineage all validate. Strategy, data, chronology, costs, gates, and all authority boundaries remain unchanged; no runtime, reservation, or result exists.
+- Revisit when: the first terminal campaign result is frozen or a separately reviewed common launch-control contract replaces this campaign surface.
+
 ## 2026-08-23 — Implement Prior-Low Rejection with an explicit inherited data contract
 
 - Decision: keep Intraday Event Prior-Low Rejection 001 as a campaign-owned single-arm runner and pass the frozen Event Drift base payload explicitly to coordinator and worker dataset validation. Leave launch-control constants unbound until exact-main review.
