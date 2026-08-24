@@ -1,6 +1,6 @@
 # Intraday Event Repricing 001 program
 
-Status: launch control bound; no reservation or result exists.
+Status: dataset-validation repair implemented; launch-control re-review required; no reservation or result exists.
 
 Plan SHA-256: `f24cae1372f346be02c0079b931c77d5efb5105a06cf26631b783010851bd8b8`.
 Plan fingerprint: `2f98e0cc4565435c9974f65791fd830f7fb9509730f31872f97d77484c00c489`.

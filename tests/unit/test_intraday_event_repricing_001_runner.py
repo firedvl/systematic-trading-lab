@@ -3,15 +3,17 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
 
 import systematic_trading_lab.intraday_event_repricing_001_runner as runner_module
+import systematic_trading_lab.intraday_exposed_002_runner as exposed_runner_module
 from systematic_trading_lab.fingerprints import fingerprint
 from systematic_trading_lab.intraday_event_drift_001_plan import (
     load_intraday_event_drift_001_plan,
@@ -50,10 +52,109 @@ from systematic_trading_lab.intraday_event_repricing_001_runner import (
 from systematic_trading_lab.intraday_execution_cost_model import (
     load_intraday_execution_cost_model,
 )
-from systematic_trading_lab.intraday_exposed_002_runner import _gate_results, _scenarios
+from systematic_trading_lab.intraday_exposed_002_plan import load_intraday_exposed_002_plan
+from systematic_trading_lab.intraday_exposed_002_runner import (
+    IntradayExposed002Runner,
+    _gate_results,
+    _scenarios,
+)
+from systematic_trading_lab.storage import StorageLayout
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _SOURCE = "0" * 40
+
+
+class _FrozenDatasetService:
+    def __init__(
+        self,
+        root: Path,
+        bindings: tuple[Any, ...],
+        data: Mapping[str, Any],
+    ) -> None:
+        self.layout = StorageLayout(root)
+        self.manifests: dict[str, dict[str, object]] = {}
+        self.validations: dict[str, dict[str, object]] = {}
+        for binding in bindings:
+            self.manifests[binding.dataset_id] = {
+                "identity": {
+                    "dataset_id": binding.dataset_id,
+                    "fingerprint": binding.data_fingerprint,
+                },
+                "provider": data["provider"],
+                "feed": data["feed"],
+                "timeframe": data["timeframe"],
+                "adjustment_policy": data["adjustment_policy"],
+                "calendar_policy": data["calendar_policy"],
+                "timestamp_policy": data["timestamp_policy"],
+                "universe_id": data["universe_id"],
+                "universe_fingerprint": data["universe_fingerprint"],
+                "raw_artifact_hashes": [binding.raw_fingerprint],
+                "symbols": [{"value": "QQQ"}, {"value": "SPY"}],
+                "requested_range": {
+                    "start": binding.start.isoformat().replace("+00:00", "Z"),
+                    "end": binding.end.isoformat().replace("+00:00", "Z"),
+                },
+                "actual_range": {
+                    "start": binding.start.isoformat().replace("+00:00", "Z"),
+                    "end": binding.end.isoformat().replace("+00:00", "Z"),
+                },
+            }
+            self.validations[binding.dataset_id] = {
+                "valid": True,
+                "fingerprint": binding.data_fingerprint,
+                "raw_artifact_matches": True,
+            }
+
+    def describe(self, dataset_id: str) -> dict[str, object]:
+        return deepcopy(self.manifests[dataset_id])
+
+    def validate(self, dataset_id: str) -> dict[str, object]:
+        return deepcopy(self.validations[dataset_id])
+
+
+def _frozen_dataset_service(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    exposed_002: bool = False,
+) -> tuple[_FrozenDatasetService, tuple[Any, ...]]:
+    if exposed_002:
+        exposed_plan = load_intraday_exposed_002_plan(_REPOSITORY)
+        bindings = exposed_runner_module._dataset_bindings(exposed_plan)
+        data = cast(Mapping[str, Any], exposed_plan.payload["data"])
+    else:
+        base_plan = load_intraday_event_drift_001_plan(_REPOSITORY)
+        bindings = _dataset_bindings(base_plan.payload)
+        data = cast(Mapping[str, Any], base_plan.payload["data"])
+    service = _FrozenDatasetService(tmp_path / "datasets", bindings, data)
+    may = bindings[-1]
+    hashes = {
+        "raw.jsonl": may.raw_sha256,
+        "bars.parquet": may.bars_sha256,
+        "manifest.json": may.manifest_sha256,
+    }
+    monkeypatch.setattr(
+        exposed_runner_module,
+        "_sha256_path",
+        lambda path: hashes[path.name],
+    )
+    return service, bindings
+
+
+def _allow_unreviewed_test_source(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(runner_module, "_source_commit", lambda _repository: _SOURCE)
+    monkeypatch.setattr(
+        runner_module,
+        "_load_launch_control",
+        lambda _repository, *, source_commit: {"source_commit": source_commit},
+    )
+
+
+def _set_nested(value: dict[str, object], path: tuple[str, ...], replacement: object) -> None:
+    target = value
+    for key in path[:-1]:
+        target = cast(dict[str, object], target[key])
+    target[path[-1]] = replacement
 
 
 def _runner() -> IntradayEventRepricing001Runner:
@@ -91,11 +192,11 @@ def test_plan_status_cli_and_bound_launch_control_are_read_only_without_runtime_
     assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
         "3d35f8d088e11ad6f07d81015c1b037b457e00b824ea908f37cef64a8fbf4a6b"
     )
-    loaded = runner_module._load_launch_control(
-        _REPOSITORY,
-        source_commit="94bc182efe952839d7e3384ea8a148554dd0149d",
-    )
-    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
+    with pytest.raises(ValueError, match="implementation file differs"):
+        runner_module._load_launch_control(
+            _REPOSITORY,
+            source_commit="94bc182efe952839d7e3384ea8a148554dd0149d",
+        )
 
 
 def test_unbound_launch_control_fails_before_runtime_write(
@@ -107,6 +208,174 @@ def test_unbound_launch_control_fails_before_runtime_write(
     with pytest.raises(ValueError, match="launch control is not hash-bound"):
         IntradayEventRepricing001Runner(_REPOSITORY, tmp_path)
     assert not (tmp_path / PROGRAM_ID).exists()
+
+
+def test_runner_constructs_from_inherited_dataset_contract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _allow_unreviewed_test_source(monkeypatch)
+    service, _bindings = _frozen_dataset_service(tmp_path, monkeypatch)
+
+    runner = IntradayEventRepricing001Runner(
+        _REPOSITORY,
+        tmp_path,
+        data_service=cast(Any, service),
+    )
+
+    assert "data" not in runner.plan.payload
+    assert runner.base_plan.payload["data"]["provider"] == "alpaca-historical-v2"
+    assert runner.attempt_store.list_runs() == ()
+
+
+def test_worker_constructs_from_inherited_dataset_contract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, bindings = _frozen_dataset_service(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        runner_module,
+        "_read_only_dataset_services",
+        lambda _data_home, _bindings: {
+            binding.dataset_id: cast(Any, service) for binding in bindings
+        },
+    )
+
+    worker = runner_module._WorkerFactory(
+        _REPOSITORY,
+        tmp_path,
+        tmp_path / PROGRAM_ID,
+        _SOURCE,
+    )()
+
+    assert "data" not in worker.plan.payload
+    assert worker.base_plan.payload["data"]["feed"] == "iex"
+    assert worker.attempt_store.list_runs() == ()
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement"),
+    (
+        ("provider", "tampered-provider"),
+        ("feed", "tampered-feed"),
+        ("timeframe", "1m"),
+        ("adjustment_policy", "tampered-adjustment"),
+        ("calendar_policy", "tampered-calendar"),
+        ("timestamp_policy", "tampered-timestamps"),
+        ("universe_id", "tampered-universe"),
+        ("universe_fingerprint", "0" * 64),
+    ),
+)
+def test_inherited_dataset_contract_tampering_fails_before_runtime_write(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    field: str,
+    replacement: str,
+) -> None:
+    _allow_unreviewed_test_source(monkeypatch)
+    service, bindings = _frozen_dataset_service(tmp_path, monkeypatch)
+    service.manifests[bindings[0].dataset_id][field] = replacement
+
+    with pytest.raises(ValueError, match="dataset differs"):
+        IntradayEventRepricing001Runner(
+            _REPOSITORY,
+            tmp_path,
+            data_service=cast(Any, service),
+        )
+
+    assert not (tmp_path / PROGRAM_ID).exists()
+
+
+@pytest.mark.parametrize(
+    ("path", "replacement"),
+    (
+        (("identity", "dataset_id"), "0" * 64),
+        (("identity", "fingerprint"), "0" * 64),
+        (("requested_range", "start"), "2025-07-01T13:35:00Z"),
+        (("actual_range", "end"), "2025-12-31T20:50:00Z"),
+        (("raw_artifact_hashes",), ["0" * 64]),
+    ),
+)
+def test_dataset_identity_fingerprint_and_range_tampering_fails_before_runtime_write(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    path: tuple[str, ...],
+    replacement: object,
+) -> None:
+    _allow_unreviewed_test_source(monkeypatch)
+    service, bindings = _frozen_dataset_service(tmp_path, monkeypatch)
+    _set_nested(service.manifests[bindings[0].dataset_id], path, replacement)
+
+    with pytest.raises(ValueError, match="dataset differs"):
+        IntradayEventRepricing001Runner(
+            _REPOSITORY,
+            tmp_path,
+            data_service=cast(Any, service),
+        )
+
+    assert not (tmp_path / PROGRAM_ID).exists()
+
+
+def test_dataset_validation_and_artifact_hash_tampering_fail_before_runtime_write(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _allow_unreviewed_test_source(monkeypatch)
+    service, bindings = _frozen_dataset_service(tmp_path, monkeypatch)
+    service.validations[bindings[0].dataset_id]["fingerprint"] = "0" * 64
+
+    with pytest.raises(ValueError, match="dataset validation failed"):
+        IntradayEventRepricing001Runner(
+            _REPOSITORY,
+            tmp_path,
+            data_service=cast(Any, service),
+        )
+    assert not (tmp_path / PROGRAM_ID).exists()
+
+    service.validations[bindings[0].dataset_id]["fingerprint"] = bindings[0].data_fingerprint
+    monkeypatch.setattr(exposed_runner_module, "_sha256_path", lambda _path: "0" * 64)
+    with pytest.raises(ValueError, match="May artifact bytes differ"):
+        IntradayEventRepricing001Runner(
+            _REPOSITORY,
+            tmp_path,
+            data_service=cast(Any, service),
+        )
+    assert not (tmp_path / PROGRAM_ID).exists()
+
+
+def test_worker_dataset_tampering_fails_before_worker_runtime_write(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, bindings = _frozen_dataset_service(tmp_path, monkeypatch)
+    service.manifests[bindings[0].dataset_id]["provider"] = "tampered-provider"
+    monkeypatch.setattr(
+        runner_module,
+        "_read_only_dataset_services",
+        lambda _data_home, _bindings: {
+            binding.dataset_id: cast(Any, service) for binding in bindings
+        },
+    )
+
+    with pytest.raises(ValueError, match="dataset differs"):
+        runner_module._WorkerFactory(
+            _REPOSITORY,
+            tmp_path,
+            tmp_path / PROGRAM_ID,
+            _SOURCE,
+        )()
+
+    assert not (tmp_path / PROGRAM_ID).exists()
+
+
+def test_exposed_002_dataset_verification_keeps_its_local_plan_contract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, bindings = _frozen_dataset_service(tmp_path, monkeypatch, exposed_002=True)
+    plan = load_intraday_exposed_002_plan(_REPOSITORY)
+    target = SimpleNamespace(
+        plan=plan,
+        datasets=bindings,
+        data_by_dataset={binding.dataset_id: cast(Any, service) for binding in bindings},
+    )
+
+    IntradayExposed002Runner._verify_datasets(cast(Any, target))
 
 
 def test_broker_environment_fails_before_runtime_or_worker_start(

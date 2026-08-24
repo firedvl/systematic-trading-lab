@@ -7,6 +7,9 @@ from pathlib import Path
 
 import pytest
 
+from systematic_trading_lab.intraday_event_drift_001_plan import (
+    load_intraday_event_drift_001_plan,
+)
 from systematic_trading_lab.intraday_event_repricing_001_plan import (
     CALENDAR_FINGERPRINT,
     CALENDAR_SHA256,
@@ -24,6 +27,7 @@ _REPOSITORY = Path(__file__).resolve().parents[2]
 
 def test_frozen_event_repricing_plan_exposes_only_validated_inputs() -> None:
     plan = load_intraday_event_repricing_001_plan(_REPOSITORY)
+    base_plan = load_intraday_event_drift_001_plan(_REPOSITORY)
 
     assert (plan.sha256, plan.plan_fingerprint) == (PLAN_SHA256, PLAN_FINGERPRINT)
     assert (plan.review_sha256, plan.review_fingerprint) == (REVIEW_SHA256, REVIEW_FINGERPRINT)
@@ -44,6 +48,8 @@ def test_frozen_event_repricing_plan_exposes_only_validated_inputs() -> None:
         (reaction, Decimal(str(threshold))) for reaction in (3, 6, 12) for threshold in (5, 10, 20)
     ]
     assert sum(len(item.neighbor_ids) for item in plan.configurations) // 2 == 12
+    assert "data" not in plan.payload
+    assert "data" in base_plan.payload
     assert not any(plan.authority.values())
 
 
