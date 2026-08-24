@@ -1,6 +1,6 @@
 # Intraday Event Prior-Low Rejection 001 program
 
-Status: prospectively frozen and independently reviewed before strategy implementation or results.
+Status: implementation complete and tested; launch control intentionally unbound pending exact-main review.
 
 Plan SHA-256: `2fe0339f498854a76a5fc4f52110290ca379117bad7387c2b0d87854ccadff41`.
 Plan fingerprint: `ab4508dd2e70231b5d169bcf2a1bcbdc691abf1615764bacc463ebdab67bfbc6`.
@@ -84,11 +84,13 @@ substitution are prohibited.
 
 ## Implementation and launch boundary
 
-The later implementation may reuse only the existing engine, attempt store, executor, cost model,
-and explicit Event Drift base payload. It must add campaign-owned plan loading, strategy, reporting,
-runner, CLI, launch control, and focused tests. Launch-control constants start unbound. A separate
-exact-main review must pass all repository gates and synthetic one-worker/four-worker byte
-equivalence before a binding PR can make the first reservation.
+The implementation reuses only the existing engine, attempt store, executor, cost model, and explicit
+Event Drift base payload. It adds campaign-owned plan loading, strategy, reporting, runner, CLI,
+launch-control surface, and focused tests. Coordinator and worker dataset validation receive the
+inherited Event Drift payload explicitly; the successor plan remains free of a duplicated `data`
+section. Launch-control constants remain unbound. A separate exact-main review must pass all
+repository gates and synthetic one-worker/four-worker byte equivalence before a binding PR can make
+the first reservation.
 
 The four-worker spawned executor remains the default. Only an expired no-result infrastructure
 lease may retry. Candidate, data, calendar, signal-trace, accounting, publication, and exhausted

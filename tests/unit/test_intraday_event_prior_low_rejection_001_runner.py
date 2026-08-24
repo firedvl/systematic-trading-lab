@@ -7,25 +7,26 @@ from collections.abc import Mapping
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
 
-import systematic_trading_lab.intraday_event_opening_breakout_001_cli as cli_module
-import systematic_trading_lab.intraday_event_opening_breakout_001_runner as runner_module
+import systematic_trading_lab.intraday_event_prior_low_rejection_001_cli as cli_module
+import systematic_trading_lab.intraday_event_prior_low_rejection_001_runner as runner_module
 from systematic_trading_lab.fingerprints import fingerprint
 from systematic_trading_lab.intraday_event_drift_001_plan import (
     load_intraday_event_drift_001_plan,
 )
 from systematic_trading_lab.intraday_event_drift_001_runner import _dataset_bindings
-from systematic_trading_lab.intraday_event_opening_breakout_001_cli import (
-    event_opening_breakout_parser,
+from systematic_trading_lab.intraday_event_prior_low_rejection_001_cli import (
+    event_prior_low_rejection_parser,
 )
-from systematic_trading_lab.intraday_event_opening_breakout_001_launch_control import (
+from systematic_trading_lab.intraday_event_prior_low_rejection_001_launch_control import (
     REVIEWED_LAUNCH_CONTROL_FINGERPRINT,
     REVIEWED_LAUNCH_CONTROL_SHA256,
 )
-from systematic_trading_lab.intraday_event_opening_breakout_001_plan import (
+from systematic_trading_lab.intraday_event_prior_low_rejection_001_plan import (
     PLAN_FINGERPRINT,
     PLAN_RELATIVE_PATH,
     PLAN_SHA256,
@@ -33,18 +34,18 @@ from systematic_trading_lab.intraday_event_opening_breakout_001_plan import (
     REVIEW_FINGERPRINT,
     REVIEW_RELATIVE_PATH,
     REVIEW_SHA256,
-    load_intraday_event_opening_breakout_001_plan,
+    load_intraday_event_prior_low_rejection_001_plan,
 )
-from systematic_trading_lab.intraday_event_opening_breakout_001_runner import (
-    IntradayEventOpeningBreakout001Runner,
-    IntradayEventOpeningBreakout001Store,
+from systematic_trading_lab.intraday_event_prior_low_rejection_001_runner import (
+    IntradayEventPriorLowRejection001Runner,
+    IntradayEventPriorLowRejection001Store,
     _aggregate_event_reports,
     _deduplicate_specifications,
     _parallel_equivalence,
     _require_non_broker_environment,
     _run_id,
-    intraday_event_opening_breakout_001_plan_summary,
-    intraday_event_opening_breakout_001_status,
+    intraday_event_prior_low_rejection_001_plan_summary,
+    intraday_event_prior_low_rejection_001_status,
 )
 from systematic_trading_lab.intraday_execution_cost_model import (
     load_intraday_execution_cost_model,
@@ -70,11 +71,11 @@ def _allow_unreviewed_test_source(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
 
-def _runner() -> IntradayEventOpeningBreakout001Runner:
-    runner = object.__new__(IntradayEventOpeningBreakout001Runner)
+def _runner() -> IntradayEventPriorLowRejection001Runner:
+    runner = object.__new__(IntradayEventPriorLowRejection001Runner)
     runner.repository = _REPOSITORY
     runner.source_commit = _SOURCE
-    runner.plan = load_intraday_event_opening_breakout_001_plan(_REPOSITORY)
+    runner.plan = load_intraday_event_prior_low_rejection_001_plan(_REPOSITORY)
     runner.base_plan = load_intraday_event_drift_001_plan(_REPOSITORY)
     runner.cost_model = load_intraday_execution_cost_model(_REPOSITORY)
     runner.datasets = _dataset_bindings(runner.base_plan.payload)
@@ -88,9 +89,9 @@ def test_plan_status_cli_and_unbound_launch_are_read_only(
 ) -> None:
     monkeypatch.setattr(runner_module, "REVIEWED_LAUNCH_CONTROL_SHA256", None)
     monkeypatch.setattr(runner_module, "REVIEWED_LAUNCH_CONTROL_FINGERPRINT", None)
-    plan = intraday_event_opening_breakout_001_plan_summary(_REPOSITORY)
-    status = intraday_event_opening_breakout_001_status(tmp_path)
-    arguments = event_opening_breakout_parser().parse_args(("run", "--workers", "6"))
+    plan = intraday_event_prior_low_rejection_001_plan_summary(_REPOSITORY)
+    status = intraday_event_prior_low_rejection_001_status(tmp_path)
+    arguments = event_prior_low_rejection_parser().parse_args(("run", "--workers", "6"))
 
     assert plan["parent_configuration_count"] == 3
     assert plan["discovery_run_specification_count"] == 6
@@ -104,24 +105,14 @@ def test_plan_status_cli_and_unbound_launch_are_read_only(
     assert not (tmp_path / PROGRAM_ID).exists()
 
     with pytest.raises(ValueError, match="launch control is not hash-bound"):
-        IntradayEventOpeningBreakout001Runner(_REPOSITORY, tmp_path)
+        IntradayEventPriorLowRejection001Runner(_REPOSITORY, tmp_path)
     assert not (tmp_path / PROGRAM_ID).exists()
 
 
-def test_closed_campaign_launch_control_rejects_successor_source() -> None:
-    path = _REPOSITORY / runner_module.LAUNCH_CONTROL_RELATIVE_PATH
-    raw = path.read_bytes()
-    review = cast(dict[str, Any], json.loads(raw))
-    stored = cast(str, review.pop("review_fingerprint"))
-
-    assert hashlib.sha256(raw).hexdigest() == REVIEWED_LAUNCH_CONTROL_SHA256
-    assert stored == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
-    assert fingerprint(review) == stored
-    with pytest.raises(ValueError, match="implementation file differs"):
-        runner_module._load_launch_control(
-            _REPOSITORY,
-            source_commit=_IMPLEMENTATION_SOURCE,
-        )
+def test_launch_control_starts_unbound() -> None:
+    assert REVIEWED_LAUNCH_CONTROL_SHA256 is None
+    assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT is None
+    assert not (_REPOSITORY / runner_module.LAUNCH_CONTROL_RELATIVE_PATH).exists()
 
 
 @pytest.mark.parametrize(
@@ -145,7 +136,7 @@ def test_plan_summary_requires_valid_launch_control(
         raise ValueError(reason)
 
     monkeypatch.setattr(runner_module, "_load_launch_control", reject)
-    pending = intraday_event_opening_breakout_001_plan_summary(_REPOSITORY)
+    pending = intraday_event_prior_low_rejection_001_plan_summary(_REPOSITORY)
     assert pending["status"] == "implementation-awaiting-review"
     assert pending["launchable"] is False
     assert pending["launch_control_bound"] is False
@@ -155,7 +146,7 @@ def test_plan_summary_requires_valid_launch_control(
         "_load_launch_control",
         lambda _repository, *, source_commit: {"source_commit": source_commit},
     )
-    ready = intraday_event_opening_breakout_001_plan_summary(_REPOSITORY)
+    ready = intraday_event_prior_low_rejection_001_plan_summary(_REPOSITORY)
     assert ready["status"] == "launch-reviewed-ready"
     assert ready["launchable"] is True
     assert ready["launch_control_bound"] is True
@@ -171,7 +162,7 @@ def test_cli_delegates_every_other_command_to_the_existing_chain(
         received = arguments
         return 17
 
-    monkeypatch.setattr(cli_module, "repricing_main", delegated)
+    monkeypatch.setattr(cli_module, "opening_breakout_main", delegated)
 
     assert cli_module.main(("research", "list-strategies")) == 17
     assert received == ("research", "list-strategies")
@@ -193,7 +184,7 @@ def test_coordinator_and_worker_use_the_explicit_inherited_data_contract(
 
     monkeypatch.setattr(IntradayExposed002Runner, "_verify_datasets", verify)
     service = cast(Any, object())
-    coordinator = IntradayEventOpeningBreakout001Runner(
+    coordinator = IntradayEventPriorLowRejection001Runner(
         _REPOSITORY,
         tmp_path / "coordinator",
         data_service=service,
@@ -225,7 +216,7 @@ def test_broker_environment_fails_before_source_plan_or_runtime(
     monkeypatch.setattr(runner_module, "_source_commit", unexpected_source)
     monkeypatch.setenv("APCA_API_SECRET_KEY", "must-not-reach-research")
     with pytest.raises(ValueError, match="APCA_API_SECRET_KEY") as error:
-        IntradayEventOpeningBreakout001Runner(_REPOSITORY, tmp_path)
+        IntradayEventPriorLowRejection001Runner(_REPOSITORY, tmp_path)
     assert "must-not-reach-research" not in str(error.value)
     assert source_checked is False
     assert not (tmp_path / PROGRAM_ID).exists()
@@ -246,7 +237,7 @@ def test_worker_repeats_the_non_broker_guard_before_plan_loading(
 
     monkeypatch.setattr(
         runner_module,
-        "load_intraday_event_opening_breakout_001_plan",
+        "load_intraday_event_prior_low_rejection_001_plan",
         unexpected_plan,
     )
     monkeypatch.setenv("TRADING_LAB_PAPER_CODE_COMMIT", "must-not-reach-worker")
@@ -268,18 +259,18 @@ def test_run_identity_budget_is_exact_and_reuses_neighbor_evidence(tmp_path: Pat
     )
     walk = tuple(
         runner._specification(runner._configuration(candidate), period, scenario)
-        for candidate in ("ieb001-a01", "ieb001-a02")
+        for candidate in ("ieplr001-a01", "ieplr001-a02")
         for period in periods
         for scenario in ("normal", "zero_cost_diagnostic")
     )
     stress = tuple(
-        runner._specification(runner._configuration("ieb001-a02"), period, scenario)
+        runner._specification(runner._configuration("ieplr001-a02"), period, scenario)
         for period in periods
         for scenario in ("stress_a", "stress_b", "normal-delay-2", "normal-delay-3")
     )
     neighbors = tuple(
         runner._specification(runner._configuration(candidate), period, scenario)
-        for candidate in ("ieb001-a01", "ieb001-a03")
+        for candidate in ("ieplr001-a01", "ieplr001-a03")
         for period in periods
         for scenario in ("normal", "zero_cost_diagnostic")
     )
@@ -307,11 +298,11 @@ def test_run_identity_budget_is_exact_and_reuses_neighbor_evidence(tmp_path: Pat
             )
         )
 
-    store = IntradayEventOpeningBreakout001Store(tmp_path)
+    store = IntradayEventPriorLowRejection001Store(tmp_path)
     store.reserve(specifications)
     assert len(store.list_runs()) == 46
     extra = deepcopy(specifications[0])
-    cast(dict[str, object], extra["context"])["candidate_id"] = "ieb001-extra"
+    cast(dict[str, object], extra["context"])["candidate_id"] = "ieplr001-extra"
     with pytest.raises(ValueError, match="budget exceeds 46"):
         store.reserve((extra,))
 
@@ -327,8 +318,8 @@ def _equivalence_result(candidate_id: str, scenario_id: str) -> Mapping[str, obj
 
 
 def test_event_report_retains_signal_and_enforces_active_inactive_contract() -> None:
-    normal = _equivalence_result("ieb001-a01", "normal")
-    delayed = _equivalence_result("ieb001-a01", "normal-delay-3")
+    normal = _equivalence_result("ieplr001-a01", "normal")
+    delayed = _equivalence_result("ieplr001-a01", "normal-delay-3")
     metrics = cast(Mapping[str, object], normal["metrics"])
     ledger = cast(list[dict[str, object]], normal["event_ledger"])
 
@@ -339,16 +330,17 @@ def test_event_report_retains_signal_and_enforces_active_inactive_contract() -> 
     assert normal["signal_trace_fingerprint"] == delayed["signal_trace_fingerprint"]
     active = next(row for row in ledger if row["active"] is True)
     inactive = next(row for row in ledger if row["active"] is False)
-    assert active["breakout_bar_index"] == 6
-    assert active["breakout_decision_timestamp"] == active["entry_fill_timestamp"]
+    assert active["reclaim_decision_bar_index"] == 6
+    assert active["reclaim_decision_timestamp"] == active["entry_fill_timestamp"]
     assert active["exit_decision_timestamp"] == active["exit_fill_timestamp"]
-    assert inactive["opening_range_high"] == Decimal("100")
-    assert inactive["breakout_threshold"] == Decimal("100.02")
+    assert inactive["prior_session_low"] == Decimal("98.90")
+    assert inactive["opening_window_low"] == Decimal("100")
+    assert inactive["opening_window_breach"] is False
     assert all(
         inactive[key] is None
         for key in (
-            "breakout_bar_index",
-            "breakout_decision_timestamp",
+            "reclaim_decision_bar_index",
+            "reclaim_decision_timestamp",
             "entry_fill_timestamp",
             "exit_decision_timestamp",
             "exit_fill_timestamp",
@@ -359,18 +351,19 @@ def test_event_report_retains_signal_and_enforces_active_inactive_contract() -> 
     signal = cast(list[dict[str, object]], normal["signal_trace"])
     assert set(signal[0]) == {
         "event_id",
-        "breakout_buffer_bps",
-        "opening_range_high",
-        "breakout_threshold",
+        "confirmation_bars",
+        "prior_session_low",
+        "opening_window_low",
+        "opening_window_breach",
         "active",
-        "breakout_bar_index",
-        "breakout_decision_timestamp",
+        "reclaim_decision_bar_index",
+        "reclaim_decision_timestamp",
         "exit_decision_timestamp",
     }
 
 
 def test_event_aggregation_recomputes_ledger_concentrations() -> None:
-    result = _equivalence_result("ieb001-a01", "normal")
+    result = _equivalence_result("ieplr001-a01", "normal")
     metrics = cast(dict[str, object], deepcopy(result["metrics"]))
     ledger = cast(list[dict[str, object]], deepcopy(result["event_ledger"]))
     details = {
@@ -397,6 +390,75 @@ def test_event_aggregation_recomputes_ledger_concentrations() -> None:
     assert aggregate["positive_profit_event_concentration"] == Decimal("0.5")
     assert aggregate["signal_trace_mismatch_count"] == 0
     assert aggregate["accounting_identity_error"] == 0
+
+
+@pytest.mark.parametrize(
+    ("cohort", "expected"),
+    (
+        (
+            (),
+            "INTRADAY EVENT PRIOR-LOW REJECTION 001 COMPLETE — NO CONTROLLED-QUALIFIED CANDIDATE",
+        ),
+        (
+            ("ieplr001-a01",),
+            "INTRADAY EVENT PRIOR-LOW REJECTION 001 COMPLETE — WAITING FOR FUTURE UNTOUCHED DATA",
+        ),
+    ),
+)
+def test_final_report_terminal_message_names_prior_low_campaign(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    cohort: tuple[str, ...],
+    expected: str,
+) -> None:
+    database = tmp_path / runner_module.DATABASE_NAME
+    database.touch()
+    (tmp_path / "final-freeze.json").write_bytes(b"freeze")
+    runner = object.__new__(IntradayEventPriorLowRejection001Runner)
+    runner.source_commit = _SOURCE
+    runner.runtime_root = tmp_path
+    runner.plan = load_intraday_event_prior_low_rejection_001_plan(_REPOSITORY)
+    runner.attempt_store = cast(
+        Any,
+        SimpleNamespace(list_runs=lambda: [], path=database),
+    )
+    monkeypatch.setattr(runner, "_publish_final_report", lambda payload: payload)
+
+    result = runner._final_report(
+        {"parent_count": 3, "run_specification_count": 6},
+        {"candidate_count": 0, "run_specification_count": 0},
+        {
+            "candidate_count": 0,
+            "stress_run_specification_count": 0,
+            "neighbor_new_specification_count": 0,
+        },
+        cohort,
+        {"attempt_summary": {}, "freeze_fingerprint": "f" * 64},
+    )
+
+    assert result["terminal_message"] == expected
+
+
+def test_terminal_interruption_message_names_prior_low_campaign(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    database = tmp_path / runner_module.DATABASE_NAME
+    database.touch()
+    runner = object.__new__(IntradayEventPriorLowRejection001Runner)
+    runner.source_commit = _SOURCE
+    runner.runtime_root = tmp_path
+    runner.attempt_store = cast(
+        Any,
+        SimpleNamespace(list_runs=lambda: [], path=database),
+    )
+    monkeypatch.setattr(runner, "_publish_final_report", lambda payload: payload)
+
+    result = runner._terminal_interruption_report(())
+
+    assert (
+        result["terminal_message"]
+        == "INTRADAY EVENT PRIOR-LOW REJECTION 001 TERMINALLY INTERRUPTED"
+    )
 
 
 def test_synthetic_one_worker_and_four_worker_reports_are_byte_identical() -> None:
