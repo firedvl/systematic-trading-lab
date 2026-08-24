@@ -1,0 +1,325 @@
+{
+  "schema_version": "intraday-spy-qqq-lead-lag-001-launch-control-review-v1",
+  "review_id": "intraday-spy-qqq-lead-lag-001-launch-control-review-v1",
+  "status": "passed",
+  "verdict": "pass",
+  "review_date": "2026-08-24",
+  "review_method": "Independent exact-main source, control, focused-test, and synthetic-equivalence review.",
+  "reviewed_inputs": {
+    "plan": {
+      "path": "config/research/intraday-spy-qqq-lead-lag-001-plan-v1.json",
+      "sha256": "1a02410da60f9dc90e2408e46e4dad88fe9ab9ec248ad8cb035f26734dc78b92",
+      "fingerprint": "177fad36b3911b89a4938cdfe130a6eda81d22bd1d19e448ab7d11b46326a51a"
+    },
+    "plan_review": {
+      "path": "config/research/intraday-spy-qqq-lead-lag-001-plan-independent-review-v1.json",
+      "sha256": "71b60c8d4b900bb4ad1cb8c737fe26927b0365c7314aff5d64c688ffea6b6a07",
+      "fingerprint": "b0f14d7fe31f509300b1f5bedce4dcf6b94edba476efc8ed0b9f9fea351fe5d6"
+    },
+    "program_state": {
+      "path": "docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-002.json",
+      "sha256": "f74bc4ad3d0d30560ed0eb4718fc00739121849fb503e8045a01d8bc63907a0f",
+      "fingerprint": "a9be74e854942eaeea0cc65f67dca2c920a66d0e402e17452670543bb55b2058"
+    },
+    "autonomous_program": {
+      "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+      "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9",
+      "fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f"
+    },
+    "autonomous_program_review": {
+      "path": "config/research/intraday-autonomous-research-001-program-independent-review-v1.json",
+      "sha256": "1731794543d13306f34462016d376966d47ae8354fa337144889c7bea5c738db",
+      "fingerprint": "50424b9e5c07a95351af93e560859293768e34959d01f816f0f63042302497c0"
+    },
+    "base_plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "base_plan_review": {
+      "path": "config/research/intraday-event-drift-001-plan-independent-review-v1.json",
+      "sha256": "25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96",
+      "fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+    },
+    "execution_cost_model": {
+      "path": "config/research/intraday-execution-cost-model-001-v1.json",
+      "sha256": "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af",
+      "fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4"
+    },
+    "execution_cost_review": {
+      "path": "config/research/intraday-execution-cost-model-001-independent-review-v1.json",
+      "sha256": "fb197856b9229349e5de4bca742f328a8f1e5e53f9558dfd7324744e91a795aa",
+      "fingerprint": "8ade5190bb64330af037f88bf0911ed3cdb04578ca7a6d6e27a5fa6d651349b2"
+    }
+  },
+  "implementation": {
+    "source_commit": "c987371b6a1b632b8fa7930ff2ac11192e4b5000",
+    "files": [
+      {
+        "path": "src/systematic_trading_lab/backtesting.py",
+        "sha256": "6e376d6d17da069f797b88e358fbbbfafb2a7be91bd76fd1e9f272ac5d95729f"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "1278d090ea15c518601b9db5b3460de700333508d19b32a6e03e59e531fdeea1"
+      },
+      {
+        "path": "src/systematic_trading_lab/datasets.py",
+        "sha256": "2b0e7fe5ec7ff530da115f4f5f1c7d3bf024a7f79120e4e4b209769cad87da2b"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/storage.py",
+        "sha256": "d18f7f7e27d76f5979eecdc2790ddc2259b5afd7651f150c74d25fd913d9c07c"
+      },
+      {
+        "path": "src/systematic_trading_lab/strategies.py",
+        "sha256": "4be05a18badf460f60016f9401206d5dcf3c89ea270835991f11aae3754085af"
+      },
+      {
+        "path": "src/systematic_trading_lab/research_attempts.py",
+        "sha256": "608d710c8fa1d7a7830bf7f82a404a5a0588a6055381d6dcc4676d2c256f5512"
+      },
+      {
+        "path": "src/systematic_trading_lab/research_executor.py",
+        "sha256": "099f9ac9572aaaa640d51cb0dde50e2cba378a6ef0b2ddf9b07a63d0ed9b1b81"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_execution_cost_model.py",
+        "sha256": "7d03b674a5ea5c3978a63c62dd34d73e855b0c35bf5655a8c61e60d59a5f9dd6"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_exposed_002_engine.py",
+        "sha256": "bf62f6661b0beb2ac57b83668412b90a17255fd176fa559966ec0f5a64032c66"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_exposed_002_runner.py",
+        "sha256": "d0b8b7d7a6460f42d987ee9587939dafb88e1e8e7aa12aa4edc1097d6c90eb05"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_autonomous_research_program.py",
+        "sha256": "a80cc42d8f46e0c91f7a147ed9ae7ca8a94c773a00e56d3c8440d11ca69db141"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_drift_001_plan.py",
+        "sha256": "28b5d1979361a9bbd518e2482ecfaef7a1f2e4cb0dea16a7e5f901b578a03f36"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_drift_001_runner.py",
+        "sha256": "5b7231347f08276db1589deb9bb599312590326cbf6bd6d4c3bc88e13f5ebd38"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_spy_qqq_lead_lag_001_plan.py",
+        "sha256": "aa6393aad1c839215fed314d0fea1dfb0bfc3e2af393c7f91de94ae296c218d2"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_spy_qqq_lead_lag_001_strategies.py",
+        "sha256": "d20155d5404334f3261188f15dab4ad4838299b7a4624b161883284cabb32c23"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_spy_qqq_lead_lag_001_runner.py",
+        "sha256": "2c7002d164ae65ed89be6ea2a25adc356b169485cdead2d67849f824b48909c1"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_spy_qqq_lead_lag_001_cli.py",
+        "sha256": "f861df28720e38196a69d83b9af7d122d45651b35c040c87e72d776f30126a1c"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_prior_low_rejection_001_cli.py",
+        "sha256": "929ca5f516cabca46706a8b6f4ee727c06da675d78ca231d69b140e08f3771ca"
+      },
+      {
+        "path": "src/systematic_trading_lab/public_cli.py",
+        "sha256": "6b96a9605291335724415c9e5a812d42e51b53571cd9b1e85679629842e47fca"
+      },
+      {
+        "path": "pyproject.toml",
+        "sha256": "783cd9a579ae5cbc3a90173dd4190720f9f476eee48d54f6673d4545be1a0c35"
+      }
+    ]
+  },
+  "quality_gates": {
+    "source_commit": "c987371b6a1b632b8fa7930ff2ac11192e4b5000",
+    "results": [
+      {
+        "command": "uv run ruff format --check .",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "205 files already formatted"
+      },
+      {
+        "command": "uv run ruff check .",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "All checks passed"
+      },
+      {
+        "command": "uv run mypy src tests",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Success: no issues found in 200 source files"
+      },
+      {
+        "command": "uv run pytest",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "970 passed, 4 skipped in 86.78s"
+      },
+      {
+        "command": "uv run python scripts/check_secrets.py",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "secret check passed (370 files scanned)"
+      },
+      {
+        "command": "bash -n scripts/*.sh",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "All shell scripts passed syntax validation"
+      },
+      {
+        "command": "uv build",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Source distribution and wheel built"
+      }
+    ]
+  },
+  "equivalence": {
+    "comparisons": [
+      "run-specification",
+      "run-fingerprint",
+      "signal-trace-fingerprint",
+      "decision-trace-fingerprint",
+      "transition-trace-fingerprint",
+      "fill-trace-fingerprint",
+      "round-trip-fingerprint",
+      "daily-fee-ledger-fingerprint",
+      "metrics",
+      "session-ledger",
+      "canonical-report-bytes",
+      "canonical-report-sha256",
+      "report-fingerprint"
+    ],
+    "equivalent": true,
+    "fixture_count": 4,
+    "fixture_kind": "synthetic-non-protected-spy-qqq-five-minute-bars",
+    "fixtures": [
+      {
+        "candidate_id": "isqlll001-a01-b01",
+        "canonical_report_equal": true,
+        "daily_fee_ledger_fingerprint": "cc8137c5455b00ddf9e448ffa4a394417a9b28d903a3e825120d22a5a0103550",
+        "decision_trace_fingerprint": "baff4d0125c3191439679af3cc2a0db20590deea6f7905aea4ff67e99a5b094a",
+        "fill_trace_fingerprint": "5c305eec1eaf4ec939a35d1f7e5ef0129a446e759b9cfc8bfb594f4c9c97ae60",
+        "report_equal": true,
+        "report_fingerprint": "beca80be4f3b3fd285d2e8d1d76bde40617eb5726a1b1f1203e203d5c5e2272b",
+        "report_sha256": "ecf0a71239578d159800b5f1f2876b894699686cbc285e44aca9c2415b69cae8",
+        "round_trip_fingerprint": "f29cd0c2d925d3dd138bf1585e07ada8cec4dc18b825def1f5de82b45cbdfb7d",
+        "run_fingerprint": "2275e9f011cea40ede5aa9df73db9c3b34ebdc4db5edd53ca2ab4914bc6e75ab",
+        "run_id": "isqlll001r-261e46e4ea6806488bf51907",
+        "scenario_id": "normal",
+        "session_ledger_equal": true,
+        "session_ledger_fingerprint": "f1b691eee7428302fc7b34c3b19eb70a271573b1b8032ba0ba4cb582deee49d7",
+        "signal_trace_fingerprint": "cede73f806aaf2a0d025fc8ceba237342b0de3e7f4cdfa68b25642a2152f54b6",
+        "specification_equal": true,
+        "transition_trace_fingerprint": "e977c5c26937b1e185996d2d846815bb716a1f03d9c22448a0a0d88a8da61d97"
+      },
+      {
+        "candidate_id": "isqlll001-a02-b02",
+        "canonical_report_equal": true,
+        "daily_fee_ledger_fingerprint": "a1329fbdc08e4cce3064118537018d2e65cb96a9079209e3f5cef7879f003849",
+        "decision_trace_fingerprint": "4b32bcf84b75caa7a9335b649d879d4dbf8f38e53e27947fea8ae64228d1214b",
+        "fill_trace_fingerprint": "ea9b9de0d38f66a91a50499ca2ff51cadab5af67f3c23abc818a7f6482318b77",
+        "report_equal": true,
+        "report_fingerprint": "f0f6656faf13cfe53ae447c4b7b889de0e20d6954aada56994c10c40015afddd",
+        "report_sha256": "6fb5916c9a8b20a409e9289a16955edcf413041f812ccdea262687130a02bf6b",
+        "round_trip_fingerprint": "bb9d23fcf6a8ec841ee086db2fe395be1817d38e6404100b18d6b1528055ebfd",
+        "run_fingerprint": "969ff369bde6eecfc6bd4581097fce493112f238af19094dd0cece7f778cd031",
+        "run_id": "isqlll001r-c0de1f555dcc1e16fbe69731",
+        "scenario_id": "zero_cost_diagnostic",
+        "session_ledger_equal": true,
+        "session_ledger_fingerprint": "5b4479d1202c1e7a6726c78e0e9172930c1fc8ab782f1db2f7143938087ff840",
+        "signal_trace_fingerprint": "3730f53f6e81ae6d11b8ed8f128070478d6b497c385d62a9bcaa242987474441",
+        "specification_equal": true,
+        "transition_trace_fingerprint": "3e8570298390d2235aa9984b5e3dc92e98c9fcfe44cbe950b63aaf4136d41b41"
+      },
+      {
+        "candidate_id": "isqlll001-a03-b03",
+        "canonical_report_equal": true,
+        "daily_fee_ledger_fingerprint": "042eb4c107748c949178ac98ce51179c0d5c866e6334e953a57743a0467bce8b",
+        "decision_trace_fingerprint": "9663f98c1861748e6988709a329e87a61b63e4683e42bb7d9a8b99867a623dac",
+        "fill_trace_fingerprint": "43c7231214b6f1379cd5a4b4fe29a6ccb0cbe070cfc3bc6680255653fb4806de",
+        "report_equal": true,
+        "report_fingerprint": "d2273bbf7675d140041508d5d7b075fecf94986311ec9d4fc880c54f3b38fd14",
+        "report_sha256": "c63685319a0272be34bbb00fe85b9696974c451df85e8715dbc1c490d0ecfcc0",
+        "round_trip_fingerprint": "264d7db2e869f0029af19a531945b5d505da44073ae537e5856e9be37f6f3c42",
+        "run_fingerprint": "947ef7fcc73d8730a9a78cee99a847b5fe02969d0d74758c9936a6571fa41448",
+        "run_id": "isqlll001r-2d201160ee490ab256c5da74",
+        "scenario_id": "stress_a",
+        "session_ledger_equal": true,
+        "session_ledger_fingerprint": "d2d44e367187c2b3a7943ce3321274fc2865621e2bbf82436c5a192aee633a9b",
+        "signal_trace_fingerprint": "abb594bfbf608a1cfa5caab04ba189b1bea6bc7b57d424a4cfda4192a7495ef2",
+        "specification_equal": true,
+        "transition_trace_fingerprint": "5c397b817e1bace081b40061c9dc199250f3a67b9b2080102efec70d2a09217d"
+      },
+      {
+        "candidate_id": "isqlll001-a01-b03",
+        "canonical_report_equal": true,
+        "daily_fee_ledger_fingerprint": "8f6856eea84433085fce54131bf982fb401eaee0f0660bc401abaa19faab254b",
+        "decision_trace_fingerprint": "9a0d870a00dc6da39b24c856287037f225c63c7a2f6c629a807269bb4a12f070",
+        "fill_trace_fingerprint": "8bddec2a2bccd4aaf9a50db0608caff15a8f88ac23927f713a5a556ae9346f76",
+        "report_equal": true,
+        "report_fingerprint": "2454d5e5d3f001fb8d1eacd17f61adc5fab8ef4383053972534a9a9d218cce59",
+        "report_sha256": "c0f5c89817836869ef9f028bd6f7ed184da9bdf60ae6702a47c35629882bea94",
+        "round_trip_fingerprint": "42f2383d7bb50a24ecc1793d98f52755de1c19dc675c3379729cd9801f74312b",
+        "run_fingerprint": "510966acb73097c761da3dc7bbf61cf12660561438d8a2bdfd9fd8549c14b5d2",
+        "run_id": "isqlll001r-1c5dda4783a0c490db8c31da",
+        "scenario_id": "normal-delay-3",
+        "session_ledger_equal": true,
+        "session_ledger_fingerprint": "86a5a56f3d798b55efa7ed146bec77773c8a99c50a76b151cb9ed0af6beb0b9d",
+        "signal_trace_fingerprint": "38caeb2783c0d6f0da086cb16d6c124854b279943f62348ccf6f89126f58f0a4",
+        "specification_equal": true,
+        "transition_trace_fingerprint": "a3a550f3d57e7b6457bddf9d8086b0d27a89f28dcad6e6938734e19f19a21815"
+      }
+    ],
+    "parallel_seconds": "0.688160",
+    "program_id": "intraday-spy-qqq-lead-lag-001",
+    "protected_inputs_accessed": false,
+    "schema_version": "intraday-spy-qqq-lead-lag-001-parallel-equivalence-v1",
+    "sequential_seconds": "0.848682",
+    "speedup": "1.233262",
+    "verification_source_commit": "c987371b6a1b632b8fa7930ff2ac11192e4b5000",
+    "worker_counts": [
+      1,
+      4
+    ]
+  },
+  "independent_review": {
+    "source_commit": "c987371b6a1b632b8fa7930ff2ac11192e4b5000",
+    "status": "passed",
+    "verdict": "pass",
+    "findings": [],
+    "reviewer": "independent-exact-main-launch-review-v4"
+  },
+  "scope_limit": "Read-only exact-main source and synthetic non-protected equivalence review; no runtime, market data, June, V3, daily 2018-2019, protected results, PAPER, broker, live, credential, or strategic-allocation-21 state was accessed.",
+  "authority": {
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "b69466bfe3ed67d8e539a6e772341f2fbb7a7bddcdefa4bcee04e336c73c446e"
+}

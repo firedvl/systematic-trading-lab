@@ -34,6 +34,10 @@ from systematic_trading_lab.intraday_autonomous_research_program import (
 from systematic_trading_lab.intraday_autonomous_research_program import (
     REVIEW_SHA256 as AUTONOMOUS_REVIEW_SHA256,
 )
+from systematic_trading_lab.intraday_spy_qqq_lead_lag_001_launch_control import (
+    REVIEWED_LAUNCH_CONTROL_FINGERPRINT,
+    REVIEWED_LAUNCH_CONTROL_SHA256,
+)
 from systematic_trading_lab.intraday_spy_qqq_lead_lag_001_plan import (
     PLAN_FINGERPRINT,
     PLAN_RELATIVE_PATH,
@@ -61,6 +65,7 @@ from systematic_trading_lab.research_attempts import AttemptStateError
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _SOURCE = "0" * 40
+_IMPLEMENTATION_SOURCE = "c987371b6a1b632b8fa7930ff2ac11192e4b5000"
 
 
 def test_plan_status_cli_and_unbound_launch_are_read_only(
@@ -83,6 +88,17 @@ def test_plan_status_cli_and_unbound_launch_are_read_only(
     with pytest.raises(ValueError, match="launch control is not hash-bound"):
         IntradaySpyQqqLeadLag001Runner(_REPOSITORY, tmp_path)
     assert not (tmp_path / PROGRAM_ID).exists()
+
+
+def test_launch_control_is_bound_to_reviewed_artifact() -> None:
+    assert REVIEWED_LAUNCH_CONTROL_SHA256 == (
+        "26d1ef10abb3b2ef063dec1bc5931b0c667c2698bc983c7c9e3a3e58ca01e863"
+    )
+    assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
+        "b69466bfe3ed67d8e539a6e772341f2fbb7a7bddcdefa4bcee04e336c73c446e"
+    )
+    loaded = runner_module._load_launch_control(_REPOSITORY, source_commit=_IMPLEMENTATION_SOURCE)
+    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
 
 
 def test_cli_delegates_and_enforces_research_boundary(

@@ -1,7 +1,8 @@
 # Intraday Autonomous Research 001 program
 
-Status: Campaign 1's exact plan and independent review are frozen. Its implementation and focused
-repair are merged, but launch control remains unbound and no successor campaign has run.
+Status: Campaign 1's exact plan and independent review are frozen. Its launch-control artifact
+binds reviewed implementation main `c987371b6a1b632b8fa7930ff2ac11192e4b5000`; no successor
+campaign has run.
 
 Program ID: `intraday-autonomous-research-001`.
 
@@ -22,6 +23,10 @@ Campaign 1 plan SHA-256/fingerprint:
 Campaign 1 review SHA-256/fingerprint:
 `71b60c8d4b900bb4ad1cb8c737fe26927b0365c7314aff5d64c688ffea6b6a07` /
 `b0f14d7fe31f509300b1f5bedce4dcf6b94edba476efc8ed0b9f9fea351fe5d6`.
+
+Campaign 1 launch-control SHA-256/fingerprint:
+`26d1ef10abb3b2ef063dec1bc5931b0c667c2698bc983c7c9e3a3e58ca01e863` /
+`b69466bfe3ed67d8e539a6e772341f2fbb7a7bddcdefa4bcee04e336c73c446e`.
 
 Current immutable state revision SHA-256/fingerprint:
 `f74bc4ad3d0d30560ed0eb4718fc00739121849fb503e8045a01d8bc63907a0f` /

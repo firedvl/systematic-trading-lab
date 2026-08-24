@@ -1,7 +1,8 @@
 # Intraday SPY-QQQ Lead-Lag 001 program
 
-Status: the exact-main implementation repair is merged. Launch control remains unbound pending a
-fresh finding-free review. No reservation, market-data read, runtime directory, or result exists.
+Status: the launch-control artifact binds finding-free reviewed implementation main
+`c987371b6a1b632b8fa7930ff2ac11192e4b5000`. No reservation, market-data read, runtime directory,
+or result exists.
 
 Program ID: `intraday-spy-qqq-lead-lag-001`.
 
@@ -11,6 +12,11 @@ Plan fingerprint: `177fad36b3911b89a4938cdfe130a6eda81d22bd1d19e448ab7d11b46326a
 Independent-review SHA-256:
 `71b60c8d4b900bb4ad1cb8c737fe26927b0365c7314aff5d64c688ffea6b6a07`.
 Review fingerprint: `b0f14d7fe31f509300b1f5bedce4dcf6b94edba476efc8ed0b9f9fea351fe5d6`.
+
+Launch-control SHA-256:
+`26d1ef10abb3b2ef063dec1bc5931b0c667c2698bc983c7c9e3a3e58ca01e863`.
+Launch-control fingerprint:
+`b69466bfe3ed67d8e539a6e772341f2fbb7a7bddcdefa4bcee04e336c73c446e`.
 
 Starting main: `4bb7615bcb508db114d11904d07dc202fe135e99`.
 
@@ -73,13 +79,14 @@ Immutable state revision 2 binds the exact program, Campaign 1 plan, and review 
 `f74bc4ad3d0d30560ed0eb4718fc00739121849fb503e8045a01d8bc63907a0f`. Future transitions must
 publish a new chained revision; the original state file cannot be mutated.
 
-The separate strategy, runner, CLI, launch-control stub, and focused tests implement the frozen
+The separate strategy, runner, CLI, launch control, and focused tests implement the frozen
 contract. Exact-main launch review found that Normal/zero-cost pairs lacked the frozen
 decision-trace equality check. Repair main `fa0f19db989c8e9d1e15c3c5a2b3f1bf1ac6dd87` makes a
-mismatch terminal and adds a regression test. Follow-up exact-main review confirmed the repair but
-requested this durable-state synchronization. Full repository gates, synthetic one-worker/four-worker
-equivalence, exact merged-main launch control, and finding-free fresh launch review remain required
-before the first reservation or result.
+mismatch terminal and adds a regression test. After durable wording was synchronized, exact main
+`c987371b6a1b632b8fa7930ff2ac11192e4b5000` passed the seven repository gates and four-fixture
+synthetic one-worker/four-worker equivalence. A fresh independent review found no issue. The launch
+artifact binds that evidence; exact bound-main verification remains required before the first
+reservation or result.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, and live data remain prohibited. Every authority field is false.
