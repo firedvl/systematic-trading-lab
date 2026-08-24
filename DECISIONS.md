@@ -1,5 +1,19 @@
 # Architecture decisions
 
+## 2026-08-23 — Implement Prior-Low Rejection with an explicit inherited data contract
+
+- Decision: keep Intraday Event Prior-Low Rejection 001 as a campaign-owned single-arm runner and pass the frozen Event Drift base payload explicitly to coordinator and worker dataset validation. Leave launch-control constants unbound until exact-main review.
+- Context: the successor plan intentionally omits inherited `data`; validation must read the already-bound base-plan section without duplicating or weakening it. The strategy and report contract differ from Opening Breakout, while the engine, attempt store, executor, cost model, and protected boundaries remain reusable.
+- Consequences: plan bytes, inherited dataset identities, chronology, costs, gates, and authority boundaries remain unchanged. Construction fails closed until a reviewed launch-control artifact binds the exact implementation source. No runtime, reservation, broker/PAPER state, or market-data read exists.
+- Revisit when: the exact-main launch-control review binds this implementation or a later reviewed common campaign kernel replaces the campaign-owned lifecycle.
+
+## 2026-08-23 — Hand the top-level research CLI to Prior-Low Rejection
+
+- Decision: point the package entry point at the Prior-Low Rejection wrapper, which handles its own command and delegates all other commands through the existing Opening Breakout, Repricing, and public CLI chain.
+- Context: the next prospective campaign needs a stable `trading-lab research intraday-event-prior-low-rejection-001` surface without editing the frozen plan or adding a command to the exact-bound public CLI. Opening Breakout is already terminal and must not be relaunched.
+- Consequences: the closed Opening Breakout launch artifact remains immutable historical evidence and rejects the successor source before any reservation. Prior-Low launch control binds the complete current wrapper chain, including the Opening Breakout delegate, before execution. No prior runtime or authority changes.
+- Revisit when: a versioned command registry can preserve each campaign's launch surface without wrapper chaining.
+
 ## 2026-08-23 — Close Event Opening Breakout without weakening sparse-evidence gates
 
 - Decision: freeze Intraday Event Opening Breakout 001 with an empty cohort and preserve its activity, gross-edge, and event-concentration failures as the result.
