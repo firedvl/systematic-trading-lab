@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Bind Campaign 2 launch control to exact reviewed main
+
+- Decision: bind `intraday-relative-volume-drift-001` to exact reviewed main `b9efc2c7a4a022177d72935821c3cb0e7b46c598` after all seven repository gates, four-fixture synthetic one-worker/four-worker equivalence, and a finding-free independent launch review. The launch-control artifact has SHA-256 `51159d51aff6b11b9fee9c5c5bacfa3ac3ceaa93c17259b493aeb794d0b5e655` and fingerprint `3b6c46f924ab94557f5235bf26650c1b8bf6f836b0f55bb590e63c1bba86717f`.
+- Context: the reviewed Campaign 2 implementation merged through PR #194 with no reservation, attempt, market-data read, or result. PR #195 made the unbound CLI test explicit before source binding; it changed no production file. Exact main passed 1,039 tests with four skips and the remaining six gates. Fresh synthetic equivalence took `13.477235` seconds with one worker and `4.147198` seconds with four workers, a `3.249721` speedup, with byte-identical canonical reports and no protected input.
+- Consequences: construction remains fail-closed until the artifact, binding constants, regression test, and durable state merge. Launch then requires clean synchronized main and complete artifact, input, implementation, quality, equivalence, independent-review, and lineage validation. Strategy, data, chronology, gates, budget, and false authorities do not change; this binding creates no runtime or result.
+- Revisit when: Campaign 2 reaches a terminal result or a separately reviewed common launch-control contract replaces this campaign surface.
+
 ## 2026-08-24 — Freeze Campaign 2 as joint same-clock relative-volume drift
 
 - Decision: freeze `intraday-relative-volume-drift-001` with nine parents crossing `8/16/24` completed-bar horizons and joint relative-volume floors `1.2/1.5/2`. Require both SPY and QQQ to return at least 15 basis points, compare each cumulative-volume prefix with the exact median from ten strictly prior complete sessions, target each symbol at one-half, and hold for 24 five-minute intervals with no resize or reentry.

@@ -9,6 +9,10 @@ from typing import Any, cast
 import pytest
 
 import systematic_trading_lab.intraday_relative_volume_drift_001_runner as runner_module
+from systematic_trading_lab.intraday_relative_volume_drift_001_launch_control import (
+    REVIEWED_LAUNCH_CONTROL_FINGERPRINT,
+    REVIEWED_LAUNCH_CONTROL_SHA256,
+)
 from systematic_trading_lab.intraday_relative_volume_drift_001_plan import (
     PROGRAM_ID,
     load_intraday_relative_volume_drift_001_plan,
@@ -18,6 +22,7 @@ from systematic_trading_lab.intraday_relative_volume_drift_001_runner import (
     IntradayRelativeVolumeDrift001Store,
     _deduplicate_specifications,
     _EquivalenceWorker,
+    _load_launch_control,
     _parallel_equivalence,
     _recompute_terminal_screening,
     _require_non_broker_environment,
@@ -32,6 +37,7 @@ from systematic_trading_lab.intraday_relative_volume_drift_001_runner import (
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _SOURCE = "0" * 40
+_IMPLEMENTATION_SOURCE = "b9efc2c7a4a022177d72935821c3cb0e7b46c598"
 
 
 def _specification(candidate: str, period: str, scenario: str) -> dict[str, object]:
@@ -90,6 +96,17 @@ def test_plan_status_and_unbound_launch_are_read_only(
     with pytest.raises(ValueError, match="not hash-bound"):
         IntradayRelativeVolumeDrift001Runner(_REPOSITORY, tmp_path)
     assert not (tmp_path / PROGRAM_ID).exists()
+
+
+def test_launch_control_binds_exact_implementation_main() -> None:
+    assert REVIEWED_LAUNCH_CONTROL_SHA256 == (
+        "51159d51aff6b11b9fee9c5c5bacfa3ac3ceaa93c17259b493aeb794d0b5e655"
+    )
+    assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
+        "3b6c46f924ab94557f5235bf26650c1b8bf6f836b0f55bb590e63c1bba86717f"
+    )
+    loaded = _load_launch_control(_REPOSITORY, source_commit=_IMPLEMENTATION_SOURCE)
+    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
 
 
 def test_broker_credentials_are_rejected_before_campaign_state() -> None:
