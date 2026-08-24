@@ -1,6 +1,6 @@
 # Intraday Event Opening Breakout 001 program
 
-Status: prospectively frozen and independently reviewed before strategy implementation or results.
+Status: implemented without results; exact-main launch-control review remains unbound.
 
 Plan SHA-256: `73ea48a3e2c250db93aca0c7ebef16b5480e118ab9577684089147bb318dfd27`.
 Plan fingerprint: `3164757c9f91a1318d48607b24bdaa1c4f3e5439a9657d1b31b0cc32d8163b68`.
@@ -78,10 +78,11 @@ or parameter substitution is allowed.
 
 ## Implementation and launch boundary
 
-The later implementation may reuse only the existing engine, attempt store, executor, cost model,
-and explicit Event Drift base payload. It must add campaign-owned plan loading, strategy, reporting,
-runner, CLI, launch control, and focused tests. Launch-control constants start unbound. A separate
-exact-main review must pass all repository gates and synthetic one-worker/four-worker byte
+The implementation reuses only the existing engine, attempt store, executor, cost model, and
+explicit Event Drift base payload. Campaign-owned plan loading, strategy, event reporting, runner,
+CLI, launch control, and focused tests now exist. Candidate, period, and scenario alone define one
+run identity, so later stages reuse exact evidence. Launch-control constants remain unbound. A
+separate exact-main review must pass all repository gates and synthetic one-worker/four-worker byte
 equivalence before a binding PR can make the first reservation.
 
 The four-worker spawned executor remains the default. Only an expired no-result infrastructure

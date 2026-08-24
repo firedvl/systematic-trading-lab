@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-trading-lab = "systematic_trading_lab.intraday_event_repricing_001_cli:main"
+trading-lab = "systematic_trading_lab.intraday_event_opening_breakout_001_cli:main"
 
 [dependency-groups]
 dev = [
