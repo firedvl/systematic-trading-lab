@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Freeze a three-campaign intraday autonomous research program
+
+- Decision: permit exactly three new successor campaigns in a fixed order: `intraday-spy-qqq-lead-lag-001`, `intraday-relative-volume-drift-001`, and `intraday-fed-policy-absorption-001`. Cap each campaign at 9 parents and 90 immutable run specifications, and cap the program at 270. Stop on the first all-gate cohort or after the third terminal empty cohort. Do not create Campaign 4.
+- Context: the complete exposed history has rejected broad high-turnover price rules, sparse price-event families, and four BLS-session mechanisms. It has not tested fixed SPY-to-QQQ catch-up, same-clock cumulative participation drift without a breakout, or post-14:00 Federal Reserve policy-publication absorption. Independent control review of the exact program and state passed with no findings before successor implementation or results.
+- Consequences: each campaign needs its own exact prospective plan and finding-free independent review before implementation or return observation. All price and volume work inherits the four Event Drift datasets through May 29, 2026. Infrastructure retries may recover only an expired no-result lease within three attempts and do not expand the search. June, V3, daily 2018–2019, protected results, PAPER/broker/live state, and `strategic-allocation-21` remain prohibited. Every authority field is false.
+- Revisit when: an all-gate cohort freezes, a protected-control issue stops the program, or all three campaigns close empty. Do not change later campaign mechanics from earlier results.
+
 ## 2026-08-24 — Close Prior-Low Rejection after an empty discovery cohort
 
 - Decision: freeze Intraday Event Prior-Low Rejection 001 as terminal exposed evidence with outcome `no-controlled-qualified-candidate`. Preserve the exact four-worker run from source main `b470aaf7c4dd28d43102ff30fa898e8561344e4d`: six discovery specifications, six attempts, zero failures or retries, and zero later-stage specifications.
