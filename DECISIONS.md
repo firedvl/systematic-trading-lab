@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Close Campaign 2 without rescuing sparse positive rows
+
+- Decision: freeze `intraday-relative-volume-drift-001` as terminal exposed evidence with outcome `no-controlled-qualified-candidate`. Preserve the exact four-worker run from source main `551c891585c176016e9f98a20586957d1bfdca61`: 18 discovery specifications, 18 attempt-1 completions, zero failures or retries, and zero later-stage specifications.
+- Context: four parents had positive Normal and zero-cost returns, but all nine failed the frozen 12-active-session, 24-round-trip, and participation-bucket concentration gates. The strongest row returned `0.878023%` under Normal costs with `15.106` gross basis points per trade, but activated six sessions, completed 12 round trips, and concentrated all positive profit in one participation bucket. Friction was not the common rejection cause. No walk-forward, stress, delay, neighbor, chronological-stability, or regime evidence exists.
+- Consequences: runtime database, final-report, and final-freeze SHA-256 values are `8d9fb50dd25f022ed69580bdc90201c47e05e7bf730d84900de04030217a200a`, `7c271ace238d0871a0654edc790ff301ce9600e64b2765baaea4dc2ac4be0ade`, and `fda9aa99ff0b456419c5d90205dc890bc612ee43974aac24a33eedf67d8f7f30`. Finding-free postmortem review closes the campaign. State revision 5 records 36 total consumed specifications and permits only prospective Campaign 3 planning. No controlled, qualification, protected, PAPER, broker-write, or live authority opened.
+- Revisit when: never for Campaign 2. Campaign 3 must keep its predeclared mechanism and freeze independently; Campaign 4 remains prohibited.
+
 ## 2026-08-24 — Bind Campaign 2 launch control to exact reviewed main
 
 - Decision: bind `intraday-relative-volume-drift-001` to exact reviewed main `b9efc2c7a4a022177d72935821c3cb0e7b46c598` after all seven repository gates, four-fixture synthetic one-worker/four-worker equivalence, and a finding-free independent launch review. The launch-control artifact has SHA-256 `51159d51aff6b11b9fee9c5c5bacfa3ac3ceaa93c17259b493aeb794d0b5e655` and fingerprint `3b6c46f924ab94557f5235bf26650c1b8bf6f836b0f55bb590e63c1bba86717f`.
