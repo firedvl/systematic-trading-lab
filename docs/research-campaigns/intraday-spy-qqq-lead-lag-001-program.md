@@ -1,8 +1,7 @@
 # Intraday SPY-QQQ Lead-Lag 001 program
 
-Status: exact-main launch review found one implementation mismatch; the focused repair awaits merge
-and fresh review. Launch control remains unbound. No reservation, market-data read, runtime
-directory, or result exists.
+Status: the exact-main implementation repair is merged. Launch control remains unbound pending a
+fresh finding-free review. No reservation, market-data read, runtime directory, or result exists.
 
 Program ID: `intraday-spy-qqq-lead-lag-001`.
 
@@ -76,10 +75,11 @@ publish a new chained revision; the original state file cannot be mutated.
 
 The separate strategy, runner, CLI, launch-control stub, and focused tests implement the frozen
 contract. Exact-main launch review found that Normal/zero-cost pairs lacked the frozen
-decision-trace equality check. The focused repair makes a mismatch terminal and adds a regression
-test. Full repository gates, a repair merge, synthetic one-worker/four-worker equivalence, exact
-merged-main launch control, and finding-free fresh launch review remain required before the first
-reservation or result.
+decision-trace equality check. Repair main `fa0f19db989c8e9d1e15c3c5a2b3f1bf1ac6dd87` makes a
+mismatch terminal and adds a regression test. Follow-up exact-main review confirmed the repair but
+requested this durable-state synchronization. Full repository gates, synthetic one-worker/four-worker
+equivalence, exact merged-main launch control, and finding-free fresh launch review remain required
+before the first reservation or result.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, and live data remain prohibited. Every authority field is false.
