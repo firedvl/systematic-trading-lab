@@ -109,10 +109,14 @@ def test_plan_status_cli_and_unbound_launch_are_read_only(
     assert not (tmp_path / PROGRAM_ID).exists()
 
 
-def test_launch_control_starts_unbound() -> None:
-    assert REVIEWED_LAUNCH_CONTROL_SHA256 is None
-    assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT is None
-    assert not (_REPOSITORY / runner_module.LAUNCH_CONTROL_RELATIVE_PATH).exists()
+def test_launch_control_is_bound_to_reviewed_artifact() -> None:
+    assert REVIEWED_LAUNCH_CONTROL_SHA256 == (
+        "ac9cc921e6b60592bfd8dcc9181ff44126d63a929867566bb9aecd1c2a043d0a"
+    )
+    assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
+        "17d1ad7207bbc76264a2762f288e71f6445a7088e4d238aac004ada94b5214d1"
+    )
+    assert (_REPOSITORY / runner_module.LAUNCH_CONTROL_RELATIVE_PATH).is_file()
 
 
 @pytest.mark.parametrize(
