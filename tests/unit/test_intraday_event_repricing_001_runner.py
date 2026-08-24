@@ -63,6 +63,7 @@ from systematic_trading_lab.storage import StorageLayout
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _SOURCE = "0" * 40
+_REVIEWED_SOURCE = "5454fb0b075fe29bbc1f1a96f08988ce847fea95"
 
 
 class _FrozenDatasetService:
@@ -200,9 +201,10 @@ def _runner() -> IntradayEventRepricing001Runner:
     return runner
 
 
-def test_plan_status_cli_and_stale_launch_control_are_read_only_without_runtime_write(
-    tmp_path: Path,
+def test_plan_status_cli_and_launch_control_are_read_only_without_runtime_write(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    monkeypatch.setattr(runner_module, "_source_commit", lambda _repository: _REVIEWED_SOURCE)
     plan = intraday_event_repricing_001_plan_summary(_REPOSITORY)
     status = intraday_event_repricing_001_status(tmp_path)
     arguments = event_repricing_parser().parse_args(("run", "--workers", "6"))
@@ -211,23 +213,23 @@ def test_plan_status_cli_and_stale_launch_control_are_read_only_without_runtime_
     assert plan["discovery_run_specification_count"] == 36
     assert plan["maximum_run_specifications"] == 244
     assert plan["maximum_attempts"] == 732
-    assert plan["status"] == "implementation-launch-review-pending"
-    assert plan["launch_control_bound"] is False
+    assert plan["status"] == "launch-control-bound"
+    assert plan["launch_control_bound"] is True
     assert status["database_exists"] is False
     assert arguments.workers == 6
     assert not any(cast(dict[str, bool], status["authority"]).values())
     assert not (tmp_path / PROGRAM_ID).exists()
     assert REVIEWED_LAUNCH_CONTROL_SHA256 == (
-        "11572b8f61d797b2a664866eb88d8b39be2ae07cbb57f9891899725b0a7293c2"
+        "5605cd28ddb1e3d1851aeab20ec415f9680e9fdf2a28e17aad0439fb24204794"
     )
     assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
-        "3d35f8d088e11ad6f07d81015c1b037b457e00b824ea908f37cef64a8fbf4a6b"
+        "910a4764efde8cecb6c17be24c04c863ed9c910d9279ab57cec3219a951db2c2"
     )
-    with pytest.raises(ValueError, match="launch files differ"):
-        runner_module._load_launch_control(
-            _REPOSITORY,
-            source_commit="94bc182efe952839d7e3384ea8a148554dd0149d",
-        )
+    launch_control = runner_module._load_launch_control(
+        _REPOSITORY,
+        source_commit=_REVIEWED_SOURCE,
+    )
+    assert launch_control["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
 
 
 def test_plan_status_reports_current_launch_control(
