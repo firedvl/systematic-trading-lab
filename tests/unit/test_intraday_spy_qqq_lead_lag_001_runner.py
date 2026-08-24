@@ -90,15 +90,15 @@ def test_plan_status_cli_and_unbound_launch_are_read_only(
     assert not (tmp_path / PROGRAM_ID).exists()
 
 
-def test_launch_control_is_bound_to_reviewed_artifact() -> None:
+def test_historical_launch_control_stays_bound_and_rejects_new_cli_source() -> None:
     assert REVIEWED_LAUNCH_CONTROL_SHA256 == (
         "26d1ef10abb3b2ef063dec1bc5931b0c667c2698bc983c7c9e3a3e58ca01e863"
     )
     assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
         "b69466bfe3ed67d8e539a6e772341f2fbb7a7bddcdefa4bcee04e336c73c446e"
     )
-    loaded = runner_module._load_launch_control(_REPOSITORY, source_commit=_IMPLEMENTATION_SOURCE)
-    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
+    with pytest.raises(ValueError, match="implementation file differs"):
+        runner_module._load_launch_control(_REPOSITORY, source_commit=_IMPLEMENTATION_SOURCE)
 
 
 def test_cli_delegates_and_enforces_research_boundary(
