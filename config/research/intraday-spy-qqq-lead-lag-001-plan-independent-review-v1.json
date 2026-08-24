@@ -1,0 +1,158 @@
+{
+  "schema_version": "intraday-spy-qqq-lead-lag-001-plan-independent-review-v1",
+  "review_id": "intraday-spy-qqq-lead-lag-001-plan-independent-review-v1",
+  "status": "passed-before-strategy-implementation-or-results",
+  "review_date": "2026-08-24",
+  "review_method": "Independent prospective exact-byte review of the frozen Campaign 1 plan, autonomous-program and source-state bindings, dependency bytes, ordinary-session causal feature and fill semantics, candidate graph, gates, concentration replacements, budget arithmetic, restart controls, immutable state-revision rule, and false-authority boundaries.",
+  "reviewed_plan": {
+    "program_id": "intraday-spy-qqq-lead-lag-001",
+    "path": "config/research/intraday-spy-qqq-lead-lag-001-plan-v1.json",
+    "sha256": "1a02410da60f9dc90e2408e46e4dad88fe9ab9ec248ad8cb035f26734dc78b92",
+    "plan_fingerprint": "177fad36b3911b89a4938cdfe130a6eda81d22bd1d19e448ab7d11b46326a51a"
+  },
+  "reviewed_program": {
+    "program_id": "intraday-autonomous-research-001",
+    "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+    "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9",
+    "program_fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f",
+    "campaign_index": 1,
+    "maximum_run_specifications": 90
+  },
+  "reviewed_source_state": {
+    "path": "docs/research-campaigns/intraday-autonomous-research-001-state.json",
+    "sha256": "8ef652046442ce7adfcd474d8effe610738a2a00e29fc97ceae3d4110ae2981a",
+    "state_revision": 1
+  },
+  "reviewed_dependencies": {
+    "base_plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "base_plan_review": {
+      "path": "config/research/intraday-event-drift-001-plan-independent-review-v1.json",
+      "sha256": "25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96",
+      "fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+    },
+    "execution_cost_model": {
+      "path": "config/research/intraday-execution-cost-model-001-v1.json",
+      "sha256": "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af",
+      "fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4"
+    },
+    "execution_cost_review": {
+      "path": "config/research/intraday-execution-cost-model-001-independent-review-v1.json",
+      "sha256": "fb197856b9229349e5de4bca742f328a8f1e5e53f9558dfd7324744e91a795aa",
+      "fingerprint": "8ade5190bb64330af037f88bf0911ed3cdb04578ca7a6d6e27a5fa6d651349b2",
+      "verdict": "pass"
+    },
+    "june_disposition": {
+      "path": "config/research/intraday-exposed-005-june-disposition-v1.json",
+      "sha256": "af6aea5e8d7bd8360aa6af4ddc31e1e67a1be48476f6c8ab13197fe12515b3c0",
+      "fingerprint": "6dad6480dc3b0379017d582bb2f29fc562f41379bb3065855c55eadf51f025dd",
+      "range_status": "ineligible"
+    },
+    "autonomous_program_review": {
+      "path": "config/research/intraday-autonomous-research-001-program-independent-review-v1.json",
+      "sha256": "1731794543d13306f34462016d376966d47ae8354fa337144889c7bea5c738db",
+      "fingerprint": "50424b9e5c07a95351af93e560859293768e34959d01f816f0f63042302497c0",
+      "state_sha256": "8ef652046442ce7adfcd474d8effe610738a2a00e29fc97ceae3d4110ae2981a",
+      "verdict": "pass"
+    }
+  },
+  "verdict": "pass",
+  "findings": [],
+  "answers": [
+    {
+      "control": "meta-program-and-source-state",
+      "answer": "pass",
+      "basis": "Campaign index 1, the nine-parent and 90-specification envelope, exact frozen program identity, and immutable revision-1 source state match. Later state transitions must be chained artifacts and cannot mutate the bound source."
+    },
+    {
+      "control": "exposed-evidence-and-novelty",
+      "answer": "pass",
+      "basis": "The fixed SPY feature source and QQQ-only catch-up trade are distinct from event filters, leader ranking, paired laggard controls, joint breakout confirmation, opening-range rules, and predecessor inversion. All permitted bars remain exposed-only."
+    },
+    {
+      "control": "causal-signal-and-engine-semantics",
+      "answer": "pass",
+      "basis": "The plan fixes aligned completed-bar inputs, opening anchors, inclusive thresholds, under-response ratio, entry and exit decision indices, scenario delays, exactly 24 holding intervals, no SPY fills, one QQQ round trip, and fail-closed missing-bar handling. Existing engine conventions can implement them."
+    },
+    {
+      "control": "chronology-data-and-protection",
+      "answer": "pass",
+      "basis": "Five campaign-owned periods bind four exact read-only SPY/QQQ five-minute datasets through 2026-05-29T19:55:00Z. New acquisition, June, V3, daily 2018-2019, protected results, PAPER, broker, SA21, and live access remain prohibited."
+    },
+    {
+      "control": "gates-concentration-and-reporting",
+      "answer": "pass",
+      "basis": "Session, period, and causal under-response-bucket concentration replace structurally inapplicable symbol concentration. Required metrics, null behavior, session dispositions, ledger reconciliation, Normal/zero and cross-scenario trace equality, and undefined-metric failure are explicit."
+    },
+    {
+      "control": "graph-budget-and-deduplication",
+      "answer": "pass",
+      "basis": "Nine unique parents form twelve symmetric undirected immediate-neighbor edges. Stage ceilings 18+24+16+32 equal 90; three infrastructure attempts each equal 270. Canonical candidate-period-scenario identities prevent neighbor re-execution."
+    },
+    {
+      "control": "restart-safe-process-boundary",
+      "answer": "pass",
+      "basis": "Four spawned workers, stage barriers, one immutable claim per worker, leases, heartbeats, create-only publication, campaign lock, and expired-no-result-only retry preserve the existing restart-safe authority boundary."
+    },
+    {
+      "control": "authority-and-launch-boundary",
+      "answer": "pass",
+      "basis": "Every authority field is false. Separate loader, strategy, runner, tests, exact merged-main binding, synthetic one-versus-four-worker equivalence, and finding-free launch review remain prerequisites to any reservation or strategy result."
+    }
+  ],
+  "verification": {
+    "plan_sha256_revalidated": true,
+    "plan_fingerprint_revalidated": true,
+    "duplicate_json_key_count": 0,
+    "autonomous_program_sha256_and_fingerprint_revalidated": true,
+    "source_state_sha256_revalidated": true,
+    "frozen_dependency_artifact_count_revalidated": 6,
+    "dataset_binding_count": 4,
+    "period_count": 5,
+    "period_session_counts": [
+      87,
+      41,
+      39,
+      43,
+      20
+    ],
+    "candidate_count": 9,
+    "undirected_neighbor_edge_count": 12,
+    "discovery_gate_count": 11,
+    "walk_forward_gate_count": 17,
+    "stress_scenario_count": 4,
+    "stress_gate_count": 12,
+    "neighbor_gate_count": 3,
+    "maximum_run_specifications": 90,
+    "maximum_infrastructure_attempts": 270,
+    "default_worker_count": 4,
+    "run_identity_fields": [
+      "candidate_id",
+      "period_id",
+      "scenario_id"
+    ],
+    "feature_source_symbol": "SPY",
+    "traded_symbol": "QQQ",
+    "new_market_data_acquisition": false,
+    "maximum_market_timestamp": "2026-05-29T19:55:00Z",
+    "all_authority_fields_false": true,
+    "exact_byte_rereview": true
+  },
+  "scope_limit": "Read-only repository control review. The reviewer did not access .trading-lab, market bars or strategy results, June, V3, daily 2018-2019, PAPER, broker, SA21, or live state; run a strategy, replay, worker, or acquisition; or use the network. Synthetic equivalence and launch control remain post-implementation obligations.",
+  "authority": {
+    "strategy_execution": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "reviewer": {
+    "role": "independent-control-reviewer",
+    "reviewed_at": "2026-08-24T08:11:28Z"
+  },
+  "review_fingerprint": "b0f14d7fe31f509300b1f5bedce4dcf6b94edba476efc8ed0b9f9fea351fe5d6"
+}

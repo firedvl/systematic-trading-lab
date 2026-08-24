@@ -1,0 +1,70 @@
+{
+  "schema_version": "intraday-autonomous-research-program-state-v2",
+  "program_id": "intraday-autonomous-research-001",
+  "state_revision": 2,
+  "previous_state": {
+    "path": "docs/research-campaigns/intraday-autonomous-research-001-state.json",
+    "sha256": "8ef652046442ce7adfcd474d8effe610738a2a00e29fc97ceae3d4110ae2981a",
+    "state_revision": 1
+  },
+  "program_plan": {
+    "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+    "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9",
+    "fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f"
+  },
+  "campaign_plan": {
+    "campaign_id": "intraday-spy-qqq-lead-lag-001",
+    "path": "config/research/intraday-spy-qqq-lead-lag-001-plan-v1.json",
+    "sha256": "1a02410da60f9dc90e2408e46e4dad88fe9ab9ec248ad8cb035f26734dc78b92",
+    "fingerprint": "177fad36b3911b89a4938cdfe130a6eda81d22bd1d19e448ab7d11b46326a51a"
+  },
+  "campaign_plan_review": {
+    "path": "config/research/intraday-spy-qqq-lead-lag-001-plan-independent-review-v1.json",
+    "sha256": "71b60c8d4b900bb4ad1cb8c737fe26927b0365c7314aff5d64c688ffea6b6a07",
+    "fingerprint": "b0f14d7fe31f509300b1f5bedce4dcf6b94edba476efc8ed0b9f9fea351fe5d6",
+    "verdict": "pass"
+  },
+  "phase": "campaign-1-plan-reviewed-implementation-pending",
+  "current_campaign_index": 1,
+  "active_campaign_id": "intraday-spy-qqq-lead-lag-001",
+  "completed_campaigns": [],
+  "campaign_dispositions": {
+    "intraday-fed-policy-absorption-001": "not-started",
+    "intraday-relative-volume-drift-001": "not-started",
+    "intraday-spy-qqq-lead-lag-001": "plan-reviewed-implementation-pending"
+  },
+  "remaining_prospectively_permitted_campaigns": [
+    "intraday-spy-qqq-lead-lag-001",
+    "intraday-relative-volume-drift-001",
+    "intraday-fed-policy-absorption-001"
+  ],
+  "run_specifications_consumed": 0,
+  "run_specifications_remaining": 270,
+  "next_action": "Implement Campaign 1 on a separate branch without reading market data or reserving a run, then bind exact merged main through finding-free launch control before execution.",
+  "state_transition_contract": {
+    "immutable_revision_artifacts": true,
+    "source_state_mutation": false,
+    "next_revision_rule": "Publish docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-{state_revision:03d}.json with state_revision incremented by one and an exact previous_state path/SHA/revision binding.",
+    "campaign_result_transition_rule": "A terminal campaign transition must bind its exact runtime database, canonical final report, final freeze, post-campaign review, and consumed specification count before advancing or stopping.",
+    "authority_change_rule": "No state revision can grant qualification, controlled, protected, PAPER, broker-write, or live authority; those require separate policy-valid artifacts outside this exposed program."
+  },
+  "stop_conditions": [
+    "nonempty all-gate exposed cohort",
+    "nonempty all-gate cohort requiring future untouched data",
+    "three terminal completed successor campaigns",
+    "270 immutable run specifications",
+    "research-integrity or protected-control failure",
+    "PAPER broker-write authorization boundary",
+    "any live-money action"
+  ],
+  "authority": {
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "state_fingerprint": "a9be74e854942eaeea0cc65f67dca2c920a66d0e402e17452670543bb55b2058"
+}
