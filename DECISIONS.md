@@ -1,10 +1,17 @@
 # Architecture decisions
 
-## 2026-08-23 — Extend the CLI without changing hash-bound campaign source
+## 2026-08-23 — Give Event Opening Breakout one exact three-field run identity
 
-- Decision: route the `trading-lab` console entry point through the Intraday Event Repricing 001 wrapper. The wrapper handles only `research intraday-event-repricing-001` and delegates every other argument unchanged to `public_cli.main`.
+- Decision: identify each Intraday Event Opening Breakout 001 run only by candidate, period, and scenario. Use one campaign-owned runner and event ledger while reusing the existing five-minute engine, attempt store, spawned executor, cost model, and explicit Event Drift base payload.
+- Context: discovery, walk-forward, stress, and neighbor screens can request the same evidence. Including a stage or base candidate in identity would duplicate work and break the frozen 46-specification limit. Reusing a prior campaign runner would also carry campaign-specific arms, reports, gates, and source bindings.
+- Consequences: exact matching evidence is reserved once and reused across stages. The runner recomputes event and release-class accounting from its ledger, requires equal signals across cost and delay scenarios, rejects broker state in coordinator and workers, and leaves launch control unbound until exact merged-main review. It adds no qualification, controlled, holdout, PAPER, broker-write, live, or promotion authority.
+- Revisit when: never within this campaign after its first reservation. A different identity, screen, strategy, or protected-data rule requires a new prospective campaign.
+
+## 2026-08-23 — Chain campaign CLI wrappers without changing historical source
+
+- Decision: route the `trading-lab` console entry point through the current campaign wrapper. The Event Opening Breakout wrapper handles only its own research command and delegates every other argument to the Event Repricing wrapper, which still handles only its command and delegates the rest unchanged to `public_cli.main`.
 - Context: Event Drift launch control binds the exact `public_cli.py` bytes. Adding the new command there would invalidate its immutable source check even though the closed campaign must remain reproducible.
-- Consequences: `public_cli.py` keeps SHA-256 `6b96a9605291335724415c9e5a812d42e51b53571cd9b1e85679629842e47fca`. Existing commands retain the same parser and dispatch. Event Repricing launch control must bind the wrapper with its other implementation files before the first reservation.
+- Consequences: `public_cli.py` keeps SHA-256 `6b96a9605291335724415c9e5a812d42e51b53571cd9b1e85679629842e47fca`. Existing commands and the terminal Repricing command retain their parsers and dispatch. Event Opening Breakout launch control must bind the complete wrapper chain with its other implementation files before the first reservation.
 - Revisit when: a separately reviewed versioned command registry can preserve past campaign identities without binding one shared mutable CLI file.
 
 ## 2026-08-22 — Preserve the aborted Exposed 004 launch and rekey recovery as Exposed 005
