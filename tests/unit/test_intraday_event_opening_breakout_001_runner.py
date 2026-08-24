@@ -98,6 +98,43 @@ def test_plan_status_cli_and_unbound_launch_are_read_only(tmp_path: Path) -> Non
     assert not (tmp_path / PROGRAM_ID).exists()
 
 
+@pytest.mark.parametrize(
+    "reason",
+    (
+        "launch control review is missing",
+        "launch control SHA-256 differs",
+        "launch source lineage differs",
+    ),
+)
+def test_plan_summary_requires_valid_launch_control(
+    monkeypatch: pytest.MonkeyPatch,
+    reason: str,
+) -> None:
+    monkeypatch.setattr(runner_module, "REVIEWED_LAUNCH_CONTROL_SHA256", "0" * 64)
+    monkeypatch.setattr(runner_module, "REVIEWED_LAUNCH_CONTROL_FINGERPRINT", "1" * 64)
+    monkeypatch.setattr(runner_module, "_source_commit", lambda _repository: _SOURCE)
+
+    def reject(_repository: Path, *, source_commit: str) -> None:
+        assert source_commit == _SOURCE
+        raise ValueError(reason)
+
+    monkeypatch.setattr(runner_module, "_load_launch_control", reject)
+    pending = intraday_event_opening_breakout_001_plan_summary(_REPOSITORY)
+    assert pending["status"] == "implementation-awaiting-review"
+    assert pending["launchable"] is False
+    assert pending["launch_control_bound"] is False
+
+    monkeypatch.setattr(
+        runner_module,
+        "_load_launch_control",
+        lambda _repository, *, source_commit: {"source_commit": source_commit},
+    )
+    ready = intraday_event_opening_breakout_001_plan_summary(_REPOSITORY)
+    assert ready["status"] == "launch-reviewed-ready"
+    assert ready["launchable"] is True
+    assert ready["launch_control_bound"] is True
+
+
 def test_cli_delegates_every_other_command_to_the_existing_chain(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
