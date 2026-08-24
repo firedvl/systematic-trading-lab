@@ -1,0 +1,551 @@
+{
+  "assembled_at": "2026-08-24T18:44:54Z",
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "live_execution": false,
+    "market_data_acquisition": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "research_qualification": false,
+    "strategy_results": false
+  },
+  "counts": {
+    "eligible_event_count": 15,
+    "eligible_minutes_count": 8,
+    "eligible_statement_count": 7,
+    "excluded_metadata_count": 1,
+    "prospective_calendar_snapshot_count": 11,
+    "rss_snapshot_count": 4,
+    "snapshot_count": 15
+  },
+  "event_evidence": [
+    {
+      "event_id": "fed-minutes-2025-07-09",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-meeting-minutes",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 9 Jul 2025 18:00:00 GMT | Minutes of the Federal Open Market Committee, June 17–18, 2025 | https://www.federalreserve.gov/newsevents/pressreleases/monetary20250709a.htm",
+        "excerpt_sha256": "56d544023765fddd170d23d4392c24840ce2ac02e963feaf81257fb9434ebf59",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20250709a.htm",
+        "pub_date": "Wed, 9 Jul 2025 18:00:00 GMT",
+        "source_snapshot_id": "rss-20251006144516",
+        "title": "Minutes of the Federal Open Market Committee, June 17–18, 2025"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Minutes | Meeting of June 17-18 | 9",
+        "capture_before_publication": true,
+        "excerpt_sha256": "26b19f6145a60b5e13f6e07895cbaf1c65bcd544884e95df75dc09ced35131cb",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2025-july-20250108195859"
+      },
+      "scheduled_utc": "2025-07-09T18:00:00Z"
+    },
+    {
+      "event_id": "fed-statement-2025-07-30",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-policy-statement",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 30 Jul 2025 18:00:00 GMT | Federal Reserve issues FOMC statement | https://www.federalreserve.gov/newsevents/pressreleases/monetary20250730a.htm",
+        "excerpt_sha256": "caa78649f0c806c98bfb23d1e7e888d1d0b12af64bdeb4ff8746ea9d4779ed96",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20250730a.htm",
+        "pub_date": "Wed, 30 Jul 2025 18:00:00 GMT",
+        "source_snapshot_id": "rss-20251006144516",
+        "title": "Federal Reserve issues FOMC statement"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Meeting | Two-day meeting, July 29-July 30; Press Conference | 30",
+        "capture_before_publication": true,
+        "excerpt_sha256": "75e038f7f872320d93f53506fa49559922e54382ec346e48dbe9b51f908bfc98",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2025-july-20250108195859"
+      },
+      "scheduled_utc": "2025-07-30T18:00:00Z"
+    },
+    {
+      "event_id": "fed-minutes-2025-08-20",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-meeting-minutes",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 20 Aug 2025 18:00:00 GMT | Minutes of the Federal Open Market Committee, July 29–30, 2025 | https://www.federalreserve.gov/newsevents/pressreleases/monetary20250820a.htm",
+        "excerpt_sha256": "d902b05ea6c37fc9ef554f24b3640fb395858df06f1fb8463f25b1370a6ceaf8",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20250820a.htm",
+        "pub_date": "Wed, 20 Aug 2025 18:00:00 GMT",
+        "source_snapshot_id": "rss-20251006144516",
+        "title": "Minutes of the Federal Open Market Committee, July 29–30, 2025"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Minutes | Meeting of July 29-30 | 20",
+        "capture_before_publication": true,
+        "excerpt_sha256": "96778e0fcf8a6b92ae74787806d122ac29870e1dd79cfd4f49d332e809f5c677",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2025-august-20250707144032"
+      },
+      "scheduled_utc": "2025-08-20T18:00:00Z"
+    },
+    {
+      "event_id": "fed-statement-2025-09-17",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-policy-statement",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 17 Sep 2025 18:00:00 GMT | Federal Reserve issues FOMC statement | https://www.federalreserve.gov/newsevents/pressreleases/monetary20250917a.htm",
+        "excerpt_sha256": "9964715b8a3d9c84b65515966409714b35b3bda20135c0f511f6fb30fa95e49f",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20250917a.htm",
+        "pub_date": "Wed, 17 Sep 2025 18:00:00 GMT",
+        "source_snapshot_id": "rss-20251006144516",
+        "title": "Federal Reserve issues FOMC statement"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Meeting | Two-day meeting, September 16-September 17; Press Conference | 17",
+        "capture_before_publication": true,
+        "excerpt_sha256": "5b676075be9a79d0eb1a2854353b3eb2e036b11043c9a9c174f08fa89ce38cc9",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2025-september-20250707144029"
+      },
+      "scheduled_utc": "2025-09-17T18:00:00Z"
+    },
+    {
+      "event_id": "fed-minutes-2025-10-08",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-meeting-minutes",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 8 Oct 2025 18:00:00 GMT | Minutes of the Federal Open Market Committee, September 16–17, 2025 | https://www.federalreserve.gov/newsevents/pressreleases/monetary20251008a.htm",
+        "excerpt_sha256": "b9f8c3043a63d4d365dc590b371bae15f251391564e00e6bfe661a3014bee1fd",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20251008a.htm",
+        "pub_date": "Wed, 8 Oct 2025 18:00:00 GMT",
+        "source_snapshot_id": "rss-20260207233050",
+        "title": "Minutes of the Federal Open Market Committee, September 16–17, 2025"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Minutes | Meeting of September 16-17 | 8",
+        "capture_before_publication": true,
+        "excerpt_sha256": "a1ccd0c383fa0654b09d3a5209a30cedeed0f843837da68c5f41f0a8574ac051",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2025-october-20251006124624"
+      },
+      "scheduled_utc": "2025-10-08T18:00:00Z"
+    },
+    {
+      "event_id": "fed-statement-2025-10-29",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-policy-statement",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 29 Oct 2025 18:00:00 GMT | Federal Reserve issues FOMC statement | https://www.federalreserve.gov/newsevents/pressreleases/monetary20251029a.htm",
+        "excerpt_sha256": "980ab78274c0374e358a4706e22a8a63ff71c7ef065741222594b9341f8a54f4",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20251029a.htm",
+        "pub_date": "Wed, 29 Oct 2025 18:00:00 GMT",
+        "source_snapshot_id": "rss-20260207233050",
+        "title": "Federal Reserve issues FOMC statement"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Meeting | Two-day meeting, October 28-October 29; Press Conference | 29",
+        "capture_before_publication": true,
+        "excerpt_sha256": "aaea515a2e2319e11229623e492fece95f4054e73e0cc2f982eb78ca6c78df81",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2025-october-20251006124624"
+      },
+      "scheduled_utc": "2025-10-29T18:00:00Z"
+    },
+    {
+      "event_id": "fed-minutes-2025-11-19",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-meeting-minutes",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 19 Nov 2025 19:00:00 GMT | Minutes of the Federal Open Market Committee, October 28-29, 2025 | https://www.federalreserve.gov/newsevents/pressreleases/monetary20251119a.htm",
+        "excerpt_sha256": "7f1cb5112950c3c9e33ba3a27b7e1c9eca86e08777ca5310a64e3cec8d538004",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20251119a.htm",
+        "pub_date": "Wed, 19 Nov 2025 19:00:00 GMT",
+        "source_snapshot_id": "rss-20260207233050",
+        "title": "Minutes of the Federal Open Market Committee, October 28-29, 2025"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Minutes | Meeting of October 28-29 | 19",
+        "capture_before_publication": true,
+        "excerpt_sha256": "c792fa84252297c26fa23b7b302f44135711e2022973f3fc5e50dd76aff1f720",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2025-november-20250707144025"
+      },
+      "scheduled_utc": "2025-11-19T19:00:00Z"
+    },
+    {
+      "event_id": "fed-statement-2025-12-10",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-policy-statement",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 10 Dec 2025 19:00:00 GMT | Federal Reserve issues FOMC statement | https://www.federalreserve.gov/newsevents/pressreleases/monetary20251210a.htm",
+        "excerpt_sha256": "afa90c5c0f7c665c6b59dc32b0b0bb1fced9f8b6ae57310b09d14e6c56cd830d",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20251210a.htm",
+        "pub_date": "Wed, 10 Dec 2025 19:00:00 GMT",
+        "source_snapshot_id": "rss-20260207233050",
+        "title": "Federal Reserve issues FOMC statement"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Meeting | Two-day meeting, December 9-December 10; Press Conference | 10",
+        "capture_before_publication": true,
+        "excerpt_sha256": "9d3528b93e2aeecaa43f4f2ca5d9afce7d787056900dcbbb13155a5eaca687ed",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2025-december-20251203175511"
+      },
+      "scheduled_utc": "2025-12-10T19:00:00Z"
+    },
+    {
+      "event_id": "fed-minutes-2025-12-30",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-meeting-minutes",
+      "publication_metadata": {
+        "canonical_excerpt": "Tue, 30 Dec 2025 19:00:00 GMT | Minutes of the Federal Open Market Committee, December 9–10, 2025 | https://www.federalreserve.gov/newsevents/pressreleases/monetary20251230a.htm",
+        "excerpt_sha256": "92a574258df248b152e98b03581fe7148ee68dbb01b33ac4f749071bc7e14bbd",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20251230a.htm",
+        "pub_date": "Tue, 30 Dec 2025 19:00:00 GMT",
+        "source_snapshot_id": "rss-20260207233050",
+        "title": "Minutes of the Federal Open Market Committee, December 9–10, 2025"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Minutes | Meeting of December 9-10 | 30",
+        "capture_before_publication": true,
+        "excerpt_sha256": "494313ac71354c7abe6e633c2e076437ec0eae5fc655787dbfa4a99a3ec09785",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2025-december-20251203175511"
+      },
+      "scheduled_utc": "2025-12-30T19:00:00Z"
+    },
+    {
+      "event_id": "fed-statement-2026-01-28",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-policy-statement",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 28 Jan 2026 19:00:00 GMT | Federal Reserve issues FOMC statement | https://www.federalreserve.gov/newsevents/pressreleases/monetary20260128a.htm",
+        "excerpt_sha256": "eb1053bc4141576a1c140160c08f6464056952b8c4790cbc63edb201d8986fcb",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260128a.htm",
+        "pub_date": "Wed, 28 Jan 2026 19:00:00 GMT",
+        "source_snapshot_id": "rss-20260207233050",
+        "title": "Federal Reserve issues FOMC statement"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Meeting | Two-day meeting, January 27 - 28; Press Conference | 28",
+        "capture_before_publication": true,
+        "excerpt_sha256": "cab16dea78ef6e076dd702bc186caaf6a0df463837a74f98f10385852476d736",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2026-january-20251231192943"
+      },
+      "scheduled_utc": "2026-01-28T19:00:00Z"
+    },
+    {
+      "event_id": "fed-minutes-2026-02-18",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-meeting-minutes",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 18 Feb 2026 19:00:00 GMT | Minutes of the Federal Open Market Committee, January 27–28, 2026 | https://www.federalreserve.gov/newsevents/pressreleases/monetary20260218a.htm",
+        "excerpt_sha256": "b22c6c8afd6e565a3d8da17cacae408feb214215bbb40b0ebe13d8e83aa617a7",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260218a.htm",
+        "pub_date": "Wed, 18 Feb 2026 19:00:00 GMT",
+        "source_snapshot_id": "rss-20260516055408",
+        "title": "Minutes of the Federal Open Market Committee, January 27–28, 2026"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Minutes | Meeting of January 27-28 | 18",
+        "capture_before_publication": true,
+        "excerpt_sha256": "c8bf84c39386a8189837bbad8e6698c9b102facfd486be13b74bcd6376f71ebe",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2026-february-20260125080949"
+      },
+      "scheduled_utc": "2026-02-18T19:00:00Z"
+    },
+    {
+      "event_id": "fed-statement-2026-03-18",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-policy-statement",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 18 Mar 2026 18:00:00 GMT | Federal Reserve issues FOMC statement | https://www.federalreserve.gov/newsevents/pressreleases/monetary20260318a.htm",
+        "excerpt_sha256": "4a575d426fede543748653734749d5f75dbf5dfccd38ec3139bcd56d3d89da51",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260318a.htm",
+        "pub_date": "Wed, 18 Mar 2026 18:00:00 GMT",
+        "source_snapshot_id": "rss-20260516055408",
+        "title": "Federal Reserve issues FOMC statement"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Meeting | Two-day meeting, March 17 - 18; Press Conference | 18",
+        "capture_before_publication": true,
+        "excerpt_sha256": "22c2f5c49f7f11560bea8568068fea6db38f1165be5fef3fc20d00388b83dcd2",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2026-march-20260123040958"
+      },
+      "scheduled_utc": "2026-03-18T18:00:00Z"
+    },
+    {
+      "event_id": "fed-minutes-2026-04-08",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-meeting-minutes",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 8 Apr 2026 18:00:00 GMT | Minutes of the Federal Open Market Committee, March 17–18, 2026 | https://www.federalreserve.gov/newsevents/pressreleases/monetary20260408a.htm",
+        "excerpt_sha256": "fc809faf3ee9dffc137257eab0a1190a879d42733c1872bc223e2df6a3ea2e3b",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260408a.htm",
+        "pub_date": "Wed, 8 Apr 2026 18:00:00 GMT",
+        "source_snapshot_id": "rss-20260516055408",
+        "title": "Minutes of the Federal Open Market Committee, March 17–18, 2026"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Minutes | Meeting of March 17-18 | 8",
+        "capture_before_publication": true,
+        "excerpt_sha256": "eff76c671bb276e415b0e848dd096c3438cac249aca96f7651f85db713822817",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2026-april-20260123051112"
+      },
+      "scheduled_utc": "2026-04-08T18:00:00Z"
+    },
+    {
+      "event_id": "fed-statement-2026-04-29",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-policy-statement",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 29 Apr 2026 18:00:00 GMT | Federal Reserve issues FOMC statement | https://www.federalreserve.gov/newsevents/pressreleases/monetary20260429a.htm",
+        "excerpt_sha256": "837f3b2fd0faceaadedc6c2522ac43983b68e7d91a203f5480c9a578e729d0ef",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260429a.htm",
+        "pub_date": "Wed, 29 Apr 2026 18:00:00 GMT",
+        "source_snapshot_id": "rss-20260516055408",
+        "title": "Federal Reserve issues FOMC statement"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Meeting | Two-day meeting, April 28 - 29; Press Conference | 29",
+        "capture_before_publication": true,
+        "excerpt_sha256": "db5f70623cfb45c4b9792d9c8e45d93b4f2e940e7d2893577fffd8c6d848fe60",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2026-april-20260123051112"
+      },
+      "scheduled_utc": "2026-04-29T18:00:00Z"
+    },
+    {
+      "event_id": "fed-minutes-2026-05-20",
+      "market_data_or_result_used": false,
+      "publication_class": "fomc-meeting-minutes",
+      "publication_metadata": {
+        "canonical_excerpt": "Wed, 20 May 2026 18:00:00 GMT | Minutes of the Federal Open Market Committee, April 28-29, 2026 | https://www.federalreserve.gov/newsevents/pressreleases/monetary20260520a.htm",
+        "excerpt_sha256": "f0c7dbb3bfee45ce8b27ea7ce8eac8d569ebf661edefd7e6fee55eb734fec922",
+        "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260520a.htm",
+        "pub_date": "Wed, 20 May 2026 18:00:00 GMT",
+        "source_snapshot_id": "rss-20260805015411",
+        "title": "Minutes of the Federal Open Market Committee, April 28-29, 2026"
+      },
+      "release_body_or_decision_value_used": false,
+      "schedule_proof": {
+        "canonical_excerpt": "2:00 p.m. | FOMC Minutes | Meeting of April 28-29 | 20",
+        "capture_before_publication": true,
+        "excerpt_sha256": "32b2aa3f3536cddc2c2ec0b6c34bcd21f4bad732db0f321faec50dedc5a2b4ef",
+        "proof_type": "archived-official-monthly-calendar-before-publication",
+        "source_snapshot_id": "calendar-2026-may-20260123052320"
+      },
+      "scheduled_utc": "2026-05-20T18:00:00Z"
+    }
+  ],
+  "evidence_fingerprint": "ed4dc2c9f638a4ef04da7d292732ee653d0040a5c844a54f90efc588d3005a7b",
+  "evidence_id": "intraday-fed-policy-absorption-001-source-evidence-v1",
+  "excluded_metadata": [
+    {
+      "canonical_excerpt": "Fri, 22 Aug 2025 14:00:00 GMT | Federal Open Market Committee announces approval of updates to its Statement on Longer-Run Goals and Monetary Policy Strategy | https://www.federalreserve.gov/newsevents/pressreleases/monetary20250822a.htm",
+      "disposition": "excluded-wrong-class-and-non-1400-new-york-publication",
+      "excerpt_sha256": "66d178946e2814e9685e0b90239578108122b05d0cb7f59fb57b8905926673ed",
+      "link": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20250822a.htm",
+      "pub_date": "Fri, 22 Aug 2025 14:00:00 GMT",
+      "publication_date": "2025-08-22",
+      "reason": "A notation-vote longer-run-goals item is neither a regular-meeting policy statement nor regular-meeting minutes and its 14:00 GMT timestamp is 10:00 New York.",
+      "source_snapshot_id": "rss-20251006144516",
+      "title": "Federal Open Market Committee announces approval of updates to its Statement on Longer-Run Goals and Monetary Policy Strategy"
+    }
+  ],
+  "exposure_control": {
+    "mitigation": "The isolated plan architect fixed every horizon, threshold, gate, and execution choice before receiving only metadata dates and counts. This artifact retains no release body. A clean-room reviewer must verify that no scientific choice derives from contents or market outcomes.",
+    "recorded_exposure": "Before this artifact was assembled, a root diagnostic command displayed text from one minutes HTML page.",
+    "release_body_retained_in_repository": false,
+    "scientific_choice_changed_after_exposure": false
+  },
+  "methodology": {
+    "archive_role": "Wayback capture timestamps and CDX digests prove the official schedule bytes existed before each event; archived RSS bytes corroborate exact publication identity and UTC time after occurrence.",
+    "canonical_excerpt_rule": "Join normalized visible metadata fields with space-pipe-space; normalize HTML nonbreaking spaces and internal whitespace but do not retain publication bodies.",
+    "exhaustive_selection_rule": "Include every regular-meeting FOMC Meeting and FOMC Minutes row at 2:00 p.m. inside the fixed range. Do not add or remove a row from market outcomes.",
+    "future_runtime_rule": "This historical evidence grants no future runtime authority. A controlled or PAPER protocol needs a new contemporaneous calendar check.",
+    "market_data_or_strategy_results_used": false,
+    "minutes_class_rule": "An official 2:00 p.m. FOMC Minutes row with its underlying regular-meeting dates is the prospective schedule proof; archived official RSS metadata must corroborate the exact minutes title, link, and UTC publication time.",
+    "release_bodies_decisions_surprises_forecasts_or_revisions_used": false,
+    "schedule_rule": "Require an archived official monthly Federal Reserve events calendar captured before the publication. Its exact metadata must say 2:00 p.m., FOMC Meeting or FOMC Minutes, the meeting dates, and the release day.",
+    "statement_class_rule": "An official 2:00 p.m. FOMC Meeting row on the final day of a scheduled regular two-day meeting is the prospective schedule proof; archived official RSS metadata must corroborate the exact FOMC statement title, link, and UTC publication time."
+  },
+  "purpose": "Bind metadata-only, content-addressed Federal Reserve evidence for every eligible regular-meeting FOMC statement and minutes publication in the exposed July 2025 through May 2026 range.",
+  "schema_version": "intraday-fed-policy-absorption-001-source-evidence-v1",
+  "scope": {
+    "eligible_event_count": 15,
+    "eligible_publication_classes": [
+      "fomc-meeting-minutes",
+      "fomc-policy-statement"
+    ],
+    "first_inclusive_date": "2025-07-01",
+    "last_inclusive_date": "2026-05-29",
+    "publisher": "Board of Governors of the Federal Reserve System"
+  },
+  "snapshots": [
+    {
+      "archive_url": "https://web.archive.org/web/20250108195859id_/https://www.federalreserve.gov/newsevents/2025-july.htm",
+      "capture_timestamp_utc": "2025-01-08T19:58:59Z",
+      "cdx_digest": "EIEPFYMFPSGFHOCX6TXXMVYUCAX3LUQL",
+      "mime_type": "text/html",
+      "official_url": "https://www.federalreserve.gov/newsevents/2025-july.htm",
+      "replay_body_sha256": "5860567915074474dec24230566b2f8445232506d7bbafcdd0b8bca8ad6198c3",
+      "role": "prospective-official-monthly-event-calendar",
+      "snapshot_id": "calendar-2025-july-20250108195859"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20250707144032id_/https://www.federalreserve.gov/newsevents/2025-august.htm",
+      "capture_timestamp_utc": "2025-07-07T14:40:32Z",
+      "cdx_digest": "OREJJKOOFD2Y5XCJDBNNMMATEOW42HRQ",
+      "mime_type": "text/html",
+      "official_url": "https://www.federalreserve.gov/newsevents/2025-august.htm",
+      "replay_body_sha256": "2a57694d513e7ca82ef680979d471f8c92d60f9233bcc613fb261ff429da3d4d",
+      "role": "prospective-official-monthly-event-calendar",
+      "snapshot_id": "calendar-2025-august-20250707144032"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20250707144029id_/https://www.federalreserve.gov/newsevents/2025-september.htm",
+      "capture_timestamp_utc": "2025-07-07T14:40:29Z",
+      "cdx_digest": "WECU2T53FIW537XEKYEZ5P7F4WNZMH4N",
+      "mime_type": "text/html",
+      "official_url": "https://www.federalreserve.gov/newsevents/2025-september.htm",
+      "replay_body_sha256": "bcaff6de624d5b9dd2c5bf9ae83a6a536b2b3afd520f4ddf7ab7b243b6d0c9e6",
+      "role": "prospective-official-monthly-event-calendar",
+      "snapshot_id": "calendar-2025-september-20250707144029"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20251006124624id_/https://www.federalreserve.gov/newsevents/2025-october.htm",
+      "capture_timestamp_utc": "2025-10-06T12:46:24Z",
+      "cdx_digest": "LS634BOSTFR6EL5HQHGEOP5V2JNJYTLT",
+      "mime_type": "text/html",
+      "official_url": "https://www.federalreserve.gov/newsevents/2025-october.htm",
+      "replay_body_sha256": "9b244e6fcb301be99fde0a5edf396492400394ef2f29957213160032fb1f9cf1",
+      "role": "prospective-official-monthly-event-calendar",
+      "snapshot_id": "calendar-2025-october-20251006124624"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20250707144025id_/https://www.federalreserve.gov/newsevents/2025-11.htm",
+      "capture_timestamp_utc": "2025-07-07T14:40:25Z",
+      "cdx_digest": "ZLUJH3N2XJRVIXKS3EVTK3HGI2IZTTLA",
+      "mime_type": "text/html",
+      "official_url": "https://www.federalreserve.gov/newsevents/2025-11.htm",
+      "replay_body_sha256": "7ed5c10b204aaf7b9a1cdd74530841bd1146dbaf82d0d75c2c6b4a099ad75b87",
+      "role": "prospective-official-monthly-event-calendar",
+      "snapshot_id": "calendar-2025-november-20250707144025"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20251203175511id_/https://www.federalreserve.gov/newsevents/2025-december.htm",
+      "capture_timestamp_utc": "2025-12-03T17:55:11Z",
+      "cdx_digest": "PMAA3D2R6TALH6AFJNZTD64XEWSO5ZPP",
+      "mime_type": "text/html",
+      "official_url": "https://www.federalreserve.gov/newsevents/2025-december.htm",
+      "replay_body_sha256": "ebdf01b143dc133fb773c3c9b7db24fb85858d9cad5f75d2e809fd62013c98ca",
+      "role": "prospective-official-monthly-event-calendar",
+      "snapshot_id": "calendar-2025-december-20251203175511"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20251231192943id_/https://www.federalreserve.gov/newsevents/2026-january.htm",
+      "capture_timestamp_utc": "2025-12-31T19:29:43Z",
+      "cdx_digest": "C3Y5D2DEOOJMF4JXGWI7TPU55OFY4NO7",
+      "mime_type": "text/html",
+      "official_url": "https://www.federalreserve.gov/newsevents/2026-january.htm",
+      "replay_body_sha256": "1532f5d1a52cf9e181aabac05644ebccafa0c0512d867d9b615b1ef370fcf77d",
+      "role": "prospective-official-monthly-event-calendar",
+      "snapshot_id": "calendar-2026-january-20251231192943"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20260125080949id_/https://www.federalreserve.gov/newsevents/2026-february.htm",
+      "capture_timestamp_utc": "2026-01-25T08:09:49Z",
+      "cdx_digest": "Z3MKXPCP72GTQZAXNMZE2NN7OG7FG7GY",
+      "mime_type": "text/html",
+      "official_url": "https://www.federalreserve.gov/newsevents/2026-february.htm",
+      "replay_body_sha256": "7d519e96f5597c946c1329407e9931abdd71824276595d3a68412de00ddbb530",
+      "role": "prospective-official-monthly-event-calendar",
+      "snapshot_id": "calendar-2026-february-20260125080949"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20260123040958id_/https://www.federalreserve.gov/newsevents/2026-march.htm",
+      "capture_timestamp_utc": "2026-01-23T04:09:58Z",
+      "cdx_digest": "F55SGYH24XHGVYJO3EMMPU7MCDFMM4BF",
+      "mime_type": "text/html",
+      "official_url": "https://www.federalreserve.gov/newsevents/2026-march.htm",
+      "replay_body_sha256": "f7faee61fe70ddbfe9da9d0a0e259b057451110d8785a5d8963ffe160f847a27",
+      "role": "prospective-official-monthly-event-calendar",
+      "snapshot_id": "calendar-2026-march-20260123040958"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20260123051112id_/https://www.federalreserve.gov/newsevents/2026-04.htm",
+      "capture_timestamp_utc": "2026-01-23T05:11:12Z",
+      "cdx_digest": "24O7DULKXK7SVN6SSMLOUWIBS5TTLMFB",
+      "mime_type": "text/html",
+      "official_url": "https://www.federalreserve.gov/newsevents/2026-04.htm",
+      "replay_body_sha256": "02d99010ae698618b2d1f0a3dbeaf7a8979edac0d4df7e0edffcd43eac409e09",
+      "role": "prospective-official-monthly-event-calendar",
+      "snapshot_id": "calendar-2026-april-20260123051112"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20260123052320id_/https://www.federalreserve.gov/newsevents/2026-may.htm",
+      "capture_timestamp_utc": "2026-01-23T05:23:20Z",
+      "cdx_digest": "JGI3P2WEU3P54C2I6SYZWIIREGXCWXBJ",
+      "mime_type": "text/html",
+      "official_url": "https://www.federalreserve.gov/newsevents/2026-may.htm",
+      "replay_body_sha256": "437b98cbc74322b7b7dff8fb17f0800cb8be7a522bdfa38e242918cab2cbd1e7",
+      "role": "prospective-official-monthly-event-calendar",
+      "snapshot_id": "calendar-2026-may-20260123052320"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20251006144516id_/https://www.federalreserve.gov/feeds/press_monetary.xml",
+      "capture_timestamp_utc": "2025-10-06T14:45:16Z",
+      "cdx_digest": "J6T5FRF5AFT33DNJXFXSM7MHLGPISF5G",
+      "mime_type": "text/xml",
+      "official_url": "https://www.federalreserve.gov/feeds/press_monetary.xml",
+      "replay_body_sha256": "f37549b21951adb6483d731f61bc93f9f502dfaf2da546e8f97f8ddfbbf8c374",
+      "role": "official-publication-metadata-corroboration",
+      "snapshot_id": "rss-20251006144516"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20260207233050id_/https://www.federalreserve.gov/feeds/press_monetary.xml",
+      "capture_timestamp_utc": "2026-02-07T23:30:50Z",
+      "cdx_digest": "VH5OMFYKUFBNSVAUJCWURVVYRJCUCUDP",
+      "mime_type": "text/xml",
+      "official_url": "https://www.federalreserve.gov/feeds/press_monetary.xml",
+      "replay_body_sha256": "92f2bd73cb7b05482e72678677f42152063f7ebe8f5e397bc3f903afa0483a29",
+      "role": "official-publication-metadata-corroboration",
+      "snapshot_id": "rss-20260207233050"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20260516055408id_/https://www.federalreserve.gov/feeds/press_monetary.xml",
+      "capture_timestamp_utc": "2026-05-16T05:54:08Z",
+      "cdx_digest": "FHC4XSANEV4RIXHL4C5QT4C4M2ZCPT4A",
+      "mime_type": "text/xml",
+      "official_url": "https://www.federalreserve.gov/feeds/press_monetary.xml",
+      "replay_body_sha256": "b7d29f36042387cb3bcb273713eccf0cd596bd4f2d80d988d88888d6e97feac8",
+      "role": "official-publication-metadata-corroboration",
+      "snapshot_id": "rss-20260516055408"
+    },
+    {
+      "archive_url": "https://web.archive.org/web/20260805015411id_/https://www.federalreserve.gov/feeds/press_monetary.xml",
+      "capture_timestamp_utc": "2026-08-05T01:54:11Z",
+      "cdx_digest": "XEP4H6UZF6IUVXXK2LTTWTKZ3TAFXCTQ",
+      "mime_type": "text/xml",
+      "official_url": "https://www.federalreserve.gov/feeds/press_monetary.xml",
+      "replay_body_sha256": "a0a0bbb4930337a86bca8f007ea04e2f9394cb0ea839886bcdadfe869ef45b41",
+      "role": "official-publication-metadata-corroboration",
+      "snapshot_id": "rss-20260805015411"
+    }
+  ],
+  "status": "prospective-source-evidence-before-strategy-implementation-reservation-or-results"
+}

@@ -1,0 +1,66 @@
+{
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "live_execution": false,
+    "market_data_read": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "research_qualification": false,
+    "strategy_execution": false,
+    "strategy_implementation": false
+  },
+  "disposition": {
+    "basis": "The second failure occurred before commit, implementation, reservation, attempt, report, market-data read, or strategy observation. The same campaign identity remains permitted under the frozen pre-execution repair rule.",
+    "next_action": "Commit a replacement source-bound pre-design packet that admits the exact cost model and review and requires separate cross-scenario signal/decision and scenario-specific execution traces, then assign another fresh no-history architect.",
+    "same_campaign_identity_permitted": true
+  },
+  "execution_state": {
+    "attempt_count": 0,
+    "campaign_runtime_created": false,
+    "canonical_report_count": 0,
+    "market_data_read": false,
+    "reservation_count": 0,
+    "strategy_implementation_started": false,
+    "strategy_result_observed": false
+  },
+  "failure_fingerprint": "80ab56bf4b4158f92aef4b099c1f51c68f29f4f7fcf4b62f1cc3f84090bad640",
+  "failure_id": "intraday-fed-policy-absorption-001-preplan-control-failure-2026-08-24-r2",
+  "independent_review": {
+    "findings": [
+      {
+        "finding": "The allowed input set omitted the bound execution-cost model and its review even though the design used exact stress-delay semantics supplied by that model.",
+        "required_remediation": "Reject the plan and bind the cost-model artifact and review as allowed inputs before another fresh architect begins.",
+        "severity": "high"
+      },
+      {
+        "finding": "The design put intended fill index in the trace required to equal Normal across scenarios, making every non-Normal delay differ by construction.",
+        "required_remediation": "Require one scenario-independent pre-fill signal/decision trace for cross-scenario equality and retention plus one scenario-specific execution trace containing the intended fill index.",
+        "severity": "high"
+      },
+      {
+        "finding": "The trace hash was listed inside its own canonical preimage.",
+        "required_remediation": "Require each trace hash to be an output excluded from its explicitly versioned canonical payload.",
+        "severity": "medium"
+      }
+    ],
+    "reviewer_id": "/root/campaign3_replacement_plan_review",
+    "reviewer_role": "fresh-read-only-control-correctness-reviewer",
+    "verdict": "fail"
+  },
+  "previous_failure": {
+    "fingerprint": "e2a8919220b5ef409e9a2eb6ddfe33a65809ebf62e953c0c7554e42b800ba56e",
+    "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-preplan-control-failure-v1.json",
+    "sha256": "364aa03c8b68beecb205ffe37f97fa0e68c1980dc4670ae010bdd65ac488ed4e"
+  },
+  "recorded_at": "2026-08-24T20:15:17Z",
+  "rejected_plan": {
+    "committed": false,
+    "fingerprint": "971dd27ec30aef48f7021d9c312da86535f8a2fcf831dbbf7c77dedf26d701fe",
+    "frozen": false,
+    "path": "config/research/intraday-fed-policy-absorption-001-plan-v1.json",
+    "sha256": "e67503e94034687d4e1c6d10830553f3e79a3b03e8e7aaece84b2035b14a95bf"
+  },
+  "schema_version": "intraday-fed-policy-absorption-001-preplan-control-failure-v2",
+  "status": "terminal-second-rejected-plan-before-commit-implementation-reservation-market-data-read-or-results"
+}

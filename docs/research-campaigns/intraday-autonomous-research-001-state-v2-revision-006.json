@@ -1,0 +1,146 @@
+{
+  "schema_version": "intraday-autonomous-research-program-state-v2",
+  "program_id": "intraday-autonomous-research-001",
+  "state_revision": 6,
+  "phase": "campaign-3-plan-reviewed-implementation-pending",
+  "active_campaign_id": "intraday-fed-policy-absorption-001",
+  "current_campaign_index": 3,
+  "completed_campaigns": [
+    "intraday-spy-qqq-lead-lag-001",
+    "intraday-relative-volume-drift-001"
+  ],
+  "campaign_dispositions": {
+    "intraday-spy-qqq-lead-lag-001": "terminal-empty-after-reviewed-reassessment",
+    "intraday-relative-volume-drift-001": "terminal-empty-after-independent-postmortem-review",
+    "intraday-fed-policy-absorption-001": "plan-and-calendar-reviewed-implementation-pending"
+  },
+  "campaign_plan": {
+    "campaign_id": "intraday-fed-policy-absorption-001",
+    "path": "config/research/intraday-fed-policy-absorption-001-plan-v1.json",
+    "sha256": "a3cd20e325f2e9eb6bc794df7a93db3763dab8e55d2fc1e02816a8480907c111",
+    "fingerprint": "99d03036512b3a8b03f38774e05779982379b1e956906a2ee36f612b52f20140"
+  },
+  "campaign_plan_review": {
+    "path": "config/research/intraday-fed-policy-absorption-001-plan-calendar-independent-review-v1.json",
+    "sha256": "7f6216324a135f9c910edc6257ef1b408ced8d6b33feb9e43d9cd524fee66014",
+    "fingerprint": "831e85f7e7228652f06d4b5bbe1b3822333d0e53e1ce2d97852ede1a24a262aa",
+    "verdict": "pass"
+  },
+  "campaign_planning_controls": {
+    "calendar": {
+      "path": "config/research/intraday-fed-policy-absorption-001-calendar-v1.json",
+      "sha256": "8bcfd05031b44e2c31861c43aa2b8130d609c82fca9aeec10804809c37a01c97",
+      "fingerprint": "54c937bbb42703213efdf14dc4becb50bc0f757bb6f16388254550e12f0c93ba"
+    },
+    "source_evidence": {
+      "path": "config/research/intraday-fed-policy-absorption-001-source-evidence-v1.json",
+      "sha256": "1d72b74a04eadba87eb178fd7d67dc644c18d31b926f78e7a48f6f9c38f012c8",
+      "fingerprint": "ed4dc2c9f638a4ef04da7d292732ee653d0040a5c844a54f90efc588d3005a7b"
+    },
+    "pre_design_attestation": {
+      "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-pre-design-attestation-v2.json",
+      "sha256": "f95c19237ec9e4f6d854fe6f4fe5aa31ba289f962e1d302ef679f73667256b47",
+      "fingerprint": "174dae849dd5d20c0e2775d798b855d54e07030a140872a029b748741ea2467e"
+    },
+    "preserved_preplan_failures": [
+      {
+        "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-preplan-control-failure-v1.json",
+        "sha256": "364aa03c8b68beecb205ffe37f97fa0e68c1980dc4670ae010bdd65ac488ed4e",
+        "fingerprint": "e2a8919220b5ef409e9a2eb6ddfe33a65809ebf62e953c0c7554e42b800ba56e"
+      },
+      {
+        "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-preplan-control-failure-v2.json",
+        "sha256": "9c3840f1992facb24b5acbbd406e33a9c984a75e47621da88bc7f5dfbab90a76",
+        "fingerprint": "80ab56bf4b4158f92aef4b099c1f51c68f29f4f7fcf4b62f1cc3f84090bad640"
+      }
+    ]
+  },
+  "campaign_terminal_evidence": {
+    "campaign_id": "intraday-relative-volume-drift-001",
+    "cohort_size": 0,
+    "completed_attempts": 18,
+    "completed_run_specifications": 18,
+    "infrastructure_retries": 0,
+    "later_stage_run_specifications": 0,
+    "runtime_source_commit": "551c891585c176016e9f98a20586957d1bfdca61",
+    "runtime_database": {
+      "path": ".trading-lab/intraday-relative-volume-drift-001/intraday-relative-volume-drift-001.sqlite3",
+      "sha256": "8d9fb50dd25f022ed69580bdc90201c47e05e7bf730d84900de04030217a200a"
+    },
+    "final_report": {
+      "path": ".trading-lab/intraday-relative-volume-drift-001/final-report.json",
+      "sha256": "7c271ace238d0871a0654edc790ff301ce9600e64b2765baaea4dc2ac4be0ade",
+      "fingerprint": "87d94ce8ce0bc30782e5a4ea3c07375c45cf61baab1d07049860fbabbb283f34"
+    },
+    "final_freeze": {
+      "path": ".trading-lab/intraday-relative-volume-drift-001/final-freeze.json",
+      "sha256": "fda9aa99ff0b456419c5d90205dc890bc612ee43974aac24a33eedf67d8f7f30",
+      "fingerprint": "3374f9206bf446bb321e1baa0117c867fc325d6e0fa8c992158ca545af57ba1b"
+    },
+    "postmortem": {
+      "path": "docs/research-campaigns/intraday-relative-volume-drift-001-postmortem-v1.json",
+      "sha256": "e1bb5f7dc8a3353219c3a9a0c93dec62938c314b1281a4eca34e37ad7b13c638",
+      "fingerprint": "5738b8bc93fb9fa24e086651bf673ed35b83232450e1e171795723b29cd65d56",
+      "disposition": "terminal-empty-after-complete-discovery-screen"
+    },
+    "independent_review": {
+      "path": "docs/research-campaigns/intraday-relative-volume-drift-001-postmortem-independent-review-v1.json",
+      "sha256": "21e83c4c180e160ad7760bde12089b6a167c01154b2ad890e824a22eb7ea4fc9",
+      "fingerprint": "6b2b632e298a1faaa86b01667d97bd7124b2c1b6f9dc0f2239232272a33c61b0",
+      "verdict": "pass"
+    },
+    "launch_control": {
+      "path": "config/research/intraday-relative-volume-drift-001-launch-control-review-v1.json",
+      "sha256": "51159d51aff6b11b9fee9c5c5bacfa3ac3ceaa93c17259b493aeb794d0b5e655",
+      "fingerprint": "3b6c46f924ab94557f5235bf26650c1b8bf6f836b0f55bb590e63c1bba86717f"
+    }
+  },
+  "previous_state": {
+    "path": "docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-005.json",
+    "sha256": "cd68f08b0b95839d41672a5df024e8867759911830f28d0a3d255c61c2643883",
+    "fingerprint": "c6eaa1acc6af58af2d0f4a937c89ad95690ee8743ec998526b5f16ebdf7ea9af",
+    "state_revision": 5
+  },
+  "program_plan": {
+    "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+    "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9",
+    "fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f"
+  },
+  "campaign_1_unused_specifications_transferable": false,
+  "campaign_2_unused_specifications_transferable": false,
+  "run_specifications_consumed": 36,
+  "run_specifications_remaining": 234,
+  "global_numerical_headroom": 234,
+  "remaining_permitted_campaign_capacity": 90,
+  "remaining_prospectively_permitted_campaigns": [
+    "intraday-fed-policy-absorption-001"
+  ],
+  "next_action": "Implement Campaign 3 on a separate branch without reading market data or reserving a run, then bind exact merged main through finding-free implementation and launch-control review before execution.",
+  "authority": {
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "state_transition_contract": {
+    "immutable_revision_artifacts": true,
+    "source_state_mutation": false,
+    "next_revision_rule": "Publish docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-{state_revision:03d}.json with state_revision incremented by one and an exact previous_state path/SHA/revision binding.",
+    "campaign_result_transition_rule": "A terminal campaign transition must bind its exact runtime database, canonical final report, final freeze, post-campaign review, and consumed specification count before stopping.",
+    "authority_change_rule": "No state revision can grant qualification, controlled, protected, PAPER, broker-write, or live authority; those require separate policy-valid artifacts outside this exposed program."
+  },
+  "stop_conditions": [
+    "nonempty all-gate exposed cohort",
+    "nonempty all-gate cohort requiring future untouched data",
+    "three terminal completed successor campaigns",
+    "270 immutable run specifications",
+    "research-integrity or protected-control failure",
+    "PAPER broker-write authorization boundary",
+    "any live-money action"
+  ],
+  "fingerprint_contract": "Remove the top-level state_fingerprint field, canonicalize with systematic_trading_lab.fingerprints.canonical_json, and take SHA-256 of those UTF-8 bytes.",
+  "state_fingerprint": "4cc76196c71713fbf56a92cd2495a9a8cc137eb749da0ee0511a429144cc6b73"
+}

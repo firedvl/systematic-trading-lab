@@ -1,0 +1,54 @@
+{
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "live_execution": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "research_qualification": false,
+    "strategy_execution": false
+  },
+  "disposition": {
+    "basis": "The failure occurred before implementation, reservation, attempt, market-data read, or strategy observation. The frozen program permits a pre-execution control repair under the same campaign identity.",
+    "next_action": "Commit a clean-room pre-design attestation and allowed-input hashes, then assign a fresh no-history architect before a replacement plan exists.",
+    "same_campaign_identity_permitted": true
+  },
+  "execution_state": {
+    "attempt_count": 0,
+    "campaign_runtime_created": false,
+    "canonical_report_count": 0,
+    "market_data_read": false,
+    "reservation_count": 0,
+    "strategy_implementation_started": false,
+    "strategy_result_observed": false
+  },
+  "failure_fingerprint": "e2a8919220b5ef409e9a2eb6ddfe33a65809ebf62e953c0c7554e42b800ba56e",
+  "failure_id": "intraday-fed-policy-absorption-001-preplan-control-failure-2026-08-24-r1",
+  "independent_review": {
+    "finding": "The draft's clean-room prospectivity was not independently provable because a root diagnostic had displayed minutes-body text and the draft relied on an unbound post-hoc assertion that an isolated planner selected its exact numerical and execution choices independently.",
+    "finding_severity": "high",
+    "required_remediation": "Reject the draft. Before replacement design, persist a source-bound task packet that enumerates every scientific and execution choice, forbids the rejected draft and publication bodies, and assigns a fresh no-history planner. Independently review the resulting replacement plan.",
+    "reviewer_role": "fresh-read-only-correctness-reviewer",
+    "verdict": "fail",
+    "verified_controls": [
+      "all three new artifact fingerprints and SHA-256 values",
+      "15 official schedule excerpts and publication metadata rows",
+      "15 unique 14:00 New York full XNYS sessions",
+      "7/8 publication-class counts",
+      "6/3/2/3/1 period counts",
+      "symmetric candidate graph",
+      "90-specification and 270-attempt arithmetic",
+      "protected boundaries and false authorities"
+    ]
+  },
+  "recorded_at": "2026-08-24T18:52:00Z",
+  "rejected_draft": {
+    "committed": false,
+    "fingerprint": "acb6de01a9850359b1f57502d57e07e5b656116504553b4cb74a6396565add9b",
+    "frozen": false,
+    "path": "config/research/intraday-fed-policy-absorption-001-plan-v1.json",
+    "sha256": "43a30cb804a9bea75f8e1cd9664b4d8c2c3926e810c1047d8a21f91b786cb1a6"
+  },
+  "schema_version": "intraday-fed-policy-absorption-001-preplan-control-failure-v1",
+  "status": "terminal-rejected-draft-before-implementation-reservation-market-data-read-or-results"
+}

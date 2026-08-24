@@ -1,0 +1,785 @@
+{
+  "schema_version": "intraday-fed-policy-absorption-001-research-plan-v1",
+  "program_id": "intraday-fed-policy-absorption-001",
+  "autonomous_program": {
+    "program_id": "intraday-autonomous-research-001",
+    "campaign_index": 3,
+    "maximum_run_specifications": 90,
+    "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+    "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9",
+    "fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f"
+  },
+  "program_state_source": {
+    "path": "docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-005.json",
+    "sha256": "cd68f08b0b95839d41672a5df024e8867759911830f28d0a3d255c61c2643883",
+    "fingerprint": "c6eaa1acc6af58af2d0f4a937c89ad95690ee8743ec998526b5f16ebdf7ea9af",
+    "state_revision": 5,
+    "successor_state_rule": "Never mutate revision 5. After this exact plan and calendar pass independent review, publish immutable revision 6 binding revision 5, this plan, its review, the calendar, source evidence, V2 attestation, and both preserved preplan failures before implementation."
+  },
+  "status": "prospective-frozen-before-strategy-implementation-reservation-market-data-read-or-results",
+  "starting_main": "0d53fa654f72ebeb262a28713dec6254e87e169a",
+  "purpose": "Test whether a jointly positive completed-bar SPY/QQQ reaction after an officially scheduled 14:00 New York Federal Reserve policy statement or meeting-minutes publication continues into the close while institutions absorb policy information.",
+  "design_provenance": {
+    "attestation": {
+      "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-pre-design-attestation-v2.json",
+      "sha256": "f95c19237ec9e4f6d854fe6f4fe5aa31ba289f962e1d302ef679f73667256b47",
+      "fingerprint": "174dae849dd5d20c0e2775d798b855d54e07030a140872a029b748741ea2467e"
+    },
+    "architect_scope": "Fresh no-history architect read only the V2 attestation and its eight exact allowed inputs at starting_main. No rejected design bytes or numerical choices, market data, results, .trading-lab path, external source, or other repository file informed the design.",
+    "coordinator_role": "The coordinator mechanically encoded the architect's single recommendation without changing scientific, execution, gate, trace, selection, or failure choices.",
+    "preserved_failures": [
+      {
+        "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-preplan-control-failure-v1.json",
+        "sha256": "364aa03c8b68beecb205ffe37f97fa0e68c1980dc4670ae010bdd65ac488ed4e",
+        "fingerprint": "e2a8919220b5ef409e9a2eb6ddfe33a65809ebf62e953c0c7554e42b800ba56e"
+      },
+      {
+        "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-preplan-control-failure-v2.json",
+        "sha256": "9c3840f1992facb24b5acbbd406e33a9c984a75e47621da88bc7f5dfbab90a76",
+        "fingerprint": "80ab56bf4b4158f92aef4b099c1f51c68f29f4f7fcf4b62f1cc3f84090bad640"
+      }
+    ],
+    "rejected_design_reuse": false
+  },
+  "research_basis": {
+    "economic_mechanism": "scheduled late-session monetary-policy information absorption",
+    "hypothesis": "After an officially scheduled 14:00 New York Federal Reserve policy statement or meeting-minutes publication, a jointly positive completed-bar SPY/QQQ reaction may continue into the close while institutions absorb policy information.",
+    "calendar_classes_share_one_contract": "Statements and minutes are scheduled regular-meeting FOMC publications at the same clock. The mechanism tests post-publication absorption rather than document contents. Separate activity, contribution, and concentration controls prevent one class from silently carrying the result.",
+    "novelty_boundary": "No pre-open BLS event, opening gap, prior-session level, volume rule, QQQ-minus-SPY rank, leader/laggard arm, surprise value, release contents, decision value, or inversion of a prior result enters the strategy.",
+    "inference_limit": "The exposed periods support bounded hypothesis triage only. No result can establish controlled qualification, future profitability, PAPER readiness, or broker authority."
+  },
+  "inheritance": {
+    "base_plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "base_plan_review": {
+      "path": "config/research/intraday-event-drift-001-plan-independent-review-v1.json",
+      "sha256": "25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96",
+      "fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+    },
+    "bound_base_artifacts": [
+      "data identity and read eligibility",
+      "period and context ranges",
+      "execution engine and session safeguards",
+      "protected-data and controlled-evaluation disposition"
+    ],
+    "campaign_owned_sections": [
+      "Federal Reserve metadata calendar",
+      "causal reaction strategy",
+      "parent and neighbor grids",
+      "split trace contracts",
+      "screens and stage rules",
+      "runtime and reporting"
+    ]
+  },
+  "calendar": {
+    "path": "config/research/intraday-fed-policy-absorption-001-calendar-v1.json",
+    "sha256": "8bcfd05031b44e2c31861c43aa2b8130d609c82fca9aeec10804809c37a01c97",
+    "fingerprint": "54c937bbb42703213efdf14dc4becb50bc0f757bb6f16388254550e12f0c93ba",
+    "source_evidence": {
+      "path": "config/research/intraday-fed-policy-absorption-001-source-evidence-v1.json",
+      "sha256": "1d72b74a04eadba87eb178fd7d67dc644c18d31b926f78e7a48f6f9c38f012c8",
+      "fingerprint": "ed4dc2c9f638a4ef04da7d292732ee653d0040a5c844a54f90efc588d3005a7b"
+    },
+    "acceptance": "Accept the frozen 15-event calendar as one indivisible causal calendar. Never select a class, date, period, event, or subset from market behavior.",
+    "eligible_event_count": 15,
+    "eligible_full_session_count": 15,
+    "publication_class_counts": {
+      "fomc-meeting-minutes": 8,
+      "fomc-policy-statement": 7
+    },
+    "period_counts": [6, 3, 2, 3, 1],
+    "required_publication_time_local": "14:00:00",
+    "source_timezone": "America/New_York",
+    "pre_publication_bar_index": 53,
+    "publication_bar_index": 54,
+    "final_bar_index": 77,
+    "required_session_bar_count": 78,
+    "excluded_2025_08_22_rule": "The notation-vote item remains excluded because it is neither a regular-meeting policy statement nor regular-meeting minutes and was published at 10:00 New York.",
+    "content_used": false,
+    "sample_floor_failure_disposition": "terminal-pre-execution-calendar-failure",
+    "sample_floor_failure_rule": "Any missing or unproven row, wrong class, duplicate event or session, timestamp other than exactly 14:00 New York, non-XNYS date, early close, count other than exactly 15 total, 8 minutes, 7 statements, or period counts other than exactly 6/3/2/3/1 closes the campaign before implementation, reservation, market-data read, or strategy result. Do not widen, substitute, or remap."
+  },
+  "data": {
+    "universe_id": "liquid-etfs-intraday-5m-v1",
+    "universe_fingerprint": "6ac4a8269f8e352536f52ddc0a3000e0b39c5551c33c03959c20a640cfddeca9",
+    "symbols": ["QQQ", "SPY"],
+    "timeframe": "5m",
+    "provider": "alpaca-historical-v2",
+    "feed": "iex",
+    "adjustment_policy": "provider-adjusted-all-v1",
+    "timestamp_policy": "bar-open-utc-v1",
+    "calendar_policy": "XNYS-regular-session-bars-v1",
+    "maximum_read_end": "2026-05-29T19:55:00Z",
+    "new_market_data_acquisition": false,
+    "reuse_existing_read_only_datasets": true,
+    "artifact_containing_june_allowed": false,
+    "full_dataset_validation_before_reservation": true,
+    "dataset_bindings": [
+      {
+        "dataset_id": "0a307dd767283d8f268c10b372c416abc49ac555cb242bf612f0b485be518363",
+        "fingerprint": "166722d26f52ca344abf38c35e56e9c6496c1fd7444affa5218495091aaee01e",
+        "raw_fingerprint": "249f23deb77c2a4488d7cdde058b538d8431f1dde912a483d80a5d5f73605d3d",
+        "allowed_read_start": "2025-07-01T13:30:00Z",
+        "allowed_read_end": "2025-12-31T20:55:00Z"
+      },
+      {
+        "dataset_id": "074e66c2260f576d6c1765295db93b5e22fb4753dc8f9912ef6f5be7fa937479",
+        "fingerprint": "d74ba8fefd3ac0f46cb86f155212f5d5eecef286d5d411847c952f6ab60e8437",
+        "raw_fingerprint": "b08465f9fdd726cf0e9669836e510bd181dd0eae3771fa80da63c2c820f104d5",
+        "allowed_read_start": "2026-01-02T14:30:00Z",
+        "allowed_read_end": "2026-02-27T20:55:00Z"
+      },
+      {
+        "dataset_id": "1b1b5b1179a84522d6827827a6143a547321ef8b49262cdfb4d6a81885f647ed",
+        "fingerprint": "bbff4ec9c8992d088a2a85cf35196d20b0b30328d9d5e287540b8e73e907c470",
+        "raw_fingerprint": "b21dc4074f31b1ba8cbc15f1767f76aa1287b5d128310f20c9b5ea002ea3609a",
+        "allowed_read_start": "2026-03-02T14:30:00Z",
+        "allowed_read_end": "2026-04-30T19:55:00Z"
+      },
+      {
+        "dataset_id": "4afa60f29ea266ec8b60be9d9600132f8cff4207e846443c65afd3bb5c497a19",
+        "fingerprint": "d34de04b0045967396266bfba7c3427b5fac949d5e1800c0d5fe5b3fc454e29c",
+        "raw_fingerprint": "9c0fa665f1afcf9f5355758d5dfe17b49e090671812132cc00612d337b96f5a5",
+        "raw_sha256": "e5fd2680c7915f4673e1735f860473c37e32ceaa57f7876111310d0ac5c87ad2",
+        "manifest_sha256": "027714eeb34f274c6b887c1fefecdd72b18d24ef505a906a9d5137bdc8e2ee5f",
+        "bars_sha256": "74ce7f13971564b4d7d42e0e7adfc1811ed026498cbed9fac7e79864d1afdb44",
+        "allowed_read_start": "2026-05-01T13:30:00Z",
+        "allowed_read_end": "2026-05-29T19:55:00Z"
+      }
+    ],
+    "run_dataset_input_rule": "Sort bindings by allowed_read_start. Include each binding that intersects context_start through evaluation_end. Each entry has exactly dataset_id, fingerprint, raw_fingerprint, read_start=max(context_start, allowed_read_start), read_end=min(evaluation_end, allowed_read_end), evaluation_read_start=max(evaluation_start, allowed_read_start), and evaluation_read_end=min(evaluation_end, allowed_read_end). Set both evaluation fields to null when the binding does not intersect the evaluation range."
+  },
+  "chronology": {
+    "period_order": [
+      "discovery-2025-07-through-10",
+      "walk-forward-2025-11-through-12",
+      "walk-forward-2026-01-through-02",
+      "walk-forward-2026-03-through-04",
+      "final-exposed-2026-05"
+    ],
+    "periods": [
+      {
+        "period_id": "discovery-2025-07-through-10",
+        "context_start": "2025-07-01T13:30:00Z",
+        "evaluation_start": "2025-07-01T13:30:00Z",
+        "evaluation_end": "2025-10-31T19:55:00Z",
+        "session_count": 87,
+        "eligible_event_count": 6,
+        "role": "discovery"
+      },
+      {
+        "period_id": "walk-forward-2025-11-through-12",
+        "context_start": "2025-10-20T13:30:00Z",
+        "evaluation_start": "2025-11-03T14:30:00Z",
+        "evaluation_end": "2025-12-31T20:55:00Z",
+        "session_count": 41,
+        "eligible_event_count": 3,
+        "role": "walk-forward-1"
+      },
+      {
+        "period_id": "walk-forward-2026-01-through-02",
+        "context_start": "2025-12-17T14:30:00Z",
+        "evaluation_start": "2026-01-02T14:30:00Z",
+        "evaluation_end": "2026-02-27T20:55:00Z",
+        "session_count": 39,
+        "eligible_event_count": 2,
+        "role": "walk-forward-2"
+      },
+      {
+        "period_id": "walk-forward-2026-03-through-04",
+        "context_start": "2026-02-13T14:30:00Z",
+        "evaluation_start": "2026-03-02T14:30:00Z",
+        "evaluation_end": "2026-04-30T19:55:00Z",
+        "session_count": 43,
+        "eligible_event_count": 3,
+        "role": "walk-forward-3"
+      },
+      {
+        "period_id": "final-exposed-2026-05",
+        "context_start": "2026-04-17T13:30:00Z",
+        "evaluation_start": "2026-05-01T13:30:00Z",
+        "evaluation_end": "2026-05-29T19:55:00Z",
+        "session_count": 20,
+        "eligible_event_count": 1,
+        "role": "walk-forward-4"
+      }
+    ],
+    "context_only_session_rule": "Context-only sessions may support the inherited dataset and validation contract but may not generate a signal, trade, return, activity observation, event support, or merit evidence.",
+    "event_order": "scheduled_utc ascending, then event_id ascending",
+    "stage_barrier": "Complete all required runs, validate completeness, bindings, traces, chronology, and accounting, then read merit, freeze decisions simultaneously, and open the next stage only when the frozen gate permits it.",
+    "partial_result_adaptation": false,
+    "maximum_market_timestamp": "2026-05-29T19:55:00Z"
+  },
+  "frozen_dependencies": {
+    "autonomous_program_review": {
+      "path": "config/research/intraday-autonomous-research-001-program-independent-review-v1.json",
+      "sha256": "1731794543d13306f34462016d376966d47ae8354fa337144889c7bea5c738db",
+      "fingerprint": "50424b9e5c07a95351af93e560859293768e34959d01f816f0f63042302497c0",
+      "verdict": "pass"
+    },
+    "execution_cost_model": {
+      "path": "config/research/intraday-execution-cost-model-001-v1.json",
+      "sha256": "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af",
+      "fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4"
+    },
+    "execution_cost_review": {
+      "path": "config/research/intraday-execution-cost-model-001-independent-review-v1.json",
+      "sha256": "fb197856b9229349e5de4bca742f328a8f1e5e53f9558dfd7324744e91a795aa",
+      "fingerprint": "8ade5190bb64330af037f88bf0911ed3cdb04578ca7a6d6e27a5fa6d651349b2",
+      "verdict": "pass"
+    },
+    "june_disposition": {
+      "path": "config/research/intraday-exposed-005-june-disposition-v1.json",
+      "sha256": "af6aea5e8d7bd8360aa6af4ddc31e1e67a1be48476f6c8ab13197fe12515b3c0",
+      "fingerprint": "6dad6480dc3b0379017d582bb2f29fc562f41379bb3065855c55eadf51f025dd",
+      "range_status": "ineligible"
+    }
+  },
+  "arithmetic": {
+    "numeric_type": "base-10 Decimal",
+    "decimal_context_precision": 50,
+    "decimal_rounding": "ROUND_HALF_EVEN",
+    "input_rule": "Parse every numeric dataset, configuration, price, quantity, notional, return, equity, slippage, rate, and fee input directly from its canonical decimal representation. Binary floating-point conversion is prohibited.",
+    "quantization_rule": "Do not quantize intermediate values except where the frozen regulatory-fee model explicitly requires upward rounding to one cent.",
+    "symbol_order": ["SPY", "QQQ"],
+    "event_order": "scheduled_utc ascending, then event_id ascending",
+    "comparison_rule": "Use exact Decimal ==, >=, <=, or > under the shared context. No epsilon, tolerance, display rounding, approximate reconciliation, or tolerance-based repair is permitted.",
+    "accounting_failure_rule": "A failed exact identity is a deterministic accounting failure.",
+    "reaction_display_rule": "Reaction display values may be rendered to eight decimal basis points with ROUND_HALF_EVEN. Display values never control signal activation, gates, calculations, or hashes."
+  },
+  "strategy_contract": {
+    "strategy_id": "intraday-fed-policy-absorption-v1",
+    "economic_mechanism": "scheduled late-session monetary-policy information absorption",
+    "bar_indexing": "Zero-based within each validated 78-bar XNYS regular session.",
+    "reference_bar_index": 53,
+    "publication_bar_index": 54,
+    "reaction_formula": "10000 * (close[53+h] / close[53] - 1)",
+    "reaction_units": "basis points",
+    "threshold_rule": "Use the exact unrounded Decimal reaction. Activate only when both SPY and QQQ reactions are greater than or equal to the parent floor at the same completed-bar decision. Equality activates.",
+    "terminal_indices": {
+      "2": 55,
+      "4": 57,
+      "6": 59
+    },
+    "no_signal_reason_priority": ["both-below-floor", "spy-below-floor", "qqq-below-floor"],
+    "missing_causal_price_rule": "A missing, duplicate, non-finite, nonpositive, wrong-session, wrong-index, or binding-mismatched causal price is a deterministic data failure, not a no-signal.",
+    "permitted_signal_inputs": [
+      "event identity",
+      "publication class",
+      "scheduled timestamp",
+      "SPY and QQQ index-53 reference closes",
+      "SPY and QQQ terminal closes",
+      "horizon",
+      "floor"
+    ],
+    "prohibited_signal_inputs": [
+      "release contents, decisions, votes, projections, surprises, headlines, revisions, or implementation notes",
+      "pre-publication trend, opening gap, prior-session level, or volume",
+      "relative rank, QQQ-minus-SPY leader logic, or later prices"
+    ],
+    "position_rule": "An activation creates one atomic joint long-only entry with SPY target weight 0.5 and QQQ target weight 0.5. An inactive event remains flat for the full session.",
+    "mechanical_half_weight_rule": "Half weights are mechanical exposure weights and do not establish diversification.",
+    "no_leverage": true,
+    "no_short": true,
+    "no_pyramiding": true,
+    "no_reentry": true,
+    "no_intraday_rebalance": true,
+    "no_stop_exit": true,
+    "no_profit_target": true,
+    "one_joint_entry_per_eligible_session": true,
+    "flat_at_close": true,
+    "parameters": {
+      "axes": [
+        {"name": "observation_horizon_bars", "values": [2, 4, 6]},
+        {"name": "minimum_joint_reaction_bps", "values": ["8", "16", "24"]}
+      ],
+      "candidate_count": 9,
+      "candidate_id_format": "fedabs-h{horizon:02d}-f{floor:04d}",
+      "indexing_rule": "Expand horizons in listed order as the outer axis and floors in listed order as the inner axis.",
+      "candidates": [
+        {"candidate_id": "fedabs-h02-f0008", "observation_horizon_bars": 2, "minimum_joint_reaction_bps": "8"},
+        {"candidate_id": "fedabs-h02-f0016", "observation_horizon_bars": 2, "minimum_joint_reaction_bps": "16"},
+        {"candidate_id": "fedabs-h02-f0024", "observation_horizon_bars": 2, "minimum_joint_reaction_bps": "24"},
+        {"candidate_id": "fedabs-h04-f0008", "observation_horizon_bars": 4, "minimum_joint_reaction_bps": "8"},
+        {"candidate_id": "fedabs-h04-f0016", "observation_horizon_bars": 4, "minimum_joint_reaction_bps": "16"},
+        {"candidate_id": "fedabs-h04-f0024", "observation_horizon_bars": 4, "minimum_joint_reaction_bps": "24"},
+        {"candidate_id": "fedabs-h06-f0008", "observation_horizon_bars": 6, "minimum_joint_reaction_bps": "8"},
+        {"candidate_id": "fedabs-h06-f0016", "observation_horizon_bars": 6, "minimum_joint_reaction_bps": "16"},
+        {"candidate_id": "fedabs-h06-f0024", "observation_horizon_bars": 6, "minimum_joint_reaction_bps": "24"}
+      ],
+      "rationale": "The 10-, 20-, and 30-minute windows distinguish immediate reaction from progressively absorbed information without consuming the close-safe execution window. Floors 8, 16, and 24 basis points span moderate through strong joint reactions and materially exceed the frozen half-weight pair's adverse spread-only round-trip costs."
+    },
+    "neighbor_graph": {
+      "horizon_domain": [1, 2, 3, 4, 5, 6, 7],
+      "floor_domain_bps": ["4", "8", "12", "16", "20", "24", "28"],
+      "node_id_format": "fedabs-h{horizon:02d}-f{floor:04d}",
+      "neighbor_rule": "Immediate neighbors have equal floors and absolute horizon difference 1, or equal horizons and absolute floor difference 4 basis points. Diagonals are excluded and the relation is symmetric.",
+      "selected_parent_neighbor_order": ["h-1,f", "h+1,f", "h,f-4", "h,f+4"],
+      "exact_neighbor_count_per_parent": 4,
+      "boundary_rule": "Every parent has four in-domain neighbors. No deletion, clamping, wrapping, or substitution is allowed."
+    }
+  },
+  "execution": {
+    "engine_version": "intraday-exposed-002-engine-v1",
+    "currency": "USD",
+    "initial_cash": "100000",
+    "fractional_shares": true,
+    "maximum_gross_weight": "1",
+    "decision_semantics": "completed-five-minute-bar-only-v1",
+    "fill_semantics": "nth-later-eligible-bar-open-v1",
+    "fill_price_source": "For each intended fill index, use the open value from the bound stored provider-adjusted-all-v1 bar. Treat that stored value as raw_open solely to distinguish it from the modeled execution price. Do not read, derive, or substitute a separately unadjusted price series. Apply the scenario's adverse slippage and regulatory costs only after reading this stored open.",
+    "entry_fill_index_formula": "53 + horizon + delay",
+    "entry_fill_indices": {
+      "h02": {"delay-1": 56, "delay-2": 57, "delay-3": 58},
+      "h04": {"delay-1": 58, "delay-2": 59, "delay-3": 60},
+      "h06": {"delay-1": 60, "delay-2": 61, "delay-3": 62}
+    },
+    "exit_decision_index": 74,
+    "exit_decision_time_local": "15:45:00",
+    "exit_fill_index_formula": "74 + delay",
+    "exit_fill_indices": {"delay-1": 75, "delay-2": 76, "delay-3": 77},
+    "buy_price_formula": "raw_open * (1 + slippage_bps / 10000)",
+    "sell_price_formula": "raw_open * (1 - slippage_bps / 10000)",
+    "atomic_fill_rule": "Both SPY and QQQ entry legs and both exit legs are required. A one-leg-only or partial joint execution is invalid, not a reduced position.",
+    "missed_fill_rule": "A missing intended entry fill, invalid fill price, entry after the exit decision, missing exit fill, one-leg-only execution, or position remaining after bar 77 is a deterministic execution failure.",
+    "synthetic_fill_prohibited": true,
+    "pending_order_policy": "fifo-no-supersession-session-close-cancel-v1",
+    "position_policy": "long-only-fixed-half-weight-no-resize-v1",
+    "session_policy": "XNYS-regular-session-flat-at-close-v1",
+    "cost_model": {
+      "path": "config/research/intraday-execution-cost-model-001-v1.json",
+      "sha256": "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af",
+      "fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4"
+    },
+    "scenarios": [
+      {"scenario_id": "normal", "cost_model_scenario_id": "normal", "delay_bars": 1, "spy_slippage_bps_per_fill": "0.09", "qqq_slippage_bps_per_fill": "0.17", "regulatory_fees": true},
+      {"scenario_id": "zero_cost_diagnostic", "cost_model_scenario_id": "zero_cost_diagnostic", "delay_bars": 1, "spy_slippage_bps_per_fill": "0", "qqq_slippage_bps_per_fill": "0", "regulatory_fees": false},
+      {"scenario_id": "stress_a", "cost_model_scenario_id": "stress_a", "delay_bars": 2, "spy_slippage_bps_per_fill": "0.16", "qqq_slippage_bps_per_fill": "0.25", "regulatory_fees": true},
+      {"scenario_id": "stress_b", "cost_model_scenario_id": "stress_b", "delay_bars": 3, "spy_slippage_bps_per_fill": "0.22", "qqq_slippage_bps_per_fill": "0.36", "regulatory_fees": true},
+      {"scenario_id": "normal-delay-2", "cost_model_scenario_id": "normal", "delay_bars": 2, "spy_slippage_bps_per_fill": "0.09", "qqq_slippage_bps_per_fill": "0.17", "regulatory_fees": true},
+      {"scenario_id": "normal-delay-3", "cost_model_scenario_id": "normal", "delay_bars": 3, "spy_slippage_bps_per_fill": "0.09", "qqq_slippage_bps_per_fill": "0.17", "regulatory_fees": true}
+    ],
+    "regulatory_fee_model": {
+      "model_id": "alpaca-us-equity-regulatory-fees-2026-07-20-v1",
+      "commission_bps": "0",
+      "sec_sell_dollar_rate": "0.0000206",
+      "finra_taf_sell_share_rate": "0.000195",
+      "finra_taf_per_trade_cap_usd": "9.79",
+      "finra_cat_equivalent_share_rate": "0.000003",
+      "finra_cat_sides": "buy-and-sell executed equivalent shares",
+      "account_day_timezone": "America/New_York",
+      "account_day_rule": "Derive the account day from aware execution timestamps in America/New_York.",
+      "aggregation_rule": "Aggregate each fee type for one account day, round each aggregated fee type upward once to the nearest cent, and deduct all three rounded totals at the session boundary before carrying cash and equity forward."
+    },
+    "zero_cost_rule": "No slippage, commission, or regulatory fee; one-bar delay; diagnostic only; no promotion authority."
+  },
+  "accounting_contract": {
+    "active_event_counts": {
+      "entry_fill_count": "2 * active_event_count",
+      "exit_fill_count": "2 * active_event_count",
+      "total_fill_count": "4 * active_event_count",
+      "symbol_round_trip_count": "2 * active_event_count"
+    },
+    "per_active_event": "SPY and QQQ each have exactly one entry and one exit; end-of-event SPY, QQQ, and aggregate exposure equal zero.",
+    "gross_portfolio_return": "0.5 * SPY_raw_return + 0.5 * QQQ_raw_return",
+    "spread_adjusted_return": "0.5 * SPY_execution_return + 0.5 * QQQ_execution_return",
+    "net_return": "spread_adjusted_return - regulatory_fees / pre_event_equity",
+    "zero_cost_identity": "net_return == gross_portfolio_return",
+    "cost_drag": "For matched one-bar-delay zero-cost and Normal runs, cost_drag = zero_cost_return - normal_return and cost_drag >= 0.",
+    "compounding_order": "scheduled_utc ascending, then event_id ascending",
+    "inactive_event_rule": "No trade; equity remains unchanged.",
+    "exact_reconciliation": "Ending equity, cash, exposure, fill counts, trade counts, fee totals, gross return, spread-adjusted return, net return, cost drag, and drawdown must recompute with exact Decimal equality."
+  },
+  "report_contract": {
+    "canonical_metric_decode_rule": "After canonical JSON reload, required numeric screening values must be JSON integers, null only where semantically undefined, or canonical finite Decimal strings. Reject booleans, floats, whitespace, exponent notation, noncanonical strings, non-finite values, missing keys, and silent omission. Convert valid strings to Decimal before every screen or selection operation.",
+    "metric_definitions": {
+      "activity_rate": "active_event_count / eligible_event_count",
+      "gross_edge_bps": "Arithmetic mean of zero-cost event returns over active events, expressed in basis points; undefined when active_event_count is zero.",
+      "normal_cost_ratio": "(zero_cost_return - normal_return) / zero_cost_return; defined only when zero_cost_return > 0 and cost drag >= 0.",
+      "maximum_drawdown": "Maximum peak-to-trough fractional decline in chronologically compounded event equity.",
+      "positive_contribution": "max(net_event_return, 0)",
+      "session_concentration": "Maximum positive contribution by session divided by total positive session contribution.",
+      "event_concentration": "Maximum positive contribution by event ID divided by total positive event contribution.",
+      "event_session_identity": "Exactly one eligible event exists per session, so event and session concentration must be exactly equal.",
+      "publication_class_concentration": "Larger of positive statement contribution and positive minutes contribution divided by total positive contribution.",
+      "period_concentration": "Maximum positive contribution grouped by exposed period divided by total positive contribution.",
+      "undefined_concentration": "A zero positive-contribution denominator makes each applicable concentration undefined; undefined required metrics fail."
+    },
+    "required_identity_fields": [
+      "plan_sha256",
+      "plan_fingerprint",
+      "autonomous_program_sha256",
+      "autonomous_program_fingerprint",
+      "source_state_sha256",
+      "source_state_fingerprint",
+      "calendar_sha256",
+      "calendar_fingerprint",
+      "source_evidence_sha256",
+      "source_evidence_fingerprint",
+      "attestation_sha256",
+      "attestation_fingerprint",
+      "dataset_inputs",
+      "cost_model_sha256",
+      "cost_model_fingerprint",
+      "source_commit"
+    ],
+    "event_ledger_rule": "Record every eligible event in frozen order with class, timestamps, session, causal prices and indices, reactions, activation or exact no-signal reason, decisions, intended fills, per-symbol stored opens, modeled fills, quantities, notionals, returns, fees, cash, exposure, flat-at-close state, P&L, contribution groups, and accounting checks. Inactive events have no fills, costs, P&L, or equity change.",
+    "aggregate_rule": "Concatenate event ledgers in frozen period order; recompute activity, class support, fill and round-trip counts, fee totals, returns, drawdown, concentrations, trace identities, and every accounting equation from exact ledger values. Never average concentration metrics.",
+    "terminal_semantic_validation_rule": "Before terminal interpretation, recompute every reached-stage gate from exact canonical reports, compare stored screening ledgers, verify report-to-ledger identity and cohort derivation, and fail closed on any mismatch."
+  },
+  "trace_contract": {
+    "cross_scenario": {
+      "schema_version": "intraday-fed-policy-absorption-cross-scenario-trace-v1",
+      "payload_scope": "One canonical run-level pre-fill signal and decision payload.",
+      "run_fields": [
+        "schema_version",
+        "campaign_id",
+        "candidate_id",
+        "horizon",
+        "floor",
+        "period_id",
+        "source_commit",
+        "attestation SHA and fingerprint",
+        "program SHA and fingerprint",
+        "state SHA and fingerprint",
+        "calendar SHA and fingerprint",
+        "source-evidence SHA and fingerprint",
+        "ordered dataset IDs",
+        "plan identity and fingerprint",
+        "ordered event array"
+      ],
+      "event_fields": [
+        "event_id",
+        "publication_class",
+        "scheduled_local",
+        "scheduled_utc",
+        "xnys_session",
+        "reference_index_53",
+        "SPY reference close",
+        "QQQ reference close",
+        "terminal_index",
+        "SPY terminal close",
+        "QQQ terminal close",
+        "exact unrounded SPY reaction bps",
+        "exact unrounded QQQ reaction bps",
+        "activation",
+        "decision_index",
+        "decision_timestamp",
+        "no_signal_reason_or_null"
+      ],
+      "excluded_fields": [
+        "run scenario ID",
+        "cost-model scenario ID",
+        "costs",
+        "execution delay",
+        "intended fill index",
+        "quantity",
+        "fills or fill prices",
+        "every price later than the decision",
+        "exit data",
+        "P&L, return, equity, drawdown, fees, or accounting outputs",
+        "every output hash",
+        "cross_scenario_trace_hash"
+      ],
+      "canonicalization": "UTF-8, sorted object keys, compact separators, frozen array order, and exact canonical Decimal strings. The output hash is excluded from its preimage.",
+      "output": "cross_scenario_trace_hash = SHA-256(canonical payload bytes)",
+      "equality_rule": "Normal and zero-cost discovery, walk-forward, and neighbor hashes must match for each candidate-period. Every stress and isolated-delay hash must match the selected candidate's corresponding walk-forward baseline hash. Activations, decisions, causal inputs, reactions, and no-signal reasons are scenario invariant.",
+      "retention_rule": "Retention compares only runs whose cross_scenario_trace_hash values match exactly. A mismatch is a deterministic trace/control failure."
+    },
+    "execution": {
+      "schema_version": "intraday-fed-policy-absorption-execution-trace-v1",
+      "payload_scope": "One canonical scenario-specific run-level execution payload.",
+      "run_fields": [
+        "schema_version",
+        "campaign_id",
+        "candidate_id",
+        "period_id",
+        "linked cross_scenario_trace_hash",
+        "run scenario ID",
+        "cost-model scenario ID",
+        "cost-model SHA and fingerprint",
+        "execution delay bars",
+        "ordered event execution records",
+        "account-day fee aggregation",
+        "activity, fill, and round-trip counts",
+        "gross and net returns",
+        "ending equity",
+        "maximum drawdown",
+        "required concentrations",
+        "every accounting-identity result"
+      ],
+      "event_fields": [
+        "activation",
+        "entry decision index and timestamp",
+        "exit decision index and timestamp",
+        "intended entry fill index",
+        "intended exit fill index",
+        "per-symbol entry and exit stored provider-adjusted raw_open, adverse slippage, modeled execution price, quantity, notional, entry fill, exit fill, trade ID, raw return, and execution return",
+        "missed-fill status",
+        "gross event return",
+        "spread-adjusted event return",
+        "regulatory fee amounts",
+        "net event return",
+        "end-of-event cash and exposure",
+        "flat-at-close boolean"
+      ],
+      "excluded_field": "execution_trace_hash",
+      "canonicalization": "Use the same canonical JSON rules; execution_trace_hash is excluded from its own preimage.",
+      "output": "execution_trace_hash = SHA-256(canonical payload bytes)",
+      "equality_rule": "Execution-trace hashes are never required to equal another scenario's execution-trace hash."
+    }
+  },
+  "discovery_screen": {
+    "required_scenarios": ["normal", "zero_cost_diagnostic"],
+    "run_all_parents_before_screening": true,
+    "required_conditions": [
+      "complete Normal/zero-cost pair",
+      "exact cross-scenario trace equality",
+      "no chronology, binding, execution, or accounting failure",
+      "exactly 2A symbol round trips and 4A fills in each scenario",
+      "event concentration equals session concentration exactly"
+    ],
+    "gates": [
+      {"metric": "active_event_count", "comparison": ">=", "threshold": 3},
+      {"metric": "active_statement_count", "comparison": ">=", "threshold": 1},
+      {"metric": "active_minutes_count", "comparison": ">=", "threshold": 1},
+      {"metric": "normal.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "zero_cost_diagnostic.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "gross_edge_bps", "comparison": ">=", "threshold": "4"},
+      {"metric": "normal.cost_ratio", "comparison": "<=", "threshold": "0.25"},
+      {"metric": "normal.maximum_drawdown", "comparison": "<=", "threshold": "0.0075"},
+      {"metric": "zero_cost_diagnostic.maximum_drawdown", "comparison": "<=", "threshold": "0.0075"},
+      {"metric": "normal.session_concentration", "comparison": "<=", "threshold": "0.70"},
+      {"metric": "normal.event_concentration", "comparison": "<=", "threshold": "0.70"},
+      {"metric": "normal.publication_class_concentration", "comparison": "<=", "threshold": "0.80"},
+      {"metric": "normal.statement_aggregate_contribution", "comparison": ">", "threshold": "0"},
+      {"metric": "normal.minutes_aggregate_contribution", "comparison": ">", "threshold": "0"}
+    ],
+    "undefined_metric_action": "fail",
+    "selection_cap": 3,
+    "selection_rule": "Select discovery passers only in immutable parent order. Do not rank by return, edge, drawdown, cost ratio, gate margin, visual behavior, or any other result.",
+    "empty_action": "Close Campaign 3 terminal empty after 18 specifications, produce cross-campaign synthesis, and stop the three-campaign program."
+  },
+  "walk_forward_screen": {
+    "required_period_count": 4,
+    "required_scenarios": ["normal", "zero_cost_diagnostic"],
+    "complete_stage_before_merit_read": true,
+    "per_period_required_conditions": [
+      "complete Normal/zero-cost pair",
+      "exact cross-scenario trace equality",
+      "exact chronology, fills, and accounting"
+    ],
+    "per_period_gates": [
+      {"metric": "normal.total_return", "comparison": ">=", "threshold": "-0.0030"},
+      {"metric": "zero_cost_diagnostic.total_return", "comparison": ">=", "threshold": "-0.0030"},
+      {"metric": "normal.maximum_drawdown", "comparison": "<=", "threshold": "0.0100"},
+      {"metric": "zero_cost_diagnostic.maximum_drawdown", "comparison": "<=", "threshold": "0.0100"}
+    ],
+    "zero_activation_rule": "A sparse period may have zero activation. It remains represented exactly and supplies no positive support.",
+    "undefined_metric_action": "fail"
+  },
+  "serious_candidate_screen": {
+    "evaluate_periods": "discovery plus all four walk-forward periods",
+    "freeze_all_decisions_simultaneously": true,
+    "required_conditions": [
+      "discovery remains passed",
+      "every walk-forward per-period gate passes",
+      "event concentration equals session concentration exactly",
+      "every active event has two symbol round trips and four fills",
+      "every trace, chronology, binding, flat-at-close, fee, and accounting identity passes"
+    ],
+    "gates": [
+      {"metric": "walk_forward.active_event_count", "comparison": ">=", "threshold": 4},
+      {"metric": "walk_forward.periods_with_activation", "comparison": ">=", "threshold": 3},
+      {"metric": "combined.active_event_count", "comparison": ">=", "threshold": 7},
+      {"metric": "combined.active_statement_count", "comparison": ">=", "threshold": 3},
+      {"metric": "combined.active_minutes_count", "comparison": ">=", "threshold": 3},
+      {"metric": "combined.normal.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "combined.zero_cost_diagnostic.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "walk_forward.normal.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "walk_forward.zero_cost_diagnostic.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "combined.gross_edge_bps", "comparison": ">=", "threshold": "4"},
+      {"metric": "combined.normal.cost_ratio", "comparison": "<=", "threshold": "0.25"},
+      {"metric": "combined.normal.maximum_drawdown", "comparison": "<=", "threshold": "0.0100"},
+      {"metric": "combined.zero_cost_diagnostic.maximum_drawdown", "comparison": "<=", "threshold": "0.0100"},
+      {"metric": "combined.normal.session_concentration", "comparison": "<=", "threshold": "0.40"},
+      {"metric": "combined.normal.event_concentration", "comparison": "<=", "threshold": "0.40"},
+      {"metric": "combined.normal.publication_class_concentration", "comparison": "<=", "threshold": "0.70"},
+      {"metric": "combined.normal.period_concentration", "comparison": "<=", "threshold": "0.50"},
+      {"metric": "combined.normal.statement_aggregate_contribution", "comparison": ">", "threshold": "0"},
+      {"metric": "combined.normal.minutes_aggregate_contribution", "comparison": ">", "threshold": "0"}
+    ],
+    "undefined_metric_action": "fail",
+    "selection_cap": 1,
+    "selection_rule": "Select at most one combined-serious parent using only immutable parent order. Record every other combined-serious parent but do not evaluate it further, rescue it, transfer it, or admit it to the cohort."
+  },
+  "stress_delay_screen": {
+    "required_scenarios": ["stress_a", "stress_b", "normal-delay-2", "normal-delay-3"],
+    "run_each_scenario_on_all_walk_forward_periods": true,
+    "complete_all_runs_before_merit_read": true,
+    "degradation_formula": "(corresponding_walk_forward_zero_cost_return - scenario_return) / corresponding_walk_forward_zero_cost_return",
+    "per_scenario_required_conditions": [
+      "cross-scenario trace equals the matching walk-forward baseline in every period",
+      "activation and decision counts equal baseline",
+      "complete fills, chronology, and accounting",
+      "corresponding walk-forward zero-cost aggregate return is positive",
+      "event concentration equals session concentration exactly",
+      "statements and minutes each retain positive aggregate contribution"
+    ],
+    "per_scenario_gates": [
+      {"metric": "aggregate.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "minimum_period_return", "comparison": ">=", "threshold": "-0.0040"},
+      {"metric": "aggregate.maximum_drawdown", "comparison": "<=", "threshold": "0.0125"},
+      {"metric": "degradation_ratio", "comparison": "<=", "threshold": "0.50"},
+      {"metric": "aggregate.session_concentration", "comparison": "<=", "threshold": "0.50"},
+      {"metric": "aggregate.event_concentration", "comparison": "<=", "threshold": "0.50"},
+      {"metric": "aggregate.publication_class_concentration", "comparison": "<=", "threshold": "0.75"},
+      {"metric": "aggregate.period_concentration", "comparison": "<=", "threshold": "0.60"}
+    ],
+    "undefined_metric_action": "fail",
+    "failure_action": "Any one scenario failure closes the candidate and prevents neighbor work."
+  },
+  "neighbor_screen": {
+    "required_neighbor_count": 4,
+    "required_period_count": 4,
+    "required_scenarios": ["normal", "zero_cost_diagnostic"],
+    "complete_all_runs_before_merit_read": true,
+    "per_neighbor_required_conditions": [
+      "four complete Normal/zero-cost period pairs",
+      "exact pairwise cross-scenario trace equality",
+      "at least one statement and one minutes event activate",
+      "event concentration equals session concentration exactly",
+      "exact chronology, round trips, fills, flat-at-close state, and accounting identities"
+    ],
+    "per_neighbor_gates": [
+      {"metric": "walk_forward.active_event_count", "comparison": ">=", "threshold": 3},
+      {"metric": "walk_forward.periods_with_activation", "comparison": ">=", "threshold": 2},
+      {"metric": "aggregate.normal.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "aggregate.zero_cost_diagnostic.total_return", "comparison": ">", "threshold": "0"},
+      {"metric": "aggregate.gross_edge_bps", "comparison": ">=", "threshold": "3"},
+      {"metric": "aggregate.normal.cost_ratio", "comparison": "<=", "threshold": "0.35"},
+      {"metric": "aggregate.normal.maximum_drawdown", "comparison": "<=", "threshold": "0.0125"},
+      {"metric": "aggregate.zero_cost_diagnostic.maximum_drawdown", "comparison": "<=", "threshold": "0.0125"},
+      {"metric": "aggregate.normal.session_concentration", "comparison": "<=", "threshold": "0.60"},
+      {"metric": "aggregate.normal.event_concentration", "comparison": "<=", "threshold": "0.60"},
+      {"metric": "aggregate.normal.publication_class_concentration", "comparison": "<=", "threshold": "0.85"},
+      {"metric": "aggregate.normal.period_concentration", "comparison": "<=", "threshold": "0.70"}
+    ],
+    "all_neighbor_rule": "All four neighbors must pass. No majority rule, directional exception, missing-neighbor waiver, rounding, rescue, or substitution is allowed.",
+    "undefined_metric_action": "fail"
+  },
+  "stage_rules": {
+    "barrier_after_each_stage": true,
+    "complete_stage_before_merit_read": true,
+    "screen_in_frozen_specification_order": true,
+    "no_gate_change_after_first_reservation": true,
+    "no_partial_result_adaptation": true,
+    "run_identity_fields": ["candidate_id", "period_id", "scenario_id"],
+    "run_identity_and_deduplication_rule": "Reserve each candidate-period-scenario identity at most once. Reuse only exact completed identical evidence; unused capacity remains unused.",
+    "final_cohort_minimum": 0,
+    "final_cohort_maximum": 1,
+    "final_cohort_rule": "The cohort contains exactly the selected serious parent if and only if it passes every stress scenario, every isolated-delay scenario, and all four immediate-neighbor gates. Neighbor nodes are robustness tests, not cohort members.",
+    "nonempty_cohort_action": "Freeze the cohort simultaneously, stop, and record WAITING FOR FUTURE UNTOUCHED DATA. No controlled evaluation, qualification, PAPER readiness, or broker authority follows.",
+    "empty_cohort_action": "Freeze Campaign 3 terminal empty, produce the three-campaign synthesis, and stop. Campaign 4 is prohibited.",
+    "interrupted_after_observation_action": "Preserve exact evidence, produce the cross-campaign synthesis, and stop without redesigning or replacing Campaign 3."
+  },
+  "failure_dispositions": {
+    "pre_execution_calendar_failure": "Terminal pre-execution closure with no widening, substitution, class removal, date replacement, market-data access, or implementation.",
+    "missing_causal_bars": "Deterministic data failure, not no-signal or infrastructure.",
+    "fill_or_close_failure": "Deterministic execution failure.",
+    "binding_or_stale_source_failure": "Fail closed on any source, attestation, input, program, state, calendar, evidence, dataset, plan, cost-model, or review mismatch.",
+    "invalid_parameter_or_graph": "Any unlisted horizon, floor, parent, scenario, delay, fee model, neighbor, index, or ID is a deterministic plan/control failure.",
+    "undefined_metric": "Fail the candidate or stage; never impute, waive, substitute, or redefine.",
+    "trace_failure": "Any mismatch, prohibited cross-scenario execution field, missing trace field, self-referential hash, or invalid canonical payload is a deterministic trace/control failure.",
+    "publication_conflict": "Unresolved class, identity, date, timestamp, source, or publication conflict is terminal publication-control failure; market behavior cannot resolve it.",
+    "accounting_or_partial_output": "Any accounting mismatch, partial canonical output, partial stage result, or incomplete report is deterministic control failure and cannot support merit or adaptation.",
+    "pre_observation_plumbing_failure": "Only when zero reservations, attempts, canonical reports, market-data reads, and observations exist, preserve evidence and repair plumbing under the same identity, then regenerate source-bound review. Scientific, calendar, parameter, trace-contract, and binding choices cannot change.",
+    "post_observation_semantic_change": "Stop for research-integrity review. Do not mutate the campaign, use another identity, or adapt from partial results.",
+    "failure_classification_rule": "Never relabel deterministic data, candidate, calendar, publication, trace, execution, accounting, or control failure as infrastructure."
+  },
+  "search_budget": {
+    "discovery_maximum": {"formula": "9 parents * 2 scenarios", "run_specifications": 18},
+    "walk_forward_maximum": {"formula": "at most 3 parents * 4 periods * 2 scenarios", "run_specifications": 24},
+    "stress_and_delay_maximum": {"formula": "1 serious parent * 4 periods * 4 scenarios", "run_specifications": 16},
+    "immediate_neighbor_maximum": {"formula": "1 serious parent * 4 neighbors * 4 periods * 2 scenarios", "run_specifications": 32},
+    "total_formula": "18 + 24 + 16 + 32",
+    "total_maximum_run_specifications": 90,
+    "program_run_specifications_consumed_before_campaign": 36,
+    "program_run_specifications_remaining_before_campaign": 234,
+    "maximum_program_total_after_campaign": 126,
+    "frozen_program_ceiling": 270,
+    "prior_campaign_unused_specifications_transferable": false,
+    "maximum_total_attempts": 270,
+    "attempts_are_not_search_specifications": true,
+    "budget_invariant": "Create later-stage specifications only when the preceding barrier opens. Reject any Campaign 3 reservation above 90."
+  },
+  "runtime": {
+    "namespace": "intraday-fed-policy-absorption-001",
+    "database": "intraday-fed-policy-absorption-001.sqlite3",
+    "run_id_prefix": "fedabs001r-",
+    "attempt_id_prefix": "fedabs001a-",
+    "executor": "bounded-process-spawn-v1",
+    "default_worker_count": 4,
+    "worker_count_change_after_freeze": false,
+    "campaign_lock": true,
+    "create_only_artifacts": true,
+    "sqlite_journal_mode": "delete",
+    "sqlite_busy_timeout_seconds": 30,
+    "heartbeat_interval_seconds": 60,
+    "lease_timeout_seconds": 300,
+    "maximum_infrastructure_attempts": 3,
+    "retryable_failure": "expired immutable run with no result only",
+    "retry_identity_rule": "A retry uses the identical run specification and exact bound bytes. It cannot change candidate, period, scenario, data, workers, cost, seed, gate, trace, or execution behavior.",
+    "attempt_exhaustion_action": "After the third expired-no-result attempt, Campaign 3 is terminal interrupted.",
+    "implementation_gate": "Merge this exact plan, finding-free independent plan/calendar review, and immutable state revision 6. Then implement the strict loader, strategy, split traces, reports, screens, 90-spec runner, CLI, and focused tests on a separate branch without market-data read. Bind exact merged implementation main and a finding-free launch-control review before the first reservation.",
+    "terminal_failures": [
+      "calendar or publication-control failure",
+      "candidate or deterministic data exception",
+      "canonical metric decode failure",
+      "cross-scenario or execution trace failure",
+      "fill, flat-at-close, fee, or accounting failure",
+      "screening semantic mismatch",
+      "binding mismatch or publication conflict",
+      "exhausted infrastructure attempts"
+    ]
+  },
+  "controlled_evaluation": {
+    "range_status": "none-eligible",
+    "controlled_plan_creation": false,
+    "june_read": false,
+    "substitute_range": false,
+    "nonempty_cohort_action": "Freeze the exposed survivor and record WAITING FOR FUTURE UNTOUCHED DATA.",
+    "empty_cohort_action": "Close Campaign 3, produce cross-campaign synthesis, and stop the autonomous program."
+  },
+  "protected_boundaries": {
+    "maximum_market_timestamp": "2026-05-29T19:55:00Z",
+    "june_market_data_or_results": false,
+    "intraday_v3_data_or_results": false,
+    "daily_2018_2019_data_or_results": false,
+    "protected_campaign_results": false,
+    "paper_or_broker_state": false,
+    "strategic_allocation_21": false,
+    "live_market_or_execution_data": false,
+    "federal_reserve_release_contents": false,
+    "new_price_or_volume_acquisition": false,
+    "partial_result_adaptation": false,
+    "campaign_4": false
+  },
+  "authority": {
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "strategy_results": false,
+    "market_data_read": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "fingerprint_contract": "Remove the top-level plan_fingerprint field, canonicalize with systematic_trading_lab.fingerprints.canonical_json, and take SHA-256 of those UTF-8 bytes.",
+  "plan_fingerprint": "99d03036512b3a8b03f38774e05779982379b1e956906a2ee36f612b52f20140"
+}
