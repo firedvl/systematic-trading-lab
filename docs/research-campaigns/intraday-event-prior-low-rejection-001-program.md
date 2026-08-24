@@ -1,6 +1,6 @@
 # Intraday Event Prior-Low Rejection 001 program
 
-Status: implementation and exact-main launch review complete; launch control is bound to implementation main `2b45028a9d1b17cde4eba5ee18837861a7a15620`.
+Status: terminal exposed research; the exact four-worker launch completed once from source main `b470aaf7c4dd28d43102ff30fa898e8561344e4d` and froze an empty cohort.
 
 Launch-control artifact SHA-256: `ac9cc921e6b60592bfd8dcc9181ff44126d63a929867566bb9aecd1c2a043d0a`.
 Launch-control artifact fingerprint: `17d1ad7207bbc76264a2762f288e71f6445a7088e4d238aac004ada94b5214d1`.
@@ -10,6 +10,21 @@ Plan fingerprint: `ab4508dd2e70231b5d169bcf2a1bcbdc691abf1615764bacc463ebdab67bf
 Review SHA-256: `7c95767fae24004831c12941355fd80342f44a0bd47aed592e23c7419ff91928`.
 Review fingerprint: `efa539340aa87ab1940ba40414d565027f034689d7cdc6b89853883815aa3c41`.
 Starting main: `f0f75e91dec4144f2de1558486859ed44341d27c`.
+
+## Terminal disposition
+
+All six discovery specifications completed once with zero failures, retries, pending rows, or
+active leases. All three confirmation candidates failed the frozen discovery gates; none reached
+walk-forward, stress, delay, or neighbor stages. The final outcome is
+`no-controlled-qualified-candidate`, with no controlled evaluation or qualification.
+
+Runtime database SHA-256: `d4bb82b42fb2d643cde048dee11f3344913ce497a92b52e18d3bb90f036290ec`.
+Final-report JSON SHA-256: `b860b8fde33d57be8fb04c3b9f5fd8a2ff563c8bbade2944fb6fda58f13a7aa1`.
+Final-freeze JSON SHA-256: `083d479d392d8dec62a0f1d20f9abb265aa756af788c1304ab7ec070612c3ba5`.
+
+The campaign is terminal and must not be relaunched, retuned, inverted, or rescued by weaker
+gates. June, V3, daily 2018–2019, PAPER, broker, live, and `strategic-allocation-21` state remain
+out of scope. A future hypothesis requires a new prospective plan and untouched evidence.
 
 ## Purpose
 
