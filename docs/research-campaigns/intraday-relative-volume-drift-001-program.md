@@ -1,7 +1,7 @@
 # Intraday Relative-Volume Drift 001 program
 
-Status: prospective plan reviewed before strategy implementation or results. Implementation and
-launch control remain pending. No market data or strategy result has been read under this campaign.
+Status: prospective plan and implementation reviewed before strategy execution or results. Exact-main
+launch control remains pending. No market data or strategy result has been read under this campaign.
 
 Program ID: `intraday-relative-volume-drift-001`.
 
@@ -104,9 +104,16 @@ Campaign 1 terminal evidence and accounting. The strict loader verifies all four
 dependency and exposed-evidence hash, campaign mechanics, candidate graph, chronology, budget, and
 state chain without reading market data.
 
-Strategy, runner, report, CLI, and tests must be implemented on a separate branch. Exact merged main
-must then pass all repository gates, synthetic one-worker/four-worker equivalence, and an independent
-launch-control review before any reservation, market-data read, or result.
+The separate implementation branch adds the strategy, runner, report, CLI, launch-disabled binding,
+and focused tests. The runner enforces causal ten-session same-clock baselines, exact two-symbol
+entry and exit timing, strict canonical numeric reloads, stage ceilings, complete accounting, and
+independent terminal-screen recomputation. Synthetic one-worker/four-worker reports are byte-equal.
+Independent implementation review found and then verified the fix for noncanonical Decimal strings;
+its final review has no findings.
+
+Exact merged main must next pass all repository gates and fresh synthetic equivalence before a
+separate finding-free launch-control review binds it. Until that later artifact and binding merge,
+construction fails before runtime creation, reservation, market-data read, or result.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, credentials, and live data remain prohibited. Every authority field is

@@ -1,7 +1,7 @@
 # Intraday Autonomous Research 001 program
 
 Status: Campaign 1 is terminal with an independently reassessed empty cohort. Campaign 2's exact
-prospective plan passed independent review and is implementation-pending.
+prospective plan and implementation passed independent review; exact-main launch control is pending.
 
 Program ID: `intraday-autonomous-research-001`.
 
@@ -80,7 +80,16 @@ The campaign remains capped at 90 specifications and 270 attempts.
 Independent review revalidated the exact bytes, causal estimator, chronology, graph, gates, budget,
 state and dependency bindings, non-adaptation rule, protected boundaries, and false authorities. It
 found no issue. State revision 4 binds revision 3, the plan, and its review while preserving Campaign
-1 terminal evidence. No Campaign 2 market data, reservation, attempt, or result exists.
+1 terminal evidence.
+
+The separate implementation branch now contains the campaign-owned strategy, runner, reports, CLI,
+launch-disabled binding, and focused tests. It uses the existing engine, attempt store, executor,
+cost model, and frozen data plumbing unchanged. It strictly validates canonical Decimal strings at
+every screen, enforces the `18/24/16/32` stage ceilings, and rebuilds every reached gate and the final
+cohort from canonical reports. Independent implementation review found one noncanonical-string gap,
+verified its fix, and closed with no findings. Synthetic one-worker/four-worker reports are byte-equal.
+No Campaign 2 market data, reservation, attempt, or result exists. Exact merged main and a separate
+finding-free launch-control artifact remain required before launch.
 
 ## Purpose and bound
 
