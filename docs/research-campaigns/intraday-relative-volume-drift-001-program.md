@@ -1,7 +1,8 @@
 # Intraday Relative-Volume Drift 001 program
 
-Status: prospective plan and implementation reviewed before strategy execution or results. Exact-main
-launch control remains pending. No market data or strategy result has been read under this campaign.
+Status: prospective plan, implementation, and exact-main launch control reviewed before strategy
+execution or results. The launch binding awaits merge and exact bound-main verification. No market
+data or strategy result has been read under this campaign.
 
 Program ID: `intraday-relative-volume-drift-001`.
 
@@ -21,6 +22,12 @@ Reviewed state revision 4 SHA-256/fingerprint:
 `69d8e113bea81e9bde27b34c3cf7909eea2cafed743a7238823e5a627ae3ff0b`.
 
 Starting main: `6fedd1acfce45758c75d93b6425873c74b4be5cb`.
+
+Reviewed implementation main: `b9efc2c7a4a022177d72935821c3cb0e7b46c598`.
+
+Launch-control SHA-256/fingerprint:
+`51159d51aff6b11b9fee9c5c5bacfa3ac3ceaa93c17259b493aeb794d0b5e655` /
+`3b6c46f924ab94557f5235bf26650c1b8bf6f836b0f55bb590e63c1bba86717f`.
 
 ## Frozen hypothesis and strategy
 
@@ -104,16 +111,23 @@ Campaign 1 terminal evidence and accounting. The strict loader verifies all four
 dependency and exposed-evidence hash, campaign mechanics, candidate graph, chronology, budget, and
 state chain without reading market data.
 
-The separate implementation branch adds the strategy, runner, report, CLI, launch-disabled binding,
-and focused tests. The runner enforces causal ten-session same-clock baselines, exact two-symbol
+Implementation main adds the strategy, runner, report, CLI, launch-disabled binding, and focused
+tests. The runner enforces causal ten-session same-clock baselines, exact two-symbol
 entry and exit timing, strict canonical numeric reloads, stage ceilings, complete accounting, and
 independent terminal-screen recomputation. Synthetic one-worker/four-worker reports are byte-equal.
 Independent implementation review found and then verified the fix for noncanonical Decimal strings;
 its final review has no findings.
 
-Exact merged main must next pass all repository gates and fresh synthetic equivalence before a
-separate finding-free launch-control review binds it. Until that later artifact and binding merge,
-construction fails before runtime creation, reservation, market-data read, or result.
+Implementation main passed all seven repository gates, including 1,039 tests with four skips. Fresh
+synthetic equivalence produced byte-identical canonical reports for four fixtures: one worker took
+`13.477235` seconds and four workers took `4.147198` seconds, a `3.249721` speedup. Independent
+launch review found no issue and accessed no protected input. Its exact artifact binds the source,
+reviewed inputs, implementation hashes, gates, equivalence evidence, reviewer, scope, and false
+authorities.
+
+The launch-control artifact, binding constants, regression test, and durable state must merge before
+exact bound-main verification. Until clean synchronized main accepts the full binding, construction
+fails before runtime creation, reservation, market-data read, or result.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, credentials, and live data remain prohibited. Every authority field is

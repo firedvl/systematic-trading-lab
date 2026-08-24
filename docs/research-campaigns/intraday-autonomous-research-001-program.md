@@ -1,7 +1,8 @@
 # Intraday Autonomous Research 001 program
 
 Status: Campaign 1 is terminal with an independently reassessed empty cohort. Campaign 2's exact
-prospective plan and implementation passed independent review; exact-main launch control is pending.
+prospective plan, implementation, and exact-main launch control passed independent review. The
+launch binding awaits merge and exact bound-main verification.
 
 Program ID: `intraday-autonomous-research-001`.
 
@@ -34,6 +35,13 @@ Campaign 2 review SHA-256/fingerprint:
 Campaign 1 launch-control SHA-256/fingerprint:
 `26d1ef10abb3b2ef063dec1bc5931b0c667c2698bc983c7c9e3a3e58ca01e863` /
 `b69466bfe3ed67d8e539a6e772341f2fbb7a7bddcdefa4bcee04e336c73c446e`.
+
+Campaign 2 reviewed implementation main:
+`b9efc2c7a4a022177d72935821c3cb0e7b46c598`.
+
+Campaign 2 launch-control SHA-256/fingerprint:
+`51159d51aff6b11b9fee9c5c5bacfa3ac3ceaa93c17259b493aeb794d0b5e655` /
+`3b6c46f924ab94557f5235bf26650c1b8bf6f836b0f55bb590e63c1bba86717f`.
 
 Current immutable state revision SHA-256/fingerprint:
 `6aa4f195b408e037dd11333f79d9f1b829ea01c12ac233b5b781866eb9ff1551` /
@@ -82,14 +90,18 @@ state and dependency bindings, non-adaptation rule, protected boundaries, and fa
 found no issue. State revision 4 binds revision 3, the plan, and its review while preserving Campaign
 1 terminal evidence.
 
-The separate implementation branch now contains the campaign-owned strategy, runner, reports, CLI,
-launch-disabled binding, and focused tests. It uses the existing engine, attempt store, executor,
-cost model, and frozen data plumbing unchanged. It strictly validates canonical Decimal strings at
-every screen, enforces the `18/24/16/32` stage ceilings, and rebuilds every reached gate and the final
-cohort from canonical reports. Independent implementation review found one noncanonical-string gap,
-verified its fix, and closed with no findings. Synthetic one-worker/four-worker reports are byte-equal.
-No Campaign 2 market data, reservation, attempt, or result exists. Exact merged main and a separate
-finding-free launch-control artifact remain required before launch.
+Implementation main contains the campaign-owned strategy, runner, reports, CLI, launch-disabled
+binding, and focused tests. It uses the existing engine, attempt store, executor, cost model, and
+frozen data plumbing unchanged. It strictly validates canonical Decimal strings at every screen,
+enforces the `18/24/16/32` stage ceilings, and rebuilds every reached gate and the final cohort from
+canonical reports. Independent implementation review found one noncanonical-string gap, verified
+its fix, and closed with no findings.
+
+Implementation main passed all seven repository gates, including 1,039 tests with four skips. Fresh
+four-fixture equivalence took `13.477235` seconds with one worker and `4.147198` seconds with four,
+a `3.249721` speedup, with byte-identical canonical reports and no protected input. Independent
+launch review found no issue. No Campaign 2 market data, reservation, attempt, or result exists. The
+launch binding must merge and pass exact bound-main verification before launch.
 
 ## Purpose and bound
 
