@@ -1,0 +1,160 @@
+{
+  "allowed_inputs": [
+    {
+      "fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f",
+      "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+      "role": "frozen autonomous program and Campaign 3 envelope",
+      "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9"
+    },
+    {
+      "fingerprint": "50424b9e5c07a95351af93e560859293768e34959d01f816f0f63042302497c0",
+      "path": "config/research/intraday-autonomous-research-001-program-independent-review-v1.json",
+      "role": "finding-free review of the frozen autonomous program",
+      "sha256": "1731794543d13306f34462016d376966d47ae8354fa337144889c7bea5c738db"
+    },
+    {
+      "fingerprint": "c6eaa1acc6af58af2d0f4a937c89ad95690ee8743ec998526b5f16ebdf7ea9af",
+      "path": "docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-005.json",
+      "role": "immutable program state authorizing only Campaign 3 planning",
+      "sha256": "cd68f08b0b95839d41672a5df024e8867759911830f28d0a3d255c61c2643883"
+    },
+    {
+      "fingerprint": "54c937bbb42703213efdf14dc4becb50bc0f757bb6f16388254550e12f0c93ba",
+      "path": "config/research/intraday-fed-policy-absorption-001-calendar-v1.json",
+      "role": "prospective metadata-only eligible-event calendar",
+      "sha256": "8bcfd05031b44e2c31861c43aa2b8130d609c82fca9aeec10804809c37a01c97"
+    },
+    {
+      "fingerprint": "ed4dc2c9f638a4ef04da7d292732ee653d0040a5c844a54f90efc588d3005a7b",
+      "path": "config/research/intraday-fed-policy-absorption-001-source-evidence-v1.json",
+      "role": "content-addressed official schedule and publication metadata evidence",
+      "sha256": "1d72b74a04eadba87eb178fd7d67dc644c18d31b926f78e7a48f6f9c38f012c8"
+    },
+    {
+      "fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4",
+      "path": "config/research/intraday-execution-cost-model-001-v1.json",
+      "role": "exact Normal, zero-cost, Stress A, and Stress B costs and embedded execution delays",
+      "sha256": "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af"
+    },
+    {
+      "fingerprint": "8ade5190bb64330af037f88bf0911ed3cdb04578ca7a6d6e27a5fa6d651349b2",
+      "path": "config/research/intraday-execution-cost-model-001-independent-review-v1.json",
+      "role": "finding-free review of the exact execution-cost model",
+      "sha256": "fb197856b9229349e5de4bca742f328a8f1e5e53f9558dfd7324744e91a795aa"
+    },
+    {
+      "fingerprint": "80ab56bf4b4158f92aef4b099c1f51c68f29f4f7fcf4b62f1cc3f84090bad640",
+      "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-preplan-control-failure-v2.json",
+      "role": "second rejection and mandatory clean-room trace/input remediation",
+      "sha256": "9c3840f1992facb24b5acbbd406e33a9c984a75e47621da88bc7f5dfbab90a76"
+    }
+  ],
+  "attestation_fingerprint": "174dae849dd5d20c0e2775d798b855d54e07030a140872a029b748741ea2467e",
+  "attestation_id": "intraday-fed-policy-absorption-001-pre-design-attestation-v2",
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "live_execution": false,
+    "market_data_read": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "research_qualification": false,
+    "strategy_execution": false,
+    "strategy_implementation": false
+  },
+  "campaign": {
+    "campaign_id": "intraday-fed-policy-absorption-001",
+    "campaign_index": 3,
+    "economic_mechanism": "scheduled late-session monetary-policy information absorption",
+    "program_id": "intraday-autonomous-research-001",
+    "program_state_revision": 5
+  },
+  "created_at": "2026-08-24T20:15:17Z",
+  "fingerprint_contract": "Remove the top-level attestation_fingerprint field, canonicalize with systematic_trading_lab.fingerprints.canonical_json, and take SHA-256 of those UTF-8 bytes.",
+  "fixed_inherited_constraints": {
+    "candidate_envelope": "At most nine parents from exactly three fixed post-publication completed-bar observation horizons crossed with exactly three fixed joint positive reaction floors.",
+    "chronology": "Use only the five exposed periods and context-only-session rule bound by the program. Complete each stage before merit read; never adapt from partial results.",
+    "data": "Use only the program-bound exposed SPY and QQQ five-minute OHLCV dataset IDs plus the allowed metadata-only Federal Reserve artifacts. Do not acquire price or volume data.",
+    "execution": "Long-only, completed-bar-only, state changes only, no leverage, one joint half-weight SPY/QQQ entry per eligible session, no reentry, flat at close, diagnostic zero cost only, and exact cost-model scenarios and embedded delays.",
+    "maximum_infrastructure_attempts_per_run": 3,
+    "maximum_parent_candidates": 9,
+    "maximum_run_specifications": 90,
+    "parallel_worker_default": 4,
+    "publication_time": "Exactly 14:00 America/New_York on a full 78-bar XNYS session; publication bar index 54 becomes observable only after it completes.",
+    "stop_boundary": "Stop after a nonempty all-gate cohort or Campaign 3 closeout. Campaign 4 is prohibited. No controlled range is currently eligible."
+  },
+  "independent_design_assignment": {
+    "calendar_and_class_acceptance": [
+      "Accept or reject the exhaustive calendar as a whole after checking both classes, every count, 14:00 local-time rule, full-session rule, uniqueness, and sample floor.",
+      "State whether statements and minutes may share one causal contract. Never select a class, date, period, or subset from market behavior.",
+      "If a calendar or class requirement fails, prescribe terminal pre-execution closure without widening, substitution, or market-data access."
+    ],
+    "causal_signal_and_execution": [
+      "Choose the exact reaction formula, reference/terminal prices and indices, units, rounding, and threshold comparisons.",
+      "Choose exactly three observation horizons and exactly three positive reaction floors without using or reconstructing either rejected plan.",
+      "Define the joint activation rule, decision time, exact cost-model scenario mapping, entry fill indices, close-safe exit decision/fill indices, missed-fill rule, and flat-at-close failure behavior.",
+      "Define deterministic parent IDs, the complete grid, no-signal reasons, and the exact trace contracts."
+    ],
+    "gates_and_selection": [
+      "Choose every discovery, walk-forward, combined-serious, stress, delay, and neighbor gate and threshold before market bars or results are read.",
+      "Cover Normal and zero-cost return, activity, event/class support, round trips, gross edge, cost ratio, drawdown, chronology, delay, accounting, and trace equality wherever defined.",
+      "Choose disqualifying session, event, period, and publication-class concentration metrics and thresholds. Mechanical half weights provide no diversification claim.",
+      "Choose complete-pair requirements, caps, non-result selection order, simultaneous cohort rule, undefined-metric action, and terminal dispositions."
+    ],
+    "neighbor_graph_and_budget": [
+      "Choose an exact symmetric immediate-neighbor graph for both axes, including perturbations, domain/boundaries, IDs, and at most four neighbors for the one serious-candidate cap.",
+      "Choose each scenario and exact prospective run count. Prove discovery, walk-forward, stress/delay, neighbor, and total arithmetic at or below 90 with no prior-campaign transfer.",
+      "State which stage barriers open later work and resolve every tie without result-driven discretion."
+    ],
+    "failure_and_stop_rules": [
+      "Choose exact dispositions for calendar defects, missing causal bars, binding mismatch, invalid parameters, undefined metrics, deterministic failure, publication conflict, partial output, and stale source.",
+      "Preserve exact expired-no-result retry semantics and the three-attempt ceiling. Never relabel deterministic data, candidate, control, or publication failure as infrastructure.",
+      "Keep authority false and prescribe cross-campaign synthesis plus the three-campaign stop after empty or interrupted Campaign 3."
+    ]
+  },
+  "input_control": {
+    "committed_packet_rule": "The architect may begin only after this attestation and all allowed inputs exist together at one pushed commit; the assignment must bind that commit and this file's SHA-256.",
+    "exact_bytes_required": true,
+    "fail_closed_on_missing_or_mismatched_input": true,
+    "permitted_read_scope": "This attestation and only the eight allowed_inputs paths at their exact SHA-256 values.",
+    "unlisted_input_rule": "Do not read, search, infer from, or receive any unlisted repository path, external source, tool history, prior agent output, or conversation context."
+  },
+  "isolation_attestation": {
+    "coordinator_role": "The coordinator may enforce inherited controls and mechanically encode the returned design, but may not select, suggest, rank, repair, or alter replacement scientific or execution choices.",
+    "planner_history": "fresh architect with no inherited conversation turns",
+    "planner_must_not_delegate": true,
+    "prohibited_inputs": [
+      "either rejected plan, any copy, diff, deleted bytes, tool output, prior architect return, or description of its numerical/scientific choices",
+      "Federal Reserve release bodies, decisions, votes, projections, implementation notes, surprises, or revisions beyond allowed metadata",
+      "market bars, prices, returns, results, reports, attempt databases, reservations, or any .trading-lab path",
+      "June 2026, Intraday V3 A/B/C, daily 2018-2019, protected results, PAPER or broker state, strategic-allocation-21, or live data",
+      "conversation history or guidance from a prior plan author or reviewer"
+    ],
+    "replacement_design_exists_before_this_attestation": false,
+    "root_exposure_recorded": "The coordinator has seen prohibited body text and both rejected designs; only the newly isolated architect may originate replacement choices."
+  },
+  "mandatory_trace_separation": {
+    "cross_scenario_trace": "Define one explicitly versioned canonical pre-fill signal/decision payload that excludes scenario ID, cost, execution delay, intended fill index, fills, later prices, exit, P&L, and every output hash. Its output hash alone is used for Normal/zero/stress/delay equality and retention identity.",
+    "execution_trace": "Define a separate explicitly versioned scenario-specific execution payload containing scenario ID, cost-model scenario ID, execution delay, intended fill index, entry/exit decisions and fills, and required accounting identities. Its output hash is never required to equal another scenario.",
+    "hash_output_rule": "Each trace hash is the SHA-256 output of its canonical payload and is excluded from its own preimage. No trace payload may contain its own hash.",
+    "retention_rule": "Cross-scenario retention compares only runs whose cross_scenario_trace hashes match exactly; differing execution_trace hashes are expected."
+  },
+  "output_contract": {
+    "deliverable": "One self-contained exact replacement recommendation, not alternatives and not a repository edit.",
+    "encoding_rule": "The coordinator must encode the recommendation without changing choices, bind the plan to this attestation and source commit, then obtain a new finding-free plan/calendar review before implementation or market-data read.",
+    "rationale_rule": "Give non-result-derived causal, sample-size, cost, and close-safety reasons for each numerical choice.",
+    "rejection_rule": "If the allowed evidence cannot support a valid plan, return terminal pre-execution rejection rather than filling gaps from outside sources.",
+    "required_sections": [
+      "calendar and publication-class disposition",
+      "exact causal signal and parent grid",
+      "exact execution timing and split traces",
+      "exact gates and cohort selection",
+      "exact neighbor graph",
+      "exact run-specification arithmetic",
+      "exact failure, terminal, authority, and protected-boundary rules"
+    ]
+  },
+  "repository_base_main_commit": "5d1009f504f83b0797499147e5a9e3eb399d57df",
+  "schema_version": "intraday-fed-policy-absorption-001-pre-design-attestation-v2",
+  "status": "prospective-source-bound-before-third-replacement-design-implementation-reservation-market-data-read-or-results"
+}
