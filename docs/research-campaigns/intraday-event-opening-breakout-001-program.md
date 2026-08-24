@@ -1,6 +1,6 @@
 # Intraday Event Opening Breakout 001 program
 
-Status: launch-control reviewed and bound without runtime, reservations, or results.
+Status: complete negative exposed result; no candidate advanced past discovery.
 
 Plan SHA-256: `73ea48a3e2c250db93aca0c7ebef16b5480e118ab9577684089147bb318dfd27`.
 Plan fingerprint: `3164757c9f91a1318d48607b24bdaa1c4f3e5439a9657d1b31b0cc32d8163b68`.
@@ -10,6 +10,9 @@ Starting main: `b268b5d8e8eb1abb7334458b2abf554b7f0809f2`.
 Reviewed implementation main: `017a7cbd91a151fbdc0ddf80f5f580f0c3f9eb34`.
 Launch-control SHA-256: `dc42631f93e0e9dd91ad2b9c22f743a1a257a890bb709cf6256b62e8877cda9e`.
 Launch-control fingerprint: `871b06339bf1d26900dec25b818ba37f51a30f4091a9ad42e2d8f48b2e79dc62`.
+Runtime database SHA-256: `8260aafed73678967dc9b859253ef4fd247d1442cfac6c6ced55a5f3217d9ad7`.
+Final-report JSON SHA-256: `f10fd0ebc7cc43c57209045be1b3ea1fb2debd6a34410fb32e15d01c2114fd08`.
+Final-freeze SHA-256: `ae8df0e96da1013e52c37d53a20c76f5a6113c8254644ec3b4f7a4b4b05bc527`.
 
 ## Purpose
 
@@ -88,7 +91,12 @@ run identity, so later stages reuse exact evidence. Exact implementation main
 `017a7cbd91a151fbdc0ddf80f5f580f0c3f9eb34` passed all seven repository gates, four-fixture
 synthetic one-worker/four-worker byte equivalence, and finding-free independent review. The bound
 launch-control artifact records that evidence. A clean synchronized merged main remains required
-before the first reservation.
+before the first reservation. The exact four-worker launch from source main
+`d0eb9a70744afcc77beb7cd6ade73de39aa3cd4b` completed all six discovery specifications once
+without failure or retry. No parent passed every discovery gate, so later stages contained no work
+and the cohort froze empty. The formal closeout is
+`docs/research-campaigns/intraday-event-opening-breakout-001-final-report.md`. This terminal
+campaign must not be relaunched, reset, retuned, or reinterpreted.
 
 The four-worker spawned executor remains the default. Only an expired no-result infrastructure
 lease may retry. Candidate, data, calendar, signal-trace, accounting, publication, and exhausted
