@@ -169,7 +169,7 @@ def _runner() -> IntradayEventRepricing001Runner:
     return runner
 
 
-def test_plan_status_cli_and_bound_launch_control_are_read_only_without_runtime_write(
+def test_plan_status_cli_and_stale_launch_control_are_read_only_without_runtime_write(
     tmp_path: Path,
 ) -> None:
     plan = intraday_event_repricing_001_plan_summary(_REPOSITORY)
@@ -180,8 +180,8 @@ def test_plan_status_cli_and_bound_launch_control_are_read_only_without_runtime_
     assert plan["discovery_run_specification_count"] == 36
     assert plan["maximum_run_specifications"] == 244
     assert plan["maximum_attempts"] == 732
-    assert plan["status"] == "launch-control-bound"
-    assert plan["launch_control_bound"] is True
+    assert plan["status"] == "implementation-launch-review-pending"
+    assert plan["launch_control_bound"] is False
     assert status["database_exists"] is False
     assert arguments.workers == 6
     assert not any(cast(dict[str, bool], status["authority"]).values())
@@ -192,11 +192,28 @@ def test_plan_status_cli_and_bound_launch_control_are_read_only_without_runtime_
     assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
         "3d35f8d088e11ad6f07d81015c1b037b457e00b824ea908f37cef64a8fbf4a6b"
     )
-    with pytest.raises(ValueError, match="implementation file differs"):
+    with pytest.raises(ValueError, match="launch files differ"):
         runner_module._load_launch_control(
             _REPOSITORY,
             source_commit="94bc182efe952839d7e3384ea8a148554dd0149d",
         )
+
+
+def test_plan_status_reports_current_launch_control(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(runner_module, "_source_commit", lambda _repository: _SOURCE)
+    monkeypatch.setattr(
+        runner_module,
+        "_load_launch_control",
+        lambda _repository, *, source_commit: {"source_commit": source_commit},
+    )
+
+    plan = intraday_event_repricing_001_plan_summary(_REPOSITORY)
+
+    assert plan["status"] == "launch-control-bound"
+    assert plan["launch_control_bound"] is True
+    assert not (tmp_path / PROGRAM_ID).exists()
 
 
 def test_unbound_launch_control_fails_before_runtime_write(

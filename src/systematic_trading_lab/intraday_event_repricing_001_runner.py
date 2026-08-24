@@ -116,6 +116,7 @@ _LAUNCH_CONTROL_FILES = (
     "src/systematic_trading_lab/research_attempts.py",
     "src/systematic_trading_lab/research_executor.py",
     "src/systematic_trading_lab/intraday_exposed_002_engine.py",
+    "src/systematic_trading_lab/intraday_exposed_002_runner.py",
     "src/systematic_trading_lab/intraday_event_repricing_001_plan.py",
     "src/systematic_trading_lab/intraday_event_repricing_001_strategies.py",
     "src/systematic_trading_lab/intraday_event_repricing_001_runner.py",
@@ -2857,12 +2858,14 @@ def verify_intraday_event_repricing_001_parallel_equivalence(
 
 
 def intraday_event_repricing_001_plan_summary(repository: Path) -> dict[str, object]:
-    plan = load_intraday_event_repricing_001_plan(repository.resolve())
-    launch_control_bound = (
-        REVIEWED_LAUNCH_CONTROL_SHA256 is not None
-        and REVIEWED_LAUNCH_CONTROL_FINGERPRINT is not None
-        and (repository / LAUNCH_CONTROL_RELATIVE_PATH).is_file()
-    )
+    repository = repository.resolve()
+    plan = load_intraday_event_repricing_001_plan(repository)
+    try:
+        _load_launch_control(repository, source_commit=_source_commit(repository))
+    except ValueError:
+        launch_control_bound = False
+    else:
+        launch_control_bound = True
     return {
         "program_id": PROGRAM_ID,
         "status": (
