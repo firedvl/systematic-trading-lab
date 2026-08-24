@@ -1,0 +1,273 @@
+{
+  "schema_version": "intraday-event-repricing-001-launch-control-review-v1",
+  "review_id": "intraday-event-repricing-001-launch-control-review-v1",
+  "status": "passed",
+  "verdict": "pass",
+  "review_date": "2026-08-23",
+  "review_method": "Independent exact-main source, gate, synthetic equivalence, credential-boundary, and authority review.",
+  "reviewed_inputs": {
+    "plan": {
+      "path": "config/research/intraday-event-repricing-001-plan-v1.json",
+      "sha256": "f24cae1372f346be02c0079b931c77d5efb5105a06cf26631b783010851bd8b8",
+      "fingerprint": "2f98e0cc4565435c9974f65791fd830f7fb9509730f31872f97d77484c00c489"
+    },
+    "plan_review": {
+      "path": "config/research/intraday-event-repricing-001-plan-independent-review-v1.json",
+      "sha256": "0c17f683d21e0e365a730f6e267029d5be64eb62691e1a3bbacf6ead678048ca",
+      "fingerprint": "2351e230df1f6618247bbd91bed19ac6444baf09b8573ced2af9c6f937513ab5"
+    },
+    "base_plan": {
+      "path": "config/research/intraday-event-drift-001-plan-v1.json",
+      "sha256": "c0dade2573405ddcd38d88814c10a27c3caae11bfb925a21179f6741cc20233c",
+      "fingerprint": "73933d470feb52c1135746ab57db742019077b8b39e8e2545e9aba37c9a8d838"
+    },
+    "base_plan_review": {
+      "path": "config/research/intraday-event-drift-001-plan-independent-review-v1.json",
+      "sha256": "25e92a85cee47aa261b4a85dce57666effbfbe329c203d3ac78df7b5bba9df96",
+      "fingerprint": "0a464aca264ad4a8583d12fc4912898461ecf9e6121a1119322229e12bfb4077"
+    },
+    "calendar": {
+      "path": "config/research/intraday-event-calendar-001-v1.json",
+      "sha256": "fa413a30234c6b82394fcdbf99df94aa31ae38e2df12d58296bcbc03162a34ee",
+      "fingerprint": "9992ee0a430abc0b59f49f6dd9e5178ff22d13a9dec5ad5de1d8578896ed2a78"
+    },
+    "source_evidence": {
+      "path": "config/research/intraday-event-calendar-001-source-evidence-v1.json",
+      "sha256": "c5f1ab34c92b10ac9c75d86a3c33c9f2a445eed022a48697edaa7dfd9eabee0a",
+      "fingerprint": "6616ed631b3d7e8e727b8cde85bf26e4c2cb5800812db745c327a71bf62192fd"
+    }
+  },
+  "implementation": {
+    "source_commit": "94bc182efe952839d7e3384ea8a148554dd0149d",
+    "files": [
+      {
+        "path": "src/systematic_trading_lab/research_attempts.py",
+        "sha256": "608d710c8fa1d7a7830bf7f82a404a5a0588a6055381d6dcc4676d2c256f5512"
+      },
+      {
+        "path": "src/systematic_trading_lab/research_executor.py",
+        "sha256": "099f9ac9572aaaa640d51cb0dde50e2cba378a6ef0b2ddf9b07a63d0ed9b1b81"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_exposed_002_engine.py",
+        "sha256": "bf62f6661b0beb2ac57b83668412b90a17255fd176fa559966ec0f5a64032c66"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_repricing_001_plan.py",
+        "sha256": "05094929b78fa86e8e2fc0c1456878f6b9424de1e4c4b6325f03dd27221d5722"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_repricing_001_strategies.py",
+        "sha256": "96628ce8ccbc72e5b22ab92b2fa7dedadd2927e1ba30a95a1c48f63f9df26d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_repricing_001_runner.py",
+        "sha256": "f344c67d61d3a5da8fbd4b41d6446216220c1afb50f4636ed109417433d6d3cd"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_event_repricing_001_cli.py",
+        "sha256": "11da13a4a07eb3d3ff60ad36fbe501f724cf56f89eccf0507dfabca546accbf6"
+      },
+      {
+        "path": "src/systematic_trading_lab/public_cli.py",
+        "sha256": "6b96a9605291335724415c9e5a812d42e51b53571cd9b1e85679629842e47fca"
+      },
+      {
+        "path": "pyproject.toml",
+        "sha256": "1341a3b4f3323861094c504c8b1f6a4470b942be71262e6654c74552739371e0"
+      }
+    ]
+  },
+  "quality_gates": {
+    "source_commit": "94bc182efe952839d7e3384ea8a148554dd0149d",
+    "results": [
+      {
+        "command": "uv run ruff format --check .",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "179 files already formatted"
+      },
+      {
+        "command": "uv run ruff check .",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "All checks passed"
+      },
+      {
+        "command": "uv run mypy src tests",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Success: no issues found in 174 source files"
+      },
+      {
+        "command": "uv run pytest",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "859 passed, 4 skipped"
+      },
+      {
+        "command": "uv run python scripts/check_secrets.py",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Secret check passed for 325 files"
+      },
+      {
+        "command": "bash -n scripts/*.sh",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "All shell scripts passed syntax validation"
+      },
+      {
+        "command": "uv build",
+        "status": "passed",
+        "exit_code": 0,
+        "summary": "Source distribution and wheel built"
+      }
+    ]
+  },
+  "equivalence": {
+    "comparisons": [
+      "run-specification",
+      "run-fingerprint",
+      "selection-trace-fingerprint",
+      "decision-trace-fingerprint",
+      "fill-trace-fingerprint",
+      "round-trip-fingerprint",
+      "arm-metrics",
+      "arm-event-ledger",
+      "paired-event-ledger",
+      "canonical-report-bytes",
+      "canonical-report-sha256",
+      "report-fingerprint"
+    ],
+    "equivalent": true,
+    "fixture_count": 4,
+    "fixture_kind": "synthetic-non-protected-paired-five-minute-bars",
+    "fixtures": [
+      {
+        "arm_reports_equal": true,
+        "candidate_id": "ier001-a01-b01",
+        "canonical_reports_equal": true,
+        "laggard_control_decision_trace_fingerprint": "7442f39aba3f3920cf56231f5f17f830f1f57b90c625a79668a3cf0af76e08e2",
+        "laggard_control_fill_trace_fingerprint": "8b365ddf54c60b9f51f905e5c0c6be134a8ed2a78ff01818f072ce196c95a533",
+        "laggard_control_report_fingerprint": "26485252faf4aac67597f3f438e59bc91d2a6b9c6d289bcc5d0959ff9987d5d3",
+        "laggard_control_report_sha256": "d16a350e8aca932de39ce0d2a04630699c31be8f3dd87f94d28a8460e98fee00",
+        "laggard_control_round_trip_fingerprint": "206f65ef1034b691b2efba5d6bd50901a3c86f6a1957df320d614d489082ef89",
+        "laggard_control_run_fingerprint": "3bb5a74bb72238821bc7462c6a6006cb5079ca0e8e7684de9ca986d2d30ccdb5",
+        "laggard_control_run_id": "ier001r-d16b84f37501e80318524b93",
+        "leader_decision_trace_fingerprint": "8a9c325a6fcbcf13940fb3ec88309e17e271d2d75e7308102f1aa23d4679b26e",
+        "leader_fill_trace_fingerprint": "ac933e0e2a392ceb48fceaafccc29dd8b9e079f46af4d045b97ba1875e7752ec",
+        "leader_report_fingerprint": "851460237bb27bebd7e46ae09c18d7da3ef691a330a01d7930fc1d9eddf57c76",
+        "leader_report_sha256": "8d56f5d45c0d652af387c5c025d4a1774c18d92528e7dc02f150baae9e202819",
+        "leader_round_trip_fingerprint": "0a7245f5e547596a20a41c1c9085962b1f2e304012dcf5ac3d5de3ecad67e030",
+        "leader_run_fingerprint": "4cca374aab0b5c6d0f07e782aa6428d17be578310583496deed94e75fa4caa31",
+        "leader_run_id": "ier001r-94183b4a9e6928243e6aa42d",
+        "paired_event_ledger_equal": true,
+        "paired_event_ledger_fingerprint": "10b9196da01d461054e2d2c98e282736b19d9cf03d22903e2bbd7a1f77100f3d",
+        "scenario_id": "normal",
+        "selection_trace_fingerprint": "72e406cd3c5d73eb29fe26f670cc486ae48560e663cde82a1d056b0d64283ba5",
+        "specifications_equal": true
+      },
+      {
+        "arm_reports_equal": true,
+        "candidate_id": "ier001-a02-b02",
+        "canonical_reports_equal": true,
+        "laggard_control_decision_trace_fingerprint": "efa1875ce0416e74bf2018e8d70633391b54c64238bd2c0bca5fad2894ce30d4",
+        "laggard_control_fill_trace_fingerprint": "07c0cf8aa27790dedc9d0389bee79249170cd4cd2868921696f3d02b83fd4606",
+        "laggard_control_report_fingerprint": "068f931400cc5a932513c0a321ba0e6bba076fdaf10e3bc63e88261bb0a2bdfa",
+        "laggard_control_report_sha256": "5a273eee7ba08fe198dde23cb6d9ba218682acadf1b2b2485772324ad6464ad4",
+        "laggard_control_round_trip_fingerprint": "773dbe4898939b55c4b9d3741a789290b0059e61fe3758df090f7da325b9bfcd",
+        "laggard_control_run_fingerprint": "49330dcb007856e31fda2669630f8bf848b7619b916c6240a257f33007632f59",
+        "laggard_control_run_id": "ier001r-afdcb2999918ca2928bbf277",
+        "leader_decision_trace_fingerprint": "854795985c848027b35c88adda7cd387d5eda13d14df804685a24f602ca2bdf5",
+        "leader_fill_trace_fingerprint": "c0677abab3470735256165192107cf69760e4cb2a346b759eb129673727c8604",
+        "leader_report_fingerprint": "80ba919891abb6211ba6f00b056791fc603655d09641234d21b429377b817929",
+        "leader_report_sha256": "f2220d00ddfb4081960fda8be4dc1384cf80432056c36b8ffee5120633d14ad0",
+        "leader_round_trip_fingerprint": "ece590503fb623623ac4c430fb3f7535f817babd1ca21a4c496254d7494448f6",
+        "leader_run_fingerprint": "d58e1f448d9a375d4914807a8a09e3c2e0e2f335a67bfa72e5cf4b51bd30df41",
+        "leader_run_id": "ier001r-bd8a51aaaa67a523662de89f",
+        "paired_event_ledger_equal": true,
+        "paired_event_ledger_fingerprint": "35742732ba3117db4d6611dba6d55212d84ce8b606f2020d02cba5304df07a55",
+        "scenario_id": "zero_cost_diagnostic",
+        "selection_trace_fingerprint": "8a080339072106fd9abfb85227a1234d84b734e6000d1a0649bae07858b9893d",
+        "specifications_equal": true
+      },
+      {
+        "arm_reports_equal": true,
+        "candidate_id": "ier001-a03-b03",
+        "canonical_reports_equal": true,
+        "laggard_control_decision_trace_fingerprint": "aaa4f2d9b0cc5e8e11db38714373ac0fad2433eba4f89cf86f1bd8c9cf7b9a9e",
+        "laggard_control_fill_trace_fingerprint": "d6067d7ad2daa1380313cc69ecb20075371c0d0c0b0da8751a72bd5e87ef2dfc",
+        "laggard_control_report_fingerprint": "a4a88ce8d8a545af69aa4a64990886d53466b22409dc1c89f92b128d2dd84b4e",
+        "laggard_control_report_sha256": "cc94f608ef816d7facfe7fa6c7f3119642604579528e0020cc61bdb597008b8a",
+        "laggard_control_round_trip_fingerprint": "382833c9c98a69a904da6c3a207b67995db0212252e69df9a146aecc04fc6c52",
+        "laggard_control_run_fingerprint": "235a2752782787ce837caede4f3889c45dcdd55fd427d88f393a1eac16a85327",
+        "laggard_control_run_id": "ier001r-e7356216d553f9abffbfd2bd",
+        "leader_decision_trace_fingerprint": "e8217540ec3261bf7918120c67022ae4b98979be6f01c66f75adbd3d8d0b9b61",
+        "leader_fill_trace_fingerprint": "7e02770a1a0f478530d3cd309db4a30da60381766d2a1a6fa255ec32c3ce1636",
+        "leader_report_fingerprint": "5900fc60153b67672ee180ea0210f48a38f30bcab0a64aa40bc2d9642c63017f",
+        "leader_report_sha256": "23daceca59dfb6e58f548c56ac600685facb15228c348731be6addcb096a0f09",
+        "leader_round_trip_fingerprint": "9aa62f984b76c6b006d294e34059c427b1232415443f16c151d88e67672736d1",
+        "leader_run_fingerprint": "f0637e8319c9c9e6c43760e039b5f29bef9f409569d7426f29178deed938983d",
+        "leader_run_id": "ier001r-f8fbcff131edc699ab7536bc",
+        "paired_event_ledger_equal": true,
+        "paired_event_ledger_fingerprint": "0cac7d0f6c35beb5a87c65cf11184eb248f13d9531ebb4abae45602c1ef595c8",
+        "scenario_id": "stress_a",
+        "selection_trace_fingerprint": "a19b9e72f01b9ea011ba838f92a64da25337978d3bd7a4a500bfa72729bcf2ac",
+        "specifications_equal": true
+      },
+      {
+        "arm_reports_equal": true,
+        "candidate_id": "ier001-a01-b03",
+        "canonical_reports_equal": true,
+        "laggard_control_decision_trace_fingerprint": "2297d79151924562b0024a6e555ddf2d6d139fc678759ba6a35ac7465140d4b8",
+        "laggard_control_fill_trace_fingerprint": "89c9b260fec70e03e386fdd34c13f841fcf4127c1365d9293cfade88004f50db",
+        "laggard_control_report_fingerprint": "8be86f83a53524d679eca7986c8efa73734e8db55a81ad812403dc467eef6963",
+        "laggard_control_report_sha256": "35169b42e921ed422f9ea87445c1d6d4ad6dda55ff7bc1f902fa9cacba1ee22e",
+        "laggard_control_round_trip_fingerprint": "cf365bd9381bb49a91a9a73fa56b618014f234be93689eeaa1d9f4dc8398814b",
+        "laggard_control_run_fingerprint": "01a035dea54b63761cc1eb1c76a3d3281e1c0779f26057e731e94ad51aa4d0d9",
+        "laggard_control_run_id": "ier001r-e18d359ad4b7e52d5920dec2",
+        "leader_decision_trace_fingerprint": "279a79682d79786b9b3735178ae9230d2c0d822f276730da605e7bc028c25fc9",
+        "leader_fill_trace_fingerprint": "fa65108aed1669cd5fa848a68bb5a65a67546daedbca7e46a7767c1393d573a9",
+        "leader_report_fingerprint": "ef2d503c86f38f317e69339972433c765f3207f2589f53697880ec0f38bb95b2",
+        "leader_report_sha256": "a19af5bf1aadc51065cdf02fb3ce1ed206086d40a21cabee80f1e2c8455e8984",
+        "leader_round_trip_fingerprint": "f3f7239833af38660199db09610cd53d58e1fd839606fab24ff5cb3cb34ff917",
+        "leader_run_fingerprint": "e27ef3707623f383ac98ac87291aa0ae2426b35108f8768067a0fce888e3c838",
+        "leader_run_id": "ier001r-8b88c2b40a5694d991bc4631",
+        "paired_event_ledger_equal": true,
+        "paired_event_ledger_fingerprint": "214ad98092615fe2ee9704cb1b11319b77ff25ada85781a5319fdd4262c70c37",
+        "scenario_id": "normal-delay-3",
+        "selection_trace_fingerprint": "1b29c8751d60f698fefb8dc9012c677dc6ddf60546051c61e7567b1c22bafefc",
+        "specifications_equal": true
+      }
+    ],
+    "parallel_seconds": "0.878151",
+    "program_id": "intraday-event-repricing-001",
+    "protected_inputs_accessed": false,
+    "schema_version": "intraday-event-repricing-001-parallel-equivalence-v1",
+    "sequential_seconds": "1.065313",
+    "speedup": "1.213131",
+    "verification_source_commit": "94bc182efe952839d7e3384ea8a148554dd0149d",
+    "worker_counts": [
+      1,
+      4
+    ]
+  },
+  "independent_review": {
+    "source_commit": "94bc182efe952839d7e3384ea8a148554dd0149d",
+    "status": "passed",
+    "verdict": "pass",
+    "findings": [],
+    "reviewer": "codex-independent-intraday-event-repricing-001-launch-review-2026-08-23"
+  },
+  "scope_limit": "Synthetic non-protected fixtures and source controls only; no market, protected, PAPER, broker, strategic-allocation-21, or live state accessed.",
+  "authority": {
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "3d35f8d088e11ad6f07d81015c1b037b457e00b824ea908f37cef64a8fbf4a6b"
+}

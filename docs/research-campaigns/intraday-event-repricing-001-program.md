@@ -1,11 +1,13 @@
 # Intraday Event Repricing 001 program
 
-Status: implementation complete; exact-main launch review pending before any reservation or result.
+Status: launch control bound; no reservation or result exists.
 
 Plan SHA-256: `f24cae1372f346be02c0079b931c77d5efb5105a06cf26631b783010851bd8b8`.
 Plan fingerprint: `2f98e0cc4565435c9974f65791fd830f7fb9509730f31872f97d77484c00c489`.
 Review SHA-256: `0c17f683d21e0e365a730f6e267029d5be64eb62691e1a3bbacf6ead678048ca`.
 Review fingerprint: `2351e230df1f6618247bbd91bed19ac6444baf09b8573ced2af9c6f937513ab5`.
+Launch-control SHA-256: `11572b8f61d797b2a664866eb88d8b39be2ae07cbb57f9891899725b0a7293c2`.
+Launch-control fingerprint: `3d35f8d088e11ad6f07d81015c1b037b457e00b824ea908f37cef64a8fbf4a6b`.
 
 ## Purpose
 
@@ -117,8 +119,11 @@ This plan grants no strategy execution. The implementation adds the strict inher
 strategy arms, selection trace, paired report, budget enforcement, runner, CLI, and focused tests.
 It routes the console entry point through a small campaign wrapper so the immutable Event Drift
 `public_cli.py` launch hash remains unchanged; every other command delegates to the existing CLI.
-The implementation must merge to clean exact main and receive a finding-free hash-bound launch
-review before the first reservation. The launch-control constants remain unset until that review.
+Reviewed implementation main `94bc182efe952839d7e3384ea8a148554dd0149d` passed all seven quality
+gates, four-fixture one-worker/four-worker equivalence, and a finding-free independent launch review.
+The launch-control artifact and constants bind that exact evidence. Runtime lineage permits only the
+reviewed launch artifact, constants, tests, and status documents to change before clean exact-main
+execution.
 
 June, Intraday V3, daily 2018–2019, PAPER/broker state, `strategic-allocation-21`, and live execution
 remain untouched. The reused pre-May bars are exposed research data, not controlled evidence. A
