@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Bind Campaign 1 launch control to exact reviewed main
+
+- Decision: bind `intraday-spy-qqq-lead-lag-001` to implementation main `c987371b6a1b632b8fa7930ff2ac11192e4b5000` after all seven repository gates, four-fixture synthetic one-worker/four-worker equivalence, and a finding-free independent launch review. The launch-control artifact has SHA-256 `26d1ef10abb3b2ef063dec1bc5931b0c667c2698bc983c7c9e3a3e58ca01e863` and fingerprint `b69466bfe3ed67d8e539a6e772341f2fbb7a7bddcdefa4bcee04e336c73c446e`.
+- Context: the first exact-main review found a missing Normal/zero-cost decision-trace equality check. The repair made mismatch terminal across discovery, walk-forward, and neighbors. Two follow-up reviews found stale durable wording, which was synchronized before the final exact-main review passed with no findings.
+- Consequences: the runner is launchable only from clean synchronized main when the exact artifact, reviewed inputs, implementation hashes, quality evidence, equivalence evidence, independent review, and restricted post-review lineage all validate. No reservation, market-data read, runtime state, result, qualification, protected, PAPER, broker-write, or live authority is created by this binding.
+- Revisit when: Campaign 1 reaches a terminal result or a separately reviewed common launch-control contract replaces this campaign surface.
+
 ## 2026-08-24 — Freeze Campaign 1 as fixed SPY-to-QQQ catch-up
 
 - Decision: freeze `intraday-spy-qqq-lead-lag-001` with nine parents crossing 6/12/18 completed-bar SPY observation horizons and 10/20/40-basis-point SPY floors. SPY stays signal-only; QQQ is the sole half-weight trade and must be nonnegative but no more than half the SPY return. Use one fixed 24-interval hold, no resize or reentry, and a 90-specification cap.
