@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 import systematic_trading_lab.intraday_relative_volume_drift_001_cli as cli_module
+import systematic_trading_lab.intraday_relative_volume_drift_001_runner as runner_module
 from systematic_trading_lab.config import Settings
 from systematic_trading_lab.domain import TradingMode
 from systematic_trading_lab.intraday_relative_volume_drift_001_plan import PROGRAM_ID
@@ -60,6 +61,8 @@ def test_unbound_run_fails_before_runtime_creation(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    monkeypatch.setattr(runner_module, "REVIEWED_LAUNCH_CONTROL_SHA256", None)
+    monkeypatch.setattr(runner_module, "REVIEWED_LAUNCH_CONTROL_FINGERPRINT", None)
     monkeypatch.setattr(cli_module, "load_dotenv", lambda: None)
     monkeypatch.setattr(
         cli_module,
