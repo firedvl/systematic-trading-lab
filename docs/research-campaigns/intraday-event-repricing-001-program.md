@@ -1,6 +1,6 @@
 # Intraday Event Repricing 001 program
 
-Status: dataset-validation repair implemented; launch-control re-review required; no reservation or result exists.
+Status: inherited data-plumbing repair implemented; launch-control re-review required; no reservation or result exists.
 
 Plan SHA-256: `f24cae1372f346be02c0079b931c77d5efb5105a06cf26631b783010851bd8b8`.
 Plan fingerprint: `2f98e0cc4565435c9974f65791fd830f7fb9509730f31872f97d77484c00c489`.
@@ -124,6 +124,13 @@ gates, four-fixture one-worker/four-worker equivalence, and a finding-free indep
 The launch-control artifact and constants bind that exact evidence. Runtime lineage permits only the
 reviewed launch artifact, constants, tests, and status documents to change before clean exact-main
 execution.
+
+The first launch stopped before runtime creation, reservation, or market-data read because shared
+dataset validation looked for a local successor `data` section that inheritance forbids. The first
+repair made coordinator and worker validation use the frozen Event Drift payload. Exact-main review
+then found the same hidden coupling in worker bar loading, after the claim boundary. Both paths now
+receive the inherited payload explicitly. The old launch-control evidence is stale; a new exact-source
+review and binding are required before execution.
 
 June, Intraday V3, daily 2018–2019, PAPER/broker state, `strategic-allocation-21`, and live execution
 remain untouched. The reused pre-May bars are exposed research data, not controlled evidence. A
