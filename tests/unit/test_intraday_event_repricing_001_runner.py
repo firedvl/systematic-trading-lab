@@ -49,6 +49,7 @@ from systematic_trading_lab.intraday_event_repricing_001_runner import (
     _stress_gates,
     intraday_event_repricing_001_plan_summary,
     intraday_event_repricing_001_status,
+    run_intraday_event_repricing_001_campaign,
 )
 from systematic_trading_lab.intraday_execution_cost_model import (
     load_intraday_execution_cost_model,
@@ -202,9 +203,8 @@ def _runner() -> IntradayEventRepricing001Runner:
 
 
 def test_plan_status_cli_and_launch_control_are_read_only_without_runtime_write(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
 ) -> None:
-    monkeypatch.setattr(runner_module, "_source_commit", lambda _repository: _REVIEWED_SOURCE)
     plan = intraday_event_repricing_001_plan_summary(_REPOSITORY)
     status = intraday_event_repricing_001_status(tmp_path)
     arguments = event_repricing_parser().parse_args(("run", "--workers", "6"))
@@ -213,8 +213,11 @@ def test_plan_status_cli_and_launch_control_are_read_only_without_runtime_write(
     assert plan["discovery_run_specification_count"] == 36
     assert plan["maximum_run_specifications"] == 244
     assert plan["maximum_attempts"] == 732
-    assert plan["status"] == "launch-control-bound"
-    assert plan["launch_control_bound"] is True
+    assert plan["status"] == "terminal-closed"
+    assert plan["terminal"] is True
+    assert plan["outcome"] == "no-controlled-qualified-candidate"
+    assert plan["launchable"] is False
+    assert plan["launch_control_bound"] is False
     assert status["database_exists"] is False
     assert arguments.workers == 6
     assert not any(cast(dict[str, bool], status["authority"]).values())
@@ -225,27 +228,18 @@ def test_plan_status_cli_and_launch_control_are_read_only_without_runtime_write(
     assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
         "910a4764efde8cecb6c17be24c04c863ed9c910d9279ab57cec3219a951db2c2"
     )
-    launch_control = runner_module._load_launch_control(
-        _REPOSITORY,
-        source_commit=_REVIEWED_SOURCE,
-    )
-    assert launch_control["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
 
 
-def test_plan_status_reports_current_launch_control(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(runner_module, "_source_commit", lambda _repository: _SOURCE)
-    monkeypatch.setattr(
-        runner_module,
-        "_load_launch_control",
-        lambda _repository, *, source_commit: {"source_commit": source_commit},
-    )
-
+def test_current_source_reports_terminal_and_blocks_relaunch(tmp_path: Path) -> None:
     plan = intraday_event_repricing_001_plan_summary(_REPOSITORY)
 
-    assert plan["status"] == "launch-control-bound"
-    assert plan["launch_control_bound"] is True
+    assert plan["status"] == "terminal-closed"
+    assert plan["terminal"] is True
+    assert plan["outcome"] == "no-controlled-qualified-candidate"
+    assert plan["launchable"] is False
+    assert plan["launch_control_bound"] is False
+    with pytest.raises(ValueError, match="closed and cannot be relaunched"):
+        run_intraday_event_repricing_001_campaign(_REPOSITORY, tmp_path)
     assert not (tmp_path / PROGRAM_ID).exists()
 
 
