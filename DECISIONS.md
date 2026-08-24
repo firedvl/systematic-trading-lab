@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Close Prior-Low Rejection after an empty discovery cohort
+
+- Decision: freeze Intraday Event Prior-Low Rejection 001 as terminal exposed evidence with outcome `no-controlled-qualified-candidate`. Preserve the exact four-worker run from source main `b470aaf7c4dd28d43102ff30fa898e8561344e4d`: six discovery specifications, six attempts, zero failures or retries, and zero later-stage specifications.
+- Context: all three confirmation candidates activated only two of ten eligible events and completed two round trips. Their Normal returns were `-0.03953%`, `-0.03885%`, and `-0.02532%`; each failed the frozen discovery gates. The final report and freeze validate against runtime database SHA-256 `d4bb82b42fb2d643cde048dee11f3344913ce497a92b52e18d3bb90f036290ec`, final-report SHA-256 `b860b8fde33d57be8fb04c3b9f5fd8a2ff563c8bbade2944fb6fda58f13a7aa1`, and final-freeze SHA-256 `083d479d392d8dec62a0f1d20f9abb265aa756af788c1304ab7ec070612c3ba5`.
+- Consequences: no controlled evaluation, qualification, holdout, PAPER, broker-write, or live authority opened. The campaign cannot be relaunched, retuned, inverted, or rescued with weaker gates; no partial-result adaptation is permitted. A future claim requires a new prospective identity and untouched evidence.
+- Revisit when: only through a genuinely new reviewed hypothesis; do not reopen this terminal campaign.
+
 ## 2026-08-24 — Bind Prior-Low Rejection launch control to exact reviewed main
 
 - Decision: bind Intraday Event Prior-Low Rejection 001 to implementation main `2b45028a9d1b17cde4eba5ee18837861a7a15620` after a finding-free exact-main review, all seven quality gates, and synthetic one-worker/four-worker byte equivalence. The launch artifact is SHA-256 `ac9cc921e6b60592bfd8dcc9181ff44126d63a929867566bb9aecd1c2a043d0a` with fingerprint `17d1ad7207bbc76264a2762f288e71f6445a7088e4d238aac004ada94b5214d1`.
