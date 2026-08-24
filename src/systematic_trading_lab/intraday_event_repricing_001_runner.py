@@ -2862,19 +2862,12 @@ def verify_intraday_event_repricing_001_parallel_equivalence(
 def intraday_event_repricing_001_plan_summary(repository: Path) -> dict[str, object]:
     repository = repository.resolve()
     plan = load_intraday_event_repricing_001_plan(repository)
-    try:
-        _load_launch_control(repository, source_commit=_source_commit(repository))
-    except ValueError:
-        launch_control_bound = False
-    else:
-        launch_control_bound = True
     return {
         "program_id": PROGRAM_ID,
-        "status": (
-            "launch-control-bound"
-            if launch_control_bound
-            else "implementation-launch-review-pending"
-        ),
+        "status": "terminal-closed",
+        "terminal": True,
+        "outcome": "no-controlled-qualified-candidate",
+        "launchable": False,
         "plan_sha256": plan.sha256,
         "plan_fingerprint": plan.plan_fingerprint,
         "calendar_sha256": plan.calendar_sha256,
@@ -2891,7 +2884,7 @@ def intraday_event_repricing_001_plan_summary(repository: Path) -> dict[str, obj
         "eligible_event_count": len(plan.eligible_events),
         "excluded_event_count": len(plan.excluded_events),
         "default_workers": DEFAULT_RESEARCH_WORKERS,
-        "launch_control_bound": launch_control_bound,
+        "launch_control_bound": False,
         "controlled_range_status": "none-eligible",
         "authority": _AUTHORITY,
     }
@@ -2955,9 +2948,4 @@ def run_intraday_event_repricing_001_campaign(
     workers: int = DEFAULT_RESEARCH_WORKERS,
     progress: Callable[[str], None] | None = None,
 ) -> dict[str, object]:
-    return IntradayEventRepricing001Runner(
-        repository,
-        data_home,
-        workers=workers,
-        progress=progress,
-    ).run()
+    raise ValueError("Intraday Event Repricing 001 is closed and cannot be relaunched")
