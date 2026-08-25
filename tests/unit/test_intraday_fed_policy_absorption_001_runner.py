@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+from dataclasses import dataclass
 from decimal import ROUND_DOWN, ROUND_UP, localcontext
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
@@ -13,7 +16,10 @@ from systematic_trading_lab.fingerprints import canonical_json, fingerprint
 from systematic_trading_lab.intraday_execution_cost_model import (
     load_intraday_execution_cost_model,
 )
-from systematic_trading_lab.intraday_exposed_002_runner import _scenarios
+from systematic_trading_lab.intraday_exposed_002_runner import (
+    IntradayExposed002Runner,
+    _scenarios,
+)
 from systematic_trading_lab.intraday_fed_policy_absorption_001_plan import (
     load_intraday_fed_policy_absorption_001_plan,
 )
@@ -31,8 +37,47 @@ from systematic_trading_lab.intraday_fed_policy_absorption_001_runner import (
     decode_canonical_metric,
     intraday_fed_policy_absorption_001_plan_summary,
 )
+from systematic_trading_lab.research_executor import ResearchProcessError, run_process_stage
 
 _SOURCE_COMMIT = "a" * 40
+
+
+@dataclass(frozen=True)
+class _RejectingWorkerFactory:
+    repository: Path
+    data_home: Path
+    runtime_root: Path
+    source_commit: str
+    stage_specifications: tuple[object, ...]
+    attestation_root: Path
+    attestation_workers: int
+
+    def __call__(self) -> Any:
+        raise ValueError("worker source commit differs")
+
+
+@dataclass(frozen=True)
+class _AttestedReplacementWorkerFactory:
+    root: Path
+
+    def __call__(self) -> _AttestedReplacementWorker:
+        return _AttestedReplacementWorker(self.root)
+
+
+class _AttestedReplacementWorker:
+    def __init__(self, root: Path) -> None:
+        self.root = root
+        runner_module._await_worker_attestations(
+            root,
+            source_commit=_SOURCE_COMMIT,
+            workers=1,
+        )
+
+    def __call__(self, task: str) -> str:
+        if task == "fail":
+            raise RuntimeError("forced worker retirement")
+        (self.root / f"completed-{task}").write_text(str(os.getpid()), encoding="ascii")
+        return task
 
 
 def _synthetic_report(
@@ -101,7 +146,15 @@ def test_worker_rejects_source_drift_before_data_access_or_claim(
     )
 
     with pytest.raises(ValueError, match="worker source commit differs"):
-        _Worker(Path.cwd(), tmp_path / "data", tmp_path / "runtime", expected)
+        _Worker(
+            Path.cwd(),
+            tmp_path / "data",
+            tmp_path / "runtime",
+            expected,
+            (),
+            tmp_path / "attestation",
+            1,
+        )
     assert not (tmp_path / "runtime").exists()
 
     worker = object.__new__(_Worker)
@@ -109,6 +162,165 @@ def test_worker_rejects_source_drift_before_data_access_or_claim(
     worker.attempt_store = cast(Any, pytest.fail)
     with pytest.raises(ValueError, match="worker specification source differs"):
         worker({"source_commit": observed})
+
+
+def test_worker_initialization_failure_precedes_reservation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    reserve_calls = 0
+
+    class Store:
+        @staticmethod
+        def list_runs() -> tuple[object, ...]:
+            return ()
+
+        @staticmethod
+        def get(_run_id: str) -> object:
+            return pytest.fail("run state read before reservation")
+
+        @staticmethod
+        def reserve(_specifications: object) -> None:
+            nonlocal reserve_calls
+            reserve_calls += 1
+
+    runtime = tmp_path / "runtime"
+    runner = object.__new__(IntradayFedPolicyAbsorption001Runner)
+    runner.repository = Path.cwd()
+    runner.data_home = tmp_path / "data"
+    runner.runtime_root = runtime
+    runner.source_commit = _SOURCE_COMMIT
+    runner.attempt_store = cast(Any, Store())
+    runner.workers = 4
+    runner.progress = lambda _message: None
+    specification = {
+        "source_commit": _SOURCE_COMMIT,
+        "context": {
+            "stage": "discovery",
+            "candidate_id": "fedabs-h02-f0008",
+            "period_id": "discovery-2025-07-through-10",
+            "scenario_id": "normal",
+        },
+    }
+    monkeypatch.setattr(runner_module, "_WorkerFactory", _RejectingWorkerFactory)
+    monkeypatch.setattr(runner_module, "_validate_stage_specifications", lambda _values: None)
+
+    with pytest.raises(ResearchProcessError, match="worker source commit differs"):
+        runner._execute((specification,))
+
+    assert reserve_calls == 0
+    assert not runtime.exists()
+
+
+def test_worker_attestation_rejects_peer_failure(tmp_path: Path) -> None:
+    (tmp_path / "failed-peer").touch()
+
+    with pytest.raises(ValueError, match="worker attestation peer failed"):
+        runner_module._await_worker_attestations(
+            tmp_path,
+            source_commit=_SOURCE_COMMIT,
+            workers=1,
+        )
+
+
+def test_worker_attestation_rejects_mixed_sources(tmp_path: Path) -> None:
+    (tmp_path / "ready-peer").write_text("b" * 40, encoding="ascii")
+
+    with pytest.raises(ValueError, match="worker attestation source differs"):
+        runner_module._await_worker_attestations(
+            tmp_path,
+            source_commit=_SOURCE_COMMIT,
+            workers=2,
+        )
+
+
+def test_worker_attestation_publishes_complete_marker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original_link = os.link
+
+    def link(
+        source: str | os.PathLike[str],
+        destination: str | os.PathLike[str],
+    ) -> None:
+        assert Path(source).read_text(encoding="ascii") == _SOURCE_COMMIT
+        assert not tuple(tmp_path.glob("ready-*"))
+        original_link(source, destination)
+
+    monkeypatch.setattr(os, "link", link)
+
+    runner_module._await_worker_attestations(
+        tmp_path,
+        source_commit=_SOURCE_COMMIT,
+        workers=1,
+    )
+
+    ready = tuple(tmp_path.glob("ready-*"))
+    assert len(ready) == 1
+    assert ready[0].read_text(encoding="ascii") == _SOURCE_COMMIT
+
+
+def test_worker_attestation_precedes_stage_reservation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    attestation_root = tmp_path / "attestations"
+    attestation_root.mkdir()
+    (attestation_root / "ready-peer").write_text(_SOURCE_COMMIT, encoding="ascii")
+    specification = {"source_commit": _SOURCE_COMMIT}
+    reserve_calls = 0
+
+    class Store:
+        def __init__(self, _runtime_root: Path) -> None:
+            ready = tuple(attestation_root.glob("ready-*"))
+            assert len(ready) == 2
+            assert {item.read_text(encoding="ascii") for item in ready} == {_SOURCE_COMMIT}
+
+        @staticmethod
+        def reserve(_specifications: object) -> None:
+            nonlocal reserve_calls
+            reserve_calls += 1
+
+    monkeypatch.setattr(runner_module, "_source_commit", lambda _repository: _SOURCE_COMMIT)
+    monkeypatch.setattr(
+        runner_module,
+        "load_intraday_fed_policy_absorption_001_plan",
+        lambda _repository: SimpleNamespace(payload={}),
+    )
+    monkeypatch.setattr(
+        runner_module,
+        "load_intraday_execution_cost_model",
+        lambda _repository: object(),
+    )
+    monkeypatch.setattr(runner_module, "_dataset_bindings", lambda _payload: ())
+    monkeypatch.setattr(runner_module, "_read_only_dataset_services", lambda *_args: {})
+    monkeypatch.setattr(IntradayExposed002Runner, "_verify_datasets", lambda _self: None)
+    monkeypatch.setattr(runner_module, "_scenarios", lambda _model: {})
+    monkeypatch.setattr(runner_module, "IntradayFedPolicyAbsorption001Store", Store)
+
+    _Worker(
+        Path.cwd(),
+        tmp_path / "data",
+        tmp_path / "runtime",
+        _SOURCE_COMMIT,
+        (specification,),
+        attestation_root,
+        2,
+    )
+
+    assert reserve_calls == 1
+
+
+def test_worker_replacement_reuses_completed_attestation_barrier(tmp_path: Path) -> None:
+    with pytest.raises(ResearchProcessError, match="forced worker retirement"):
+        run_process_stage(
+            ("fail", "unaffected"),
+            worker_factory=_AttestedReplacementWorkerFactory(tmp_path),
+            workers=1,
+        )
+
+    completion_pid = (tmp_path / "completed-unaffected").read_text(encoding="ascii")
+    ready = tuple(tmp_path.glob("ready-*"))
+    assert len(ready) == 1
+    assert ready[0].name != f"ready-{completion_pid}"
 
 
 def test_synthetic_report_binds_split_traces_and_exact_timing() -> None:
