@@ -20,6 +20,10 @@ from systematic_trading_lab.intraday_exposed_002_runner import (
     IntradayExposed002Runner,
     _scenarios,
 )
+from systematic_trading_lab.intraday_fed_policy_absorption_001_launch_control import (
+    REVIEWED_LAUNCH_CONTROL_FINGERPRINT,
+    REVIEWED_LAUNCH_CONTROL_SHA256,
+)
 from systematic_trading_lab.intraday_fed_policy_absorption_001_plan import (
     load_intraday_fed_policy_absorption_001_plan,
 )
@@ -40,6 +44,7 @@ from systematic_trading_lab.intraday_fed_policy_absorption_001_runner import (
 from systematic_trading_lab.research_executor import ResearchProcessError, run_process_stage
 
 _SOURCE_COMMIT = "a" * 40
+_IMPLEMENTATION_SOURCE = "9b586561d848743af77bb30a4c243080dae85eda"
 
 
 @dataclass(frozen=True)
@@ -116,17 +121,26 @@ def test_selection_preserves_frozen_parent_order() -> None:
     assert _select_eligible(ledger, 2, key=lambda _: (0,)) == ("first", "second")
 
 
-def test_unbound_runner_fails_before_runtime_creation(
+def test_launch_control_binds_exact_reviewed_main() -> None:
+    repository = Path.cwd()
+    assert REVIEWED_LAUNCH_CONTROL_SHA256 == (
+        "13c14ada3025a2a10d395842a85f9a1304c02d8ed4fade7e53f86682f44803e3"
+    )
+    assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
+        "c8f09c6aa8f05654d2ea232082bc18965f8a2f20c32c1051f8c6033f8a6835df"
+    )
+    loaded = runner_module._load_launch_control(repository, source_commit=_IMPLEMENTATION_SOURCE)
+    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
+    assert (
+        intraday_fed_policy_absorption_001_plan_summary(repository)["launch_control_bound"] is True
+    )
+
+
+def test_broker_environment_fails_before_runtime_creation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     repository = Path.cwd()
     runtime = tmp_path / "runtime"
-    assert (
-        intraday_fed_policy_absorption_001_plan_summary(repository)["launch_control_bound"] is False
-    )
-    with pytest.raises(ValueError, match="launch control"):
-        IntradayFedPolicyAbsorption001Runner(repository, runtime)
-    assert not runtime.exists()
     monkeypatch.setenv("APCA_API_KEY_ID", "not-a-secret-test-value")
     with pytest.raises(ValueError, match="broker environment"):
         IntradayFedPolicyAbsorption001Runner(repository, runtime)
