@@ -1,8 +1,9 @@
 # Intraday Autonomous Research 001 program
 
-Status: Campaigns 1 and 2 are terminal with independently reviewed empty cohorts. Immutable state
-revision 5 permits prospective planning for Campaign 3, the program's final campaign. Campaign 4
-remains prohibited.
+Status: closed after finding-free independent closeout review. Campaigns 1 and 2 ended with
+independently reviewed empty cohorts. Campaign 3 terminally interrupted after 18 deterministic
+data-boundary failures and produced no strategy result or cohort. Campaign 3 cannot be repaired or
+relaunched, and Campaign 4 is prohibited.
 
 Program ID: `intraday-autonomous-research-001`.
 
@@ -44,8 +45,8 @@ Campaign 2 launch-control SHA-256/fingerprint:
 `3b6c46f924ab94557f5235bf26650c1b8bf6f836b0f55bb590e63c1bba86717f`.
 
 Current immutable state revision SHA-256/fingerprint:
-`cd68f08b0b95839d41672a5df024e8867759911830f28d0a3d255c61c2643883` /
-`c6eaa1acc6af58af2d0f4a937c89ad95690ee8743ec998526b5f16ebdf7ea9af`.
+`1f47f158a362f4874d1b0f7a0fec8feb1946942555fbff382e805c926a0a65db` /
+`a87b57a984beffb47c7664f4a38f79de7ac9f712a985bba60e48a65b4d318473`.
 
 ## Campaign 1 disposition
 
@@ -116,6 +117,54 @@ Independent review SHA-256/fingerprint is
 `6b2b632e298a1faaa86b01667d97bd7124b2c1b6f9dc0f2239232272a33c61b0` and has no findings.
 Campaign 2 consumed 18 specifications. Its unused 72 cannot transfer.
 
+## Campaign 3 disposition
+
+Campaign 3 froze 15 official 14:00 New York Federal Reserve events and nine joint positive-reaction
+parents. Repaired exact-main source `a7c2228a68c3cad39c6faf5bf02d6b4b3c495ebf` passed all gates and
+five-fixture synthetic equivalence. Launch control bound that source, and PR #206 produced clean
+synchronized launch main `e74c5632529ef568b043428a251a1014e4f443de`.
+
+One four-worker launch reserved and attempted all 18 discovery specifications. Every run failed once
+with `ValueError: plan data must be an object`. The repaired preflight passed a canonical plain-dict
+plan copy to inherited dataset validation, but the per-run inherited `_bars` call used the original
+nested `MappingProxyType`. Existing permitted exposed artifacts were integrity-validated; bounded
+period loading, engine execution, canonical report publication, and return observation were not
+reached.
+
+Runtime database and terminal final-report SHA-256 values are
+`ad5e548cc9106204cca478f2d0e0fbc272d92796a13be62e917f34ae14dd73db` and
+`7010b2f9628441a5d34e806b5ebfb8e788a7f77e4133aaa9082ce4f741476eb2`. No final freeze or cohort
+exists. The frozen repair exception requires zero reservations and attempts, so Campaign 3 cannot be
+repaired or relaunched. Its Fed-policy hypothesis remains unassessed. Campaign 3 consumed 18
+specifications.
+
+Terminal postmortem SHA-256/fingerprint is
+`05e10b7b444e2d988af0e1c335b00888fe29d750016067351aa3920a50c3cc1c` /
+`770c881c513b79962b56b02911a1a607ef3bb2ca19a6cb7e48395519d0b59627`.
+
+## Cross-campaign synthesis
+
+Campaign 1 rejected fixed SPY-to-QQQ catch-up because every parent failed activity and matching
+round-trip gates; most active rows were negative. Campaign 2 showed positive gross edge at its low
+relative-volume floors, but all parents failed activity and participation-bucket concentration.
+Costs did not cause the common rejection. Neither completed campaign produced a parent eligible for
+walk-forward, stress, delay, or immediate-neighbor testing. Campaign 3 adds no economic evidence.
+
+The program consumed 54 immutable specifications. It retains 216 units of numerical headroom but no
+permitted campaign capacity. The bounded program and its exposed-data authority are exhausted; the
+SPY/QQQ five-minute economic domain is not scientifically exhausted because Campaign 3 never ran its
+strategy. Further variants on the same exposed bars would raise data-mining risk. Any new program
+must be user-approved and prospectively change the universe, timeframe, data type, or future untouched
+evidence source. It cannot be Campaign 4 or a Campaign 3 repair.
+
+Cross-campaign synthesis SHA-256/fingerprint is
+`32971360d54e3f87ed3de630e6b299b1448bbc73b2797cb2128625c3bd1b46f9` /
+`8a9406971f7341ae9d661e8c3f63e45113b541783ff83cc210c1984abf0eecd9`.
+
+The finding-free independent closeout review has SHA-256/fingerprint
+`dc10bd17acf2053125520b7e870a0ac8298769537e36c7dd9ac5f930f6d40709` /
+`6c6c2cf3fd5ce7deecd22a2b7f88a8f270a89f0e70fecdc3e15c003f692ef47c`.
+
 ## Purpose and bound
 
 The program permits three successor campaigns in one fixed order and no fourth campaign. Each may
@@ -157,14 +206,12 @@ cohort freezes simultaneously and stops the program while waiting for future unt
 post-observation semantic defect, protected-boundary issue, or authority escalation stops the
 program for review.
 
-If all three campaigns close empty, the program is exhausted. The closeout must synthesize common
-gate failures and decide whether the SPY/QQQ five-minute domain is exhausted. It cannot invent
-Campaign 4.
+Campaign 3's terminal data/control failure stops the program even though it produced no cohort. The
+closeout distinguishes procedural exhaustion from scientific rejection and cannot invent Campaign 4.
 
-Program state changes use immutable chained revisions. Revision 5 binds revision 4, Campaign 2's
-exact runtime database, final report, final freeze, postmortem, independent review, and 18 newly
-consumed specifications. Across Campaigns 1 and 2, 36 specifications are consumed. Only the 90
-specifications reserved for Campaign 3 remain usable. Campaign 3 must bind revision 5 and pass its
-own prospective plan review before implementation, reservation, market-data read, or result.
+Program state changes use immutable chained revisions. Revision 7 binds revision 6, Campaign 3's
+exact terminal runtime database and final report, its terminal postmortem, the cross-campaign
+synthesis, and 18 newly consumed specifications. Final revision 8 binds revision 7 and the
+finding-free independent closeout review. It leaves no active campaign or usable campaign capacity.
 
 Historical simulation does not establish future profitability or trading authority.

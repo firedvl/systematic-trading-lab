@@ -1,11 +1,10 @@
 # Intraday Fed Policy Absorption 001 program
 
-Status: prospective plan/calendar, implementation, repair, and repaired exact-main launch reviews
-are finding-free. PR #205 merged the plain-dict validator repair at exact main
-`a7c2228a68c3cad39c6faf5bf02d6b4b3c495ebf`. That source passed all seven gates and five-fixture
-synthetic equivalence. The replacement launch-control artifact binds it without changing frozen
-inputs, scientific semantics, execution semantics, or authority. No runtime, reservation, attempt,
-report, or strategy result exists.
+Status: terminally interrupted and independently reviewed after one exact four-worker launch from
+clean synchronized main `e74c5632529ef568b043428a251a1014e4f443de`. All 18 discovery
+specifications failed once at the same deterministic plan-container boundary. No bounded period bar
+load, strategy-engine invocation, canonical run report, return observation, final freeze, or cohort
+exists. The campaign cannot be repaired or relaunched, and Campaign 4 is prohibited.
 
 Program ID: `intraday-fed-policy-absorption-001`.
 
@@ -134,7 +133,7 @@ disqualifying. Undefined required metrics fail.
 
 Only an expired no-result immutable run may retry, without changing bytes, and each run has at most
 three attempts. Four workers remain fixed. A nonempty all-gate cohort freezes and records
-`WAITING FOR FUTURE UNTOUCHED DATA`. An empty or post-observation interrupted Campaign 3 produces the
+`WAITING FOR FUTURE UNTOUCHED DATA`. An empty or terminally interrupted Campaign 3 produces the
 three-campaign synthesis and stops. Campaign 4 is prohibited.
 
 ## Review and implementation boundary
@@ -219,9 +218,51 @@ skips. Five non-protected synthetic fixtures were byte-identical at one and four
 `0.776451` and `0.709242` seconds. Fresh independent launch review passed with no findings. The
 replacement launch-control SHA-256/fingerprint
 `6b1ee2e789307fce253d8a5a7780cd4dfdb33a1df2addb5eaedd236fc68d105f` /
-`1f2ecb1339613ec7b7e3e98a93fa6a8ae21f3528de779d861512c6ac0d56a6a0` binds that source. Clean
-synchronized main must validate the restricted post-review lineage before the one permitted launch.
+`1f2ecb1339613ec7b7e3e98a93fa6a8ae21f3528de779d861512c6ac0d56a6a0` binds that source.
+
+## Terminal launch and disposition
+
+PR #206 merged the replacement binding. Clean synchronized main
+`e74c5632529ef568b043428a251a1014e4f443de` validated the restricted lineage, false authorities,
+four frozen datasets, offline environment, and absence of any prior runtime. One tmux-supervised
+`caffeinate` launch then used exactly four workers.
+
+Coordinator and worker preflight read the existing permitted exposed `manifest.json`,
+`bars.parquet`, and `raw.jsonl` bytes for full integrity validation. Every worker then claimed a
+discovery specification and called the inherited Exposed 002 `_bars` method without the canonical
+plain-dict plan copy used by preflight. Its dict-only parser rejected the nested `MappingProxyType`
+with `ValueError: plan data must be an object` before `load_bars_range`, engine execution, report
+publication, or return observation. Synthetic equivalence had injected synthetic bars and therefore
+did not exercise this boundary.
+
+The immutable database contains 18 failed discovery specifications, 18 attempt-1 rows, 18 started
+events, 18 data-failure events, zero retries, zero completed, pending, or running rows, zero active
+leases, zero canonical reports, and no final freeze. SQLite quick check passes. Runtime database and
+final-report SHA-256 values are
+`ad5e548cc9106204cca478f2d0e0fbc272d92796a13be62e917f34ae14dd73db` and
+`7010b2f9628441a5d34e806b5ebfb8e788a7f77e4133aaa9082ce4f741476eb2`; report fingerprint is
+`ac2b9dd60ff6e73ba9b541c6285e30fe248f9283af16d270c4956802bcba474d`.
+
+The frozen same-identity repair exception requires zero reservations, attempts, canonical reports,
+market-data reads, and observations. Campaign 3 has 18 reservations and attempts, so repair,
+relaunch, or infrastructure retry is prohibited even though no strategy result exists. Its economic
+hypothesis remains unassessed. Terminal postmortem SHA-256/fingerprint is
+`05e10b7b444e2d988af0e1c335b00888fe29d750016067351aa3920a50c3cc1c` /
+`770c881c513b79962b56b02911a1a607ef3bb2ca19a6cb7e48395519d0b59627`.
+
+The cross-campaign synthesis has SHA-256/fingerprint
+`32971360d54e3f87ed3de630e6b299b1448bbc73b2797cb2128625c3bd1b46f9` /
+`8a9406971f7341ae9d661e8c3f63e45113b541783ff83cc210c1984abf0eecd9`. It closes the program with two
+discovery rejections and one unassessed terminal campaign. No serious cohort, controlled evaluation,
+controlled-qualified candidate, replay or shadow package, or intraday PAPER-ready candidate exists.
+
+Independent closeout review passed with no remaining P0, P1, or P2 findings. Its SHA-256/fingerprint
+is `dc10bd17acf2053125520b7e870a0ac8298769537e36c7dd9ac5f930f6d40709` /
+`6c6c2cf3fd5ce7deecd22a2b7f88a8f270a89f0e70fecdc3e15c003f692ef47c`. Final immutable program
+state revision 8 has SHA-256/fingerprint
+`1f47f158a362f4874d1b0f7a0fec8feb1946942555fbff382e805c926a0a65db` /
+`a87b57a984beffb47c7664f4a38f79de7ac9f712a985bba60e48a65b4d318473`.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
-`strategic-allocation-21`, credentials, and live data remain prohibited. Every authority field is
-false. Historical simulation cannot establish future profitability or trading authority.
+`strategic-allocation-21`, credentials, and live data remain prohibited and untouched. Every authority
+field is false. Historical simulation does not establish future profitability or trading authority.

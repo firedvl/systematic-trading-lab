@@ -1,0 +1,87 @@
+{
+  "schema_version": "intraday-autonomous-research-001-closeout-independent-review-v1",
+  "review_id": "intraday-autonomous-research-001-closeout-independent-review-v1",
+  "program_id": "intraday-autonomous-research-001",
+  "reviewed_at": "2026-08-25T04:53:18Z",
+  "review_method": "Independent read-only exact-byte review of Campaign 3 terminal evidence, its postmortem, the cross-campaign synthesis, immutable state revision 7, source failure location, program accounting, stop rules, and durable closeout text.",
+  "reviewed_inputs": {
+    "program_plan": {
+      "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+      "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9",
+      "fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f"
+    },
+    "runtime_database": {
+      "path": ".trading-lab/intraday-fed-policy-absorption-001/intraday-fed-policy-absorption-001.sqlite3",
+      "sha256": "ad5e548cc9106204cca478f2d0e0fbc272d92796a13be62e917f34ae14dd73db"
+    },
+    "final_report": {
+      "path": ".trading-lab/intraday-fed-policy-absorption-001/final-report.json",
+      "sha256": "7010b2f9628441a5d34e806b5ebfb8e788a7f77e4133aaa9082ce4f741476eb2",
+      "fingerprint": "ac2b9dd60ff6e73ba9b541c6285e30fe248f9283af16d270c4956802bcba474d"
+    },
+    "terminal_postmortem": {
+      "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-terminal-postmortem-v1.json",
+      "sha256": "05e10b7b444e2d988af0e1c335b00888fe29d750016067351aa3920a50c3cc1c",
+      "fingerprint": "770c881c513b79962b56b02911a1a607ef3bb2ca19a6cb7e48395519d0b59627"
+    },
+    "cross_campaign_synthesis": {
+      "path": "docs/research-campaigns/intraday-autonomous-research-001-cross-campaign-synthesis-v1.json",
+      "sha256": "32971360d54e3f87ed3de630e6b299b1448bbc73b2797cb2128625c3bd1b46f9",
+      "fingerprint": "8a9406971f7341ae9d661e8c3f63e45113b541783ff83cc210c1984abf0eecd9"
+    },
+    "review_pending_state": {
+      "path": "docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-007.json",
+      "sha256": "8074e3c0aa9f3d1fb186e0beac9a28ccf925d2fe25d60b5dc64123bdf552ceb6",
+      "fingerprint": "4f56d6ea8391e46ee92aa8562440143b92a385bc35420bc05295106aa53f1fe2",
+      "state_revision": 7
+    }
+  },
+  "reviewer": {
+    "reviewer_id": "codex-independent-intraday-autonomous-research-001-closeout-review-2026-08-25-v1",
+    "role": "independent-terminal-evidence-and-program-closeout-reviewer"
+  },
+  "findings": [],
+  "resolved_findings": [
+    {
+      "severity": "P2",
+      "title": "Revision 7 terminal-interruption review binding was internally inconsistent",
+      "resolution": "Revision 7 now binds the pre-review runtime, report, postmortem, synthesis, and accounting evidence, while its final successor must bind this finding-free independent closeout review.",
+      "verified": true
+    }
+  ],
+  "verification": {
+    "revision_7_exact_bytes_verified": true,
+    "revision_7_fingerprint_verified": true,
+    "revision_7_review_pending_contract_verified": true,
+    "terminal_postmortem_exact_bytes_verified": true,
+    "terminal_postmortem_fingerprint_verified": true,
+    "cross_campaign_synthesis_exact_bytes_verified": true,
+    "cross_campaign_synthesis_fingerprint_verified": true,
+    "source_failure_path_verified_before_bounded_bar_loading": true,
+    "campaign_3_runtime_source_commit": "e74c5632529ef568b043428a251a1014e4f443de",
+    "campaign_3_disposition": "terminally-interrupted-no-strategy-result",
+    "campaign_3_scientific_hypothesis_disposition": "unassessed",
+    "campaign_3_reserved_run_specifications": 18,
+    "campaign_3_attempts": 18,
+    "campaign_3_completed_runs": 0,
+    "campaign_3_failed_runs": 18,
+    "campaign_3_canonical_run_reports": 0,
+    "campaign_3_infrastructure_retries": 0,
+    "run_specifications_consumed": 54,
+    "run_specifications_remaining_numerical_headroom": 216,
+    "remaining_permitted_campaign_capacity": 0,
+    "campaign_3_repair_or_relaunch_permitted": false,
+    "campaign_4_permitted": false,
+    "all_authority_fields_false": true,
+    "all_protected_access_fields_false": true,
+    "no_remaining_p0_p1_or_p2_findings": true,
+    "json_parsing_passed": true,
+    "git_diff_check_passed": true,
+    "runtime_evidence_reopened_after_contract_correction": false,
+    "runtime_claims_bound_to_prior_read_only_validation": true
+  },
+  "scope_limit": "The final contract re-review did not reopen runtime or protected dataset state. It relied on the exact immutable evidence bindings and the prior read-only runtime validation. No campaign rerun, market-data acquisition, protected-data access, PAPER or broker mutation, credential access, live action, or strategic-allocation-21 access occurred.",
+  "status": "passed",
+  "verdict": "pass",
+  "review_fingerprint": "6c6c2cf3fd5ce7deecd22a2b7f88a8f270a89f0e70fecdc3e15c003f692ef47c"
+}

@@ -1,0 +1,126 @@
+{
+  "schema_version": "intraday-autonomous-research-program-state-v2",
+  "program_id": "intraday-autonomous-research-001",
+  "state_revision": 7,
+  "phase": "campaign-3-terminal-evidence-independent-review-pending",
+  "active_campaign_id": null,
+  "current_campaign_index": 3,
+  "completed_strategy_campaigns": [
+    "intraday-spy-qqq-lead-lag-001",
+    "intraday-relative-volume-drift-001"
+  ],
+  "closed_campaigns": [
+    "intraday-spy-qqq-lead-lag-001",
+    "intraday-relative-volume-drift-001",
+    "intraday-fed-policy-absorption-001"
+  ],
+  "campaign_dispositions": {
+    "intraday-spy-qqq-lead-lag-001": "terminal-empty-after-reviewed-reassessment",
+    "intraday-relative-volume-drift-001": "terminal-empty-after-independent-postmortem-review",
+    "intraday-fed-policy-absorption-001": "terminally-interrupted-no-strategy-result-review-pending"
+  },
+  "campaign_3_terminal_evidence": {
+    "campaign_id": "intraday-fed-policy-absorption-001",
+    "runtime_source_commit": "e74c5632529ef568b043428a251a1014e4f443de",
+    "outcome": "terminally-interrupted",
+    "scientific_hypothesis_disposition": "unassessed",
+    "cohort_size": null,
+    "reserved_run_specifications": 18,
+    "completed_runs": 0,
+    "failed_runs": 18,
+    "attempts": 18,
+    "infrastructure_retries": 0,
+    "canonical_run_reports": 0,
+    "strategy_results_observed": 0,
+    "active_leases": 0,
+    "runtime_database": {
+      "path": ".trading-lab/intraday-fed-policy-absorption-001/intraday-fed-policy-absorption-001.sqlite3",
+      "sha256": "ad5e548cc9106204cca478f2d0e0fbc272d92796a13be62e917f34ae14dd73db"
+    },
+    "final_report": {
+      "path": ".trading-lab/intraday-fed-policy-absorption-001/final-report.json",
+      "sha256": "7010b2f9628441a5d34e806b5ebfb8e788a7f77e4133aaa9082ce4f741476eb2",
+      "fingerprint": "ac2b9dd60ff6e73ba9b541c6285e30fe248f9283af16d270c4956802bcba474d"
+    },
+    "final_freeze": null,
+    "plan": {
+      "path": "config/research/intraday-fed-policy-absorption-001-plan-v1.json",
+      "sha256": "a3cd20e325f2e9eb6bc794df7a93db3763dab8e55d2fc1e02816a8480907c111",
+      "fingerprint": "99d03036512b3a8b03f38774e05779982379b1e956906a2ee36f612b52f20140"
+    },
+    "launch_control": {
+      "path": "config/research/intraday-fed-policy-absorption-001-launch-control-review-v1.json",
+      "sha256": "6b1ee2e789307fce253d8a5a7780cd4dfdb33a1df2addb5eaedd236fc68d105f",
+      "fingerprint": "1f2ecb1339613ec7b7e3e98a93fa6a8ae21f3528de779d861512c6ac0d56a6a0"
+    },
+    "terminal_postmortem": {
+      "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-terminal-postmortem-v1.json",
+      "sha256": "05e10b7b444e2d988af0e1c335b00888fe29d750016067351aa3920a50c3cc1c",
+      "fingerprint": "770c881c513b79962b56b02911a1a607ef3bb2ca19a6cb7e48395519d0b59627"
+    }
+  },
+  "cross_campaign_synthesis": {
+    "path": "docs/research-campaigns/intraday-autonomous-research-001-cross-campaign-synthesis-v1.json",
+    "sha256": "32971360d54e3f87ed3de630e6b299b1448bbc73b2797cb2128625c3bd1b46f9",
+    "fingerprint": "8a9406971f7341ae9d661e8c3f63e45113b541783ff83cc210c1984abf0eecd9",
+    "disposition": "two-discovery-rejections-one-unassessed-terminal-campaign"
+  },
+  "previous_state": {
+    "path": "docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-006.json",
+    "sha256": "7c414a92e22ca4ceead8d1cde5ad3429a8a62c5a5bd3ade7f88ce72c38f1b891",
+    "fingerprint": "4cc76196c71713fbf56a92cd2495a9a8cc137eb749da0ee0511a429144cc6b73",
+    "state_revision": 6
+  },
+  "program_plan": {
+    "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+    "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9",
+    "fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f"
+  },
+  "run_specifications_consumed": 54,
+  "run_specifications_remaining_numerical_headroom": 216,
+  "remaining_permitted_campaign_capacity": 0,
+  "remaining_prospectively_permitted_campaigns": [],
+  "campaign_1_unused_specifications_transferable": false,
+  "campaign_2_unused_specifications_transferable": false,
+  "campaign_3_unused_specifications_transferable": false,
+  "campaign_3_repair_or_relaunch_permitted": false,
+  "campaign_4_permitted": false,
+  "next_action": "Obtain independent review of Campaign 3 terminal evidence, its postmortem, the cross-campaign synthesis, and this revision. If findings are resolved, publish revision 8 binding that review and close the program for user strategic review.",
+  "authority": {
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "june_market_data_or_results": false,
+    "intraday_v3_data_or_results": false,
+    "daily_2018_2019_data_or_results": false,
+    "protected_campaign_results": false,
+    "paper_broker_or_live_state": false,
+    "strategic_allocation_21": false,
+    "live_market_or_execution_data": false,
+    "partial_result_adaptation": false,
+    "campaign_4": false
+  },
+  "state_transition_contract": {
+    "immutable_revision_artifacts": true,
+    "source_state_mutation": false,
+    "next_revision_rule": "Publish revision 8 with an exact revision 7 path, SHA-256, fingerprint, and state-revision binding plus the independently reviewed closeout evidence.",
+    "terminal_interruption_rule": "A review-pending terminal revision with no final freeze binds the exact immutable runtime database, terminal final report, postmortem, and consumed specification count. Its final successor must also bind a finding-free independent closeout review. Neither revision may fabricate a freeze or cohort.",
+    "authority_change_rule": "No state revision can grant qualification, controlled, protected, PAPER, broker-write, or live authority."
+  },
+  "stop_conditions": [
+    "Campaign 3 terminal data/control failure",
+    "no frozen same-identity repair after reservation and attempt",
+    "Campaign 4 prohibited",
+    "new strategic direction requires user review",
+    "PAPER broker-write authorization boundary",
+    "any live-money action"
+  ],
+  "fingerprint_contract": "Remove the top-level state_fingerprint field, canonicalize with systematic_trading_lab.fingerprints.canonical_json, and take SHA-256 of those UTF-8 bytes.",
+  "state_fingerprint": "4f56d6ea8391e46ee92aa8562440143b92a385bc35420bc05295106aa53f1fe2"
+}
