@@ -1,7 +1,9 @@
 # Intraday Fed Policy Absorption 001 program
 
 Status: prospective plan/calendar and implementation reviews are finding-free. Launch control remains
-unbound. No reservation, attempt, market-data read, report, or result exists.
+unbound. The second exact-main launch review found a pre-reservation worker-readiness race; its repair
+is local to Campaign 3 and is not merged or launch-reviewed. No reservation, attempt, market-data
+read, report, or result exists.
 
 Program ID: `intraday-fed-policy-absorption-001`.
 
@@ -145,6 +147,30 @@ it: spawned workers inherited the coordinator's source SHA but did not independe
 their imported worktree before plan/data loading or the specification SHA before claim. The
 pre-observation repair adds both checks. It must pass focused and full gates, merge, and receive a
 fresh finding-free exact-main review; the failed review grants no launch authority.
+
+Source-guard repair main `a90dc9b864fd8802b9ad915b70f35f7ae59d346c` merged through PR #200 and
+passed all seven exact-main gates: 1,063 tests passed with four skips. Five synthetic fixtures were
+byte-identical; one worker took `0.766139` seconds and four workers took `0.747410` seconds, a
+`1.025060` speedup. The fresh exact-main launch review still failed: the generic process preflight
+only proved that the factory and tasks could be pickled, so Campaign 3 reserved specifications before
+spawned workers constructed and ran the new source guard.
+
+An initial callback repair changed the shared process executor and passed focused review. The full
+suite then proved that closed Event Drift launch evidence binds `research_executor.py` to SHA-256
+`099f9ac9572aaaa640d51cb0dde50e2cba378a6ef0b2ddf9b07a63d0ed9b1b81`. The shared executor was
+restored byte-for-byte.
+
+The replacement repair is local to Campaign 3. Each stage gets an ephemeral coordinator-owned
+attestation directory. Every initial spawned worker validates the loaded source, all stage
+specification source SHAs, and the frozen plan, cost, and dataset inputs; writes a PID-bound source
+marker; and waits for the full expected set of matching markers with no failure marker. Only then
+may any worker create the attempt store and reserve the complete stage. Each worker reserves the full
+stage before the unchanged executor sees that worker as ready, so the first task dispatch finds all
+stage specifications reserved. A later replacement revalidates the same controls and reuses the
+complete matching marker set without adding a marker. A source, input, or peer-attestation failure
+stops the waiting pool before any worker opens the attempt store, reserves, claims, or receives a
+task. This repair must pass focused and full gates, merge, and receive another finding-free exact-main
+review; neither failed review grants launch authority.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, credentials, and live data remain prohibited. Every authority field is

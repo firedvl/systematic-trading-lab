@@ -10,11 +10,12 @@ import sqlite3
 import subprocess
 import time
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_EVEN, Context, Decimal, InvalidOperation, localcontext
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from types import MappingProxyType
 from typing import Any, cast
 
@@ -156,6 +157,7 @@ _LAUNCH_CONTROL_POST_REVIEW_FILES = frozenset(
 _STATUSES = ("pending", "running", "completed", "failed")
 _LEASE_TIMEOUT = timedelta(seconds=300)
 _HEARTBEAT_INTERVAL = timedelta(seconds=60)
+_WORKER_ATTESTATION_TIMEOUT = timedelta(seconds=300)
 _ZERO = Decimal("0")
 _CONTEXT = Context(prec=50, rounding=ROUND_HALF_EVEN)
 _CALENDAR_FAILURE_PREFIX = "calendar-integrity: "
@@ -680,15 +682,69 @@ class IntradayFedPolicyAbsorption001Store:
         return self.attempts.list_attempts(run_id)
 
 
+def _record_worker_attestation_failure(root: Path) -> None:
+    with suppress(OSError):
+        (root / f"failed-{os.getpid()}").touch(exist_ok=True)
+
+
+def _await_worker_attestations(root: Path, *, source_commit: str, workers: int) -> None:
+    if workers < 1:
+        raise ValueError("Fed Policy Absorption 001 attestation worker count differs")
+    marker = root / f"ready-{os.getpid()}"
+    marker_written = False
+    deadline = time.monotonic() + _WORKER_ATTESTATION_TIMEOUT.total_seconds()
+    while True:
+        if any(root.glob("failed-*")):
+            raise ValueError("Fed Policy Absorption 001 worker attestation peer failed")
+        ready = tuple(root.glob("ready-*"))
+        if len(ready) == workers:
+            try:
+                observed = {item.read_text(encoding="ascii", errors="strict") for item in ready}
+            except (OSError, UnicodeError) as error:
+                raise ValueError(
+                    "Fed Policy Absorption 001 worker attestation read failed"
+                ) from error
+            if observed != {source_commit}:
+                raise ValueError("Fed Policy Absorption 001 worker attestation source differs")
+            return
+        if len(ready) > workers or time.monotonic() >= deadline:
+            raise ValueError("Fed Policy Absorption 001 worker attestation barrier failed")
+        if not marker_written:
+            try:
+                _write_create_only_text(marker, source_commit)
+            except OSError as error:
+                raise ValueError(
+                    "Fed Policy Absorption 001 worker attestation write failed"
+                ) from error
+            marker_written = True
+            continue
+        time.sleep(0.05)
+
+
 @dataclass(frozen=True)
 class _WorkerFactory:
     repository: Path
     data_home: Path
     runtime_root: Path
     source_commit: str
+    stage_specifications: tuple[Mapping[str, object], ...]
+    attestation_root: Path
+    attestation_workers: int
 
     def __call__(self) -> _Worker:
-        return _Worker(self.repository, self.data_home, self.runtime_root, self.source_commit)
+        try:
+            return _Worker(
+                self.repository,
+                self.data_home,
+                self.runtime_root,
+                self.source_commit,
+                self.stage_specifications,
+                self.attestation_root,
+                self.attestation_workers,
+            )
+        except Exception:
+            _record_worker_attestation_failure(self.attestation_root)
+            raise
 
 
 class _Worker:
@@ -700,12 +756,20 @@ class _Worker:
         data_home: Path,
         runtime_root: Path,
         source_commit: str,
+        stage_specifications: Sequence[Mapping[str, object]],
+        attestation_root: Path,
+        attestation_workers: int,
     ) -> None:
         self.repository = repository.resolve()
         self.data_home = data_home.resolve()
         self.source_commit = source_commit
         if _source_commit(self.repository) != self.source_commit:
             raise ValueError("Fed Policy Absorption 001 worker source commit differs")
+        if any(
+            specification.get("source_commit") != self.source_commit
+            for specification in stage_specifications
+        ):
+            raise ValueError("Fed Policy Absorption 001 worker stage source differs")
         self.plan = load_intraday_fed_policy_absorption_001_plan(self.repository)
         self.cost_model = load_intraday_execution_cost_model(self.repository)
         self.datasets = _dataset_bindings(self.plan.payload)
@@ -713,7 +777,13 @@ class _Worker:
         IntradayExposed002Runner._verify_datasets(cast(Any, self))
         self.scenarios = _scenarios(self.cost_model)
         self._bar_cache: dict[str, tuple[Any, ...]] = {}
+        _await_worker_attestations(
+            attestation_root,
+            source_commit=self.source_commit,
+            workers=attestation_workers,
+        )
         self.attempt_store = IntradayFedPolicyAbsorption001Store(runtime_root)
+        self.attempt_store.reserve(stage_specifications)
 
     def __call__(self, specification: Mapping[str, object]) -> str:
         if specification.get("source_commit") != self.source_commit:
@@ -1020,19 +1090,14 @@ class IntradayFedPolicyAbsorption001Runner:
         new_ids = {_run_id(specification) for specification in specifications} - existing_ids
         if len(existing_ids) + len(new_ids) > _MAXIMUM_RUN_SPECIFICATIONS:
             raise ValueError("Fed Policy Absorption 001 exceeds its 90-run budget")
-        worker_factory = _WorkerFactory(
-            self.repository,
-            self.data_home,
-            self.runtime_root,
-            self.source_commit,
-        )
-        preflight_process_stage(specifications, worker_factory=worker_factory)
-        self.attempt_store.reserve(specifications)
+        by_run_id = {str(row["run_id"]): row for row in existing}
         pending: list[Mapping[str, object]] = []
         for specification in specifications:
             run_id = _run_id(specification)
-            row = self.attempt_store.get(run_id)
-            if row["status"] == "completed":
+            row = by_run_id.get(run_id)
+            if row is None or row["status"] == "pending":
+                pending.append(specification)
+            elif row["status"] == "completed":
                 self._load_report(row)
             elif row["status"] == "failed":
                 raise AttemptStateError(f"Fed Policy Absorption 001 run is terminal: {run_id}")
@@ -1041,13 +1106,26 @@ class IntradayFedPolicyAbsorption001Runner:
                     f"Fed Policy Absorption 001 run has an active attempt: {run_id}"
                 )
             else:
-                pending.append(specification)
-        run_process_stage(
-            tuple(pending),
-            worker_factory=worker_factory,
-            workers=self.workers,
-            progress=lambda done, total, _task, result: self.progress(f"{done}/{total} {result}"),
-        )
+                raise AttemptStateError(f"Fed Policy Absorption 001 run status differs: {run_id}")
+        if pending:
+            with TemporaryDirectory(prefix="fedabs001-worker-attestation-") as temporary:
+                worker_factory = _WorkerFactory(
+                    self.repository,
+                    self.data_home,
+                    self.runtime_root,
+                    self.source_commit,
+                    tuple(specifications),
+                    Path(temporary),
+                    min(self.workers, len(pending)),
+                )
+                run_process_stage(
+                    tuple(pending),
+                    worker_factory=worker_factory,
+                    workers=self.workers,
+                    progress=lambda done, total, _task, result: self.progress(
+                        f"{done}/{total} {result}"
+                    ),
+                )
         for specification in specifications:
             self._load_report(self.attempt_store.get(_run_id(specification)))
 
