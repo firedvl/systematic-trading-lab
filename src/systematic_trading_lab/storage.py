@@ -43,6 +43,9 @@ class StorageLayout:
     def prepare(self) -> None:
         self.datasets.mkdir(parents=True, exist_ok=True)
         self.quarantine.mkdir(parents=True, exist_ok=True)
+        _fsync_directory(self.root)
+        _fsync_directory(self.datasets)
+        _fsync_directory(self.quarantine)
 
     def publish(self, dataset_id: str, files: dict[str, str | bytes]) -> bool:
         self.prepare()
@@ -53,10 +56,12 @@ class StorageLayout:
         try:
             for name, contents in files.items():
                 _write_file(temporary / name, contents)
+            _fsync_directory(temporary)
             try:
                 os.rename(temporary, destination)
             except FileExistsError:
                 return False
+            _fsync_directory(self.datasets)
             return True
         finally:
             if temporary.exists():
@@ -67,6 +72,7 @@ class StorageLayout:
         path = self.quarantine / f"{evidence_id}.json"
         if not path.exists():
             _write_file(path, contents)
+            _fsync_directory(self.quarantine)
         return path
 
 
@@ -81,3 +87,11 @@ def _write_file(path: Path, contents: str | bytes) -> None:
         file.write(contents)
         file.flush()
         os.fsync(file.fileno())
+
+
+def _fsync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)

@@ -1,0 +1,91 @@
+{
+  "schema_version": "program-002-implementation-acquisition-authority-v1",
+  "authority_id": "program-002-implementation-acquisition-2026-08-25-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "status": "active-until-complete-or-terminal-blocker",
+  "issued_date": "2026-08-25",
+  "source": {
+    "kind": "user-supplied-authorization-packet",
+    "sha256": "8314190d0525e1ff4bd479bc9c1f455f7b40c9e295bc0ccdc8c5d7fcd4a97785"
+  },
+  "bindings": {
+    "program_plan": {
+      "path": "config/research/cross-sectional-sector-etf-program-002-plan-proposal-v1.json",
+      "sha256": "2872d4d3301df0a85e1a5a2eba6e3ee533ee5573971121e99840041e7c8d2173",
+      "fingerprint": "701dc67ea2da1e45d235f4247724b2bc8eb62853561c2400c17a668342c6b81e"
+    },
+    "acquisition_plan": {
+      "path": "config/research/cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1.json",
+      "sha256": "26c768f422e63e9f00e6adc88be2d57f5c6447972a9de1fa4873ab2826556aae"
+    },
+    "universe": {
+      "path": "config/research/multi-hour-sector-etfs-v1.json",
+      "sha256": "8f07f73fd93f9432501d579e43616e1d9a09d6db77c347a6bed4151f2210c312",
+      "fingerprint": "ef23e533aa7a91262200bd7a77a65f9b6d8b4d473573850c33ef014701177790"
+    },
+    "implementation_plan": {
+      "path": "docs/research-campaigns/multi-hour-sector-etf-research-001-implementation-plan.md",
+      "sha256": "aebfea81a2c8a4110d369dbd23d12e0ff79a661fc8f6187df0f27939abdfede5"
+    },
+    "planning_review": {
+      "path": "config/research/cross-sectional-sector-etf-program-002-plan-independent-review-v1.json",
+      "sha256": "b5023c90a7d748a7c8ac42609bad6d1c394150bc914c51b8b65c73e3d80c17e6",
+      "fingerprint": "55e30955789981a4eca129856322207ceb05fa9aebccb1101d892dd92f7a5d33"
+    }
+  },
+  "authorized": {
+    "strategy_implementation": true,
+    "synthetic_and_mock_validation": true,
+    "exposed_market_data_acquisition": true,
+    "exposed_quote_calibration_acquisition": true,
+    "prospective_cost_model_derivation": true,
+    "authorized_dataset_roles": [
+      "exposed-context-only",
+      "exposed-block-1",
+      "exposed-block-2",
+      "exposed-block-3"
+    ],
+    "quote_sessions": 73,
+    "quote_fill_clocks": 9,
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ]
+  },
+  "prohibited": {
+    "strategy_execution_on_acquired_data": true,
+    "strategy_result_generation_or_read": true,
+    "discovery": true,
+    "walk_forward": true,
+    "robustness": true,
+    "controlled_dataset_acquisition_or_access": true,
+    "qualification": true,
+    "protected_holdout": true,
+    "paper_execution": true,
+    "broker_writes": true,
+    "live_execution": true,
+    "strategic_allocation_21_access": true
+  },
+  "authority": {
+    "market_data_acquisition": true,
+    "strategy_implementation": true,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  }
+}

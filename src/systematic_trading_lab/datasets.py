@@ -472,6 +472,7 @@ def _version_key(
     feed: str | None,
     data_fingerprint: str,
     raw_fingerprint: str,
+    calendar_package_and_version: object | None = None,
 ) -> dict[str, object]:
     key: dict[str, object] = {
         "provider": provider,
@@ -491,6 +492,16 @@ def _version_key(
         key["feed"] = feed
     if timeframe.is_supported_intraday:
         key["timestamp_policy"] = timestamp_policy
+    if calendar_package_and_version is not None:
+        if not isinstance(calendar_package_and_version, dict) or set(
+            calendar_package_and_version
+        ) != {"package", "version"}:
+            raise ValueError("calendar package/version is invalid")
+        if not all(
+            isinstance(value, str) and value for value in calendar_package_and_version.values()
+        ):
+            raise ValueError("calendar package/version is invalid")
+        key["calendar_package_and_version"] = calendar_package_and_version
     return key
 
 
@@ -538,6 +549,7 @@ def _manifest_static_identity_matches(manifest: dict[str, Any]) -> bool:
                 _optional_text(manifest.get("feed")),
                 str(manifest["identity"]["fingerprint"]),
                 str(manifest["raw_artifact_hashes"][0]),
+                manifest.get("calendar_package_and_version"),
             )
         )
         return bool(policy_matches and manifest["identity"]["dataset_id"] == expected_id)
