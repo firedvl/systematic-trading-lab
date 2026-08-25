@@ -1,0 +1,169 @@
+{
+  "schema_version": "intraday-fed-policy-absorption-001-terminal-postmortem-v1",
+  "postmortem_id": "intraday-fed-policy-absorption-001-terminal-postmortem-v1",
+  "program_id": "intraday-fed-policy-absorption-001",
+  "autonomous_program_id": "intraday-autonomous-research-001",
+  "assessed_at": "2026-08-25T04:36:41Z",
+  "method": "Read-only process, SQLite, canonical final-report, source-lineage, launch-control, and policy validation. No campaign rerun, strategy execution, new market-data acquisition, protected-data access, or result interpretation occurred.",
+  "reviewed_inputs": {
+    "source_main": "e74c5632529ef568b043428a251a1014e4f443de",
+    "plan": {
+      "path": "config/research/intraday-fed-policy-absorption-001-plan-v1.json",
+      "sha256": "a3cd20e325f2e9eb6bc794df7a93db3763dab8e55d2fc1e02816a8480907c111",
+      "fingerprint": "99d03036512b3a8b03f38774e05779982379b1e956906a2ee36f612b52f20140"
+    },
+    "launch_control": {
+      "path": "config/research/intraday-fed-policy-absorption-001-launch-control-review-v1.json",
+      "sha256": "6b1ee2e789307fce253d8a5a7780cd4dfdb33a1df2addb5eaedd236fc68d105f",
+      "fingerprint": "1f2ecb1339613ec7b7e3e98a93fa6a8ae21f3528de779d861512c6ac0d56a6a0"
+    },
+    "source_state": {
+      "path": "docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-006.json",
+      "sha256": "7c414a92e22ca4ceead8d1cde5ad3429a8a62c5a5bd3ade7f88ce72c38f1b891",
+      "fingerprint": "4cc76196c71713fbf56a92cd2495a9a8cc137eb749da0ee0511a429144cc6b73",
+      "state_revision": 6
+    },
+    "runtime_database": {
+      "path": ".trading-lab/intraday-fed-policy-absorption-001/intraday-fed-policy-absorption-001.sqlite3",
+      "sha256": "ad5e548cc9106204cca478f2d0e0fbc272d92796a13be62e917f34ae14dd73db"
+    },
+    "final_report": {
+      "path": ".trading-lab/intraday-fed-policy-absorption-001/final-report.json",
+      "sha256": "7010b2f9628441a5d34e806b5ebfb8e788a7f77e4133aaa9082ce4f741476eb2",
+      "fingerprint": "ac2b9dd60ff6e73ba9b541c6285e30fe248f9283af16d270c4956802bcba474d"
+    },
+    "final_report_markdown": {
+      "path": ".trading-lab/intraday-fed-policy-absorption-001/final-report.md",
+      "sha256": "b0beb5426b6e65571a948ef3f6d3199ef0e77b3d9f4372d7c15304b96906cc41"
+    },
+    "launch_log": {
+      "path": ".trading-lab/intraday-fed-policy-absorption-001-launch-e74c563.log",
+      "sha256": "bcae4e3465e4f51e5cd220b45e51c8c9866fef76e868d97973613160181702fe"
+    }
+  },
+  "launch": {
+    "campaign_launch_count": 1,
+    "command": "caffeinate -dimsu uv run trading-lab research intraday-fed-policy-absorption-001 run --workers 4",
+    "supervisor": "tmux session stl-campaign3-e74c563",
+    "worker_count": 4,
+    "first_attempt_started_at": "2026-08-25T04:29:57.616970Z",
+    "last_attempt_finished_at": "2026-08-25T04:30:05.269461Z",
+    "pre_campaign_process_arrangement_failures": [
+      {
+        "classification": "launch-wrapper-guard-failure-before-campaign-invocation",
+        "evidence": "A shell duplicate-process guard matched its own command and stopped before the runner executed.",
+        "runtime_state_created": false
+      },
+      {
+        "classification": "detached-process-reaped-before-campaign-invocation",
+        "evidence": "A nohup caffeinate arrangement was reaped before uv reached the runner; its log remained empty and no runtime, reservation, or attempt existed.",
+        "runtime_state_created": false
+      }
+    ]
+  },
+  "runtime_integrity": {
+    "quick_check": "ok",
+    "active_campaign_process": false,
+    "active_lease_count": 0,
+    "program_binding_count": 1,
+    "program_binding_fingerprint": "6ea1bf97ac769997a7dfed24b67dd40e3f8bbacd2e8e1443187a3eb7227f517f",
+    "runtime_source_commit": "e74c5632529ef568b043428a251a1014e4f443de",
+    "reserved_run_specification_count": 18,
+    "discovery_run_specification_count": 18,
+    "later_stage_run_specification_count": 0,
+    "failed_run_count": 18,
+    "completed_run_count": 0,
+    "pending_run_count": 0,
+    "running_run_count": 0,
+    "attempt_count": 18,
+    "attempt_1_count": 18,
+    "retried_run_count": 0,
+    "infrastructure_interruption_count": 0,
+    "started_event_count": 18,
+    "data_failure_event_count": 18,
+    "heartbeat_event_count": 0,
+    "canonical_report_count": 0,
+    "publication_conflict_count": 0,
+    "duplicate_run_fingerprint_count": 0,
+    "duplicate_attempt_id_count": 0,
+    "duplicate_event_fingerprint_count": 0,
+    "sealed_output_file_count": 36,
+    "nonempty_sealed_output_file_count": 0,
+    "final_freeze_exists": false,
+    "terminal_report_exists": true
+  },
+  "failure": {
+    "recorded_failure_class": "data",
+    "recorded_failure_reason": "ValueError: plan data must be an object",
+    "affected_run_count": 18,
+    "classification": "deterministic-data-boundary-implementation-defect",
+    "root_cause": "The repaired coordinator and worker preflight paths passed a canonical plain-dict plan copy to the inherited Exposed 002 dataset validator, but the per-run worker called IntradayExposed002Runner._bars without that copy. The inherited _bars method therefore read self.plan.payload['data'] as MappingProxyType and rejected it through its dict-only parser before loading a bounded period.",
+    "source_location": "src/systematic_trading_lab/intraday_fed_policy_absorption_001_runner.py:808",
+    "inherited_parser_location": "src/systematic_trading_lab/intraday_exposed_002_runner.py:454",
+    "test_gap": "Regression coverage exercised coordinator and worker dataset validation before reservation, while synthetic equivalence injected synthetic bars and bypassed the inherited per-run bar-loading path.",
+    "permitted_exposed_dataset_integrity_validation_performed": true,
+    "bounded_period_bar_load_reached": false,
+    "strategy_engine_invocation_reached": false,
+    "canonical_strategy_report_created": false,
+    "strategy_return_observed": false,
+    "candidate_merit_assessed": false,
+    "infrastructure_retry_eligible": false
+  },
+  "policy_disposition": {
+    "same_identity_repair_rule": "Repair and relaunch require zero reservations, attempts, canonical reports, market-data reads, and observations.",
+    "same_identity_repair_conditions_satisfied": false,
+    "same_identity_repair_or_relaunch_permitted": false,
+    "campaign_4_permitted": false,
+    "campaign_disposition": "terminally-interrupted-no-strategy-result",
+    "cohort_size": null,
+    "scientific_hypothesis_disposition": "unassessed",
+    "controlled_evaluation_performed": false,
+    "controlled_qualified_candidate_count": 0,
+    "paper_ready_candidate_count": 0,
+    "program_action": "Preserve exact terminal evidence, produce the frozen three-campaign synthesis, close the bounded program, and stop for strategic review.",
+    "runner_repair_in_closeout": false
+  },
+  "unreached_analyses": [
+    "gross signal",
+    "Normal versus zero-cost behavior",
+    "transaction-cost sensitivity",
+    "turnover",
+    "holding time",
+    "execution-delay sensitivity",
+    "event activation counts",
+    "symbol, direction, event, release, and period concentration",
+    "chronological stability",
+    "walk-forward stability",
+    "parameter-neighbor stability",
+    "drawdown",
+    "cost-to-gross-profit",
+    "average gross trade edge",
+    "regime dependence"
+  ],
+  "protected_access": {
+    "june_market_data_or_results": false,
+    "intraday_v3_data_or_results": false,
+    "daily_2018_2019_data_or_results": false,
+    "protected_campaign_results": false,
+    "paper_broker_or_live_state": false,
+    "strategic_allocation_21": false,
+    "live_market_or_execution_data": false,
+    "federal_reserve_release_contents": false,
+    "new_price_or_volume_acquisition": false,
+    "partial_result_adaptation": false,
+    "campaign_4": false
+  },
+  "authority": {
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "strategy_results": false,
+    "market_data_read": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "postmortem_fingerprint": "770c881c513b79962b56b02911a1a607ef3bb2ca19a6cb7e48395519d0b59627"
+}

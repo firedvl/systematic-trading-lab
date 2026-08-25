@@ -1,0 +1,114 @@
+{
+  "schema_version": "intraday-autonomous-research-001-cross-campaign-synthesis-v1",
+  "synthesis_id": "intraday-autonomous-research-001-cross-campaign-synthesis-v1",
+  "program_id": "intraday-autonomous-research-001",
+  "assessed_at": "2026-08-25T04:36:41Z",
+  "method": "Read-only synthesis of the frozen autonomous program, Campaign 1 reassessment, Campaign 2 postmortem, and Campaign 3 terminal postmortem. No strategy rerun, new market-data read, parameter adaptation, or protected-data access occurred.",
+  "reviewed_inputs": {
+    "program_plan": {
+      "path": "config/research/intraday-autonomous-research-001-program-v1.json",
+      "sha256": "dda9b38a95970660ec2244e540de649586ed940e037eaa49a3b11c760480d1f9",
+      "fingerprint": "734282e42b991889aa2dbce220b46807debe0114309e93cf4ca8d89bf0d0c14f"
+    },
+    "campaign_1_reassessment": {
+      "path": "docs/research-campaigns/intraday-spy-qqq-lead-lag-001-post-campaign-reassessment-v1.json",
+      "sha256": "597d7229e1a4a9616fbe418c12b6ad8053cd2ca0f3bae538184ec428b8a50cad",
+      "fingerprint": "a06e1c83980f6968dba678fb4a0b71b25f73f542e58d01c09ee5144e89b60e6f"
+    },
+    "campaign_2_postmortem": {
+      "path": "docs/research-campaigns/intraday-relative-volume-drift-001-postmortem-v1.json",
+      "sha256": "e1bb5f7dc8a3353219c3a9a0c93dec62938c314b1281a4eca34e37ad7b13c638",
+      "fingerprint": "5738b8bc93fb9fa24e086651bf673ed35b83232450e1e171795723b29cd65d56"
+    },
+    "campaign_3_postmortem": {
+      "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-terminal-postmortem-v1.json",
+      "sha256": "05e10b7b444e2d988af0e1c335b00888fe29d750016067351aa3920a50c3cc1c",
+      "fingerprint": "770c881c513b79962b56b02911a1a607ef3bb2ca19a6cb7e48395519d0b59627"
+    }
+  },
+  "program_accounting": {
+    "maximum_campaign_count": 3,
+    "closed_campaign_count": 3,
+    "completed_strategy_campaign_count": 2,
+    "terminally_interrupted_campaign_count": 1,
+    "maximum_run_specifications": 270,
+    "consumed_run_specifications": 54,
+    "unused_numerical_headroom": 216,
+    "remaining_permitted_campaign_capacity": 0,
+    "campaign_4_permitted": false
+  },
+  "campaigns": [
+    {
+      "index": 1,
+      "campaign_id": "intraday-spy-qqq-lead-lag-001",
+      "economic_mechanism": "fixed-leader cross-asset information transmission",
+      "disposition": "rejected-at-discovery",
+      "run_specifications": 18,
+      "candidate_count": 9,
+      "maximum_normal_active_sessions": 3,
+      "required_normal_active_sessions": 12,
+      "cohort_size": 0,
+      "finding": "Every parent failed activity and matching round-trip gates. Most active rows were negative; the only positive Normal row had one session, 3.442 gross basis points per trade, and complete session and signal-bucket concentration. No candidate reached walk-forward."
+    },
+    {
+      "index": 2,
+      "campaign_id": "intraday-relative-volume-drift-001",
+      "economic_mechanism": "same-clock participation shock and gradual order-flow absorption",
+      "disposition": "rejected-at-discovery",
+      "run_specifications": 18,
+      "candidate_count": 9,
+      "maximum_normal_active_sessions": 6,
+      "required_normal_active_sessions": 12,
+      "cohort_size": 0,
+      "finding": "Four parents were positive under Normal and zero-cost scenarios, but every parent failed activity and participation-bucket concentration. The strongest row returned 0.878023 percent with 15.106 gross basis points per trade, six active sessions, 12 round trips, and all positive profit in one participation bucket. No candidate reached walk-forward."
+    },
+    {
+      "index": 3,
+      "campaign_id": "intraday-fed-policy-absorption-001",
+      "economic_mechanism": "scheduled late-session monetary-policy information absorption",
+      "disposition": "unassessed-terminally-interrupted",
+      "run_specifications": 18,
+      "candidate_count": 9,
+      "cohort_size": null,
+      "finding": "All 18 discovery specifications failed at the same deterministic plan-container boundary before bounded bar loading, strategy execution, canonical report publication, or return observation. This campaign supplies no evidence for or against the economic hypothesis."
+    }
+  ],
+  "findings": {
+    "economic_mechanisms": "Fixed SPY-to-QQQ catch-up and same-clock relative-volume drift were rejected at discovery. Scheduled Fed-policy absorption remains untested and must not be described as rejected.",
+    "common_gate_failures": "Activity and sample size were the common binding gates in both completed campaigns. Campaign 2 also failed participation-bucket concentration throughout. Neither completed campaign produced a parent eligible for walk-forward, stress, delay, or neighbor testing.",
+    "gross_edge_or_robustness_bottleneck": "Campaign 1 mostly lacked gross edge and activity. Campaign 2 showed gross edge at low relative-volume floors, but sparse, concentrated activation blocked robustness assessment. Costs were not the common rejection cause. Campaign 3 has no gross or robustness evidence.",
+    "chronological_and_parameter_stability": "No autonomous-program candidate reached walk-forward, stress, isolated-delay, or immediate-neighbor stages. Chronological, delay, regime, and parameter-neighbor stability remain unestablished.",
+    "domain_assessment": "The frozen three-campaign program and its exposed-data research authority are exhausted, but the SPY/QQQ five-minute economic domain is not scientifically exhausted because Campaign 3 never executed. Repeated sparse discovery evidence makes further variant search on the same exposed bars vulnerable to data mining.",
+    "new_direction_requirement": "Any further autonomous strategy research requires a new user-approved strategic direction outside this frozen program. A defensible proposal should prospectively change the universe, timeframe, data type, or future untouched evidence source rather than repair, relaunch, or parameter-extend Campaign 3 on the same exposed domain.",
+    "qualification_status": "No serious exposed cohort, controlled evaluation, controlled-qualified candidate, replay or shadow package, or intraday PAPER-ready candidate exists."
+  },
+  "stop_disposition": {
+    "stop_trigger": "Campaign 3 terminal data/control failure plus the frozen prohibition on Campaign 4.",
+    "bounded_program_status": "closed-fail-closed-with-two-negative-campaigns-and-one-unassessed-campaign",
+    "campaign_3_repair_or_relaunch_permitted": false,
+    "campaign_4_permitted": false,
+    "automatic_new_program_permitted": false,
+    "exact_next_action": "User strategic review must decide whether to authorize a new prospectively bounded program in a materially different research domain."
+  },
+  "protected_access": {
+    "june_market_data_or_results": false,
+    "intraday_v3_data_or_results": false,
+    "daily_2018_2019_data_or_results": false,
+    "protected_campaign_results": false,
+    "paper_broker_or_live_state": false,
+    "strategic_allocation_21": false,
+    "live_market_or_execution_data": false,
+    "partial_result_adaptation": false,
+    "campaign_4": false
+  },
+  "authority": {
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "synthesis_fingerprint": "8a9406971f7341ae9d661e8c3f63e45113b541783ff83cc210c1984abf0eecd9"
+}
