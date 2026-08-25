@@ -1,0 +1,40 @@
+{
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "live_execution": false,
+    "market_data_read": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "research_qualification": false,
+    "strategy_execution": false,
+    "strategy_implementation": false,
+    "strategy_results": false
+  },
+  "disposition": {
+    "basis": "The read-only preflight failed before runtime creation, reservation, attempt, dataset manifest-file read, raw-record read, normalized-bar read, price-payload read, canonical report, or strategy observation. DatasetService.describe read only four frozen manifest_json catalog rows before the inherited validator rejected the immutable mapping type. The control classification treats catalog identity metadata as non-observational and not as a market-data payload read. The same campaign identity remains permitted under the frozen pre-observation plumbing repair rule subject to fresh independent review of this interpretation.",
+    "next_action": "Convert the already-frozen plan payload to its canonical plain-dict form only at the inherited validator boundary, add a regression, merge the repair, rerun exact-main gates and synthetic equivalence, and obtain a fresh independent launch review and source-bound launch artifact.",
+    "same_campaign_identity_permitted": true
+  },
+  "execution_state": {
+    "attempt_count": 0,
+    "campaign_runtime_created": false,
+    "canonical_report_count": 0,
+    "dataset_catalog_metadata_read": true,
+    "dataset_manifest_file_read": false,
+    "normalized_bar_payload_read": false,
+    "raw_market_record_read": false,
+    "reservation_count": 0,
+    "strategy_result_observed": false
+  },
+  "failure": {
+    "classification": "pre-observation-plumbing",
+    "error": "ValueError: plan data must be an object",
+    "failed_boundary": "IntradayFedPolicyAbsorption001Runner._verify_datasets delegated an immutable MappingProxyType payload to IntradayExposed002Runner._verify_datasets, whose local parser accepts only dict.",
+    "source_commit": "5825181e60ae9fa7fbcd8701d281346f087c237c"
+  },
+  "failure_fingerprint": "b9b2154d41b96a9ff4afd2e609bfc0fc7327203d65b8b29d4be8a951f4848d23",
+  "recorded_at": "2026-08-25T03:40:53Z",
+  "schema_version": "intraday-fed-policy-absorption-001-pre-execution-plumbing-failure-v1",
+  "status": "repair-required-no-runtime-reservation-attempt-market-payload-or-result"
+}

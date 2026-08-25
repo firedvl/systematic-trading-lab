@@ -774,7 +774,7 @@ class _Worker:
         self.cost_model = load_intraday_execution_cost_model(self.repository)
         self.datasets = _dataset_bindings(self.plan.payload)
         self.data_by_dataset = _read_only_dataset_services(self.data_home, self.datasets)
-        IntradayExposed002Runner._verify_datasets(cast(Any, self))
+        IntradayExposed002Runner._verify_datasets(cast(Any, self), canonicalize(self.plan.payload))
         self.scenarios = _scenarios(self.cost_model)
         self._bar_cache: dict[str, tuple[Any, ...]] = {}
         _await_worker_attestations(
@@ -952,7 +952,7 @@ class IntradayFedPolicyAbsorption001Runner:
         self.attempt_store.bind(self._program_binding())
 
     def _verify_datasets(self) -> None:
-        IntradayExposed002Runner._verify_datasets(cast(Any, self))
+        IntradayExposed002Runner._verify_datasets(cast(Any, self), canonicalize(self.plan.payload))
 
     def run(self) -> dict[str, object]:
         with localcontext(_CONTEXT), _exclusive_file_lock(self.runtime_root / "campaign.lock"):
