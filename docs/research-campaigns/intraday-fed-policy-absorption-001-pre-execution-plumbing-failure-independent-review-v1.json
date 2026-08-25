@@ -1,0 +1,49 @@
+{
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "live_execution": false,
+    "market_data_read": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "research_qualification": false,
+    "strategy_execution": false,
+    "strategy_implementation": false,
+    "strategy_results": false
+  },
+  "findings": [],
+  "independent_review_fingerprint": "61947093898243c3bf2678bff0c1b16776c1494c9d044fcdb666abefb2348ad5",
+  "repair_files": [
+    {
+      "path": "src/systematic_trading_lab/intraday_fed_policy_absorption_001_runner.py",
+      "sha256": "b75c2cc72e11feb84dbe8c0b83ec1e981e208495068224f89cabc5d0c272552e"
+    },
+    {
+      "path": "src/systematic_trading_lab/intraday_fed_policy_absorption_001_launch_control.py",
+      "sha256": "6ee0f7e28e986d56a4e985ed39db83b1518ff29d17aebca30690a6fed139a7db"
+    },
+    {
+      "path": "tests/unit/test_intraday_fed_policy_absorption_001_runner.py",
+      "sha256": "426e4001b99adad5f3290999d9a7175ad6536b3bd5485ae11d23f03011c773b7"
+    }
+  ],
+  "resolved_findings": [
+    "Apply canonical plain-dict conversion at both coordinator and spawned-worker inherited validator boundaries.",
+    "Use nested MappingProxyType in the worker regression and require both payload layers to become plain dicts before reservation.",
+    "Distinguish catalog identity metadata from dataset artifact, raw-record, normalized-bar, price-payload, and strategy-observation access."
+  ],
+  "review_date": "2026-08-24",
+  "review_id": "intraday-fed-policy-absorption-001-pre-execution-plumbing-failure-independent-review-v1",
+  "review_method": "Independent read-only source, failure-path, frozen-policy, regression-test, and zero-runtime-state review.",
+  "reviewed_at": "2026-08-25T03:47:46Z",
+  "reviewed_failure": {
+    "fingerprint": "b9b2154d41b96a9ff4afd2e609bfc0fc7327203d65b8b29d4be8a951f4848d23",
+    "path": "docs/research-campaigns/intraday-fed-policy-absorption-001-pre-execution-plumbing-failure-v1.json",
+    "sha256": "93663de82a123df7f5adedaae301e4638b05c5331e04500ea0c8cc25e9323b1c"
+  },
+  "reviewer": "/root/campaign3_preexecution_dataset_failure_review",
+  "schema_version": "intraday-fed-policy-absorption-001-pre-execution-plumbing-failure-independent-review-v1",
+  "scope_limit": "No dataset artifact, raw record, normalized bar, price payload, strategy result, June, V3, daily 2018-2019, protected result, PAPER, broker, live, credential, or strategic-allocation-21 state was accessed.",
+  "status": "passed",
+  "verdict": "pass"
+}

@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Thaw Campaign 3 plan only at inherited dataset-validation boundaries
+
+- Decision: pass `canonicalize(self.plan.payload)` to the inherited Exposed 002 dataset validator from both the Campaign 3 coordinator and spawned worker. Keep the frozen plan immutable everywhere else and unset launch-control constants until a repaired exact main passes all gates, synthetic equivalence, and fresh independent launch review.
+- Context: PR #204 merged the first launch binding at exact main `5825181e60ae9fa7fbcd8701d281346f087c237c`. A read-only preflight loaded four catalog metadata rows, then failed because Campaign 3's `MappingProxyType` plan reached an inherited parser that accepts only `dict`. No dataset manifest file, raw record, normalized bar, price payload, runtime, reservation, attempt, report, or strategy result was accessed. Failure SHA-256/fingerprint is `93663de82a123df7f5adedaae301e4638b05c5331e04500ea0c8cc25e9323b1c` / `b9b2154d41b96a9ff4afd2e609bfc0fc7327203d65b8b29d4be8a951f4848d23`; finding-free independent repair-review SHA-256/fingerprint is `137dff07e5d450a034337a024529c02a3d8aa33ccd9335f7875d2bdc992b2ff5` / `61947093898243c3bf2678bff0c1b16776c1494c9d044fcdb666abefb2348ad5`.
+- Consequences: inherited validation receives the same canonical values in its expected container type at coordinator and worker initialization. Tests require nested frozen mappings to become plain dictionaries before store creation or reservation. Hypothesis, calendar, data identity, chronology, strategy, cost, execution, gates, trace contracts, budget, retries, and authorities do not change. The same campaign identity remains valid under the pre-observation plumbing rule.
+- Revisit when: a shared validator accepts immutable mappings without changing closed campaign behavior. Never use this repair to alter plan values or validate an observed campaign under new semantics.
+
 ## 2026-08-24 — Bind Campaign 3 launch control to exact reviewed main
 
 - Decision: bind `intraday-fed-policy-absorption-001` to exact reviewed main `9b586561d848743af77bb30a4c243080dae85eda` after all seven repository gates, five-fixture synthetic one-worker/four-worker equivalence, and a finding-free independent launch review. The launch-control artifact has SHA-256 `13c14ada3025a2a10d395842a85f9a1304c02d8ed4fade7e53f86682f44803e3` and fingerprint `c8f09c6aa8f05654d2ea232082bc18965f8a2f20c32c1051f8c6033f8a6835df`.

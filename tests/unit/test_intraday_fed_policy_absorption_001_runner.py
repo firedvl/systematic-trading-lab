@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 from decimal import ROUND_DOWN, ROUND_UP, localcontext
 from pathlib import Path
-from types import SimpleNamespace
+from types import MappingProxyType, SimpleNamespace
 from typing import Any, cast
 
 import pytest
@@ -44,7 +44,6 @@ from systematic_trading_lab.intraday_fed_policy_absorption_001_runner import (
 from systematic_trading_lab.research_executor import ResearchProcessError, run_process_stage
 
 _SOURCE_COMMIT = "a" * 40
-_IMPLEMENTATION_SOURCE = "9b586561d848743af77bb30a4c243080dae85eda"
 
 
 @dataclass(frozen=True)
@@ -121,19 +120,32 @@ def test_selection_preserves_frozen_parent_order() -> None:
     assert _select_eligible(ledger, 2, key=lambda _: (0,)) == ("first", "second")
 
 
-def test_launch_control_binds_exact_reviewed_main() -> None:
+def test_unbound_repair_fails_before_runtime_creation(tmp_path: Path) -> None:
     repository = Path.cwd()
-    assert REVIEWED_LAUNCH_CONTROL_SHA256 == (
-        "13c14ada3025a2a10d395842a85f9a1304c02d8ed4fade7e53f86682f44803e3"
-    )
-    assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
-        "c8f09c6aa8f05654d2ea232082bc18965f8a2f20c32c1051f8c6033f8a6835df"
-    )
-    loaded = runner_module._load_launch_control(repository, source_commit=_IMPLEMENTATION_SOURCE)
-    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
+    runtime = tmp_path / "runtime"
+    assert REVIEWED_LAUNCH_CONTROL_SHA256 is None
+    assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT is None
     assert (
-        intraday_fed_policy_absorption_001_plan_summary(repository)["launch_control_bound"] is True
+        intraday_fed_policy_absorption_001_plan_summary(repository)["launch_control_bound"] is False
     )
+    with pytest.raises(ValueError, match="launch control"):
+        IntradayFedPolicyAbsorption001Runner(repository, runtime)
+    assert not runtime.exists()
+
+
+def test_dataset_validation_thaws_frozen_plan_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runner = object.__new__(IntradayFedPolicyAbsorption001Runner)
+    runner.plan = load_intraday_fed_policy_absorption_001_plan(Path.cwd())
+
+    def verify(_self: object, payload: object | None = None) -> None:
+        assert isinstance(payload, dict)
+        assert isinstance(payload.get("data"), dict)
+
+    monkeypatch.setattr(IntradayExposed002Runner, "_verify_datasets", verify)
+
+    runner._verify_datasets()
 
 
 def test_broker_environment_fails_before_runtime_creation(
@@ -273,7 +285,7 @@ def test_worker_attestation_publishes_complete_marker(
     assert ready[0].read_text(encoding="ascii") == _SOURCE_COMMIT
 
 
-def test_worker_attestation_precedes_stage_reservation(
+def test_worker_dataset_validation_and_attestation_precede_stage_reservation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     attestation_root = tmp_path / "attestations"
@@ -297,7 +309,9 @@ def test_worker_attestation_precedes_stage_reservation(
     monkeypatch.setattr(
         runner_module,
         "load_intraday_fed_policy_absorption_001_plan",
-        lambda _repository: SimpleNamespace(payload={}),
+        lambda _repository: SimpleNamespace(
+            payload=MappingProxyType({"data": MappingProxyType({})})
+        ),
     )
     monkeypatch.setattr(
         runner_module,
@@ -306,7 +320,12 @@ def test_worker_attestation_precedes_stage_reservation(
     )
     monkeypatch.setattr(runner_module, "_dataset_bindings", lambda _payload: ())
     monkeypatch.setattr(runner_module, "_read_only_dataset_services", lambda *_args: {})
-    monkeypatch.setattr(IntradayExposed002Runner, "_verify_datasets", lambda _self: None)
+
+    def verify(_self: object, payload: object | None = None) -> None:
+        assert isinstance(payload, dict)
+        assert isinstance(payload.get("data"), dict)
+
+    monkeypatch.setattr(IntradayExposed002Runner, "_verify_datasets", verify)
     monkeypatch.setattr(runner_module, "_scenarios", lambda _model: {})
     monkeypatch.setattr(runner_module, "IntradayFedPolicyAbsorption001Store", Store)
 
