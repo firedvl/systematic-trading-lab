@@ -44,6 +44,7 @@ from systematic_trading_lab.intraday_fed_policy_absorption_001_runner import (
 from systematic_trading_lab.research_executor import ResearchProcessError, run_process_stage
 
 _SOURCE_COMMIT = "a" * 40
+_IMPLEMENTATION_SOURCE = "a7c2228a68c3cad39c6faf5bf02d6b4b3c495ebf"
 
 
 @dataclass(frozen=True)
@@ -120,17 +121,19 @@ def test_selection_preserves_frozen_parent_order() -> None:
     assert _select_eligible(ledger, 2, key=lambda _: (0,)) == ("first", "second")
 
 
-def test_unbound_repair_fails_before_runtime_creation(tmp_path: Path) -> None:
+def test_launch_control_binds_repaired_exact_main() -> None:
     repository = Path.cwd()
-    runtime = tmp_path / "runtime"
-    assert REVIEWED_LAUNCH_CONTROL_SHA256 is None
-    assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT is None
-    assert (
-        intraday_fed_policy_absorption_001_plan_summary(repository)["launch_control_bound"] is False
+    assert REVIEWED_LAUNCH_CONTROL_SHA256 == (
+        "6b1ee2e789307fce253d8a5a7780cd4dfdb33a1df2addb5eaedd236fc68d105f"
     )
-    with pytest.raises(ValueError, match="launch control"):
-        IntradayFedPolicyAbsorption001Runner(repository, runtime)
-    assert not runtime.exists()
+    assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
+        "1f2ecb1339613ec7b7e3e98a93fa6a8ae21f3528de779d861512c6ac0d56a6a0"
+    )
+    loaded = runner_module._load_launch_control(repository, source_commit=_IMPLEMENTATION_SOURCE)
+    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
+    assert (
+        intraday_fed_policy_absorption_001_plan_summary(repository)["launch_control_bound"] is True
+    )
 
 
 def test_dataset_validation_thaws_frozen_plan_payload(
