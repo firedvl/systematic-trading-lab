@@ -1,9 +1,10 @@
 # Intraday Fed Policy Absorption 001 program
 
 Status: prospective plan/calendar and implementation reviews are finding-free. Launch control remains
-unbound. The second exact-main launch review found a pre-reservation worker-readiness race; its repair
-is local to Campaign 3 and is not merged or launch-reviewed. No reservation, attempt, market-data
-read, report, or result exists.
+unbound. PR #201 merged the Campaign-local worker-readiness repair at exact main
+`9778f823bf00da9e96c92d6463d099dd3b530ad7`; the next exact-main review found only stale launch-state
+documentation. This correction is not merged or reviewed. No reservation, attempt, market-data read,
+report, or result exists.
 
 Program ID: `intraday-fed-policy-absorption-001`.
 
@@ -169,8 +170,13 @@ stage before the unchanged executor sees that worker as ready, so the first task
 stage specifications reserved. A later replacement revalidates the same controls and reuses the
 complete matching marker set without adding a marker. A source, input, or peer-attestation failure
 stops the waiting pool before any worker opens the attempt store, reserves, claims, or receives a
-task. This repair must pass focused and full gates, merge, and receive another finding-free exact-main
-review; neither failed review grants launch authority.
+task. PR #201 merged the repair at exact main `9778f823bf00da9e96c92d6463d099dd3b530ad7`.
+All seven exact-main gates passed with 1,069 tests and four skips. The public verifier found all five
+non-protected synthetic fixtures byte-identical at one and four workers in `0.802682` and `0.812015`
+seconds. The fresh exact-main review found no code or control defect, but it rejected the stale durable
+records that still called the repair unmerged. This docs-only correction must merge and receive a
+finding-free exact-main review before launch-control binding; none of the failed reviews grants launch
+authority.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, credentials, and live data remain prohibited. Every authority field is
