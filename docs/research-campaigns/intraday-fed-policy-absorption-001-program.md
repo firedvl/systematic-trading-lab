@@ -1,13 +1,13 @@
 # Intraday Fed Policy Absorption 001 program
 
-Status: prospective plan/calendar and implementation reviews are finding-free. Launch control remains
-unbound. PR #201 merged the Campaign-local worker-readiness repair at exact main
+Status: prospective plan/calendar, implementation, and exact-main launch reviews are finding-free.
+PR #201 merged the Campaign-local worker-readiness repair at exact main
 `9778f823bf00da9e96c92d6463d099dd3b530ad7`; the next exact-main review found only stale launch-state
 documentation. PR #202 merged the initial chronology correction at exact main
 `ed042c29696e646aaf0a44e5b7f3977092fe71cc`; review of that exact main rejected its self-referential
-branch-status wording. This record avoids claims about its own merge state. Launch-control binding
-requires a finding-free review of current exact main. No reservation, attempt, market-data read,
-report, or result exists.
+branch-status wording. PR #203 replaced it with stable history. Exact main
+`9b586561d848743af77bb30a4c243080dae85eda` passed launch review; the launch-control artifact binds
+that exact source and evidence. No reservation, attempt, market-data read, report, or result exists.
 
 Program ID: `intraday-fed-policy-absorption-001`.
 
@@ -28,6 +28,12 @@ Reviewed state revision 6 SHA-256/fingerprint:
 `4cc76196c71713fbf56a92cd2495a9a8cc137eb749da0ee0511a429144cc6b73`.
 
 Starting main: `0d53fa654f72ebeb262a28713dec6254e87e169a`.
+
+Reviewed launch source main: `9b586561d848743af77bb30a4c243080dae85eda`.
+
+Launch-control SHA-256/fingerprint:
+`13c14ada3025a2a10d395842a85f9a1304c02d8ed4fade7e53f86682f44803e3` /
+`c8f09c6aa8f05654d2ea232082bc18965f8a2f20c32c1051f8c6033f8a6835df`.
 
 ## Frozen provenance and calendar
 
@@ -141,9 +147,9 @@ including 1,062 tests with four skips. Independent implementation review recheck
 identity and timing, atomic pair execution, immutable-result rejection, launch-disable behavior, and
 protected boundaries. It found no issue and accessed no market data or protected input.
 
-The implementation must merge through PR and CI. A separate review must then bind launch control to
-the exact synchronized implementation main before runtime creation, reservation, market-data read,
-or the first campaign run.
+Implementation and launch binding remain separate controls. Runtime construction requires clean
+synchronized main, the exact launch artifact and constants, reviewed file hashes and inputs, and an
+allowed source lineage before reservation, market-data read, or the first campaign run.
 
 Implementation main `1e22649336fe4481ab9c7831c16d929e6227cf85` merged through PR #199 and
 passed exact-main gates and five-fixture synthetic equivalence. The first launch review did not bind
@@ -179,9 +185,13 @@ non-protected synthetic fixtures byte-identical at one and four workers in `0.80
 seconds. The fresh exact-main review found no code or control defect, but it rejected the stale durable
 records that still called the repair unmerged. PR #202 merged the initial chronology correction at
 exact main `ed042c29696e646aaf0a44e5b7f3977092fe71cc`; review of that exact main rejected its
-self-referential branch-status wording. This record removes branch-status claims. Launch-control
-binding requires a finding-free review of current exact main; none of the failed reviews grants
-launch authority.
+self-referential branch-status wording. PR #203 replaced it with stable history at exact main
+`9b586561d848743af77bb30a4c243080dae85eda`. All seven gates passed there, including 1,069 tests with
+four skips. Five non-protected synthetic fixtures were byte-identical at one and four workers in
+`0.796068` and `0.876997` seconds. Independent launch review passed with no findings. Launch-control
+SHA-256/fingerprint `13c14ada3025a2a10d395842a85f9a1304c02d8ed4fade7e53f86682f44803e3` /
+`c8f09c6aa8f05654d2ea232082bc18965f8a2f20c32c1051f8c6033f8a6835df` binds that exact evidence;
+none of the failed reviews grants authority.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, credentials, and live data remain prohibited. Every authority field is
