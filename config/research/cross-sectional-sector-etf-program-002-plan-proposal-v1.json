@@ -1,0 +1,691 @@
+{
+  "schema_version": "cross-sectional-sector-etf-program-002-plan-proposal-v1",
+  "plan_id": "cross-sectional-sector-etf-program-002-plan-proposal-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "status": "PROPOSED-NOT-AUTHORIZED",
+  "created_date": "2026-08-25",
+  "purpose": "Prospectively define two bounded cross-sectional ETF hypotheses without acquiring market data, implementing executable strategies, or observing strategy returns.",
+  "source_state": {
+    "planning_base_commit": "ad43c3098e6714b3dde934b5c993b415895f8a21",
+    "program_001_state_path": "docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-008.json",
+    "program_001_state_sha256": "1f47f158a362f4874d1b0f7a0fec8feb1946942555fbff382e805c926a0a65db",
+    "program_001_state_fingerprint": "a87b57a984beffb47c7664f4a38f79de7ac9f712a985bba60e48a65b4d318473",
+    "program_001_disposition": "closed-do-not-restart-repair-or-extend",
+    "active_campaign": null,
+    "remaining_program_001_campaign_capacity": 0,
+    "active_program_001_leases": 0,
+    "state_evidence_scope": "Committed terminal state and finding-free closeout evidence only; no runtime market-data or protected-result store was opened during planning.",
+    "strategic_review_path": "docs/research-campaigns/post-autonomous-research-001-strategic-review.md",
+    "strategic_review_sha256": "d41138b79985ebb8124eb9790a006ae5b325ed232043331becdcad9064f7c73f",
+    "source_proposal_path": "docs/research-campaigns/next-research-program-002-proposal.json",
+    "source_proposal_sha256": "0efdff506ecfd9d628ac18e516fc8ef859fcf3ae4ec3d7eb396a6f409cec6cc3"
+  },
+  "proposal_clarifications": [
+    "Campaign 1 is the continuation family and Campaign 2 is the reversal family. Both are fixed exposed campaigns. Future controlled evaluation is a separate phase, not the second strategy campaign.",
+    "The 11:30 New York decision observes the six open-labeled five-minute bars in [11:00, 11:30); the last source bar opens at 11:25.",
+    "Any missing required bar or symbol invalidates the complete dataset or run specification; a missing member never shrinks the ranking universe.",
+    "Only full 09:30-16:00 XNYS sessions may trade. Early-close sessions remain flat but may supply complete [09:30, 11:30) prior-volume context.",
+    "Campaign 2 runs after a normal terminal Campaign 1 regardless of Campaign 1 merit. Campaign 1 results cannot alter Campaign 2.",
+    "Controlled Block A uses its first twenty sessions only as sealed same-clock-volume warmup, avoiding Program 002 acquisition of Intraday V3 dates.",
+    "Base selection uses only 2020-07-27 through 2022-01-21 discovery evidence. All nine validation folds begin later and are disjoint from selection evidence.",
+    "The 11:30 decision creates an order only after the 11:25 source bar completes. The earliest fill is the next five-minute bar open at 11:35."
+  ],
+  "universe": {
+    "path": "config/research/multi-hour-sector-etfs-v1.json",
+    "sha256": "8f07f73fd93f9432501d579e43616e1d9a09d6db77c347a6bed4151f2210c312",
+    "universe_id": "multi-hour-sector-etfs-v1",
+    "universe_fingerprint": "ef23e533aa7a91262200bd7a77a65f9b6d8b4d473573850c33ef014701177790",
+    "ranking_symbols": [
+      "IWM",
+      "MDY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "context_and_benchmark_symbol": "SPY",
+    "membership_change_allowed": false
+  },
+  "economic_contracts": [
+    {
+      "family_id": "sector-relative-continuation-v1",
+      "strategy_id": "multi-hour-sector-relative-continuation-v1",
+      "campaign_id": "multi-hour-sector-etf-continuation-exposed-001",
+      "rationale": "A sector or capitalization sleeve that outperforms SPY on elevated participation may continue to absorb information over a fixed multi-hour horizon.",
+      "direction": "long-only",
+      "activation": "residual_return > 0 and same_clock_relative_volume >= 1.2",
+      "ranking": "residual_return descending, then symbol ascending",
+      "fixed_threshold_rationale": "Positive SPY-relative return expresses continuation without a searched return floor; 1.2 requires a 20 percent participation increase while leaving the only grid axes to lookback and hold."
+    },
+    {
+      "family_id": "sector-relative-reversal-v1",
+      "strategy_id": "multi-hour-sector-relative-reversal-v1",
+      "campaign_id": "multi-hour-sector-etf-reversal-exposed-001",
+      "rationale": "A sleeve that underperforms SPY by at least ten basis points on unusually high participation may reflect temporary pressure that reverses over a fixed multi-hour horizon.",
+      "direction": "long-only",
+      "activation": "residual_return <= -0.001 and same_clock_relative_volume >= 1.5",
+      "ranking": "residual_return ascending, then symbol ascending",
+      "fixed_threshold_rationale": "The ten-basis-point displacement and 1.5 participation floor require a larger move and stronger participation for reversal; neither threshold is a searched axis."
+    }
+  ],
+  "feature_contract": {
+    "source_bars": {
+      "timeframe": "5m",
+      "calendar": "XNYS",
+      "session": "regular-session-only",
+      "timestamp_semantics": "UTC bar-open labels; a source bar is observable only at bar-open plus five minutes",
+      "required_symbols_per_timestamp": 13
+    },
+    "thirty_minute_aggregation": {
+      "bucket_alignment_new_york": "Half-hour buckets anchored at 09:30: [09:30,10:00), [10:00,10:30), and so on until the scheduled XNYS close.",
+      "source_count_per_bucket": 6,
+      "open": "first source open",
+      "high": "maximum source high",
+      "low": "minimum source low",
+      "close": "last source close",
+      "volume": "integer sum of source volume",
+      "label": "bucket close timestamp in UTC",
+      "incomplete_bucket_action": "terminal-data-failure"
+    },
+    "decision": {
+      "clock": "11:30:00 America/New_York",
+      "latest_completed_bucket": "[11:00,11:30)",
+      "latest_source_bar_open": "11:25:00 America/New_York",
+      "decisions_per_session": 1,
+      "simultaneous_snapshot": "Compute all twelve traded-symbol features and SPY context from one complete synchronized slice before ranking any symbol."
+    },
+    "lookback_return": "For L in {1,2}, latest completed 30-minute close divided by the completed 30-minute close L buckets earlier, minus one.",
+    "residual_return": "Traded-symbol lookback_return minus SPY lookback_return at the same decision and L. Do not demean, standardize, winsorize, z-score, or otherwise normalize cross-sectionally.",
+    "same_clock_relative_volume": {
+      "numerator": "Sum source volume for the traded symbol over the 24 bars in [09:30,11:30) on the decision session.",
+      "denominator": "Arithmetic mean of the same 24-bar sum over exactly the twenty immediately preceding complete XNYS sessions.",
+      "prior_session_rule": "A normal or early-close XNYS session is prior-context eligible when all thirteen symbols have the complete expected regular-session grid and [09:30,11:30) exists.",
+      "causality": "The decision session never contributes to its denominator.",
+      "nonpositive_denominator_action": "terminal-data-failure"
+    },
+    "numeric_policy": "Use Decimal price and return arithmetic and exact integer volumes. No floating-point ranking key is permitted.",
+    "invalid_input_action": "A missing or duplicate symbol/bar, malformed OHLC relationship, nonpositive price, negative volume, incomplete bucket/history, nonfinite derived value, or nonpositive relative-volume denominator fails the whole dataset or run specification. It never removes only one symbol and never creates a flat signal."
+  },
+  "configuration_grid": {
+    "lookback_30m_bars": {
+      "values": [
+        1,
+        2
+      ],
+      "rationale": "Thirty and sixty minutes are the two nearest interpretable signal horizons around the proposed fixed aggregation and do not reopen a broad timing search."
+    },
+    "hold_30m_bars": {
+      "values": [
+        4,
+        8
+      ],
+      "rationale": "Two and four hours test the proposed slower intraday mechanism while preserving one session and one entry set."
+    },
+    "configuration_count": 8,
+    "configurations": [
+      {
+        "configuration_id": "src-v1-l1-h4",
+        "family_id": "sector-relative-continuation-v1",
+        "lookback_30m_bars": 1,
+        "hold_30m_bars": 4,
+        "immediate_neighbors": [
+          "src-v1-l1-h8",
+          "src-v1-l2-h4"
+        ]
+      },
+      {
+        "configuration_id": "src-v1-l1-h8",
+        "family_id": "sector-relative-continuation-v1",
+        "lookback_30m_bars": 1,
+        "hold_30m_bars": 8,
+        "immediate_neighbors": [
+          "src-v1-l1-h4",
+          "src-v1-l2-h8"
+        ]
+      },
+      {
+        "configuration_id": "src-v1-l2-h4",
+        "family_id": "sector-relative-continuation-v1",
+        "lookback_30m_bars": 2,
+        "hold_30m_bars": 4,
+        "immediate_neighbors": [
+          "src-v1-l1-h4",
+          "src-v1-l2-h8"
+        ]
+      },
+      {
+        "configuration_id": "src-v1-l2-h8",
+        "family_id": "sector-relative-continuation-v1",
+        "lookback_30m_bars": 2,
+        "hold_30m_bars": 8,
+        "immediate_neighbors": [
+          "src-v1-l1-h8",
+          "src-v1-l2-h4"
+        ]
+      },
+      {
+        "configuration_id": "srr-v1-l1-h4",
+        "family_id": "sector-relative-reversal-v1",
+        "lookback_30m_bars": 1,
+        "hold_30m_bars": 4,
+        "immediate_neighbors": [
+          "srr-v1-l1-h8",
+          "srr-v1-l2-h4"
+        ]
+      },
+      {
+        "configuration_id": "srr-v1-l1-h8",
+        "family_id": "sector-relative-reversal-v1",
+        "lookback_30m_bars": 1,
+        "hold_30m_bars": 8,
+        "immediate_neighbors": [
+          "srr-v1-l1-h4",
+          "srr-v1-l2-h8"
+        ]
+      },
+      {
+        "configuration_id": "srr-v1-l2-h4",
+        "family_id": "sector-relative-reversal-v1",
+        "lookback_30m_bars": 2,
+        "hold_30m_bars": 4,
+        "immediate_neighbors": [
+          "srr-v1-l1-h4",
+          "srr-v1-l2-h8"
+        ]
+      },
+      {
+        "configuration_id": "srr-v1-l2-h8",
+        "family_id": "sector-relative-reversal-v1",
+        "lookback_30m_bars": 2,
+        "hold_30m_bars": 8,
+        "immediate_neighbors": [
+          "srr-v1-l1-h8",
+          "srr-v1-l2-h4"
+        ]
+      }
+    ],
+    "neighbor_definition": "Same family; differ on exactly one axis; the changed value is the sole adjacent value on that axis. Every configuration has exactly two neighbors.",
+    "hidden_or_added_parameters_allowed": false
+  },
+  "portfolio_contract": {
+    "construction": "long-flat",
+    "shorting": false,
+    "leverage": false,
+    "initial_cash_usd": "100000",
+    "maximum_positions": 3,
+    "selection": "Filter the fixed twelve-symbol ranking universe by the family activation rule, sort by the family rank and symbol tie-break, and take the first three or fewer.",
+    "ties": "Compare exact Decimal residual returns. Equal values use symbol ascending. Relative volume never breaks a tie.",
+    "slot_weight": "0.3333333333333333333333333333",
+    "pre_fee_slot_budget": "Each selected symbol receives slot_weight times the common pre-fill equity before the fee reserve. The occupied-slot budget is selected_count times that amount.",
+    "unused_slots": "remain-cash-without-rescaling",
+    "target_gross_exposure": "selected_count / 3 before the common fee-reserve scale; actual entry gross exposure is selected_count / 3 times that scale",
+    "target_net_exposure": "equal to actual target gross exposure because every position is long",
+    "maximum_target_gross_exposure": "1",
+    "maximum_target_net_exposure": "1",
+    "fee_reserve_and_uniform_scaling": {
+      "preliminary_quantity": "For each selected symbol i, q0_i = slot_weight * common pre-fill equity / its adverse-spread-adjusted buy price.",
+      "preliminary_buy_fee_reserve": "R0 is the exact total buy-side regulatory and broker charge for the complete preliminary quantity vector under the frozen fee model, including all account-day grouping and rounding.",
+      "fee_monotonicity_requirement": "The reviewed fee model must prove that reducing every nonnegative buy quantity cannot increase total buy-side charges. Otherwise launch is blocked.",
+      "common_scale": "For selected_count > 0, B = selected_count * slot_weight * common pre-fill equity and scale = (B - R0) / B. R0 must satisfy 0 <= R0 < B; otherwise the run fails before any fill.",
+      "final_quantity": "For every selected symbol, q_i = scale * q0_i. Recompute exact fees once for the complete final vector; do not resize symbols separately.",
+      "cash_proof": "Final entry notional is B - R0 and monotonic final buy fees are no greater than R0, so post-entry cash is at least the unused-slot cash and cannot be negative. Any failed inequality is terminal."
+    },
+    "simultaneous_sizing": "At the entry fill timestamp, use one common pre-fill portfolio-equity snapshot, one complete preliminary quantity vector, one fee reserve, and one common scale. Symbol iteration order cannot change quantities, fees, or cash.",
+    "share_policy": "Exact positive Decimal fractional shares; no whole-share or lot rounding in research replay.",
+    "fill_order": "All due exits first, then entries; within a phase use symbol ascending only for ledger order. Quantity and cash must not depend on ledger order.",
+    "cash": "Cash must remain nonnegative before and after the atomic entry and every later event. Any sizing, fee-monotonicity, or accounting violation is terminal.",
+    "no_trade": "If no symbol activates, remain fully in cash and publish the inactive decision trace.",
+    "entries_per_symbol_per_session": 1,
+    "reentry": false,
+    "resize": false,
+    "overlap": "Selected symbols coexist in one portfolio. No position survives its fixed exit, no configuration shares capital with another run, and every session starts and ends flat.",
+    "turnover_control": "One entry and one complete exit per selected symbol is the control. Report two-sided fill notional divided by initial cash; do not add an outcome-tuned turnover threshold.",
+    "capacity": "Before entry, require each final fee-reserved entry market notional to be no more than one percent of that symbol's median five-minute close-times-volume across every bar in its twenty prior complete sessions. A breach fails the run specification; selected symbols are not dropped or rescaled. Mandatory exits always execute and report the same ratio."
+  },
+  "execution_contract": {
+    "decision_target_timestamp": "11:30:00 America/New_York",
+    "order_creation": "Create the complete atomic entry order only after the 11:30 decision snapshot is complete. The 11:30 bar open is contemporaneous with decision formation and is never eligible.",
+    "delay_semantics": "For delay d in {1,2,3}, fill at the open of the d-th five-minute bar strictly after the 11:30 decision timestamp: decision + d * five minutes.",
+    "entry_fill_clocks": {
+      "delay_1": "11:35",
+      "delay_2": "11:40",
+      "delay_3": "11:45"
+    },
+    "exit_target": "When the atomic entry fills, schedule its complete exit for that actual entry fill timestamp plus hold_30m_bars times thirty minutes. The order exists before that future bar open, so every scenario holds exactly two or four hours.",
+    "two_hour_exit_fill_clocks": {
+      "delay_1": "13:35",
+      "delay_2": "13:40",
+      "delay_3": "13:45"
+    },
+    "four_hour_exit_fill_clocks": {
+      "delay_1": "15:35",
+      "delay_2": "15:40",
+      "delay_3": "15:45"
+    },
+    "fill_market_price": "The exact source five-minute bar open at the fill timestamp.",
+    "cost_application": "Apply the configured symbol adverse half-spread independently to every buy and sell fill, then apply the frozen regulatory-fee formula. Costs affect only adverse fill prices, the common entry fee-reserve scale, fees, and resulting accounting; they never affect features, activation, ranking, the pre-fee slot budget, or the selection trace.",
+    "market_impact_model": null,
+    "queue_position_model": null,
+    "partial_fill_model": null,
+    "fill_model_limit": "Replay assumes each fee-reserved quantity fills completely at the source bar open plus or minus the calibrated adverse half-spread. The capacity gate is a feasibility screen, not a market-impact, queue-position, or partial-fill model.",
+    "early_close": "A session whose scheduled XNYS close is before 16:00 New York is trade-ineligible and remains flat for every configuration. It may still enter later sessions' prior-volume denominator.",
+    "full_day_exit_safety": "The latest supported four-hour stress exit fills at 15:45, before the 15:55 final bar open and 16:00 close.",
+    "missing_fill_bar_action": "terminal-data-failure",
+    "flat_at_close": true
+  },
+  "benchmark_contract": {
+    "benchmark_id": "participation-matched-spy-v1",
+    "definition": "On each candidate-active session, give SPY the pre-fee gross budget selected_count / 3 for the same scenario entry fill and exact hold interval, then apply the same preliminary-fee reserve and common-scale algorithm in its separate benchmark account. Remain cash on candidate-inactive or trade-ineligible sessions.",
+    "signal_trace": "Generate the candidate selection trace once from cost-free features. It includes session, configuration, ranks, selected symbols, selected count, 11:30 decision timestamp, hold_30m_bars, and trace fingerprint. It excludes scenario-specific entry and exit fills. Candidate and benchmark consume that same trace.",
+    "costs": "Use SPY's newly calibrated symbol spread and the same fee and delay scenario as the candidate. Candidate and benchmark each prove nonnegative cash from their own complete quantity vector.",
+    "exposed_storage": "Paired benchmark ledgers and metrics are part of each candidate run report and consume no extra run specification.",
+    "controlled_storage": "Before a block read, register one candidate Normal specification and one immutable benchmark Normal template whose only deferred field is the exact selection-trace identity. The candidate specification is the sole trace producer: after its receipt it reads the full universe once and create-only publishes one content-addressed selection-trace artifact. Only the canonically derived final benchmark specification may consume the template-bound grant and read the exact trace plus SPY fill bars without recomputing a feature or rank. Hide metrics until both reports are terminal.",
+    "trace_mismatch_action": "terminal-control-failure"
+  },
+  "chronology": {
+    "engineering_development": {
+      "market_period": null,
+      "rule": "Develop and debug implementation only with deterministic synthetic fixtures. No historical strategy-return development interval exists."
+    },
+    "exposed_context_only": {
+      "start": "2020-06-26",
+      "end": "2020-07-24",
+      "session_count": 20,
+      "use": "same-clock relative-volume denominator only; no target, P&L, benchmark, or gate"
+    },
+    "discovery_blocks": [
+      {
+        "block_id": "discovery-01",
+        "start": "2020-07-27",
+        "end": "2021-01-22",
+        "xnys_sessions": 125,
+        "trade_eligible_full_sessions": 123
+      },
+      {
+        "block_id": "discovery-02",
+        "start": "2021-01-25",
+        "end": "2021-07-23",
+        "xnys_sessions": 126,
+        "trade_eligible_full_sessions": 126
+      },
+      {
+        "block_id": "discovery-03",
+        "start": "2021-07-26",
+        "end": "2022-01-21",
+        "xnys_sessions": 126,
+        "trade_eligible_full_sessions": 125
+      }
+    ],
+    "base_selection_discovery_only": {
+      "start": "2020-07-27",
+      "end": "2022-01-21",
+      "sessions": 377,
+      "rule": "Only these three discovery blocks may select the family base. No discovery return, P&L, benchmark metric, or gate includes a later validation or final-fold session."
+    },
+    "walk_forward": {
+      "kind": "rolling-fixed-parameter",
+      "training_sessions": 252,
+      "test_sessions": 126,
+      "step_sessions": 126,
+      "training_use": "Chronology and causal feature-context boundary only. Parameters are never refit. No training P&L, return, benchmark metric, report, or gate is computed or read; validation evidence comes only from each disjoint test range.",
+      "selection_validation_separation": "The selected base is frozen from discovery evidence ending 2022-01-21 before any fold test begins. The nine test ranges are mutually disjoint and no test return can select, replace, or retune the base.",
+      "folds": [
+        {
+          "fold_id": "wf-01",
+          "train_start": "2021-01-25",
+          "train_end": "2022-01-21",
+          "test_start": "2022-01-24",
+          "test_end": "2022-07-25"
+        },
+        {
+          "fold_id": "wf-02",
+          "train_start": "2021-07-26",
+          "train_end": "2022-07-25",
+          "test_start": "2022-07-26",
+          "test_end": "2023-01-24"
+        },
+        {
+          "fold_id": "wf-03",
+          "train_start": "2022-01-24",
+          "train_end": "2023-01-24",
+          "test_start": "2023-01-25",
+          "test_end": "2023-07-26"
+        },
+        {
+          "fold_id": "wf-04",
+          "train_start": "2022-07-26",
+          "train_end": "2023-07-26",
+          "test_start": "2023-07-27",
+          "test_end": "2024-01-25"
+        },
+        {
+          "fold_id": "wf-05",
+          "train_start": "2023-01-25",
+          "train_end": "2024-01-25",
+          "test_start": "2024-01-26",
+          "test_end": "2024-07-26"
+        },
+        {
+          "fold_id": "wf-06",
+          "train_start": "2023-07-27",
+          "train_end": "2024-07-26",
+          "test_start": "2024-07-29",
+          "test_end": "2025-01-28"
+        },
+        {
+          "fold_id": "wf-07",
+          "train_start": "2024-01-26",
+          "train_end": "2025-01-28",
+          "test_start": "2025-01-29",
+          "test_end": "2025-07-30"
+        },
+        {
+          "fold_id": "wf-08",
+          "train_start": "2024-07-29",
+          "train_end": "2025-07-30",
+          "test_start": "2025-07-31",
+          "test_end": "2026-01-29"
+        },
+        {
+          "fold_id": "wf-09-final-exposed",
+          "train_start": "2025-01-29",
+          "train_end": "2026-01-29",
+          "test_start": "2026-01-30",
+          "test_end": "2026-07-31"
+        }
+      ],
+      "final_exposed_fold": "wf-09-final-exposed"
+    },
+    "controlled_blocks": [
+      {
+        "block_id": "controlled-a",
+        "acquisition_start": "2027-04-16",
+        "acquisition_end": "2027-10-15",
+        "evaluation_rule": "Use the first twenty complete sessions only as in-block volume warmup; evaluation begins on session twenty-one and ends 2027-10-15.",
+        "intraday_v3_overlap_acquired_by_program_002": false,
+        "authority_required": "separate Block A acquisition-only authority after the block ends, independent dataset review and binding, then a distinct one-use evaluation authority"
+      },
+      {
+        "block_id": "controlled-b",
+        "acquisition_start": "2027-10-18",
+        "acquisition_end": "2028-04-14",
+        "evaluation_rule": "Use a volume-only projection from the final twenty complete Block A sessions as context; evaluate every complete trade-eligible Block B session.",
+        "authority_required": "after Block A passes and Block B ends: separate Block B acquisition-only authority, independent dataset review and binding, then a distinct one-use evaluation authority"
+      }
+    ],
+    "substitute_range_allowed": false,
+    "installed_calendar_limit": "exchange-calendars 4.13.2 currently ends at 2027-08-25; a reviewed dependency/calendar update must freeze exact controlled session tables before any controlled acquisition without moving block dates."
+  },
+  "metric_contract": {
+    "period_return": "(final flat cash - initial cash) / initial cash",
+    "aggregate_return": "Geometrically link chronological disjoint period returns: product(1 + period_return) - 1.",
+    "period_net_profit": "final flat cash minus initial cash for one run period after every spread and fee",
+    "aggregate_net_profit": "Sum period_net_profit across the exact disjoint periods in frozen chronological order. Do not compound, average, annualize, or reuse overlapping period profit.",
+    "benchmark_excess_return": "candidate return minus participation-matched SPY return over the identical period and trace",
+    "round_trip": "One selected-symbol entry fill and its complete fixed exit fill",
+    "active_session": "A trade-eligible session with at least one completed candidate round trip",
+    "gross_trade_edge_bps": "10000 * sum(quantity * (exit market open - entry market open)) / sum(entry market open * quantity)",
+    "round_trip_friction_bps": "10000 * total adverse spread and regulatory costs / sum(entry market open * quantity)",
+    "cost_to_gross_profitable_trade_profit": "All modeled costs divided by the sum of strictly positive gross round-trip profits; undefined when the denominator is not positive.",
+    "positive_profit_symbol_concentration": "Group net round-trip profit by traded symbol, keep strictly positive group sums, then largest divided by their sum.",
+    "positive_profit_exposure_bucket_concentration": "Apply the same formula after grouping symbols by the frozen universe exposure_buckets.",
+    "positive_profit_block_concentration": "Largest strictly positive fixed-block net profit divided by the sum of strictly positive fixed-block profits.",
+    "maximum_drawdown": "Maximum peak-to-trough loss on the synchronized five-minute marked portfolio equity curve, including fills and fees; also report session-close drawdown separately.",
+    "turnover": "Sum absolute market-value fill notional divided by initial cash.",
+    "sharpe_like": "Mean complete-session return divided by sample standard deviation times sqrt(252), zero reference rate; undefined with fewer than two returns or zero deviation. Report only; it is not a gate.",
+    "regulatory_fee_allocation": "Compute account-day charges under the frozen model, allocate each component to trade IDs pro rata by its unrounded contribution, and assign any Decimal cent remainder to the lexicographically last trade ID.",
+    "accounting_identity_error": "Maximum exact Decimal difference between independently recomputed cash-plus-marked-positions equity and the recorded equity at every event.",
+    "neighbor_normal_net_profit_retention": "Neighbor aggregate Normal net profit divided by the base candidate aggregate Normal net profit over the same nine folds; undefined unless both ledgers are complete and the base denominator is strictly positive.",
+    "median_neighbor_normal_net_profit_retention": "Sort the two exact immediate-neighbor retention values and take their arithmetic mean. A missing or undefined value makes the metric undefined.",
+    "scenario_normal_net_profit_retention": "Scenario aggregate net profit divided by the same candidate's Normal aggregate net profit over the identical nine folds; undefined unless both ledgers are complete and the Normal denominator is strictly positive.",
+    "undefined_gate_metric": "fail"
+  },
+  "gates": {
+    "discovery": [
+      "aggregate Normal return > 0",
+      "aggregate zero-cost return > 0",
+      "aggregate Normal benchmark excess return > 0",
+      "at least two of three fixed blocks have Normal return > 0",
+      "at least two of three fixed blocks have Normal benchmark excess return > 0",
+      "each fixed block has at least 60 active sessions",
+      "aggregate completed round trips >= 300",
+      "maximum drawdown <= 0.10",
+      "gross trade edge bps >= max(5, 3 * round-trip friction bps)",
+      "cost-to-gross-profitable-trade-profit <= 0.35",
+      "positive-profit symbol concentration <= 0.35",
+      "positive-profit exposure-bucket concentration <= 0.40",
+      "positive-profit block concentration <= 0.60",
+      "entry capacity breach count = 0",
+      "Normal, zero-cost, and benchmark selection-trace mismatch count = 0",
+      "accounting identity error = 0"
+    ],
+    "walk_forward_folds_1_to_8": [
+      "eight-fold aggregate Normal return > 0",
+      "eight-fold aggregate zero-cost return > 0",
+      "eight-fold aggregate Normal benchmark excess return > 0",
+      "at least six of eight Normal folds have return > 0",
+      "at least five of eight Normal folds have benchmark excess return > 0",
+      "worst Normal fold return >= -0.01",
+      "all discovery edge, cost, capacity, concentration, trace, and accounting gates pass on the concatenated eight-fold ledger"
+    ],
+    "final_exposed_fold_9": [
+      "Normal return > 0",
+      "zero-cost return > 0",
+      "Normal benchmark excess return > 0",
+      "active sessions >= 15",
+      "completed round trips >= 30",
+      "maximum drawdown <= 0.10",
+      "all discovery edge, cost, capacity, symbol, exposure-bucket, trace, and accounting gates pass"
+    ],
+    "all_nine_fold_and_neighbors": [
+      "nine-fold aggregate Normal and zero-cost returns > 0",
+      "nine-fold aggregate Normal benchmark excess return > 0",
+      "at least seven of nine Normal folds have return > 0",
+      "at least six of nine Normal folds have benchmark excess return > 0",
+      "worst Normal fold return >= -0.01",
+      "both exact immediate neighbors have nine-fold aggregate Normal return > 0",
+      "median of the two neighbor aggregate Normal net-profit retention ratios >= 0.50",
+      "positive-profit symbol concentration <= 0.35",
+      "positive-profit exposure-bucket concentration <= 0.40",
+      "all discovery edge, cost, capacity, trace, and accounting gates pass"
+    ],
+    "robustness": [
+      "Stress A, Stress B, Normal-delay-2, and Normal-delay-3 each have aggregate net profit > 0",
+      "each of the four variants has at least seven of nine folds with return > 0",
+      "Stress A and Normal-delay-2 aggregate net-profit retention versus Normal >= 0.50",
+      "Stress B and Normal-delay-3 aggregate net-profit retention versus Normal >= 0.25",
+      "each variant passes the applicable gross-edge, cost, capacity, concentration, trace, and accounting gates"
+    ],
+    "controlled_each_block": [
+      "candidate Normal return > 0",
+      "candidate Normal benchmark excess return > 0",
+      "active sessions >= 15",
+      "completed round trips >= 30",
+      "maximum drawdown <= 0.10",
+      "gross trade edge bps >= max(5, 3 * round-trip friction bps)",
+      "cost-to-gross-profitable-trade-profit <= 0.35",
+      "positive-profit symbol concentration <= 0.35",
+      "positive-profit exposure-bucket concentration <= 0.40",
+      "entry capacity breach count = 0",
+      "candidate and benchmark trace mismatch count = 0",
+      "accounting identity error = 0"
+    ],
+    "rationale": {
+      "activity": "The 60/300 exposed and 15/30 controlled floors prevent a small number of sessions or trades from presenting as a cohort; they do not claim formal power.",
+      "chronology": "Two-of-three blocks, seven-of-nine folds, six benchmark wins, a -1 percent worst-fold floor, and a separately passing final fold prevent aggregate rescue of unstable periods.",
+      "edge_and_cost": "Five basis points sets a practical minimum while three times friction and the 35 percent cost ratio require margin beyond the calibrated model.",
+      "concentration": "The 35 percent symbol cap sits just above one equal slot; the 40 percent exposure-bucket cap prevents IWM and MDY from jointly dominating; the 60 percent block cap prevents one period from supplying nearly all positive profit.",
+      "drawdown": "Ten percent is the predeclared research capital-risk ceiling and is not relaxed because earlier campaigns failed.",
+      "sharpe": "No Sharpe threshold is added because one daily observation per session and cross-symbol dependence do not justify a separate pseudo-precision gate; the metric remains visible."
+    }
+  },
+  "campaigns_and_budget": {
+    "campaign_1": {
+      "campaign_id": "multi-hour-sector-etf-continuation-exposed-001",
+      "family_id": "sector-relative-continuation-v1",
+      "configuration_count": 4,
+      "maximum_discovery_specs": 24,
+      "maximum_walk_forward_and_neighbor_specs": 54,
+      "maximum_robustness_specs": 36,
+      "maximum_specs": 114,
+      "terminal_scientific_outcomes": [
+        "completed-empty",
+        "completed-one-serious-family-candidate"
+      ]
+    },
+    "campaign_2": {
+      "campaign_id": "multi-hour-sector-etf-reversal-exposed-001",
+      "family_id": "sector-relative-reversal-v1",
+      "configuration_count": 4,
+      "maximum_discovery_specs": 24,
+      "maximum_walk_forward_and_neighbor_specs": 54,
+      "maximum_robustness_specs": 36,
+      "maximum_specs": 114,
+      "succession": "Run after Campaign 1 reaches either normal scientific terminal outcome, regardless of Campaign 1 merit. Do not run after contamination, protected-boundary breach, or unresolved deterministic control failure.",
+      "campaign_1_adaptation_allowed": false
+    },
+    "per_family_stage_graph": "Run all four configurations across three discovery blocks under Normal and zero cost. If any passes every discovery gate, select one base by the frozen order and run that base plus its two neighbors across nine folds under Normal and zero cost. If the base passes folds 1-8, final fold 9, and all-neighbor gates, run only that base across nine folds under four robustness scenarios.",
+    "base_selection_order": [
+      "every discovery gate passed",
+      "worst fixed-block Normal benchmark excess return descending",
+      "aggregate Normal benchmark excess return descending",
+      "aggregate Normal return descending",
+      "maximum Normal drawdown ascending",
+      "configuration_id ascending"
+    ],
+    "program_final_selection": {
+      "input": "At most one all-gate serious candidate from each family after both exposed campaigns terminate normally.",
+      "order": [
+        "every discovery, walk-forward, final-exposed, neighbor, and robustness gate passed",
+        "worst Normal fold benchmark excess return descending",
+        "aggregate Normal benchmark excess return descending",
+        "aggregate Normal return descending",
+        "configuration_id ascending"
+      ],
+      "maximum_frozen_controlled_cohort": 1
+    },
+    "controlled_specs": 4,
+    "maximum_strategy_campaigns": 2,
+    "maximum_parent_configurations": 8,
+    "maximum_run_specifications": 232,
+    "maximum_attempts_per_specification": 3,
+    "maximum_infrastructure_attempts": 696,
+    "default_workers": 4,
+    "retry_rule": "For exposed specifications, only an expired lease with no result, no publication intent, and infrastructure classification may retry. Data, strategy, accounting, capacity, control, and publication conflicts are terminal.",
+    "controlled_retry_rule": "A controlled specification may retry an expired infrastructure lease only while no protected-read receipt exists and within the same three-attempt ceiling. Its exact read-grant consumption and receipt creation occur atomically before the first bounded read. Any failure or lease loss after that receipt is terminal and can never retry or reread the block under this program.",
+    "stage_barriers": true,
+    "partial_stage_merit_read_allowed": false
+  },
+  "controlled_evaluation": {
+    "current_authority": false,
+    "cohort_freeze_prerequisites": [
+      "both exposed campaigns reached normal terminal outcomes",
+      "exactly one final candidate passed the frozen final selection",
+      "implementation source, plan, universe, exposed datasets, quote calibration, cost model, formulas, gates, and report schema are content-addressed",
+      "finding-free independent launch review",
+      "no protected-boundary breach"
+    ],
+    "candidate_count": 1,
+    "multiplicity": "No controlled candidate multiplicity exists. The exposed eight-configuration search is bounded by stage gates, neighbor tests, two fixed campaigns, and a one-candidate freeze; no p-value or formal power claim is made.",
+    "authority_sequence": [
+      "After the block ends and every block-specific prerequisite passes, a user may grant an acquisition-only authority that binds the exact block, plan, universe, provider request, storage root, and false strategy/result-read authority.",
+      "Acquisition consumes only that acquisition authority, publishes immutable artifacts, and returns no strategy input binding or result.",
+      "A reviewer independent of acquisition validates every raw page, manifest, normalized artifact, calendar/session table, row count, dataset fingerprint, and isolation control, then signs one exact dataset-review-and-binding artifact. This artifact grants no evaluation authority.",
+      "A separate user evaluation authority binds the frozen candidate, exact reviewed dataset IDs and fingerprints, source and plan hashes, cost model, benchmark, gates, report schema, the exact candidate specification, an immutable benchmark template and canonical trace-only derivation rule, one candidate full-universe read grant, and one template-bound benchmark SPY-only read grant.",
+      "For the candidate specification or canonically derived final benchmark specification, the evaluator atomically verifies the authority binding, consumes its exact read grant, and creates an immutable protected-read receipt before its bounded data read. The authority cannot create replacement grants. Acquisition authority can never be reused or interpreted as evaluation authority; any post-receipt failure is terminal."
+    ],
+    "block_pair_processing": "Only after the block's independent dataset binding and separate evaluation authority exist, register the candidate specification and immutable benchmark template. Run the candidate first as sole trace producer. Its receipt must precede the full-universe read; create-only publish and verify one trace artifact, then verify candidate terminal publication through a separate status-and-hash attestation that exposes no metric bytes. In one transaction, derive the final benchmark specification only by the authority's canonical trace-identity substitution, verify it against the template, register it immutably, consume its template-bound SPY-only grant, and create its receipt before opening the exact trace or SPY bars. The benchmark cannot load traded-symbol bars, compute features or ranks, or create or replace a trace. Hide both metrics until both canonical reports are terminal and mutually verified. A post-receipt failure of either specification fails the block without retry.",
+    "controlled_trace_artifact": {
+      "producer": "candidate Normal specification only",
+      "read_order": "The candidate protected-read receipt exists before any full-universe controlled byte is opened.",
+      "content": "Canonical scenario-independent selection trace: block, candidate/configuration identity, session, ordered ranks, selected symbols/count, decision timestamp, hold length, inactive reason, and source plan/dataset identities. Exclude fills, costs, P&L, later prices, benchmark metrics, and result gates.",
+      "publication": "Commit an immutable publication intent, create-only publish canonical bytes, fsync, and verify SHA-256 and canonical fingerprint. Exactly one trace exists; a missing, duplicate, changed, replacement, or conflicting trace is terminal.",
+      "benchmark_template": "At evaluation-authority issuance, publish an immutable canonical benchmark specification template that binds every field except selection_trace_identity. That sole deferred field is an explicit null placeholder; the authority binds the template SHA-256 and fingerprint.",
+      "benchmark_derivation": "After the trace and the candidate status-and-hash attestation verify without opening metric bytes, replace only the template's null selection_trace_identity with the trace path, SHA-256, and fingerprint. Canonicalize and fingerprint the resulting final benchmark specification. Any other field or byte difference is terminal.",
+      "handoff": "One atomic transaction re-derives the final benchmark specification from the authority-bound template and registry-bound trace identity, verifies its exact fingerprint, registers it immutably, consumes the template-bound benchmark grant, and creates its protected-read receipt before opening the trace bytes. After the receipt, the benchmark consumes that exact trace as input and cannot recreate it.",
+      "benchmark_read_scope": "After its own receipt, the benchmark may open only the exact bound trace artifact and SPY bars at its trace-bound entry and exit timestamps from the exact reviewed block dataset. It may not enumerate or read any other symbol or feature interval."
+    },
+    "protected_read_receipt": {
+      "atomic_transition": "In one transaction, require the unconsumed candidate-full-universe or template-bound benchmark-SPY-only grant from the exact evaluation authority; for the benchmark, re-derive and verify the final specification from the authority-bound template plus exact trace identity; bind specification and attempt IDs, exact symbol/read scope, dataset IDs and fingerprints, read range, source/plan/cost/report identities and any required trace identity; consume that grant; and create the receipt before opening any controlled artifact.",
+      "pre_receipt_failure": "No controlled bytes were opened and authority remains unconsumed; an expired infrastructure lease may retry within the three-attempt ceiling.",
+      "post_receipt_failure": "The read is deemed used. Failure, timeout, lease loss, process loss, report loss, or publication loss is terminal. Do not issue another attempt, reuse the authority, reread the block, or replace the candidate.",
+      "recovery": "Only deterministic reconciliation of an already committed canonical trace or report publication intent may finish publication without reopening controlled data; its exact bytes and receipt must already be durable."
+    },
+    "block_a": {
+      "acquisition": "After 2027-10-15 and cohort freeze, require a Block A acquisition-only authority. The first twenty sessions remain context-only. Acquisition cannot register a strategy specification, inspect returns, or grant evaluation.",
+      "dataset_review": "Require an independent exact-byte Block A dataset review and binding after acquisition and before evaluation authority.",
+      "evaluation": "Require a distinct one-use Block A evaluation authority bound to the reviewed dataset IDs, exact candidate specification, and immutable benchmark template and derivation rule. Any failed or undefined gate stops the program."
+    },
+    "block_b": {
+      "dependency": "Do not acquire, bind, or evaluate Block B unless Block A passed every controlled gate and its protected result read was logged.",
+      "acquisition": "After 2028-04-14 and the dependency passes, require a Block B acquisition-only authority. It cannot register a strategy specification, inspect returns, or grant evaluation.",
+      "dataset_review": "Require an independent exact-byte Block B dataset review and binding after acquisition and before evaluation authority.",
+      "evaluation": "Require a distinct one-use Block B evaluation authority bound to the reviewed dataset IDs, exact candidate specification, and immutable benchmark template and derivation rule."
+    },
+    "pass": "Both blocks independently pass every controlled gate. Aggregation cannot rescue a block.",
+    "one_use": "Each block has one acquisition-only authority and one distinct evaluation authority. Neither can substitute for the other. The evaluation authority binds one candidate, one block, exact independently reviewed dataset identities, source and plan hashes, cost model, benchmark, gates, the exact candidate specification, the immutable benchmark template and trace-only derivation rule, one full-universe candidate grant, and one template-bound SPY-only benchmark grant. The candidate specification or exactly derived final benchmark specification consumes its grant and creates its protected-read receipt atomically before its bounded read; no post-receipt retry exists.",
+    "result_access": "Completed metrics remain protected until a separate logged reviewer-and-reason read event.",
+    "reselection_retuning_replacement_or_rerun": false
+  },
+  "statistical_scope": {
+    "exposed_xnys_sessions": 1511,
+    "trade_eligible_full_sessions": 1499,
+    "cross_sectional_symbol_session_observations_per_configuration": 17988,
+    "configuration_session_opportunities": 11992,
+    "maximum_round_trips_per_configuration": 4497,
+    "minimum_discovery_round_trips_for_a_survivor": 300,
+    "independence_statement": "The session, not each symbol or five-minute bar, is the upper-bound sampling unit. Same-session ETF observations share market, sector, and capitalization shocks; serial dependence and overlapping family/configuration signals reduce effective observations below 1499.",
+    "walk_forward_test_sessions": 1134,
+    "trade_expectation": "No expected activation or trade count is inferred without market data. A survivor must lie between the frozen minimum and structural maximum; this plan makes no formal power claim.",
+    "eight_configuration_assessment": "Eight fixed configurations are supportable as a bounded falsification program because only two axes vary, local neighbors are mandatory, test folds are chronological, and at most one candidate reaches controlled evaluation."
+  },
+  "researcher_degrees_of_freedom": {
+    "universe_change": false,
+    "family_change": false,
+    "feature_addition_or_transform": false,
+    "decision_time_change": false,
+    "threshold_change": false,
+    "lookback_or_hold_change": false,
+    "configuration_expansion": false,
+    "long_short_switch": false,
+    "failed_candidate_rescue": false,
+    "campaign_2_result_adaptation": false,
+    "gate_reinterpretation_or_weakening": false,
+    "controlled_range_substitution": false,
+    "machine_learning": false,
+    "permitted_future_change": "A materially changed hypothesis requires a new program ID, new review, and new user authority before its data or results are read."
+  },
+  "stop_rules": [
+    "Stop a family stage when it has no survivor.",
+    "Continue from a scientifically empty Campaign 1 to the already frozen Campaign 2; do not adapt Campaign 2.",
+    "Stop the whole program on data contamination, protected-boundary breach, source mismatch, deterministic control failure, exhausted third infrastructure attempt, accounting failure, or run-budget exhaustion.",
+    "Do not inspect partial-stage merit for adaptation.",
+    "Do not acquire or open controlled data under this proposal."
+  ],
+  "launch_control": {
+    "executable_plan": false,
+    "dataset_bindings_present": false,
+    "cost_model_binding_present": false,
+    "implementation_commit_binding_present": false,
+    "strategy_execution_authority_present": false,
+    "launch_allowed": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "plan_fingerprint": "701dc67ea2da1e45d235f4247724b2bc8eb62853561c2400c17a668342c6b81e"
+}

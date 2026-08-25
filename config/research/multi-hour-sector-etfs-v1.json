@@ -1,0 +1,158 @@
+{
+  "schema_version": "research-universe-proposal-v1",
+  "id": "multi-hour-sector-etfs-v1",
+  "status": "PROPOSED-NOT-AUTHORIZED-FOR-ACQUISITION",
+  "timeframe": "5m",
+  "selection_provenance": {
+    "source_path": "config/research/rapid-004-final-universe-v1.json",
+    "source_sha256": "100ed3b1f195e35827fb70c418f1a2bce9ef2c7444385c79c2c61278d32f60dc",
+    "rule": "Take the ten us-sector members present in the frozen Rapid-004 final universe, add its IWM small-cap and MDY mid-cap broad-equity members as traded symbols, and use SPY only as context and benchmark.",
+    "strategy_results_used": false,
+    "clarification": "XLC is not omitted by a Program 002 performance decision; it was not a member of the frozen Rapid-004 seed or final universe. No symbol may be added after Program 002 results exist."
+  },
+  "traded_symbols": [
+    "IWM",
+    "MDY",
+    "XLB",
+    "XLE",
+    "XLF",
+    "XLI",
+    "XLK",
+    "XLP",
+    "XLRE",
+    "XLU",
+    "XLV",
+    "XLY"
+  ],
+  "ranking_symbols": [
+    "IWM",
+    "MDY",
+    "XLB",
+    "XLE",
+    "XLF",
+    "XLI",
+    "XLK",
+    "XLP",
+    "XLRE",
+    "XLU",
+    "XLV",
+    "XLY"
+  ],
+  "context_and_benchmark_symbols": [
+    "SPY"
+  ],
+  "exposure_buckets": {
+    "IWM": "broad-equity",
+    "MDY": "broad-equity",
+    "XLB": "materials",
+    "XLE": "energy",
+    "XLF": "financials",
+    "XLI": "industrials",
+    "XLK": "technology",
+    "XLP": "consumer-staples",
+    "XLRE": "real-estate",
+    "XLU": "utilities",
+    "XLV": "health-care",
+    "XLY": "consumer-discretionary",
+    "SPY": "benchmark-only"
+  },
+  "memberships": [
+    {
+      "symbol": "SPY",
+      "start": "1993-01-22",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/spdr-sp-500-etf-trust-spy"
+    },
+    {
+      "symbol": "IWM",
+      "start": "2000-05-22",
+      "end": null,
+      "source": "https://www.ishares.com/us/products/239710/ishares-russell-2000-etf"
+    },
+    {
+      "symbol": "MDY",
+      "start": "1995-05-04",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/spdr-sp-midcap-400-etf-trust-mdy"
+    },
+    {
+      "symbol": "XLB",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-materials-select-sector-spdr-fund-xlb"
+    },
+    {
+      "symbol": "XLE",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-energy-select-sector-spdr-fund-xle"
+    },
+    {
+      "symbol": "XLF",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-financial-select-sector-spdr-fund-xlf"
+    },
+    {
+      "symbol": "XLI",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-industrial-select-sector-spdr-fund-xli"
+    },
+    {
+      "symbol": "XLK",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-technology-select-sector-spdr-fund-xlk"
+    },
+    {
+      "symbol": "XLP",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-consumer-staples-select-sector-spdr-fund-xlp"
+    },
+    {
+      "symbol": "XLRE",
+      "start": "2015-10-07",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-real-estate-select-sector-spdr-fund-xlre"
+    },
+    {
+      "symbol": "XLU",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-utilities-select-sector-spdr-fund-xlu"
+    },
+    {
+      "symbol": "XLV",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-health-care-select-sector-spdr-fund-xlv"
+    },
+    {
+      "symbol": "XLY",
+      "start": "1998-12-16",
+      "end": null,
+      "source": "https://www.ssga.com/us/en/intermediary/etfs/funds/the-consumer-discretionary-select-sector-spdr-fund-xly"
+    }
+  ],
+  "invariants": {
+    "traded_symbol_count": 12,
+    "ranking_symbol_count": 12,
+    "context_symbol_count": 1,
+    "all_members_cover_exposed_start": true,
+    "spy_may_be_ranked_or_traded": false,
+    "missing_or_extra_member_action": "reject-the-complete-dataset-before-any-strategy-run"
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  }
+}

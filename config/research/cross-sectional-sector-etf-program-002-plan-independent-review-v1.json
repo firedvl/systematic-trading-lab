@@ -1,0 +1,130 @@
+{
+  "schema_version": "cross-sectional-sector-etf-program-002-plan-independent-review-v1",
+  "review_id": "cross-sectional-sector-etf-program-002-plan-independent-review-v1",
+  "status": "passed-planning-only-before-implementation-acquisition-or-execution",
+  "review_date": "2026-08-25",
+  "review_method": "Independent read-only prospective exact-byte review with a final clean review after causal, chronology, identity, controlled-trace, and benchmark-authority corrections.",
+  "base_commit": "ad43c3098e6714b3dde934b5c993b415895f8a21",
+  "reviewed_artifacts": {
+    "universe": {
+      "path": "config/research/multi-hour-sector-etfs-v1.json",
+      "sha256": "8f07f73fd93f9432501d579e43616e1d9a09d6db77c347a6bed4151f2210c312",
+      "universe_fingerprint": "ef23e533aa7a91262200bd7a77a65f9b6d8b4d473573850c33ef014701177790"
+    },
+    "program_plan": {
+      "path": "config/research/cross-sectional-sector-etf-program-002-plan-proposal-v1.json",
+      "sha256": "2872d4d3301df0a85e1a5a2eba6e3ee533ee5573971121e99840041e7c8d2173",
+      "plan_fingerprint": "701dc67ea2da1e45d235f4247724b2bc8eb62853561c2400c17a668342c6b81e"
+    },
+    "data_acquisition_plan": {
+      "path": "config/research/cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1.json",
+      "sha256": "26c768f422e63e9f00e6adc88be2d57f5c6447972a9de1fa4873ab2826556aae"
+    },
+    "implementation_plan": {
+      "path": "docs/research-campaigns/multi-hour-sector-etf-research-001-implementation-plan.md",
+      "sha256": "aebfea81a2c8a4110d369dbd23d12e0ff79a661fc8f6187df0f27939abdfede5"
+    }
+  },
+  "verdict": "pass",
+  "findings": [],
+  "answers": [
+    {
+      "control": "strategy-contract-and-causality",
+      "answer": "pass",
+      "basis": "Two fixed families and eight configurations use completed five-minute inputs, deterministic 30-minute aggregation and ranks, one 11:30 New York decision, earliest 11:35 entry, and holds measured from actual entry."
+    },
+    {
+      "control": "chronology-and-degrees-of-freedom",
+      "answer": "pass",
+      "basis": "Twenty context sessions and 377 discovery-only selection sessions precede nine mutually disjoint validation folds. Training P&L is prohibited, controlled ranges are fixed, and outcome-based adaptation is forbidden."
+    },
+    {
+      "control": "portfolio-cost-and-benchmark-accounting",
+      "answer": "pass",
+      "basis": "The long/flat portfolio has three fee-reserved one-third slots, one common scale, no leverage, no shorting, no resize or reentry, and a participation-matched SPY benchmark with separate cash proof."
+    },
+    {
+      "control": "data-acquisition-and-quote-isolation",
+      "answer": "pass",
+      "basis": "The acquisition proposal separates exposed evaluation rows from context-only rows, leaves both controlled blocks unacquired, limits quotes to prospective cost calibration, and grants no network or result authority."
+    },
+    {
+      "control": "gates-and-budget",
+      "answer": "pass",
+      "basis": "The fixed stages, immediate neighbors, gates, campaign succession, 232-specification ceiling, and 696-attempt ceiling reconcile without a hidden parameter search."
+    },
+    {
+      "control": "controlled-trace-and-benchmark-authority",
+      "answer": "pass",
+      "basis": "The candidate alone produces the create-only trace after its receipt. The authority pre-binds an immutable benchmark template; one transaction derives, verifies, registers, consumes its grant, and creates its receipt before trace or SPY access."
+    },
+    {
+      "control": "implementation-and-synthetic-validation-scope",
+      "answer": "pass",
+      "basis": "The implementation plan reuses existing boundaries where they fit, proposes only the missing generic cross-sectional components, and limits this phase to static and synthetic checks."
+    },
+    {
+      "control": "authority-and-protected-boundaries",
+      "answer": "pass",
+      "basis": "Every implementation, acquisition, strategy, qualification, controlled, holdout, PAPER, broker-write, and live authority remains false; no protected or runtime state was accessed."
+    }
+  ],
+  "resolved_before_final_verdict": [
+    {
+      "finding": "Core planning controls lacked structural assertions and the acquisition proposal did not bind exact plan bytes.",
+      "resolution": "The focused test now asserts the frozen controls, and the acquisition proposal binds the exact plan SHA-256 and fingerprint."
+    },
+    {
+      "finding": "The first chronology reused selection evidence, the earliest fill was not causal, and controlled retries were ambiguous after a protected read.",
+      "resolution": "Selection now ends before nine disjoint validation folds, entry begins at 11:35 with exits shifted from actual entry, and a protected-read receipt makes later failure terminal."
+    },
+    {
+      "finding": "The shared controlled selection trace had no receipt-bearing owner.",
+      "resolution": "The candidate specification is the sole trace producer and create-only publisher; the benchmark may consume only the exact trace plus SPY fill bars."
+    },
+    {
+      "finding": "The benchmark specification could not be exactly authorized before the candidate trace identity existed.",
+      "resolution": "The authority binds an immutable benchmark template whose only deferred field is the trace identity and fixes the canonical final-specification derivation."
+    },
+    {
+      "finding": "Summary prose conflicted with the atomic grant, registration, and receipt sequence.",
+      "resolution": "Every normative occurrence now requires one transaction to derive, verify, register immutably, consume the grant, and create the receipt before a controlled benchmark read."
+    }
+  ],
+  "verification": {
+    "base_commit_revalidated": true,
+    "strict_json_and_duplicate_keys_revalidated": true,
+    "universe_sha256_and_fingerprint_revalidated": true,
+    "plan_sha256_and_fingerprint_revalidated": true,
+    "acquisition_plan_binding_revalidated": true,
+    "calendar_session_and_row_counts_revalidated": true,
+    "configuration_count": 8,
+    "maximum_run_specifications": 232,
+    "maximum_infrastructure_attempts": 696,
+    "focused_planning_tests_at_final_delivery_review": "7 passed",
+    "repository_ruff_format_check": "passed",
+    "git_diff_check": "passed",
+    "exact_byte_rereview": true
+  },
+  "scope_limit": "Read-only repository planning review. It did not use the network; access .trading-lab, market or quote records, returns, candidates, credentials, controlled blocks, PAPER, broker, live, or strategic-allocation-21 state; or run a strategy or backtest. Future provider entitlement, controlled calendars, and runtime atomicity remain fail-closed implementation obligations.",
+  "protected_access": {
+    "market_or_quote_data": false,
+    "strategy_returns_or_candidates": false,
+    "controlled_block_a_or_b": false,
+    "credentials": false,
+    "paper_broker_or_live_state": false,
+    "strategic_allocation_21": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "55e30955789981a4eca129856322207ceb05fa9aebccb1101d892dd92f7a5d33"
+}
