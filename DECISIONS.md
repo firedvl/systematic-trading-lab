@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Rebind Campaign 3 after the pre-execution repair
+
+- Decision: bind `intraday-fed-policy-absorption-001` to repaired exact main `a7c2228a68c3cad39c6faf5bf02d6b4b3c495ebf` after all seven repository gates, five-fixture synthetic one-worker/four-worker equivalence, and a fresh finding-free independent launch review. The replacement launch-control artifact has SHA-256 `6b1ee2e789307fce253d8a5a7780cd4dfdb33a1df2addb5eaedd236fc68d105f` and fingerprint `1f2ecb1339613ec7b7e3e98a93fa6a8ae21f3528de779d861512c6ac0d56a6a0`.
+- Context: PR #205 merged the plain-dict validator repair without changing frozen scientific or execution semantics. Exact main passed 1,071 tests with four skips and the remaining six gates. Five non-protected synthetic reports were byte-identical at one and four workers in `0.776451` and `0.709242` seconds. The independent reviewer found no code, control, chronology, data-boundary, or authority defect.
+- Consequences: construction accepts the repaired source and only its restricted post-review lineage. The replacement artifact, constants, regression test, and state records change no frozen input, runner semantic, reservation, runtime, market-data payload, strategy result, protected boundary, or authority. Clean synchronized main must still validate the binding before the one permitted four-worker launch.
+- Revisit when: Campaign 3 reaches a terminal result or a separately reviewed common launch-control contract replaces this campaign surface.
+
 ## 2026-08-24 — Thaw Campaign 3 plan only at inherited dataset-validation boundaries
 
 - Decision: pass `canonicalize(self.plan.payload)` to the inherited Exposed 002 dataset validator from both the Campaign 3 coordinator and spawned worker. Keep the frozen plan immutable everywhere else and unset launch-control constants until a repaired exact main passes all gates, synthetic equivalence, and fresh independent launch review.

@@ -1,12 +1,11 @@
 # Intraday Fed Policy Absorption 001 program
 
-Status: prospective plan/calendar and implementation reviews remain finding-free. The reviewed
-launch binding merged through PR #204 at exact main
-`5825181e60ae9fa7fbcd8701d281346f087c237c`. A read-only dataset preflight then found a plain-dict
-compatibility defect before runtime creation. Four frozen catalog metadata rows were read, but no
-dataset manifest file, raw record, normalized bar, price payload, reservation, attempt, report, or
-strategy result was observed. The finding-free repair changes only both inherited validator call
-sites and leaves launch control unbound pending new exact-main evidence.
+Status: prospective plan/calendar, implementation, repair, and repaired exact-main launch reviews
+are finding-free. PR #205 merged the plain-dict validator repair at exact main
+`a7c2228a68c3cad39c6faf5bf02d6b4b3c495ebf`. That source passed all seven gates and five-fixture
+synthetic equivalence. The replacement launch-control artifact binds it without changing frozen
+inputs, scientific semantics, execution semantics, or authority. No runtime, reservation, attempt,
+report, or strategy result exists.
 
 Program ID: `intraday-fed-policy-absorption-001`.
 
@@ -33,6 +32,12 @@ Superseded reviewed launch source main: `9b586561d848743af77bb30a4c243080dae85ed
 Superseded launch-control SHA-256/fingerprint:
 `13c14ada3025a2a10d395842a85f9a1304c02d8ed4fade7e53f86682f44803e3` /
 `c8f09c6aa8f05654d2ea232082bc18965f8a2f20c32c1051f8c6033f8a6835df`.
+
+Repaired reviewed launch source main: `a7c2228a68c3cad39c6faf5bf02d6b4b3c495ebf`.
+
+Replacement launch-control SHA-256/fingerprint:
+`6b1ee2e789307fce253d8a5a7780cd4dfdb33a1df2addb5eaedd236fc68d105f` /
+`1f2ecb1339613ec7b7e3e98a93fa6a8ae21f3528de779d861512c6ac0d56a6a0`.
 
 Pre-execution plumbing-failure SHA-256/fingerprint:
 `93663de82a123df7f5adedaae301e4638b05c5331e04500ea0c8cc25e9323b1c` /
@@ -208,9 +213,14 @@ preceded dataset artifact validation, runtime creation, reservation, attempt, or
 observation. The repair uses the existing canonical serializer to make a plain-dict copy at both
 coordinator and spawned-worker validator boundaries. Regression tests cover both paths before
 reservation. Independent review found no remaining issue and accepted catalog identity metadata as
-non-observational rather than a market-data payload read. Launch constants are unset. An exact
-merged source containing the repair must pass all gates, five-fixture equivalence, and a new
-finding-free launch review before another source-bound launch artifact can enable construction.
+non-observational rather than a market-data payload read. PR #205 merged the repair at exact main
+`a7c2228a68c3cad39c6faf5bf02d6b4b3c495ebf`. All seven gates passed, including 1,071 tests with four
+skips. Five non-protected synthetic fixtures were byte-identical at one and four workers in
+`0.776451` and `0.709242` seconds. Fresh independent launch review passed with no findings. The
+replacement launch-control SHA-256/fingerprint
+`6b1ee2e789307fce253d8a5a7780cd4dfdb33a1df2addb5eaedd236fc68d105f` /
+`1f2ecb1339613ec7b7e3e98a93fa6a8ae21f3528de779d861512c6ac0d56a6a0` binds that source. Clean
+synchronized main must validate the restricted post-review lineage before the one permitted launch.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, credentials, and live data remain prohibited. Every authority field is
