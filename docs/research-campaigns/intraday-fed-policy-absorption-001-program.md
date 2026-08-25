@@ -1,7 +1,7 @@
 # Intraday Fed Policy Absorption 001 program
 
-Status: prospective plan and calendar reviewed; implementation pending. No strategy implementation,
-reservation, attempt, market-data read, report, or result exists.
+Status: prospective plan/calendar and implementation reviews are finding-free. Launch control remains
+unbound. No reservation, attempt, market-data read, report, or result exists.
 
 Program ID: `intraday-fed-policy-absorption-001`.
 
@@ -122,10 +122,22 @@ ceiling, protected boundaries, and false authorities. It found no issue and acce
 runtime state, protected data, PAPER, broker, live, credential, or `strategic-allocation-21` input.
 
 Immutable state revision 6 binds revision 5, the plan, review, calendar, source evidence, V2
-attestation, and both preserved failures. Implementation must occur on a separate branch without
-market-data read or reservation. The exact merged implementation main needs focused tests,
-one-worker/four-worker synthetic equivalence, finding-free implementation review, and separately
-bound launch control before the first campaign run.
+attestation, and both preserved failures. The separate implementation branch adds a plan loader,
+strategy, campaign-owned engine and store view, runner, reports, CLI, launch-disabled binding, and
+focused tests without market-data read or reservation. The engine executes both half-weight entry or
+exit legs from one shared equity base and commits the batch only after both fills succeed. The store
+can reject a completed canonical report as terminal campaign evidence without changing the generic
+attempt store or any closed campaign source.
+
+Five synthetic fixtures produce byte-identical run specifications, reports, trace hashes, ledgers,
+metrics, report hashes, and fingerprints with one and four workers. All seven repository gates pass,
+including 1,062 tests with four skips. Independent implementation review rechecked frozen-calendar
+identity and timing, atomic pair execution, immutable-result rejection, launch-disable behavior, and
+protected boundaries. It found no issue and accessed no market data or protected input.
+
+The implementation must merge through PR and CI. A separate review must then bind launch control to
+the exact synchronized implementation main before runtime creation, reservation, market-data read,
+or the first campaign run.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, credentials, and live data remain prohibited. Every authority field is

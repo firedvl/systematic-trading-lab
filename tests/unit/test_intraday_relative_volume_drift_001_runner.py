@@ -98,15 +98,15 @@ def test_plan_status_and_unbound_launch_are_read_only(
     assert not (tmp_path / PROGRAM_ID).exists()
 
 
-def test_launch_control_binds_exact_implementation_main() -> None:
+def test_historical_launch_control_stays_bound_and_rejects_new_cli_source() -> None:
     assert REVIEWED_LAUNCH_CONTROL_SHA256 == (
         "51159d51aff6b11b9fee9c5c5bacfa3ac3ceaa93c17259b493aeb794d0b5e655"
     )
     assert REVIEWED_LAUNCH_CONTROL_FINGERPRINT == (
         "3b6c46f924ab94557f5235bf26650c1b8bf6f836b0f55bb590e63c1bba86717f"
     )
-    loaded = _load_launch_control(_REPOSITORY, source_commit=_IMPLEMENTATION_SOURCE)
-    assert loaded["review_fingerprint"] == REVIEWED_LAUNCH_CONTROL_FINGERPRINT
+    with pytest.raises(ValueError, match="implementation file differs"):
+        _load_launch_control(_REPOSITORY, source_commit=_IMPLEMENTATION_SOURCE)
 
 
 def test_broker_credentials_are_rejected_before_campaign_state() -> None:

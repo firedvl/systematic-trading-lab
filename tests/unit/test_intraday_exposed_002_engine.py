@@ -15,6 +15,11 @@ from systematic_trading_lab.intraday_execution_cost_model import (
     RegulatoryFeeModel,
 )
 from systematic_trading_lab.intraday_exposed_002_engine import IntradayExposed002Engine
+from systematic_trading_lab.intraday_fed_policy_absorption_001_engine import (
+    Exposed002Fill,
+    IntradayFedPolicyAbsorption001Engine,
+    _PendingTransition,
+)
 from systematic_trading_lab.strategies import TargetPosition
 
 QQQ = Symbol("QQQ")
@@ -166,6 +171,95 @@ def test_replay_uses_symbol_costs_flattens_and_deducts_daily_fees() -> None:
     assert (result.equity_curve[-1].equity - result.initial_cash).quantize(precision) == (
         gross - friction
     ).quantize(precision)
+
+
+def test_exact_joint_entries_use_shared_half_equity_notional_and_flatten() -> None:
+    bars = _bars(
+        datetime(2026, 5, 1, 13, 30, tzinfo=UTC),
+        datetime(2026, 5, 1, 19, 55, tzinfo=UTC),
+        "3",
+    )
+    initial_cash = Decimal("100001")
+    result = IntradayFedPolicyAbsorption001Engine(
+        initial_cash,
+        _scenario(qqq_bps="0", spy_bps="0", charge_fees=False),
+        _fees(),
+    ).run(bars, _EnterAndHold((QQQ, SPY)))
+
+    entries = [fill for fill in result.fills if fill.quantity > ZERO]
+    assert len(entries) == 2
+    assert all(fill.quantity * fill.fill_price != initial_cash * HALF for fill in entries)
+    assert {fill.symbol for fill in entries} == {QQQ, SPY}
+    assert all(fill.gross_notional == initial_cash * HALF for fill in entries)
+    assert sum((fill.gross_notional for fill in entries), ZERO) == initial_cash
+    assert len(result.round_trips) == 2
+    assert all(trade.net_before_regulatory_fees == ZERO for trade in result.round_trips)
+    assert result.equity_curve[-1].positions == ((SPY, ZERO), (QQQ, ZERO))
+    assert result.equity_curve[-1].equity == initial_cash
+    assert result.fee_ledger[0].charges.total == ZERO
+
+
+def test_exact_joint_second_leg_failure_does_not_commit_batch_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bars = _bars(
+        datetime(2026, 5, 1, 13, 30, tzinfo=UTC),
+        datetime(2026, 5, 1, 19, 55, tzinfo=UTC),
+    )
+    engine = IntradayFedPolicyAbsorption001Engine(
+        Decimal("100000"),
+        _scenario(charge_fees=False),
+        _fees(),
+    )
+    before = dict(engine.__dict__)
+    original_fill = IntradayFedPolicyAbsorption001Engine._fill
+    observed: dict[str, object] = {}
+
+    def fail_on_qqq(
+        self: IntradayFedPolicyAbsorption001Engine,
+        item: _PendingTransition,
+        market_price: Decimal,
+        cash: Decimal,
+        positions: dict[Symbol, Decimal],
+        marks: Mapping[Symbol, Decimal],
+        entries: dict[Symbol, int],
+        open_fills: Mapping[Symbol, Exposed002Fill],
+        *,
+        entry_equity: Decimal | None = None,
+    ) -> tuple[Decimal, Exposed002Fill]:
+        if item.symbol == QQQ:
+            observed["cash"] = cash
+            observed["positions"] = dict(positions)
+            observed["entries"] = dict(entries)
+            observed["open_fills"] = dict(open_fills)
+            raise BacktestError("forced second-leg failure")
+        return original_fill(
+            self,
+            item,
+            market_price,
+            cash,
+            positions,
+            marks,
+            entries,
+            open_fills,
+            entry_equity=entry_equity,
+        )
+
+    monkeypatch.setattr(IntradayFedPolicyAbsorption001Engine, "_fill", fail_on_qqq)
+
+    with pytest.raises(BacktestError, match="forced second-leg failure"):
+        engine.run(bars, _EnterAndHold((QQQ, SPY)))
+
+    # The first fill mutated only the batch's working copies.  The engine stores
+    # no replay state, and no replay artifact was returned to expose partial fills.
+    assert engine.__dict__ == before
+    assert observed["cash"] == Decimal("50000")
+    assert observed["positions"] == {
+        SPY: Decimal("50000") / Decimal("100.02"),
+        QQQ: ZERO,
+    }
+    assert observed["entries"] == {SPY: 1, QQQ: 0}
+    assert observed["open_fills"]
 
 
 def test_daily_fees_reduce_next_session_position_size_before_carry() -> None:
