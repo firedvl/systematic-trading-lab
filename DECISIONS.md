@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Revalidate Campaign 3 source inside every worker
+
+- Decision: each Campaign 3 worker must confirm that its repository is clean exact synchronized main and matches the coordinator's reviewed source SHA before loading the plan or datasets. It must also reject any run specification whose source SHA differs before deriving a run ID or claiming an attempt.
+- Context: the first exact-main launch review found that only the coordinator established source identity. A spawned process could import changed worktree code after coordinator validation while its immutable specification and report still named the old reviewed commit.
+- Consequences: source drift stops preflight before reservation or data access, and a mismatched specification stops before claim. The repair changes no frozen hypothesis, calendar, data binding, strategy, cost, execution, gate, budget, retry, report, or authority semantic. It requires a new merged implementation source, fresh exact-main gates and equivalence, and a finding-free launch review before binding.
+- Revisit when: execution moves from a local synchronized worktree to a content-addressed immutable build whose loaded code identity is attested independently in each worker.
+
 ## 2026-08-24 — Isolate Campaign 3 execution and report rejection
 
 - Decision: give `intraday-fed-policy-absorption-001` a campaign-owned replay engine and store view. Derive both half-weight entry legs from one shared pre-entry equity value, apply them as one in-memory batch, and commit no fill state unless both legs succeed. Extend only the campaign database's forward-state trigger so terminal validation can reject a completed canonical report as `canonical-report-invalid`.

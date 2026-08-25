@@ -139,6 +139,13 @@ The implementation must merge through PR and CI. A separate review must then bin
 the exact synchronized implementation main before runtime creation, reservation, market-data read,
 or the first campaign run.
 
+Implementation main `1e22649336fe4481ab9c7831c16d929e6227cf85` merged through PR #199 and
+passed exact-main gates and five-fixture synthetic equivalence. The first launch review did not bind
+it: spawned workers inherited the coordinator's source SHA but did not independently revalidate
+their imported worktree before plan/data loading or the specification SHA before claim. The
+pre-observation repair adds both checks. It must pass focused and full gates, merge, and receive a
+fresh finding-free exact-main review; the failed review grants no launch authority.
+
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, credentials, and live data remain prohibited. Every authority field is
 false. Historical simulation cannot establish future profitability or trading authority.

@@ -27,6 +27,7 @@ from systematic_trading_lab.intraday_fed_policy_absorption_001_runner import (
     _select_eligible,
     _validate_run_report_payload,
     _validate_stage_specifications,
+    _Worker,
     decode_canonical_metric,
     intraday_fed_policy_absorption_001_plan_summary,
 )
@@ -85,6 +86,29 @@ def test_unbound_runner_fails_before_runtime_creation(
     with pytest.raises(ValueError, match="broker environment"):
         IntradayFedPolicyAbsorption001Runner(repository, runtime)
     assert not runtime.exists()
+
+
+def test_worker_rejects_source_drift_before_data_access_or_claim(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    expected = "a" * 40
+    observed = "b" * 40
+    monkeypatch.setattr(runner_module, "_source_commit", lambda _repository: observed)
+    monkeypatch.setattr(
+        runner_module,
+        "load_intraday_fed_policy_absorption_001_plan",
+        lambda _repository: pytest.fail("worker read the plan before checking source"),
+    )
+
+    with pytest.raises(ValueError, match="worker source commit differs"):
+        _Worker(Path.cwd(), tmp_path / "data", tmp_path / "runtime", expected)
+    assert not (tmp_path / "runtime").exists()
+
+    worker = object.__new__(_Worker)
+    worker.source_commit = expected
+    worker.attempt_store = cast(Any, pytest.fail)
+    with pytest.raises(ValueError, match="worker specification source differs"):
+        worker({"source_commit": observed})
 
 
 def test_synthetic_report_binds_split_traces_and_exact_timing() -> None:

@@ -704,6 +704,8 @@ class _Worker:
         self.repository = repository.resolve()
         self.data_home = data_home.resolve()
         self.source_commit = source_commit
+        if _source_commit(self.repository) != self.source_commit:
+            raise ValueError("Fed Policy Absorption 001 worker source commit differs")
         self.plan = load_intraday_fed_policy_absorption_001_plan(self.repository)
         self.cost_model = load_intraday_execution_cost_model(self.repository)
         self.datasets = _dataset_bindings(self.plan.payload)
@@ -714,6 +716,8 @@ class _Worker:
         self.attempt_store = IntradayFedPolicyAbsorption001Store(runtime_root)
 
     def __call__(self, specification: Mapping[str, object]) -> str:
+        if specification.get("source_commit") != self.source_commit:
+            raise ValueError("Fed Policy Absorption 001 worker specification source differs")
         run_id = _run_id(specification)
         claim = self.attempt_store.claim(run_id, source_sha=self.source_commit)
         context = _mapping(specification.get("context"), "run context")
