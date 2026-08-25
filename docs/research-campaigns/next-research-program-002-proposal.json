@@ -1,0 +1,362 @@
+{
+  "schema_version": "next-research-program-002-proposal-v1",
+  "proposal_id": "next-research-program-002-proposal",
+  "proposed_program_id": "multi-hour-sector-etf-research-001",
+  "status": "PROPOSED - NOT AUTHORIZED FOR STRATEGY EXECUTION",
+  "created_date": "2026-08-25",
+  "source_state": {
+    "main_commit": "0068842ef4c57485020db28446e16e5a111e2ed6",
+    "autonomous_program_id": "intraday-autonomous-research-001",
+    "autonomous_state_path": "docs/research-campaigns/intraday-autonomous-research-001-state-v2-revision-008.json",
+    "autonomous_program_disposition": "closed-do-not-restart-or-extend",
+    "current_surface_assessment": "mostly-exhausted"
+  },
+  "purpose": "Test whether cross-sectional breadth and fixed 30-minute signal formation can produce stable multi-hour ETF evidence without reopening broad SPY/QQQ five-minute search.",
+  "economic_mechanisms": [
+    "sector-relative information diffusion over a fixed multi-hour horizon",
+    "temporary sector-relative price pressure followed by multi-hour reversal"
+  ],
+  "universe": {
+    "universe_id": "multi-hour-sector-etfs-v1",
+    "traded_symbols": [
+      "IWM",
+      "MDY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "context_and_benchmark_symbols": [
+      "SPY"
+    ],
+    "selection_rule": "Use every sector ETF in the frozen Rapid-004 final universe plus its small- and mid-cap broad equity sleeves. Selection uses prior non-return liquidity, completeness, product, and duplicate-exposure evidence only.",
+    "strategy_result_based_selection": false
+  },
+  "data": {
+    "provider": "alpaca-historical-v2",
+    "feed": "sip",
+    "source_timeframe": "5m",
+    "signal_timeframe": "30m-derived-from-six-complete-5m-bars",
+    "adjustment_policy": "provider-adjusted-all-v1",
+    "calendar_policy": "XNYS-regular-session-bars-v1",
+    "timestamp_policy": "bar-open-utc-v1",
+    "allowed_strategy_features": [
+      "completed 30-minute OHLCV aggregates",
+      "ETF return relative to SPY over one or two completed 30-minute bars",
+      "same-clock cumulative relative volume against twenty strictly prior complete sessions"
+    ],
+    "cost_calibration_inputs_only": [
+      "historical SIP NBBO quotes",
+      "official regulatory fee schedules"
+    ],
+    "prohibited_strategy_features": [
+      "quote depth",
+      "trade imbalance",
+      "news",
+      "event release contents",
+      "consensus or surprise",
+      "rates or yields",
+      "futures",
+      "options",
+      "extended-hours bars",
+      "protected-period data"
+    ],
+    "exploratory_range": {
+      "start": "2020-07-27",
+      "end": "2026-07-31",
+      "physical_block_isolation_required": true
+    },
+    "new_acquisition_required": true,
+    "acquisition_authorized": false,
+    "expected_provider_cost_usd": {
+      "base": 0,
+      "one_month_contingency": 99,
+      "recheck_before_spend": true
+    },
+    "expected_storage_gb_range": [
+      2,
+      5
+    ],
+    "raw_immutability": "Retain every mapped transport record unchanged. Publish normalized Parquet only after full validation.",
+    "content_address_fields": [
+      "provider",
+      "feed",
+      "request",
+      "universe",
+      "adjustment",
+      "processing versions",
+      "calendar policy",
+      "timestamp policy",
+      "raw sha256",
+      "normalized fingerprint"
+    ]
+  },
+  "strategy_contract": {
+    "initial_cash_usd": "100000",
+    "decision_clock_new_york": "11:30 after the fixed completed 30-minute bar",
+    "feature_definitions": {
+      "thirty_minute_bar": "Aggregate six consecutive complete XNYS regular-session 5m bars: first open, maximum high, minimum low, last close, and summed volume.",
+      "lookback_return": "For L in {1,2}, divide the 11:30 completed 30m close by the completed 30m close exactly L bars earlier and subtract one.",
+      "residual_return": "Subtract SPY lookback_return from the traded ETF lookback_return for the same L and timestamp.",
+      "same_clock_relative_volume": "Divide ETF volume summed over the 24 complete regular-session 5m bars in [09:30, 11:30) New York time by the arithmetic mean of the same sum over exactly twenty strictly prior complete XNYS sessions.",
+      "undefined_input_rule": "A missing, duplicate, nonpositive-price, nonpositive-volume-denominator, incomplete-history, or nonfinite required input is a terminal data failure, not a flat signal."
+    },
+    "maximum_selection_count": 3,
+    "selection_rule": "Select up to three eligible symbols in family rank order. Break equal residual returns by symbol ascending. Each selected symbol receives one-third weight; absent slots stay cash and weights are never rescaled.",
+    "active_session_definition": "A session with at least one selected symbol and at least one completed candidate round trip; completed round trips count per selected symbol.",
+    "no_signal_action": "Remain entirely in cash.",
+    "weight_per_selected_symbol": "0.3333333333333333333333333333",
+    "maximum_gross_weight": "1",
+    "long_only": true,
+    "leverage": false,
+    "shorting": false,
+    "maximum_entries_per_symbol_per_session": 1,
+    "resize_allowed": false,
+    "reentry_allowed": false,
+    "flat_at_close": true,
+    "unsupported_early_close_action": "remain-flat",
+    "entry_and_exit_clock_rule": "Create the entry target after 11:30. Create the exit target exactly hold_30m_bars times 30 minutes later. Apply the scenario fill delay to both targets; every supported exit fill must precede the regular-session close.",
+    "families": [
+      {
+        "family_id": "sector-relative-continuation-v1",
+        "activation": "residual_return > 0 and same_clock_relative_volume >= 1.2",
+        "ranking": "residual_return descending, then symbol ascending",
+        "axes": {
+          "lookback_30m_bars": [
+            1,
+            2
+          ],
+          "hold_30m_bars": [
+            4,
+            8
+          ]
+        },
+        "configuration_count": 4
+      },
+      {
+        "family_id": "sector-relative-reversal-v1",
+        "activation": "residual_return <= -0.001 and same_clock_relative_volume >= 1.5",
+        "ranking": "residual_return ascending, then symbol ascending",
+        "axes": {
+          "lookback_30m_bars": [
+            1,
+            2
+          ],
+          "hold_30m_bars": [
+            4,
+            8
+          ]
+        },
+        "configuration_count": 4
+      }
+    ],
+    "total_configuration_count": 8,
+    "immediate_neighbor_rule": "Configurations in the same family differ by one adjacent value on exactly one axis."
+  },
+  "benchmark_contract": {
+    "benchmark_id": "participation-matched-spy-v1",
+    "definition": "On each candidate-active session, hold SPY from the candidate entry target through the same scheduled exit at gross weight equal to the candidate's total target gross weight. Remain in cash on candidate-inactive sessions.",
+    "comparability": "Use the same initial cash, timestamps, fill delay, spread percentile, fees, and candidate activation trace. The trace is an input to the benchmark and cannot change after candidate publication.",
+    "exposed_accounting": "Discovery and walk-forward reports include paired benchmark metrics without a separate run specification.",
+    "controlled_accounting": "Each controlled block uses one candidate Normal specification and one separately stored benchmark Normal specification bound to the frozen candidate trace."
+  },
+  "chronology": {
+    "discovery_blocks": [
+      {
+        "block_id": "exposed-block-1",
+        "start": "2020-07-27",
+        "end": "2022-07-25"
+      },
+      {
+        "block_id": "exposed-block-2",
+        "start": "2022-07-26",
+        "end": "2024-07-26"
+      },
+      {
+        "block_id": "exposed-block-3",
+        "start": "2024-07-29",
+        "end": "2026-07-31"
+      }
+    ],
+    "walk_forward": {
+      "fold_count": 9,
+      "training_sessions": 252,
+      "test_sessions": 126,
+      "step_sessions": 126,
+      "fixed_before_results": true
+    },
+    "future_controlled_blocks": [
+      {
+        "block_id": "controlled-a",
+        "start": "2027-04-16",
+        "end": "2027-10-15"
+      },
+      {
+        "block_id": "controlled-b",
+        "start": "2027-10-18",
+        "end": "2028-04-14"
+      }
+    ],
+    "substitute_range_allowed": false
+  },
+  "execution_costs": {
+    "precondition": "Freeze and independently review a new symbol-specific SIP quote calibration before any strategy run.",
+    "normal": "symbol p75 adverse half-spread per fill plus regulatory fees; one 5m fill-delay bar",
+    "stress_a": "symbol p95 adverse half-spread per fill plus regulatory fees; two 5m fill-delay bars",
+    "stress_b": "symbol p99 adverse half-spread per fill plus regulatory fees; three 5m fill-delay bars",
+    "normal_delay_2": "symbol p75 adverse half-spread per fill plus regulatory fees; two 5m fill-delay bars",
+    "normal_delay_3": "symbol p75 adverse half-spread per fill plus regulatory fees; three 5m fill-delay bars",
+    "zero_cost_diagnostic": "zero spread and fees with one 5m fill-delay bar; no promotion authority",
+    "market_impact_model": null,
+    "capacity_rule": "Fail when proposed order notional exceeds one percent of the symbol's median close-times-volume across every regular-session 5m bar in exactly twenty strictly prior complete sessions."
+  },
+  "program_budget": {
+    "maximum_strategy_campaigns": 2,
+    "maximum_candidate_families": 2,
+    "maximum_parent_configurations": 8,
+    "maximum_discovery_run_specifications": 48,
+    "maximum_walk_forward_and_neighbor_run_specifications": 108,
+    "maximum_stress_and_delay_run_specifications": 72,
+    "maximum_controlled_run_specifications": 4,
+    "maximum_total_run_specifications": 232,
+    "maximum_attempts_per_run_specification": 3,
+    "maximum_total_infrastructure_attempts": 696,
+    "default_workers": 4,
+    "stage_barriers_required": true
+  },
+  "campaign_sequence": [
+    {
+      "campaign_index": 1,
+      "campaign_id": "multi-hour-sector-etf-exposed-001",
+      "purpose": "Run the eight fixed configurations on exposed chronology and complete discovery, walk-forward, neighbor, stress, and delay gates.",
+      "family_base_selection_order": [
+        "every discovery gate passed",
+        "worst fixed-block Normal excess return versus the benchmark descending",
+        "aggregate Normal excess return versus the benchmark descending",
+        "aggregate Normal return descending",
+        "maximum Normal drawdown ascending",
+        "canonical configuration identity ascending"
+      ],
+      "final_candidate_selection_order": [
+        "every walk-forward, neighbor, stress, and delay gate passed",
+        "worst Normal fold excess return versus the benchmark descending",
+        "aggregate Normal excess return versus the benchmark descending",
+        "aggregate Normal return descending",
+        "canonical configuration identity ascending"
+      ],
+      "maximum_final_cohort": 1,
+      "automatic_next_campaign": false
+    },
+    {
+      "campaign_index": 2,
+      "campaign_id": "multi-hour-sector-etf-controlled-001",
+      "purpose": "Evaluate at most one frozen candidate and its fixed benchmark on two future blocks.",
+      "preconditions": [
+        "campaign 1 freezes exactly one all-gate candidate",
+        "independent final review passes",
+        "the next controlled block is complete and isolated",
+        "user grants separate one-use controlled authority for that block",
+        "controlled-b remains inaccessible unless controlled-a passes every block gate and the user grants a new one-use authority"
+      ],
+      "automatic_next_campaign": false
+    }
+  ],
+  "discovery_gates": [
+    "aggregate Normal return greater than zero",
+    "aggregate zero-cost return greater than zero",
+    "aggregate Normal return greater than the participation-matched SPY Normal return",
+    "at least two of three fixed blocks have positive Normal return",
+    "at least two of three fixed blocks have positive Normal excess return versus the benchmark",
+    "at least 60 active sessions in each fixed block",
+    "at least 300 aggregate completed round trips",
+    "maximum drawdown no more than 0.10",
+    "average gross trade edge at least max(5 bps, three times modeled round-trip friction)",
+    "cost to gross profitable-trade profit no more than 0.35",
+    "positive-profit symbol concentration no more than 0.35",
+    "positive-profit block concentration no more than 0.60",
+    "paired Normal and zero-cost signal traces match exactly",
+    "accounting identity error equals zero"
+  ],
+  "walk_forward_and_robustness_gates": [
+    "aggregate Normal and zero-cost returns greater than zero",
+    "aggregate Normal return greater than the participation-matched SPY Normal return",
+    "at least seven of nine Normal folds positive",
+    "at least six of nine Normal folds beat the participation-matched SPY Normal return",
+    "worst Normal fold return at least -0.01",
+    "positive-profit symbol concentration no more than 0.35",
+    "both immediate neighbors have positive aggregate Normal return",
+    "median immediate-neighbor Normal profit retention at least 0.50",
+    "Stress A and normal-delay-2 retain at least 0.50 of Normal profit",
+    "Stress B and normal-delay-3 retain at least 0.25 of Normal profit",
+    "every stress and delay variant has at least seven positive folds",
+    "all discovery accounting, trace, edge, and cost invariants still pass"
+  ],
+  "controlled_evaluation_gates": {
+    "each_block": [
+      "candidate Normal return greater than zero",
+      "candidate Normal return greater than the participation-matched SPY Normal return",
+      "at least 15 active sessions",
+      "at least 30 completed round trips",
+      "maximum drawdown no more than 0.10",
+      "average gross trade edge at least max(5 bps, three times modeled round-trip friction)",
+      "cost to gross profitable-trade profit no more than 0.35",
+      "positive-profit symbol concentration no more than 0.35",
+      "accounting identity error equals zero"
+    ],
+    "sequence": "Freeze the candidate, source, formulas, benchmark, costs, and gates before controlled-a. If controlled-a fails any gate, stop without acquiring or opening controlled-b. If controlled-a passes, require a new one-use authorization before controlled-b.",
+    "final_pass": "Both blocks must independently pass every block gate. Aggregation cannot rescue a failed block, and no reselection, retuning, substitute range, or gate change is allowed."
+  },
+  "global_stopping_rules": [
+    "stop when any stage has no survivor",
+    "stop on any protected-boundary or data-isolation breach",
+    "stop on a terminal deterministic failure or exhausted third infrastructure attempt",
+    "stop at 232 run specifications",
+    "do not add or invert a family after results",
+    "do not add a parameter, symbol, feature, chronology, range, retry class, or weaker gate",
+    "do not inspect a partial stage for adaptation"
+  ],
+  "infrastructure_retries": {
+    "registry": "research-attempts-v1",
+    "retry_condition": "expired-no-result-infrastructure-lease-only",
+    "lease_timeout_seconds": 300,
+    "heartbeat_interval_seconds": 60,
+    "candidate_data_accounting_and_publication_failures_terminal": true
+  },
+  "protected_boundaries": {
+    "june_2026_status": "exposed-and-ineligible",
+    "intraday_v3_validation_a": "2026-10-01/2026-12-03",
+    "intraday_v3_validation_b": "2026-12-04/2027-02-09",
+    "intraday_v3_validation_c": "2027-02-10/2027-04-15",
+    "daily_2018_2019": "sealed-and-not-used-by-this-proposal",
+    "controlled_storage_separate": true,
+    "protected_results_accessed_by_proposal": false
+  },
+  "researcher_degrees_of_freedom": {
+    "post_result_family_changes": false,
+    "post_result_parameter_changes": false,
+    "post_result_universe_changes": false,
+    "post_result_feature_changes": false,
+    "post_result_chronology_changes": false,
+    "post_result_gate_changes": false,
+    "replacement_controlled_range": false,
+    "machine_learning_allowed": false
+  },
+  "authority": {
+    "data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "exact_user_decision_requested": "Authorize or reject implementation planning and historical acquisition planning for this proposal. Authorization must not grant data acquisition or strategy execution; those require later reviewed artifacts and explicit approval."
+}
