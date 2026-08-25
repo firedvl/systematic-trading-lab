@@ -1,0 +1,527 @@
+{
+  "schema_version": "cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1",
+  "plan_id": "cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "status": "PROPOSED-NOT-AUTHORIZED-FOR-ACQUISITION",
+  "created_date": "2026-08-25",
+  "purpose": "Define a later narrow acquisition of exposed SIP bars and quote-calibration evidence without performing any network request or granting strategy authority.",
+  "program_plan": {
+    "path": "config/research/cross-sectional-sector-etf-program-002-plan-proposal-v1.json",
+    "status_required": "PROPOSED-NOT-AUTHORIZED",
+    "sha256": "2872d4d3301df0a85e1a5a2eba6e3ee533ee5573971121e99840041e7c8d2173",
+    "plan_fingerprint": "701dc67ea2da1e45d235f4247724b2bc8eb62853561c2400c17a668342c6b81e"
+  },
+  "universe": {
+    "path": "config/research/multi-hour-sector-etfs-v1.json",
+    "sha256": "8f07f73fd93f9432501d579e43616e1d9a09d6db77c347a6bed4151f2210c312",
+    "universe_id": "multi-hour-sector-etfs-v1",
+    "universe_fingerprint": "ef23e533aa7a91262200bd7a77a65f9b6d8b4d473573850c33ef014701177790",
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ]
+  },
+  "historical_bars": {
+    "provider": "alpaca-historical-v2",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "http_method": "GET",
+    "feed": "sip",
+    "feed_provenance": "Bind the explicit feed=sip request query, fixed endpoint, credential/subscription context, HTTP result and headers, retrieval time, and raw response hashes in the attempt journal. Alpaca documents no response-level feed attestation, so payload fields alone never prove SIP.",
+    "sip_entitlement": "As documented on 2026-08-25, Basic may request SIP history whose end is at least fifteen minutes old; recent SIP requires the paid plan. Every proposed exposed range is older, but current entitlement and terms must be rechecked before separate acquisition authority.",
+    "timeframe": "5Min",
+    "adjustment": "all",
+    "adjustment_policy": "provider-adjusted-all-v1",
+    "sort": "asc",
+    "limit_per_page": 10000,
+    "pagination": "Follow each exact next_page_token until null; a repeated token, missing terminal token, page-shape change, or configured page ceiling breach fails the request segment.",
+    "calendar_policy": "XNYS-regular-session-bars-v1",
+    "timestamp_policy": "bar-open-utc-v1",
+    "request_boundary": "Repository ranges use inclusive expected bar opens. Alpaca start is inclusive and end is sent as the final expected bar open plus five minutes because the provider end is exclusive.",
+    "normalized_fields": [
+      "timestamp",
+      "symbol",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "derived_30m_storage": "Do not catalog a second market dataset. Derive 30-minute bars deterministically in memory from validated five-minute bars and fingerprint the derived trace in each report."
+  },
+  "data_classes": {
+    "A_exposed_research_and_development": {
+      "namespace": "program-002/exposed",
+      "strategy_return_status": "exposed-only-after-separate-future-strategy-execution-authority",
+      "datasets": [
+        {
+          "role": "exposed-block-1",
+          "start_date": "2020-07-27",
+          "end_date": "2022-07-25",
+          "inclusive_utc_bar_open_start": "2020-07-27T13:30:00Z",
+          "inclusive_utc_bar_open_end": "2022-07-25T19:55:00Z",
+          "xnys_sessions": 503,
+          "five_minute_slots_per_symbol": 39126,
+          "expected_rows": 508638
+        },
+        {
+          "role": "exposed-block-2",
+          "start_date": "2022-07-26",
+          "end_date": "2024-07-26",
+          "inclusive_utc_bar_open_start": "2022-07-26T13:30:00Z",
+          "inclusive_utc_bar_open_end": "2024-07-26T19:55:00Z",
+          "xnys_sessions": 504,
+          "five_minute_slots_per_symbol": 39168,
+          "expected_rows": 509184
+        },
+        {
+          "role": "exposed-block-3",
+          "start_date": "2024-07-29",
+          "end_date": "2026-07-31",
+          "inclusive_utc_bar_open_start": "2024-07-29T13:30:00Z",
+          "inclusive_utc_bar_open_end": "2026-07-31T19:55:00Z",
+          "xnys_sessions": 504,
+          "five_minute_slots_per_symbol": 39132,
+          "expected_rows": 508716
+        }
+      ],
+      "total_xnys_sessions": 1511,
+      "total_expected_rows": 1526538,
+      "physical_isolation": "Publish three separate content-addressed exposed datasets. A run binds only the exact block datasets and volume-only context projections needed by its date range."
+    },
+    "B_context_only": {
+      "namespace": "program-002/context-only",
+      "strategy_return_status": "never-evaluated",
+      "exposed_dataset": {
+        "role": "exposed-context-only",
+        "start_date": "2020-06-26",
+        "end_date": "2020-07-24",
+        "inclusive_utc_bar_open_start": "2020-06-26T13:30:00Z",
+        "inclusive_utc_bar_open_end": "2020-07-24T19:55:00Z",
+        "xnys_sessions": 20,
+        "five_minute_slots_per_symbol": 1560,
+        "expected_rows": 20280,
+        "allowed_use": "same-clock volume context only; no target, benchmark, P&L, or gate"
+      },
+      "total_expected_rows": 20280,
+      "controlled_a": "Acquire no pre-2027-04-16 Program 002 context. Within sealed Block A, use its first twenty complete sessions only to build a volume-only context projection; begin evaluation on session twenty-one.",
+      "controlled_b": "Only after Block A passes, derive a content-addressed volume-only projection from Block A's final twenty complete sessions. Do not pass Block A OHLC prices or returns to the Block B worker.",
+      "projection_schema": [
+        "session_date",
+        "symbol",
+        "cumulative_volume_0930_1130",
+        "source_dataset_id",
+        "source_dataset_fingerprint"
+      ],
+      "intraday_v3_dates_acquired_by_program_002": false
+    },
+    "C_future_untouched_controlled_evaluation": {
+      "namespace": "program-002/controlled",
+      "blocks": [
+        {
+          "block_id": "controlled-a",
+          "start_date": "2027-04-16",
+          "end_date": "2027-10-15",
+          "current_state": "UNACQUIRED-SEALED",
+          "earliest_acquisition": "after 2027-10-15, cohort freeze, and a new acquisition-only user authority",
+          "context": "first twenty in-block sessions are context-only",
+          "post_acquisition_requirement": "independent exact-byte dataset review and binding",
+          "evaluation_authority": "separate one-use authority bound to the exact reviewed dataset IDs; acquisition authority cannot grant evaluation"
+        },
+        {
+          "block_id": "controlled-b",
+          "start_date": "2027-10-18",
+          "end_date": "2028-04-14",
+          "current_state": "UNACQUIRED-SEALED-CONDITIONAL",
+          "earliest_acquisition": "after 2028-04-14, Block A passes every controlled gate, its protected read is logged, and a Block B acquisition-only user authority is granted",
+          "context": "volume-only projection from the final twenty Block A sessions",
+          "post_acquisition_requirement": "independent exact-byte dataset review and binding",
+          "evaluation_authority": "separate one-use authority bound to the exact reviewed dataset IDs; acquisition authority cannot grant evaluation"
+        }
+      ],
+      "catalog_isolation": "Controlled artifacts use a storage root and registry that exposed research workers cannot enumerate. No controlled dataset ID enters the exposed catalog.",
+      "calendar_blocker": "The installed exchange-calendars 4.13.2 schedule ends at 2027-08-25. Freeze a reviewed updated calendar and exact row counts before any controlled acquisition; do not move or substitute the block dates."
+    }
+  },
+  "request_chunking": {
+    "bar_segment": "One calendar month inside one physical dataset, all thirteen symbols in one request, exact first and last expected XNYS bar opens.",
+    "bar_segment_project_page_ceiling": 10,
+    "quote_segment_project_page_ceiling": 100,
+    "page_ceiling_semantics": "These are Program 002 resource controls, not provider limits. Alpaca documents at most 10000 total records per page and mandatory next_page_token pagination but no request-page ceiling. Drain tokens through null; exceeding a project ceiling stops acquisition without publishing or truncating and requires a new reviewed proposal.",
+    "reason": "Monthly segments keep retries and correction lineage bounded while the documented multi-symbol endpoint and page token define record pagination.",
+    "undocumented_symbol_limit_action": "The official documentation gives no endpoint-side symbol-count maximum. Request all thirteen. If the provider rejects that exact request, stop and revise the plan before acquisition; do not invent adaptive symbol batches.",
+    "resume": "A failed incomplete monthly segment is not published. Restart that complete segment under a new acquisition-attempt ID; compare any prior complete fingerprint and create correction lineage rather than appending to old bytes."
+  },
+  "rate_limit_and_retry": {
+    "planning_tier": "Alpaca Basic historical market data",
+    "request_pacing": "At most 180 requests per rolling minute and no faster than one request every 350 milliseconds. Honor a lower server-advertised remaining/reset limit.",
+    "retryable": [
+      "HTTP 408",
+      "HTTP 425",
+      "HTTP 429",
+      "HTTP 500",
+      "HTTP 502",
+      "HTTP 503",
+      "HTTP 504",
+      "connection reset",
+      "DNS failure",
+      "thirty-second read timeout"
+    ],
+    "nonretryable": "Every other HTTP 4xx, authentication or entitlement failure, redirect, malformed payload, symbol mismatch, request-journal feed mismatch, duplicate page token, and validation failure.",
+    "maximum_attempts_per_page": 5,
+    "backoff_seconds_without_server_instruction": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "server_instruction": "Use Retry-After or X-RateLimit reset when it requires a longer delay.",
+    "redirects": "disabled; the exact HTTPS origin and GET method are fixed"
+  },
+  "raw_and_normalized_storage": {
+    "raw_transport": "Create-only exact response body bytes by request segment and page, with SHA-256 per page. Store only non-secret request parameters and selected non-secret rate-limit/request IDs beside each page.",
+    "raw_records": "Canonical JSON Lines containing symbol plus every provider bar field from each transport record in provider/page order. Preserve extended-hours or out-of-grid records as raw evidence; never normalize them.",
+    "normalized": "Deterministic Parquet sorted by symbol then UTC timestamp with exact Decimal-string OHLC values and integer volume.",
+    "publication": "Write to an attempt-private directory, fsync files and directory, validate all artifacts, then create-only rename to the content-addressed dataset path. A byte conflict is terminal evidence.",
+    "quarantine": "Retain invalid raw pages, canonical raw records, validation errors, request identity, and hashes in a separate create-only quarantine namespace. Never publish normalized bars after a failed gate."
+  },
+  "manifest_and_identity": {
+    "manifest_schema": "program-002-ohlcv-dataset-manifest-v1 extending the existing DatasetManifest",
+    "required_fields": [
+      "dataset_id",
+      "normalized_fingerprint",
+      "provider",
+      "endpoint",
+      "feed",
+      "timeframe",
+      "adjustment_policy",
+      "requested_range",
+      "actual_range",
+      "retrieval_timestamp",
+      "symbols",
+      "universe_id",
+      "universe_fingerprint",
+      "calendar_package_and_version",
+      "calendar_policy",
+      "timestamp_policy",
+      "normalization_version",
+      "schema_version",
+      "request_segments",
+      "raw_page_sha256_values",
+      "raw_jsonl_sha256",
+      "raw_record_fingerprint",
+      "validation_evidence",
+      "parent_dataset_id"
+    ],
+    "sha256": "SHA-256 over exact file bytes for each transport page, raw JSONL, Parquet, manifest, and context projection.",
+    "fingerprint": "Use the repository canonical JSON fingerprint: SHA-256 of UTF-8 canonical JSON with sorted mapping keys and normalized typed values.",
+    "dataset_id": "Fingerprint provider, endpoint, feed, exact request segments, symbol order, timeframe, adjustment, universe ID/fingerprint, processing/calendar/timestamp versions, raw fingerprint, and normalized fingerprint.",
+    "duplicate_dataset": "An existing identical dataset ID is accepted only after complete byte and manifest validation. Changed provider bytes produce a new dataset ID and immutable parent lineage; they never overwrite."
+  },
+  "validation": {
+    "transport": [
+      "HTTPS fixed origin and GET",
+      "object payload with a bars object",
+      "only requested symbols",
+      "attempt journal and exact request query bind feed=sip; the credential entitlement must accept that request with no fallback, and no undocumented response field is treated as SIP proof",
+      "nonrepeating next_page_token chain",
+      "nondecreasing provider order per symbol"
+    ],
+    "record": [
+      "exactly one normalized row for every requested symbol and expected XNYS five-minute bar open",
+      "no duplicate symbol/timestamp",
+      "UTC-aware timestamp",
+      "finite positive OHLC",
+      "low <= open and close <= high",
+      "nonnegative integer volume",
+      "no normalized extended-hours or unexpected timestamp"
+    ],
+    "session": [
+      "all thirteen symbols share the identical timestamp grid",
+      "normal session has 78 five-minute bars per symbol",
+      "scheduled early-close session has 42 five-minute bars per symbol",
+      "no weekday or fixed-hours inference outside the bound XNYS calendar",
+      "all three exposed datasets and the separate context-only dataset match their exact expected row counts"
+    ],
+    "corporate_actions": "Require adjustment=all and provider-adjusted-all-v1. Bind provider split, dividend, and spin-off adjustment behavior. Do not infer or locally repair an action, price, volume, symbol change, or delisting.",
+    "thirty_minute_preflight": "Every complete half-hour bucket must aggregate exactly six consecutive source bars with the frozen OHLCV formula; any failure rejects the data binding before strategy execution."
+  },
+  "quote_cost_calibration": {
+    "status": "PROPOSED-NOT-AUTHORIZED-FOR-ACQUISITION",
+    "reuse_decision": "Reuse the existing SPY/QQQ calibration's causal one-second sampling, latest-prior-state eligibility, crossed/stale handling, nearest-rank percentiles, upward spread rounding, and fee structure. Do not reuse its SPY/QQQ numeric spreads. Recalibrate all thirteen symbols, including SPY, on the same dates and execution clocks.",
+    "provider": "alpaca-market-data-api-v2-historical-quotes",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/quotes",
+    "http_method": "GET",
+    "feed": "sip",
+    "feed_provenance": "Bind the explicit feed=sip quote request, credential/subscription context, HTTP result and headers, retrieval time, and raw response hashes. Do not require or infer an undocumented response-level feed field.",
+    "iex_fallback": false,
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "session_selection_rule": "For every calendar month from July 2020 through July 2026, select the first full-length XNYS session on or after day 15 that lies inside the exposed range. July 2020 starts at the range boundary. Do not sample early closes.",
+    "sessions": [
+      "2020-07-27",
+      "2020-08-17",
+      "2020-09-15",
+      "2020-10-15",
+      "2020-11-16",
+      "2020-12-15",
+      "2021-01-15",
+      "2021-02-16",
+      "2021-03-15",
+      "2021-04-15",
+      "2021-05-17",
+      "2021-06-15",
+      "2021-07-15",
+      "2021-08-16",
+      "2021-09-15",
+      "2021-10-15",
+      "2021-11-15",
+      "2021-12-15",
+      "2022-01-18",
+      "2022-02-15",
+      "2022-03-15",
+      "2022-04-18",
+      "2022-05-16",
+      "2022-06-15",
+      "2022-07-15",
+      "2022-08-15",
+      "2022-09-15",
+      "2022-10-17",
+      "2022-11-15",
+      "2022-12-15",
+      "2023-01-17",
+      "2023-02-15",
+      "2023-03-15",
+      "2023-04-17",
+      "2023-05-15",
+      "2023-06-15",
+      "2023-07-17",
+      "2023-08-15",
+      "2023-09-15",
+      "2023-10-16",
+      "2023-11-15",
+      "2023-12-15",
+      "2024-01-16",
+      "2024-02-15",
+      "2024-03-15",
+      "2024-04-15",
+      "2024-05-15",
+      "2024-06-17",
+      "2024-07-15",
+      "2024-08-15",
+      "2024-09-16",
+      "2024-10-15",
+      "2024-11-15",
+      "2024-12-16",
+      "2025-01-15",
+      "2025-02-18",
+      "2025-03-17",
+      "2025-04-15",
+      "2025-05-15",
+      "2025-06-16",
+      "2025-07-15",
+      "2025-08-15",
+      "2025-09-15",
+      "2025-10-15",
+      "2025-11-17",
+      "2025-12-15",
+      "2026-01-15",
+      "2026-02-17",
+      "2026-03-16",
+      "2026-04-15",
+      "2026-05-15",
+      "2026-06-15",
+      "2026-07-15"
+    ],
+    "fill_clocks_new_york": [
+      "11:35",
+      "11:40",
+      "11:45",
+      "13:35",
+      "13:40",
+      "13:45",
+      "15:35",
+      "15:40",
+      "15:45"
+    ],
+    "window": "For each fill clock, request quotes from five seconds before clock-minus-thirty-seconds through clock-plus-thirty-seconds. The first five seconds are raw causal lookback only. Sample the sixty one-second grid instants in [clock-30s, clock+30s).",
+    "request_segment": "One session, one fill clock, all thirteen symbols, explicit feed=sip, limit 10000 total records per page, paginated to null subject to the fixed 100-page project ceiling.",
+    "maximum_grid_observations": 512460,
+    "causal_selection": "At each grid instant, use the latest unique raw quote with provider timestamp strictly before the instant and no more than five seconds old. Never backfill an older quote when that latest state is ineligible.",
+    "eligibility": "bid and ask prices > 0, bid and ask sizes > 0, ask >= bid, finite midpoint, and source symbol match. The request journal, entitlement result, and no-fallback control bind SIP because Alpaca documents no response-level feed attestation. Locked markets are eligible at zero spread. Crossed, stale, one-sided, zero-size, malformed, or absent latest states are retained raw, excluded, and counted.",
+    "same_timestamp_updates": "Retain provider/page order, count changed quotes, and do not infer an order beyond the response.",
+    "duplicate_updates": "Retain exact duplicates raw, suppress them before sampling, and count them.",
+    "outliers": "Do not trim, winsorize, cap, or delete any otherwise eligible spread. Report minimum, maximum, clock/month distributions, and extreme counts; a suspicious distribution blocks review rather than changing observations.",
+    "weighting": "One observation per symbol per scheduled grid second. Every session and fill clock has sixty possible observations, so quote-message frequency cannot overweight a period.",
+    "coverage_gate": "Every symbol/session/fill-clock window must have at least 57 of 60 eligible grid observations. Each symbol therefore requires at least 37449 eligible observations across all 657 windows. A failed window blocks publication; it is not dropped.",
+    "half_spread_bps": "10000 * ((ask - bid) / 2) / ((ask + bid) / 2)",
+    "percentile_method": "nearest-rank over the complete equally weighted eligible symbol distribution",
+    "percentiles": [
+      "p50",
+      "p75",
+      "p90",
+      "p95",
+      "p99"
+    ],
+    "scenario_derivation": {
+      "Normal": "Each symbol's p75 half-spread rounded upward to 0.01 bps per fill, frozen regulatory fees, and delay 1.",
+      "Stress_A": "Each symbol's p95 half-spread rounded upward to 0.01 bps per fill, frozen regulatory fees, and delay 2.",
+      "Stress_B": "Each symbol's p99 half-spread rounded upward to 0.01 bps per fill, frozen regulatory fees, and delay 3.",
+      "Normal_delay_2": "Normal monetary costs and delay 2.",
+      "Normal_delay_3": "Normal monetary costs and delay 3.",
+      "zero_cost_diagnostic": "Zero spread and regulatory fees with delay 1; diagnostic only."
+    },
+    "signal_prohibition": "Quote prices, sizes, spreads, conditions, timestamps, and calibration distributions may affect cost scenarios only. They cannot enter a feature, activation, rank, weight, candidate choice, or gate threshold."
+  },
+  "regulatory_and_broker_fees": {
+    "model": "Freeze one prospective Alpaca US-equity fee floor before any strategy run and apply it to every exposed fill regardless of historical date.",
+    "components": [
+      "broker-documented SEC Section 31 sell-notional pass-through",
+      "broker-documented FINRA TAF sell-share fee and per-trade cap",
+      "broker-documented CAT per-share pass-through",
+      "documented direct commission, or zero only when the frozen broker schedule states zero"
+    ],
+    "rounding": "Use the broker schedule's account-day and trade rounding rules. Where the existing model applies a daily upward cent, preserve it.",
+    "later_controlled_rate_change": "For a later controlled block, apply max(frozen numeric floor, then-effective documented broker pass-through rate) component by component. Ignore decreases. An absent or conflicting source blocks evaluation; it never permits a lower rate.",
+    "source_warning": "SEC Section 31 is assessed on SROs rather than directly on customers; the broker schedule controls modeled customer pass-through. FINRA source discrepancies must be resolved and content-addressed before model freeze.",
+    "numeric_rates_frozen_now": false
+  },
+  "credentials_and_process_boundary": {
+    "credential_scope_problem": "Alpaca documentation does not establish a data-only API-key scope distinct from trading authority.",
+    "required_account": "Use a dedicated acquisition key/account with no funded live account and no key reused by PAPER or live processes. If Alpaca cannot provide a suitable isolated key, acquisition remains blocked.",
+    "secret_injection": "Inject credentials at process launch from an OS keychain or secret manager into a dedicated acquisition process. Do not require or read a repository .env file.",
+    "forbidden_secret_locations": [
+      "repository files",
+      ".env",
+      "test fixtures",
+      "command-line arguments",
+      "logs",
+      "manifests",
+      "raw artifacts",
+      "prompts"
+    ],
+    "process": "Run under a dedicated OS user or isolated container with write access only to the acquisition staging/storage root and fixed GET access only to data.alpaca.markets.",
+    "post_acquisition": "Publish validated data, terminate the credentialed process, clear its environment, and run all later feature/backtest workers without Alpaca or broker credentials.",
+    "module_boundary": "The acquisition executable must not import paper, order, broker mutation, risk authorization, or execution modules."
+  },
+  "cost_storage_and_duration": {
+    "exposed_evaluation_bar_rows": 1526538,
+    "context_only_bar_rows": 20280,
+    "combined_bar_rows": 1546818,
+    "bar_storage_estimate_gb": [
+      0.5,
+      1.0
+    ],
+    "quote_grid_observations_maximum": 512460,
+    "quote_raw_storage_estimate_gb": [
+      1.0,
+      5.0
+    ],
+    "working_storage_reservation_gb": 10,
+    "storage_caveat": "Quote-message volume and provider JSON size are unknown without acquisition; raw quote updates, duplicate exact page bytes, quarantine, and staging dominate the range.",
+    "expected_bar_request_floor": "About 155 full 10000-record pages before monthly-segment page-boundary overhead; expect roughly 220 monthly bar pages from the fixed row count.",
+    "expected_quote_request_floor": 657,
+    "duration": "No defensible wall-clock estimate exists without a credentialed response-size probe. At the fixed Basic throttle, request pacing alone is at least several minutes; quote pagination, transfer, validation, retries, and fsync may extend acquisition to hours.",
+    "current_provider_cost_usd": 0,
+    "one_month_paid_contingency_usd": 99,
+    "cost_rule": "Recheck current official terms before any spend. This plan authorizes neither the free request nor the paid contingency."
+  },
+  "official_sources_checked_2026_08_25": [
+    {
+      "id": "alpaca-multi-symbol-bars",
+      "url": "https://docs.alpaca.markets/us/v1.4.2/reference/stockbars",
+      "use": "GET endpoint, multi-symbol response, 5Min timeframe, adjustment, 10000 total-page limit, page token"
+    },
+    {
+      "id": "alpaca-historical-quotes",
+      "url": "https://docs.alpaca.markets/us/reference/stockquotes-1",
+      "use": "historical multi-symbol quote endpoint and pagination"
+    },
+    {
+      "id": "alpaca-market-data-plans",
+      "url": "https://docs.alpaca.markets/us/docs/about-market-data-api",
+      "use": "Basic and Algo Trader Plus historical limits and current prices"
+    },
+    {
+      "id": "alpaca-market-data-faq",
+      "url": "https://docs.alpaca.markets/us/docs/market-data-faq",
+      "use": "SIP versus IEX and fifteen-minute historical entitlement rule"
+    },
+    {
+      "id": "sec-section-31-basic-information",
+      "url": "https://www.sec.gov/rules-regulations/fee-rate-advisories/section-31-transaction-fees-basic-information-firms",
+      "use": "Section 31 assessment boundary"
+    },
+    {
+      "id": "sec-fee-rate-advisories",
+      "url": "https://www.sec.gov/rules-regulations/fee-rate-advisories",
+      "use": "official effective-rate history"
+    },
+    {
+      "id": "finra-taf-faq",
+      "url": "https://www.finra.org/rules-guidance/guidance/faqs/trading-activity-fee",
+      "use": "ETF and sell-side TAF applicability"
+    },
+    {
+      "id": "finra-fee-adjustment-schedule",
+      "url": "https://www.finra.org/rules-guidance/rule-filings/sr-finra-2024-019/fee-adjustment-schedule",
+      "use": "scheduled TAF rates and caps"
+    },
+    {
+      "id": "nyse-hours-and-calendars",
+      "url": "https://www.nyse.com/trade/hours-calendars",
+      "use": "core session and early-close source"
+    }
+  ],
+  "preconditions_for_a_later_exposed_acquisition_authority": [
+    "This exact artifact and universe pass independent review and are bound by SHA-256.",
+    "Current official endpoint, SIP entitlement, plan price, fee, and calendar facts are rechecked without requesting market records.",
+    "The read-only fixed-origin transport, monthly segment journal, immutable raw-page storage, custom intraday universe loading, and mock-only tests are implemented and merged.",
+    "A dedicated non-broker credential boundary is available.",
+    "The user authorizes only the three exposed bar datasets, one separate context-only dataset, and fixed quote windows; controlled blocks remain false."
+  ],
+  "launch_control": {
+    "network_request_allowed": false,
+    "credentials_allowed": false,
+    "market_data_acquisition_allowed": false,
+    "controlled_dataset_acquisition_allowed": false,
+    "strategy_execution_allowed": false,
+    "controlled_evaluation_allowed": false,
+    "protected_result_read_allowed": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  }
+}
