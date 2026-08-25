@@ -3,7 +3,10 @@
 Status: prospective plan/calendar and implementation reviews are finding-free. Launch control remains
 unbound. PR #201 merged the Campaign-local worker-readiness repair at exact main
 `9778f823bf00da9e96c92d6463d099dd3b530ad7`; the next exact-main review found only stale launch-state
-documentation. This correction is not merged or reviewed. No reservation, attempt, market-data read,
+documentation. PR #202 merged the initial chronology correction at exact main
+`ed042c29696e646aaf0a44e5b7f3977092fe71cc`; review of that exact main rejected its self-referential
+branch-status wording. This record avoids claims about its own merge state. Launch-control binding
+requires a finding-free review of current exact main. No reservation, attempt, market-data read,
 report, or result exists.
 
 Program ID: `intraday-fed-policy-absorption-001`.
@@ -174,9 +177,11 @@ task. PR #201 merged the repair at exact main `9778f823bf00da9e96c92d6463d099dd3
 All seven exact-main gates passed with 1,069 tests and four skips. The public verifier found all five
 non-protected synthetic fixtures byte-identical at one and four workers in `0.802682` and `0.812015`
 seconds. The fresh exact-main review found no code or control defect, but it rejected the stale durable
-records that still called the repair unmerged. This docs-only correction must merge and receive a
-finding-free exact-main review before launch-control binding; none of the failed reviews grants launch
-authority.
+records that still called the repair unmerged. PR #202 merged the initial chronology correction at
+exact main `ed042c29696e646aaf0a44e5b7f3977092fe71cc`; review of that exact main rejected its
+self-referential branch-status wording. This record removes branch-status claims. Launch-control
+binding requires a finding-free review of current exact main; none of the failed reviews grants
+launch authority.
 
 June, Intraday V3, daily 2018–2019, protected results, PAPER or broker state,
 `strategic-allocation-21`, credentials, and live data remain prohibited. Every authority field is
