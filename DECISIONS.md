@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-24 — Isolate Campaign 3 execution and report rejection
+
+- Decision: give `intraday-fed-policy-absorption-001` a campaign-owned replay engine and store view. Derive both half-weight entry legs from one shared pre-entry equity value, apply them as one in-memory batch, and commit no fill state unless both legs succeed. Extend only the campaign database's forward-state trigger so terminal validation can reject a completed canonical report as `canonical-report-invalid`.
+- Context: the frozen strategy requires exact simultaneous SPY/QQQ half-notional entries. Sequential cash-limited sizing in the closed Exposed 002 engine would underweight the second leg. Campaign 3 also validates canonical report bytes after publication and must retain a detected invalid result as terminal evidence, while the generic attempt store's historical transition contract allows completed-to-failed only for publication conflicts.
+- Consequences: `intraday_exposed_002_engine.py` and `research_attempts.py` remain byte-unchanged closed source. Campaign 3 reuses their stable contracts locally, preserves the generic immutable canonical-result trigger, and serializes its trigger replacement in one SQLite transaction. Tests cover exact joint notional, second-leg rollback, immutable canonical-result bytes, terminal rejection, and forged frozen-calendar evidence. Launch control remains unbound, so this design creates no reservation, market-data read, result, controlled, PAPER, broker-write, or live authority.
+- Revisit when: a separately reviewed versioned common engine or attempt-store schema can serve more than one active campaign without changing closed evidence. Never migrate an observed Campaign 3 database in place.
+
 ## 2026-08-24 — Freeze Campaign 3 as post-Fed-policy absorption
 
 - Decision: freeze `intraday-fed-policy-absorption-001` with nine parents crossing `2/4/6` completed publication bars and inclusive joint SPY/QQQ reaction floors of `8/16/24` basis points. Use one atomic half-weight pair, scenario delays of one to three bars, and a fixed exit decision after completed index 74. Require separate scenario-independent signal/decision and scenario-specific execution traces, exact precision-50 Decimal accounting, immutable-order selection, all four `h±1` or `f±4` neighbors, and the fixed `18+24+16+32=90` specification budget.
