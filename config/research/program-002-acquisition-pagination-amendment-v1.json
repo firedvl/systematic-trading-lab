@@ -1,0 +1,101 @@
+{
+  "schema_version": "program-002-acquisition-pagination-amendment-v1",
+  "amendment_id": "program-002-acquisition-pagination-amendment-2026-08-26-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "created_date": "2026-08-26",
+  "status": "PROSPECTIVE-PAGINATION-REPAIR-NOT-AUTHORIZED-FOR-ACQUISITION",
+  "source_authorization": {
+    "kind": "user-supplied-authorization-packet",
+    "sha256": "fd1a468fb152c6c18c0babda29c8393507a68558161b325d7f17348422093480"
+  },
+  "base_acquisition_plan": {
+    "path": "config/research/cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1.json",
+    "sha256": "26c768f422e63e9f00e6adc88be2d57f5c6447972a9de1fa4873ab2826556aae",
+    "disposition": "immutable-base-plan-amended-only-for-bar-page-resource-ceiling"
+  },
+  "prior_acquisition_authority": {
+    "path": "config/research/program-002-exposed-acquisition-authority-v4.json",
+    "sha256": "4c2f707c1c96a5671422faee41a1b6dcc3e78f42573519c7df38b3e9b1acba0a",
+    "fingerprint": "a9eecc8ffbf2c91fdb66418b73ce920595035ca7b423a1acf2ad7cc0d5f1f8a9",
+    "disposition": "immutable-runtime-failed-on-pagination-resource-ceiling"
+  },
+  "prior_acquisition_authority_review": {
+    "path": "config/research/program-002-exposed-acquisition-authority-independent-review-v2.json",
+    "sha256": "b47d49774af2e548203a9e125b02cd408b0dcd55037d0ab850cd1402df4c5787",
+    "fingerprint": "baa1df63bd96ed2a8c0c6af0a617d17955defb9b521ddeea4591838df15724ac"
+  },
+  "runtime_failure": {
+    "path": "config/research/program-002-exposed-acquisition-pagination-failure-v1.json",
+    "sha256": "b0656fb36c2ca5ecd97034a37e2630bf363765d5e01711a8092cd76f3235babc",
+    "fingerprint": "2537863a4f3f8215f573ea028949c5ef49c802ade2d3bcf2878af8bdf0607d1a"
+  },
+  "provider_contract": {
+    "official_reference": "https://docs.alpaca.markets/us/v1.4.2/reference/stockbars",
+    "checked_date": "2026-08-26",
+    "documented_limit_range": "1 to 10000 records per response page",
+    "documented_underfill": "A response page may contain fewer records than the requested limit even when more records remain.",
+    "documented_pagination": "Continue with each non-null next_page_token until the provider returns null.",
+    "observed_records_per_page_minimum": 2128,
+    "observed_records_per_page_maximum": 2590,
+    "observed_nonterminal_page_count_at_stop": 10
+  },
+  "pagination_change": {
+    "bar_segment_project_page_ceiling_before": 10,
+    "bar_segment_project_page_ceiling_after": 100,
+    "quote_segment_project_page_ceiling": 100,
+    "provider_limit_parameter": 10000,
+    "page_ceiling_semantics": "The project ceiling bounds resource use; it is not a provider page limit. Drain unique next_page_token values through null. If token pagination remains nonterminal after page 100, fail without segment or dataset publication and require another reviewed proposal.",
+    "reason": "Use the existing reviewed quote-page ceiling for monthly bars because the provider may underfill pages and the observed valid context chain remained nonterminal after page ten."
+  },
+  "resource_controls": {
+    "maximum_accepted_pages_per_monthly_bar_segment": 100,
+    "maximum_records_per_page": 10000,
+    "maximum_accepted_records_per_monthly_bar_segment": 1000000,
+    "maximum_attempts_per_page": 5,
+    "minimum_request_spacing_seconds": "0.35",
+    "duplicate_page_tokens_rejected": true,
+    "fixed_https_get_origin_required": true,
+    "out_of-bound_timestamp_disposition": "quarantine-and-fail",
+    "ceiling_disposition": "quarantine-and-fail-with-terminal-attempt-journal"
+  },
+  "unchanged": {
+    "monthly_bar_segments": true,
+    "all_thirteen_symbols_per_request": true,
+    "bar_dates_and_inclusive_endpoints": true,
+    "sip_feed": true,
+    "five_minute_timeframe": true,
+    "adjustment_all": true,
+    "raw_transport_retention": true,
+    "xnys_normalization_grid": true,
+    "expected_dataset_rows_and_sessions": true,
+    "quote_sessions_clocks_and_windows": true,
+    "cost_calibration": true,
+    "research_semantics": true,
+    "controlled_and_protected_exclusions": true,
+    "credential_isolation": true
+  },
+  "launch_control": {
+    "network_request_allowed": false,
+    "credentials_allowed": false,
+    "market_data_acquisition_allowed": false,
+    "strategy_execution_allowed": false,
+    "research_qualification_allowed": false,
+    "controlled_evaluation_allowed": false,
+    "protected_holdout_allowed": false,
+    "paper_execution_allowed": false,
+    "broker_writes_allowed": false,
+    "live_execution_allowed": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "amendment_fingerprint": "986a5aeab8b7aa351b15882dcd14271e52b6e1901c7be362a158809d23aed73c"
+}

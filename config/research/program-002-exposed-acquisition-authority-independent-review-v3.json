@@ -1,0 +1,182 @@
+{
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "live_execution": false,
+    "market_data_acquisition": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "research_qualification": false,
+    "strategy_execution": false,
+    "strategy_implementation": false
+  },
+  "findings": [],
+  "next_step": "Commit this finding-free review after authority v5, run all quality gates, merge through normal PR and CI, then revalidate clean synchronized main and exact bytes before loading credentials or constructing a historical client.",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "proof_gap": "The independent reviewer did not inspect credential values, query provider or account endpoints, access market data, inspect strategy results, or inspect remote Git state. Current credential validity, provider truth, remote CI, merge state, and clean synchronized-main preflight remain later runtime facts.",
+  "protected_access": {
+    "controlled_or_protected_data": false,
+    "credential_values": false,
+    "market_or_quote_data": false,
+    "paper_broker_or_live_state": false,
+    "provider_or_account_endpoint": false,
+    "strategic_allocation_21": false,
+    "strategy_returns_or_candidates": false
+  },
+  "review_date": "2026-08-26",
+  "review_fingerprint": "8faaa972d4bbac9de202e45e50c5cde5c5f37ec66004bfe2e009d9d06a6a4b4a",
+  "review_id": "program-002-exposed-acquisition-authority-independent-review-2026-08-26-v3",
+  "review_method": "Fresh independent read-only review of exact source 14cc082 and authority commit 7e56bd0, including v5 identity and bindings, unchanged acquisition scope, reviewed pagination repair, cross-authority bar lineage, quote isolation, credential isolation, and preflight ordering.",
+  "reviewed_authority": {
+    "fingerprint": "88ca7a20e80827061f93886b8aee28fa55005a1e87101358bb228b11e2cd9630",
+    "path": "config/research/program-002-exposed-acquisition-authority-v5.json",
+    "sha256": "949260f3b45f902c67247de25987fdca94a75292137603c4b4996774a4fc7065"
+  },
+  "reviewed_source": {
+    "authority_artifact_commit": "7e56bd0e0764cc61ae389bb36efaf82d3503490b",
+    "files": [
+      {
+        "path": "src/systematic_trading_lab/__init__.py",
+        "sha256": "500e5a33c6a1067a9ce2e3c5b074256a7d1207d18ab797830d5c704d5def0942"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/catalog.py",
+        "sha256": "da86c2ae2edda09cef4ba048c4b8c5a99829cb30e2e72b39141b71e0af6a3984"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "f1c6b84a1382d9f7125f09a90e0766274a687b0438a1338f0a9e8715288d03c6"
+      },
+      {
+        "path": "src/systematic_trading_lab/datasets.py",
+        "sha256": "e3fac0def47451411a3472f09406f22d6d9d57d05b83809a9d8c0d678576433d"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_plan.py",
+        "sha256": "4c877257f2db205b64451952f3dcbfa8d2320bc2b8679e59ae1720cbef9ca0c1"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_features.py",
+        "sha256": "a6411ce224917f2c41f1466fa0e7d01ff8a1526e064249b1fae9c5ab4116aaa0"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_engine.py",
+        "sha256": "856dae6ecf5a87e14bd0a4df34368cd3ac220c811e34bee44a5a84bc309da149"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_synthetic.py",
+        "sha256": "c9e50cb1aa612eff46e99e31c4da45b2f913a060b20f61e6e561dfbce0e2a3ca"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_runner.py",
+        "sha256": "d176babf4b000d58bc663b491a4b6c489f6b426ee8869d0d125fbc57cfdc4cd8"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_002_acquisition.py",
+        "sha256": "f14e63ab0897095718076b700b24290dbb6582f0feaf00f0376ee081e074a61b"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_002_acquisition_cli.py",
+        "sha256": "6cdbd9989d28a025759e12f3c44014ee16cdad161613e11fb38ddacaff5bf758"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_002_account_isolation.py",
+        "sha256": "6b3aca7a7d35f8220a670758860b268054d2aba592b79236c21c885e3da41ad9"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_002_credentials.py",
+        "sha256": "00f54064e2d2706ce7b418fba724706499a87c0d98cccdb44b8289b2f7e07c29"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_launch_control.py",
+        "sha256": "de2dd084ca14dc05ddde0db39474289a67130e7ed40ae6be91e5215ce8e2c821"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_execution_cost_model.py",
+        "sha256": "7d03b674a5ea5c3978a63c62dd34d73e855b0c35bf5655a8c61e60d59a5f9dd6"
+      },
+      {
+        "path": "src/systematic_trading_lab/parquet.py",
+        "sha256": "34e97c421d1483dd55b4b179285e7a11fcefee86c16f096eaf711318d62e8799"
+      },
+      {
+        "path": "src/systematic_trading_lab/providers.py",
+        "sha256": "5713d26c0ee433249a6ed22d5d4e126cf98cf1bfe8ef3de82bdc40ee390c3ade"
+      },
+      {
+        "path": "src/systematic_trading_lab/storage.py",
+        "sha256": "a9b4fba2d1d8fb813ed447365e1e025b61b3cbe131765ad376b3cb080c3a27d2"
+      },
+      {
+        "path": "src/systematic_trading_lab/universe.py",
+        "sha256": "d00eb013c3ad06256dc13f3aa362ac663aee3f04ecf8a6df36755c83e1a71aff"
+      },
+      {
+        "path": "src/systematic_trading_lab/validation.py",
+        "sha256": "c1b49854c4289065352b88bec19a2417902c84dabf4132cee157dbb078dd23d4"
+      },
+      {
+        "path": "pyproject.toml",
+        "sha256": "0872d76edc4c9c10b93c15ad0dbf6f3d855c9196e1799566f6790fb936b581ce"
+      },
+      {
+        "path": "uv.lock",
+        "sha256": "d6d60aa5d93644dd3bf932ef84f6793bab6d33992659ed48e968850c6673c00d"
+      }
+    ],
+    "source_commit": "14cc08253038a8aabac4f75a90b7e7f27a2e3737"
+  },
+  "schema_version": "program-002-exposed-acquisition-authority-independent-review-v3",
+  "status": "passed-before-market-data-acquisition",
+  "verdict": "pass",
+  "verification": {
+    "authority_fingerprint_recomputation": "passed",
+    "authority_sha256_recomputation": "passed",
+    "bound_artifact_fingerprints": "19 of 19 passed",
+    "bound_artifact_hashes": "21 of 21 passed",
+    "bound_source_hashes": "25 of 25 passed",
+    "commit_lineage": "passed",
+    "credential_stripped_cli_preflight": "exited 64 because review v3 was absent",
+    "focused_credential_stripped_tests": "6 passed",
+    "git_diff_check": "passed",
+    "pagination_and_segment_lineage_trace": "passed",
+    "scope_and_calendar_recomputation": "passed",
+    "source_authorization_sha256_recomputation": "passed"
+  },
+  "verified_assertions": {
+    "authority_provenance_propagation": true,
+    "client_rechecks_credential_continuity": true,
+    "controlled_and_protected_exclusions": true,
+    "credential_loading_after_control_preflight": true,
+    "cross_authority_lineage_limited_to_exact_superseded_bar_authority": true,
+    "exact_authority_bytes_and_fingerprint": true,
+    "exact_bar_scope_and_inclusive_bounds": true,
+    "exact_bound_artifact_hashes_and_fingerprints": true,
+    "exact_bound_source_hashes": true,
+    "exact_quote_scope": true,
+    "immutable_v2_runtime_failure_history": true,
+    "immutable_v3_rejected_review_history": true,
+    "immutable_v4_pagination_failure_history": true,
+    "ordered_proof_source_authority_lineage": true,
+    "pagination_amendment_and_review_bound": true,
+    "proof_environment_and_identity_binding": true,
+    "provider_numeric_evidence_bound": true,
+    "quarantine_and_terminal_failure_preservation": true,
+    "quote_lineage_excludes_superseded_authority": true,
+    "raw_transport_and_normalized_grid_separation": true,
+    "research_subprocess_credential_stripping": true,
+    "strategy_execution_disabled": true
+  }
+}

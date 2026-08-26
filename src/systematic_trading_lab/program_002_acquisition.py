@@ -236,7 +236,7 @@ def acquisition_authority_preflight(
     identity = plan.authority.payload.get("account_isolation")
     if (
         plan.authority.payload.get("schema_version")
-        != "program-002-exposed-acquisition-authority-v4"
+        != "program-002-exposed-acquisition-authority-v5"
         or not isinstance(control, Mapping)
         or control.get("sha256") != plan.control_sha256
         or control.get("fingerprint") != plan.control_fingerprint
@@ -1902,7 +1902,7 @@ def _bar_segment(plan: Program002AcquisitionPlan, start: date, end: date) -> Req
     )
     if not points:
         raise Program002AcquisitionError("monthly segment contains no XNYS bars")
-    return RequestSegment("bars", _BARS, _params(plan, points[0], points[-1], "5Min"), 10)
+    return RequestSegment("bars", _BARS, _params(plan, points[0], points[-1], "5Min"), 100)
 
 
 def _quote_segment(
@@ -2381,12 +2381,20 @@ def _segment_correction_parent(
 ) -> str | None:
     if not layout.datasets.exists():
         return None
+    supersedes = plan.authority.payload.get("supersedes")
+    prior_authority = (
+        supersedes.get("sha256") if role is not None and isinstance(supersedes, Mapping) else None
+    )
+    allowed_authorities = {plan.authority.sha256}
+    if isinstance(prior_authority, str):
+        allowed_authorities.add(prior_authority)
     candidates: dict[str, str | None] = {}
     for path in layout.datasets.glob("*/segment.json"):
         try:
             artifact = _json(path.read_bytes())
         except Program002AcquisitionError:
             continue
+        artifact_authority = artifact.get("acquisition_authority_sha256")
         schema = (
             "program-002-acquisition-segment-v1"
             if role is not None
@@ -2396,7 +2404,8 @@ def _segment_correction_parent(
             artifact.get("request") != segment.url()
             or artifact.get("role") != role
             or artifact.get("plan_sha256") != plan.sha256
-            or artifact.get("acquisition_authority_sha256") != plan.authority.sha256
+            or not isinstance(artifact_authority, str)
+            or artifact_authority not in allowed_authorities
             or artifact.get("schema_version") != schema
         ):
             continue
@@ -2411,7 +2420,7 @@ def _segment_correction_parent(
                 schema,
                 role=role,
                 plan_sha256=plan.sha256,
-                authority_sha256=plan.authority.sha256,
+                authority_sha256=str(artifact_authority),
             )
         except Program002AcquisitionError:
             continue

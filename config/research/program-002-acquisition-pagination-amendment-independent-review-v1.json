@@ -1,0 +1,52 @@
+{
+  "schema_version": "program-002-acquisition-pagination-amendment-independent-review-v1",
+  "review_id": "program-002-acquisition-pagination-amendment-independent-review-2026-08-26-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "reviewed_at": "2026-08-26T07:47:41Z",
+  "status": "passed-before-pagination-implementation",
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_commit": "63470f4f64d73a456dc1f1a1ac6ceb09354409fc",
+  "reviewed_failure": {
+    "path": "config/research/program-002-exposed-acquisition-pagination-failure-v1.json",
+    "sha256": "b0656fb36c2ca5ecd97034a37e2630bf363765d5e01711a8092cd76f3235babc",
+    "fingerprint": "2537863a4f3f8215f573ea028949c5ef49c802ade2d3bcf2878af8bdf0607d1a"
+  },
+  "reviewed_amendment": {
+    "path": "config/research/program-002-acquisition-pagination-amendment-v1.json",
+    "sha256": "c6f709f2f9388929823ac780e82c8f8eda8c022cd5c9a01c42e550a570071840",
+    "fingerprint": "986a5aeab8b7aa351b15882dcd14271e52b6e1901c7be362a158809d23aed73c"
+  },
+  "checks": {
+    "proposal_commit_adds_only_failure_and_amendment_artifacts": true,
+    "artifact_hashes_and_fingerprints_reproduced": true,
+    "prior_authority_and_review_bindings_reproduced": true,
+    "source_hashes_reproduced": true,
+    "runtime_structural_counts_and_hashes_match": true,
+    "official_provider_pagination_contract_supports_underfilled_pages": true,
+    "bar_page_ceiling_change_is_exactly_10_to_100": true,
+    "quote_page_ceiling_remains_100": true,
+    "monthly_segments_dates_symbols_feed_timeframe_and_adjustment_unchanged": true,
+    "maximum_records_per_bar_segment_is_1000000": true,
+    "duplicate_tokens_outer_bounds_quarantine_and_terminal_evidence_remain_required": true,
+    "strategy_and_protected_authorities_remain_closed": true,
+    "implementation_source_unchanged_at_review": true
+  },
+  "proof_gaps": [
+    "The reviewer did not access credential values or provider endpoints.",
+    "The reviewer checked retained runtime evidence structurally and did not parse or reproduce raw market-data values."
+  ],
+  "required_next_step": "Implement only the reviewed bar-page ceiling change and boundary regressions, then bind the exact implementation through a new acquisition authority and independent review before any retry.",
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "11c6c8fd556a3d61893164b89f75653d6ecbd566d28b173bf2c2af9580414c60"
+}
