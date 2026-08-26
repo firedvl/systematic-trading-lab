@@ -1,0 +1,391 @@
+{
+  "account_isolation": {
+    "account_identity_hash": "8a886b72c5a47bf2faa2a6087e3ae0f5cad6b861ae9bf720625d14dad2a4beec",
+    "credential_key_id_hash": "9172d88de0365827e29ba910beac93917c499add636184b499d32123feae8157",
+    "environment": "paper",
+    "proof_accepted": true
+  },
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "live_execution": false,
+    "market_data_acquisition": true,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "research_qualification": false,
+    "strategy_execution": false,
+    "strategy_implementation": true
+  },
+  "authority_fingerprint": "4f4c5275f9dfc2d019fc57829c87caa643800d8581bbb065c49a15f39369db34",
+  "authority_id": "program-002-exposed-acquisition-2026-08-25-v3",
+  "authorized_scope": {
+    "bars": {
+      "adjustment": "all",
+      "adjustment_policy": "provider-adjusted-all-v1",
+      "calendar_policy": "XNYS-regular-session-bars-v1",
+      "datasets": [
+        {
+          "allowed_use": "same-clock volume context only; no target, benchmark, P&L, or gate",
+          "end_date": "2020-07-24",
+          "expected_rows": 20280,
+          "five_minute_slots_per_symbol": 1560,
+          "inclusive_utc_bar_open_end": "2020-07-24T19:55:00Z",
+          "inclusive_utc_bar_open_start": "2020-06-26T13:30:00Z",
+          "role": "exposed-context-only",
+          "start_date": "2020-06-26",
+          "xnys_sessions": 20
+        },
+        {
+          "end_date": "2022-07-25",
+          "expected_rows": 508638,
+          "five_minute_slots_per_symbol": 39126,
+          "inclusive_utc_bar_open_end": "2022-07-25T19:55:00Z",
+          "inclusive_utc_bar_open_start": "2020-07-27T13:30:00Z",
+          "role": "exposed-block-1",
+          "start_date": "2020-07-27",
+          "xnys_sessions": 503
+        },
+        {
+          "end_date": "2024-07-26",
+          "expected_rows": 509184,
+          "five_minute_slots_per_symbol": 39168,
+          "inclusive_utc_bar_open_end": "2024-07-26T19:55:00Z",
+          "inclusive_utc_bar_open_start": "2022-07-26T13:30:00Z",
+          "role": "exposed-block-2",
+          "start_date": "2022-07-26",
+          "xnys_sessions": 504
+        },
+        {
+          "end_date": "2026-07-31",
+          "expected_rows": 508716,
+          "five_minute_slots_per_symbol": 39132,
+          "inclusive_utc_bar_open_end": "2026-07-31T19:55:00Z",
+          "inclusive_utc_bar_open_start": "2024-07-29T13:30:00Z",
+          "role": "exposed-block-3",
+          "start_date": "2024-07-29",
+          "xnys_sessions": 504
+        }
+      ],
+      "end_semantics": "inclusive",
+      "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+      "feed": "sip",
+      "http_method": "GET",
+      "start_semantics": "inclusive",
+      "timeframe": "5Min",
+      "timestamp_policy": "bar-open-utc-v1"
+    },
+    "controlled_block_a": false,
+    "controlled_block_b": false,
+    "protected_data": false,
+    "quotes": {
+      "endpoint": "https://data.alpaca.markets/v2/stocks/quotes",
+      "feed": "sip",
+      "fill_clocks_new_york": [
+        "11:35",
+        "11:40",
+        "11:45",
+        "13:35",
+        "13:40",
+        "13:45",
+        "15:35",
+        "15:40",
+        "15:45"
+      ],
+      "http_method": "GET",
+      "sessions": [
+        "2020-07-27",
+        "2020-08-17",
+        "2020-09-15",
+        "2020-10-15",
+        "2020-11-16",
+        "2020-12-15",
+        "2021-01-15",
+        "2021-02-16",
+        "2021-03-15",
+        "2021-04-15",
+        "2021-05-17",
+        "2021-06-15",
+        "2021-07-15",
+        "2021-08-16",
+        "2021-09-15",
+        "2021-10-15",
+        "2021-11-15",
+        "2021-12-15",
+        "2022-01-18",
+        "2022-02-15",
+        "2022-03-15",
+        "2022-04-18",
+        "2022-05-16",
+        "2022-06-15",
+        "2022-07-15",
+        "2022-08-15",
+        "2022-09-15",
+        "2022-10-17",
+        "2022-11-15",
+        "2022-12-15",
+        "2023-01-17",
+        "2023-02-15",
+        "2023-03-15",
+        "2023-04-17",
+        "2023-05-15",
+        "2023-06-15",
+        "2023-07-17",
+        "2023-08-15",
+        "2023-09-15",
+        "2023-10-16",
+        "2023-11-15",
+        "2023-12-15",
+        "2024-01-16",
+        "2024-02-15",
+        "2024-03-15",
+        "2024-04-15",
+        "2024-05-15",
+        "2024-06-17",
+        "2024-07-15",
+        "2024-08-15",
+        "2024-09-16",
+        "2024-10-15",
+        "2024-11-15",
+        "2024-12-16",
+        "2025-01-15",
+        "2025-02-18",
+        "2025-03-17",
+        "2025-04-15",
+        "2025-05-15",
+        "2025-06-16",
+        "2025-07-15",
+        "2025-08-15",
+        "2025-09-15",
+        "2025-10-15",
+        "2025-11-17",
+        "2025-12-15",
+        "2026-01-15",
+        "2026-02-17",
+        "2026-03-16",
+        "2026-04-15",
+        "2026-05-15",
+        "2026-06-15",
+        "2026-07-15"
+      ]
+    },
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ]
+  },
+  "bindings": {
+    "account_isolation_proof": {
+      "fingerprint": "a8a4063837a93d866aa1d0ca4bd3ecdeb6e196fd810efea9104f125588923ba7",
+      "path": "config/research/program-002-account-isolation-proof-v1.json",
+      "sha256": "21800879cb4825dd147214e7a5720fb6d6978b00a887efd0a7789baa4a8d94e7"
+    },
+    "account_isolation_proof_review": {
+      "fingerprint": "2776ada38e5912f7631bf694fa645854c8cbc0a8539a01ef4fe2472a56386478",
+      "path": "config/research/program-002-account-isolation-proof-independent-review-v1.json",
+      "sha256": "ac1a83d2f50424cd1a88e93d9e6cbbaabedc2802ece390a0d1f0b96da5d697c2"
+    },
+    "acquisition_control_amendment": {
+      "fingerprint": "6db1a382621c146f7d389c1997c5dc66c73471f530fcf1e89e1ec1f01eb9685a",
+      "path": "config/research/program-002-acquisition-control-amendment-v2.json",
+      "sha256": "ecabaf6a46ea24cd88dc7e62aa3e27d78180f57aff7af671840a092747e7b5b5"
+    },
+    "acquisition_control_repair_review": {
+      "fingerprint": "ca733b0f015715a18e123872cd15a34a1bb743718d487da87a3b3ae4e2447c74",
+      "path": "config/research/program-002-acquisition-control-repair-independent-review-v1.json",
+      "sha256": "44ee39877e0135092f278b12aa224fbd578a08a59a05dcdd4fd0c1cbaf8feb48"
+    },
+    "acquisition_plan": {
+      "path": "config/research/cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1.json",
+      "sha256": "26c768f422e63e9f00e6adc88be2d57f5c6447972a9de1fa4873ab2826556aae"
+    },
+    "acquisition_runtime_failure": {
+      "fingerprint": "07418cd02962e6284df3447a01df4c871c78f9cf476ae7d02935fe1c7fe9828d",
+      "path": "config/research/program-002-exposed-acquisition-runtime-failure-v1.json",
+      "sha256": "af17ee7d34317d33db5be7672f2d490c03401e35c0aee43b040519a7fea7df0e"
+    },
+    "implementation_plan": {
+      "path": "docs/research-campaigns/multi-hour-sector-etf-research-001-implementation-plan.md",
+      "sha256": "aebfea81a2c8a4110d369dbd23d12e0ff79a661fc8f6187df0f27939abdfede5"
+    },
+    "planning_review": {
+      "fingerprint": "55e30955789981a4eca129856322207ceb05fa9aebccb1101d892dd92f7a5d33",
+      "path": "config/research/cross-sectional-sector-etf-program-002-plan-independent-review-v1.json",
+      "sha256": "b5023c90a7d748a7c8ac42609bad6d1c394150bc914c51b8b65c73e3d80c17e6"
+    },
+    "prior_acquisition_authority": {
+      "fingerprint": "5e734986a9cdb9058375f95a1457c00ffa1329f1bf7e9245834af43f04c807f4",
+      "path": "config/research/program-002-exposed-acquisition-authority-v2.json",
+      "sha256": "5543f427e9b7058bd8ed827af476eb48138eb4199788ca0437c9b4c8b70b5262"
+    },
+    "prior_acquisition_authority_review": {
+      "fingerprint": "249fa690a3e4a0bb313561895f91547b1a61264f8b46dc37bafddb9b7fd86f07",
+      "path": "config/research/program-002-exposed-acquisition-authority-independent-review-v1.json",
+      "sha256": "20c254ad448d9c036a78a59eedf3d04b642775b01d06f4a52a4a09689f582d2c"
+    },
+    "program_plan": {
+      "fingerprint": "701dc67ea2da1e45d235f4247724b2bc8eb62853561c2400c17a668342c6b81e",
+      "path": "config/research/cross-sectional-sector-etf-program-002-plan-proposal-v1.json",
+      "sha256": "2872d4d3301df0a85e1a5a2eba6e3ee533ee5573971121e99840041e7c8d2173"
+    },
+    "provider_contract_evidence": {
+      "fingerprint": "5d11a9fb2cbf35f48f857de88737c5e67a04348d9d696f98367039e694f925d6",
+      "path": "config/research/program-002-provider-contract-evidence-v1.json",
+      "sha256": "86a9740a1ecd74f3152e470b9d2fa1c2f759c3a1e9b19b30b54c2ae7b94d0bf2"
+    },
+    "regulatory_fee_source": {
+      "fingerprint": "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4",
+      "path": "config/research/intraday-execution-cost-model-001-v1.json",
+      "sha256": "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af"
+    },
+    "universe": {
+      "fingerprint": "ef23e533aa7a91262200bd7a77a65f9b6d8b4d473573850c33ef014701177790",
+      "path": "config/research/multi-hour-sector-etfs-v1.json",
+      "sha256": "8f07f73fd93f9432501d579e43616e1d9a09d6db77c347a6bed4151f2210c312"
+    }
+  },
+  "issued_date": "2026-08-25",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "prohibited": {
+    "broker_writes": true,
+    "controlled_dataset_acquisition_or_access": true,
+    "discovery": true,
+    "live_execution": true,
+    "paper_execution": true,
+    "protected_holdout": true,
+    "qualification": true,
+    "robustness": true,
+    "strategic_allocation_21_access": true,
+    "strategy_execution_on_acquired_data": true,
+    "strategy_result_generation_or_read": true,
+    "walk_forward": true
+  },
+  "schema_version": "program-002-exposed-acquisition-authority-v3",
+  "source_authorization": {
+    "kind": "user-supplied-authorization-packet",
+    "sha256": "fd1a468fb152c6c18c0babda29c8393507a68558161b325d7f17348422093480"
+  },
+  "source_binding": {
+    "files": [
+      {
+        "path": "src/systematic_trading_lab/__init__.py",
+        "sha256": "500e5a33c6a1067a9ce2e3c5b074256a7d1207d18ab797830d5c704d5def0942"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/catalog.py",
+        "sha256": "da86c2ae2edda09cef4ba048c4b8c5a99829cb30e2e72b39141b71e0af6a3984"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "f1c6b84a1382d9f7125f09a90e0766274a687b0438a1338f0a9e8715288d03c6"
+      },
+      {
+        "path": "src/systematic_trading_lab/datasets.py",
+        "sha256": "e3fac0def47451411a3472f09406f22d6d9d57d05b83809a9d8c0d678576433d"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_plan.py",
+        "sha256": "a416537bed540367beaca60a697a8b25df71f3bd4fdcc195c04273a2206d899e"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_features.py",
+        "sha256": "a6411ce224917f2c41f1466fa0e7d01ff8a1526e064249b1fae9c5ab4116aaa0"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_engine.py",
+        "sha256": "856dae6ecf5a87e14bd0a4df34368cd3ac220c811e34bee44a5a84bc309da149"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_synthetic.py",
+        "sha256": "c9e50cb1aa612eff46e99e31c4da45b2f913a060b20f61e6e561dfbce0e2a3ca"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_runner.py",
+        "sha256": "d176babf4b000d58bc663b491a4b6c489f6b426ee8869d0d125fbc57cfdc4cd8"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_002_acquisition.py",
+        "sha256": "abcdcefc6cec2a7c5e26af3122a766e280d0b4bad63b17fd61d74a81ede37114"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_002_acquisition_cli.py",
+        "sha256": "6cdbd9989d28a025759e12f3c44014ee16cdad161613e11fb38ddacaff5bf758"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_002_account_isolation.py",
+        "sha256": "6b3aca7a7d35f8220a670758860b268054d2aba592b79236c21c885e3da41ad9"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_002_credentials.py",
+        "sha256": "00f54064e2d2706ce7b418fba724706499a87c0d98cccdb44b8289b2f7e07c29"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_launch_control.py",
+        "sha256": "de2dd084ca14dc05ddde0db39474289a67130e7ed40ae6be91e5215ce8e2c821"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_execution_cost_model.py",
+        "sha256": "7d03b674a5ea5c3978a63c62dd34d73e855b0c35bf5655a8c61e60d59a5f9dd6"
+      },
+      {
+        "path": "src/systematic_trading_lab/parquet.py",
+        "sha256": "34e97c421d1483dd55b4b179285e7a11fcefee86c16f096eaf711318d62e8799"
+      },
+      {
+        "path": "src/systematic_trading_lab/providers.py",
+        "sha256": "5713d26c0ee433249a6ed22d5d4e126cf98cf1bfe8ef3de82bdc40ee390c3ade"
+      },
+      {
+        "path": "src/systematic_trading_lab/storage.py",
+        "sha256": "a9b4fba2d1d8fb813ed447365e1e025b61b3cbe131765ad376b3cb080c3a27d2"
+      },
+      {
+        "path": "src/systematic_trading_lab/universe.py",
+        "sha256": "d00eb013c3ad06256dc13f3aa362ac663aee3f04ecf8a6df36755c83e1a71aff"
+      },
+      {
+        "path": "src/systematic_trading_lab/validation.py",
+        "sha256": "c1b49854c4289065352b88bec19a2417902c84dabf4132cee157dbb078dd23d4"
+      },
+      {
+        "path": "pyproject.toml",
+        "sha256": "0872d76edc4c9c10b93c15ad0dbf6f3d855c9196e1799566f6790fb936b581ce"
+      },
+      {
+        "path": "uv.lock",
+        "sha256": "d6d60aa5d93644dd3bf932ef84f6793bab6d33992659ed48e968850c6673c00d"
+      }
+    ],
+    "proof_evidence_commit": "00298a0c089d5e5912f2d3d622ffa2ea257c2c14",
+    "relationship": "ancestor-of-clean-synchronized-main-with-identical-bound-files",
+    "source_commit": "c708f1640be4a6494d9fecdf5f3e9ce0ced42e33"
+  },
+  "status": "active-until-complete-or-terminal-blocker",
+  "supersedes": {
+    "disposition": "immutable-runtime-failed-before-publication",
+    "path": "config/research/program-002-exposed-acquisition-authority-v2.json",
+    "sha256": "5543f427e9b7058bd8ed827af476eb48138eb4199788ca0437c9b4c8b70b5262"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": "program-002-exposed-acquisition-runtime-failure-v1",
+  "incident_id": "program-002-exposed-acquisition-runtime-failure-2026-08-26-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "observed_at": "2026-08-26T04:55:52Z",
+  "source_main_commit": "57a3029000f49785e6bf57315981f8709618614a",
+  "acquisition_attempt_id": "program-002-exposed-acquisition-20260825-v1",
+  "action": "acquire-bars",
+  "role": "exposed-context-only",
+  "prior_authority": {
+    "path": "config/research/program-002-exposed-acquisition-authority-v2.json",
+    "sha256": "5543f427e9b7058bd8ed827af476eb48138eb4199788ca0437c9b4c8b70b5262",
+    "fingerprint": "5e734986a9cdb9058375f95a1457c00ffa1329f1bf7e9245834af43f04c807f4"
+  },
+  "prior_authority_review": {
+    "path": "config/research/program-002-exposed-acquisition-authority-independent-review-v1.json",
+    "sha256": "20c254ad448d9c036a78a59eedf3d04b642775b01d06f4a52a4a09689f582d2c",
+    "fingerprint": "249fa690a3e4a0bb313561895f91547b1a61264f8b46dc37bafddb9b7fd86f07"
+  },
+  "result": {
+    "status": "failed-closed-before-segment-publication",
+    "primary_error": "provider bar is outside its authorized segment",
+    "secondary_error": "unsupported canonical value: float",
+    "historical_client_constructed": true,
+    "market_request_occurred": true
+  },
+  "artifact_persistence": {
+    "raw_page": false,
+    "quarantine_evidence": false,
+    "terminal_attempt_journal": false,
+    "segment": false,
+    "dataset": false,
+    "context_projection": false,
+    "quote_evidence": false,
+    "cost_artifact": false
+  },
+  "proof_gap": "The provider timestamp and response bytes did not survive the quarantine serialization failure. This artifact cannot establish whether the rejected record was a valid in-range raw transport extra or a true outer-request-bound violation.",
+  "diagnosis": {
+    "frozen_transport_contract": "Validate every returned bar, retain valid timestamps inside the outer request bounds as raw evidence, admit only exact XNYS five-minute opens to normalization, and reject timestamps outside the outer request bounds.",
+    "boundary_defect": "The acquisition path required every valid raw bar to be an exact normalized XNYS bar open, conflating raw transport retention with normalized-grid admission.",
+    "serialization_defect": "Provider decimal numbers and retry delays entered canonical evidence as Python float values, which the repository canonical serializer rejects."
+  },
+  "repair_scope": {
+    "provider_decimal_decode": "Decimal",
+    "retry_delay_evidence": "Decimal",
+    "raw_transport_extra_disposition": "retain-raw-exclude-from-normalized",
+    "outer_request_violation_disposition": "quarantine-and-fail",
+    "research_semantics_changed": false,
+    "strategy_code_executed": false
+  },
+  "protected_access": {
+    "credential_values_persisted_or_printed": false,
+    "strategy_returns_or_candidates": false,
+    "controlled_block_a_or_b": false,
+    "protected_holdout": false,
+    "paper_broker_or_live_state": false,
+    "strategic_allocation_21": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "next_step": "Commit and review the runtime-only repair, then create and independently review a new proof-bound authority before any retry under a new acquisition-attempt ID.",
+  "incident_fingerprint": "07418cd02962e6284df3447a01df4c871c78f9cf476ae7d02935fe1c7fe9828d"
+}
