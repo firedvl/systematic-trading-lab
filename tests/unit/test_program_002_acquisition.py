@@ -60,10 +60,10 @@ _REPOSITORY = Path(__file__).resolve().parents[2]
 _ATTEMPT = "synthetic-attempt-1"
 
 
-def _v4_plan() -> Program002AcquisitionPlan:
+def _v5_plan() -> Program002AcquisitionPlan:
     plan = load_plan(_REPOSITORY)
     payload = {
-        "schema_version": "program-002-exposed-acquisition-authority-v4",
+        "schema_version": "program-002-exposed-acquisition-authority-v5",
         "bindings": {
             "acquisition_control_amendment": {
                 "sha256": plan.control_sha256,
@@ -85,7 +85,7 @@ def _v4_plan() -> Program002AcquisitionPlan:
     authority = Program002Authority(
         plan.path.parent / ACQUISITION_AUTHORITY_RELATIVE_PATH.name,
         "5" * 64,
-        "program-002-exposed-acquisition-2026-08-25-v4",
+        "program-002-exposed-acquisition-2026-08-26-v5",
         payload,
     )
     return replace(plan, authority=authority)
@@ -134,13 +134,37 @@ def test_exact_bar_query_and_raw_bytes() -> None:
     assert acquired.normalized_records[0]["symbol"] == "SPY"
 
 
-def test_pagination_rejects_repeat_and_page_ceiling() -> None:
+def test_pagination_drains_underfilled_pages_and_rejects_repeat_and_ceiling(
+    tmp_path: Path,
+) -> None:
     segment = bar_segments(load_plan(_REPOSITORY), "exposed-block-1")[0]
+    assert segment.page_ceiling == 100
+    assert quote_segments(load_plan(_REPOSITORY))[0].page_ceiling == 100
+
+    pages = iter([_page(str(index)) for index in range(10)] + [_page()])
+    acquired = acquire_segment(segment, lambda _: next(pages), pace=lambda: None)
+    assert len(acquired.pages) == 11
+
     with pytest.raises(Program002AcquisitionError, match="repeated"):
-        acquire_segment(segment, lambda _: _page("same"))
-    pages = iter([_page(str(index)) for index in range(10)])
+        acquire_segment(segment, lambda _: _page("same"), pace=lambda: None)
+    pages = iter([_page(str(index)) for index in range(100)])
+    layout = StorageLayout(tmp_path)
     with pytest.raises(Program002AcquisitionError, match="ceiling"):
-        acquire_segment(segment, lambda _: next(pages))
+        acquire_role_segments(
+            load_plan(_REPOSITORY),
+            "exposed-block-1",
+            layout,
+            lambda _: next(pages),
+            acquisition_attempt_id=_ATTEMPT,
+            pace=lambda: None,
+        )
+    evidence = json.loads(next((tmp_path / "quarantine").glob("*.json")).read_text())
+    assert evidence["error"] == "Program 002 page ceiling exceeded"
+    assert len(evidence["previous_pages"]) == 100
+    terminal = json.loads(
+        (tmp_path / "reports" / "program-002" / "acquisition-terminal-attempts.jsonl").read_text()
+    )
+    assert terminal["error"] == "Program 002 page ceiling exceeded"
     with pytest.raises(Program002AcquisitionError, match="terminal"):
         acquire_segment(segment, lambda _: HttpPage(200, b'{"bars":{}}', {}))
 
@@ -738,10 +762,10 @@ def test_provider_contract_preflight_and_reviewed_fee_floor_binding() -> None:
         acquisition_authority_preflight(plan)
 
 
-def test_v4_authority_requires_review_and_account_continuity(
+def test_v5_authority_requires_review_and_account_continuity(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    plan = _v4_plan()
+    plan = _v5_plan()
     with pytest.raises(Program002AcquisitionError, match="review|No such file"):
         acquisition_authority_preflight(plan)
 
@@ -826,7 +850,7 @@ def test_repository_source_preflight_enforces_reviewed_git_lineage(tmp_path: Pat
     authority = Program002Authority(
         authority_path,
         hashlib.sha256(authority_bytes).hexdigest(),
-        "program-002-exposed-acquisition-2026-08-25-v4",
+        "program-002-exposed-acquisition-2026-08-26-v5",
         authority_payload,
     )
     plan = replace(

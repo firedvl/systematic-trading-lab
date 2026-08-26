@@ -236,7 +236,7 @@ def acquisition_authority_preflight(
     identity = plan.authority.payload.get("account_isolation")
     if (
         plan.authority.payload.get("schema_version")
-        != "program-002-exposed-acquisition-authority-v4"
+        != "program-002-exposed-acquisition-authority-v5"
         or not isinstance(control, Mapping)
         or control.get("sha256") != plan.control_sha256
         or control.get("fingerprint") != plan.control_fingerprint
@@ -1902,7 +1902,7 @@ def _bar_segment(plan: Program002AcquisitionPlan, start: date, end: date) -> Req
     )
     if not points:
         raise Program002AcquisitionError("monthly segment contains no XNYS bars")
-    return RequestSegment("bars", _BARS, _params(plan, points[0], points[-1], "5Min"), 10)
+    return RequestSegment("bars", _BARS, _params(plan, points[0], points[-1], "5Min"), 100)
 
 
 def _quote_segment(

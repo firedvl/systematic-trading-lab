@@ -48,11 +48,26 @@ ACQUISITION_AUTHORITY_V3_RELATIVE_PATH = Path(
 ACQUISITION_AUTHORITY_V3_REVIEW_FAILURE_RELATIVE_PATH = Path(
     "config/research/program-002-exposed-acquisition-authority-v3-review-failure-v1.json"
 )
-ACQUISITION_AUTHORITY_RELATIVE_PATH = Path(
+ACQUISITION_AUTHORITY_V4_RELATIVE_PATH = Path(
     "config/research/program-002-exposed-acquisition-authority-v4.json"
 )
-ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH = Path(
+ACQUISITION_AUTHORITY_REVIEW_V2_RELATIVE_PATH = Path(
     "config/research/program-002-exposed-acquisition-authority-independent-review-v2.json"
+)
+ACQUISITION_PAGINATION_FAILURE_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-pagination-failure-v1.json"
+)
+ACQUISITION_PAGINATION_AMENDMENT_RELATIVE_PATH = Path(
+    "config/research/program-002-acquisition-pagination-amendment-v1.json"
+)
+ACQUISITION_PAGINATION_AMENDMENT_REVIEW_RELATIVE_PATH = Path(
+    "config/research/program-002-acquisition-pagination-amendment-independent-review-v1.json"
+)
+ACQUISITION_AUTHORITY_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-authority-v5.json"
+)
+ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-authority-independent-review-v3.json"
 )
 ACQUISITION_CONTROL_REPAIR_REVIEW_RELATIVE_PATH = Path(
     "config/research/program-002-acquisition-control-repair-independent-review-v1.json"
@@ -132,6 +147,37 @@ REVIEWED_ACQUISITION_AUTHORITY_V3_REVIEW_FAILURE_SHA256 = (
 REVIEWED_ACQUISITION_AUTHORITY_V3_REVIEW_FAILURE_FINGERPRINT = (
     "3e31ffdcd8ec590297c79861d29e23e824f18efd21063b3c60f502ba0f1f1d0d"
 )
+REVIEWED_ACQUISITION_AUTHORITY_V4_SHA256 = (
+    "4c2f707c1c96a5671422faee41a1b6dcc3e78f42573519c7df38b3e9b1acba0a"
+)
+REVIEWED_ACQUISITION_AUTHORITY_V4_FINGERPRINT = (
+    "a9eecc8ffbf2c91fdb66418b73ce920595035ca7b423a1acf2ad7cc0d5f1f8a9"
+)
+REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V2_SHA256 = (
+    "b47d49774af2e548203a9e125b02cd408b0dcd55037d0ab850cd1402df4c5787"
+)
+REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V2_FINGERPRINT = (
+    "baa1df63bd96ed2a8c0c6af0a617d17955defb9b521ddeea4591838df15724ac"
+)
+REVIEWED_ACQUISITION_PAGINATION_FAILURE_SHA256 = (
+    "b0656fb36c2ca5ecd97034a37e2630bf363765d5e01711a8092cd76f3235babc"
+)
+REVIEWED_ACQUISITION_PAGINATION_FAILURE_FINGERPRINT = (
+    "2537863a4f3f8215f573ea028949c5ef49c802ade2d3bcf2878af8bdf0607d1a"
+)
+REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_SHA256 = (
+    "c6f709f2f9388929823ac780e82c8f8eda8c022cd5c9a01c42e550a570071840"
+)
+REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_FINGERPRINT = (
+    "986a5aeab8b7aa351b15882dcd14271e52b6e1901c7be362a158809d23aed73c"
+)
+REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_REVIEW_SHA256 = (
+    "7969a04cab7206e8b1f8a2db0850768c4abc2d8573b93633c9093636418424ea"
+)
+REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_REVIEW_FINGERPRINT = (
+    "11c6c8fd556a3d61893164b89f75653d6ecbd566d28b173bf2c2af9580414c60"
+)
+REVIEWED_ACQUISITION_PAGINATION_PROPOSAL_COMMIT = "63470f4f64d73a456dc1f1a1ac6ceb09354409fc"
 REVIEWED_ACQUISITION_CONTROL_REPAIR_REVIEW_SHA256 = (
     "44ee39877e0135092f278b12aa224fbd578a08a59a05dcdd4fd0c1cbaf8feb48"
 )
@@ -301,7 +347,7 @@ def load_program_002_acquisition_authority(repository: Path) -> Program002Author
     repository = repository.resolve()
     path = repository / ACQUISITION_AUTHORITY_RELATIVE_PATH
     raw = path.read_bytes()
-    payload = _load_unique_json(raw, "Program 002 acquisition authority v4")
+    payload = _load_unique_json(raw, "Program 002 acquisition authority v5")
     proof_path = repository / ACCOUNT_ISOLATION_PROOF_RELATIVE_PATH
     proof_review_path = repository / ACCOUNT_ISOLATION_PROOF_REVIEW_RELATIVE_PATH
     proof_raw = proof_path.read_bytes()
@@ -320,11 +366,11 @@ def load_program_002_acquisition_authority(repository: Path) -> Program002Author
     proof_review = _load_unique_json(proof_review_raw, "Program 002 account-isolation proof review")
     _verify_account_isolation_proof(proof)
     _verify_account_isolation_proof_review(proof_review)
-    _verify_acquisition_authority_v4(repository, payload, proof)
+    _verify_acquisition_authority_v5(repository, payload, proof)
     return Program002Authority(
         path,
         hashlib.sha256(raw).hexdigest(),
-        "program-002-exposed-acquisition-2026-08-25-v4",
+        "program-002-exposed-acquisition-2026-08-26-v5",
         payload,
     )
 
@@ -342,7 +388,7 @@ def load_program_002_acquisition_authority_review(
     files = source.get("files")
     if (
         value.get("schema_version")
-        != "program-002-exposed-acquisition-authority-independent-review-v2"
+        != "program-002-exposed-acquisition-authority-independent-review-v3"
         or value.get("program_id") != PROGRAM_ID
         or value.get("status") != "passed-before-market-data-acquisition"
         or value.get("verdict") != "pass"
@@ -407,9 +453,10 @@ def load_program_002_account_proof_plan(repository: Path) -> Program002Acquisiti
 
 
 def load_program_002_acquisition_plan(repository: Path) -> Program002AcquisitionPlan:
-    return _load_program_002_acquisition_contract(
-        repository.resolve(), load_program_002_acquisition_authority(repository)
-    )
+    repository = repository.resolve()
+    authority = load_program_002_acquisition_authority(repository)
+    _verify_acquisition_pagination_amendment(repository)
+    return _load_program_002_acquisition_contract(repository, authority)
 
 
 def _load_program_002_acquisition_contract(
@@ -588,7 +635,146 @@ def _verify_account_isolation_proof_review(review: Mapping[str, Any]) -> None:
         raise ValueError("Program 002 account-isolation proof review differs")
 
 
-def _verify_acquisition_authority_v4(
+def _verify_acquisition_pagination_amendment(repository: Path) -> None:
+    failure_path = repository / ACQUISITION_PAGINATION_FAILURE_RELATIVE_PATH
+    amendment_path = repository / ACQUISITION_PAGINATION_AMENDMENT_RELATIVE_PATH
+    review_path = repository / ACQUISITION_PAGINATION_AMENDMENT_REVIEW_RELATIVE_PATH
+    failure_raw = failure_path.read_bytes()
+    amendment_raw = amendment_path.read_bytes()
+    review_raw = review_path.read_bytes()
+    _require_sha256(
+        failure_raw,
+        REVIEWED_ACQUISITION_PAGINATION_FAILURE_SHA256,
+        "Program 002 pagination failure",
+    )
+    _require_sha256(
+        amendment_raw,
+        REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_SHA256,
+        "Program 002 pagination amendment",
+    )
+    _require_sha256(
+        review_raw,
+        REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_REVIEW_SHA256,
+        "Program 002 pagination amendment review",
+    )
+    failure = _load_unique_json(failure_raw, "Program 002 pagination failure")
+    amendment = _load_unique_json(amendment_raw, "Program 002 pagination amendment")
+    review = _load_unique_json(review_raw, "Program 002 pagination amendment review")
+
+    unsigned_failure = dict(failure)
+    if (
+        failure.get("schema_version") != "program-002-exposed-acquisition-pagination-failure-v1"
+        or unsigned_failure.pop("incident_fingerprint", None)
+        != REVIEWED_ACQUISITION_PAGINATION_FAILURE_FINGERPRINT
+        or fingerprint(unsigned_failure) != REVIEWED_ACQUISITION_PAGINATION_FAILURE_FINGERPRINT
+        or failure.get("acquisition_attempt_id") != "program-002-exposed-acquisition-20260826-v2"
+        or _mapping(failure.get("result"), "pagination failure result").get(
+            "final_dataset_published"
+        )
+        is not False
+        or any(_mapping(failure.get("protected_access"), "pagination protected access").values())
+    ):
+        raise ValueError("Program 002 pagination failure differs")
+    _require_false_authority(failure.get("authority"), "pagination failure")
+
+    unsigned_amendment = dict(amendment)
+    if (
+        amendment.get("schema_version") != "program-002-acquisition-pagination-amendment-v1"
+        or amendment.get("status") != "PROSPECTIVE-PAGINATION-REPAIR-NOT-AUTHORIZED-FOR-ACQUISITION"
+        or unsigned_amendment.pop("amendment_fingerprint", None)
+        != REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_FINGERPRINT
+        or fingerprint(unsigned_amendment) != REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_FINGERPRINT
+        or amendment.get("base_acquisition_plan")
+        != {
+            "path": ACQUISITION_PLAN_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_PLAN_SHA256,
+            "disposition": "immutable-base-plan-amended-only-for-bar-page-resource-ceiling",
+        }
+        or amendment.get("prior_acquisition_authority")
+        != {
+            "path": ACQUISITION_AUTHORITY_V4_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_AUTHORITY_V4_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_AUTHORITY_V4_FINGERPRINT,
+            "disposition": "immutable-runtime-failed-on-pagination-resource-ceiling",
+        }
+        or amendment.get("prior_acquisition_authority_review")
+        != {
+            "path": ACQUISITION_AUTHORITY_REVIEW_V2_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V2_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V2_FINGERPRINT,
+        }
+        or amendment.get("runtime_failure")
+        != {
+            "path": ACQUISITION_PAGINATION_FAILURE_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_PAGINATION_FAILURE_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_PAGINATION_FAILURE_FINGERPRINT,
+        }
+        or amendment.get("pagination_change")
+        != {
+            "bar_segment_project_page_ceiling_before": 10,
+            "bar_segment_project_page_ceiling_after": 100,
+            "quote_segment_project_page_ceiling": 100,
+            "provider_limit_parameter": 10000,
+            "page_ceiling_semantics": (
+                "The project ceiling bounds resource use; it is not a provider page limit. "
+                "Drain unique next_page_token values through null. If token pagination remains "
+                "nonterminal after page 100, fail without segment or dataset publication and "
+                "require another reviewed proposal."
+            ),
+            "reason": (
+                "Use the existing reviewed quote-page ceiling for monthly bars because the "
+                "provider may underfill pages and the observed valid context chain remained "
+                "nonterminal after page ten."
+            ),
+        }
+        or any(
+            value is not True
+            for value in _mapping(amendment.get("unchanged"), "pagination unchanged scope").values()
+        )
+        or any(
+            value is not False
+            for value in _mapping(
+                amendment.get("launch_control"), "pagination launch control"
+            ).values()
+        )
+    ):
+        raise ValueError("Program 002 pagination amendment differs")
+    _require_false_authority(amendment.get("authority"), "pagination amendment")
+
+    unsigned_review = dict(review)
+    if (
+        review.get("schema_version")
+        != "program-002-acquisition-pagination-amendment-independent-review-v1"
+        or review.get("status") != "passed-before-pagination-implementation"
+        or review.get("verdict") != "pass"
+        or review.get("findings") != []
+        or review.get("reviewed_commit") != REVIEWED_ACQUISITION_PAGINATION_PROPOSAL_COMMIT
+        or unsigned_review.pop("review_fingerprint", None)
+        != REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_REVIEW_FINGERPRINT
+        or fingerprint(unsigned_review)
+        != REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_REVIEW_FINGERPRINT
+        or review.get("reviewed_failure")
+        != {
+            "path": ACQUISITION_PAGINATION_FAILURE_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_PAGINATION_FAILURE_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_PAGINATION_FAILURE_FINGERPRINT,
+        }
+        or review.get("reviewed_amendment")
+        != {
+            "path": ACQUISITION_PAGINATION_AMENDMENT_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_FINGERPRINT,
+        }
+        or any(
+            value is not True
+            for value in _mapping(review.get("checks"), "pagination review checks").values()
+        )
+    ):
+        raise ValueError("Program 002 pagination amendment review differs")
+    _require_false_authority(review.get("authority"), "pagination amendment review")
+
+
+def _verify_acquisition_authority_v5(
     repository: Path, payload: Mapping[str, Any], proof: Mapping[str, Any]
 ) -> None:
     unsigned = dict(payload)
@@ -596,8 +782,8 @@ def _verify_acquisition_authority_v4(
     source = _mapping(payload.get("source_binding"), "acquisition authority source binding")
     files = source.get("files")
     if (
-        payload.get("schema_version") != "program-002-exposed-acquisition-authority-v4"
-        or payload.get("authority_id") != "program-002-exposed-acquisition-2026-08-25-v4"
+        payload.get("schema_version") != "program-002-exposed-acquisition-authority-v5"
+        or payload.get("authority_id") != "program-002-exposed-acquisition-2026-08-26-v5"
         or payload.get("program_id") != PROGRAM_ID
         or payload.get("status") != "active-until-complete-or-terminal-blocker"
         or payload.get("source_authorization")
@@ -624,9 +810,9 @@ def _verify_acquisition_authority_v4(
     ):
         raise ValueError("Program 002 acquisition authority identity or source differs")
     if payload.get("supersedes") != {
-        "path": ACQUISITION_AUTHORITY_V3_RELATIVE_PATH.as_posix(),
-        "sha256": REVIEWED_ACQUISITION_AUTHORITY_V3_SHA256,
-        "disposition": "immutable-review-rejected-before-market-data-acquisition",
+        "path": ACQUISITION_AUTHORITY_V4_RELATIVE_PATH.as_posix(),
+        "sha256": REVIEWED_ACQUISITION_AUTHORITY_V4_SHA256,
+        "disposition": "immutable-runtime-failed-on-pagination-resource-ceiling",
     }:
         raise ValueError("Program 002 acquisition authority supersession differs")
     expected_bindings = _expected_acquisition_authority_bindings()
@@ -748,6 +934,31 @@ def _expected_acquisition_authority_bindings() -> Mapping[str, Any]:
             "path": ACQUISITION_AUTHORITY_V3_REVIEW_FAILURE_RELATIVE_PATH.as_posix(),
             "sha256": REVIEWED_ACQUISITION_AUTHORITY_V3_REVIEW_FAILURE_SHA256,
             "fingerprint": REVIEWED_ACQUISITION_AUTHORITY_V3_REVIEW_FAILURE_FINGERPRINT,
+        },
+        "runtime_failed_acquisition_authority": {
+            "path": ACQUISITION_AUTHORITY_V4_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_AUTHORITY_V4_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_AUTHORITY_V4_FINGERPRINT,
+        },
+        "runtime_failed_acquisition_authority_review": {
+            "path": ACQUISITION_AUTHORITY_REVIEW_V2_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V2_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V2_FINGERPRINT,
+        },
+        "acquisition_pagination_failure": {
+            "path": ACQUISITION_PAGINATION_FAILURE_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_PAGINATION_FAILURE_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_PAGINATION_FAILURE_FINGERPRINT,
+        },
+        "acquisition_pagination_amendment": {
+            "path": ACQUISITION_PAGINATION_AMENDMENT_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_FINGERPRINT,
+        },
+        "acquisition_pagination_amendment_review": {
+            "path": ACQUISITION_PAGINATION_AMENDMENT_REVIEW_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_REVIEW_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_REVIEW_FINGERPRINT,
         },
         "regulatory_fee_source": {
             "path": COST_MODEL_RELATIVE_PATH.as_posix(),
