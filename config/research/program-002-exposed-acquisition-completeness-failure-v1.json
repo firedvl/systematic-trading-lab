@@ -1,0 +1,173 @@
+{
+  "schema_version": "program-002-exposed-acquisition-completeness-failure-v1",
+  "incident_id": "program-002-exposed-acquisition-completeness-failure-2026-08-26-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "observed_at": "2026-08-26T17:35:37Z",
+  "source_main_commit": "c714da1c43451594a910aae4ff856c1c182a6cef",
+  "source_authorization": {
+    "kind": "user-supplied-authorization-packet",
+    "sha256": "fd1a468fb152c6c18c0babda29c8393507a68558161b325d7f17348422093480"
+  },
+  "acquisition_authority": {
+    "path": "config/research/program-002-exposed-acquisition-authority-v5.json",
+    "sha256": "949260f3b45f902c67247de25987fdca94a75292137603c4b4996774a4fc7065",
+    "fingerprint": "88ca7a20e80827061f93886b8aee28fa55005a1e87101358bb228b11e2cd9630"
+  },
+  "acquisition_authority_review": {
+    "path": "config/research/program-002-exposed-acquisition-authority-independent-review-v3.json",
+    "sha256": "bfb89f808e483c033117b6a445194a9f74a340846c55c11f7fd0cfab685ac2f5",
+    "fingerprint": "8faaa972d4bbac9de202e45e50c5cde5c5f37ec66004bfe2e009d9d06a6a4b4a"
+  },
+  "result": {
+    "status": "control-stop-after-context-publication-before-exposed-dataset-publication",
+    "historical_client_constructed": true,
+    "credential_environment_and_key_identity_matched_proof": true,
+    "provider_requests_by_attempt": {
+      "program-002-exposed-acquisition-20260826-v3": 82,
+      "program-002-exposed-acquisition-20260826-v4": 69
+    },
+    "context_dataset_published": true,
+    "exposed_block_1_published": false,
+    "exposed_block_2_published": false,
+    "exposed_block_3_published": false,
+    "context_projection_published": false,
+    "quote_evidence_acquired": false,
+    "cost_artifact_published": false
+  },
+  "context_dataset": {
+    "dataset_id": "f82aa71d00bc4b0bf7d4c9730a11d2e78e61c37ace64875cd76174da01045a0f",
+    "fingerprint": "1cf098112f0042e1942a2ec253341b7bae7cc152c40793ffb11967785bdcd87f",
+    "manifest_sha256": "8b36f4c17bb62612298e5c8a8d4fc0d62bd073cd398d5ab5bc21031093371c68",
+    "raw_jsonl_sha256": "d6da0e0b3b93fd4329aaf869e6c798face0e3aa773f99782a76f1a940142aead",
+    "requested_start": "2020-06-26T13:30:00Z",
+    "requested_end": "2020-07-24T19:55:00Z",
+    "actual_start": "2020-06-26T13:30:00Z",
+    "actual_end": "2020-07-24T19:55:00Z",
+    "request_segment_count": 2,
+    "expected_rows": 20280,
+    "normalized_rows": 20280,
+    "missing_intervals": [],
+    "duplicate_intervals": [],
+    "validation_errors": [],
+    "quarantined_records": 0,
+    "thirty_minute_preflight": true,
+    "allowed_use": "same-clock volume context only; no target, benchmark, P&L, or gate"
+  },
+  "repeated_failed_segment": {
+    "role": "exposed-block-1",
+    "requested_start": "2020-12-01T14:30:00Z",
+    "requested_end": "2020-12-31T20:55:00Z",
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "all",
+    "page_count": 13,
+    "raw_record_count": 30029,
+    "expected_normalized_rows": 21840,
+    "actual_normalized_rows": 21838,
+    "missing_intervals": [
+      "MDY@2020-12-04T18:10:00+00:00",
+      "MDY@2020-12-04T18:25:00+00:00"
+    ],
+    "duplicate_intervals": [],
+    "validation_errors": [],
+    "quarantined_normalized_records": 0,
+    "every_http_attempt_status": 200,
+    "pagination_terminated_with_null_next_page_token": true,
+    "provider_payloads_identical_between_attempts": false,
+    "missing_intervals_identical_between_attempts": true,
+    "attempts": [
+      {
+        "acquisition_attempt_id": "program-002-exposed-acquisition-20260826-v3",
+        "terminal_attempt_identity": "7ddb1a185688815952de8ed5d20bacf96c50fdb58bd4efe3a755e329aeda2484",
+        "quarantine_identity": "f77d8cebc54a553b0dbbcd56bc5db73c72aa8180f1bc60a77c2defed29981d2a",
+        "quarantine_sha256": "fe4f3de200072d2ef92aec2bd35848313bb7a78a30bedd31886529bf0a449c3d",
+        "raw_record_fingerprint": "4463759146f9937f25257a39aac18783724bb84fdc444e4811477476bab172bd",
+        "normalized_record_fingerprint": "45ef963d0f1eacac42ee52cfab7033ca621876de3288d0d6253062f0a84aa3d6"
+      },
+      {
+        "acquisition_attempt_id": "program-002-exposed-acquisition-20260826-v4",
+        "terminal_attempt_identity": "cadb0b96bb7108ce1f82a365f7d9438ad76096cb3c56c7af25541d6d025086d8",
+        "quarantine_identity": "2ed2802bb6df7dfd2964aa5898ef778984f24e4fbcd97424b8eea1e1080c81c0",
+        "quarantine_sha256": "2868e74cc2ac1cf5707d52eacc48f15a57821f2a82f96dd993f9e4890d8e2f3f",
+        "raw_record_fingerprint": "f847c3ef6446e8ec1b7e42337de8753b65b0a4bada23e0469d3a15d702f77012",
+        "normalized_record_fingerprint": "1c0aa7300c4987ef6f8d507f31b0abc46dca8d6492bc0446cb20ffb4f398430e"
+      }
+    ]
+  },
+  "completed_exposed_segment_lineage": [
+    {
+      "range": "2020-07-27/2020-07-31",
+      "attempt_v3_segment_id": "614e4bff50fb8c4d96fb186b12ff439434914850fa87703f85260bb251080aec",
+      "attempt_v4_segment_id": "09301f286f9ef4d48cc303d998dfe2831b4dccfada831060ab728905ac3748b3"
+    },
+    {
+      "range": "2020-08-03/2020-08-31",
+      "attempt_v3_segment_id": "1a53c0abcd42a4d264c77dd16a79491d393c9f8b2eb42ef1052525553855dbcd",
+      "attempt_v4_segment_id": "dbe118c80afc25765cc67b1b7c3b080d6779a795bcf1624a9b3792caa6d2462b"
+    },
+    {
+      "range": "2020-09-01/2020-09-30",
+      "attempt_v3_segment_id": "c327a2a81f638aa57064de4b0a06fbd3cd89e47465c19486d1bd7b341411f891",
+      "attempt_v4_segment_id": "46b8afda4ba597529362739217a6faf0bcb6a3a9403aa2fe8631ba5ba36a92e4"
+    },
+    {
+      "range": "2020-10-01/2020-10-30",
+      "attempt_v3_segment_id": "2f756d9dec6201eef00035a617683ec7b0c17d5457e56826137ed3d71b257a26",
+      "attempt_v4_segment_id": "a65437286c5087ce5404a100eafe20f8d77b76a7fcc5a637ae7797cbf8ef56c9"
+    },
+    {
+      "range": "2020-11-02/2020-11-30",
+      "attempt_v3_segment_id": "45c412632fc8a8a2c48c339e9e7554e3924cae80ed67d28cfbd621101c3ae36f",
+      "attempt_v4_segment_id": "a2e66d19599f3c9222b0f55738ba886c758c7af0bd6643d53ee1ef2dab44dc79"
+    }
+  ],
+  "runtime_evidence": {
+    "segment_journal_sha256": "1223cd77c4d688a99e9b17f44c871c5d9d35a6183bb94612ad03c88ead6090c8",
+    "terminal_attempt_journal_sha256": "cf34c18898f046636780977dd0fd846462b593cc7484daae30d5a89a098498b9",
+    "raw_response_bytes_retained": true,
+    "credential_values_persisted_or_printed": false
+  },
+  "diagnosis": {
+    "frozen_completeness_contract": "Every monthly segment requires exactly one normalized row for every requested symbol and expected XNYS five-minute bar open; every final exposed dataset must match its exact expected row count.",
+    "provider_behavior": "Two complete, independently paginated responses under new attempt IDs both omitted the same two MDY intervals. The second response changed some provider bytes but did not resolve either gap.",
+    "recovery_disposition": "The frozen new-attempt recovery path was exercised once. It reproduced the same structural failure with no transport, parsing, duplicate, pagination, outer-bound, or authorization error.",
+    "root_cause": "The frozen full-grid completeness assumption does not match the provider records for this authorized historical segment.",
+    "semantics_boundary": "Filling, dropping, or tolerating the missing bars would change frozen data and downstream research semantics and is not authorized by the acquisition workflow."
+  },
+  "protected_access": {
+    "strategy_code_executed": false,
+    "strategy_returns_or_candidates": false,
+    "controlled_block_a_or_b": false,
+    "protected_holdout": false,
+    "paper_broker_or_live_state": false,
+    "strategic_allocation_21": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "next_step": "Stop Program 002 acquisition. The user must either close the program or separately authorize a new planning phase that prospectively revises the completeness rule, expected row counts, and every affected downstream binding before any new request or strategy execution.",
+  "incident_fingerprint": "311a355aa22e917f6a343036ad2950d42a2b98479b874604dd3b712282cacd78"
+}

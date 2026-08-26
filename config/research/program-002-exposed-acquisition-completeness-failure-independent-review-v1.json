@@ -1,0 +1,107 @@
+{
+  "schema_version": "program-002-exposed-acquisition-completeness-failure-independent-review-v1",
+  "review_id": "program-002-exposed-acquisition-completeness-failure-independent-review-2026-08-26-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "reviewed_at": "2026-08-26T17:54:47Z",
+  "status": "passed-control-stop-before-further-acquisition",
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_commit": "2cf3bca5cf586315d5311446e3f8c72027ba9e5c",
+  "base_main_commit": "c714da1c43451594a910aae4ff856c1c182a6cef",
+  "reviewed_incident": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-v1.json",
+    "sha256": "6109b230ce66c2d1bb01d2b50e86e344eaa9c6eeff7a9287477ea066fbfe9076",
+    "fingerprint": "311a355aa22e917f6a343036ad2950d42a2b98479b874604dd3b712282cacd78"
+  },
+  "reviewed_authority": {
+    "path": "config/research/program-002-exposed-acquisition-authority-v5.json",
+    "sha256": "949260f3b45f902c67247de25987fdca94a75292137603c4b4996774a4fc7065",
+    "fingerprint": "88ca7a20e80827061f93886b8aee28fa55005a1e87101358bb228b11e2cd9630"
+  },
+  "reviewed_authority_review": {
+    "path": "config/research/program-002-exposed-acquisition-authority-independent-review-v3.json",
+    "sha256": "bfb89f808e483c033117b6a445194a9f74a340846c55c11f7fd0cfab685ac2f5",
+    "fingerprint": "8faaa972d4bbac9de202e45e50c5cde5c5f37ec66004bfe2e009d9d06a6a4b4a"
+  },
+  "reviewed_context_dataset": {
+    "dataset_id": "f82aa71d00bc4b0bf7d4c9730a11d2e78e61c37ace64875cd76174da01045a0f",
+    "manifest_sha256": "8b36f4c17bb62612298e5c8a8d4fc0d62bd073cd398d5ab5bc21031093371c68",
+    "fingerprint": "1cf098112f0042e1942a2ec253341b7bae7cc152c40793ffb11967785bdcd87f",
+    "raw_jsonl_sha256": "d6da0e0b3b93fd4329aaf869e6c798face0e3aa773f99782a76f1a940142aead",
+    "expected_rows": 20280,
+    "normalized_rows": 20280,
+    "request_segment_count": 2,
+    "missing_intervals": [],
+    "duplicate_intervals": [],
+    "validation_errors": [],
+    "quarantined_records": 0
+  },
+  "reviewed_repeated_failure": {
+    "role": "exposed-block-1",
+    "page_count_per_attempt": 13,
+    "raw_record_count_per_attempt": 30029,
+    "expected_normalized_rows": 21840,
+    "actual_normalized_rows": 21838,
+    "missing_intervals": [
+      "MDY@2020-12-04T18:10:00+00:00",
+      "MDY@2020-12-04T18:25:00+00:00"
+    ],
+    "duplicate_intervals": [],
+    "validation_errors": [],
+    "provider_payloads_identical_between_attempts": false,
+    "missing_intervals_identical_between_attempts": true,
+    "attempts": [
+      {
+        "acquisition_attempt_id": "program-002-exposed-acquisition-20260826-v3",
+        "terminal_attempt_identity": "7ddb1a185688815952de8ed5d20bacf96c50fdb58bd4efe3a755e329aeda2484",
+        "quarantine_identity": "f77d8cebc54a553b0dbbcd56bc5db73c72aa8180f1bc60a77c2defed29981d2a",
+        "quarantine_sha256": "fe4f3de200072d2ef92aec2bd35848313bb7a78a30bedd31886529bf0a449c3d"
+      },
+      {
+        "acquisition_attempt_id": "program-002-exposed-acquisition-20260826-v4",
+        "terminal_attempt_identity": "cadb0b96bb7108ce1f82a365f7d9438ad76096cb3c56c7af25541d6d025086d8",
+        "quarantine_identity": "2ed2802bb6df7dfd2964aa5898ef778984f24e4fbcd97424b8eea1e1080c81c0",
+        "quarantine_sha256": "2868e74cc2ac1cf5707d52eacc48f15a57821f2a82f96dd993f9e4890d8e2f3f"
+      }
+    ]
+  },
+  "reviewed_runtime_evidence": {
+    "segment_journal_sha256": "1223cd77c4d688a99e9b17f44c871c5d9d35a6183bb94612ad03c88ead6090c8",
+    "terminal_attempt_journal_sha256": "cf34c18898f046636780977dd0fd846462b593cc7484daae30d5a89a098498b9",
+    "completed_exposed_segment_lineage_edges": 5
+  },
+  "verified_assertions": {
+    "reviewed_commit_changes_only_the_incident_and_state_records": true,
+    "incident_hash_and_fingerprint_reproduced": true,
+    "authority_and_review_hashes_and_fingerprints_reproduced": true,
+    "context_dataset_identity_hashes_and_structural_validation_match": true,
+    "both_quarantine_hashes_and_terminal_attempt_identities_match": true,
+    "both_attempts_terminated_after_complete_pagination": true,
+    "both_attempts_omitted_the_same_two_intervals": true,
+    "provider_payloads_changed_between_attempts": true,
+    "all_five_completed_segment_lineage_edges_match": true,
+    "segment_and_terminal_journal_hashes_match": true,
+    "v4_was_the_only_new_attempt_recovery": true,
+    "no_exposed_dataset_quote_cost_binding_or_strategy_result_exists": true,
+    "further_acquisition_requires_new_prospective_authority": true
+  },
+  "proof_gaps": [
+    "The reviewer did not inspect credential values or query provider or account endpoints.",
+    "The reviewer checked retained runtime evidence structurally and did not inspect raw provider record values.",
+    "This review establishes evidence consistency and the policy stop; it does not establish a separate source-level acquisition block."
+  ],
+  "scope_limit": "No credential value, provider or account endpoint, new market or quote data, strategy result, controlled or protected data, PAPER or broker state, live state, or strategic-allocation-21 state was accessed during this review.",
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_step": "Stop acquisition under authority v5. The user must close Program 002 or separately authorize a prospective planning phase that revises and reviews completeness semantics and every affected downstream binding before any new request or strategy execution.",
+  "review_fingerprint": "3d993728e8ecd57086c800c113b78ddf2ab72d19970402a06c177c337f2cb30c"
+}
