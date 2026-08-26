@@ -41,6 +41,11 @@
     "fingerprint": "88ca7a20e80827061f93886b8aee28fa55005a1e87101358bb228b11e2cd9630",
     "disposition": "immutable-and-revoked-before-credential-loading-by-bound-source-drift"
   },
+  "revocation_enforcement_review": {
+    "path": "config/research/program-002-exposed-acquisition-control-stop-enforcement-independent-review-v1.json",
+    "sha256": "07d2cfe2ec9964fae5c4e793866ffecfbb552cd82cbe830950ab2ff052b67c09",
+    "fingerprint": "fea87406ad694226bf55151919cbbc1cd288b2f51b17783f3aaf30b049637c02"
+  },
   "provider_contract": {
     "official_reference": "https://docs.alpaca.markets/us/docs/market-data-faq",
     "checked_date": "2026-08-26",
@@ -181,5 +186,5 @@
     "broker_writes": false,
     "live_execution": false
   },
-  "amendment_fingerprint": "64baf560b6d8299742eba8cfe9dc9a7a9136bf20b638d633d531ed006a4ddf0a"
+  "amendment_fingerprint": "f6540b404cfc12a8885b58c799279239fa3df90a3b8bffe2b950289ee3b4b09c"
 }
