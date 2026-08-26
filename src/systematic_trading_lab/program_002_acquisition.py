@@ -271,7 +271,7 @@ def acquisition_authority_preflight(
     credential_key_hash: str | None = None,
     account_environment: str | None = None,
 ) -> None:
-    """Require reviewed v6 authority, clean source lineage, and proof identity continuity."""
+    """Require reviewed acquisition authority, clean source lineage, and proof continuity."""
     bindings = _mapping(plan.authority.payload.get("bindings"), "acquisition authority bindings")
     control = bindings.get("acquisition_control_amendment")
     evidence = bindings.get("provider_contract_evidence")
