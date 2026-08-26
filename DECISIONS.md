@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-26 — Stop Program 002 on the foreign and consecutive February gaps
+
+- Decision: preserve attempt `program-002-exposed-acquisition-20260826-v5`, its seven complete Exposed Block 1 segment artifacts, context projection, February quarantine, and journals. Stop authority v6 at the February 2021 segment. Do not synthesize, drop, tolerate, or reacquire any February gap under the December-only amendment.
+- Context: seven monthly segments through January passed stored-raw rederivation; December used only the two authorized MDY continuity rows. The fully paginated February response had 27,273 raw records and 19,259 of 19,266 required normalized rows. Seven MDY coordinates were absent. The `16:45` and `16:50` UTC gaps on February 5 are consecutive, and every gap is outside the two-coordinate eligible set. This meets two explicit amendment failure conditions. The user authorized a prospective completeness/data-source planning phase after the stop, not a new request or a broader synthesis rule.
+- Consequences: incident v2 SHA-256/fingerprint is `a8307c50c809e2da45f101495847e3f55a437121e24d2eb5833085c8ece41516` / `f6bf79ca1f2c90183fa0d12295c2a938b46e6da10edc0199405275878022f64f`. Quarantine SHA-256 is `571da2c19efad7ded9ddfb257966ecb47298ebb12e22413a769a9f2341e527c5`. No exposed dataset, quote evidence, cost model, Campaign 1 binding, strategy result, controlled/protected read, PAPER action, broker write, live action, or `strategic-allocation-21` access exists. Every authority field is false.
+- Revisit when: only after a prospective plan defines the exact data source and completeness semantics, expected counts, identities, downstream effects, and failure rules; passes independent review; is implemented and tested; and receives a new source-bound acquisition authority plus a finding-free review on clean synchronized main.
+
 ## 2026-08-26 — Complete only the two reviewed Program 002 provider omissions
 
 - Decision: under authority v6, complete only `MDY@2020-12-04T18:10:00Z` and `MDY@2020-12-04T18:25:00Z` in Exposed Block 1. Require full pagination, parsing, duplicate, symbol, and outer-range validation first; require observed same-session bars exactly five minutes before and after each omission. Set synthetic open, high, low, and close to the observed predecessor close and volume to zero. Preserve all raw provider pages and raw-record JSONL byte-for-byte.
