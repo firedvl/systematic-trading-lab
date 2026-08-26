@@ -39,18 +39,13 @@ from .fingerprints import canonical_json, canonicalize, fingerprint
 from .intraday_execution_cost_model import load_intraday_execution_cost_model
 from .multi_hour_sector_etf_plan import Program002AcquisitionPlan, load_program_002_acquisition_plan
 from .parquet import to_parquet
+from .program_002_credentials import credential_key_id_hash, read_acquisition_credentials
 from .storage import StorageLayout
 from .validation import validate_records
 
 _NY = ZoneInfo("America/New_York")
 _BARS = "https://data.alpaca.markets/v2/stocks/bars"
 _QUOTES = "https://data.alpaca.markets/v2/stocks/quotes"
-_CREDS = ("PROGRAM_002_ACQUISITION_API_KEY_ID", "PROGRAM_002_ACQUISITION_API_SECRET_KEY")
-_EXCLUSIVE_END_BOUNDARY = (
-    "Repository ranges use inclusive expected bar opens. Alpaca start is inclusive and "
-    "end is sent as "
-    "the final expected bar open plus five minutes because the provider end is exclusive."
-)
 
 
 class Program002AcquisitionError(RuntimeError):
@@ -73,9 +68,11 @@ class HistoricalHttpClient:
         self,
         api_key: str,
         secret: str,
+        plan: Program002AcquisitionPlan,
         segments: Sequence[RequestSegment],
         transport: Callable[[Request], HttpPage] | None = None,
     ) -> None:
+        acquisition_authority_preflight(plan, credential_key_hash=credential_key_id_hash(api_key))
         if not api_key or not secret:
             raise ValueError("Program 002 acquisition credentials are required")
         self._headers = {"APCA-API-KEY-ID": api_key, "APCA-API-SECRET-KEY": secret}
@@ -194,34 +191,53 @@ def load_plan(repository: Path) -> Program002AcquisitionPlan:
 
 
 def acquisition_credentials(environ: Mapping[str, str] | None = None) -> tuple[str, str]:
-    env = os.environ if environ is None else environ
-    dedicated = set(_CREDS)
-    forbidden = ("APCA", "ALPACA", "BROKER", "IBKR", "PAPER", "LIVE")
-    if any(
-        value
-        and (
-            key not in dedicated
-            and (
-                key.upper().startswith("PROGRAM_002_ACQUISITION_")
-                or any(marker in key.upper() for marker in forbidden)
-            )
-        )
-        for key, value in env.items()
-    ):
-        raise Program002AcquisitionError("non-acquisition credentials are present")
-    key, secret = (env.get(name, "") for name in _CREDS)
-    if not key or not secret:
-        raise Program002AcquisitionError("Program 002 acquisition credentials are required")
-    return key, secret
+    try:
+        return read_acquisition_credentials(environ)
+    except ValueError as error:
+        raise Program002AcquisitionError(str(error)) from error
 
 
 def provider_contract_preflight(plan: Program002AcquisitionPlan) -> None:
-    """Stop before secrets or transport while the reviewed plan/doc contract disagrees."""
-    bars = _mapping(plan.payload.get("historical_bars"), "historical bars")
-    if bars.get("request_boundary") == _EXCLUSIVE_END_BOUNDARY:
+    """Require the reviewed prospective inclusive-end control before secret access."""
+    contract = _mapping(
+        plan.control_payload.get("corrected_request_contract"), "corrected request contract"
+    )
+    if (
+        contract.get("start_semantics") != "inclusive"
+        or contract.get("end_semantics") != "inclusive"
+    ):
+        raise Program002AcquisitionError("provider contract preflight blocked")
+
+
+def acquisition_authority_preflight(
+    plan: Program002AcquisitionPlan, *, credential_key_hash: str | None = None
+) -> None:
+    """The historical v1 authority cannot authorize the amended request contract."""
+    bindings = _mapping(plan.authority.payload.get("bindings"), "acquisition authority bindings")
+    control = bindings.get("acquisition_control_amendment")
+    evidence = bindings.get("provider_contract_evidence")
+    proof = bindings.get("account_isolation_proof")
+    identity = plan.authority.payload.get("account_isolation")
+    if (
+        plan.authority.payload.get("schema_version")
+        != "program-002-exposed-acquisition-authority-v2"
+        or not isinstance(control, Mapping)
+        or control.get("sha256") != plan.control_sha256
+        or control.get("fingerprint") != plan.control_fingerprint
+        or not isinstance(evidence, Mapping)
+        or evidence.get("sha256") != plan.provider_contract_evidence_sha256
+        or evidence.get("fingerprint") != plan.provider_contract_evidence_fingerprint
+        or not isinstance(proof, Mapping)
+        or not isinstance(proof.get("sha256"), str)
+        or not isinstance(proof.get("fingerprint"), str)
+        or not isinstance(identity, Mapping)
+        or identity.get("proof_accepted") is not True
+        or not isinstance(identity.get("credential_key_id_hash"), str)
+        or identity.get("credential_key_id_hash")
+        != (credential_key_hash or identity.get("credential_key_id_hash"))
+    ):
         raise Program002AcquisitionError(
-            "provider contract preflight blocked: frozen exclusive-end request conflicts "
-            "with current inclusive-end documentation"
+            "revised acquisition authority with account-isolation proof is absent"
         )
 
 
@@ -642,7 +658,7 @@ def _validate_bar_segment_complete(
 ) -> None:
     expected = expected_bar_timestamps(
         _time(segment.params["start"]),
-        _time(segment.params["end"]) - timedelta(minutes=5),
+        _time(segment.params["end"]),
         Timeframe.FIVE_MINUTES,
     )
     checked = validate_records(
@@ -1814,9 +1830,7 @@ def _bar_segment(plan: Program002AcquisitionPlan, start: date, end: date) -> Req
     )
     if not points:
         raise Program002AcquisitionError("monthly segment contains no XNYS bars")
-    return RequestSegment(
-        "bars", _BARS, _params(plan, points[0], points[-1] + timedelta(minutes=5), "5Min"), 10
-    )
+    return RequestSegment("bars", _BARS, _params(plan, points[0], points[-1], "5Min"), 10)
 
 
 def _quote_segment(
@@ -2015,11 +2029,7 @@ def _require_bar_in_segment(raw: Mapping[str, Any], segment: RequestSegment) -> 
 
 @lru_cache(maxsize=128)
 def _segment_bar_opens(start: str, end: str) -> frozenset[datetime]:
-    return frozenset(
-        expected_bar_timestamps(
-            _time(start), _time(end) - timedelta(minutes=5), Timeframe.FIVE_MINUTES
-        )
-    )
+    return frozenset(expected_bar_timestamps(_time(start), _time(end), Timeframe.FIVE_MINUTES))
 
 
 def _require_quote_in_segment(raw: Mapping[str, Any], segment: RequestSegment) -> None:

@@ -13,6 +13,7 @@ from systematic_trading_lab.multi_hour_sector_etf_runner import (
     Program002Metrics,
     SyntheticProgram002Runner,
     _run_id,
+    _SyntheticWorker,
     aggregate_net_profit,
     aggregate_return,
     all_nine_and_neighbor_gates,
@@ -122,6 +123,23 @@ def test_exact_exposed_and_controlled_template_ceilings_and_false_authority() ->
     validate_program_specification_ceiling(exposed, controlled)
     with pytest.raises(ValueError, match="membership"):
         validate_program_specification_ceiling(exposed[:-1], controlled)
+
+
+def test_research_runner_rejects_acquisition_credentials(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PROGRAM_002_ACQUISITION_API_KEY_ID", "must-not-reach-research")
+    with pytest.raises(ValueError, match="forbids credentials"):
+        SyntheticProgram002Runner(_REPOSITORY, tmp_path, _SOURCE)
+    with pytest.raises(ValueError, match="forbids credentials"):
+        _SyntheticWorker(tmp_path, _SOURCE, _REPOSITORY, False)
+    monkeypatch.delenv("PROGRAM_002_ACQUISITION_API_KEY_ID")
+    monkeypatch.setenv("APCA_API_SECRET_KEY", "must-not-reach-research")
+    with pytest.raises(ValueError, match="forbids credentials"):
+        SyntheticProgram002Runner(_REPOSITORY, tmp_path, _SOURCE)
+    with pytest.raises(ValueError, match="forbids credentials"):
+        _SyntheticWorker(tmp_path, _SOURCE, _REPOSITORY, False)
+    assert not tuple(tmp_path.iterdir())
 
 
 def test_metric_hand_calculation_and_undefined_denominators_fail_gates() -> None:

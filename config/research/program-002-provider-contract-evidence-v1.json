@@ -1,0 +1,30 @@
+{
+  "schema_version": "program-002-provider-contract-evidence-v1",
+  "evidence_id": "program-002-alpaca-inclusive-end-2026-08-25-v1",
+  "retrieved_and_reviewed_date": "2026-08-25",
+  "provider": "Alpaca Market Data API",
+  "sources": [
+    {
+      "documentation_title": "Historical bars",
+      "documentation_url": "https://docs.alpaca.markets/us/v1.4.2/reference/stockbars",
+      "endpoint": "GET https://data.alpaca.markets/v2/stocks/bars",
+      "parameters": {
+        "start": "inclusive",
+        "end": "inclusive"
+      },
+      "pagination": "Follow next_page_token until absent; limit applies to total data points, not each symbol."
+    },
+    {
+      "documentation_title": "Historical quotes",
+      "documentation_url": "https://docs.alpaca.markets/us/reference/stockquotes-1",
+      "endpoint": "GET https://data.alpaca.markets/v2/stocks/quotes",
+      "parameters": {
+        "start": "inclusive",
+        "end": "inclusive"
+      },
+      "pagination": "Follow next_page_token until absent; limit applies to total data points, not each symbol."
+    }
+  ],
+  "reviewer_conclusion": "Both current official endpoint references define start and end as inclusive. The frozen exclusive-end Program 002 request rule must be superseded prospectively.",
+  "evidence_fingerprint": "5d11a9fb2cbf35f48f857de88737c5e67a04348d9d696f98367039e694f925d6"
+}

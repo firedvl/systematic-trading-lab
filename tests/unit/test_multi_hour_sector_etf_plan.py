@@ -10,12 +10,16 @@ from systematic_trading_lab.multi_hour_sector_etf_launch_control import (
     program_002_prelaunch_status,
 )
 from systematic_trading_lab.multi_hour_sector_etf_plan import (
+    ACQUISITION_CONTROL_AMENDMENT_RELATIVE_PATH,
     ACQUISITION_PLAN_RELATIVE_PATH,
     AUTHORITY_RELATIVE_PATH,
     IMPLEMENTATION_PLAN_RELATIVE_PATH,
     PLAN_RELATIVE_PATH,
     PLANNING_REVIEW_RELATIVE_PATH,
+    PROVIDER_CONTRACT_EVIDENCE_RELATIVE_PATH,
+    REVIEWED_ACQUISITION_CONTROL_AMENDMENT_SHA256,
     REVIEWED_AUTHORITY_SHA256,
+    REVIEWED_PROVIDER_CONTRACT_EVIDENCE_SHA256,
     UNIVERSE_RELATIVE_PATH,
     load_program_002_acquisition_plan,
     load_program_002_authority,
@@ -35,6 +39,15 @@ def test_authority_binds_every_reviewed_input_and_keeps_execution_false() -> Non
     assert authority.payload["authority"]["market_data_acquisition"] is True
     assert authority.payload["authority"]["strategy_implementation"] is True
     assert authority.payload["authority"]["strategy_execution"] is False
+    assert acquisition.control_path == _REPOSITORY / ACQUISITION_CONTROL_AMENDMENT_RELATIVE_PATH
+    assert acquisition.control_sha256 == REVIEWED_ACQUISITION_CONTROL_AMENDMENT_SHA256
+    assert (
+        acquisition.provider_contract_evidence_path
+        == _REPOSITORY / PROVIDER_CONTRACT_EVIDENCE_RELATIVE_PATH
+    )
+    assert (
+        acquisition.provider_contract_evidence_sha256 == REVIEWED_PROVIDER_CONTRACT_EVIDENCE_SHA256
+    )
 
 
 def test_authority_tampering_fails_before_plan_use(tmp_path: Path) -> None:
@@ -66,7 +79,7 @@ def test_prelaunch_is_pure_false_authority_and_rejects_credentials(tmp_path: Pat
     assert status["strategy_execution_authority_present"] is False
     assert status["launch_allowed"] is False
     assert len(status["required_dataset_roles"]) == 4
-    assert len(status["known_bindings"]["implementation_files"]) == 8
+    assert len(status["known_bindings"]["implementation_files"]) == 10
 
     with pytest.raises(ValueError, match="forbids credentials"):
         program_002_prelaunch_status(

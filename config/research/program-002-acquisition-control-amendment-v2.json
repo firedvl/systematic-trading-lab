@@ -1,0 +1,84 @@
+{
+  "schema_version": "program-002-acquisition-control-amendment-v2",
+  "amendment_id": "program-002-inclusive-end-control-2026-08-25-v2",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "status": "PROSPECTIVE-CONTROL-REPAIR-NOT-AUTHORIZED-FOR-ACQUISITION",
+  "issued_date": "2026-08-25",
+  "source_authorization": {
+    "kind": "user-supplied-authorization-packet",
+    "sha256": "4eaa8879aa89823cd7cc582b7b5fff0e992dc8324b1eeceb11055bdae6b7f718"
+  },
+  "supersedes": {
+    "acquisition_plan_path": "config/research/cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1.json",
+    "acquisition_plan_sha256": "26c768f422e63e9f00e6adc88be2d57f5c6447972a9de1fa4873ab2826556aae",
+    "old_authority_path": "config/research/program-002-implementation-acquisition-authority-v1.json",
+    "old_authority_sha256": "c1fb084b0ac36f7270b56066e499258f18c38adb393b7b597b3d4e1a593e6ca3",
+    "reason": "The frozen plan treats Alpaca end as exclusive, but current official historical stock bars and quotes documentation defines end as inclusive. The old bytes remain immutable history and cannot authorize a request under this amendment."
+  },
+  "provider_contract_evidence": {
+    "path": "config/research/program-002-provider-contract-evidence-v1.json",
+    "sha256": "86a9740a1ecd74f3152e470b9d2fa1c2f759c3a1e9b19b30b54c2ae7b94d0bf2",
+    "fingerprint": "5d11a9fb2cbf35f48f857de88737c5e67a04348d9d696f98367039e694f925d6"
+  },
+  "corrected_request_contract": {
+    "start_semantics": "inclusive",
+    "end_semantics": "inclusive",
+    "bars": "For each monthly segment, send the first and final permitted XNYS regular-session five-minute bar-open timestamps as explicit UTC RFC-3339 start and end values.",
+    "quotes": "For each frozen fill clock, send explicit UTC RFC-3339 timestamps from clock minus 35 seconds through clock plus 30 seconds, inclusive. Sample only the frozen sixty instants in [clock minus 30 seconds, clock plus 30 seconds).",
+    "calendar_policy": "XNYS-regular-session-bars-v1",
+    "timestamp_policy": "bar-open-utc-v1"
+  },
+  "account_isolation_proof_contract": {
+    "environment_selection": "Require PROGRAM_002_ACQUISITION_ACCOUNT_ENVIRONMENT=paper or live before credential loading. Use only paper-api.alpaca.markets for paper or api.alpaca.markets for live.",
+    "http_contract": "GET only: /v2/account, /v2/positions, /v2/orders?status=all&limit=1&direction=asc, and /v2/account/activities?direction=asc&page_size=1. Any first returned order or activity fails; an empty first page proves absence without further account-history reads.",
+    "account_created_at_or_after": "2026-08-25T00:00:00Z",
+    "required_status": "ACTIVE",
+    "positions_empty": true,
+    "orders_empty": true,
+    "open_orders_empty": true,
+    "account_activities_empty": true,
+    "live_environment_zero_fields": [
+      "cash",
+      "equity",
+      "portfolio_value",
+      "long_market_value",
+      "short_market_value"
+    ],
+    "paper_environment_funding_scope": "Paper credentials are environment-isolated from live Trading API credentials under Alpaca's documented authentication contract; simulated paper balances are not live funding.",
+    "non_secret_output": "Persist only environment, hashes of credential key ID and account identities, derived assertions, safe request IDs, counts, timestamps, and artifact fingerprint. Never persist raw responses, API key IDs, secrets, account numbers, or personal data.",
+    "process_isolation": "Program 002 research runner and worker entry points must reject either acquisition secret variable. Proof and acquisition processes are the only repository processes permitted to receive them."
+  },
+  "unchanged_scope": {
+    "universe": true,
+    "chronology": true,
+    "strategy_mechanics": true,
+    "candidate_grid": true,
+    "gates": true,
+    "search_budget": true,
+    "controlled_boundaries": true,
+    "quote_sessions_and_clocks": true,
+    "feed_and_adjustment": true
+  },
+  "launch_control": {
+    "account_isolation_verification_allowed": true,
+    "market_data_acquisition_allowed": false,
+    "strategy_execution_allowed": false,
+    "controlled_dataset_acquisition_allowed": false,
+    "controlled_evaluation_allowed": false,
+    "paper_execution_allowed": false,
+    "broker_writes_allowed": false,
+    "live_execution_allowed": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "control_fingerprint": "6db1a382621c146f7d389c1997c5dc66c73471f530fcf1e89e1ec1f01eb9685a"
+}

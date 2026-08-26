@@ -23,6 +23,7 @@ from .multi_hour_sector_etf_engine import (
 from .multi_hour_sector_etf_features import build_selection_trace
 from .multi_hour_sector_etf_plan import PROGRAM_ID, Program002Configuration, load_program_002_plan
 from .multi_hour_sector_etf_synthetic import build_synthetic_program_002_fixture
+from .program_002_credentials import reject_research_credentials
 from .research_attempts import AttemptStateError, ResearchAttemptStore
 from .research_executor import DEFAULT_RESEARCH_WORKERS, run_process_stage
 
@@ -519,6 +520,7 @@ class SyntheticProgram002Runner:
         workers: int = DEFAULT_RESEARCH_WORKERS,
         crash_after_claim: bool = False,
     ) -> None:
+        reject_research_credentials()
         _require_source_commit(source_commit)
         if isinstance(workers, bool) or workers < 1:
             raise ValueError("worker count must be positive")
@@ -759,6 +761,7 @@ class _SyntheticWorker:
     def __init__(
         self, root: Path, source_commit: str, repository: Path, crash_after_claim: bool
     ) -> None:
+        reject_research_credentials()
         self.store = ResearchAttemptStore(root)
         self.source_commit = source_commit
         self.repository = repository

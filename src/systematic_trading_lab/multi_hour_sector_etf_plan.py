@@ -20,6 +20,12 @@ PLAN_RELATIVE_PATH = Path(
 ACQUISITION_PLAN_RELATIVE_PATH = Path(
     "config/research/cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1.json"
 )
+ACQUISITION_CONTROL_AMENDMENT_RELATIVE_PATH = Path(
+    "config/research/program-002-acquisition-control-amendment-v2.json"
+)
+PROVIDER_CONTRACT_EVIDENCE_RELATIVE_PATH = Path(
+    "config/research/program-002-provider-contract-evidence-v1.json"
+)
 UNIVERSE_RELATIVE_PATH = Path("config/research/multi-hour-sector-etfs-v1.json")
 AUTHORITY_RELATIVE_PATH = Path(
     "config/research/program-002-implementation-acquisition-authority-v1.json"
@@ -38,6 +44,18 @@ REVIEWED_PLAN_SHA256 = "2872d4d3301df0a85e1a5a2eba6e3ee533ee5573971121e99840041e
 REVIEWED_PLAN_FINGERPRINT = "701dc67ea2da1e45d235f4247724b2bc8eb62853561c2400c17a668342c6b81e"
 REVIEWED_ACQUISITION_PLAN_SHA256 = (
     "26c768f422e63e9f00e6adc88be2d57f5c6447972a9de1fa4873ab2826556aae"
+)
+REVIEWED_ACQUISITION_CONTROL_AMENDMENT_SHA256 = (
+    "ecabaf6a46ea24cd88dc7e62aa3e27d78180f57aff7af671840a092747e7b5b5"
+)
+REVIEWED_ACQUISITION_CONTROL_AMENDMENT_FINGERPRINT = (
+    "6db1a382621c146f7d389c1997c5dc66c73471f530fcf1e89e1ec1f01eb9685a"
+)
+REVIEWED_PROVIDER_CONTRACT_EVIDENCE_SHA256 = (
+    "86a9740a1ecd74f3152e470b9d2fa1c2f759c3a1e9b19b30b54c2ae7b94d0bf2"
+)
+REVIEWED_PROVIDER_CONTRACT_EVIDENCE_FINGERPRINT = (
+    "5d11a9fb2cbf35f48f857de88737c5e67a04348d9d696f98367039e694f925d6"
 )
 REVIEWED_UNIVERSE_SHA256 = "8f07f73fd93f9432501d579e43616e1d9a09d6db77c347a6bed4151f2210c312"
 REVIEWED_UNIVERSE_FINGERPRINT = "ef23e533aa7a91262200bd7a77a65f9b6d8b4d473573850c33ef014701177790"
@@ -134,9 +152,23 @@ class Program002AcquisitionPlan:
     sha256: str
     payload: Mapping[str, Any]
     authority: Program002Authority
+    control_path: Path
+    control_sha256: str
+    control_fingerprint: str
+    control_payload: Mapping[str, Any]
+    provider_contract_evidence_path: Path
+    provider_contract_evidence_sha256: str
+    provider_contract_evidence_fingerprint: str
+    provider_contract_evidence: Mapping[str, Any]
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "payload", MappingProxyType(dict(self.payload)))
+        object.__setattr__(self, "control_payload", MappingProxyType(dict(self.control_payload)))
+        object.__setattr__(
+            self,
+            "provider_contract_evidence",
+            MappingProxyType(dict(self.provider_contract_evidence)),
+        )
 
 
 def load_program_002_authority(repository: Path) -> Program002Authority:
@@ -189,9 +221,25 @@ def load_program_002_acquisition_plan(repository: Path) -> Program002Acquisition
     repository = repository.resolve()
     authority = load_program_002_authority(repository)
     path = repository / ACQUISITION_PLAN_RELATIVE_PATH
+    control_path = repository / ACQUISITION_CONTROL_AMENDMENT_RELATIVE_PATH
+    evidence_path = repository / PROVIDER_CONTRACT_EVIDENCE_RELATIVE_PATH
     raw = path.read_bytes()
+    control_raw = control_path.read_bytes()
+    evidence_raw = evidence_path.read_bytes()
     _require_sha256(raw, REVIEWED_ACQUISITION_PLAN_SHA256, "Program 002 acquisition plan")
+    _require_sha256(
+        control_raw,
+        REVIEWED_ACQUISITION_CONTROL_AMENDMENT_SHA256,
+        "Program 002 acquisition control amendment",
+    )
+    _require_sha256(
+        evidence_raw,
+        REVIEWED_PROVIDER_CONTRACT_EVIDENCE_SHA256,
+        "Program 002 provider contract evidence",
+    )
     payload = _load_unique_json(raw, "Program 002 acquisition plan")
+    control = _load_unique_json(control_raw, "Program 002 acquisition control amendment")
+    evidence = _load_unique_json(evidence_raw, "Program 002 provider contract evidence")
     if (
         payload.get("schema_version")
         != "cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1"
@@ -217,7 +265,66 @@ def load_program_002_acquisition_plan(repository: Path) -> Program002Acquisition
         raise ValueError("Program 002 acquisition plan universe binding differs")
     if any(_mapping(payload.get("launch_control"), "acquisition launch control").values()):
         raise ValueError("Program 002 acquisition proposal unexpectedly grants launch authority")
-    return Program002AcquisitionPlan(path, REVIEWED_ACQUISITION_PLAN_SHA256, payload, authority)
+    _verify_acquisition_control(control, evidence)
+    return Program002AcquisitionPlan(
+        path,
+        REVIEWED_ACQUISITION_PLAN_SHA256,
+        payload,
+        authority,
+        control_path,
+        REVIEWED_ACQUISITION_CONTROL_AMENDMENT_SHA256,
+        REVIEWED_ACQUISITION_CONTROL_AMENDMENT_FINGERPRINT,
+        control,
+        evidence_path,
+        REVIEWED_PROVIDER_CONTRACT_EVIDENCE_SHA256,
+        REVIEWED_PROVIDER_CONTRACT_EVIDENCE_FINGERPRINT,
+        evidence,
+    )
+
+
+def _verify_acquisition_control(control: Mapping[str, Any], evidence: Mapping[str, Any]) -> None:
+    if (
+        control.get("schema_version") != "program-002-acquisition-control-amendment-v2"
+        or control.get("program_id") != PROGRAM_ID
+        or control.get("status") != "PROSPECTIVE-CONTROL-REPAIR-NOT-AUTHORIZED-FOR-ACQUISITION"
+    ):
+        raise ValueError("Program 002 acquisition control identity differs")
+    unsigned_control = dict(control)
+    if (
+        unsigned_control.pop("control_fingerprint", None)
+        != REVIEWED_ACQUISITION_CONTROL_AMENDMENT_FINGERPRINT
+        or fingerprint(unsigned_control) != REVIEWED_ACQUISITION_CONTROL_AMENDMENT_FINGERPRINT
+    ):
+        raise ValueError("Program 002 acquisition control fingerprint differs")
+    unsigned_evidence = dict(evidence)
+    if (
+        evidence.get("schema_version") != "program-002-provider-contract-evidence-v1"
+        or unsigned_evidence.pop("evidence_fingerprint", None)
+        != REVIEWED_PROVIDER_CONTRACT_EVIDENCE_FINGERPRINT
+        or fingerprint(unsigned_evidence) != REVIEWED_PROVIDER_CONTRACT_EVIDENCE_FINGERPRINT
+    ):
+        raise ValueError("Program 002 provider contract evidence differs")
+    binding = _mapping(control.get("provider_contract_evidence"), "provider contract binding")
+    if binding != {
+        "path": PROVIDER_CONTRACT_EVIDENCE_RELATIVE_PATH.as_posix(),
+        "sha256": REVIEWED_PROVIDER_CONTRACT_EVIDENCE_SHA256,
+        "fingerprint": REVIEWED_PROVIDER_CONTRACT_EVIDENCE_FINGERPRINT,
+    }:
+        raise ValueError("Program 002 provider contract binding differs")
+    contract = _mapping(control.get("corrected_request_contract"), "corrected request contract")
+    if (
+        contract.get("start_semantics") != "inclusive"
+        or contract.get("end_semantics") != "inclusive"
+    ):
+        raise ValueError("Program 002 corrected request semantics differ")
+    launch = _mapping(control.get("launch_control"), "amended acquisition launch control")
+    if launch.get("account_isolation_verification_allowed") is not True or any(
+        value is not False
+        for key, value in launch.items()
+        if key != "account_isolation_verification_allowed"
+    ):
+        raise ValueError("Program 002 amended launch control differs")
+    _require_false_authority(control.get("authority"), "acquisition control amendment")
 
 
 def _verify_authority(repository: Path, payload: Mapping[str, Any]) -> None:

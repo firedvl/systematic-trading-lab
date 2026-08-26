@@ -28,6 +28,7 @@ from systematic_trading_lab.program_002_acquisition import (
     acquire_quote_segments,
     acquire_role_segments,
     acquire_segment,
+    acquisition_authority_preflight,
     acquisition_credentials,
     bar_segments,
     derive_quote_costs,
@@ -187,6 +188,7 @@ def test_out_of_grid_bars_and_out_of_window_quotes_are_quarantined(tmp_path: Pat
         acquire_segment(segment, lambda _: out_of_grid, quarantine_layout=StorageLayout(tmp_path))
     quote = quote_segments(load_plan(_REPOSITORY))[0]
     quote_end = datetime.fromisoformat(quote.params["end"].replace("Z", "+00:00"))
+    acquisition._require_quote_in_segment({"t": quote.params["end"]}, quote)
     out_of_window = HttpPage(
         200,
         json.dumps(
@@ -212,6 +214,59 @@ def test_out_of_grid_bars_and_out_of_window_quotes_are_quarantined(tmp_path: Pat
     with pytest.raises(Program002AcquisitionError, match="authorized window"):
         acquire_segment(quote, lambda _: out_of_window, quarantine_layout=StorageLayout(tmp_path))
     assert list((tmp_path / "quarantine").glob("*.json"))
+
+
+def test_inclusive_bar_end_is_exact_xnys_final_open() -> None:
+    plan = load_plan(_REPOSITORY)
+    cases = {
+        ("2024-03-08", "2024-03-08"): ("2024-03-08T14:30:00Z", "2024-03-08T20:55:00Z"),
+        ("2024-03-11", "2024-03-11"): ("2024-03-11T13:30:00Z", "2024-03-11T19:55:00Z"),
+        ("2024-11-29", "2024-11-29"): ("2024-11-29T14:30:00Z", "2024-11-29T17:55:00Z"),
+    }
+    for (start, end), expected in cases.items():
+        segment = acquisition._bar_segment(
+            plan, datetime.fromisoformat(start).date(), datetime.fromisoformat(end).date()
+        )
+        assert (segment.params["start"], segment.params["end"]) == expected
+        acquisition._require_bar_in_segment({"t": expected[1]}, segment)
+        with pytest.raises(Program002AcquisitionError, match="outside"):
+            acquisition._require_bar_in_segment(
+                {
+                    "t": (
+                        datetime.fromisoformat(expected[1].replace("Z", "+00:00"))
+                        + timedelta(minutes=5)
+                    )
+                    .isoformat()
+                    .replace("+00:00", "Z")
+                },
+                segment,
+            )
+    with pytest.raises(Program002AcquisitionError, match="no XNYS bars"):
+        acquisition._bar_segment(plan, datetime(2024, 7, 4).date(), datetime(2024, 7, 4).date())
+
+
+def test_every_role_uses_exact_first_and_final_authorized_bar_open() -> None:
+    plan = load_plan(_REPOSITORY)
+    expected = {
+        "exposed-context-only": ("2020-06-26T13:30:00Z", "2020-07-24T19:55:00Z"),
+        "exposed-block-1": ("2020-07-27T13:30:00Z", "2022-07-25T19:55:00Z"),
+        "exposed-block-2": ("2022-07-26T13:30:00Z", "2024-07-26T19:55:00Z"),
+        "exposed-block-3": ("2024-07-29T13:30:00Z", "2026-07-31T19:55:00Z"),
+    }
+    for role, bounds in expected.items():
+        segments = bar_segments(plan, role)
+        assert segments[0].params["start"] == bounds[0]
+        assert segments[-1].params["end"] == bounds[1]
+        end = datetime.fromisoformat(bounds[1].replace("Z", "+00:00"))
+        next_session = expected_bar_timestamps(
+            end + timedelta(minutes=5), end + timedelta(days=10), Timeframe.FIVE_MINUTES
+        )[0]
+        with pytest.raises(Program002AcquisitionError, match="outside"):
+            acquisition._require_bar_in_segment({"t": next_session}, segments[-1])
+    with pytest.raises(Program002AcquisitionError, match="outside"):
+        acquisition._require_bar_in_segment(
+            {"t": "2027-04-16T13:30:00Z"}, bar_segments(plan, "exposed-block-3")[-1]
+        )
 
 
 def test_protected_dates_and_credential_isolation_are_rejected() -> None:
@@ -498,19 +553,26 @@ def test_provider_contract_preflight_and_reviewed_fee_floor_binding() -> None:
     from systematic_trading_lab.program_002_acquisition import provider_contract_preflight
 
     plan = load_plan(_REPOSITORY)
-    with pytest.raises(Program002AcquisitionError, match="provider contract"):
-        provider_contract_preflight(plan)
+    provider_contract_preflight(plan)
+    with pytest.raises(Program002AcquisitionError, match="revised acquisition authority"):
+        acquisition_authority_preflight(plan)
 
 
-def test_fixed_get_client_and_create_only_cost_artifact(tmp_path: Path) -> None:
+def test_fixed_get_client_and_create_only_cost_artifact(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     seen: list[str] = []
 
     def transport(request: Request) -> HttpPage:
         seen.append(request.full_url)
         return _page()
 
-    segment = bar_segments(load_plan(_REPOSITORY), "exposed-block-1")[0]
-    client = HistoricalHttpClient("dedicated-key", "dedicated-secret", (segment,), transport)
+    plan = load_plan(_REPOSITORY)
+    segment = bar_segments(plan, "exposed-block-1")[0]
+    with pytest.raises(Program002AcquisitionError, match="revised acquisition authority"):
+        HistoricalHttpClient("dedicated-key", "dedicated-secret", plan, (segment,), transport)
+    monkeypatch.setattr(acquisition, "acquisition_authority_preflight", lambda *_, **__: None)
+    client = HistoricalHttpClient("dedicated-key", "dedicated-secret", plan, (segment,), transport)
     assert client.get(segment.url()).status == 200
     assert seen == [segment.url()]
     with pytest.raises(Program002AcquisitionError, match="authority-bound"):
