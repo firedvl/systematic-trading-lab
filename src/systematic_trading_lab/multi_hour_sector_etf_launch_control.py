@@ -22,6 +22,7 @@ from .multi_hour_sector_etf_plan import (
     load_program_002_acquisition_plan,
     load_program_002_plan,
 )
+from .program_002_credentials import reject_research_credentials
 
 _IMPLEMENTATION_PATHS = (
     "src/systematic_trading_lab/multi_hour_sector_etf_plan.py",
@@ -31,6 +32,8 @@ _IMPLEMENTATION_PATHS = (
     "src/systematic_trading_lab/multi_hour_sector_etf_runner.py",
     "src/systematic_trading_lab/program_002_acquisition.py",
     "src/systematic_trading_lab/program_002_acquisition_cli.py",
+    "src/systematic_trading_lab/program_002_account_isolation.py",
+    "src/systematic_trading_lab/program_002_credentials.py",
     "src/systematic_trading_lab/multi_hour_sector_etf_launch_control.py",
 )
 _DATASET_ROLES = (
@@ -39,7 +42,6 @@ _DATASET_ROLES = (
     "exposed-block-2",
     "exposed-block-3",
 )
-_FORBIDDEN_ENV_MARKERS = ("APCA", "ALPACA", "BROKER", "IBKR")
 
 
 def program_002_prelaunch_status(
@@ -48,7 +50,7 @@ def program_002_prelaunch_status(
     environ: Mapping[str, str] | None = None,
 ) -> Mapping[str, Any]:
     """Bind the known implementation surface and report every still-missing launch input."""
-    _reject_credentials(os.environ if environ is None else environ)
+    reject_research_credentials(os.environ if environ is None else environ)
     repository = repository.resolve()
     plan = load_program_002_plan(repository)
     acquisition = load_program_002_acquisition_plan(repository)
@@ -92,20 +94,3 @@ def program_002_prelaunch_status(
         "broker_writes_allowed": False,
         "live_execution_allowed": False,
     }
-
-
-def _reject_credentials(environ: Mapping[str, str]) -> None:
-    present = sorted(
-        key
-        for key, value in environ.items()
-        if value
-        and (
-            (normalized := key.upper()).startswith("PROGRAM_002_ACQUISITION_")
-            or any(mark in normalized for mark in _FORBIDDEN_ENV_MARKERS)
-            or normalized.startswith(("PAPER", "LIVE"))
-            or "_PAPER" in normalized
-            or "_LIVE" in normalized
-        )
-    )
-    if present:
-        raise ValueError(f"Program 002 prelaunch forbids credentials: {', '.join(present)}")

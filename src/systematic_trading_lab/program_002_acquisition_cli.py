@@ -17,6 +17,7 @@ from .program_002_acquisition import (
     Program002AcquisitionError,
     acquire_quote_segments,
     acquire_role_segments,
+    acquisition_authority_preflight,
     acquisition_credentials,
     bar_segments,
     derive_quote_costs_from_artifacts,
@@ -57,6 +58,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         plan = load_plan(parsed.repository)  # Strict plan and authority before credentials.
         provider_contract_preflight(plan)
+        acquisition_authority_preflight(plan)
         if parsed.action == "preflight":
             print(
                 json.dumps(
@@ -125,16 +127,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
             )
             return 0
-        key, secret = acquisition_credentials()
         if parsed.action == "acquire-bars":
             if parsed.data_home is None or parsed.role is None:
                 raise Program002AcquisitionError("acquire-bars requires --data-home and --role")
             segments = bar_segments(plan, parsed.role)
+            key, secret = acquisition_credentials()
             completed = acquire_role_segments(
                 plan,
                 parsed.role,
                 StorageLayout(parsed.data_home),
-                HistoricalHttpClient(key, secret, segments).get,
+                HistoricalHttpClient(key, secret, plan, segments).get,
                 acquisition_attempt_id=parsed.acquisition_attempt_id,
             )
             published = publish_role_dataset_from_artifacts(
@@ -156,10 +158,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             if parsed.data_home is None:
                 raise Program002AcquisitionError("acquire-quotes requires --data-home")
             segments = quote_segments(plan)
+            key, secret = acquisition_credentials()
             completed = acquire_quote_segments(
                 plan,
                 StorageLayout(parsed.data_home),
-                HistoricalHttpClient(key, secret, segments).get,
+                HistoricalHttpClient(key, secret, plan, segments).get,
                 acquisition_attempt_id=parsed.acquisition_attempt_id,
             )
             print(json.dumps(canonicalize({"completed_quote_windows": completed}), sort_keys=True))
