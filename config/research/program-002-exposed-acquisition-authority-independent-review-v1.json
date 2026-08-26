@@ -1,0 +1,169 @@
+{
+  "schema_version": "program-002-exposed-acquisition-authority-independent-review-v1",
+  "review_id": "program-002-exposed-acquisition-authority-independent-review-2026-08-25-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "status": "passed-before-market-data-acquisition",
+  "verdict": "pass",
+  "review_date": "2026-08-25",
+  "review_method": "Fresh independent read-only security and correctness review of the exact committed proof-bound authority, its source and artifact bindings, acquisition scope, client-construction ordering, credential isolation, provenance propagation, and failure paths.",
+  "reviewed_authority": {
+    "path": "config/research/program-002-exposed-acquisition-authority-v2.json",
+    "sha256": "5543f427e9b7058bd8ed827af476eb48138eb4199788ca0437c9b4c8b70b5262",
+    "fingerprint": "5e734986a9cdb9058375f95a1457c00ffa1329f1bf7e9245834af43f04c807f4"
+  },
+  "reviewed_source": {
+    "source_commit": "e6d17141d2fc08b2f0ae279a60d35613a450bc3d",
+    "authority_artifact_commit": "58ecdef1ed20de3642816fcf88699b36017e3a2f",
+    "files": [
+      {
+        "path": "src/systematic_trading_lab/__init__.py",
+        "sha256": "500e5a33c6a1067a9ce2e3c5b074256a7d1207d18ab797830d5c704d5def0942"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/catalog.py",
+        "sha256": "da86c2ae2edda09cef4ba048c4b8c5a99829cb30e2e72b39141b71e0af6a3984"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "f1c6b84a1382d9f7125f09a90e0766274a687b0438a1338f0a9e8715288d03c6"
+      },
+      {
+        "path": "src/systematic_trading_lab/datasets.py",
+        "sha256": "e3fac0def47451411a3472f09406f22d6d9d57d05b83809a9d8c0d678576433d"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_plan.py",
+        "sha256": "11400584af22c74dfe40cf35aa37720905a4732385e9bd5894e2052f7465c0de"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_features.py",
+        "sha256": "a6411ce224917f2c41f1466fa0e7d01ff8a1526e064249b1fae9c5ab4116aaa0"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_engine.py",
+        "sha256": "856dae6ecf5a87e14bd0a4df34368cd3ac220c811e34bee44a5a84bc309da149"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_synthetic.py",
+        "sha256": "c9e50cb1aa612eff46e99e31c4da45b2f913a060b20f61e6e561dfbce0e2a3ca"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_runner.py",
+        "sha256": "d176babf4b000d58bc663b491a4b6c489f6b426ee8869d0d125fbc57cfdc4cd8"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_002_acquisition.py",
+        "sha256": "37bf94cd2377f3d29110e99cf4e210bdfbed6a40674d76b2622f3ceea7e4857a"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_002_acquisition_cli.py",
+        "sha256": "6cdbd9989d28a025759e12f3c44014ee16cdad161613e11fb38ddacaff5bf758"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_002_account_isolation.py",
+        "sha256": "6b3aca7a7d35f8220a670758860b268054d2aba592b79236c21c885e3da41ad9"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_002_credentials.py",
+        "sha256": "00f54064e2d2706ce7b418fba724706499a87c0d98cccdb44b8289b2f7e07c29"
+      },
+      {
+        "path": "src/systematic_trading_lab/multi_hour_sector_etf_launch_control.py",
+        "sha256": "de2dd084ca14dc05ddde0db39474289a67130e7ed40ae6be91e5215ce8e2c821"
+      },
+      {
+        "path": "src/systematic_trading_lab/intraday_execution_cost_model.py",
+        "sha256": "7d03b674a5ea5c3978a63c62dd34d73e855b0c35bf5655a8c61e60d59a5f9dd6"
+      },
+      {
+        "path": "src/systematic_trading_lab/parquet.py",
+        "sha256": "34e97c421d1483dd55b4b179285e7a11fcefee86c16f096eaf711318d62e8799"
+      },
+      {
+        "path": "src/systematic_trading_lab/providers.py",
+        "sha256": "5713d26c0ee433249a6ed22d5d4e126cf98cf1bfe8ef3de82bdc40ee390c3ade"
+      },
+      {
+        "path": "src/systematic_trading_lab/storage.py",
+        "sha256": "a9b4fba2d1d8fb813ed447365e1e025b61b3cbe131765ad376b3cb080c3a27d2"
+      },
+      {
+        "path": "src/systematic_trading_lab/universe.py",
+        "sha256": "d00eb013c3ad06256dc13f3aa362ac663aee3f04ecf8a6df36755c83e1a71aff"
+      },
+      {
+        "path": "src/systematic_trading_lab/validation.py",
+        "sha256": "c1b49854c4289065352b88bec19a2417902c84dabf4132cee157dbb078dd23d4"
+      },
+      {
+        "path": "pyproject.toml",
+        "sha256": "0872d76edc4c9c10b93c15ad0dbf6f3d855c9196e1799566f6790fb936b581ce"
+      },
+      {
+        "path": "uv.lock",
+        "sha256": "d6d60aa5d93644dd3bf932ef84f6793bab6d33992659ed48e968850c6673c00d"
+      }
+    ]
+  },
+  "verified_assertions": {
+    "ordered_proof_source_authority_lineage": true,
+    "exact_authority_bytes_and_fingerprint": true,
+    "exact_bound_source_hashes": true,
+    "exact_bound_artifact_hashes_and_fingerprints": true,
+    "proof_environment_and_identity_binding": true,
+    "exact_bar_scope_and_inclusive_bounds": true,
+    "exact_quote_scope": true,
+    "controlled_and_protected_exclusions": true,
+    "credential_loading_after_control_preflight": true,
+    "client_rechecks_credential_continuity": true,
+    "research_subprocess_credential_stripping": true,
+    "authority_provenance_propagation": true,
+    "strategy_execution_disabled": true
+  },
+  "verification": {
+    "commit_lineage": "passed",
+    "authority_sha256_recomputation": "passed",
+    "authority_fingerprint_recomputation": "passed",
+    "bound_source_hashes": "25 of 25 passed",
+    "bound_artifact_hashes": "11 of 11 passed",
+    "scope_and_calendar_recomputation": "passed",
+    "client_and_failure_path_trace": "passed",
+    "focused_tests": "inspected; not executed by the read-only reviewer"
+  },
+  "findings": [],
+  "proof_gap": "The independent reviewer did not inspect credential values, query the provider or account, issue market requests, or execute tests. Provider truth and current credential validity remain runtime facts; a stale secret paired with the proof-bound key ID will fail provider authentication rather than bypass authority.",
+  "protected_access": {
+    "credential_values": false,
+    "provider_or_account_endpoint": false,
+    "market_or_quote_data": false,
+    "strategy_returns_or_candidates": false,
+    "controlled_or_protected_data": false,
+    "paper_broker_or_live_state": false,
+    "strategic_allocation_21": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "next_step": "Commit this finding-free review after the authority artifact, merge through normal PR and CI, then revalidate clean synchronized main before any credential loading or historical client construction.",
+  "review_fingerprint": "249fa690a3e4a0bb313561895f91547b1a61264f8b46dc37bafddb9b7fd86f07"
+}
