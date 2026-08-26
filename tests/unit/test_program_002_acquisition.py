@@ -60,10 +60,10 @@ _REPOSITORY = Path(__file__).resolve().parents[2]
 _ATTEMPT = "synthetic-attempt-1"
 
 
-def _v3_plan() -> Program002AcquisitionPlan:
+def _v4_plan() -> Program002AcquisitionPlan:
     plan = load_plan(_REPOSITORY)
     payload = {
-        "schema_version": "program-002-exposed-acquisition-authority-v3",
+        "schema_version": "program-002-exposed-acquisition-authority-v4",
         "bindings": {
             "acquisition_control_amendment": {
                 "sha256": plan.control_sha256,
@@ -85,7 +85,7 @@ def _v3_plan() -> Program002AcquisitionPlan:
     authority = Program002Authority(
         plan.path.parent / ACQUISITION_AUTHORITY_RELATIVE_PATH.name,
         "5" * 64,
-        "program-002-exposed-acquisition-2026-08-25-v3",
+        "program-002-exposed-acquisition-2026-08-25-v4",
         payload,
     )
     return replace(plan, authority=authority)
@@ -243,6 +243,50 @@ def test_malformed_transport_records_and_duplicate_keys_fail_closed(tmp_path: Pa
             quarantine_layout=StorageLayout(tmp_path),
         )
     assert list((tmp_path / "quarantine").glob("*.json"))
+
+
+def test_extreme_json_numbers_preserve_failure_evidence(tmp_path: Path) -> None:
+    plan = load_plan(_REPOSITORY)
+    segment = bar_segments(plan, "exposed-context-only")[0]
+    decimal_body = (
+        b'{"bars":{"SPY":[{"t":"'
+        + segment.params["start"].encode()
+        + b'","o":1e1000000,"h":1,"l":1,"c":1,"v":1}]},"next_page_token":null}'
+    )
+    decimal_layout = StorageLayout(tmp_path / "decimal")
+    with pytest.raises(Program002AcquisitionError, match="canonical evidence bound"):
+        acquire_role_segments(
+            plan,
+            "exposed-context-only",
+            decimal_layout,
+            lambda _: HttpPage(200, decimal_body, {}),
+            acquisition_attempt_id=_ATTEMPT,
+            pace=lambda: None,
+        )
+    assert list((tmp_path / "decimal" / "quarantine").glob("*.json"))
+    terminal = json.loads(
+        (
+            tmp_path / "decimal" / "reports" / "program-002" / "acquisition-terminal-attempts.jsonl"
+        ).read_text()
+    )
+    assert terminal["disposition"] == "failed"
+    assert "canonical evidence bound" in terminal["error"]
+
+    integer_body = (
+        b'{"bars":{"SPY":[{"t":"'
+        + segment.params["start"].encode()
+        + b'","o":1,"h":1,"l":1,"c":1,"v":'
+        + (b"9" * 5000)
+        + b'}]},"next_page_token":null}'
+    )
+    integer_layout = StorageLayout(tmp_path / "integer")
+    with pytest.raises(Program002AcquisitionError, match="canonical evidence bound"):
+        acquire_segment(
+            segment,
+            lambda _: HttpPage(200, integer_body, {}),
+            quarantine_layout=integer_layout,
+        )
+    assert list((tmp_path / "integer" / "quarantine").glob("*.json"))
 
 
 def test_transport_extras_are_raw_only_and_outside_bounds_are_quarantined(
@@ -694,10 +738,10 @@ def test_provider_contract_preflight_and_reviewed_fee_floor_binding() -> None:
         acquisition_authority_preflight(plan)
 
 
-def test_v3_authority_requires_review_and_account_continuity(
+def test_v4_authority_requires_review_and_account_continuity(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    plan = _v3_plan()
+    plan = _v4_plan()
     with pytest.raises(Program002AcquisitionError, match="review|No such file"):
         acquisition_authority_preflight(plan)
 
@@ -782,7 +826,7 @@ def test_repository_source_preflight_enforces_reviewed_git_lineage(tmp_path: Pat
     authority = Program002Authority(
         authority_path,
         hashlib.sha256(authority_bytes).hexdigest(),
-        "program-002-exposed-acquisition-2026-08-25-v3",
+        "program-002-exposed-acquisition-2026-08-25-v4",
         authority_payload,
     )
     plan = replace(

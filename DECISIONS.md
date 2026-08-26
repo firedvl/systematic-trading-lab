@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-25 — Reject Program 002 authority v3 and bound provider JSON numbers
+
+- Decision: preserve authority v3 as immutable rejected-before-review history. Reject any provider integer or finite decimal that cannot be converted to canonical evidence within a character budget no larger than its response body. Require authority v4 to bind the numeric repair, rejected v3, its review-failure artifact, the original runtime failure, and unchanged acquisition scope before a new attempt.
+- Context: independent review reproduced `decimal.Overflow` from `1e1000000` and `ValueError` from a 5,000-digit integer. Dataset publication stayed closed, but neither quarantine nor terminal-journal evidence survived. Authority v3 received no passing review artifact and authorized no request.
+- Consequences: numeric rejection lives once at the shared provider JSON boundary. Synthetic regressions require quarantine for both number classes and a terminal failure journal for the role-level decimal path. Review-failure SHA-256/fingerprint is `1aa0efdcd2bd95a8adde83e75a3116cb0473e5c99cb0d8a4b25a8e3f717c9da8` / `3e31ffdcd8ec590297c79861d29e23e824f18efd21063b3c60f502ba0f1f1d0d`. Authority v2 remains failed-at-runtime; authority v3 remains failed-pre-review. No credential value, provider/account endpoint, market or quote data, strategy result, controlled/protected data, PAPER/broker/live state, or `strategic-allocation-21` state was accessed.
+- Revisit when: never for v3. Any further acquisition-boundary finding requires another source identity and authority version before network access.
+
 ## 2026-08-25 — Preserve the failed first Program 002 request and separate raw from normalized bars
 
 - Decision: preserve acquisition attempt `program-002-exposed-acquisition-20260825-v1` and authority v2/review v1 as immutable failed history. A bar returned inside the exact outer request timestamps is valid raw transport evidence even when it is not an exact XNYS five-minute open; only exact XNYS opens enter normalization. Reject bars outside the outer timestamps. Decode provider decimals as `Decimal`, reject non-finite JSON numbers, and store retry delays as `Decimal` so every failure path remains canonical. Require a separately committed and independently reviewed authority v3 before any retry, and use a new attempt ID.

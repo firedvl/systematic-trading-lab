@@ -1,0 +1,59 @@
+{
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "live_execution": false,
+    "market_data_acquisition": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "research_qualification": false,
+    "strategy_execution": false,
+    "strategy_implementation": false
+  },
+  "failure_fingerprint": "3e31ffdcd8ec590297c79861d29e23e824f18efd21063b3c60f502ba0f1f1d0d",
+  "failure_id": "program-002-exposed-acquisition-authority-v3-review-failure-2026-08-25-v1",
+  "finding": {
+    "control_gap": "The provider decoder rejected non-finite constants but did not reject integers or finite Decimals that the canonical evidence serializer cannot encode safely.",
+    "impact": "Dataset publication still failed closed, but quarantine and terminal-journal evidence could be lost, repeating the original incident class.",
+    "required_remediation": "Reject any provider JSON number that cannot be represented canonically before record admission, and add quarantine plus terminal-journal regression coverage.",
+    "severity": "P2-medium",
+    "sink": "quarantine and terminal-attempt evidence serialization",
+    "source": "provider-controlled historical market-data response body",
+    "title": "Extreme valid JSON numbers can bypass evidence-preserving failure handling",
+    "validation": [
+      "An out-of-bounds synthetic bar with 1e1000000 prices raised decimal.Overflow and wrote no quarantine artifact.",
+      "A synthetic bar with a 5000-digit integer volume raised ValueError and wrote no quarantine artifact."
+    ]
+  },
+  "next_step": "Commit the numeric evidence-boundary repair under a new source identity, create a new authority that supersedes rejected v3, and obtain another fresh finding-free review before any market request.",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "protected_access": {
+    "controlled_or_protected_data": false,
+    "credential_values": false,
+    "market_or_quote_data": false,
+    "paper_broker_or_live_state": false,
+    "provider_or_account_endpoint": false,
+    "strategic_allocation_21": false,
+    "strategy_returns_or_candidates": false
+  },
+  "review_date": "2026-08-25",
+  "reviewed_authority": {
+    "artifact_commit": "d5f04e48db9ed6a6f380c65bb70bbf7244cc8c9a",
+    "fingerprint": "4f4c5275f9dfc2d019fc57829c87caa643800d8581bbb065c49a15f39369db34",
+    "path": "config/research/program-002-exposed-acquisition-authority-v3.json",
+    "sha256": "d09b12048c9da25cb360781d5b17aa8c614b4670c6e921f6933b89e67bb4ac72"
+  },
+  "reviewed_source": {
+    "source_commit": "c708f1640be4a6494d9fecdf5f3e9ce0ced42e33"
+  },
+  "schema_version": "program-002-exposed-acquisition-authority-review-failure-v1",
+  "status": "rejected-before-market-data-acquisition",
+  "verified_identity": {
+    "account_and_scope_binding": true,
+    "artifact_bindings": "14-of-14",
+    "authority_sha256_and_fingerprint": true,
+    "execution_and_protected_flags_closed": true,
+    "ordered_source_authority_lineage": true,
+    "source_hashes": "25-of-25"
+  }
+}

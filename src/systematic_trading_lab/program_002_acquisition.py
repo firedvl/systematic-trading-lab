@@ -228,7 +228,7 @@ def acquisition_authority_preflight(
     credential_key_hash: str | None = None,
     account_environment: str | None = None,
 ) -> None:
-    """Require reviewed v3 authority, clean source lineage, and proof identity continuity."""
+    """Require reviewed v4 authority, clean source lineage, and proof identity continuity."""
     bindings = _mapping(plan.authority.payload.get("bindings"), "acquisition authority bindings")
     control = bindings.get("acquisition_control_amendment")
     evidence = bindings.get("provider_contract_evidence")
@@ -236,7 +236,7 @@ def acquisition_authority_preflight(
     identity = plan.authority.payload.get("account_isolation")
     if (
         plan.authority.payload.get("schema_version")
-        != "program-002-exposed-acquisition-authority-v3"
+        != "program-002-exposed-acquisition-authority-v4"
         or not isinstance(control, Mapping)
         or control.get("sha256") != plan.control_sha256
         or control.get("fingerprint") != plan.control_fingerprint
@@ -2729,6 +2729,8 @@ def _manifest_bytes_valid(root: Path, manifest: Mapping[str, Any]) -> bool:
 
 
 def _json(raw: bytes) -> Mapping[str, Any]:
+    canonical_number_chars = 0
+
     def pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
         output = {}
         for key, value in items:
@@ -2737,6 +2739,51 @@ def _json(raw: bytes) -> Mapping[str, Any]:
             output[key] = value
         return output
 
+    def decimal_value(token: str) -> Decimal:
+        nonlocal canonical_number_chars
+        value = Decimal(token)
+        try:
+            normalized = value.normalize()
+        except ArithmeticError as error:
+            raise Program002AcquisitionError(
+                "provider JSON number exceeds canonical evidence bound"
+            ) from error
+        if normalized != value:
+            raise Program002AcquisitionError(
+                "provider JSON number exceeds canonical evidence bound"
+            )
+        sign, digits, exponent = normalized.as_tuple()
+        if not isinstance(exponent, int):
+            raise Program002AcquisitionError("provider JSON contains non-finite number")
+        if value == 0:
+            length = 1
+        elif exponent >= 0:
+            length = sign + len(digits) + exponent
+        elif len(digits) + exponent > 0:
+            length = sign + len(digits) + 1
+        else:
+            length = sign + 2 - exponent
+        canonical_number_chars += length
+        if canonical_number_chars > len(raw):
+            raise Program002AcquisitionError(
+                "provider JSON number exceeds canonical evidence bound"
+            )
+        return value
+
+    def integer_value(token: str) -> int:
+        nonlocal canonical_number_chars
+        canonical_number_chars += len(token)
+        if canonical_number_chars > len(raw):
+            raise Program002AcquisitionError(
+                "provider JSON number exceeds canonical evidence bound"
+            )
+        try:
+            return int(token)
+        except ValueError as error:
+            raise Program002AcquisitionError(
+                "provider JSON number exceeds canonical evidence bound"
+            ) from error
+
     def reject_constant(_: str) -> object:
         raise Program002AcquisitionError("provider JSON contains non-finite number")
 
@@ -2744,10 +2791,11 @@ def _json(raw: bytes) -> Mapping[str, Any]:
         value = json.loads(
             raw,
             object_pairs_hook=pairs,
-            parse_float=Decimal,
+            parse_float=decimal_value,
+            parse_int=integer_value,
             parse_constant=reject_constant,
         )
-    except json.JSONDecodeError as error:
+    except (ArithmeticError, json.JSONDecodeError, RecursionError, TypeError, ValueError) as error:
         raise Program002AcquisitionError("malformed provider payload") from error
     return _mapping(value, "provider response")
 
