@@ -131,6 +131,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         if parsed.action == "acquire-bars":
             if parsed.data_home is None or parsed.role is None:
                 raise Program002AcquisitionError("acquire-bars requires --data-home and --role")
+            if parsed.role == "exposed-context-only":
+                raise Program002AcquisitionError(
+                    "the reviewed Program 002 context dataset must be reused, not reacquired"
+                )
             segments = bar_segments(plan, parsed.role)
             environment = acquisition_account_environment()
             key, secret = acquisition_credentials()

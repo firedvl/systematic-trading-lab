@@ -42,6 +42,9 @@ from .intraday_execution_cost_model import load_intraday_execution_cost_model
 from .multi_hour_sector_etf_plan import (
     ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH,
     ACQUISITION_SOURCE_PATHS,
+    PROGRAM_002_REUSED_CONTEXT_DATASET_BINDING,
+    REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_FINGERPRINT,
+    REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_SHA256,
     Program002AcquisitionPlan,
     load_program_002_acquisition_authority_review,
     load_program_002_acquisition_plan,
@@ -54,6 +57,30 @@ from .validation import validate_records
 _NY = ZoneInfo("America/New_York")
 _BARS = "https://data.alpaca.markets/v2/stocks/bars"
 _QUOTES = "https://data.alpaca.markets/v2/stocks/quotes"
+_BAR_SEGMENT_SCHEMA = "program-002-acquisition-segment-v2"
+_LEGACY_BAR_SEGMENT_SCHEMA = "program-002-acquisition-segment-v1"
+_PROGRAM_002_NORMALIZATION_VERSION = "program-002-provider-omission-normalization-v2"
+_EXPOSED_BAR_ROLES = ("exposed-block-1", "exposed-block-2", "exposed-block-3")
+_ALLOWED_PROVIDER_OMISSIONS = (
+    (
+        "exposed-block-1",
+        "2020-12-01T14:30:00Z",
+        "2020-12-31T20:55:00Z",
+        "MDY",
+        "2020-12-04T18:10:00Z",
+        "2020-12-04T18:05:00Z",
+        "2020-12-04T18:15:00Z",
+    ),
+    (
+        "exposed-block-1",
+        "2020-12-01T14:30:00Z",
+        "2020-12-31T20:55:00Z",
+        "MDY",
+        "2020-12-04T18:25:00Z",
+        "2020-12-04T18:20:00Z",
+        "2020-12-04T18:30:00Z",
+    ),
+)
 
 
 class Program002AcquisitionError(RuntimeError):
@@ -88,11 +115,26 @@ class HistoricalHttpClient:
         )
         if not api_key or not secret:
             raise ValueError("Program 002 acquisition credentials are required")
+        supplied = tuple(segments)
+        if not supplied or len({segment.kind for segment in supplied}) != 1:
+            raise Program002AcquisitionError("historical client segment scope differs")
+        authorized = (
+            tuple(segment for role in _EXPOSED_BAR_ROLES for segment in bar_segments(plan, role))
+            if supplied[0].kind == "bars"
+            else quote_segments(plan)
+            if supplied[0].kind == "quotes"
+            else ()
+        )
+        supplied_identities = {
+            _request_identity(segment.url(), allow_page_token=False) for segment in supplied
+        }
+        if len(supplied_identities) != len(supplied) or any(
+            segment not in authorized for segment in supplied
+        ):
+            raise Program002AcquisitionError("historical client segment exceeds v6 authority")
         self._headers = {"APCA-API-KEY-ID": api_key, "APCA-API-SECRET-KEY": secret}
         self._transport = transport or _urlopen_page
-        self._segments = {
-            _request_identity(segment.url(), allow_page_token=False) for segment in segments
-        }
+        self._segments = supplied_identities
 
     def get(self, url: str) -> HttpPage:
         parsed = urlparse(url)
@@ -186,6 +228,7 @@ class AcquiredSegment:
     pages: tuple[RawPage, ...]
     raw_records: tuple[Mapping[str, Any], ...]
     normalized_records: tuple[dict[str, Any], ...]
+    completion_ledger: tuple[Mapping[str, Any], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -228,15 +271,17 @@ def acquisition_authority_preflight(
     credential_key_hash: str | None = None,
     account_environment: str | None = None,
 ) -> None:
-    """Require reviewed v5 authority, clean source lineage, and proof identity continuity."""
+    """Require reviewed v6 authority, clean source lineage, and proof identity continuity."""
     bindings = _mapping(plan.authority.payload.get("bindings"), "acquisition authority bindings")
     control = bindings.get("acquisition_control_amendment")
     evidence = bindings.get("provider_contract_evidence")
     proof = bindings.get("account_isolation_proof")
+    amendment = bindings.get("acquisition_no_trade_completeness_amendment")
+    context = bindings.get("reused_context_dataset")
     identity = plan.authority.payload.get("account_isolation")
     if (
         plan.authority.payload.get("schema_version")
-        != "program-002-exposed-acquisition-authority-v5"
+        != "program-002-exposed-acquisition-authority-v6"
         or not isinstance(control, Mapping)
         or control.get("sha256") != plan.control_sha256
         or control.get("fingerprint") != plan.control_fingerprint
@@ -246,6 +291,11 @@ def acquisition_authority_preflight(
         or not isinstance(proof, Mapping)
         or not isinstance(proof.get("sha256"), str)
         or not isinstance(proof.get("fingerprint"), str)
+        or not isinstance(amendment, Mapping)
+        or amendment.get("sha256") != REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_SHA256
+        or amendment.get("fingerprint")
+        != REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_FINGERPRINT
+        or context != PROGRAM_002_REUSED_CONTEXT_DATASET_BINDING
         or not isinstance(identity, Mapping)
         or identity.get("proof_accepted") is not True
         or not isinstance(identity.get("credential_key_id_hash"), str)
@@ -271,6 +321,13 @@ def acquisition_authority_preflight(
 
 def bar_segments(plan: Program002AcquisitionPlan, role: str) -> tuple[RequestSegment, ...]:
     return tuple(_bar_segment(plan, start, end) for start, end in _months(_role(plan, role)))
+
+
+def _reject_context_reacquisition(role: str) -> None:
+    if role == "exposed-context-only":
+        raise Program002AcquisitionError(
+            "the reviewed Program 002 context dataset must be reused, not reacquired"
+        )
 
 
 def quote_segments(plan: Program002AcquisitionPlan) -> tuple[RequestSegment, ...]:
@@ -446,6 +503,159 @@ def acquire_segment(
     raise fail(ceiling_error, last_page)
 
 
+def _complete_bar_segment(
+    expected_symbols: Sequence[str],
+    role: str,
+    segment: RequestSegment,
+    acquired: AcquiredSegment,
+) -> AcquiredSegment:
+    expected = expected_bar_timestamps(
+        _time(segment.params["start"]),
+        _time(segment.params["end"]),
+        Timeframe.FIVE_MINUTES,
+    )
+    checked = validate_records(
+        acquired.normalized_records,
+        Timeframe.FIVE_MINUTES,
+        expected_symbols=expected_symbols,
+        expected_bar_timestamps=expected,
+    )
+    result = checked.result
+    if (
+        result.errors
+        or result.duplicate_intervals
+        or result.conflicts
+        or result.quarantined_records
+    ):
+        raise Program002AcquisitionError("monthly bar segment validation failed")
+
+    allowed = {
+        f"{item['symbol']}@{_time(str(item['timestamp'])).isoformat()}": (
+            str(item["symbol"]),
+            _time(str(item["timestamp"])),
+            _time(str(item["immediate_predecessor"])),
+            _time(str(item["immediate_successor"])),
+        )
+        for item in _eligible_bar_completions(role, segment)
+    }
+    missing = set(result.missing_intervals)
+    if not missing <= set(allowed):
+        raise Program002AcquisitionError("monthly bar segment validation failed")
+
+    observed = {(bar.symbol.value, bar.timestamp): bar for bar in checked.bars}
+    completed = [canonicalize(bar.to_record()) for bar in checked.bars]
+    ledger: list[Mapping[str, Any]] = []
+    for label in sorted(missing):
+        symbol, timestamp, predecessor_timestamp, successor_timestamp = allowed[label]
+        predecessor = observed.get((symbol, predecessor_timestamp))
+        successor = observed.get((symbol, successor_timestamp))
+        if (
+            predecessor is None
+            or successor is None
+            or predecessor.timestamp + timedelta(minutes=5) != timestamp
+            or timestamp + timedelta(minutes=5) != successor.timestamp
+            or len(
+                {
+                    item.astimezone(_NY).date()
+                    for item in (predecessor.timestamp, timestamp, successor.timestamp)
+                }
+            )
+            != 1
+        ):
+            raise Program002AcquisitionError("monthly bar segment validation failed")
+        record = canonicalize(
+            {
+                "symbol": symbol,
+                "timestamp": timestamp,
+                "open": predecessor.close,
+                "high": predecessor.close,
+                "low": predecessor.close,
+                "close": predecessor.close,
+                "volume": 0,
+            }
+        )
+        assert isinstance(record, dict)
+        completed.append(record)
+        ledger.append(
+            {
+                "symbol": symbol,
+                "timestamp": _iso(timestamp),
+                "source_predecessor_timestamp": _iso(predecessor_timestamp),
+                "bounding_successor_timestamp": _iso(successor_timestamp),
+                "reason": "provider-omitted-complete-ohlcv-bar",
+                "canonical_record": record,
+            }
+        )
+    completed.sort(key=lambda item: (str(item["symbol"]), str(item["timestamp"])))
+    return AcquiredSegment(
+        acquired.segment,
+        acquired.pages,
+        acquired.raw_records,
+        tuple(completed),
+        tuple(ledger),
+    )
+
+
+def _eligible_bar_completions(
+    role: str | None, segment: RequestSegment
+) -> tuple[Mapping[str, str], ...]:
+    return tuple(
+        {
+            "role": allowed_role,
+            "segment_start": start,
+            "segment_end": end,
+            "symbol": symbol,
+            "timestamp": timestamp,
+            "immediate_predecessor": predecessor,
+            "immediate_successor": successor,
+        }
+        for allowed_role, start, end, symbol, timestamp, predecessor, successor in (
+            _ALLOWED_PROVIDER_OMISSIONS
+        )
+        if role == allowed_role
+        and segment.params["start"] == start
+        and segment.params["end"] == end
+    )
+
+
+def _segment_processing(
+    schema: str,
+    segment: RequestSegment,
+    acquired: AcquiredSegment,
+    *,
+    role: str | None,
+) -> Mapping[str, Any]:
+    base = {
+        "normalization_version": "ohlcv-normalization-v1",
+        "schema_version": "ohlcv-v1",
+        "timestamp_policy": "bar-open-utc-v1" if segment.kind == "bars" else "quote-utc-v1",
+    }
+    if schema == _BAR_SEGMENT_SCHEMA:
+        if segment.kind != "bars":
+            raise Program002AcquisitionError("bar segment schema differs")
+        ledger = tuple(acquired.completion_ledger)
+        processing = canonicalize(
+            {
+                **base,
+                "program_002_normalization_version": _PROGRAM_002_NORMALIZATION_VERSION,
+                "eligible_completion_coordinates": _eligible_bar_completions(role, segment),
+                "provider_omission_coordinates": tuple(
+                    {"symbol": item["symbol"], "timestamp": item["timestamp"]} for item in ledger
+                ),
+                "provider_observed_normalized_record_count": len(acquired.normalized_records)
+                - len(ledger),
+                "synthesized_normalized_record_count": len(ledger),
+                "completion_ledger": ledger,
+                "completion_ledger_fingerprint": fingerprint(ledger),
+            }
+        )
+        assert isinstance(processing, dict)
+        return processing
+    if acquired.completion_ledger:
+        raise Program002AcquisitionError("legacy segment contains completion evidence")
+    return base
+
+
 def _segment_record(
     schema: str,
     identity: str,
@@ -472,11 +682,7 @@ def _segment_record(
         "raw_record_fingerprint": fingerprint(acquired.raw_records),
         "request_evidence": [page.request_evidence for page in acquired.pages],
         "http_attempts": [list(page.attempts) for page in acquired.pages],
-        "processing": {
-            "normalization_version": "ohlcv-normalization-v1",
-            "schema_version": "ohlcv-v1",
-            "timestamp_policy": "bar-open-utc-v1" if segment.kind == "bars" else "quote-utc-v1",
-        },
+        "processing": _segment_processing(schema, segment, acquired, role=role),
     }
     if role is not None:
         record["role"] = role
@@ -562,7 +768,7 @@ def _load_segment_artifact(
         tuple(_normalized_bar(row, segment) for row in rows) if segment.kind == "bars" else ()
     )
     normalized = tuple(row for row in parsed_bars if row is not None)
-    return AcquiredSegment(
+    acquired = AcquiredSegment(
         segment,
         tuple(
             RawPage(segment.url(), path.read_bytes(), digest, request, tuple(page_attempts))
@@ -573,6 +779,15 @@ def _load_segment_artifact(
         rows,
         normalized,
     )
+    if schema == _BAR_SEGMENT_SCHEMA:
+        if role is None:
+            raise Program002AcquisitionError("stored bar segment role is missing")
+        acquired = _complete_bar_segment(
+            tuple(segment.params["symbols"].split(",")), role, segment, acquired
+        )
+    if artifact.get("processing") != _segment_processing(schema, segment, acquired, role=role):
+        raise Program002AcquisitionError("stored segment processing differs")
+    return acquired
 
 
 def acquire_role_segments(
@@ -585,6 +800,7 @@ def acquire_role_segments(
     pace: Callable[[], None] | None = None,
 ) -> tuple[str, ...]:
     """Acquire one frozen monthly segment at a time, resuming verified artifacts."""
+    _reject_context_reacquisition(role)
     _attempt_id(acquisition_attempt_id)
     _validate_segment_journal(layout)
     _validate_terminal_attempt_journal(layout)
@@ -598,7 +814,7 @@ def acquire_role_segments(
                 layout,
                 identity,
                 segment,
-                "program-002-acquisition-segment-v1",
+                _BAR_SEGMENT_SCHEMA,
                 role=role,
                 plan_sha256=plan.sha256,
                 authority_sha256=plan.authority.sha256,
@@ -616,7 +832,7 @@ def acquire_role_segments(
             _append_segment_journal(
                 layout,
                 _segment_record(
-                    "program-002-acquisition-segment-v1",
+                    _BAR_SEGMENT_SCHEMA,
                     identity,
                     segment,
                     stored,
@@ -637,6 +853,7 @@ def acquire_role_segments(
             _append_terminal_attempt_journal(layout, acquisition_attempt_id, segment, error)
             raise
         try:
+            acquired = _complete_bar_segment(_symbols(plan), role, segment, acquired)
             _validate_bar_segment_complete(plan, segment, acquired)
         except Program002AcquisitionError as error:
             quarantine_identity = _quarantine_acquired_segment(
@@ -647,7 +864,7 @@ def acquire_role_segments(
             )
             raise
         record = _segment_record(
-            "program-002-acquisition-segment-v1",
+            _BAR_SEGMENT_SCHEMA,
             identity,
             segment,
             acquired,
@@ -672,14 +889,14 @@ def acquire_role_segments(
                 layout,
                 identity,
                 segment,
-                "program-002-acquisition-segment-v1",
+                _BAR_SEGMENT_SCHEMA,
                 role=role,
                 plan_sha256=plan.sha256,
                 authority_sha256=plan.authority.sha256,
             )
             if (
                 _segment_record(
-                    "program-002-acquisition-segment-v1",
+                    _BAR_SEGMENT_SCHEMA,
                     identity,
                     segment,
                     stored,
@@ -825,6 +1042,7 @@ def publish_role_dataset_from_artifacts(
     acquisition_attempt_id: str,
 ) -> PublishedDataset:
     """Assemble a role from verified create-only segment artifacts, not live pages."""
+    _reject_context_reacquisition(role)
     _attempt_id(acquisition_attempt_id)
     expected_ids = tuple(
         _segment_identity(plan, role, item, acquisition_attempt_id)
@@ -839,7 +1057,7 @@ def publish_role_dataset_from_artifacts(
             layout,
             identity,
             segment,
-            "program-002-acquisition-segment-v1",
+            _BAR_SEGMENT_SCHEMA,
             role=role,
             plan_sha256=plan.sha256,
             authority_sha256=plan.authority.sha256,
@@ -847,7 +1065,7 @@ def publish_role_dataset_from_artifacts(
         normalized.extend(acquired.normalized_records)
         segment_evidence.append(
             _segment_record(
-                "program-002-acquisition-segment-v1",
+                _BAR_SEGMENT_SCHEMA,
                 identity,
                 segment,
                 acquired,
@@ -873,6 +1091,48 @@ def _publish_normalized_role(
 ) -> PublishedDataset:
     del retrieval_timestamp
     target = _role(plan, role)
+    provider_observed_count = 0
+    eligible_completion_coordinates: list[Mapping[str, Any]] = []
+    provider_omission_coordinates: list[Mapping[str, Any]] = []
+    completion_ledger: list[Mapping[str, Any]] = []
+    for segment in segments:
+        processing = _mapping(segment.get("processing"), "bar segment processing")
+        observed_count = processing.get("provider_observed_normalized_record_count")
+        synthesized_count = processing.get("synthesized_normalized_record_count")
+        eligible = processing.get("eligible_completion_coordinates")
+        omissions = processing.get("provider_omission_coordinates")
+        ledger = processing.get("completion_ledger")
+        if (
+            processing.get("program_002_normalization_version")
+            != _PROGRAM_002_NORMALIZATION_VERSION
+            or isinstance(observed_count, bool)
+            or not isinstance(observed_count, int)
+            or isinstance(synthesized_count, bool)
+            or not isinstance(synthesized_count, int)
+            or observed_count < 0
+            or synthesized_count < 0
+            or not isinstance(eligible, list)
+            or not isinstance(omissions, list)
+            or not isinstance(ledger, list)
+            or synthesized_count != len(ledger)
+            or omissions
+            != [
+                {"symbol": item.get("symbol"), "timestamp": item.get("timestamp")}
+                for item in ledger
+                if isinstance(item, Mapping)
+            ]
+            or processing.get("completion_ledger_fingerprint") != fingerprint(tuple(ledger))
+            or any(not isinstance(item, Mapping) for item in eligible)
+            or any(not isinstance(item, Mapping) for item in omissions)
+            or any(not isinstance(item, Mapping) for item in ledger)
+        ):
+            raise Program002AcquisitionError("bar segment completion evidence differs")
+        provider_observed_count += observed_count
+        eligible_completion_coordinates.extend(eligible)
+        provider_omission_coordinates.extend(omissions)
+        completion_ledger.extend(ledger)
+    if provider_observed_count + len(completion_ledger) != len(records):
+        raise Program002AcquisitionError("bar segment completion counts differ")
     expected = expected_bar_timestamps(
         _time(target["inclusive_utc_bar_open_start"]),
         _time(target["inclusive_utc_bar_open_end"]),
@@ -894,6 +1154,31 @@ def _publish_normalized_role(
         raise Program002AcquisitionError("Program 002 bar validation failed")
     bars = tuple(sorted(valid.bars, key=lambda item: (item.symbol.value, item.timestamp)))
     _preflight(bars)
+    canonical_bar_fingerprint = fingerprint(tuple(item.to_record() for item in bars))
+    completion_processing = canonicalize(
+        {
+            "normalization_version": "ohlcv-normalization-v1",
+            "schema_version": "ohlcv-v1",
+            "program_002_normalization_version": _PROGRAM_002_NORMALIZATION_VERSION,
+            "eligible_completion_coordinates": eligible_completion_coordinates,
+            "provider_omission_coordinates": provider_omission_coordinates,
+            "provider_observed_normalized_record_count": provider_observed_count,
+            "synthesized_normalized_record_count": len(completion_ledger),
+            "completion_ledger": completion_ledger,
+            "completion_ledger_fingerprint": fingerprint(tuple(completion_ledger)),
+        }
+    )
+    normalized_fingerprint = fingerprint(
+        {
+            "canonical_bar_fingerprint": canonical_bar_fingerprint,
+            "processing": completion_processing,
+        }
+    )
+    dataset_processing = {
+        **completion_processing,
+        "canonical_bar_fingerprint": canonical_bar_fingerprint,
+        "normalized_fingerprint": normalized_fingerprint,
+    }
     provider_raw_records = tuple(
         _json(line.encode())
         for item in segments
@@ -907,16 +1192,12 @@ def _publish_normalized_role(
             "raw_page_sha256_values": [
                 digest for item in segments for digest in item["raw_page_sha256_values"]
             ],
-            "processing": {
-                "normalization_version": "ohlcv-normalization-v1",
-                "schema_version": "ohlcv-v1",
-            },
+            "processing": dataset_processing,
         }
     }
     raw_records = (raw_evidence, *provider_raw_records)
     raw_text = "".join(canonical_json(item) + "\n" for item in raw_records)
     raw_fingerprint = fingerprint(raw_records)
-    normalized_fingerprint = fingerprint(tuple(item.to_record() for item in bars))
     requested = TimestampRange(
         _time(target["inclusive_utc_bar_open_start"]), _time(target["inclusive_utc_bar_open_end"])
     )
@@ -941,13 +1222,13 @@ def _publish_normalized_role(
             "universe_id": universe["universe_id"],
             "universe_fingerprint": universe["universe_fingerprint"],
             "feed": "sip",
-            "data_fingerprint": normalized_fingerprint,
+            "data_fingerprint": canonical_bar_fingerprint,
             "raw_fingerprint": raw_fingerprint,
         }
     )
     manifest = canonicalize(
         DatasetManifest(
-            identity=DatasetIdentity(dataset_id, normalized_fingerprint),
+            identity=DatasetIdentity(dataset_id, canonical_bar_fingerprint),
             provider="alpaca-historical-v2",
             symbols=tuple(Symbol(item) for item in _symbols(plan)),
             timeframe=Timeframe.FIVE_MINUTES,
@@ -972,6 +1253,7 @@ def _publish_normalized_role(
         {
             "dataset_id": dataset_id,
             "normalized_fingerprint": normalized_fingerprint,
+            "canonical_bar_fingerprint": canonical_bar_fingerprint,
             "manifest_schema": "program-002-ohlcv-dataset-manifest-v1",
             "program_002": {
                 "role": role,
@@ -982,8 +1264,7 @@ def _publish_normalized_role(
                 ),
                 "request_segments": segments,
                 "processing": {
-                    "normalization_version": "ohlcv-normalization-v1",
-                    "schema_version": "ohlcv-v1",
+                    **dataset_processing,
                     "calendar_package": calendar_package_and_version["package"],
                     "calendar_version": calendar_package_and_version["version"],
                 },
@@ -1000,6 +1281,10 @@ def _publish_normalized_role(
             "validation_evidence": {
                 "expected_rows": target["expected_rows"],
                 "bar_count": len(bars),
+                "provider_observed_bar_count": provider_observed_count,
+                "synthesized_bar_count": len(completion_ledger),
+                "completion_ledger": completion_ledger,
+                "completion_ledger_fingerprint": fingerprint(tuple(completion_ledger)),
                 "thirty_minute_preflight": True,
             },
         }
@@ -1088,11 +1373,16 @@ def derive_volume_context_projection(
     *,
     source_dataset_id: str,
     source_dataset_fingerprint: str,
+    source_dataset_normalized_fingerprint: str,
     plan_sha256: str | None = None,
     authority_sha256: str | None = None,
 ) -> Mapping[str, Any]:
     """Publishable volume-only context with no OHLC values or returns."""
-    if not source_dataset_id or not source_dataset_fingerprint:
+    if (
+        not source_dataset_id
+        or not source_dataset_fingerprint
+        or not source_dataset_normalized_fingerprint
+    ):
         raise Program002AcquisitionError("volume context source identity is required")
     volumes: dict[tuple[str, str], int] = {}
     counts: dict[tuple[str, str], int] = {}
@@ -1110,6 +1400,7 @@ def derive_volume_context_projection(
             "cumulative_volume_0930_1130": volume,
             "source_dataset_id": source_dataset_id,
             "source_dataset_fingerprint": source_dataset_fingerprint,
+            "source_dataset_normalized_fingerprint": source_dataset_normalized_fingerprint,
         }
         for (session, symbol), volume in sorted(volumes.items())
     )
@@ -1120,10 +1411,11 @@ def derive_volume_context_projection(
             "volume context projection requires 24 bars per symbol/session"
         )
     artifact = {
-        "schema_version": "program-002-volume-context-projection-v1",
+        "schema_version": "program-002-volume-context-projection-v2",
         "rows": rows,
         "source_dataset_id": source_dataset_id,
         "source_dataset_fingerprint": source_dataset_fingerprint,
+        "source_dataset_normalized_fingerprint": source_dataset_normalized_fingerprint,
         "plan_sha256": plan_sha256,
         "acquisition_authority_sha256": authority_sha256,
         "allowed_use": "same-clock volume context only; no target, benchmark, P&L, or gate",
@@ -1135,26 +1427,23 @@ def publish_volume_context_projection(
     plan: Program002AcquisitionPlan, layout: StorageLayout, source_dataset_id: str
 ) -> tuple[Path, Mapping[str, Any], bool]:
     """Freeze the exact authorized context dataset as a volume-only projection."""
-    manifest = DatasetCatalog(layout.catalog).get(source_dataset_id)
-    if (
-        manifest is None
-        or manifest.get("program_002", {}).get("role") != "exposed-context-only"
-        or manifest.get("program_002", {}).get("plan_sha256") != plan.sha256
-        or manifest.get("program_002", {}).get("acquisition_authority_sha256")
-        != plan.authority.sha256
-        or manifest.get("identity", {}).get("dataset_id") != source_dataset_id
-    ):
-        raise Program002AcquisitionError("volume context source dataset differs")
-    bars = DatasetService(layout).load_bars(source_dataset_id)
+    manifest, bars = _load_reused_context_dataset(plan, layout, source_dataset_id)
+    source_fingerprint = str(manifest["identity"]["fingerprint"])
+    source_normalized_fingerprint = str(manifest["normalized_fingerprint"])
     artifact = derive_volume_context_projection(
         bars,
         source_dataset_id=source_dataset_id,
-        source_dataset_fingerprint=str(manifest["identity"]["fingerprint"]),
+        source_dataset_fingerprint=source_fingerprint,
+        source_dataset_normalized_fingerprint=source_normalized_fingerprint,
         plan_sha256=plan.sha256,
         authority_sha256=plan.authority.sha256,
     )
     _validate_context_projection_rows(
-        artifact, plan, source_dataset_id, str(manifest["identity"]["fingerprint"])
+        artifact,
+        plan,
+        source_dataset_id,
+        source_fingerprint,
+        source_normalized_fingerprint,
     )
     identity = str(artifact["projection_fingerprint"])
     path = layout.reports / "program-002" / "context-projections" / f"{identity}.json"
@@ -1187,6 +1476,72 @@ def publish_volume_context_projection(
             ) from None
         created = False
     return path, artifact, created
+
+
+def _load_reused_context_dataset(
+    plan: Program002AcquisitionPlan,
+    layout: StorageLayout,
+    source_dataset_id: str,
+) -> tuple[dict[str, Any], tuple[OHLCVBar, ...]]:
+    bindings = _mapping(plan.authority.payload.get("bindings"), "acquisition authority bindings")
+    binding = _mapping(bindings.get("reused_context_dataset"), "reused context dataset binding")
+    if set(binding) != {
+        "dataset_id",
+        "manifest_sha256",
+        "fingerprint",
+        "normalized_fingerprint",
+        "normalization_version",
+        "plan_sha256",
+        "role",
+        "original_acquisition_authority_sha256",
+        "allowed_use",
+        "expected_rows",
+        "disposition",
+    } or binding.get("disposition") != (
+        "reuse-exact-bytes-without-relabeling-mutation-or-reacquisition"
+    ):
+        raise Program002AcquisitionError("reused context dataset authority binding differs")
+    if source_dataset_id != binding.get("dataset_id"):
+        raise Program002AcquisitionError("reused context dataset differs")
+    path = layout.dataset(source_dataset_id) / "manifest.json"
+    try:
+        raw = path.read_bytes()
+        service = DatasetService(layout, read_only=True)
+        manifest = service.catalog.get(source_dataset_id)
+        bars = service.load_bars(source_dataset_id)
+    except (KeyError, OSError, TypeError, ValueError) as error:
+        raise Program002AcquisitionError("reused context dataset validation failed") from error
+    identity = _mapping(manifest.get("identity") if manifest else None, "context identity")
+    program = _mapping(manifest.get("program_002") if manifest else None, "context provenance")
+    processing = _mapping(program.get("processing"), "context processing")
+    validation = _mapping(
+        manifest.get("validation_evidence") if manifest else None, "context validation evidence"
+    )
+    if (
+        hashlib.sha256(raw).hexdigest() != binding.get("manifest_sha256")
+        or manifest is None
+        or manifest.get("dataset_id") != source_dataset_id
+        or manifest.get("manifest_schema") != "program-002-ohlcv-dataset-manifest-v1"
+        or manifest.get("normalization_version") != binding.get("normalization_version")
+        or manifest.get("normalized_fingerprint") != binding.get("normalized_fingerprint")
+        or identity
+        != {
+            "dataset_id": source_dataset_id,
+            "fingerprint": binding.get("fingerprint"),
+        }
+        or program.get("role") != binding.get("role")
+        or program.get("plan_sha256") != binding.get("plan_sha256")
+        or program.get("acquisition_authority_sha256")
+        != binding.get("original_acquisition_authority_sha256")
+        or program.get("allowed_use") != binding.get("allowed_use")
+        or processing.get("normalization_version") != binding.get("normalization_version")
+        or "program_002_normalization_version" in processing
+        or validation.get("expected_rows") != binding.get("expected_rows")
+        or validation.get("bar_count") != binding.get("expected_rows")
+        or len(bars) != binding.get("expected_rows")
+    ):
+        raise Program002AcquisitionError("reused context dataset differs")
+    return manifest, bars
 
 
 def load_volume_context_projection(
@@ -1223,24 +1578,26 @@ def load_volume_context_projection(
         "projection_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
     }:
         raise Program002AcquisitionError("volume context projection byte evidence differs")
-    manifest = DatasetCatalog(layout.catalog).get(source_dataset_id)
+    manifest, bars = _load_reused_context_dataset(plan, layout, source_dataset_id)
+    source_fingerprint = str(manifest["identity"]["fingerprint"])
+    source_normalized_fingerprint = str(manifest["normalized_fingerprint"])
     if (
-        manifest is None
-        or manifest.get("program_002", {}).get("role") != "exposed-context-only"
-        or manifest.get("program_002", {}).get("plan_sha256") != plan.sha256
-        or manifest.get("program_002", {}).get("acquisition_authority_sha256")
-        != plan.authority.sha256
-        or artifact.get("source_dataset_fingerprint")
-        != manifest.get("identity", {}).get("fingerprint")
+        artifact.get("source_dataset_fingerprint") != source_fingerprint
+        or artifact.get("source_dataset_normalized_fingerprint") != source_normalized_fingerprint
     ):
         raise Program002AcquisitionError("volume context source dataset differs")
     _validate_context_projection_rows(
-        artifact, plan, source_dataset_id, str(manifest["identity"]["fingerprint"])
+        artifact,
+        plan,
+        source_dataset_id,
+        source_fingerprint,
+        source_normalized_fingerprint,
     )
     expected = derive_volume_context_projection(
-        DatasetService(layout).load_bars(source_dataset_id),
+        bars,
         source_dataset_id=source_dataset_id,
-        source_dataset_fingerprint=str(manifest["identity"]["fingerprint"]),
+        source_dataset_fingerprint=source_fingerprint,
+        source_dataset_normalized_fingerprint=source_normalized_fingerprint,
         plan_sha256=plan.sha256,
         authority_sha256=plan.authority.sha256,
     )
@@ -1254,6 +1611,7 @@ def _validate_context_projection_rows(
     plan: Program002AcquisitionPlan,
     source_dataset_id: str,
     source_dataset_fingerprint: str,
+    source_dataset_normalized_fingerprint: str,
 ) -> None:
     rows = artifact.get("rows")
     context = _role(plan, "exposed-context-only")
@@ -1267,6 +1625,7 @@ def _validate_context_projection_rows(
         "cumulative_volume_0930_1130",
         "source_dataset_id",
         "source_dataset_fingerprint",
+        "source_dataset_normalized_fingerprint",
     }
     keys: set[tuple[str, str]] = set()
     for row in rows:
@@ -1276,6 +1635,8 @@ def _validate_context_projection_rows(
             or row.get("symbol") not in _symbols(plan)
             or row.get("source_dataset_id") != source_dataset_id
             or row.get("source_dataset_fingerprint") != source_dataset_fingerprint
+            or row.get("source_dataset_normalized_fingerprint")
+            != source_dataset_normalized_fingerprint
             or isinstance(row.get("cumulative_volume_0930_1130"), bool)
             or not isinstance(row.get("cumulative_volume_0930_1130"), int)
             or row["cumulative_volume_0930_1130"] < 0
@@ -2395,11 +2756,14 @@ def _segment_correction_parent(
         except Program002AcquisitionError:
             continue
         artifact_authority = artifact.get("acquisition_authority_sha256")
-        schema = (
-            "program-002-acquisition-segment-v1"
-            if role is not None
-            else "program-002-quote-window-v1"
-        )
+        if role is None:
+            schema = "program-002-quote-window-v1"
+        elif artifact_authority == plan.authority.sha256:
+            schema = _BAR_SEGMENT_SCHEMA
+        elif artifact_authority == prior_authority:
+            schema = _LEGACY_BAR_SEGMENT_SCHEMA
+        else:
+            continue
         if (
             artifact.get("request") != segment.url()
             or artifact.get("role") != role
