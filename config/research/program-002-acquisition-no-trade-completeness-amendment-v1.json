@@ -1,0 +1,185 @@
+{
+  "schema_version": "program-002-acquisition-no-trade-completeness-amendment-v1",
+  "amendment_id": "program-002-acquisition-no-trade-completeness-amendment-2026-08-26-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "created_date": "2026-08-26",
+  "status": "PROSPECTIVE-NO-TRADE-COMPLETENESS-AMENDMENT-NOT-AUTHORIZED-FOR-ACQUISITION",
+  "source_authorization": {
+    "original_user_packet": {
+      "kind": "user-supplied-authorization-packet",
+      "sha256": "fd1a468fb152c6c18c0babda29c8393507a68558161b325d7f17348422093480"
+    },
+    "supplemental_user_authorization": {
+      "received_date": "2026-08-26",
+      "exact_text": "authorized",
+      "scope": "Prospective planning and review of revised Program 002 completeness semantics. This artifact grants no credential, network, acquisition, strategy, qualification, controlled, protected, PAPER, broker-write, or live authority."
+    }
+  },
+  "base_acquisition_plan": {
+    "path": "config/research/cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1.json",
+    "sha256": "26c768f422e63e9f00e6adc88be2d57f5c6447972a9de1fa4873ab2826556aae",
+    "disposition": "immutable-base-plan-amended-only-by-the-exact-provider-omission-rule-in-this-artifact"
+  },
+  "base_program_plan_review": {
+    "path": "config/research/cross-sectional-sector-etf-program-002-plan-independent-review-v1.json",
+    "sha256": "b5023c90a7d748a7c8ac42609bad6d1c394150bc914c51b8b65c73e3d80c17e6",
+    "fingerprint": "55e30955789981a4eca129856322207ceb05fa9aebccb1101d892dd92f7a5d33"
+  },
+  "reviewed_incident": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-v1.json",
+    "sha256": "6109b230ce66c2d1bb01d2b50e86e344eaa9c6eeff7a9287477ea066fbfe9076",
+    "fingerprint": "311a355aa22e917f6a343036ad2950d42a2b98479b874604dd3b712282cacd78"
+  },
+  "incident_review": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-independent-review-v1.json",
+    "sha256": "f63d6d584b489a166443758d342b9f23a4a5cbe21645b3bb94847f049d9ea34a",
+    "fingerprint": "3d993728e8ecd57086c800c113b78ddf2ab72d19970402a06c177c337f2cb30c"
+  },
+  "revoked_acquisition_authority": {
+    "path": "config/research/program-002-exposed-acquisition-authority-v5.json",
+    "sha256": "949260f3b45f902c67247de25987fdca94a75292137603c4b4996774a4fc7065",
+    "fingerprint": "88ca7a20e80827061f93886b8aee28fa55005a1e87101358bb228b11e2cd9630",
+    "disposition": "immutable-and-revoked-before-credential-loading-by-bound-source-drift"
+  },
+  "provider_contract": {
+    "official_reference": "https://docs.alpaca.markets/us/docs/market-data-faq",
+    "checked_date": "2026-08-26",
+    "documented_stock_bar_rule": "A stock bar is emitted only when every OHLCV field is nonzero after eligible-trade aggregation. No bar is generated when an interval has no trades or only trades that cannot update every required price field.",
+    "documented_higher_timeframe_rule": "Non-minute bars are aggregated from emitted minute bars using first open, maximum high, minimum low, last close, and summed volume.",
+    "incident_consistency": "Two separately paginated, raw-byte-nonidentical attempts omitted the same two five-minute MDY intervals while all pagination, bounds, duplicate, parse, and transport controls passed."
+  },
+  "amended_completeness_contract": {
+    "canonical_grid": "Every published Program 002 dataset still contains exactly one canonical OHLCV row for every authorized symbol and expected XNYS five-minute bar open.",
+    "provider_observed_grid": "A provider response may omit only a coordinate enumerated by this amendment. Provider-observed rows and synthesized continuity rows are counted and identified separately.",
+    "eligible_coordinates": [
+      {
+        "role": "exposed-block-1",
+        "segment_start": "2020-12-01T14:30:00Z",
+        "segment_end": "2020-12-31T20:55:00Z",
+        "symbol": "MDY",
+        "timestamp": "2020-12-04T18:10:00Z",
+        "immediate_predecessor": "2020-12-04T18:05:00Z",
+        "immediate_successor": "2020-12-04T18:15:00Z"
+      },
+      {
+        "role": "exposed-block-1",
+        "segment_start": "2020-12-01T14:30:00Z",
+        "segment_end": "2020-12-31T20:55:00Z",
+        "symbol": "MDY",
+        "timestamp": "2020-12-04T18:25:00Z",
+        "immediate_predecessor": "2020-12-04T18:20:00Z",
+        "immediate_successor": "2020-12-04T18:30:00Z"
+      }
+    ],
+    "eligibility": [
+      "The complete unique next_page_token chain must terminate with null within the reviewed resource ceiling.",
+      "Every provider-observed record must pass the existing symbol, timestamp, ordering, OHLCV, duplicate, and authorized-boundary controls.",
+      "The actual missing set must be a subset of the two eligible coordinates and no other expected coordinate may be missing.",
+      "Each missing coordinate must have its exact immediate predecessor and successor as provider-observed bars for the same symbol and XNYS session.",
+      "No raw provider record may exist at the missing coordinate.",
+      "A provider-observed valid bar at an eligible coordinate always takes precedence and is never replaced."
+    ],
+    "synthesis": {
+      "normalization_version": "program-002-provider-omission-normalization-v2",
+      "schema_version": "ohlcv-v1",
+      "timestamp": "the eligible missing XNYS five-minute bar open",
+      "open": "immediately preceding provider-observed bar close",
+      "high": "immediately preceding provider-observed bar close",
+      "low": "immediately preceding provider-observed bar close",
+      "close": "immediately preceding provider-observed bar close",
+      "volume": 0,
+      "volume_interpretation": "Zero means no complete provider OHLCV bar volume was observed for the canonical interval. It conservatively adds no unknown volume and is not a claim that no trade, quote, odd lot, or other market activity occurred.",
+      "causality": "No successor price, quote, future trade, candidate result, or strategy output contributes to the synthesized values.",
+      "timing": "Synthesize only after complete raw pagination and validation, then run the unchanged full-grid and six-source-bar thirty-minute structural checks."
+    },
+    "failure_conditions": [
+      "any missing coordinate outside the exact eligible set",
+      "an unbounded, leading, trailing, consecutive, cross-session, or cross-symbol gap",
+      "any duplicate, malformed, out-of-order, unauthorized, out-of-bound, or quarantined provider record",
+      "any pagination, transport, source, authority, proof, credential-identity, or raw-integrity failure"
+    ]
+  },
+  "provenance_contract": {
+    "raw_pages_and_raw_records": "Retain exact provider bytes unchanged. Never insert a synthesized row into provider raw-record evidence.",
+    "segment_evidence": "Record the eligible coordinate set, actual provider-observed omission set, synthesis algorithm version, source predecessor timestamp, and synthesized canonical record in the create-only segment artifact.",
+    "dataset_evidence": "Record provider-observed row count, synthesized row count, each synthesized coordinate and source predecessor, normalization version, raw hashes, normalized fingerprint, and exact request-segment identities in the immutable manifest and raw-evidence header.",
+    "identity": "The normalization version and synthesis evidence must contribute to segment content identity, normalized fingerprint, raw-evidence fingerprint, dataset ID, manifest SHA-256, and downstream dataset binding.",
+    "review": "Independently review raw-to-canonical derivation and every synthesized row before quote acquisition or cost calibration."
+  },
+  "expected_counts": {
+    "exposed_block_1_canonical_rows": 508638,
+    "all_exposed_canonical_rows": 1526538,
+    "context_canonical_rows": 20280,
+    "maximum_synthesized_rows": 2,
+    "known_december_2020_provider_observed_rows_if_both_omissions_recur": 21838,
+    "known_december_2020_canonical_rows_after_synthesis": 21840,
+    "interpretation": "Existing expected_rows fields bind canonical published rows. Provider-observed and synthesized counts are separate mandatory evidence and must never be conflated."
+  },
+  "research_semantics": {
+    "change": "Two exact provider omissions may become causal zero-volume continuity rows instead of terminating the whole Program 002 dataset.",
+    "price_rule": "Prior observed close is the last eligible-trade price known before the missing interval. Carrying it forward adds no price move and does not use future information.",
+    "volume_rule": "Zero adds no fabricated participation and preserves sums of provider-observed volume.",
+    "thirty_minute_effect": "The synthesized rows add no high or low extreme and preserve the last provider-observed close as the 13:00-13:30 New York bucket close when the 13:25 row is absent.",
+    "decision_feature_effect": "Both eligible coordinates occur after the frozen 11:30 New York decision and after the 09:30-11:30 same-clock volume window, so they cannot change that session's selection snapshot.",
+    "later_feature_effect": "When 2020-12-04 enters a later session's twenty-session history, each zero-volume continuity row can conservatively affect the all-day median dollar-volume capacity input. The morning same-clock volume denominator is unaffected because both omissions are after 11:30 New York.",
+    "execution_and_metric_effect": "The continuity rows remain part of the later price path and may affect structural aggregation or mark-to-market evidence. This is an explicit prospective research-semantic change, not an implementation-only repair.",
+    "fill_clock_safety": "Neither eligible coordinate is one of the frozen 11:35, 11:40, 11:45, 13:35, 13:40, 13:45, 15:35, 15:40, or 15:45 New York fill clocks. Every fill remains priced from a provider-observed bar open.",
+    "not_allowed": [
+      "generic missing-bar tolerance",
+      "dropping the symbol or session",
+      "using successor prices or interpolation",
+      "using quote midpoints or a new provider",
+      "changing dates, symbols, feed, adjustment, candidate parameters, gates, cost calibration, or controlled/protected boundaries"
+    ]
+  },
+  "implementation_prerequisites": [
+    "finding-free independent exact-byte review of this amendment",
+    "implementation limited to the reviewed eligibility, synthesis, provenance, and validation rules",
+    "focused regressions for exact eligible gaps, observed-bar precedence, foreign gaps, unbounded gaps, provenance, raw immutability, and unchanged complete segments",
+    "new exact source commit and acquisition authority v6 bound to this amendment and its review",
+    "finding-free independent authority review and clean synchronized-main preflight before credential loading or any provider request"
+  ],
+  "existing_context_dataset_disposition": {
+    "dataset_id": "f82aa71d00bc4b0bf7d4c9730a11d2e78e61c37ace64875cd76174da01045a0f",
+    "manifest_sha256": "8b36f4c17bb62612298e5c8a8d4fc0d62bd073cd398d5ab5bc21031093371c68",
+    "fingerprint": "1cf098112f0042e1942a2ec253341b7bae7cc152c40793ffb11967785bdcd87f",
+    "disposition": "Reuse the exact reviewed gap-free context dataset under its original normalization identity. Do not relabel, mutate, or reacquire it. Apply program-002-provider-omission-normalization-v2 to newly published exposed datasets."
+  },
+  "unchanged": {
+    "symbols_dates_and_chronology": true,
+    "sip_feed_and_five_minute_timeframe": true,
+    "adjustment_all": true,
+    "inclusive_request_bounds": true,
+    "monthly_segments_and_pagination_controls": true,
+    "quote_sessions_clocks_and_windows": true,
+    "cost_calibration_procedure": true,
+    "candidate_configurations_and_gates": true,
+    "controlled_and_protected_exclusions": true,
+    "credential_isolation": true,
+    "raw_immutability": true
+  },
+  "launch_control": {
+    "network_request_allowed": false,
+    "credentials_allowed": false,
+    "market_data_acquisition_allowed": false,
+    "strategy_execution_allowed": false,
+    "research_qualification_allowed": false,
+    "controlled_evaluation_allowed": false,
+    "protected_holdout_allowed": false,
+    "paper_execution_allowed": false,
+    "broker_writes_allowed": false,
+    "live_execution_allowed": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "amendment_fingerprint": "64baf560b6d8299742eba8cfe9dc9a7a9136bf20b638d633d531ed006a4ddf0a"
+}
