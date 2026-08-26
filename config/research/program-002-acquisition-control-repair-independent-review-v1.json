@@ -1,0 +1,124 @@
+{
+  "schema_version": "program-002-acquisition-control-repair-independent-review-v1",
+  "review_id": "program-002-acquisition-control-repair-independent-review-2026-08-25-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "status": "passed-control-repair-before-account-proof-or-acquisition",
+  "verdict": "pass",
+  "review_date": "2026-08-25",
+  "review_method": "Independent read-only correctness and security review of the exact committed repair after resolving request-boundary, credential-ordering, account-proof, and source-binding findings.",
+  "base_main_commit": "833c9cb0a193f3923be11c94e614baa278cfd7ac",
+  "reviewed_source_commit": "aec144260b226d478bdcc49e4dc18dea440d2507",
+  "source_authorization_sha256": "4eaa8879aa89823cd7cc582b7b5fff0e992dc8324b1eeceb11055bdae6b7f718",
+  "reviewed_controls": {
+    "provider_contract_evidence": {
+      "path": "config/research/program-002-provider-contract-evidence-v1.json",
+      "sha256": "86a9740a1ecd74f3152e470b9d2fa1c2f759c3a1e9b19b30b54c2ae7b94d0bf2",
+      "fingerprint": "5d11a9fb2cbf35f48f857de88737c5e67a04348d9d696f98367039e694f925d6"
+    },
+    "acquisition_control_amendment": {
+      "path": "config/research/program-002-acquisition-control-amendment-v2.json",
+      "sha256": "ecabaf6a46ea24cd88dc7e62aa3e27d78180f57aff7af671840a092747e7b5b5",
+      "fingerprint": "6db1a382621c146f7d389c1997c5dc66c73471f530fcf1e89e1ec1f01eb9685a"
+    }
+  },
+  "reviewed_source": [
+    {
+      "path": "src/systematic_trading_lab/multi_hour_sector_etf_launch_control.py",
+      "sha256": "79f82bb39feaf82242378d12e9824e186a263eb4578f114c667d60971e72b1ec"
+    },
+    {
+      "path": "src/systematic_trading_lab/multi_hour_sector_etf_plan.py",
+      "sha256": "644813ebb6dd31c15dbf75fed5e085b6658457fb5870b2a3d2dc74af9fb0b252"
+    },
+    {
+      "path": "src/systematic_trading_lab/multi_hour_sector_etf_runner.py",
+      "sha256": "d176babf4b000d58bc663b491a4b6c489f6b426ee8869d0d125fbc57cfdc4cd8"
+    },
+    {
+      "path": "src/systematic_trading_lab/program_002_account_isolation.py",
+      "sha256": "8708b555c31180df002b2851a0a02b7bfa7b8429648438e7a4c4e16581df0907"
+    },
+    {
+      "path": "src/systematic_trading_lab/program_002_acquisition.py",
+      "sha256": "655456619b5a87a304c7506bd794e124ad0bd238d5b5017aed29d89d85a888b8"
+    },
+    {
+      "path": "src/systematic_trading_lab/program_002_acquisition_cli.py",
+      "sha256": "2515f79194ee6b94bb368ece53952910d78d77bc4b53026e333daa08afe48570"
+    },
+    {
+      "path": "src/systematic_trading_lab/program_002_credentials.py",
+      "sha256": "00f54064e2d2706ce7b418fba724706499a87c0d98cccdb44b8289b2f7e07c29"
+    }
+  ],
+  "reviewed_tests": [
+    {
+      "path": "tests/unit/test_intraday_source_provenance.py",
+      "sha256": "7eca644fece0f9c43e4f9d3d865a89313752bc943d75530fafa4444571f75432"
+    },
+    {
+      "path": "tests/unit/test_multi_hour_sector_etf_plan.py",
+      "sha256": "1300dbe9a370b04fae5d3d20df3f5b1acd674ae28b184064c95436d182f593ce"
+    },
+    {
+      "path": "tests/unit/test_multi_hour_sector_etf_runner.py",
+      "sha256": "850018b31ad605a1e4533ec0eab814e39dde55d47bf0503b2232f9db7ef2a411"
+    },
+    {
+      "path": "tests/unit/test_program_002_account_isolation.py",
+      "sha256": "23c24d4369dbb54a0c40044a2c873a3caa4bc3b9c1a4196c4b3e8b929d4bbe3f"
+    },
+    {
+      "path": "tests/unit/test_program_002_acquisition.py",
+      "sha256": "33e055fa269c1dc52121a871ab2fb976331c079a58b5581f8d2a1fdcff8ebd16"
+    },
+    {
+      "path": "tests/unit/test_program_002_acquisition_cli.py",
+      "sha256": "02ec01c5cb276a08f99d040455e17b2b1d1f836f38d2e49f2b3c7e6f0bb1e4f6"
+    }
+  ],
+  "findings": [],
+  "resolved_before_final_verdict": [
+    "The inclusive provider end is now translated to the exact final permitted XNYS bar-open timestamp rather than final open plus five minutes.",
+    "The credentialed historical client now repeats the proof-bound authority and credential-key hash checks instead of relying only on CLI preflight.",
+    "Account proof identity now derives from the key installed in the fixed-host client, rejects any prior order or account activity using one-record existence queries, and records only empty-first-page evidence.",
+    "Program 002 coordinator, worker, and prelaunch entry points now reject acquisition, Alpaca, broker, PAPER, and live credential markers before state creation.",
+    "Bar and quote bounds are derived and validated before credentials load.",
+    "The two new Program 002 modules are included in its hashed implementation surface without changing the immutable Campaign V2 manifest."
+  ],
+  "verification": {
+    "full_pytest": "1159 passed, 4 skipped",
+    "ruff_format": "244 files already formatted",
+    "ruff_check": "passed",
+    "mypy": "239 source files passed",
+    "secret_scan": "449 files scanned; passed",
+    "shell_syntax": "passed",
+    "build": "source distribution and wheel built",
+    "synthetic_worker_equivalence": "one-worker and four-worker canonical outputs byte-equivalent",
+    "credential_free_v1_preflight": "exit 64; revised acquisition authority with account-isolation proof is absent",
+    "git_diff_check": "passed"
+  },
+  "scope_limit": "No credential value or private account response was read. No Alpaca account, market-data, quote, controlled-data, strategy, PAPER, broker-write, live, or strategic-allocation-21 endpoint or artifact was accessed. Account proof, v2 acquisition authority, data acquisition, quote calibration, cost derivation, and Campaign 1 binding remain later reviewed phases.",
+  "protected_access": {
+    "credentials": false,
+    "account_endpoint": false,
+    "market_or_quote_data": false,
+    "strategy_returns_or_candidates": false,
+    "controlled_block_a_or_b": false,
+    "paper_broker_or_live_state": false,
+    "strategic_allocation_21": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "next_step": "Merge this repair, then inspect only the presence of the three Program 002 acquisition environment variables. Run the GET-only account proof only when all are present; if it passes, create and independently review a proof-bound v2 acquisition authority before any market-data request.",
+  "review_fingerprint": "ca733b0f015715a18e123872cd15a34a1bb743718d487da87a3b3ae4e2447c74"
+}
