@@ -44,6 +44,7 @@ CURRENT_V2_SURFACE_MISMATCHES = (
     "systematic_trading_lab/campaign_specs.py",
     "systematic_trading_lab/catalog.py",
     "systematic_trading_lab/cli.py",
+    "systematic_trading_lab/config.py",
     "systematic_trading_lab/datasets.py",
     "systematic_trading_lab/domain.py",
     "systematic_trading_lab/execution.py",

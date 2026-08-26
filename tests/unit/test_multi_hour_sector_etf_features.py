@@ -17,7 +17,7 @@ from systematic_trading_lab.multi_hour_sector_etf_plan import (
     REVIEWED_ACQUISITION_PLAN_SHA256,
     REVIEWED_PLAN_FINGERPRINT,
     REVIEWED_PLAN_SHA256,
-    load_program_002_acquisition_plan,
+    load_program_002_account_proof_plan,
     load_program_002_plan,
 )
 from systematic_trading_lab.multi_hour_sector_etf_synthetic import (
@@ -30,7 +30,7 @@ _NEW_YORK = ZoneInfo("America/New_York")
 
 def test_strict_plan_loader_binds_exact_reviewed_contracts() -> None:
     plan = load_program_002_plan(_REPOSITORY)
-    acquisition = load_program_002_acquisition_plan(_REPOSITORY)
+    acquisition = load_program_002_account_proof_plan(_REPOSITORY)
 
     assert plan.sha256 == REVIEWED_PLAN_SHA256
     assert plan.plan_fingerprint == REVIEWED_PLAN_FINGERPRINT

@@ -10,7 +10,7 @@ from urllib.request import Request
 
 import pytest
 
-from systematic_trading_lab.multi_hour_sector_etf_plan import load_program_002_acquisition_plan
+from systematic_trading_lab.multi_hour_sector_etf_plan import load_program_002_account_proof_plan
 from systematic_trading_lab.program_002_account_isolation import (
     AccountPage,
     AccountProofClient,
@@ -63,7 +63,7 @@ def _transport(
 def test_paper_proof_is_get_only_redacted_and_bound() -> None:
     transport, seen = _transport()
     artifact = verify_account_isolation(
-        load_program_002_acquisition_plan(_REPOSITORY),
+        load_program_002_account_proof_plan(_REPOSITORY),
         AccountProofClient("paper", _KEY, _AUTH_VALUE, transport),
         created_at=datetime(2026, 8, 25, 13, tzinfo=UTC),
     )
@@ -92,7 +92,7 @@ def test_paper_proof_is_get_only_redacted_and_bound() -> None:
 
 
 def test_old_reused_or_funded_accounts_fail_closed() -> None:
-    plan = load_program_002_acquisition_plan(_REPOSITORY)
+    plan = load_program_002_account_proof_plan(_REPOSITORY)
     transport, _ = _transport(created_at="2026-08-24T23:59:59Z")
     with pytest.raises(Program002AccountIsolationError, match="predates"):
         verify_account_isolation(
@@ -145,7 +145,7 @@ def test_activity_check_stops_after_first_nonempty_page() -> None:
 
     with pytest.raises(Program002AccountIsolationError, match="prior activity"):
         verify_account_isolation(
-            load_program_002_acquisition_plan(_REPOSITORY),
+            load_program_002_account_proof_plan(_REPOSITORY),
             AccountProofClient("paper", _KEY, _AUTH_VALUE, transport),
             created_at=datetime(2026, 8, 25, 13, tzinfo=UTC),
         )

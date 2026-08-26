@@ -123,5 +123,6 @@ def non_broker_subprocess_environment(
     return {
         name: value
         for name, value in values.items()
-        if not name.startswith(("APCA_", "GIT_", "TRADING_LAB_PAPER_")) and name != "GH_HOST"
+        if not name.startswith(("APCA_", "GIT_", "PROGRAM_002_ACQUISITION_", "TRADING_LAB_PAPER_"))
+        and name != "GH_HOST"
     }

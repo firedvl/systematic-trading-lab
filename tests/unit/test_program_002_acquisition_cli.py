@@ -5,6 +5,7 @@ from pathlib import Path
 from pytest import CaptureFixture, MonkeyPatch
 
 from systematic_trading_lab import program_002_acquisition_cli as cli
+from systematic_trading_lab.multi_hour_sector_etf_plan import load_program_002_account_proof_plan
 from systematic_trading_lab.program_002_acquisition import Program002AcquisitionError
 
 
@@ -13,7 +14,7 @@ def test_preflight_loads_plan_before_dedicated_credentials(
 ) -> None:
     order: list[str] = []
     repository = Path(__file__).resolve().parents[2]
-    original = cli.load_plan  # type: ignore[attr-defined]
+    original = load_program_002_account_proof_plan
 
     def load(path: Path) -> object:
         order.append("plan")
@@ -36,6 +37,7 @@ def test_revised_authority_is_checked_before_credentials(
     order: list[str] = []
     repository = Path(__file__).resolve().parents[2]
 
+    monkeypatch.setattr(cli, "load_plan", load_program_002_account_proof_plan)
     monkeypatch.setattr(cli, "provider_contract_preflight", lambda _: order.append("contract"))
 
     def authority(_: object) -> None:
@@ -55,10 +57,14 @@ def test_exact_bar_and_quote_bounds_are_checked_before_credentials(
     monkeypatch: MonkeyPatch, tmp_path: Path
 ) -> None:
     repository = Path(__file__).resolve().parents[2]
+    monkeypatch.setattr(cli, "load_plan", load_program_002_account_proof_plan)
     monkeypatch.setattr(cli, "provider_contract_preflight", lambda _: None)
     monkeypatch.setattr(cli, "acquisition_authority_preflight", lambda _: None)
     monkeypatch.setattr(
         cli, "acquisition_credentials", lambda: (_ for _ in ()).throw(AssertionError())
+    )
+    monkeypatch.setattr(
+        cli, "acquisition_account_environment", lambda: (_ for _ in ()).throw(AssertionError())
     )
 
     def blocked_bounds(*_: object) -> None:

@@ -19,7 +19,7 @@ from .multi_hour_sector_etf_plan import (
     REVIEWED_PLANNING_REVIEW_SHA256,
     REVIEWED_UNIVERSE_FINGERPRINT,
     REVIEWED_UNIVERSE_SHA256,
-    load_program_002_acquisition_plan,
+    load_program_002_account_proof_plan,
     load_program_002_plan,
 )
 from .program_002_credentials import reject_research_credentials
@@ -53,7 +53,7 @@ def program_002_prelaunch_status(
     reject_research_credentials(os.environ if environ is None else environ)
     repository = repository.resolve()
     plan = load_program_002_plan(repository)
-    acquisition = load_program_002_acquisition_plan(repository)
+    acquisition = load_program_002_account_proof_plan(repository)
     authority = plan.authority.payload["authority"]
     if acquisition.authority != plan.authority or authority.get("strategy_execution") is not False:
         raise ValueError("Program 002 authority separation differs")

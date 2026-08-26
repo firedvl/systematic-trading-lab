@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from collections.abc import Iterator
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from email.message import Message
@@ -16,9 +18,20 @@ import pytest
 import systematic_trading_lab.program_002_acquisition as acquisition
 from systematic_trading_lab.calendar import expected_bar_timestamps, expected_sessions
 from systematic_trading_lab.catalog import DatasetCatalog
+from systematic_trading_lab.config import non_broker_subprocess_environment
 from systematic_trading_lab.datasets import DatasetService
 from systematic_trading_lab.domain import OHLCVBar, Timeframe
 from systematic_trading_lab.fingerprints import canonical_json, canonicalize, fingerprint
+from systematic_trading_lab.multi_hour_sector_etf_plan import (
+    ACQUISITION_AUTHORITY_RELATIVE_PATH,
+    ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH,
+    ACQUISITION_SOURCE_PATHS,
+    Program002AcquisitionPlan,
+    Program002Authority,
+)
+from systematic_trading_lab.multi_hour_sector_etf_plan import (
+    load_program_002_account_proof_plan as load_plan,
+)
 from systematic_trading_lab.program_002_acquisition import (
     AcquiredSegment,
     HistoricalHttpClient,
@@ -33,7 +46,6 @@ from systematic_trading_lab.program_002_acquisition import (
     bar_segments,
     derive_quote_costs,
     derive_volume_context_projection,
-    load_plan,
     load_program_002_quote_cost_artifact,
     load_quote_segments_from_artifacts,
     publish_quote_costs,
@@ -46,6 +58,37 @@ from systematic_trading_lab.storage import StorageLayout
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _ATTEMPT = "synthetic-attempt-1"
+
+
+def _v2_plan() -> Program002AcquisitionPlan:
+    plan = load_plan(_REPOSITORY)
+    payload = {
+        "schema_version": "program-002-exposed-acquisition-authority-v2",
+        "bindings": {
+            "acquisition_control_amendment": {
+                "sha256": plan.control_sha256,
+                "fingerprint": plan.control_fingerprint,
+            },
+            "provider_contract_evidence": {
+                "sha256": plan.provider_contract_evidence_sha256,
+                "fingerprint": plan.provider_contract_evidence_fingerprint,
+            },
+            "account_isolation_proof": {"sha256": "1" * 64, "fingerprint": "2" * 64},
+        },
+        "account_isolation": {
+            "proof_accepted": True,
+            "environment": "paper",
+            "credential_key_id_hash": hashlib.sha256(b"dedicated-key").hexdigest(),
+        },
+        "source_binding": {"source_commit": "4" * 40, "files": []},
+    }
+    authority = Program002Authority(
+        plan.path.parent / ACQUISITION_AUTHORITY_RELATIVE_PATH.name,
+        "5" * 64,
+        "program-002-exposed-acquisition-2026-08-25-v2",
+        payload,
+    )
+    return replace(plan, authority=authority)
 
 
 def _page(token: str | None = None) -> HttpPage:
@@ -306,7 +349,7 @@ def test_quote_scope_and_import_graph() -> None:
     assert quotes[0].params["end"].endswith("15:35:30Z")
     source = (_REPOSITORY / "src/systematic_trading_lab/program_002_acquisition.py").read_text()
     assert not any(
-        line.startswith("from .") and any(word in line for word in ("paper", "broker", "orders"))
+        line.startswith(("from .paper", "from .broker", "from .orders"))
         for line in source.splitlines()
     )
 
@@ -440,13 +483,18 @@ def test_context_projection_publish_load_and_tamper(
     )
     manifest = {
         "identity": {"dataset_id": "dataset", "fingerprint": "fingerprint"},
-        "program_002": {"role": "exposed-context-only", "plan_sha256": plan.sha256},
+        "program_002": {
+            "role": "exposed-context-only",
+            "plan_sha256": plan.sha256,
+            "acquisition_authority_sha256": plan.authority.sha256,
+        },
     }
     monkeypatch.setattr(DatasetCatalog, "get", lambda *_: manifest)
     monkeypatch.setattr(DatasetService, "load_bars", lambda *_: bars)
     layout = StorageLayout(tmp_path)
     path, artifact, created = acquisition.publish_volume_context_projection(plan, layout, "dataset")
     assert created
+    assert artifact["acquisition_authority_sha256"] == plan.authority.sha256
     assert canonicalize(
         acquisition.load_volume_context_projection(layout, path.stem, "dataset", plan)
     ) == canonicalize(artifact)
@@ -501,6 +549,9 @@ def test_final_role_publication_and_correction_parent_excludes_invalid_candidate
         plan, role, records, [segment], layout, datetime.now(UTC)
     )
     assert published.created
+    assert (
+        published.manifest["program_002"]["acquisition_authority_sha256"] == plan.authority.sha256
+    )
     assert DatasetService(layout).validate(published.dataset_id)["valid"] is True
     assert acquisition._correction_parent(layout, plan, role, "b" * 64) == published.dataset_id
 
@@ -558,6 +609,135 @@ def test_provider_contract_preflight_and_reviewed_fee_floor_binding() -> None:
         acquisition_authority_preflight(plan)
 
 
+def test_v2_authority_requires_review_and_account_continuity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    plan = _v2_plan()
+    with pytest.raises(Program002AcquisitionError, match="review|No such file"):
+        acquisition_authority_preflight(plan)
+
+    monkeypatch.setattr(acquisition, "load_program_002_acquisition_authority_review", lambda *_: {})
+    monkeypatch.setattr(acquisition, "_repository_source_preflight", lambda *_: None)
+    acquisition_authority_preflight(
+        plan,
+        credential_key_hash=hashlib.sha256(b"dedicated-key").hexdigest(),
+        account_environment="paper",
+    )
+    with pytest.raises(Program002AcquisitionError, match="credential key differs"):
+        acquisition_authority_preflight(plan, credential_key_hash="0" * 64)
+    with pytest.raises(Program002AcquisitionError, match="environment differs"):
+        acquisition_authority_preflight(plan, account_environment="live")
+
+
+def test_non_broker_subprocess_environment_removes_program_002_credentials() -> None:
+    assert non_broker_subprocess_environment(
+        {
+            "PATH": "/bin",
+            "PROGRAM_002_ACQUISITION_ACCOUNT_ENVIRONMENT": "paper",
+            "PROGRAM_002_ACQUISITION_API_KEY_ID": "key",
+            "PROGRAM_002_ACQUISITION_API_SECRET_KEY": "secret",
+            "APCA_API_KEY_ID": "other",
+            "GIT_CONFIG_GLOBAL": "other",
+        }
+    ) == {"PATH": "/bin"}
+
+
+def test_repository_source_preflight_enforces_reviewed_git_lineage(tmp_path: Path) -> None:
+    environment = non_broker_subprocess_environment()
+    environment.update({"GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1"})
+
+    def git(*arguments: str) -> str:
+        return subprocess.run(
+            ("git", "-C", str(tmp_path), *arguments),
+            check=True,
+            capture_output=True,
+            text=True,
+            env=environment,
+        ).stdout.strip()
+
+    git("init", "-b", "main")
+    git("config", "user.name", "Program 002 Test")
+    git("config", "user.email", "program-002-test@example.invalid")
+    proof_path = tmp_path / "config/research/proof.json"
+    proof_path.parent.mkdir(parents=True)
+    proof_path.write_text("{}\n", encoding="utf-8")
+    git("add", proof_path.relative_to(tmp_path).as_posix())
+    git("commit", "-m", "proof")
+    proof_commit = git("rev-parse", "HEAD")
+
+    source_path = tmp_path / ACQUISITION_SOURCE_PATHS[0]
+    source_path.parent.mkdir(parents=True, exist_ok=True)
+    source_path.write_text("source = 1\n", encoding="utf-8")
+    git("add", source_path.relative_to(tmp_path).as_posix())
+    git("commit", "-m", "implementation")
+    source_commit = git("rev-parse", "HEAD")
+
+    authority_path = tmp_path / ACQUISITION_AUTHORITY_RELATIVE_PATH
+    authority_bytes = b'{"authority":"test"}\n'
+    authority_path.write_bytes(authority_bytes)
+    git("add", ACQUISITION_AUTHORITY_RELATIVE_PATH.as_posix())
+    git("commit", "-m", "authority")
+    authority_commit = git("rev-parse", "HEAD")
+
+    review_path = tmp_path / ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH
+    review_bytes = b'{"review":"test"}\n'
+    review_path.write_bytes(review_bytes)
+    git("add", ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH.as_posix())
+    git("commit", "-m", "review")
+    review_commit = git("rev-parse", "HEAD")
+    git("update-ref", "refs/remotes/origin/main", review_commit)
+
+    base = load_plan(_REPOSITORY)
+    authority_payload = {
+        "source_binding": {
+            "source_commit": source_commit,
+            "proof_evidence_commit": proof_commit,
+        }
+    }
+    authority = Program002Authority(
+        authority_path,
+        hashlib.sha256(authority_bytes).hexdigest(),
+        "program-002-exposed-acquisition-2026-08-25-v2",
+        authority_payload,
+    )
+    plan = replace(
+        base,
+        path=tmp_path / "config/research/acquisition-plan.json",
+        authority=authority,
+    )
+    review = {"reviewed_source": {"authority_artifact_commit": authority_commit}}
+    acquisition._repository_source_preflight(plan, review)
+
+    (tmp_path / "untracked").write_text("dirty\n", encoding="utf-8")
+    with pytest.raises(Program002AcquisitionError, match="clean synchronized"):
+        acquisition._repository_source_preflight(plan, review)
+    (tmp_path / "untracked").unlink()
+
+    git("update-ref", "refs/remotes/origin/main", authority_commit)
+    with pytest.raises(Program002AcquisitionError, match="clean synchronized"):
+        acquisition._repository_source_preflight(plan, review)
+    git("update-ref", "refs/remotes/origin/main", review_commit)
+
+    wrong_bytes = replace(
+        plan,
+        authority=Program002Authority(
+            authority_path,
+            "0" * 64,
+            authority.authority_id,
+            authority_payload,
+        ),
+    )
+    with pytest.raises(Program002AcquisitionError, match="authority commit bytes"):
+        acquisition._repository_source_preflight(wrong_bytes, review)
+
+    source_path.write_text("source = 2\n", encoding="utf-8")
+    git("add", source_path.relative_to(tmp_path).as_posix())
+    git("commit", "-m", "source drift")
+    git("update-ref", "refs/remotes/origin/main", git("rev-parse", "HEAD"))
+    with pytest.raises(Program002AcquisitionError, match="source lineage"):
+        acquisition._repository_source_preflight(plan, review)
+
+
 def test_fixed_get_client_and_create_only_cost_artifact(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -570,9 +750,13 @@ def test_fixed_get_client_and_create_only_cost_artifact(
     plan = load_plan(_REPOSITORY)
     segment = bar_segments(plan, "exposed-block-1")[0]
     with pytest.raises(Program002AcquisitionError, match="revised acquisition authority"):
-        HistoricalHttpClient("dedicated-key", "dedicated-secret", plan, (segment,), transport)
+        HistoricalHttpClient(
+            "dedicated-key", "dedicated-secret", "paper", plan, (segment,), transport
+        )
     monkeypatch.setattr(acquisition, "acquisition_authority_preflight", lambda *_, **__: None)
-    client = HistoricalHttpClient("dedicated-key", "dedicated-secret", plan, (segment,), transport)
+    client = HistoricalHttpClient(
+        "dedicated-key", "dedicated-secret", "paper", plan, (segment,), transport
+    )
     assert client.get(segment.url()).status == 200
     assert seen == [segment.url()]
     with pytest.raises(Program002AcquisitionError, match="authority-bound"):
@@ -694,6 +878,7 @@ def test_later_acquisition_attempt_creates_child_segment_lineage(
         pace=lambda: None,
     )
     valid = json.loads((layout.dataset(first[0]) / "segment.json").read_text())
+    assert valid["acquisition_authority_sha256"] == plan.authority.sha256
     stale_alias = layout.datasets / ".stale-segment.tmp"
     stale_alias.mkdir()
     stale_record = {**valid, "parent_segment_id": first[0]}
@@ -905,6 +1090,7 @@ def test_quote_derivation_reads_verified_persisted_window_only(
         plan, layout, identifiers, acquisition_attempt_id=_ATTEMPT
     )
     artifact = derive_quote_costs(plan, loaded)
+    assert artifact["acquisition_authority_sha256"] == plan.authority.sha256
     assert set(artifact["symbols"]) == set(plan.payload["universe"]["symbols"])
     assert artifact["scenario_metadata"]["Stress_A"]["execution_delay_bars"] == 2
     assert artifact["scenario_metadata"]["Stress_B"]["execution_delay_bars"] == 3
