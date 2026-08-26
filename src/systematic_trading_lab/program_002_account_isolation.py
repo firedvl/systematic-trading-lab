@@ -18,7 +18,10 @@ from urllib.parse import parse_qsl, urlencode, urlparse
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
 from .fingerprints import canonical_json, canonicalize, fingerprint
-from .multi_hour_sector_etf_plan import Program002AcquisitionPlan, load_program_002_acquisition_plan
+from .multi_hour_sector_etf_plan import (
+    Program002AcquisitionPlan,
+    load_program_002_account_proof_plan,
+)
 from .program_002_credentials import (
     acquisition_account_environment,
     credential_key_id_hash,
@@ -236,7 +239,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parsed = parser.parse_args(sys.argv[1:] if argv is None else argv)
     try:
-        plan = load_program_002_acquisition_plan(parsed.repository)
+        plan = load_program_002_account_proof_plan(parsed.repository)
         environment = acquisition_account_environment()
         key_id, secret = read_acquisition_credentials()
         artifact = verify_account_isolation(

@@ -6,6 +6,7 @@ import hashlib
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any
@@ -26,6 +27,22 @@ ACQUISITION_CONTROL_AMENDMENT_RELATIVE_PATH = Path(
 PROVIDER_CONTRACT_EVIDENCE_RELATIVE_PATH = Path(
     "config/research/program-002-provider-contract-evidence-v1.json"
 )
+ACCOUNT_ISOLATION_PROOF_RELATIVE_PATH = Path(
+    "config/research/program-002-account-isolation-proof-v1.json"
+)
+ACCOUNT_ISOLATION_PROOF_REVIEW_RELATIVE_PATH = Path(
+    "config/research/program-002-account-isolation-proof-independent-review-v1.json"
+)
+ACQUISITION_AUTHORITY_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-authority-v2.json"
+)
+ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-authority-independent-review-v1.json"
+)
+ACQUISITION_CONTROL_REPAIR_REVIEW_RELATIVE_PATH = Path(
+    "config/research/program-002-acquisition-control-repair-independent-review-v1.json"
+)
+COST_MODEL_RELATIVE_PATH = Path("config/research/intraday-execution-cost-model-001-v1.json")
 UNIVERSE_RELATIVE_PATH = Path("config/research/multi-hour-sector-etfs-v1.json")
 AUTHORITY_RELATIVE_PATH = Path(
     "config/research/program-002-implementation-acquisition-authority-v1.json"
@@ -57,6 +74,27 @@ REVIEWED_PROVIDER_CONTRACT_EVIDENCE_SHA256 = (
 REVIEWED_PROVIDER_CONTRACT_EVIDENCE_FINGERPRINT = (
     "5d11a9fb2cbf35f48f857de88737c5e67a04348d9d696f98367039e694f925d6"
 )
+REVIEWED_ACCOUNT_ISOLATION_PROOF_SHA256 = (
+    "21800879cb4825dd147214e7a5720fb6d6978b00a887efd0a7789baa4a8d94e7"
+)
+REVIEWED_ACCOUNT_ISOLATION_PROOF_FINGERPRINT = (
+    "a8a4063837a93d866aa1d0ca4bd3ecdeb6e196fd810efea9104f125588923ba7"
+)
+REVIEWED_ACCOUNT_ISOLATION_PROOF_REVIEW_SHA256 = (
+    "ac1a83d2f50424cd1a88e93d9e6cbbaabedc2802ece390a0d1f0b96da5d697c2"
+)
+REVIEWED_ACCOUNT_ISOLATION_PROOF_REVIEW_FINGERPRINT = (
+    "2776ada38e5912f7631bf694fa645854c8cbc0a8539a01ef4fe2472a56386478"
+)
+REVIEWED_ACCOUNT_ISOLATION_PROOF_COMMIT = "00298a0c089d5e5912f2d3d622ffa2ea257c2c14"
+REVIEWED_ACQUISITION_CONTROL_REPAIR_REVIEW_SHA256 = (
+    "44ee39877e0135092f278b12aa224fbd578a08a59a05dcdd4fd0c1cbaf8feb48"
+)
+REVIEWED_ACQUISITION_CONTROL_REPAIR_REVIEW_FINGERPRINT = (
+    "ca733b0f015715a18e123872cd15a34a1bb743718d487da87a3b3ae4e2447c74"
+)
+REVIEWED_COST_MODEL_SHA256 = "a9e6c2b86c6623d73e089de591c55eeec0711fa55f0933a4e3ea9a1c0c2392af"
+REVIEWED_COST_MODEL_FINGERPRINT = "94fc3ba4663b422fbb0dc0cce7e3d78a7ba81f22d71d5fa986ab6847b7925bb4"
 REVIEWED_UNIVERSE_SHA256 = "8f07f73fd93f9432501d579e43616e1d9a09d6db77c347a6bed4151f2210c312"
 REVIEWED_UNIVERSE_FINGERPRINT = "ef23e533aa7a91262200bd7a77a65f9b6d8b4d473573850c33ef014701177790"
 REVIEWED_IMPLEMENTATION_PLAN_SHA256 = (
@@ -101,6 +139,34 @@ _SPY = Symbol("SPY")
 _NUMERIC_POLICY = (
     "Use Decimal price and return arithmetic and exact integer volumes. "
     "No floating-point ranking key is permitted."
+)
+
+ACQUISITION_SOURCE_PATHS = (
+    "src/systematic_trading_lab/__init__.py",
+    "src/systematic_trading_lab/calendar.py",
+    "src/systematic_trading_lab/catalog.py",
+    "src/systematic_trading_lab/config.py",
+    "src/systematic_trading_lab/datasets.py",
+    "src/systematic_trading_lab/domain.py",
+    "src/systematic_trading_lab/fingerprints.py",
+    "src/systematic_trading_lab/multi_hour_sector_etf_plan.py",
+    "src/systematic_trading_lab/multi_hour_sector_etf_features.py",
+    "src/systematic_trading_lab/multi_hour_sector_etf_engine.py",
+    "src/systematic_trading_lab/multi_hour_sector_etf_synthetic.py",
+    "src/systematic_trading_lab/multi_hour_sector_etf_runner.py",
+    "src/systematic_trading_lab/program_002_acquisition.py",
+    "src/systematic_trading_lab/program_002_acquisition_cli.py",
+    "src/systematic_trading_lab/program_002_account_isolation.py",
+    "src/systematic_trading_lab/program_002_credentials.py",
+    "src/systematic_trading_lab/multi_hour_sector_etf_launch_control.py",
+    "src/systematic_trading_lab/intraday_execution_cost_model.py",
+    "src/systematic_trading_lab/parquet.py",
+    "src/systematic_trading_lab/providers.py",
+    "src/systematic_trading_lab/storage.py",
+    "src/systematic_trading_lab/universe.py",
+    "src/systematic_trading_lab/validation.py",
+    "pyproject.toml",
+    "uv.lock",
 )
 
 
@@ -186,6 +252,78 @@ def load_program_002_authority(repository: Path) -> Program002Authority:
     )
 
 
+def load_program_002_acquisition_authority(repository: Path) -> Program002Authority:
+    repository = repository.resolve()
+    path = repository / ACQUISITION_AUTHORITY_RELATIVE_PATH
+    raw = path.read_bytes()
+    payload = _load_unique_json(raw, "Program 002 acquisition authority v2")
+    proof_path = repository / ACCOUNT_ISOLATION_PROOF_RELATIVE_PATH
+    proof_review_path = repository / ACCOUNT_ISOLATION_PROOF_REVIEW_RELATIVE_PATH
+    proof_raw = proof_path.read_bytes()
+    proof_review_raw = proof_review_path.read_bytes()
+    _require_sha256(
+        proof_raw,
+        REVIEWED_ACCOUNT_ISOLATION_PROOF_SHA256,
+        "Program 002 account-isolation proof",
+    )
+    _require_sha256(
+        proof_review_raw,
+        REVIEWED_ACCOUNT_ISOLATION_PROOF_REVIEW_SHA256,
+        "Program 002 account-isolation proof review",
+    )
+    proof = _load_unique_json(proof_raw, "Program 002 account-isolation proof")
+    proof_review = _load_unique_json(proof_review_raw, "Program 002 account-isolation proof review")
+    _verify_account_isolation_proof(proof)
+    _verify_account_isolation_proof_review(proof_review)
+    _verify_acquisition_authority_v2(repository, payload, proof)
+    return Program002Authority(
+        path,
+        hashlib.sha256(raw).hexdigest(),
+        "program-002-exposed-acquisition-2026-08-25-v2",
+        payload,
+    )
+
+
+def load_program_002_acquisition_authority_review(
+    repository: Path, authority: Program002Authority
+) -> Mapping[str, Any]:
+    path = repository.resolve() / ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH
+    value = _load_unique_json(path.read_bytes(), "Program 002 acquisition authority review")
+    unsigned = dict(value)
+    review_fingerprint = unsigned.pop("review_fingerprint", None)
+    binding = _mapping(value.get("reviewed_authority"), "reviewed acquisition authority")
+    source = _mapping(value.get("reviewed_source"), "reviewed acquisition source")
+    review_authority = _mapping(value.get("authority"), "acquisition review authority")
+    files = source.get("files")
+    if (
+        value.get("schema_version")
+        != "program-002-exposed-acquisition-authority-independent-review-v1"
+        or value.get("program_id") != PROGRAM_ID
+        or value.get("status") != "passed-before-market-data-acquisition"
+        or value.get("verdict") != "pass"
+        or value.get("findings") != []
+        or review_fingerprint != fingerprint(unsigned)
+        or binding
+        != {
+            "path": ACQUISITION_AUTHORITY_RELATIVE_PATH.as_posix(),
+            "sha256": authority.sha256,
+            "fingerprint": authority.payload.get("authority_fingerprint"),
+        }
+        or source.get("source_commit")
+        != _mapping(authority.payload.get("source_binding"), "authority source binding").get(
+            "source_commit"
+        )
+        or not _is_commit(source.get("authority_artifact_commit"))
+        or set(source) != {"source_commit", "authority_artifact_commit", "files"}
+        or not isinstance(files, list)
+        or files != authority.payload.get("source_binding", {}).get("files")
+        or set(review_authority) != _AUTHORITY_KEYS
+        or any(flag is not False for flag in review_authority.values())
+    ):
+        raise ValueError("Program 002 acquisition authority review differs")
+    return value
+
+
 def load_program_002_plan(repository: Path) -> Program002Plan:
     repository = repository.resolve()
     authority = load_program_002_authority(repository)
@@ -217,9 +355,22 @@ def load_program_002_plan(repository: Path) -> Program002Plan:
     )
 
 
+def load_program_002_account_proof_plan(repository: Path) -> Program002AcquisitionPlan:
+    return _load_program_002_acquisition_contract(
+        repository.resolve(), load_program_002_authority(repository)
+    )
+
+
 def load_program_002_acquisition_plan(repository: Path) -> Program002AcquisitionPlan:
+    return _load_program_002_acquisition_contract(
+        repository.resolve(), load_program_002_acquisition_authority(repository)
+    )
+
+
+def _load_program_002_acquisition_contract(
+    repository: Path, authority: Program002Authority
+) -> Program002AcquisitionPlan:
     repository = repository.resolve()
-    authority = load_program_002_authority(repository)
     path = repository / ACQUISITION_PLAN_RELATIVE_PATH
     control_path = repository / ACQUISITION_CONTROL_AMENDMENT_RELATIVE_PATH
     evidence_path = repository / PROVIDER_CONTRACT_EVIDENCE_RELATIVE_PATH
@@ -325,6 +476,250 @@ def _verify_acquisition_control(control: Mapping[str, Any], evidence: Mapping[st
     ):
         raise ValueError("Program 002 amended launch control differs")
     _require_false_authority(control.get("authority"), "acquisition control amendment")
+
+
+def _verify_account_isolation_proof(proof: Mapping[str, Any]) -> None:
+    unsigned = dict(proof)
+    proof_fingerprint = unsigned.pop("proof_fingerprint", None)
+    try:
+        provider_created_at = datetime.fromisoformat(
+            _text(proof, "provider_account_created_at").replace("Z", "+00:00")
+        ).astimezone(UTC)
+    except ValueError as error:
+        raise ValueError("Program 002 proof account timestamp differs") from error
+    if (
+        proof.get("schema_version") != "program-002-account-isolation-proof-v1"
+        or proof.get("program_id") != PROGRAM_ID
+        or proof_fingerprint != REVIEWED_ACCOUNT_ISOLATION_PROOF_FINGERPRINT
+        or fingerprint(unsigned) != REVIEWED_ACCOUNT_ISOLATION_PROOF_FINGERPRINT
+        or proof.get("control_amendment_sha256") != REVIEWED_ACQUISITION_CONTROL_AMENDMENT_SHA256
+        or proof.get("environment") not in {"paper", "live"}
+        or provider_created_at < datetime(2026, 8, 25, tzinfo=UTC)
+        or proof.get("account_status") != "ACTIVE"
+        or any(
+            proof.get(key) is not True
+            for key in ("positions_empty", "orders_empty", "open_orders_empty")
+        )
+        or proof.get("order_history_disposition") != "empty-first-page"
+        or proof.get("activity_history_disposition") != "empty-first-page"
+        or proof.get("order_page_count") != 1
+        or proof.get("activity_page_count") != 1
+        or proof.get("raw_responses_persisted") is not False
+        or proof.get("market_data_requested") is not False
+        or proof.get("broker_write_requested") is not False
+        or not _is_sha256(proof.get("account_identity_hash"))
+        or not _is_sha256(proof.get("account_number_hash"))
+        or not _is_sha256(proof.get("credential_key_id_hash"))
+    ):
+        raise ValueError("Program 002 account-isolation proof differs")
+    expected_funding = (
+        "paper-credential-has-no-live-host-authority"
+        if proof["environment"] == "paper"
+        else "live-account-balance-and-market-value-fields-are-zero"
+    )
+    if proof.get("funding_isolation_assertion") != expected_funding:
+        raise ValueError("Program 002 account funding-isolation proof differs")
+
+
+def _verify_account_isolation_proof_review(review: Mapping[str, Any]) -> None:
+    unsigned = dict(review)
+    review_fingerprint = unsigned.pop("review_fingerprint", None)
+    if (
+        review.get("schema_version") != "program-002-account-isolation-proof-independent-review-v1"
+        or review.get("program_id") != PROGRAM_ID
+        or review.get("status") != "passed-before-proof-bound-acquisition-authority"
+        or review.get("verdict") != "pass"
+        or review.get("findings") != []
+        or review_fingerprint != REVIEWED_ACCOUNT_ISOLATION_PROOF_REVIEW_FINGERPRINT
+        or fingerprint(unsigned) != REVIEWED_ACCOUNT_ISOLATION_PROOF_REVIEW_FINGERPRINT
+        or review.get("reviewed_proof")
+        != {
+            "path": ACCOUNT_ISOLATION_PROOF_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACCOUNT_ISOLATION_PROOF_SHA256,
+            "fingerprint": REVIEWED_ACCOUNT_ISOLATION_PROOF_FINGERPRINT,
+        }
+        or any(_mapping(review.get("authority"), "proof review authority").values())
+    ):
+        raise ValueError("Program 002 account-isolation proof review differs")
+
+
+def _verify_acquisition_authority_v2(
+    repository: Path, payload: Mapping[str, Any], proof: Mapping[str, Any]
+) -> None:
+    unsigned = dict(payload)
+    authority_fingerprint = unsigned.pop("authority_fingerprint", None)
+    source = _mapping(payload.get("source_binding"), "acquisition authority source binding")
+    files = source.get("files")
+    if (
+        payload.get("schema_version") != "program-002-exposed-acquisition-authority-v2"
+        or payload.get("authority_id") != "program-002-exposed-acquisition-2026-08-25-v2"
+        or payload.get("program_id") != PROGRAM_ID
+        or payload.get("status") != "active-until-complete-or-terminal-blocker"
+        or payload.get("source_authorization")
+        != {
+            "kind": "user-supplied-authorization-packet",
+            "sha256": "fd1a468fb152c6c18c0babda29c8393507a68558161b325d7f17348422093480",
+        }
+        or authority_fingerprint != fingerprint(unsigned)
+        or not _is_commit(source.get("source_commit"))
+        or source.get("proof_evidence_commit") != REVIEWED_ACCOUNT_ISOLATION_PROOF_COMMIT
+        or source.get("relationship")
+        != "ancestor-of-clean-synchronized-main-with-identical-bound-files"
+        or not isinstance(files, list)
+        or [item.get("path") if isinstance(item, Mapping) else None for item in files]
+        != list(ACQUISITION_SOURCE_PATHS)
+        or any(
+            not isinstance(item, Mapping)
+            or set(item) != {"path", "sha256"}
+            or not _is_sha256(item.get("sha256"))
+            or hashlib.sha256((repository / str(item.get("path"))).read_bytes()).hexdigest()
+            != item.get("sha256")
+            for item in files
+        )
+    ):
+        raise ValueError("Program 002 acquisition authority identity or source differs")
+    if payload.get("supersedes") != {
+        "path": AUTHORITY_RELATIVE_PATH.as_posix(),
+        "sha256": REVIEWED_AUTHORITY_SHA256,
+        "disposition": "immutable-failed-inclusive-end-history",
+    }:
+        raise ValueError("Program 002 acquisition authority supersession differs")
+    expected_bindings = _expected_acquisition_authority_bindings()
+    if payload.get("bindings") != expected_bindings:
+        raise ValueError("Program 002 acquisition authority bindings differ")
+    for binding in expected_bindings.values():
+        _require_sha256(
+            (repository / str(binding["path"])).read_bytes(),
+            str(binding["sha256"]),
+            str(binding["path"]),
+        )
+    plan_payload = _load_unique_json(
+        (repository / ACQUISITION_PLAN_RELATIVE_PATH).read_bytes(),
+        "Program 002 acquisition plan",
+    )
+    if payload.get("authorized_scope") != _expected_acquisition_scope(plan_payload):
+        raise ValueError("Program 002 acquisition authority scope differs")
+    account = _mapping(payload.get("account_isolation"), "acquisition account isolation")
+    if account != {
+        "proof_accepted": True,
+        "environment": proof.get("environment"),
+        "account_identity_hash": proof.get("account_identity_hash"),
+        "credential_key_id_hash": proof.get("credential_key_id_hash"),
+    }:
+        raise ValueError("Program 002 acquisition authority account binding differs")
+    expected_authority = {key: False for key in _AUTHORITY_KEYS}
+    expected_authority.update({"market_data_acquisition": True, "strategy_implementation": True})
+    if payload.get("authority") != expected_authority:
+        raise ValueError("Program 002 acquisition authority flags differ")
+    prohibited = _mapping(payload.get("prohibited"), "Program 002 prohibited acquisition scope")
+    if set(prohibited) != {
+        "strategy_execution_on_acquired_data",
+        "strategy_result_generation_or_read",
+        "discovery",
+        "walk_forward",
+        "robustness",
+        "controlled_dataset_acquisition_or_access",
+        "qualification",
+        "protected_holdout",
+        "paper_execution",
+        "broker_writes",
+        "live_execution",
+        "strategic_allocation_21_access",
+    } or any(value is not True for value in prohibited.values()):
+        raise ValueError("Program 002 prohibited acquisition scope differs")
+
+
+def _expected_acquisition_authority_bindings() -> Mapping[str, Any]:
+    return {
+        "program_plan": {
+            "path": PLAN_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_PLAN_SHA256,
+            "fingerprint": REVIEWED_PLAN_FINGERPRINT,
+        },
+        "acquisition_plan": {
+            "path": ACQUISITION_PLAN_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_PLAN_SHA256,
+        },
+        "universe": {
+            "path": UNIVERSE_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_UNIVERSE_SHA256,
+            "fingerprint": REVIEWED_UNIVERSE_FINGERPRINT,
+        },
+        "implementation_plan": {
+            "path": IMPLEMENTATION_PLAN_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_IMPLEMENTATION_PLAN_SHA256,
+        },
+        "planning_review": {
+            "path": PLANNING_REVIEW_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_PLANNING_REVIEW_SHA256,
+            "fingerprint": REVIEWED_PLANNING_REVIEW_FINGERPRINT,
+        },
+        "acquisition_control_amendment": {
+            "path": ACQUISITION_CONTROL_AMENDMENT_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_CONTROL_AMENDMENT_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_CONTROL_AMENDMENT_FINGERPRINT,
+        },
+        "provider_contract_evidence": {
+            "path": PROVIDER_CONTRACT_EVIDENCE_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_PROVIDER_CONTRACT_EVIDENCE_SHA256,
+            "fingerprint": REVIEWED_PROVIDER_CONTRACT_EVIDENCE_FINGERPRINT,
+        },
+        "acquisition_control_repair_review": {
+            "path": ACQUISITION_CONTROL_REPAIR_REVIEW_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_CONTROL_REPAIR_REVIEW_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_CONTROL_REPAIR_REVIEW_FINGERPRINT,
+        },
+        "account_isolation_proof": {
+            "path": ACCOUNT_ISOLATION_PROOF_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACCOUNT_ISOLATION_PROOF_SHA256,
+            "fingerprint": REVIEWED_ACCOUNT_ISOLATION_PROOF_FINGERPRINT,
+        },
+        "account_isolation_proof_review": {
+            "path": ACCOUNT_ISOLATION_PROOF_REVIEW_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACCOUNT_ISOLATION_PROOF_REVIEW_SHA256,
+            "fingerprint": REVIEWED_ACCOUNT_ISOLATION_PROOF_REVIEW_FINGERPRINT,
+        },
+        "regulatory_fee_source": {
+            "path": COST_MODEL_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_COST_MODEL_SHA256,
+            "fingerprint": REVIEWED_COST_MODEL_FINGERPRINT,
+        },
+    }
+
+
+def _expected_acquisition_scope(plan: Mapping[str, Any]) -> Mapping[str, Any]:
+    data = _mapping(plan.get("data_classes"), "acquisition data classes")
+    exposed = _mapping(data.get("A_exposed_research_and_development"), "exposed acquisition data")
+    context = _mapping(data.get("B_context_only"), "context acquisition data")
+    quotes = _mapping(plan.get("quote_cost_calibration"), "quote calibration")
+    bars = _mapping(plan.get("historical_bars"), "historical bars")
+    datasets = [context.get("exposed_dataset"), *list(exposed.get("datasets", []))]
+    return {
+        "symbols": quotes.get("symbols"),
+        "bars": {
+            "endpoint": bars.get("endpoint"),
+            "http_method": "GET",
+            "feed": "sip",
+            "timeframe": "5Min",
+            "adjustment": "all",
+            "adjustment_policy": "provider-adjusted-all-v1",
+            "calendar_policy": "XNYS-regular-session-bars-v1",
+            "timestamp_policy": "bar-open-utc-v1",
+            "start_semantics": "inclusive",
+            "end_semantics": "inclusive",
+            "datasets": datasets,
+        },
+        "quotes": {
+            "endpoint": quotes.get("endpoint"),
+            "http_method": "GET",
+            "feed": "sip",
+            "sessions": quotes.get("sessions"),
+            "fill_clocks_new_york": quotes.get("fill_clocks_new_york"),
+        },
+        "controlled_block_a": False,
+        "controlled_block_b": False,
+        "protected_data": False,
+    }
 
 
 def _verify_authority(repository: Path, payload: Mapping[str, Any]) -> None:
@@ -608,3 +1003,19 @@ def _text(value: Mapping[str, Any], key: str) -> str:
     if not isinstance(item, str) or not item:
         raise ValueError(f"{key} must be text")
     return item
+
+
+def _is_sha256(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
+def _is_commit(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 40
+        and all(character in "0123456789abcdef" for character in value)
+    )

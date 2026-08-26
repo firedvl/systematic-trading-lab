@@ -8,6 +8,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import tempfile
 import time as system_time
 from collections.abc import Callable, Mapping, Sequence
@@ -25,6 +26,7 @@ from zoneinfo import ZoneInfo
 
 from .calendar import expected_bar_timestamps
 from .catalog import DatasetCatalog
+from .config import non_broker_subprocess_environment
 from .datasets import DatasetService
 from .domain import (
     AdjustmentPolicy,
@@ -37,7 +39,13 @@ from .domain import (
 )
 from .fingerprints import canonical_json, canonicalize, fingerprint
 from .intraday_execution_cost_model import load_intraday_execution_cost_model
-from .multi_hour_sector_etf_plan import Program002AcquisitionPlan, load_program_002_acquisition_plan
+from .multi_hour_sector_etf_plan import (
+    ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH,
+    ACQUISITION_SOURCE_PATHS,
+    Program002AcquisitionPlan,
+    load_program_002_acquisition_authority_review,
+    load_program_002_acquisition_plan,
+)
 from .parquet import to_parquet
 from .program_002_credentials import credential_key_id_hash, read_acquisition_credentials
 from .storage import StorageLayout
@@ -68,11 +76,16 @@ class HistoricalHttpClient:
         self,
         api_key: str,
         secret: str,
+        environment: str,
         plan: Program002AcquisitionPlan,
         segments: Sequence[RequestSegment],
         transport: Callable[[Request], HttpPage] | None = None,
     ) -> None:
-        acquisition_authority_preflight(plan, credential_key_hash=credential_key_id_hash(api_key))
+        acquisition_authority_preflight(
+            plan,
+            credential_key_hash=credential_key_id_hash(api_key),
+            account_environment=environment,
+        )
         if not api_key or not secret:
             raise ValueError("Program 002 acquisition credentials are required")
         self._headers = {"APCA-API-KEY-ID": api_key, "APCA-API-SECRET-KEY": secret}
@@ -186,7 +199,7 @@ class PublishedDataset:
 def load_plan(repository: Path) -> Program002AcquisitionPlan:
     try:
         return load_program_002_acquisition_plan(repository)
-    except ValueError as error:
+    except (OSError, ValueError) as error:
         raise Program002AcquisitionError(str(error)) from error
 
 
@@ -210,9 +223,12 @@ def provider_contract_preflight(plan: Program002AcquisitionPlan) -> None:
 
 
 def acquisition_authority_preflight(
-    plan: Program002AcquisitionPlan, *, credential_key_hash: str | None = None
+    plan: Program002AcquisitionPlan,
+    *,
+    credential_key_hash: str | None = None,
+    account_environment: str | None = None,
 ) -> None:
-    """The historical v1 authority cannot authorize the amended request contract."""
+    """Require reviewed v2 authority, clean source lineage, and proof identity continuity."""
     bindings = _mapping(plan.authority.payload.get("bindings"), "acquisition authority bindings")
     control = bindings.get("acquisition_control_amendment")
     evidence = bindings.get("provider_contract_evidence")
@@ -233,11 +249,23 @@ def acquisition_authority_preflight(
         or not isinstance(identity, Mapping)
         or identity.get("proof_accepted") is not True
         or not isinstance(identity.get("credential_key_id_hash"), str)
-        or identity.get("credential_key_id_hash")
-        != (credential_key_hash or identity.get("credential_key_id_hash"))
     ):
         raise Program002AcquisitionError(
             "revised acquisition authority with account-isolation proof is absent"
+        )
+    try:
+        review = load_program_002_acquisition_authority_review(plan.path.parents[2], plan.authority)
+    except (OSError, ValueError) as error:
+        raise Program002AcquisitionError(str(error)) from error
+    _repository_source_preflight(plan, review)
+    if (
+        credential_key_hash is not None
+        and identity.get("credential_key_id_hash") != credential_key_hash
+    ):
+        raise Program002AcquisitionError("acquisition credential key differs from account proof")
+    if account_environment is not None and identity.get("environment") != account_environment:
+        raise Program002AcquisitionError(
+            "acquisition account environment differs from account proof"
         )
 
 
@@ -266,6 +294,7 @@ def quote_segment_ids(
         fingerprint(
             {
                 "plan": plan.sha256,
+                "acquisition_authority": plan.authority.sha256,
                 "acquisition_attempt_id": acquisition_attempt_id,
                 "quote_window": index,
                 "request": segment.url(),
@@ -426,6 +455,7 @@ def _segment_record(
     *,
     role: str | None = None,
     plan_sha256: str,
+    authority_sha256: str,
     acquisition_attempt_id: str,
     parent_segment_id: str | None = None,
 ) -> dict[str, Any]:
@@ -435,6 +465,7 @@ def _segment_record(
         "identity": identity,
         "acquisition_attempt_id": acquisition_attempt_id,
         "plan_sha256": plan_sha256,
+        "acquisition_authority_sha256": authority_sha256,
         "parent_segment_id": parent_segment_id,
         "request": segment.url(),
         "raw_jsonl_sha256": hashlib.sha256(raw_bytes).hexdigest(),
@@ -462,6 +493,7 @@ def _load_segment_artifact(
     *,
     role: str | None = None,
     plan_sha256: str | None = None,
+    authority_sha256: str | None = None,
 ) -> AcquiredSegment:
     """Read a create-only segment only after every stored byte is revalidated."""
     root = layout.dataset(identity)
@@ -475,6 +507,7 @@ def _load_segment_artifact(
         "identity",
         "acquisition_attempt_id",
         "plan_sha256",
+        "acquisition_authority_sha256",
         "parent_segment_id",
         "request",
         "raw_jsonl_sha256",
@@ -493,6 +526,10 @@ def _load_segment_artifact(
         or artifact.get("identity") != identity
         or artifact.get("request") != segment.url()
         or (plan_sha256 is not None and artifact.get("plan_sha256") != plan_sha256)
+        or (
+            authority_sha256 is not None
+            and artifact.get("acquisition_authority_sha256") != authority_sha256
+        )
         or (role is not None and artifact.get("role") != role)
         or artifact.get("raw_jsonl_sha256") != hashlib.sha256(raw_bytes).hexdigest()
         or artifact.get("content_identity")
@@ -562,6 +599,7 @@ def acquire_role_segments(
                 "program-002-acquisition-segment-v1",
                 role=role,
                 plan_sha256=plan.sha256,
+                authority_sha256=plan.authority.sha256,
             )
             try:
                 _validate_bar_segment_complete(plan, segment, stored)
@@ -582,6 +620,7 @@ def acquire_role_segments(
                     stored,
                     role=role,
                     plan_sha256=plan.sha256,
+                    authority_sha256=plan.authority.sha256,
                     acquisition_attempt_id=acquisition_attempt_id,
                     parent_segment_id=stored_record_parent(layout, identity),
                 ),
@@ -612,6 +651,7 @@ def acquire_role_segments(
             acquired,
             role=role,
             plan_sha256=plan.sha256,
+            authority_sha256=plan.authority.sha256,
             acquisition_attempt_id=acquisition_attempt_id,
             parent_segment_id=_segment_correction_parent(layout, plan, segment, role),
         )
@@ -633,6 +673,7 @@ def acquire_role_segments(
                 "program-002-acquisition-segment-v1",
                 role=role,
                 plan_sha256=plan.sha256,
+                authority_sha256=plan.authority.sha256,
             )
             if (
                 _segment_record(
@@ -642,6 +683,7 @@ def acquire_role_segments(
                     stored,
                     role=role,
                     plan_sha256=plan.sha256,
+                    authority_sha256=plan.authority.sha256,
                     acquisition_attempt_id=acquisition_attempt_id,
                     parent_segment_id=stored_record_parent(layout, identity),
                 )
@@ -691,7 +733,12 @@ def acquire_quote_segments(
         path = layout.dataset(identity) / "segment.json"
         if path.exists():
             acquired = _load_segment_artifact(
-                layout, identity, segment, "program-002-quote-window-v1", plan_sha256=plan.sha256
+                layout,
+                identity,
+                segment,
+                "program-002-quote-window-v1",
+                plan_sha256=plan.sha256,
+                authority_sha256=plan.authority.sha256,
             )
             _append_segment_journal(
                 layout,
@@ -701,6 +748,7 @@ def acquire_quote_segments(
                     segment,
                     acquired,
                     plan_sha256=plan.sha256,
+                    authority_sha256=plan.authority.sha256,
                     acquisition_attempt_id=acquisition_attempt_id,
                     parent_segment_id=stored_record_parent(layout, identity),
                 ),
@@ -720,6 +768,7 @@ def acquire_quote_segments(
             segment,
             acquired,
             plan_sha256=plan.sha256,
+            authority_sha256=plan.authority.sha256,
             acquisition_attempt_id=acquisition_attempt_id,
             parent_segment_id=_segment_correction_parent(layout, plan, segment, None),
         )
@@ -738,7 +787,12 @@ def acquire_quote_segments(
         )
         if not published:
             stored = _load_segment_artifact(
-                layout, identity, segment, "program-002-quote-window-v1", plan_sha256=plan.sha256
+                layout,
+                identity,
+                segment,
+                "program-002-quote-window-v1",
+                plan_sha256=plan.sha256,
+                authority_sha256=plan.authority.sha256,
             )
             if (
                 _segment_record(
@@ -747,6 +801,7 @@ def acquire_quote_segments(
                     segment,
                     stored,
                     plan_sha256=plan.sha256,
+                    authority_sha256=plan.authority.sha256,
                     acquisition_attempt_id=acquisition_attempt_id,
                     parent_segment_id=stored_record_parent(layout, identity),
                 )
@@ -785,6 +840,7 @@ def publish_role_dataset_from_artifacts(
             "program-002-acquisition-segment-v1",
             role=role,
             plan_sha256=plan.sha256,
+            authority_sha256=plan.authority.sha256,
         )
         normalized.extend(acquired.normalized_records)
         segment_evidence.append(
@@ -795,6 +851,7 @@ def publish_role_dataset_from_artifacts(
                 acquired,
                 role=role,
                 plan_sha256=plan.sha256,
+                authority_sha256=plan.authority.sha256,
                 acquisition_attempt_id=acquisition_attempt_id,
                 parent_segment_id=stored_record_parent(layout, identity),
             )
@@ -917,6 +974,7 @@ def _publish_normalized_role(
             "program_002": {
                 "role": role,
                 "plan_sha256": plan.sha256,
+                "acquisition_authority_sha256": plan.authority.sha256,
                 "allowed_use": target.get(
                     "allowed_use", "exposed-research-after-separate-authority"
                 ),
@@ -1029,6 +1087,7 @@ def derive_volume_context_projection(
     source_dataset_id: str,
     source_dataset_fingerprint: str,
     plan_sha256: str | None = None,
+    authority_sha256: str | None = None,
 ) -> Mapping[str, Any]:
     """Publishable volume-only context with no OHLC values or returns."""
     if not source_dataset_id or not source_dataset_fingerprint:
@@ -1064,6 +1123,7 @@ def derive_volume_context_projection(
         "source_dataset_id": source_dataset_id,
         "source_dataset_fingerprint": source_dataset_fingerprint,
         "plan_sha256": plan_sha256,
+        "acquisition_authority_sha256": authority_sha256,
         "allowed_use": "same-clock volume context only; no target, benchmark, P&L, or gate",
     }
     return {**artifact, "projection_fingerprint": fingerprint(artifact)}
@@ -1078,6 +1138,8 @@ def publish_volume_context_projection(
         manifest is None
         or manifest.get("program_002", {}).get("role") != "exposed-context-only"
         or manifest.get("program_002", {}).get("plan_sha256") != plan.sha256
+        or manifest.get("program_002", {}).get("acquisition_authority_sha256")
+        != plan.authority.sha256
         or manifest.get("identity", {}).get("dataset_id") != source_dataset_id
     ):
         raise Program002AcquisitionError("volume context source dataset differs")
@@ -1087,6 +1149,7 @@ def publish_volume_context_projection(
         source_dataset_id=source_dataset_id,
         source_dataset_fingerprint=str(manifest["identity"]["fingerprint"]),
         plan_sha256=plan.sha256,
+        authority_sha256=plan.authority.sha256,
     )
     _validate_context_projection_rows(
         artifact, plan, source_dataset_id, str(manifest["identity"]["fingerprint"])
@@ -1148,6 +1211,7 @@ def load_volume_context_projection(
         or fingerprint_value != identity
         or artifact.get("source_dataset_id") != source_dataset_id
         or artifact.get("plan_sha256") != plan.sha256
+        or artifact.get("acquisition_authority_sha256") != plan.authority.sha256
         or artifact.get("allowed_use")
         != "same-clock volume context only; no target, benchmark, P&L, or gate"
     ):
@@ -1162,6 +1226,8 @@ def load_volume_context_projection(
         manifest is None
         or manifest.get("program_002", {}).get("role") != "exposed-context-only"
         or manifest.get("program_002", {}).get("plan_sha256") != plan.sha256
+        or manifest.get("program_002", {}).get("acquisition_authority_sha256")
+        != plan.authority.sha256
         or artifact.get("source_dataset_fingerprint")
         != manifest.get("identity", {}).get("fingerprint")
     ):
@@ -1174,6 +1240,7 @@ def load_volume_context_projection(
         source_dataset_id=source_dataset_id,
         source_dataset_fingerprint=str(manifest["identity"]["fingerprint"]),
         plan_sha256=plan.sha256,
+        authority_sha256=plan.authority.sha256,
     )
     if canonicalize(artifact) != canonicalize(expected):
         raise Program002AcquisitionError("volume context projection values differ")
@@ -1355,6 +1422,7 @@ def derive_quote_costs(
     artifact: dict[str, Any] = {
         "schema_version": "program-002-quote-cost-artifact-v1",
         "plan_sha256": plan.sha256,
+        "acquisition_authority_sha256": plan.authority.sha256,
         "feed": "sip",
         "symbols": percentiles,
         "windows": windows,
@@ -1486,6 +1554,7 @@ def load_quote_segments_from_artifacts(
             segment,
             "program-002-quote-window-v1",
             plan_sha256=plan.sha256,
+            authority_sha256=plan.authority.sha256,
         )
         for identity, segment in zip(segment_ids, segments, strict=True)
     )
@@ -1536,6 +1605,7 @@ def publish_quote_costs(
         not isinstance(identity, str)
         or identity != fingerprint(unsigned)
         or artifact.get("plan_sha256") != plan.sha256
+        or artifact.get("acquisition_authority_sha256") != plan.authority.sha256
         or artifact.get("feed") != "sip"
         or not isinstance(symbols, Mapping)
         or set(symbols) != expected_symbols
@@ -2171,6 +2241,7 @@ def _segment_identity(
     return fingerprint(
         {
             "plan": plan.sha256,
+            "acquisition_authority": plan.authority.sha256,
             "role": role,
             "request": segment.url(),
             "acquisition_attempt_id": _attempt_id(acquisition_attempt_id),
@@ -2182,6 +2253,101 @@ def _attempt_id(value: str) -> str:
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}", value):
         raise Program002AcquisitionError("acquisition attempt ID is invalid")
     return value
+
+
+def _repository_source_preflight(
+    plan: Program002AcquisitionPlan, review: Mapping[str, Any]
+) -> None:
+    repository = plan.path.parents[2].resolve()
+    source = _mapping(plan.authority.payload.get("source_binding"), "authority source binding")
+    reviewed = _mapping(review.get("reviewed_source"), "reviewed acquisition source")
+    source_commit = str(source.get("source_commit"))
+    proof_commit = str(source.get("proof_evidence_commit"))
+    authority_commit = str(reviewed.get("authority_artifact_commit"))
+    review_relative = ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH.as_posix()
+    command = (
+        "git",
+        "--no-replace-objects",
+        "-c",
+        "core.fsmonitor=false",
+        "-C",
+        str(repository),
+    )
+    environment = non_broker_subprocess_environment()
+    environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
+
+    def git(*arguments: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            (*command, *arguments),
+            check=check,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+
+    try:
+        head = git("rev-parse", "HEAD").stdout.strip()
+        main = git("rev-parse", "refs/heads/main").stdout.strip()
+        origin_main = git("rev-parse", "refs/remotes/origin/main").stdout.strip()
+        dirty = git("status", "--porcelain", "--untracked-files=all").stdout
+        ancestry = tuple(
+            git("merge-base", "--is-ancestor", commit, head, check=False).returncode
+            for commit in (source_commit, proof_commit, authority_commit)
+        )
+        ordered_ancestry = tuple(
+            git("merge-base", "--is-ancestor", earlier, later, check=False).returncode
+            for earlier, later in (
+                (proof_commit, source_commit),
+                (source_commit, authority_commit),
+            )
+        )
+        changed = git(
+            "diff", "--name-only", source_commit, head, "--", *ACQUISITION_SOURCE_PATHS
+        ).stdout
+        review_commits = git(
+            "log", "--diff-filter=A", "--format=%H", "--", review_relative
+        ).stdout.splitlines()
+        if len(review_commits) != 1:
+            raise Program002AcquisitionError("acquisition authority review history differs")
+        review_commit = review_commits[0]
+        review_ancestry = tuple(
+            git("merge-base", "--is-ancestor", earlier, later, check=False).returncode
+            for earlier, later in (
+                (authority_commit, review_commit),
+                (review_commit, head),
+            )
+        )
+        authority_bytes = subprocess.run(
+            (*command, "show", f"{authority_commit}:{plan.authority.path.relative_to(repository)}"),
+            check=True,
+            capture_output=True,
+            env=environment,
+        ).stdout
+        review_bytes = subprocess.run(
+            (*command, "show", f"{review_commit}:{review_relative}"),
+            check=True,
+            capture_output=True,
+            env=environment,
+        ).stdout
+        current_review_bytes = (repository / review_relative).read_bytes()
+    except (OSError, subprocess.CalledProcessError, ValueError) as error:
+        raise Program002AcquisitionError("acquisition source identity is unavailable") from error
+    if dirty or head != main or head != origin_main:
+        raise Program002AcquisitionError(
+            "acquisition requires clean synchronized HEAD, main, and origin/main"
+        )
+    if (
+        len({proof_commit, source_commit, authority_commit, review_commit}) != 4
+        or any((*ancestry, *ordered_ancestry, *review_ancestry))
+        or changed
+    ):
+        raise Program002AcquisitionError(
+            "acquisition source lineage differs from reviewed authority"
+        )
+    if hashlib.sha256(authority_bytes).hexdigest() != plan.authority.sha256:
+        raise Program002AcquisitionError("acquisition authority commit bytes differ")
+    if review_bytes != current_review_bytes:
+        raise Program002AcquisitionError("acquisition authority review commit bytes differ")
 
 
 def stored_record_parent(layout: StorageLayout, identity: str) -> str | None:
@@ -2217,6 +2383,7 @@ def _segment_correction_parent(
             artifact.get("request") != segment.url()
             or artifact.get("role") != role
             or artifact.get("plan_sha256") != plan.sha256
+            or artifact.get("acquisition_authority_sha256") != plan.authority.sha256
             or artifact.get("schema_version") != schema
         ):
             continue
@@ -2231,6 +2398,7 @@ def _segment_correction_parent(
                 schema,
                 role=role,
                 plan_sha256=plan.sha256,
+                authority_sha256=plan.authority.sha256,
             )
         except Program002AcquisitionError:
             continue
@@ -2455,6 +2623,8 @@ def _correction_parent(
             or path.parent != layout.dataset(identity)
             or manifest.get("program_002", {}).get("role") != role
             or manifest.get("program_002", {}).get("plan_sha256") != plan.sha256
+            or manifest.get("program_002", {}).get("acquisition_authority_sha256")
+            != plan.authority.sha256
             or manifest.get("provider") != "alpaca-historical-v2"
             or manifest.get("feed") != "sip"
             or manifest.get("endpoint") != _BARS
