@@ -33,11 +33,20 @@ ACCOUNT_ISOLATION_PROOF_RELATIVE_PATH = Path(
 ACCOUNT_ISOLATION_PROOF_REVIEW_RELATIVE_PATH = Path(
     "config/research/program-002-account-isolation-proof-independent-review-v1.json"
 )
-ACQUISITION_AUTHORITY_RELATIVE_PATH = Path(
+ACQUISITION_AUTHORITY_V2_RELATIVE_PATH = Path(
     "config/research/program-002-exposed-acquisition-authority-v2.json"
 )
-ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH = Path(
+ACQUISITION_AUTHORITY_REVIEW_V1_RELATIVE_PATH = Path(
     "config/research/program-002-exposed-acquisition-authority-independent-review-v1.json"
+)
+ACQUISITION_RUNTIME_FAILURE_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-runtime-failure-v1.json"
+)
+ACQUISITION_AUTHORITY_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-authority-v3.json"
+)
+ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-authority-independent-review-v2.json"
 )
 ACQUISITION_CONTROL_REPAIR_REVIEW_RELATIVE_PATH = Path(
     "config/research/program-002-acquisition-control-repair-independent-review-v1.json"
@@ -87,6 +96,24 @@ REVIEWED_ACCOUNT_ISOLATION_PROOF_REVIEW_FINGERPRINT = (
     "2776ada38e5912f7631bf694fa645854c8cbc0a8539a01ef4fe2472a56386478"
 )
 REVIEWED_ACCOUNT_ISOLATION_PROOF_COMMIT = "00298a0c089d5e5912f2d3d622ffa2ea257c2c14"
+REVIEWED_ACQUISITION_AUTHORITY_V2_SHA256 = (
+    "5543f427e9b7058bd8ed827af476eb48138eb4199788ca0437c9b4c8b70b5262"
+)
+REVIEWED_ACQUISITION_AUTHORITY_V2_FINGERPRINT = (
+    "5e734986a9cdb9058375f95a1457c00ffa1329f1bf7e9245834af43f04c807f4"
+)
+REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V1_SHA256 = (
+    "20c254ad448d9c036a78a59eedf3d04b642775b01d06f4a52a4a09689f582d2c"
+)
+REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V1_FINGERPRINT = (
+    "249fa690a3e4a0bb313561895f91547b1a61264f8b46dc37bafddb9b7fd86f07"
+)
+REVIEWED_ACQUISITION_RUNTIME_FAILURE_SHA256 = (
+    "af17ee7d34317d33db5be7672f2d490c03401e35c0aee43b040519a7fea7df0e"
+)
+REVIEWED_ACQUISITION_RUNTIME_FAILURE_FINGERPRINT = (
+    "07418cd02962e6284df3447a01df4c871c78f9cf476ae7d02935fe1c7fe9828d"
+)
 REVIEWED_ACQUISITION_CONTROL_REPAIR_REVIEW_SHA256 = (
     "44ee39877e0135092f278b12aa224fbd578a08a59a05dcdd4fd0c1cbaf8feb48"
 )
@@ -256,7 +283,7 @@ def load_program_002_acquisition_authority(repository: Path) -> Program002Author
     repository = repository.resolve()
     path = repository / ACQUISITION_AUTHORITY_RELATIVE_PATH
     raw = path.read_bytes()
-    payload = _load_unique_json(raw, "Program 002 acquisition authority v2")
+    payload = _load_unique_json(raw, "Program 002 acquisition authority v3")
     proof_path = repository / ACCOUNT_ISOLATION_PROOF_RELATIVE_PATH
     proof_review_path = repository / ACCOUNT_ISOLATION_PROOF_REVIEW_RELATIVE_PATH
     proof_raw = proof_path.read_bytes()
@@ -275,11 +302,11 @@ def load_program_002_acquisition_authority(repository: Path) -> Program002Author
     proof_review = _load_unique_json(proof_review_raw, "Program 002 account-isolation proof review")
     _verify_account_isolation_proof(proof)
     _verify_account_isolation_proof_review(proof_review)
-    _verify_acquisition_authority_v2(repository, payload, proof)
+    _verify_acquisition_authority_v3(repository, payload, proof)
     return Program002Authority(
         path,
         hashlib.sha256(raw).hexdigest(),
-        "program-002-exposed-acquisition-2026-08-25-v2",
+        "program-002-exposed-acquisition-2026-08-25-v3",
         payload,
     )
 
@@ -297,7 +324,7 @@ def load_program_002_acquisition_authority_review(
     files = source.get("files")
     if (
         value.get("schema_version")
-        != "program-002-exposed-acquisition-authority-independent-review-v1"
+        != "program-002-exposed-acquisition-authority-independent-review-v2"
         or value.get("program_id") != PROGRAM_ID
         or value.get("status") != "passed-before-market-data-acquisition"
         or value.get("verdict") != "pass"
@@ -543,7 +570,7 @@ def _verify_account_isolation_proof_review(review: Mapping[str, Any]) -> None:
         raise ValueError("Program 002 account-isolation proof review differs")
 
 
-def _verify_acquisition_authority_v2(
+def _verify_acquisition_authority_v3(
     repository: Path, payload: Mapping[str, Any], proof: Mapping[str, Any]
 ) -> None:
     unsigned = dict(payload)
@@ -551,8 +578,8 @@ def _verify_acquisition_authority_v2(
     source = _mapping(payload.get("source_binding"), "acquisition authority source binding")
     files = source.get("files")
     if (
-        payload.get("schema_version") != "program-002-exposed-acquisition-authority-v2"
-        or payload.get("authority_id") != "program-002-exposed-acquisition-2026-08-25-v2"
+        payload.get("schema_version") != "program-002-exposed-acquisition-authority-v3"
+        or payload.get("authority_id") != "program-002-exposed-acquisition-2026-08-25-v3"
         or payload.get("program_id") != PROGRAM_ID
         or payload.get("status") != "active-until-complete-or-terminal-blocker"
         or payload.get("source_authorization")
@@ -579,9 +606,9 @@ def _verify_acquisition_authority_v2(
     ):
         raise ValueError("Program 002 acquisition authority identity or source differs")
     if payload.get("supersedes") != {
-        "path": AUTHORITY_RELATIVE_PATH.as_posix(),
-        "sha256": REVIEWED_AUTHORITY_SHA256,
-        "disposition": "immutable-failed-inclusive-end-history",
+        "path": ACQUISITION_AUTHORITY_V2_RELATIVE_PATH.as_posix(),
+        "sha256": REVIEWED_ACQUISITION_AUTHORITY_V2_SHA256,
+        "disposition": "immutable-runtime-failed-before-publication",
     }:
         raise ValueError("Program 002 acquisition authority supersession differs")
     expected_bindings = _expected_acquisition_authority_bindings()
@@ -678,6 +705,21 @@ def _expected_acquisition_authority_bindings() -> Mapping[str, Any]:
             "path": ACCOUNT_ISOLATION_PROOF_REVIEW_RELATIVE_PATH.as_posix(),
             "sha256": REVIEWED_ACCOUNT_ISOLATION_PROOF_REVIEW_SHA256,
             "fingerprint": REVIEWED_ACCOUNT_ISOLATION_PROOF_REVIEW_FINGERPRINT,
+        },
+        "prior_acquisition_authority": {
+            "path": ACQUISITION_AUTHORITY_V2_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_AUTHORITY_V2_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_AUTHORITY_V2_FINGERPRINT,
+        },
+        "prior_acquisition_authority_review": {
+            "path": ACQUISITION_AUTHORITY_REVIEW_V1_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V1_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V1_FINGERPRINT,
+        },
+        "acquisition_runtime_failure": {
+            "path": ACQUISITION_RUNTIME_FAILURE_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_RUNTIME_FAILURE_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_RUNTIME_FAILURE_FINGERPRINT,
         },
         "regulatory_fee_source": {
             "path": COST_MODEL_RELATIVE_PATH.as_posix(),

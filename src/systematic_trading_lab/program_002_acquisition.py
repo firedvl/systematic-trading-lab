@@ -228,7 +228,7 @@ def acquisition_authority_preflight(
     credential_key_hash: str | None = None,
     account_environment: str | None = None,
 ) -> None:
-    """Require reviewed v2 authority, clean source lineage, and proof identity continuity."""
+    """Require reviewed v3 authority, clean source lineage, and proof identity continuity."""
     bindings = _mapping(plan.authority.payload.get("bindings"), "acquisition authority bindings")
     control = bindings.get("acquisition_control_amendment")
     evidence = bindings.get("provider_contract_evidence")
@@ -236,7 +236,7 @@ def acquisition_authority_preflight(
     identity = plan.authority.payload.get("account_isolation")
     if (
         plan.authority.payload.get("schema_version")
-        != "program-002-exposed-acquisition-authority-v2"
+        != "program-002-exposed-acquisition-authority-v3"
         or not isinstance(control, Mapping)
         or control.get("sha256") != plan.control_sha256
         or control.get("fingerprint") != plan.control_fingerprint
@@ -413,9 +413,8 @@ def acquire_segment(
                 raw.append(record)
                 try:
                     if segment.kind == "bars":
-                        parsed_bar = _bar(record)
-                        _require_bar_in_segment(record, segment)
-                        normalized.append(parsed_bar)
+                        if (parsed_bar := _normalized_bar(record, segment)) is not None:
+                            normalized.append(parsed_bar)
                     else:
                         _require_quote_in_segment(record, segment)
                 except Program002AcquisitionError as error:
@@ -559,7 +558,10 @@ def _load_segment_artifact(
         or hashes != expected_hashes
     ):
         raise Program002AcquisitionError("stored raw page bytes differ")
-    normalized = tuple(_bar(row) for row in rows) if segment.kind == "bars" else ()
+    parsed_bars = (
+        tuple(_normalized_bar(row, segment) for row in rows) if segment.kind == "bars" else ()
+    )
+    normalized = tuple(row for row in parsed_bars if row is not None)
     return AcquiredSegment(
         segment,
         tuple(
@@ -2041,7 +2043,7 @@ def _http_attempt(
         "body_hex": body[:8192].hex() if page is not None and body else None,
         "captured_body_length": len(body) if page is not None else 0,
         "captured_body_truncated": page.captured_body_truncated if page is not None else False,
-        "retry_delay_seconds": retry_delay,
+        "retry_delay_seconds": Decimal(str(retry_delay)) if retry_delay is not None else None,
         "disposition": disposition,
     }
 
@@ -2090,11 +2092,22 @@ def _bar(raw: Mapping[str, Any]) -> dict[str, Any]:
     return output
 
 
-def _require_bar_in_segment(raw: Mapping[str, Any], segment: RequestSegment) -> None:
+def _require_bar_in_segment(raw: Mapping[str, Any], segment: RequestSegment) -> datetime:
     timestamp = _time(raw["t"])
     start, end = _time(segment.params["start"]), _time(segment.params["end"])
-    if timestamp not in _segment_bar_opens(_iso(start), _iso(end)):
+    if timestamp < start or timestamp > end:
         raise Program002AcquisitionError("provider bar is outside its authorized segment")
+    return timestamp
+
+
+def _normalized_bar(raw: Mapping[str, Any], segment: RequestSegment) -> dict[str, Any] | None:
+    parsed = _bar(raw)
+    timestamp = _require_bar_in_segment(raw, segment)
+    return (
+        parsed
+        if timestamp in _segment_bar_opens(segment.params["start"], segment.params["end"])
+        else None
+    )
 
 
 @lru_cache(maxsize=128)
@@ -2724,8 +2737,16 @@ def _json(raw: bytes) -> Mapping[str, Any]:
             output[key] = value
         return output
 
+    def reject_constant(_: str) -> object:
+        raise Program002AcquisitionError("provider JSON contains non-finite number")
+
     try:
-        value = json.loads(raw, object_pairs_hook=pairs)
+        value = json.loads(
+            raw,
+            object_pairs_hook=pairs,
+            parse_float=Decimal,
+            parse_constant=reject_constant,
+        )
     except json.JSONDecodeError as error:
         raise Program002AcquisitionError("malformed provider payload") from error
     return _mapping(value, "provider response")

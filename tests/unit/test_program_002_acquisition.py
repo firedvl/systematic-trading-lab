@@ -60,10 +60,10 @@ _REPOSITORY = Path(__file__).resolve().parents[2]
 _ATTEMPT = "synthetic-attempt-1"
 
 
-def _v2_plan() -> Program002AcquisitionPlan:
+def _v3_plan() -> Program002AcquisitionPlan:
     plan = load_plan(_REPOSITORY)
     payload = {
-        "schema_version": "program-002-exposed-acquisition-authority-v2",
+        "schema_version": "program-002-exposed-acquisition-authority-v3",
         "bindings": {
             "acquisition_control_amendment": {
                 "sha256": plan.control_sha256,
@@ -85,7 +85,7 @@ def _v2_plan() -> Program002AcquisitionPlan:
     authority = Program002Authority(
         plan.path.parent / ACQUISITION_AUTHORITY_RELATIVE_PATH.name,
         "5" * 64,
-        "program-002-exposed-acquisition-2026-08-25-v2",
+        "program-002-exposed-acquisition-2026-08-25-v3",
         payload,
     )
     return replace(plan, authority=authority)
@@ -201,34 +201,119 @@ def test_retry_honors_server_delay_and_quarantines_invalid_page(tmp_path: Path) 
         segment, lambda _: next(pages), retry_wait=waits.append, wall_clock=lambda: 100.0
     ).pages
     assert waits == [10.0]
+    retry_layout = StorageLayout(tmp_path / "retry")
+    invalid_after_retry = iter(
+        [
+            HttpPage(429, b"", {}),
+            HttpPage(
+                200,
+                b'{"bars":{"SPY":[{}]},"next_page_token":null}',
+                {},
+            ),
+        ]
+    )
     with pytest.raises(Program002AcquisitionError, match="missing fields"):
         acquire_segment(
             segment,
-            lambda _: HttpPage(200, b'{"bars":{"SPY":[{}]},"next_page_token":null}', {}),
+            lambda _: next(invalid_after_retry),
+            retry_wait=lambda _: None,
+            quarantine_layout=retry_layout,
+        )
+    evidence = json.loads(next((tmp_path / "retry" / "quarantine").glob("*.json")).read_text())
+    assert evidence["http_attempts"][0]["retry_delay_seconds"] == "1"
+
+
+def test_malformed_transport_records_and_duplicate_keys_fail_closed(tmp_path: Path) -> None:
+    segment = bar_segments(load_plan(_REPOSITORY), "exposed-block-1")[0]
+    malformed = HttpPage(200, b'{"bars":{"SPY":[{"t":"bad"}]}}', {})
+    duplicate_key = HttpPage(200, b'{"bars":{},"bars":{}}', {})
+    non_finite = HttpPage(
+        200,
+        b'{"bars":{"SPY":[{"t":"2020-07-27T13:30:00Z","o":NaN,"h":1,"l":1,"c":1,"v":1}]},"next_page_token":null}',
+        {},
+    )
+    with pytest.raises(Program002AcquisitionError, match="missing fields"):
+        acquire_segment(segment, lambda _: malformed)
+    with pytest.raises(Program002AcquisitionError, match="duplicate key"):
+        acquire_segment(segment, lambda _: duplicate_key)
+    with pytest.raises(Program002AcquisitionError, match="non-finite"):
+        acquire_segment(
+            segment,
+            lambda _: non_finite,
             quarantine_layout=StorageLayout(tmp_path),
         )
     assert list((tmp_path / "quarantine").glob("*.json"))
 
 
-def test_malformed_transport_records_and_duplicate_keys_fail_closed() -> None:
+def test_transport_extras_are_raw_only_and_outside_bounds_are_quarantined(
+    tmp_path: Path,
+) -> None:
     segment = bar_segments(load_plan(_REPOSITORY), "exposed-block-1")[0]
-    malformed = HttpPage(200, b'{"bars":{"SPY":[{"t":"bad"}]}}', {})
-    duplicate_key = HttpPage(200, b'{"bars":{},"bars":{}}', {})
-    with pytest.raises(Program002AcquisitionError, match="missing fields"):
-        acquire_segment(segment, lambda _: malformed)
-    with pytest.raises(Program002AcquisitionError, match="duplicate key"):
-        acquire_segment(segment, lambda _: duplicate_key)
-
-
-def test_out_of_grid_bars_and_out_of_window_quotes_are_quarantined(tmp_path: Path) -> None:
-    segment = bar_segments(load_plan(_REPOSITORY), "exposed-block-1")[0]
-    out_of_grid = HttpPage(
+    start = datetime.fromisoformat(segment.params["start"].replace("Z", "+00:00"))
+    in_range_extra = HttpPage(
         200,
-        b'{"bars":{"SPY":[{"t":"2020-07-27T13:31:00Z","o":1,"h":1,"l":1,"c":1,"v":1}]},"next_page_token":null}',
+        json.dumps(
+            {
+                "bars": {
+                    "SPY": [
+                        {
+                            "t": segment.params["start"],
+                            "o": 1.25,
+                            "h": 1.5,
+                            "l": 1.0,
+                            "c": 1.4,
+                            "v": 1,
+                        },
+                        {
+                            "t": (start + timedelta(minutes=1)).isoformat().replace("+00:00", "Z"),
+                            "o": 1.25,
+                            "h": 1.5,
+                            "l": 1.0,
+                            "c": 1.4,
+                            "v": 1,
+                        },
+                    ]
+                },
+                "next_page_token": None,
+            }
+        ).encode(),
+        {},
+    )
+    acquired = acquire_segment(segment, lambda _: in_range_extra)
+    assert len(acquired.raw_records) == 2
+    assert len(acquired.normalized_records) == 1
+
+    after_end = datetime.fromisoformat(segment.params["end"].replace("Z", "+00:00"))
+    outside_bounds = HttpPage(
+        200,
+        json.dumps(
+            {
+                "bars": {
+                    "SPY": [
+                        {
+                            "t": (after_end + timedelta(seconds=1))
+                            .isoformat()
+                            .replace("+00:00", "Z"),
+                            "o": 1.25,
+                            "h": 1.5,
+                            "l": 1.0,
+                            "c": 1.4,
+                            "v": 1,
+                        }
+                    ]
+                },
+                "next_page_token": None,
+            }
+        ).encode(),
         {},
     )
     with pytest.raises(Program002AcquisitionError, match="authorized segment"):
-        acquire_segment(segment, lambda _: out_of_grid, quarantine_layout=StorageLayout(tmp_path))
+        acquire_segment(
+            segment, lambda _: outside_bounds, quarantine_layout=StorageLayout(tmp_path)
+        )
+    bar_evidence = json.loads(next((tmp_path / "quarantine").glob("*.json")).read_text())
+    assert bar_evidence["raw_records"][0]["o"] == "1.25"
+
     quote = quote_segments(load_plan(_REPOSITORY))[0]
     quote_end = datetime.fromisoformat(quote.params["end"].replace("Z", "+00:00"))
     acquisition._require_quote_in_segment({"t": quote.params["end"]}, quote)
@@ -609,10 +694,10 @@ def test_provider_contract_preflight_and_reviewed_fee_floor_binding() -> None:
         acquisition_authority_preflight(plan)
 
 
-def test_v2_authority_requires_review_and_account_continuity(
+def test_v3_authority_requires_review_and_account_continuity(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    plan = _v2_plan()
+    plan = _v3_plan()
     with pytest.raises(Program002AcquisitionError, match="review|No such file"):
         acquisition_authority_preflight(plan)
 
@@ -697,7 +782,7 @@ def test_repository_source_preflight_enforces_reviewed_git_lineage(tmp_path: Pat
     authority = Program002Authority(
         authority_path,
         hashlib.sha256(authority_bytes).hexdigest(),
-        "program-002-exposed-acquisition-2026-08-25-v2",
+        "program-002-exposed-acquisition-2026-08-25-v3",
         authority_payload,
     )
     plan = replace(
@@ -790,12 +875,33 @@ def test_role_segments_resume_from_verified_create_only_artifacts(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     plan = load_plan(_REPOSITORY)
+    segments = bar_segments(plan, "exposed-context-only")
     calls: list[str] = []
 
     def transport(url: str) -> HttpPage:
         calls.append(url)
         start = dict(parse_qsl(urlparse(url).query))["start"]
-        return _page_at(start)
+        extra = (
+            (datetime.fromisoformat(start.replace("Z", "+00:00")) + timedelta(minutes=1))
+            .isoformat()
+            .replace("+00:00", "Z")
+        )
+        return HttpPage(
+            200,
+            json.dumps(
+                {
+                    "bars": {
+                        "SPY": [
+                            {"t": start, "o": 1, "h": 1, "l": 1, "c": 1, "v": 1},
+                            {"t": extra, "o": 1, "h": 1, "l": 1, "c": 1, "v": 1},
+                        ]
+                    },
+                    "next_page_token": None,
+                },
+                separators=(",", ":"),
+            ).encode(),
+            {},
+        )
 
     layout = StorageLayout(tmp_path)
     monkeypatch.setattr(acquisition, "_validate_bar_segment_complete", lambda *_: None)
@@ -808,6 +914,18 @@ def test_role_segments_resume_from_verified_create_only_artifacts(
         pace=lambda: None,
     )
     assert first and calls
+    for identity, segment in zip(first, segments, strict=True):
+        stored = acquisition._load_segment_artifact(
+            layout,
+            identity,
+            segment,
+            "program-002-acquisition-segment-v1",
+            role="exposed-context-only",
+            plan_sha256=plan.sha256,
+            authority_sha256=plan.authority.sha256,
+        )
+        assert len(stored.raw_records) == 2
+        assert len(stored.normalized_records) == 1
     calls.clear()
     assert (
         acquire_role_segments(

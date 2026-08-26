@@ -56,7 +56,7 @@ def test_authority_binds_every_reviewed_input_and_keeps_execution_false() -> Non
     )
 
 
-def test_account_proof_keeps_v1_while_acquisition_requires_separate_v2(
+def test_account_proof_keeps_v1_while_acquisition_requires_separate_v3(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     proof = load_program_002_account_proof_plan(_REPOSITORY)
@@ -65,7 +65,7 @@ def test_account_proof_keeps_v1_while_acquisition_requires_separate_v2(
     monkeypatch.setattr(
         plan_module,
         "ACQUISITION_AUTHORITY_RELATIVE_PATH",
-        Path("config/research/missing-program-002-acquisition-authority-v2.json"),
+        Path("config/research/missing-program-002-acquisition-authority-v3.json"),
     )
     with pytest.raises(FileNotFoundError):
         plan_module.load_program_002_acquisition_plan(_REPOSITORY)
@@ -77,7 +77,7 @@ def test_acquisition_review_requires_exact_false_authority(tmp_path: Path) -> No
     authority = Program002Authority(
         tmp_path / ACQUISITION_AUTHORITY_RELATIVE_PATH,
         "2" * 64,
-        "program-002-exposed-acquisition-2026-08-25-v2",
+        "program-002-exposed-acquisition-2026-08-25-v3",
         {
             "authority_fingerprint": "3" * 64,
             "source_binding": {"source_commit": source_commit, "files": files},
@@ -95,7 +95,7 @@ def test_acquisition_review_requires_exact_false_authority(tmp_path: Path) -> No
         "live_execution": False,
     }
     review = {
-        "schema_version": "program-002-exposed-acquisition-authority-independent-review-v1",
+        "schema_version": "program-002-exposed-acquisition-authority-independent-review-v2",
         "program_id": "multi-hour-sector-etf-research-001",
         "status": "passed-before-market-data-acquisition",
         "verdict": "pass",
