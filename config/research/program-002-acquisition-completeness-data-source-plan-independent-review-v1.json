@@ -1,0 +1,112 @@
+{
+  "schema_version": "program-002-acquisition-completeness-data-source-plan-independent-review-v1",
+  "review_id": "program-002-acquisition-completeness-data-source-plan-independent-review-2026-08-26-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "reviewed_at": "2026-08-26T23:38:30Z",
+  "status": "passed-prospective-plan-before-implementation-or-acquisition",
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_commit": "0b59062cd8eeddbb1bafd7a0c3390763e1ea3145",
+  "parent_commit": "0fffefe4774ec5623e70f39f5b1b5831d7dd649d",
+  "reviewed_plan": {
+    "path": "config/research/program-002-acquisition-completeness-data-source-plan-v1.json",
+    "sha256": "c45a5f749a120d600973753804533f7b7a9f352b0335d89a32bde990f3227735",
+    "fingerprint": "07edec3a871a68f9c0a9d64842d6b8e668bf1c2af77cd885b12c61e27d27e8f8"
+  },
+  "reviewed_source_contract": {
+    "provider": "Alpaca Market Data API",
+    "endpoint": "GET https://data.alpaca.markets/v2/stocks/bars",
+    "symbol": "MDY",
+    "feed": "sip",
+    "timeframe": "1Min",
+    "adjustment": "all",
+    "sort": "asc",
+    "request_count": 4,
+    "request_dates": [
+      "2021-02-03",
+      "2021-02-05",
+      "2021-02-10",
+      "2021-02-22"
+    ],
+    "expected_source_minute_slots": 1560,
+    "official_references": [
+      "https://docs.alpaca.markets/us/v1.4.2/reference/stockbars",
+      "https://docs.alpaca.markets/us/docs/market-data-faq"
+    ],
+    "checked_date": "2026-08-26"
+  },
+  "reviewed_reconstruction": {
+    "expected_five_minute_coordinates": 312,
+    "frozen_provider_observed_comparators": 305,
+    "exact_provider_derived_targets": 7,
+    "target_coordinates": [
+      "MDY@2021-02-03T16:40:00Z",
+      "MDY@2021-02-05T16:45:00Z",
+      "MDY@2021-02-05T16:50:00Z",
+      "MDY@2021-02-10T20:20:00Z",
+      "MDY@2021-02-22T18:25:00Z",
+      "MDY@2021-02-22T19:05:00Z",
+      "MDY@2021-02-22T19:20:00Z"
+    ],
+    "aggregation": "first open, maximum high, minimum low, last close, summed integer volume, and summed integer trade count across provider-observed one-minute bars in each left-closed five-minute bucket",
+    "comparison": "The exact 305-coordinate set and every exact parsed OHLCV and trade-count value must match the frozen five-minute evidence before any target is admitted.",
+    "vwap": "Preserve provider vw only in immutable raw evidence; do not derive, compare, or use it.",
+    "admitted_origin": "provider-derived-from-1m",
+    "fallback": "none"
+  },
+  "reviewed_counts": {
+    "february_provider_observed_five_minute_rows": 19259,
+    "february_provider_derived_one_minute_rows": 7,
+    "february_canonical_rows": 19266,
+    "cumulative_through_february_provider_observed_five_minute_rows": 150141,
+    "cumulative_through_february_december_synthetic_rows": 2,
+    "cumulative_through_february_provider_derived_one_minute_rows": 7,
+    "cumulative_through_february_canonical_rows": 150150,
+    "exposed_block_1_provider_observed_five_minute_rows_if_no_later_gap_occurs": 508629,
+    "exposed_block_1_december_synthetic_rows": 2,
+    "exposed_block_1_provider_derived_one_minute_rows": 7,
+    "exposed_block_1_canonical_rows": 508638,
+    "all_exposed_canonical_rows": 1526538,
+    "context_canonical_rows": 20280
+  },
+  "verified_assertions": {
+    "reviewed_commit_has_starting_main_as_sole_parent": true,
+    "reviewed_commit_adds_only_the_plan_artifact": true,
+    "plan_sha256_and_fingerprint_reproduced": true,
+    "plan_and_all_bound_json_reject_duplicate_keys": true,
+    "all_ten_bound_sha256_values_reproduced": true,
+    "all_nine_bound_fingerprints_reproduced": true,
+    "original_user_packet_sha256_reproduced": true,
+    "four_request_bounds_are_exact_full_xnys_sessions": true,
+    "seven_targets_equal_the_corrected_incident_missing_set": true,
+    "three_origin_count_equations_reproduced": true,
+    "coordinate_identity_is_required_in_addition_to_count": true,
+    "ohlcv_and_trade_count_equality_are_exact": true,
+    "vwap_is_raw_evidence_only": true,
+    "december_completion_rows_and_ledger_remain_unchanged": true,
+    "context_dataset_and_projection_identity_and_use_remain_unchanged": true,
+    "failed_february_evidence_and_completed_segments_remain_immutable": true,
+    "source_proof_and_canonical_admission_use_separate_future_authorities": true,
+    "terminal_failure_grants_no_retry_or_fallback": true,
+    "all_launch_and_authority_flags_are_false": true
+  },
+  "proof_gaps": [
+    "Static plan review does not prove current provider behavior, entitlement, future one-minute field presence, or implementation correctness.",
+    "The reviewer did not inspect .trading-lab, credential values, provider or account endpoints, market-data payloads, strategy outputs, protected state, PAPER or broker state, live state, or strategic-allocation-21 state.",
+    "Remote CI, implementation tests, source-proof evidence, raw-to-derived review, and final synchronized-main preflight remain future checks."
+  ],
+  "scope_limit": "Independent exact-byte prospective planning review only. No credential loading, provider request, market-data acquisition, canonical admission, strategy execution, result access, qualification, controlled or protected access, PAPER action, broker write, or live action occurred.",
+  "required_next_step": "Merge this plan-only review chain through green CI. Implementation and the four exact one-minute request chains require separate user authorization. After that authorization, implement and test the narrow reconstruction while authority v6 stays revoked, then create and independently review a one-use source-proof authority before any credential loading or provider request.",
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "3dfad1b705d07d47915b19048d02e8ef352afc290e40ad5b4347485a08f710a5"
+}

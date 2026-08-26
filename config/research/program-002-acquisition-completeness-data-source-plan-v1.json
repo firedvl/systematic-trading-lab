@@ -1,0 +1,310 @@
+{
+  "schema_version": "program-002-acquisition-completeness-data-source-plan-v1",
+  "plan_id": "program-002-alpaca-minute-reconstruction-2026-08-26-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "created_date": "2026-08-26",
+  "status": "PROSPECTIVE-MINUTE-RECONSTRUCTION-PLAN-NOT-AUTHORIZED-FOR-IMPLEMENTATION-OR-ACQUISITION",
+  "source_authorization": {
+    "original_user_packet": {
+      "kind": "user-supplied-authorization-packet",
+      "sha256": "fd1a468fb152c6c18c0babda29c8393507a68558161b325d7f17348422093480"
+    },
+    "supplemental_user_authorization": {
+      "received_date": "2026-08-26",
+      "exact_text": "authorized",
+      "scope": "Prospective planning and independent review of revised Program 002 completeness and data-source semantics only. This plan grants no implementation, credential, provider-request, acquisition, strategy, qualification, controlled, protected, PAPER, broker-write, or live authority."
+    }
+  },
+  "starting_main": {
+    "commit": "0fffefe4774ec5623e70f39f5b1b5831d7dd649d",
+    "disposition": "Clean synchronized main after the February incident, corrected review, authority-v6 revocation, and finding-free revocation review merged as PR 217."
+  },
+  "immutable_bindings": {
+    "base_acquisition_plan": {
+      "path": "config/research/cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1.json",
+      "sha256": "26c768f422e63e9f00e6adc88be2d57f5c6447972a9de1fa4873ab2826556aae"
+    },
+    "base_plan_review": {
+      "path": "config/research/cross-sectional-sector-etf-program-002-plan-independent-review-v1.json",
+      "sha256": "b5023c90a7d748a7c8ac42609bad6d1c394150bc914c51b8b65c73e3d80c17e6",
+      "fingerprint": "55e30955789981a4eca129856322207ceb05fa9aebccb1101d892dd92f7a5d33"
+    },
+    "december_completeness_amendment": {
+      "path": "config/research/program-002-acquisition-no-trade-completeness-amendment-v1.json",
+      "sha256": "c04991ecec8d9792cc916488c76c6bc5882db5f5677a6bf583ade2f343c17ffd",
+      "fingerprint": "f6540b404cfc12a8885b58c799279239fa3df90a3b8bffe2b950289ee3b4b09c",
+      "disposition": "Immutable and unchanged; its two exact December continuity rows do not authorize any February row."
+    },
+    "december_completeness_review": {
+      "path": "config/research/program-002-acquisition-no-trade-completeness-amendment-independent-review-v1.json",
+      "sha256": "55add70f3cbda1ae71d6d724f681679f8f50b7be8ef2d1e383adcc8523941722",
+      "fingerprint": "54a931d8997834a7eca918184c361bc46fd66887d02230111b39f83ccb6a7fd6"
+    },
+    "provider_contract_evidence": {
+      "path": "config/research/program-002-provider-contract-evidence-v1.json",
+      "sha256": "86a9740a1ecd74f3152e470b9d2fa1c2f759c3a1e9b19b30b54c2ae7b94d0bf2",
+      "fingerprint": "5d11a9fb2cbf35f48f857de88737c5e67a04348d9d696f98367039e694f925d6"
+    },
+    "corrected_february_incident": {
+      "path": "config/research/program-002-exposed-acquisition-completeness-failure-v3.json",
+      "sha256": "ebc8f536d51fd701f9fc26f28630abff9f23a0b5edb3e794a5a3016337273618",
+      "fingerprint": "1f5350eb3f704c343044cd11ac328643fd1ae0939ebeaa030248ce031938b53a"
+    },
+    "corrected_february_incident_review": {
+      "path": "config/research/program-002-exposed-acquisition-completeness-failure-independent-review-v2.json",
+      "sha256": "18ee95730f5af8698ff090c74df42774e1294dea8ff5552ad6c3b16495566e53",
+      "fingerprint": "23c20fb78b71c3e527eb5c4f916d58463fdb311daf2a66436c5d32f976047cbf"
+    },
+    "revoked_authority_v6": {
+      "path": "config/research/program-002-exposed-acquisition-authority-v6.json",
+      "sha256": "1d40446ca391c7b9dd5b1e0575c033ba5813d1e921e193c26e401718be3256ec",
+      "fingerprint": "22481c9821e946a86dc32f51de30e6087a31af1a309068b56f4290d5c1590a49"
+    },
+    "revoked_authority_v6_review": {
+      "path": "config/research/program-002-exposed-acquisition-authority-independent-review-v4.json",
+      "sha256": "5bb1fd3bff76589668166aafc20ec133bb39a9b182cfc9314d10803d3cb17ef4",
+      "fingerprint": "59d1605e1353b990f12b5cf51be2ce9b557b5850e8a71c372f1b6ae2a55b76bf"
+    },
+    "revocation_enforcement_review": {
+      "path": "config/research/program-002-exposed-acquisition-control-stop-enforcement-independent-review-v2.json",
+      "sha256": "99f4c9be1a3cd01edeeffdf9129611d4a94667ed78f098bb023c9d1b514a2624",
+      "fingerprint": "c06c679fc4c80db479e34c13ce01e9bac0a8d42367561d54b890cf60be086edf"
+    }
+  },
+  "frozen_runtime_lineage": {
+    "acquisition_attempt_id": "program-002-exposed-acquisition-20260826-v5",
+    "completed_segment_ids": [
+      "1157d5f1acae25511fd44d6131177bcd4ec4e25c8361c985be76facef9a57584",
+      "18f3c39fb0b523a850a9d1def5cd889528ac1aff6791d7de9ee25fc8edd81605",
+      "346e9bff155a33eacd871f5c726eb9058fa945384adb3c29552d0de8f1c64307",
+      "429e5145eb9efd8582b34fcdd72829b2de9a17ede7b37c1d2547a6989166bc6d",
+      "eb074e287c9d560b51703e5815497125033eb3ebd1975da30f30a72b4486f35b",
+      "09b8d6edd4897d51ffec62d6e668eb58ece0f9a0e445814ab4940d41e6f8dff5",
+      "2ea1aa7eafe1cd3ff95c992a96f7ca7979e631884d8cea21a6dc2a9346bf72e0"
+    ],
+    "completed_raw_record_count": 183050,
+    "completed_canonical_row_count": 130884,
+    "completed_provider_observed_five_minute_row_count": 130882,
+    "completed_december_synthetic_row_count": 2,
+    "failed_february_segment_identity": "14f60d294fb60df49f30626112d7e0c9663a2cc0375f9d234288a1a13ae8bbea",
+    "failed_february_quarantine_identity": "6515226348cddcbc06daeac95cd0def483c156bb797aed32ed373085a0f2fa62",
+    "failed_february_quarantine_sha256": "571da2c19efad7ded9ddfb257966ecb47298ebb12e22413a769a9f2341e527c5",
+    "failed_february_canonical_sorted_fingerprint": "2e68522891739f7aaa23f525dc900b22cc760baef1ad19bd06c97515b7ada4e2",
+    "segment_journal_sha256": "ec632b61dc4947f6390288b922ea3751de1ccbb3b72d01e6cbfd9fdb559096c3",
+    "terminal_attempt_journal_sha256": "33e0534fd201d445998fd1f2683a213cd835476ca6d6be7dbfda729dd420ea41",
+    "disposition": "Immutable input evidence only. No page, record, segment artifact, quarantine, or journal may be changed or relabeled."
+  },
+  "selected_data_source": {
+    "provider": "Alpaca Market Data API",
+    "endpoint": "GET https://data.alpaca.markets/v2/stocks/bars",
+    "symbol": "MDY",
+    "feed": "sip",
+    "timeframe": "1Min",
+    "adjustment": "all",
+    "sort": "asc",
+    "limit": 10000,
+    "start_semantics": "inclusive",
+    "end_semantics": "inclusive",
+    "timestamp_policy": "bar-open-utc-v1",
+    "calendar_policy": "XNYS-regular-session-bars-v1",
+    "official_references": [
+      {
+        "title": "Historical bars",
+        "url": "https://docs.alpaca.markets/us/v1.4.2/reference/stockbars",
+        "checked_date": "2026-08-26"
+      },
+      {
+        "title": "Market Data FAQ - bar aggregation",
+        "url": "https://docs.alpaca.markets/us/docs/market-data-faq",
+        "checked_date": "2026-08-26"
+      }
+    ],
+    "documented_basis": "Alpaca documents that non-minute bars are aggregated from emitted minute bars using first open, maximum high, minimum low, last close, summed volume, and summed trade count.",
+    "scientific_scope": "Same-provider cross-timeframe reconstruction of Alpaca five-minute semantics; this is corroboration within one provider and not independent consolidated-tape ground truth."
+  },
+  "exact_one_minute_request_segments": [
+    {
+      "role": "february-minute-reconstruction-source",
+      "start": "2021-02-03T14:30:00Z",
+      "end": "2021-02-03T20:59:00Z",
+      "expected_xnys_minute_slots": 390
+    },
+    {
+      "role": "february-minute-reconstruction-source",
+      "start": "2021-02-05T14:30:00Z",
+      "end": "2021-02-05T20:59:00Z",
+      "expected_xnys_minute_slots": 390
+    },
+    {
+      "role": "february-minute-reconstruction-source",
+      "start": "2021-02-10T14:30:00Z",
+      "end": "2021-02-10T20:59:00Z",
+      "expected_xnys_minute_slots": 390
+    },
+    {
+      "role": "february-minute-reconstruction-source",
+      "start": "2021-02-22T14:30:00Z",
+      "end": "2021-02-22T20:59:00Z",
+      "expected_xnys_minute_slots": 390
+    }
+  ],
+  "exact_derived_coordinates": [
+    "MDY@2021-02-03T16:40:00Z",
+    "MDY@2021-02-05T16:45:00Z",
+    "MDY@2021-02-05T16:50:00Z",
+    "MDY@2021-02-10T20:20:00Z",
+    "MDY@2021-02-22T18:25:00Z",
+    "MDY@2021-02-22T19:05:00Z",
+    "MDY@2021-02-22T19:20:00Z"
+  ],
+  "reconstruction_contract": {
+    "algorithm_version": "program-002-provider-minute-reconstruction-v1",
+    "source_validation": [
+      "Each exact request must pass the existing authority, source, account-proof, credential-identity, transport, inclusive-bound, and protected-boundary checks before any client construction or request.",
+      "Follow each unique next_page_token chain until null, with the existing 100-page bar-segment ceiling; a short page never proves completion.",
+      "Preserve exact request parameters, response bytes, request IDs when safe, page tokens, page hashes, retrieval time, and source-record JSONL in create-only evidence.",
+      "Reject a wrong symbol, timestamp outside the exact regular-session one-minute grid, timestamp not aligned to one minute, duplicate or conflicting coordinate, malformed or non-finite number, nonpositive OHLC value, negative volume or trade count, unexpected field-presence transition, or any quarantined record.",
+      "Every one of the 312 authorized five-minute buckets across the four sessions must contain at least one complete provider-observed one-minute bar. Missing one-minute slots inside a nonempty bucket are permitted because Alpaca does not emit incomplete minute bars."
+    ],
+    "aggregation": {
+      "bucket": "Each XNYS regular-session five-minute interval is left-closed and right-open, anchored at 09:30 America/New_York; the output timestamp is the bucket's UTC open.",
+      "open": "open of the earliest provider-observed one-minute bar in the bucket",
+      "high": "maximum high across provider-observed one-minute bars in the bucket",
+      "low": "minimum low across provider-observed one-minute bars in the bucket",
+      "close": "close of the latest provider-observed one-minute bar in the bucket",
+      "volume": "exact integer sum of volume across provider-observed one-minute bars in the bucket",
+      "trade_count": "exact integer sum of n across provider-observed one-minute bars in the bucket; n must be present on every one-minute source row and every frozen five-minute comparator",
+      "vwap": "Retain provider vw fields only in immutable raw evidence. Do not derive, round, compare, or use vw for eligibility, canonical OHLCV, costs, strategy inputs, or dataset identity because the public response-rounding contract is unspecified.",
+      "numeric_policy": "Parse prices as exact Decimal values and counts as integers. Do not aggregate through binary floating point."
+    },
+    "comparison_matrix": {
+      "expected_five_minute_coordinates": 312,
+      "frozen_provider_observed_coordinates": 305,
+      "target_derived_coordinates": 7,
+      "coordinate_rule": "The frozen provider-observed coordinate set must equal the exact four-session 312-coordinate grid minus the seven exact derived coordinates; count equality alone is insufficient.",
+      "equality_rule": "For every one of the 305 coordinates, derived and frozen provider-observed open, high, low, close, volume, and trade_count must be numerically identical after exact parsing.",
+      "revision_rule": "Any adjustment-vintage, provider-revision, source, field, or value mismatch is terminal. Never infer a tolerance or rounding rule from the response.",
+      "admission_rule": "Only after all 305 controls match may the seven nonempty target aggregates enter the new February canonical segment as provider-derived-from-1m rows. They are never labeled provider-observed-5m or synthetic."
+    },
+    "source_precedence": [
+      "The 19,259 frozen valid February provider-observed five-minute rows always take precedence and are never replaced.",
+      "Only the seven exact absent coordinates may use the exact one-minute aggregate after the complete comparison matrix passes.",
+      "The two December predecessor-close zero-volume rows remain byte-for-byte and semantically unchanged under their original ledger.",
+      "No other Program 002 coordinate may use one-minute reconstruction under this plan."
+    ],
+    "terminal_failure_conditions": [
+      "any incomplete, repeated, cyclic, conflicting, or over-ceiling pagination chain",
+      "any foreign, out-of-bound, misaligned, duplicate, malformed, non-finite, quarantined, or tampered source row",
+      "any empty target five-minute bucket",
+      "any difference between the exact expected and actual 305-coordinate comparator sets",
+      "any OHLCV or trade-count mismatch at any comparator coordinate",
+      "any target coordinate outside the exact seven-coordinate set",
+      "any credential, source-binding, account-proof, authority, protected-boundary, raw-integrity, publication, or lineage failure"
+    ]
+  },
+  "provenance_and_identity": {
+    "minute_source_evidence": "Freeze each one-minute request segment separately with request identity, exact raw pages, page hashes, raw-record fingerprint, normalized minute fingerprint, actual row count, pagination evidence, and retrieval time.",
+    "derivation_ledger": "For every one of the 312 five-minute buckets record the ordered source minute coordinates, source page hashes, aggregate fields, comparator disposition, and algorithm version. Bind the seven admitted records explicitly.",
+    "february_segment": "Create a successor February segment that references the failed segment and quarantine as immutable lineage. Never rewrite or publish the failed segment in place.",
+    "origin_counts": "Record provider-observed-five-minute, provider-derived-from-one-minute, and December-synthetic origins separately in segment, raw-evidence, manifest, review, and Campaign 1 binding artifacts.",
+    "fingerprints": "Canonical record fingerprints are sorted by symbol and timestamp. The Program 002 semantic normalized fingerprint, minute-source fingerprints, derivation-ledger fingerprint, February segment identity, raw-evidence fingerprint, manifest SHA-256, and downstream binding must cover both frozen five-minute and new one-minute evidence.",
+    "generic_dataset_identity": "Keep the existing generic OHLCV dataset fingerprint content-based. The Program 002 semantic fingerprint and manifest bind origin and derivation semantics.",
+    "review": "A fresh reviewer must rederive all 312 aggregates from stored one-minute bytes, reproduce all 305 exact comparisons and seven admitted records, and find no material issue before any continuation authority exists."
+  },
+  "expected_counts": {
+    "affected_session_count": 4,
+    "affected_session_expected_five_minute_coordinates": 312,
+    "affected_session_frozen_provider_observed_five_minute_rows": 305,
+    "affected_session_exact_provider_derived_one_minute_rows": 7,
+    "one_minute_source_row_count_minimum": 312,
+    "one_minute_source_row_count_maximum": 1560,
+    "february_provider_observed_five_minute_rows": 19259,
+    "february_provider_derived_one_minute_rows": 7,
+    "february_canonical_rows": 19266,
+    "cumulative_through_february_provider_observed_five_minute_rows": 150141,
+    "cumulative_through_february_december_synthetic_rows": 2,
+    "cumulative_through_february_provider_derived_one_minute_rows": 7,
+    "cumulative_through_february_canonical_rows": 150150,
+    "exposed_block_1_canonical_rows": 508638,
+    "exposed_block_1_provider_observed_five_minute_rows_if_no_later_gap_occurs": 508629,
+    "exposed_block_1_december_synthetic_rows": 2,
+    "exposed_block_1_provider_derived_one_minute_rows": 7,
+    "all_exposed_canonical_rows": 1526538,
+    "context_canonical_rows": 20280,
+    "interpretation": "The one-minute source row count is unknown until an authorized request and must fall within the stated bound while making every target bucket nonempty. Every five-minute canonical count remains frozen; origins are separate evidence."
+  },
+  "research_semantics": {
+    "change": "Exactly seven February provider five-minute omissions may use exact same-provider one-minute aggregates after full-session cross-timeframe equivalence passes.",
+    "fill_clock_effect": "MDY@2021-02-03T16:40:00Z and MDY@2021-02-05T16:45:00Z are frozen 11:40 and 11:45 America/New_York fill clocks. Their derived opens may directly affect later candidate fills; predecessor carry, zero volume, interpolation, or another provider is prohibited.",
+    "other_effects": "All seven derived rows may affect later thirty-minute aggregation, price paths, volume context, capacity, fills, and metrics. This is an explicit prospective data-source and research-semantic change; no candidate result informed it.",
+    "no_outcome_access": "Planning, implementation, source proof, derivation, validation, and review may not execute a real strategy or generate or inspect fills, P&L, returns, ranks, qualification, controlled, or protected results.",
+    "no_independent_ground_truth_claim": "Passing the comparison establishes internal Alpaca cross-timeframe consistency only. It does not establish independent consolidated-tape completeness."
+  },
+  "staged_future_work": [
+    "Obtain a finding-free independent exact-byte review of this plan and merge the plan-only chain through green CI.",
+    "Receive separate user authorization for implementation and the exact four one-minute request chains; this planning authorization is insufficient.",
+    "Implement the narrow one-minute grid, aggregation, comparison, provenance, and failure path with synthetic tests while authority v6 remains revoked.",
+    "Create and independently review a one-use source-proof authority that permits only the four exact one-minute request chains and immutable local proof artifacts; it must permit no canonical admission, remaining bar acquisition, quote acquisition, costs, strategy, qualification, controlled, protected, PAPER, broker, or live action.",
+    "After clean-main preflight, run the four source requests once, freeze evidence, stop, and obtain a fresh raw-to-derived independent review.",
+    "Revoke the source-proof authority, then create and independently review a separate source-bound continuation authority that may admit only the seven reviewed rows and resume the still-frozen acquisition order.",
+    "Any failure preserves all evidence, admits no row, grants no fallback or retry, and returns Program 002 to a control stop."
+  ],
+  "rejected_or_deferred_paths": {
+    "predecessor_close_or_zero_volume_for_february": "Rejected because two omissions are exact fill clocks and the February set includes a consecutive pair.",
+    "raw_trade_reconstruction": "Deferred because provider-issued one-minute all-adjusted bars already encode Alpaca trade-condition and adjustment semantics with a smaller proof and implementation surface.",
+    "alternate_provider_or_full_rebaseline": "Deferred because it would change source, entitlement, adjustment, and cross-provider semantics across substantially more data.",
+    "drop_symbol_session_or_coordinate": "Rejected because it changes the frozen universe or chronology and does not preserve the canonical grid.",
+    "generic_one_minute_fallback": "Rejected. This plan applies only to the seven incident-bound coordinates; any later omission is a new terminal stop."
+  },
+  "existing_context_dataset_disposition": {
+    "dataset_id": "f82aa71d00bc4b0bf7d4c9730a11d2e78e61c37ace64875cd76174da01045a0f",
+    "manifest_sha256": "8b36f4c17bb62612298e5c8a8d4fc0d62bd073cd398d5ab5bc21031093371c68",
+    "fingerprint": "1cf098112f0042e1942a2ec253341b7bae7cc152c40793ffb11967785bdcd87f",
+    "projection_id": "2822d5e3b7bb314043667d83c4196ffbdbb909317f189501112146cecde42618",
+    "projection_sha256": "6862a22819d49c5bc740b89f3bcdff86e1092e7652b266ae602cbb46a6260d99",
+    "disposition": "Reuse exact bytes and identity for same-clock volume context only. Do not relabel, mutate, reacquire, republish, or expand its use."
+  },
+  "unchanged": {
+    "universe_dates_and_chronology": true,
+    "published_five_minute_timeframe": true,
+    "sip_feed": true,
+    "adjustment_all": true,
+    "inclusive_request_bounds": true,
+    "monthly_five_minute_segments_and_pagination_controls": true,
+    "december_completion_ledger": true,
+    "quote_sessions_clocks_and_windows": true,
+    "cost_calibration_procedure": true,
+    "candidate_configurations_and_gates": true,
+    "context_identity_and_use": true,
+    "credential_isolation": true,
+    "raw_immutability": true,
+    "controlled_and_protected_exclusions": true
+  },
+  "launch_control": {
+    "implementation_allowed": false,
+    "network_request_allowed": false,
+    "credentials_allowed": false,
+    "market_data_acquisition_allowed": false,
+    "canonical_admission_allowed": false,
+    "remaining_acquisition_allowed": false,
+    "strategy_execution_allowed": false,
+    "research_qualification_allowed": false,
+    "controlled_evaluation_allowed": false,
+    "protected_holdout_allowed": false,
+    "paper_execution_allowed": false,
+    "broker_writes_allowed": false,
+    "live_execution_allowed": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "plan_fingerprint": "07edec3a871a68f9c0a9d64842d6b8e668bf1c2af77cd885b12c61e27d27e8f8"
+}
