@@ -1,0 +1,121 @@
+{
+  "schema_version": "program-002-acquisition-no-trade-completeness-amendment-independent-review-v1",
+  "review_id": "program-002-acquisition-no-trade-completeness-amendment-independent-review-2026-08-26-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "reviewed_at": "2026-08-26T18:54:32Z",
+  "status": "passed-before-no-trade-completeness-implementation",
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_commit": "61397b58b02ab057d852a7484f2fb99a74d22c17",
+  "base_main_commit": "075bf428c9faa9031f20e2ece00ddbcbc05362ff",
+  "reviewed_amendment": {
+    "path": "config/research/program-002-acquisition-no-trade-completeness-amendment-v1.json",
+    "sha256": "c04991ecec8d9792cc916488c76c6bc5882db5f5677a6bf583ade2f343c17ffd",
+    "fingerprint": "f6540b404cfc12a8885b58c799279239fa3df90a3b8bffe2b950289ee3b4b09c"
+  },
+  "reviewed_incident": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-v1.json",
+    "sha256": "6109b230ce66c2d1bb01d2b50e86e344eaa9c6eeff7a9287477ea066fbfe9076",
+    "fingerprint": "311a355aa22e917f6a343036ad2950d42a2b98479b874604dd3b712282cacd78"
+  },
+  "reviewed_incident_review": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-independent-review-v1.json",
+    "sha256": "f63d6d584b489a166443758d342b9f23a4a5cbe21645b3bb94847f049d9ea34a",
+    "fingerprint": "3d993728e8ecd57086c800c113b78ddf2ab72d19970402a06c177c337f2cb30c"
+  },
+  "reviewed_revoked_authority": {
+    "path": "config/research/program-002-exposed-acquisition-authority-v5.json",
+    "sha256": "949260f3b45f902c67247de25987fdca94a75292137603c4b4996774a4fc7065",
+    "fingerprint": "88ca7a20e80827061f93886b8aee28fa55005a1e87101358bb228b11e2cd9630"
+  },
+  "reviewed_revoked_authority_review": {
+    "path": "config/research/program-002-exposed-acquisition-authority-independent-review-v3.json",
+    "sha256": "bfb89f808e483c033117b6a445194a9f74a340846c55c11f7fd0cfab685ac2f5",
+    "fingerprint": "8faaa972d4bbac9de202e45e50c5cde5c5f37ec66004bfe2e009d9d06a6a4b4a"
+  },
+  "reviewed_revocation_enforcement": {
+    "path": "config/research/program-002-exposed-acquisition-control-stop-enforcement-independent-review-v1.json",
+    "sha256": "07d2cfe2ec9964fae5c4e793866ffecfbb552cd82cbe830950ab2ff052b67c09",
+    "fingerprint": "fea87406ad694226bf55151919cbbc1cd288b2f51b17783f3aaf30b049637c02",
+    "conclusion": "Authority v5 source drift fails closed before credential loading, historical-client construction, or provider requests."
+  },
+  "reviewed_context_dataset": {
+    "dataset_id": "f82aa71d00bc4b0bf7d4c9730a11d2e78e61c37ace64875cd76174da01045a0f",
+    "manifest_sha256": "8b36f4c17bb62612298e5c8a8d4fc0d62bd073cd398d5ab5bc21031093371c68",
+    "fingerprint": "1cf098112f0042e1942a2ec253341b7bae7cc152c40793ffb11967785bdcd87f",
+    "expected_rows": 20280,
+    "observed_rows": 20280,
+    "normalization_version": "ohlcv-normalization-v1",
+    "allowed_use": "same-clock volume context only; no target, benchmark, P&L, or gate",
+    "disposition": "reuse-exact-bytes-without-relabeling-mutation-or-reacquisition"
+  },
+  "reviewed_runtime_evidence": {
+    "attempts": [
+      {
+        "acquisition_attempt_id": "program-002-exposed-acquisition-20260826-v3",
+        "quarantine_identity": "f77d8cebc54a553b0dbbcd56bc5db73c72aa8180f1bc60a77c2defed29981d2a",
+        "quarantine_sha256": "fe4f3de200072d2ef92aec2bd35848313bb7a78a30bedd31886529bf0a449c3d",
+        "raw_record_count": 30029
+      },
+      {
+        "acquisition_attempt_id": "program-002-exposed-acquisition-20260826-v4",
+        "quarantine_identity": "2ed2802bb6df7dfd2964aa5898ef778984f24e4fbcd97424b8eea1e1080c81c0",
+        "quarantine_sha256": "2868e74cc2ac1cf5707d52eacc48f15a57821f2a82f96dd993f9e4890d8e2f3f",
+        "raw_record_count": 30029
+      }
+    ],
+    "segment_journal_sha256": "1223cd77c4d688a99e9b17f44c871c5d9d35a6183bb94612ad03c88ead6090c8",
+    "terminal_attempt_journal_sha256": "cf34c18898f046636780977dd0fd846462b593cc7484daae30d5a89a098498b9",
+    "expected_december_rows": 21840,
+    "provider_observed_december_rows": 21838,
+    "eligible_synthesized_rows": 2,
+    "missing_coordinates": [
+      "MDY@2020-12-04T18:10:00+00:00",
+      "MDY@2020-12-04T18:25:00+00:00"
+    ]
+  },
+  "provider_contract_review": {
+    "official_reference": "https://docs.alpaca.markets/us/docs/market-data-faq",
+    "checked_date": "2026-08-26",
+    "verified_semantics": "A stock bar is emitted only when every OHLCV field is nonzero after eligible-trade aggregation; non-minute bars aggregate emitted minute bars with first open, maximum high, minimum low, last close, and summed volume.",
+    "interpretation": "The amendment's zero-volume continuity row records the absence of a complete provider bar and does not assert that no trade, quote, odd lot, or other market activity occurred."
+  },
+  "checks": {
+    "branch_diff_from_base_adds_only_the_amendment_artifact": true,
+    "amendment_sha256_and_fingerprint_reproduced": true,
+    "bound_artifact_hashes_and_fingerprints_reproduced": true,
+    "original_user_packet_sha256_reproduced": true,
+    "revocation_enforcement_review_is_exactly_bound": true,
+    "both_quarantine_hashes_reproduced": true,
+    "both_attempts_have_unique_symbol_timestamp_coordinates": true,
+    "both_attempts_omit_exactly_the_two_allowed_coordinates": true,
+    "each_missing_coordinate_has_one_observed_immediate_predecessor_and_successor": true,
+    "calendar_expected_count_recomputed": true,
+    "provider_observed_and_synthesized_counts_are_separate": true,
+    "eligible_coordinates_are_outside_every_frozen_fill_clock": true,
+    "prior_close_rule_uses_no_future_price": true,
+    "raw_provider_bytes_remain_immutable": true,
+    "generic_missing_bar_tolerance_is_absent": true,
+    "context_dataset_identity_and_reuse_rule_match": true,
+    "feature_execution_and_capacity_effects_are_disclosed": true,
+    "all_launch_and_authority_flags_remain_false": true
+  },
+  "scope_limit": "Independent exact-byte planning review only. No credential value, provider or account endpoint, raw market price, strategy result, controlled or protected data, PAPER or broker state, live state, remote CI, or strategic-allocation-21 state was accessed.",
+  "proof_gaps": [
+    "The reviewer did not prove that no eligible trade or other market activity occurred in either interval; the amendment interprets provider omission under the documented bar contract.",
+    "Current provider behavior, implementation correctness, post-merge source identity, and credential-order preflight remain unproven until their separately reviewed phases."
+  ],
+  "required_next_step": "Implement only the reviewed exact-coordinate synthesis and provenance contract with the listed regressions. Then create acquisition authority v6 bound to the exact implementation, amendment, and review; obtain a finding-free independent authority review and merge through green CI before any credential or provider request.",
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "54a931d8997834a7eca918184c361bc46fd66887d02230111b39f83ccb6a7fd6"
+}

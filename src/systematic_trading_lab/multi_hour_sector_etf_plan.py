@@ -63,11 +63,32 @@ ACQUISITION_PAGINATION_AMENDMENT_RELATIVE_PATH = Path(
 ACQUISITION_PAGINATION_AMENDMENT_REVIEW_RELATIVE_PATH = Path(
     "config/research/program-002-acquisition-pagination-amendment-independent-review-v1.json"
 )
-ACQUISITION_AUTHORITY_RELATIVE_PATH = Path(
+ACQUISITION_AUTHORITY_V5_RELATIVE_PATH = Path(
     "config/research/program-002-exposed-acquisition-authority-v5.json"
 )
-ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH = Path(
+ACQUISITION_AUTHORITY_REVIEW_V3_RELATIVE_PATH = Path(
     "config/research/program-002-exposed-acquisition-authority-independent-review-v3.json"
+)
+ACQUISITION_COMPLETENESS_FAILURE_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-completeness-failure-v1.json"
+)
+ACQUISITION_COMPLETENESS_FAILURE_REVIEW_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-completeness-failure-independent-review-v1.json"
+)
+ACQUISITION_CONTROL_STOP_ENFORCEMENT_REVIEW_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-control-stop-enforcement-independent-review-v1.json"
+)
+ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_RELATIVE_PATH = Path(
+    "config/research/program-002-acquisition-no-trade-completeness-amendment-v1.json"
+)
+ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_REVIEW_RELATIVE_PATH = Path(
+    "config/research/program-002-acquisition-no-trade-completeness-amendment-independent-review-v1.json"
+)
+ACQUISITION_AUTHORITY_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-authority-v6.json"
+)
+ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH = Path(
+    "config/research/program-002-exposed-acquisition-authority-independent-review-v4.json"
 )
 ACQUISITION_CONTROL_REPAIR_REVIEW_RELATIVE_PATH = Path(
     "config/research/program-002-acquisition-control-repair-independent-review-v1.json"
@@ -178,6 +199,48 @@ REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_REVIEW_FINGERPRINT = (
     "11c6c8fd556a3d61893164b89f75653d6ecbd566d28b173bf2c2af9580414c60"
 )
 REVIEWED_ACQUISITION_PAGINATION_PROPOSAL_COMMIT = "63470f4f64d73a456dc1f1a1ac6ceb09354409fc"
+REVIEWED_ACQUISITION_AUTHORITY_V5_SHA256 = (
+    "949260f3b45f902c67247de25987fdca94a75292137603c4b4996774a4fc7065"
+)
+REVIEWED_ACQUISITION_AUTHORITY_V5_FINGERPRINT = (
+    "88ca7a20e80827061f93886b8aee28fa55005a1e87101358bb228b11e2cd9630"
+)
+REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V3_SHA256 = (
+    "bfb89f808e483c033117b6a445194a9f74a340846c55c11f7fd0cfab685ac2f5"
+)
+REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V3_FINGERPRINT = (
+    "8faaa972d4bbac9de202e45e50c5cde5c5f37ec66004bfe2e009d9d06a6a4b4a"
+)
+REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_SHA256 = (
+    "6109b230ce66c2d1bb01d2b50e86e344eaa9c6eeff7a9287477ea066fbfe9076"
+)
+REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_FINGERPRINT = (
+    "311a355aa22e917f6a343036ad2950d42a2b98479b874604dd3b712282cacd78"
+)
+REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_REVIEW_SHA256 = (
+    "f63d6d584b489a166443758d342b9f23a4a5cbe21645b3bb94847f049d9ea34a"
+)
+REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_REVIEW_FINGERPRINT = (
+    "3d993728e8ecd57086c800c113b78ddf2ab72d19970402a06c177c337f2cb30c"
+)
+REVIEWED_ACQUISITION_CONTROL_STOP_ENFORCEMENT_REVIEW_SHA256 = (
+    "07d2cfe2ec9964fae5c4e793866ffecfbb552cd82cbe830950ab2ff052b67c09"
+)
+REVIEWED_ACQUISITION_CONTROL_STOP_ENFORCEMENT_REVIEW_FINGERPRINT = (
+    "fea87406ad694226bf55151919cbbc1cd288b2f51b17783f3aaf30b049637c02"
+)
+REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_SHA256 = (
+    "c04991ecec8d9792cc916488c76c6bc5882db5f5677a6bf583ade2f343c17ffd"
+)
+REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_FINGERPRINT = (
+    "f6540b404cfc12a8885b58c799279239fa3df90a3b8bffe2b950289ee3b4b09c"
+)
+REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_REVIEW_SHA256 = (
+    "55add70f3cbda1ae71d6d724f681679f8f50b7be8ef2d1e383adcc8523941722"
+)
+REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_REVIEW_FINGERPRINT = (
+    "54a931d8997834a7eca918184c361bc46fd66887d02230111b39f83ccb6a7fd6"
+)
 REVIEWED_ACQUISITION_CONTROL_REPAIR_REVIEW_SHA256 = (
     "44ee39877e0135092f278b12aa224fbd578a08a59a05dcdd4fd0c1cbaf8feb48"
 )
@@ -194,6 +257,24 @@ REVIEWED_IMPLEMENTATION_PLAN_SHA256 = (
 REVIEWED_PLANNING_REVIEW_SHA256 = "b5023c90a7d748a7c8ac42609bad6d1c394150bc914c51b8b65c73e3d80c17e6"
 REVIEWED_PLANNING_REVIEW_FINGERPRINT = (
     "55e30955789981a4eca129856322207ceb05fa9aebccb1101d892dd92f7a5d33"
+)
+
+PROGRAM_002_REUSED_CONTEXT_DATASET_BINDING = MappingProxyType(
+    {
+        "dataset_id": "f82aa71d00bc4b0bf7d4c9730a11d2e78e61c37ace64875cd76174da01045a0f",
+        "manifest_sha256": "8b36f4c17bb62612298e5c8a8d4fc0d62bd073cd398d5ab5bc21031093371c68",
+        "fingerprint": "1cf098112f0042e1942a2ec253341b7bae7cc152c40793ffb11967785bdcd87f",
+        "normalized_fingerprint": (
+            "1cf098112f0042e1942a2ec253341b7bae7cc152c40793ffb11967785bdcd87f"
+        ),
+        "normalization_version": "ohlcv-normalization-v1",
+        "plan_sha256": REVIEWED_ACQUISITION_PLAN_SHA256,
+        "role": "exposed-context-only",
+        "original_acquisition_authority_sha256": REVIEWED_ACQUISITION_AUTHORITY_V5_SHA256,
+        "allowed_use": "same-clock volume context only; no target, benchmark, P&L, or gate",
+        "expected_rows": 20280,
+        "disposition": "reuse-exact-bytes-without-relabeling-mutation-or-reacquisition",
+    }
 )
 
 _AUTHORITY_KEYS = frozenset(
@@ -347,7 +428,7 @@ def load_program_002_acquisition_authority(repository: Path) -> Program002Author
     repository = repository.resolve()
     path = repository / ACQUISITION_AUTHORITY_RELATIVE_PATH
     raw = path.read_bytes()
-    payload = _load_unique_json(raw, "Program 002 acquisition authority v5")
+    payload = _load_unique_json(raw, "Program 002 acquisition authority v6")
     proof_path = repository / ACCOUNT_ISOLATION_PROOF_RELATIVE_PATH
     proof_review_path = repository / ACCOUNT_ISOLATION_PROOF_REVIEW_RELATIVE_PATH
     proof_raw = proof_path.read_bytes()
@@ -366,11 +447,11 @@ def load_program_002_acquisition_authority(repository: Path) -> Program002Author
     proof_review = _load_unique_json(proof_review_raw, "Program 002 account-isolation proof review")
     _verify_account_isolation_proof(proof)
     _verify_account_isolation_proof_review(proof_review)
-    _verify_acquisition_authority_v5(repository, payload, proof)
+    _verify_acquisition_authority_v6(repository, payload, proof)
     return Program002Authority(
         path,
         hashlib.sha256(raw).hexdigest(),
-        "program-002-exposed-acquisition-2026-08-26-v5",
+        "program-002-exposed-acquisition-2026-08-26-v6",
         payload,
     )
 
@@ -388,7 +469,7 @@ def load_program_002_acquisition_authority_review(
     files = source.get("files")
     if (
         value.get("schema_version")
-        != "program-002-exposed-acquisition-authority-independent-review-v3"
+        != "program-002-exposed-acquisition-authority-independent-review-v4"
         or value.get("program_id") != PROGRAM_ID
         or value.get("status") != "passed-before-market-data-acquisition"
         or value.get("verdict") != "pass"
@@ -456,6 +537,7 @@ def load_program_002_acquisition_plan(repository: Path) -> Program002Acquisition
     repository = repository.resolve()
     authority = load_program_002_acquisition_authority(repository)
     _verify_acquisition_pagination_amendment(repository)
+    _verify_acquisition_no_trade_completeness_amendment(repository)
     return _load_program_002_acquisition_contract(repository, authority)
 
 
@@ -774,7 +856,204 @@ def _verify_acquisition_pagination_amendment(repository: Path) -> None:
     _require_false_authority(review.get("authority"), "pagination amendment review")
 
 
-def _verify_acquisition_authority_v5(
+def _load_reviewed_fingerprinted_artifact(
+    repository: Path,
+    path: Path,
+    sha256: str,
+    fingerprint_value: str,
+    fingerprint_field: str,
+    label: str,
+) -> Mapping[str, Any]:
+    raw = (repository / path).read_bytes()
+    _require_sha256(raw, sha256, label)
+    value = _load_unique_json(raw, label)
+    unsigned = dict(value)
+    if (
+        unsigned.pop(fingerprint_field, None) != fingerprint_value
+        or fingerprint(unsigned) != fingerprint_value
+    ):
+        raise ValueError(f"{label} fingerprint differs")
+    return value
+
+
+def _verify_acquisition_no_trade_completeness_amendment(repository: Path) -> None:
+    incident = _load_reviewed_fingerprinted_artifact(
+        repository,
+        ACQUISITION_COMPLETENESS_FAILURE_RELATIVE_PATH,
+        REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_SHA256,
+        REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_FINGERPRINT,
+        "incident_fingerprint",
+        "Program 002 acquisition completeness failure",
+    )
+    incident_review = _load_reviewed_fingerprinted_artifact(
+        repository,
+        ACQUISITION_COMPLETENESS_FAILURE_REVIEW_RELATIVE_PATH,
+        REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_REVIEW_SHA256,
+        REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_REVIEW_FINGERPRINT,
+        "review_fingerprint",
+        "Program 002 acquisition completeness failure review",
+    )
+    enforcement_review = _load_reviewed_fingerprinted_artifact(
+        repository,
+        ACQUISITION_CONTROL_STOP_ENFORCEMENT_REVIEW_RELATIVE_PATH,
+        REVIEWED_ACQUISITION_CONTROL_STOP_ENFORCEMENT_REVIEW_SHA256,
+        REVIEWED_ACQUISITION_CONTROL_STOP_ENFORCEMENT_REVIEW_FINGERPRINT,
+        "review_fingerprint",
+        "Program 002 acquisition control-stop enforcement review",
+    )
+    amendment = _load_reviewed_fingerprinted_artifact(
+        repository,
+        ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_RELATIVE_PATH,
+        REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_SHA256,
+        REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_FINGERPRINT,
+        "amendment_fingerprint",
+        "Program 002 no-trade completeness amendment",
+    )
+    amendment_review = _load_reviewed_fingerprinted_artifact(
+        repository,
+        ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_REVIEW_RELATIVE_PATH,
+        REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_REVIEW_SHA256,
+        REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_REVIEW_FINGERPRINT,
+        "review_fingerprint",
+        "Program 002 no-trade completeness amendment review",
+    )
+    incident_binding = {
+        "path": ACQUISITION_COMPLETENESS_FAILURE_RELATIVE_PATH.as_posix(),
+        "sha256": REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_SHA256,
+        "fingerprint": REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_FINGERPRINT,
+    }
+    incident_review_binding = {
+        "path": ACQUISITION_COMPLETENESS_FAILURE_REVIEW_RELATIVE_PATH.as_posix(),
+        "sha256": REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_REVIEW_SHA256,
+        "fingerprint": REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_REVIEW_FINGERPRINT,
+    }
+    enforcement_binding = {
+        "path": ACQUISITION_CONTROL_STOP_ENFORCEMENT_REVIEW_RELATIVE_PATH.as_posix(),
+        "sha256": REVIEWED_ACQUISITION_CONTROL_STOP_ENFORCEMENT_REVIEW_SHA256,
+        "fingerprint": REVIEWED_ACQUISITION_CONTROL_STOP_ENFORCEMENT_REVIEW_FINGERPRINT,
+    }
+    v5_binding = {
+        "path": ACQUISITION_AUTHORITY_V5_RELATIVE_PATH.as_posix(),
+        "sha256": REVIEWED_ACQUISITION_AUTHORITY_V5_SHA256,
+        "fingerprint": REVIEWED_ACQUISITION_AUTHORITY_V5_FINGERPRINT,
+    }
+    v5_review_binding = {
+        "path": ACQUISITION_AUTHORITY_REVIEW_V3_RELATIVE_PATH.as_posix(),
+        "sha256": REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V3_SHA256,
+        "fingerprint": REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V3_FINGERPRINT,
+    }
+    expected_coordinates = [
+        {
+            "role": "exposed-block-1",
+            "segment_start": "2020-12-01T14:30:00Z",
+            "segment_end": "2020-12-31T20:55:00Z",
+            "symbol": "MDY",
+            "timestamp": timestamp,
+            "immediate_predecessor": predecessor,
+            "immediate_successor": successor,
+        }
+        for timestamp, predecessor, successor in (
+            ("2020-12-04T18:10:00Z", "2020-12-04T18:05:00Z", "2020-12-04T18:15:00Z"),
+            ("2020-12-04T18:25:00Z", "2020-12-04T18:20:00Z", "2020-12-04T18:30:00Z"),
+        )
+    ]
+    contract = _mapping(amendment.get("amended_completeness_contract"), "completeness contract")
+    synthesis = _mapping(contract.get("synthesis"), "completeness synthesis")
+    context = _mapping(
+        amendment.get("existing_context_dataset_disposition"), "context dataset disposition"
+    )
+    reviewed_enforcement = _mapping(
+        amendment_review.get("reviewed_revocation_enforcement"),
+        "reviewed revocation enforcement",
+    )
+    if (
+        incident.get("schema_version") != "program-002-exposed-acquisition-completeness-failure-v1"
+        or incident.get("program_id") != PROGRAM_ID
+        or incident_review.get("schema_version")
+        != "program-002-exposed-acquisition-completeness-failure-independent-review-v1"
+        or incident_review.get("status") != "passed-control-stop-before-further-acquisition"
+        or incident_review.get("verdict") != "pass"
+        or incident_review.get("findings") != []
+        or incident_review.get("reviewed_incident") != incident_binding
+        or enforcement_review.get("schema_version")
+        != "program-002-exposed-acquisition-control-stop-enforcement-independent-review-v1"
+        or enforcement_review.get("status") != "passed-authority-revocation-before-merge"
+        or enforcement_review.get("verdict") != "pass"
+        or enforcement_review.get("findings") != []
+        or amendment.get("schema_version")
+        != "program-002-acquisition-no-trade-completeness-amendment-v1"
+        or amendment.get("program_id") != PROGRAM_ID
+        or amendment.get("status")
+        != "PROSPECTIVE-NO-TRADE-COMPLETENESS-AMENDMENT-NOT-AUTHORIZED-FOR-ACQUISITION"
+        or amendment.get("reviewed_incident") != incident_binding
+        or amendment.get("incident_review") != incident_review_binding
+        or amendment.get("revoked_acquisition_authority")
+        != {
+            **v5_binding,
+            "disposition": "immutable-and-revoked-before-credential-loading-by-bound-source-drift",
+        }
+        or amendment.get("revocation_enforcement_review") != enforcement_binding
+        or contract.get("eligible_coordinates") != expected_coordinates
+        or synthesis.get("normalization_version")
+        != "program-002-provider-omission-normalization-v2"
+        or synthesis.get("volume") != 0
+        or _mapping(amendment.get("expected_counts"), "completeness counts").get(
+            "maximum_synthesized_rows"
+        )
+        != 2
+        or context
+        != {
+            "dataset_id": PROGRAM_002_REUSED_CONTEXT_DATASET_BINDING["dataset_id"],
+            "manifest_sha256": PROGRAM_002_REUSED_CONTEXT_DATASET_BINDING["manifest_sha256"],
+            "fingerprint": PROGRAM_002_REUSED_CONTEXT_DATASET_BINDING["fingerprint"],
+            "disposition": (
+                "Reuse the exact reviewed gap-free context dataset under its original "
+                "normalization identity. Do not relabel, mutate, or reacquire it. Apply "
+                "program-002-provider-omission-normalization-v2 to newly published exposed "
+                "datasets."
+            ),
+        }
+        or any(
+            value is not False
+            for value in _mapping(amendment.get("launch_control"), "completeness launch").values()
+        )
+        or amendment_review.get("schema_version")
+        != "program-002-acquisition-no-trade-completeness-amendment-independent-review-v1"
+        or amendment_review.get("status") != "passed-before-no-trade-completeness-implementation"
+        or amendment_review.get("verdict") != "pass"
+        or amendment_review.get("findings") != []
+        or amendment_review.get("reviewed_amendment")
+        != {
+            "path": ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_FINGERPRINT,
+        }
+        or amendment_review.get("reviewed_incident") != incident_binding
+        or amendment_review.get("reviewed_incident_review") != incident_review_binding
+        or amendment_review.get("reviewed_revoked_authority") != v5_binding
+        or amendment_review.get("reviewed_revoked_authority_review") != v5_review_binding
+        or reviewed_enforcement.get("path") != enforcement_binding["path"]
+        or reviewed_enforcement.get("sha256") != enforcement_binding["sha256"]
+        or reviewed_enforcement.get("fingerprint") != enforcement_binding["fingerprint"]
+        or any(
+            value is not True
+            for value in _mapping(
+                amendment_review.get("checks"), "completeness review checks"
+            ).values()
+        )
+    ):
+        raise ValueError("Program 002 no-trade completeness amendment differs")
+    for value, label in (
+        (incident, "completeness failure"),
+        (incident_review, "completeness failure review"),
+        (enforcement_review, "control-stop enforcement review"),
+        (amendment, "no-trade completeness amendment"),
+        (amendment_review, "no-trade completeness amendment review"),
+    ):
+        _require_false_authority(value.get("authority"), label)
+
+
+def _verify_acquisition_authority_v6(
     repository: Path, payload: Mapping[str, Any], proof: Mapping[str, Any]
 ) -> None:
     unsigned = dict(payload)
@@ -782,10 +1061,11 @@ def _verify_acquisition_authority_v5(
     source = _mapping(payload.get("source_binding"), "acquisition authority source binding")
     files = source.get("files")
     if (
-        payload.get("schema_version") != "program-002-exposed-acquisition-authority-v5"
-        or payload.get("authority_id") != "program-002-exposed-acquisition-2026-08-26-v5"
+        payload.get("schema_version") != "program-002-exposed-acquisition-authority-v6"
+        or payload.get("authority_id") != "program-002-exposed-acquisition-2026-08-26-v6"
         or payload.get("program_id") != PROGRAM_ID
         or payload.get("status") != "active-until-complete-or-terminal-blocker"
+        or payload.get("issued_date") != "2026-08-26"
         or payload.get("source_authorization")
         != {
             "kind": "user-supplied-authorization-packet",
@@ -810,15 +1090,17 @@ def _verify_acquisition_authority_v5(
     ):
         raise ValueError("Program 002 acquisition authority identity or source differs")
     if payload.get("supersedes") != {
-        "path": ACQUISITION_AUTHORITY_V4_RELATIVE_PATH.as_posix(),
-        "sha256": REVIEWED_ACQUISITION_AUTHORITY_V4_SHA256,
-        "disposition": "immutable-runtime-failed-on-pagination-resource-ceiling",
+        "path": ACQUISITION_AUTHORITY_V5_RELATIVE_PATH.as_posix(),
+        "sha256": REVIEWED_ACQUISITION_AUTHORITY_V5_SHA256,
+        "disposition": "immutable-and-revoked-before-credential-loading-by-bound-source-drift",
     }:
         raise ValueError("Program 002 acquisition authority supersession differs")
     expected_bindings = _expected_acquisition_authority_bindings()
     if payload.get("bindings") != expected_bindings:
         raise ValueError("Program 002 acquisition authority bindings differ")
     for binding in expected_bindings.values():
+        if "path" not in binding:
+            continue
         _require_sha256(
             (repository / str(binding["path"])).read_bytes(),
             str(binding["sha256"]),
@@ -856,6 +1138,7 @@ def _verify_acquisition_authority_v5(
         "broker_writes",
         "live_execution",
         "strategic_allocation_21_access",
+        "context_dataset_reacquisition_relabel_mutation_or_republication",
     } or any(value is not True for value in prohibited.values()):
         raise ValueError("Program 002 prohibited acquisition scope differs")
 
@@ -960,6 +1243,42 @@ def _expected_acquisition_authority_bindings() -> Mapping[str, Any]:
             "sha256": REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_REVIEW_SHA256,
             "fingerprint": REVIEWED_ACQUISITION_PAGINATION_AMENDMENT_REVIEW_FINGERPRINT,
         },
+        "revoked_acquisition_authority": {
+            "path": ACQUISITION_AUTHORITY_V5_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_AUTHORITY_V5_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_AUTHORITY_V5_FINGERPRINT,
+        },
+        "revoked_acquisition_authority_review": {
+            "path": ACQUISITION_AUTHORITY_REVIEW_V3_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V3_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_AUTHORITY_REVIEW_V3_FINGERPRINT,
+        },
+        "acquisition_completeness_failure": {
+            "path": ACQUISITION_COMPLETENESS_FAILURE_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_FINGERPRINT,
+        },
+        "acquisition_completeness_failure_review": {
+            "path": ACQUISITION_COMPLETENESS_FAILURE_REVIEW_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_REVIEW_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_COMPLETENESS_FAILURE_REVIEW_FINGERPRINT,
+        },
+        "acquisition_control_stop_enforcement_review": {
+            "path": ACQUISITION_CONTROL_STOP_ENFORCEMENT_REVIEW_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_CONTROL_STOP_ENFORCEMENT_REVIEW_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_CONTROL_STOP_ENFORCEMENT_REVIEW_FINGERPRINT,
+        },
+        "acquisition_no_trade_completeness_amendment": {
+            "path": ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_FINGERPRINT,
+        },
+        "acquisition_no_trade_completeness_amendment_review": {
+            "path": ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_REVIEW_RELATIVE_PATH.as_posix(),
+            "sha256": REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_REVIEW_SHA256,
+            "fingerprint": REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_REVIEW_FINGERPRINT,
+        },
+        "reused_context_dataset": dict(PROGRAM_002_REUSED_CONTEXT_DATASET_BINDING),
         "regulatory_fee_source": {
             "path": COST_MODEL_RELATIVE_PATH.as_posix(),
             "sha256": REVIEWED_COST_MODEL_SHA256,
@@ -971,10 +1290,9 @@ def _expected_acquisition_authority_bindings() -> Mapping[str, Any]:
 def _expected_acquisition_scope(plan: Mapping[str, Any]) -> Mapping[str, Any]:
     data = _mapping(plan.get("data_classes"), "acquisition data classes")
     exposed = _mapping(data.get("A_exposed_research_and_development"), "exposed acquisition data")
-    context = _mapping(data.get("B_context_only"), "context acquisition data")
     quotes = _mapping(plan.get("quote_cost_calibration"), "quote calibration")
     bars = _mapping(plan.get("historical_bars"), "historical bars")
-    datasets = [context.get("exposed_dataset"), *list(exposed.get("datasets", []))]
+    datasets = list(exposed.get("datasets", []))
     return {
         "symbols": quotes.get("symbols"),
         "bars": {

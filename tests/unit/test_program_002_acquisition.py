@@ -17,7 +17,6 @@ import pytest
 
 import systematic_trading_lab.program_002_acquisition as acquisition
 from systematic_trading_lab.calendar import expected_bar_timestamps, expected_sessions
-from systematic_trading_lab.catalog import DatasetCatalog
 from systematic_trading_lab.config import non_broker_subprocess_environment
 from systematic_trading_lab.datasets import DatasetService
 from systematic_trading_lab.domain import OHLCVBar, Timeframe
@@ -26,6 +25,9 @@ from systematic_trading_lab.multi_hour_sector_etf_plan import (
     ACQUISITION_AUTHORITY_RELATIVE_PATH,
     ACQUISITION_AUTHORITY_REVIEW_RELATIVE_PATH,
     ACQUISITION_SOURCE_PATHS,
+    PROGRAM_002_REUSED_CONTEXT_DATASET_BINDING,
+    REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_FINGERPRINT,
+    REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_SHA256,
     Program002AcquisitionPlan,
     Program002Authority,
 )
@@ -60,10 +62,10 @@ _REPOSITORY = Path(__file__).resolve().parents[2]
 _ATTEMPT = "synthetic-attempt-1"
 
 
-def _v5_plan() -> Program002AcquisitionPlan:
+def _v6_plan() -> Program002AcquisitionPlan:
     plan = load_plan(_REPOSITORY)
     payload = {
-        "schema_version": "program-002-exposed-acquisition-authority-v5",
+        "schema_version": "program-002-exposed-acquisition-authority-v6",
         "bindings": {
             "acquisition_control_amendment": {
                 "sha256": plan.control_sha256,
@@ -74,6 +76,11 @@ def _v5_plan() -> Program002AcquisitionPlan:
                 "fingerprint": plan.provider_contract_evidence_fingerprint,
             },
             "account_isolation_proof": {"sha256": "1" * 64, "fingerprint": "2" * 64},
+            "acquisition_no_trade_completeness_amendment": {
+                "sha256": REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_SHA256,
+                "fingerprint": REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_FINGERPRINT,
+            },
+            "reused_context_dataset": dict(PROGRAM_002_REUSED_CONTEXT_DATASET_BINDING),
         },
         "account_isolation": {
             "proof_accepted": True,
@@ -85,7 +92,7 @@ def _v5_plan() -> Program002AcquisitionPlan:
     authority = Program002Authority(
         plan.path.parent / ACQUISITION_AUTHORITY_RELATIVE_PATH.name,
         "5" * 64,
-        "program-002-exposed-acquisition-2026-08-26-v5",
+        "program-002-exposed-acquisition-2026-08-26-v6",
         payload,
     )
     return replace(plan, authority=authority)
@@ -118,6 +125,102 @@ def _page_at(timestamp: str) -> HttpPage:
     )
 
 
+def _december_2020_segment() -> acquisition.RequestSegment:
+    segment = next(
+        item
+        for item in bar_segments(load_plan(_REPOSITORY), "exposed-block-1")
+        if item.params["start"] == "2020-12-01T14:30:00Z"
+    )
+    return replace(segment, params={**segment.params, "symbols": "MDY"})
+
+
+def _december_2020_page(segment: acquisition.RequestSegment, omitted: frozenset[str]) -> HttpPage:
+    timestamps = expected_bar_timestamps(
+        datetime.fromisoformat(segment.params["start"].replace("Z", "+00:00")),
+        datetime.fromisoformat(segment.params["end"].replace("Z", "+00:00")),
+        Timeframe.FIVE_MINUTES,
+    )
+    bars = [
+        {
+            "t": timestamp.isoformat().replace("+00:00", "Z"),
+            "o": index + 1,
+            "h": index + 1,
+            "l": index + 1,
+            "c": index + 1,
+            "v": index + 1,
+        }
+        for index, timestamp in enumerate(timestamps)
+        if timestamp.isoformat().replace("+00:00", "Z") not in omitted
+    ]
+    return HttpPage(
+        200,
+        json.dumps(
+            {"bars": {"MDY": bars}, "next_page_token": None}, separators=(",", ":")
+        ).encode(),
+        {"X-Request-ID": "synthetic"},
+    )
+
+
+def _december_2020_plan() -> Program002AcquisitionPlan:
+    plan = load_plan(_REPOSITORY)
+    payload = json.loads(json.dumps(dict(plan.payload)))
+    datasets = payload["data_classes"]["A_exposed_research_and_development"]["datasets"]
+    target = next(item for item in datasets if item["role"] == "exposed-block-1")
+    target.update(
+        {
+            "start_date": "2020-12-01",
+            "end_date": "2020-12-31",
+            "inclusive_utc_bar_open_start": "2020-12-01T14:30:00Z",
+            "inclusive_utc_bar_open_end": "2020-12-31T20:55:00Z",
+            "expected_rows": 21840,
+            "xnys_sessions": 22,
+        }
+    )
+    return replace(plan, payload=payload)
+
+
+def _december_2020_all_symbol_pages(
+    plan: Program002AcquisitionPlan,
+    segment: acquisition.RequestSegment,
+    omitted: frozenset[tuple[str, str]],
+) -> tuple[HttpPage, ...]:
+    timestamps = expected_bar_timestamps(
+        datetime.fromisoformat(segment.params["start"].replace("Z", "+00:00")),
+        datetime.fromisoformat(segment.params["end"].replace("Z", "+00:00")),
+        Timeframe.FIVE_MINUTES,
+    )
+    symbols = tuple(plan.payload["universe"]["symbols"])
+    pages = []
+    for page_index in range(0, len(symbols), 5):
+        page_symbols = symbols[page_index : page_index + 5]
+        bars = {
+            symbol: [
+                {
+                    "t": timestamp.isoformat().replace("+00:00", "Z"),
+                    "o": index + 1,
+                    "h": index + 1,
+                    "l": index + 1,
+                    "c": index + 1,
+                    "v": index + 1,
+                }
+                for index, timestamp in enumerate(timestamps)
+                if (symbol, timestamp.isoformat().replace("+00:00", "Z")) not in omitted
+            ]
+            for symbol in page_symbols
+        }
+        next_token = f"page-{page_index // 5 + 2}" if page_index + 5 < len(symbols) else None
+        pages.append(
+            HttpPage(
+                200,
+                json.dumps(
+                    {"bars": bars, "next_page_token": next_token}, separators=(",", ":")
+                ).encode(),
+                {"X-Request-ID": f"synthetic-{page_index // 5 + 1}"},
+            )
+        )
+    return tuple(pages)
+
+
 def test_exact_bar_query_and_raw_bytes() -> None:
     segment = bar_segments(load_plan(_REPOSITORY), "exposed-block-1")[0]
     seen: list[str] = []
@@ -132,6 +235,200 @@ def test_exact_bar_query_and_raw_bytes() -> None:
     assert "sort=asc" in seen[0] and "limit=10000" in seen[0]
     assert acquired.pages[0].body == _page().body
     assert acquired.normalized_records[0]["symbol"] == "SPY"
+
+
+def test_exact_provider_omissions_complete_causally_and_all_other_gaps_fail() -> None:
+    segment = _december_2020_segment()
+    omissions = frozenset({"2020-12-04T18:10:00Z", "2020-12-04T18:25:00Z"})
+    acquired = acquire_segment(segment, lambda _: _december_2020_page(segment, omissions))
+    completed = acquisition._complete_bar_segment(("MDY",), "exposed-block-1", segment, acquired)
+
+    assert len(completed.normalized_records) == len(acquired.normalized_records) + 2
+    assert [item["timestamp"] for item in completed.completion_ledger] == sorted(omissions)
+    assert not any(str(item["t"]) in omissions for item in completed.raw_records)
+    for item in completed.completion_ledger:
+        predecessor = next(
+            record
+            for record in acquired.raw_records
+            if record["t"] == item["source_predecessor_timestamp"]
+        )
+        assert item["canonical_record"] == {
+            "close": str(predecessor["c"]),
+            "high": str(predecessor["c"]),
+            "low": str(predecessor["c"]),
+            "open": str(predecessor["c"]),
+            "symbol": "MDY",
+            "timestamp": item["timestamp"],
+            "volume": 0,
+        }
+
+    observed = acquire_segment(segment, lambda _: _december_2020_page(segment, frozenset()))
+    unchanged = acquisition._complete_bar_segment(("MDY",), "exposed-block-1", segment, observed)
+    assert not unchanged.completion_ledger
+    assert (
+        next(
+            item
+            for item in unchanged.normalized_records
+            if item["timestamp"] == "2020-12-04T18:10:00Z"
+        )["volume"]
+        > 0
+    )
+
+    foreign_gap = frozenset({"2020-12-04T18:35:00Z"})
+    invalid = acquire_segment(segment, lambda _: _december_2020_page(segment, foreign_gap))
+    with pytest.raises(Program002AcquisitionError, match="monthly bar segment"):
+        acquisition._complete_bar_segment(("MDY",), "exposed-block-1", segment, invalid)
+
+
+@pytest.mark.parametrize(
+    "omissions",
+    (
+        frozenset({"2020-12-01T14:30:00Z"}),
+        frozenset({"2020-12-31T20:55:00Z"}),
+        frozenset({"2020-12-04T18:10:00Z", "2020-12-04T18:15:00Z"}),
+        frozenset({"2020-12-03T20:55:00Z", "2020-12-04T14:30:00Z"}),
+    ),
+    ids=("leading", "trailing", "consecutive", "cross-session"),
+)
+def test_unbounded_provider_omission_shapes_fail_closed(omissions: frozenset[str]) -> None:
+    segment = _december_2020_segment()
+    acquired = acquire_segment(segment, lambda _: _december_2020_page(segment, omissions))
+    with pytest.raises(Program002AcquisitionError, match="monthly bar segment"):
+        acquisition._complete_bar_segment(("MDY",), "exposed-block-1", segment, acquired)
+
+
+def test_context_reacquisition_and_republication_are_prohibited(tmp_path: Path) -> None:
+    plan = load_plan(_REPOSITORY)
+    with pytest.raises(Program002AcquisitionError, match="must be reused"):
+        acquire_role_segments(
+            plan,
+            "exposed-context-only",
+            StorageLayout(tmp_path),
+            lambda _: (_ for _ in ()).throw(AssertionError("transport called")),
+            acquisition_attempt_id=_ATTEMPT,
+        )
+    with pytest.raises(Program002AcquisitionError, match="must be reused"):
+        publish_role_dataset_from_artifacts(
+            plan,
+            "exposed-context-only",
+            (),
+            StorageLayout(tmp_path),
+            datetime.now(UTC),
+            acquisition_attempt_id=_ATTEMPT,
+        )
+
+
+def test_completed_segment_reloads_from_provider_raw_and_rejects_ledger_tamper(
+    tmp_path: Path,
+) -> None:
+    plan = load_plan(_REPOSITORY)
+    role = "exposed-block-1"
+    segment = _december_2020_segment()
+    omissions = frozenset({"2020-12-04T18:10:00Z", "2020-12-04T18:25:00Z"})
+    acquired = acquire_segment(segment, lambda _: _december_2020_page(segment, omissions))
+    completed = acquisition._complete_bar_segment(("MDY",), role, segment, acquired)
+    identity = "a" * 64
+    record = acquisition._segment_record(
+        acquisition._BAR_SEGMENT_SCHEMA,
+        identity,
+        segment,
+        completed,
+        role=role,
+        plan_sha256=plan.sha256,
+        authority_sha256=plan.authority.sha256,
+        acquisition_attempt_id=_ATTEMPT,
+    )
+    raw_text = "".join(canonical_json(item) + "\n" for item in acquired.raw_records)
+    layout = StorageLayout(tmp_path)
+    assert layout.publish(
+        identity,
+        {
+            "segment.json": canonical_json(record) + "\n",
+            "raw-records.jsonl": raw_text,
+            "raw-page-0001.json": acquired.pages[0].body,
+        },
+    )
+
+    loaded = acquisition._load_segment_artifact(
+        layout,
+        identity,
+        segment,
+        acquisition._BAR_SEGMENT_SCHEMA,
+        role=role,
+        plan_sha256=plan.sha256,
+        authority_sha256=plan.authority.sha256,
+    )
+    assert canonicalize(loaded.completion_ledger) == canonicalize(completed.completion_ledger)
+    assert (layout.dataset(identity) / "raw-records.jsonl").read_text() == raw_text
+    assert not any(timestamp in raw_text for timestamp in omissions)
+
+    tampered = json.loads((layout.dataset(identity) / "segment.json").read_text())
+    tampered["processing"]["completion_ledger"][0]["canonical_record"]["open"] = "999"
+    tampered["processing"]["completion_ledger_fingerprint"] = fingerprint(
+        tuple(tampered["processing"]["completion_ledger"])
+    )
+    tampered["content_identity"] = fingerprint(
+        {key: value for key, value in tampered.items() if key != "content_identity"}
+    )
+    (layout.dataset(identity) / "segment.json").write_text(
+        canonical_json(tampered) + "\n", encoding="utf-8"
+    )
+    with pytest.raises(Program002AcquisitionError, match="processing differs"):
+        acquisition._load_segment_artifact(
+            layout,
+            identity,
+            segment,
+            acquisition._BAR_SEGMENT_SCHEMA,
+            role=role,
+            plan_sha256=plan.sha256,
+            authority_sha256=plan.authority.sha256,
+        )
+
+
+def test_exact_omissions_publish_end_to_end_with_semantic_identity(tmp_path: Path) -> None:
+    plan = _december_2020_plan()
+    role = "exposed-block-1"
+    segment = bar_segments(plan, role)[0]
+    omissions = frozenset(
+        {
+            ("MDY", "2020-12-04T18:10:00Z"),
+            ("MDY", "2020-12-04T18:25:00Z"),
+        }
+    )
+    pages = iter(_december_2020_all_symbol_pages(plan, segment, omissions))
+    layout = StorageLayout(tmp_path)
+    segment_ids = acquire_role_segments(
+        plan,
+        role,
+        layout,
+        lambda _: next(pages),
+        acquisition_attempt_id=_ATTEMPT,
+        pace=lambda: None,
+    )
+    published = publish_role_dataset_from_artifacts(
+        plan,
+        role,
+        segment_ids,
+        layout,
+        datetime.now(UTC),
+        acquisition_attempt_id=_ATTEMPT,
+    )
+
+    manifest = published.manifest
+    assert published.bar_count == 21840
+    assert manifest["validation_evidence"]["provider_observed_bar_count"] == 21838
+    assert manifest["validation_evidence"]["synthesized_bar_count"] == 2
+    assert manifest["normalized_fingerprint"] != manifest["identity"]["fingerprint"]
+    assert DatasetService(layout).validate(published.dataset_id)["valid"] is True
+    raw_records = tuple(
+        json.loads(line)
+        for line in (layout.dataset(segment_ids[0]) / "raw-records.jsonl").read_text().splitlines()
+    )
+    assert not any((str(item["symbol"]), str(item["t"])) in omissions for item in raw_records)
+    assert [item["timestamp"] for item in manifest["validation_evidence"]["completion_ledger"]] == [
+        "2020-12-04T18:10:00Z",
+        "2020-12-04T18:25:00Z",
+    ]
 
 
 def test_pagination_drains_underfilled_pages_and_rejects_repeat_and_ceiling(
@@ -200,7 +497,7 @@ def test_terminal_attempt_journal_records_failed_segment(tmp_path: Path) -> None
     with pytest.raises(Program002AcquisitionError, match="malformed provider payload"):
         acquire_role_segments(
             plan,
-            "exposed-context-only",
+            "exposed-block-1",
             StorageLayout(tmp_path),
             lambda _: HttpPage(200, b"{", {}),
             acquisition_attempt_id=_ATTEMPT,
@@ -271,7 +568,7 @@ def test_malformed_transport_records_and_duplicate_keys_fail_closed(tmp_path: Pa
 
 def test_extreme_json_numbers_preserve_failure_evidence(tmp_path: Path) -> None:
     plan = load_plan(_REPOSITORY)
-    segment = bar_segments(plan, "exposed-context-only")[0]
+    segment = bar_segments(plan, "exposed-block-1")[0]
     decimal_body = (
         b'{"bars":{"SPY":[{"t":"'
         + segment.params["start"].encode()
@@ -281,7 +578,7 @@ def test_extreme_json_numbers_preserve_failure_evidence(tmp_path: Path) -> None:
     with pytest.raises(Program002AcquisitionError, match="canonical evidence bound"):
         acquire_role_segments(
             plan,
-            "exposed-context-only",
+            "exposed-block-1",
             decimal_layout,
             lambda _: HttpPage(200, decimal_body, {}),
             acquisition_attempt_id=_ATTEMPT,
@@ -549,7 +846,10 @@ def test_volume_context_projection_contains_only_cumulative_volume() -> None:
         for index in range(24)
     )
     artifact = derive_volume_context_projection(
-        bars, source_dataset_id="dataset", source_dataset_fingerprint="fp"
+        bars,
+        source_dataset_id="dataset",
+        source_dataset_fingerprint="fp",
+        source_dataset_normalized_fingerprint="normalized",
     )
     assert artifact["rows"] == (
         {
@@ -558,6 +858,7 @@ def test_volume_context_projection_contains_only_cumulative_volume() -> None:
             "cumulative_volume_0930_1130": 7,
             "source_dataset_id": "dataset",
             "source_dataset_fingerprint": "fp",
+            "source_dataset_normalized_fingerprint": "normalized",
         },
     )
 
@@ -594,14 +895,19 @@ def test_volume_context_projection_requires_complete_planned_grid() -> None:
         bars,
         source_dataset_id="dataset",
         source_dataset_fingerprint="fingerprint",
+        source_dataset_normalized_fingerprint="normalized-fingerprint",
         plan_sha256=plan.sha256,
     )
     assert len(artifact["rows"]) == 20 * 13
-    acquisition._validate_context_projection_rows(artifact, plan, "dataset", "fingerprint")
+    acquisition._validate_context_projection_rows(
+        artifact, plan, "dataset", "fingerprint", "normalized-fingerprint"
+    )
     malformed = dict(artifact)
     malformed["rows"] = artifact["rows"][:-1]
     with pytest.raises(Program002AcquisitionError, match="coverage"):
-        acquisition._validate_context_projection_rows(malformed, plan, "dataset", "fingerprint")
+        acquisition._validate_context_projection_rows(
+            malformed, plan, "dataset", "fingerprint", "normalized-fingerprint"
+        )
 
 
 def test_context_projection_publish_load_and_tamper(
@@ -636,18 +942,18 @@ def test_context_projection_publish_load_and_tamper(
     )
     manifest = {
         "identity": {"dataset_id": "dataset", "fingerprint": "fingerprint"},
-        "program_002": {
-            "role": "exposed-context-only",
-            "plan_sha256": plan.sha256,
-            "acquisition_authority_sha256": plan.authority.sha256,
-        },
+        "normalized_fingerprint": "normalized-fingerprint",
     }
-    monkeypatch.setattr(DatasetCatalog, "get", lambda *_: manifest)
-    monkeypatch.setattr(DatasetService, "load_bars", lambda *_: bars)
+    monkeypatch.setattr(
+        acquisition,
+        "_load_reused_context_dataset",
+        lambda *_: (manifest, bars),
+    )
     layout = StorageLayout(tmp_path)
     path, artifact, created = acquisition.publish_volume_context_projection(plan, layout, "dataset")
     assert created
     assert artifact["acquisition_authority_sha256"] == plan.authority.sha256
+    assert artifact["source_dataset_normalized_fingerprint"] == "normalized-fingerprint"
     assert canonicalize(
         acquisition.load_volume_context_projection(layout, path.stem, "dataset", plan)
     ) == canonicalize(artifact)
@@ -662,6 +968,90 @@ def test_context_projection_publish_load_and_tamper(
     assert canonicalize(
         acquisition.load_volume_context_projection(layout, path.stem, "dataset", plan)
     ) == canonicalize(artifact)
+
+
+def test_reused_context_dataset_requires_exact_v1_manifest_and_validation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    dataset_id = "context-dataset"
+    fingerprint_value = "1" * 64
+    old_authority = "2" * 64
+    plan = load_plan(_REPOSITORY)
+    manifest: dict[str, object] = {
+        "dataset_id": dataset_id,
+        "identity": {"dataset_id": dataset_id, "fingerprint": fingerprint_value},
+        "manifest_schema": "program-002-ohlcv-dataset-manifest-v1",
+        "normalization_version": "ohlcv-normalization-v1",
+        "normalized_fingerprint": fingerprint_value,
+        "program_002": {
+            "role": "exposed-context-only",
+            "plan_sha256": plan.sha256,
+            "acquisition_authority_sha256": old_authority,
+            "allowed_use": "same-clock volume context only; no target, benchmark, P&L, or gate",
+            "processing": {
+                "normalization_version": "ohlcv-normalization-v1",
+                "schema_version": "ohlcv-v1",
+            },
+        },
+        "validation_evidence": {"expected_rows": 2, "bar_count": 2},
+    }
+    holder = {"manifest": manifest}
+
+    class FakeCatalog:
+        def get(self, _: str) -> dict[str, object]:
+            return holder["manifest"]
+
+    class FakeDatasetService:
+        def __init__(self, _: StorageLayout, *, read_only: bool = False) -> None:
+            assert read_only is True
+            self.catalog = FakeCatalog()
+
+        def load_bars(self, _: str) -> tuple[object, object]:
+            return object(), object()
+
+    monkeypatch.setattr(acquisition, "DatasetService", FakeDatasetService)
+    layout = StorageLayout(tmp_path)
+    path = layout.dataset(dataset_id) / "manifest.json"
+    path.parent.mkdir(parents=True)
+
+    def bound_plan(value: dict[str, object]) -> Program002AcquisitionPlan:
+        raw = (canonical_json(value) + "\n").encode()
+        path.write_bytes(raw)
+        binding = {
+            "dataset_id": dataset_id,
+            "manifest_sha256": hashlib.sha256(raw).hexdigest(),
+            "fingerprint": fingerprint_value,
+            "normalized_fingerprint": fingerprint_value,
+            "normalization_version": "ohlcv-normalization-v1",
+            "plan_sha256": plan.sha256,
+            "role": "exposed-context-only",
+            "original_acquisition_authority_sha256": old_authority,
+            "allowed_use": "same-clock volume context only; no target, benchmark, P&L, or gate",
+            "expected_rows": 2,
+            "disposition": "reuse-exact-bytes-without-relabeling-mutation-or-reacquisition",
+        }
+        payload = {**dict(plan.authority.payload), "bindings": {"reused_context_dataset": binding}}
+        return replace(plan, authority=replace(plan.authority, payload=payload))
+
+    reused_plan = bound_plan(manifest)
+    loaded, bars = acquisition._load_reused_context_dataset(reused_plan, layout, dataset_id)
+    assert loaded == manifest
+    assert len(bars) == 2
+    with pytest.raises(Program002AcquisitionError, match="dataset differs"):
+        acquisition._load_reused_context_dataset(reused_plan, layout, "other-dataset")
+
+    path.write_bytes(path.read_bytes() + b" ")
+    with pytest.raises(Program002AcquisitionError, match="dataset differs"):
+        acquisition._load_reused_context_dataset(reused_plan, layout, dataset_id)
+
+    v2_manifest = json.loads(json.dumps(manifest))
+    v2_manifest["program_002"]["processing"]["program_002_normalization_version"] = (
+        acquisition._PROGRAM_002_NORMALIZATION_VERSION
+    )
+    holder["manifest"] = v2_manifest
+    v2_plan = bound_plan(v2_manifest)
+    with pytest.raises(Program002AcquisitionError, match="dataset differs"):
+        acquisition._load_reused_context_dataset(v2_plan, layout, dataset_id)
 
 
 def test_final_role_publication_and_correction_parent_excludes_invalid_candidates(
@@ -697,6 +1087,17 @@ def test_final_role_publication_and_correction_parent_excludes_invalid_candidate
         "content_identity": "content",
         "raw_page_sha256_values": [],
         "request_evidence": [{"retrieval_timestamp": "2020-07-25T00:00:00Z"}],
+        "processing": {
+            "normalization_version": "ohlcv-normalization-v1",
+            "schema_version": "ohlcv-v1",
+            "program_002_normalization_version": (acquisition._PROGRAM_002_NORMALIZATION_VERSION),
+            "eligible_completion_coordinates": [],
+            "provider_omission_coordinates": [],
+            "provider_observed_normalized_record_count": len(records),
+            "synthesized_normalized_record_count": 0,
+            "completion_ledger": [],
+            "completion_ledger_fingerprint": fingerprint(()),
+        },
     }
     published = acquisition._publish_normalized_role(
         plan, role, records, [segment], layout, datetime.now(UTC)
@@ -705,6 +1106,17 @@ def test_final_role_publication_and_correction_parent_excludes_invalid_candidate
     assert (
         published.manifest["program_002"]["acquisition_authority_sha256"] == plan.authority.sha256
     )
+    processing = published.manifest["program_002"]["processing"]
+    assert processing["normalized_fingerprint"] == published.manifest["normalized_fingerprint"]
+    assert processing["canonical_bar_fingerprint"] == published.manifest["identity"]["fingerprint"]
+    raw_header = json.loads(
+        (layout.dataset(published.dataset_id) / "raw.jsonl").read_text().splitlines()[0]
+    )
+    assert raw_header["program_002_raw_evidence"]["processing"] == {
+        key: value
+        for key, value in processing.items()
+        if key not in {"calendar_package", "calendar_version"}
+    }
     assert DatasetService(layout).validate(published.dataset_id)["valid"] is True
     assert acquisition._correction_parent(layout, plan, role, "b" * 64) == published.dataset_id
 
@@ -762,10 +1174,10 @@ def test_provider_contract_preflight_and_reviewed_fee_floor_binding() -> None:
         acquisition_authority_preflight(plan)
 
 
-def test_v5_authority_requires_review_and_account_continuity(
+def test_v6_authority_requires_review_and_account_continuity(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    plan = _v5_plan()
+    plan = _v6_plan()
     with pytest.raises(Program002AcquisitionError, match="review|No such file"):
         acquisition_authority_preflight(plan)
 
@@ -850,7 +1262,7 @@ def test_repository_source_preflight_enforces_reviewed_git_lineage(tmp_path: Pat
     authority = Program002Authority(
         authority_path,
         hashlib.sha256(authority_bytes).hexdigest(),
-        "program-002-exposed-acquisition-2026-08-26-v5",
+        "program-002-exposed-acquisition-2026-08-26-v6",
         authority_payload,
     )
     plan = replace(
@@ -907,6 +1319,35 @@ def test_fixed_get_client_and_create_only_cost_artifact(
             "dedicated-key", "dedicated-secret", "paper", plan, (segment,), transport
         )
     monkeypatch.setattr(acquisition, "acquisition_authority_preflight", lambda *_, **__: None)
+    context_segment = bar_segments(plan, "exposed-context-only")[0]
+    with pytest.raises(Program002AcquisitionError, match="exceeds v6 authority"):
+        HistoricalHttpClient(
+            "dedicated-key",
+            "dedicated-secret",
+            "paper",
+            plan,
+            (context_segment,),
+            transport,
+        )
+    with pytest.raises(Program002AcquisitionError, match="exceeds v6 authority"):
+        HistoricalHttpClient(
+            "dedicated-key",
+            "dedicated-secret",
+            "paper",
+            plan,
+            (replace(segment, endpoint="https://foreign.invalid/v2/stocks/bars"),),
+            transport,
+        )
+    with pytest.raises(Program002AcquisitionError, match="exceeds v6 authority"):
+        HistoricalHttpClient(
+            "dedicated-key",
+            "dedicated-secret",
+            "paper",
+            plan,
+            (segment, context_segment),
+            transport,
+        )
+    assert seen == []
     client = HistoricalHttpClient(
         "dedicated-key", "dedicated-secret", "paper", plan, (segment,), transport
     )
@@ -943,7 +1384,8 @@ def test_role_segments_resume_from_verified_create_only_artifacts(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     plan = load_plan(_REPOSITORY)
-    segments = bar_segments(plan, "exposed-context-only")
+    role = "exposed-block-1"
+    segments = bar_segments(plan, role)
     calls: list[str] = []
 
     def transport(url: str) -> HttpPage:
@@ -973,9 +1415,10 @@ def test_role_segments_resume_from_verified_create_only_artifacts(
 
     layout = StorageLayout(tmp_path)
     monkeypatch.setattr(acquisition, "_validate_bar_segment_complete", lambda *_: None)
+    monkeypatch.setattr(acquisition, "_complete_bar_segment", lambda *args: args[-1])
     first = acquire_role_segments(
         plan,
-        "exposed-context-only",
+        role,
         layout,
         transport,
         acquisition_attempt_id=_ATTEMPT,
@@ -987,8 +1430,8 @@ def test_role_segments_resume_from_verified_create_only_artifacts(
             layout,
             identity,
             segment,
-            "program-002-acquisition-segment-v1",
-            role="exposed-context-only",
+            acquisition._BAR_SEGMENT_SCHEMA,
+            role=role,
             plan_sha256=plan.sha256,
             authority_sha256=plan.authority.sha256,
         )
@@ -998,7 +1441,7 @@ def test_role_segments_resume_from_verified_create_only_artifacts(
     assert (
         acquire_role_segments(
             plan,
-            "exposed-context-only",
+            role,
             layout,
             transport,
             acquisition_attempt_id=_ATTEMPT,
@@ -1010,7 +1453,7 @@ def test_role_segments_resume_from_verified_create_only_artifacts(
     with pytest.raises(Program002AcquisitionError, match="bar validation"):
         publish_role_dataset_from_artifacts(
             plan,
-            "exposed-context-only",
+            role,
             first,
             layout,
             datetime.now(UTC),
@@ -1021,7 +1464,7 @@ def test_role_segments_resume_from_verified_create_only_artifacts(
     assert (
         acquire_role_segments(
             plan,
-            "exposed-context-only",
+            role,
             layout,
             transport,
             acquisition_attempt_id=_ATTEMPT,
@@ -1037,7 +1480,7 @@ def test_role_segments_resume_from_verified_create_only_artifacts(
     ):
         acquire_role_segments(
             plan,
-            "exposed-context-only",
+            role,
             layout,
             transport,
             acquisition_attempt_id=_ATTEMPT,
@@ -1058,18 +1501,35 @@ def test_later_acquisition_attempt_creates_child_segment_lineage(
     )
     v5_plan = replace(plan, authority=v5_authority)
     monkeypatch.setattr(acquisition, "_validate_bar_segment_complete", lambda *_: None)
+    monkeypatch.setattr(acquisition, "_complete_bar_segment", lambda *args: args[-1])
 
     def transport(url: str) -> HttpPage:
         return _page_at(dict(parse_qsl(urlparse(url).query))["start"])
 
     layout = StorageLayout(tmp_path)
-    first = acquire_role_segments(
-        v4_plan,
-        "exposed-context-only",
-        layout,
-        transport,
+    role = "exposed-block-1"
+    first_segment = bar_segments(v4_plan, role)[0]
+    acquired = acquire_segment(first_segment, transport, pace=lambda: None)
+    first = (acquisition._segment_identity(v4_plan, role, first_segment, "synthetic-attempt-1"),)
+    legacy = acquisition._segment_record(
+        acquisition._LEGACY_BAR_SEGMENT_SCHEMA,
+        first[0],
+        first_segment,
+        acquired,
+        role=role,
+        plan_sha256=v4_plan.sha256,
+        authority_sha256=v4_authority.sha256,
         acquisition_attempt_id="synthetic-attempt-1",
-        pace=lambda: None,
+    )
+    assert layout.publish(
+        first[0],
+        {
+            "segment.json": canonical_json(legacy) + "\n",
+            "raw-records.jsonl": "".join(
+                canonical_json(item) + "\n" for item in acquired.raw_records
+            ),
+            "raw-page-0001.json": acquired.pages[0].body,
+        },
     )
     valid = json.loads((layout.dataset(first[0]) / "segment.json").read_text())
     assert valid["acquisition_authority_sha256"] == v4_authority.sha256
@@ -1093,8 +1553,8 @@ def test_later_acquisition_attempt_creates_child_segment_lineage(
         acquisition._segment_correction_parent(
             layout,
             v5_plan,
-            bar_segments(v5_plan, "exposed-context-only")[0],
-            "exposed-context-only",
+            bar_segments(v5_plan, role)[0],
+            role,
         )
         == first[0]
     )
@@ -1116,7 +1576,7 @@ def test_later_acquisition_attempt_creates_child_segment_lineage(
     )
     second = acquire_role_segments(
         v5_plan,
-        "exposed-context-only",
+        role,
         layout,
         transport,
         acquisition_attempt_id="synthetic-attempt-2",
@@ -1135,7 +1595,7 @@ def test_incomplete_monthly_segment_is_never_persisted(tmp_path: Path) -> None:
     with pytest.raises(Program002AcquisitionError, match="monthly bar segment"):
         acquire_role_segments(
             plan,
-            "exposed-context-only",
+            "exposed-block-1",
             layout,
             lambda url: _page_at(dict(parse_qsl(urlparse(url).query))["start"]),
             acquisition_attempt_id=_ATTEMPT,
@@ -1161,7 +1621,7 @@ def test_journal_rejects_missing_artifact(tmp_path: Path) -> None:
     with pytest.raises(Program002AcquisitionError, match="journal references missing"):
         acquire_role_segments(
             load_plan(_REPOSITORY),
-            "exposed-context-only",
+            "exposed-block-1",
             layout,
             lambda _: _page(),
             acquisition_attempt_id=_ATTEMPT,
@@ -1174,10 +1634,11 @@ def test_journal_torn_tail_recovery_ignores_stale_repair_files(
 ) -> None:
     plan = load_plan(_REPOSITORY)
     monkeypatch.setattr(acquisition, "_validate_bar_segment_complete", lambda *_: None)
+    monkeypatch.setattr(acquisition, "_complete_bar_segment", lambda *args: args[-1])
     layout = StorageLayout(tmp_path)
     acquire_role_segments(
         plan,
-        "exposed-context-only",
+        "exposed-block-1",
         layout,
         lambda url: _page_at(dict(parse_qsl(urlparse(url).query))["start"]),
         acquisition_attempt_id=_ATTEMPT,
@@ -1194,7 +1655,7 @@ def test_journal_torn_tail_recovery_ignores_stale_repair_files(
     with pytest.raises(Program002AcquisitionError):
         acquire_role_segments(
             plan,
-            "exposed-context-only",
+            "exposed-block-1",
             StorageLayout(tmp_path / "terminal"),
             lambda _: HttpPage(200, b"{", {}),
             acquisition_attempt_id=_ATTEMPT,

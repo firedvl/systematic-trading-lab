@@ -105,6 +105,38 @@ def test_exact_bar_and_quote_bounds_are_checked_before_credentials(
     )
 
 
+def test_context_reacquisition_is_rejected_before_credentials(
+    monkeypatch: MonkeyPatch, tmp_path: Path, capsys: CaptureFixture[str]
+) -> None:
+    repository = Path(__file__).resolve().parents[2]
+    monkeypatch.setattr(cli, "load_plan", load_program_002_account_proof_plan)
+    monkeypatch.setattr(cli, "provider_contract_preflight", lambda _: None)
+    monkeypatch.setattr(cli, "acquisition_authority_preflight", lambda _: None)
+    monkeypatch.setattr(
+        cli, "acquisition_credentials", lambda: (_ for _ in ()).throw(AssertionError())
+    )
+    monkeypatch.setattr(
+        cli, "acquisition_account_environment", lambda: (_ for _ in ()).throw(AssertionError())
+    )
+    assert (
+        cli.main(
+            (
+                "--repository",
+                str(repository),
+                "--data-home",
+                str(tmp_path),
+                "--acquisition-attempt-id",
+                "program-002-context-reuse-test",
+                "--role",
+                "exposed-context-only",
+                "acquire-bars",
+            )
+        )
+        != 0
+    )
+    assert "must be reused" in capsys.readouterr().err
+
+
 def test_cli_imports_no_forbidden_runtime_modules() -> None:
     source = Path(cli.__file__).read_text(encoding="utf-8")
     assert not any(

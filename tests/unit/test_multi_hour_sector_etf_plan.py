@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 from pathlib import Path
@@ -56,12 +57,13 @@ def test_authority_binds_every_reviewed_input_and_keeps_execution_false() -> Non
     )
 
 
-def test_account_proof_keeps_v1_while_acquisition_requires_separate_v5(
+def test_account_proof_keeps_v1_while_acquisition_requires_separate_v6(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     proof = load_program_002_account_proof_plan(_REPOSITORY)
     assert proof.authority.sha256 == REVIEWED_AUTHORITY_SHA256
     plan_module._verify_acquisition_pagination_amendment(_REPOSITORY)
+    plan_module._verify_acquisition_no_trade_completeness_amendment(_REPOSITORY)
     with monkeypatch.context() as context:
         context.setattr(
             plan_module,
@@ -70,11 +72,19 @@ def test_account_proof_keeps_v1_while_acquisition_requires_separate_v5(
         )
         with pytest.raises(ValueError, match="pagination amendment SHA-256"):
             plan_module._verify_acquisition_pagination_amendment(_REPOSITORY)
+    with monkeypatch.context() as context:
+        context.setattr(
+            plan_module,
+            "REVIEWED_ACQUISITION_NO_TRADE_COMPLETENESS_AMENDMENT_SHA256",
+            "0" * 64,
+        )
+        with pytest.raises(ValueError, match="no-trade completeness amendment SHA-256"):
+            plan_module._verify_acquisition_no_trade_completeness_amendment(_REPOSITORY)
 
     monkeypatch.setattr(
         plan_module,
         "ACQUISITION_AUTHORITY_RELATIVE_PATH",
-        Path("config/research/missing-program-002-acquisition-authority-v5.json"),
+        Path("config/research/missing-program-002-acquisition-authority-v6.json"),
     )
     with pytest.raises(FileNotFoundError):
         plan_module.load_program_002_acquisition_plan(_REPOSITORY)
@@ -86,7 +96,7 @@ def test_acquisition_review_requires_exact_false_authority(tmp_path: Path) -> No
     authority = Program002Authority(
         tmp_path / ACQUISITION_AUTHORITY_RELATIVE_PATH,
         "2" * 64,
-        "program-002-exposed-acquisition-2026-08-26-v5",
+        "program-002-exposed-acquisition-2026-08-26-v6",
         {
             "authority_fingerprint": "3" * 64,
             "source_binding": {"source_commit": source_commit, "files": files},
@@ -104,7 +114,7 @@ def test_acquisition_review_requires_exact_false_authority(tmp_path: Path) -> No
         "live_execution": False,
     }
     review = {
-        "schema_version": "program-002-exposed-acquisition-authority-independent-review-v3",
+        "schema_version": "program-002-exposed-acquisition-authority-independent-review-v4",
         "program_id": "multi-hour-sector-etf-research-001",
         "status": "passed-before-market-data-acquisition",
         "verdict": "pass",
@@ -134,6 +144,93 @@ def test_acquisition_review_requires_exact_false_authority(tmp_path: Path) -> No
     path.write_text(canonical_json(review) + "\n", encoding="utf-8")
     with pytest.raises(ValueError, match="review differs"):
         load_program_002_acquisition_authority_review(tmp_path, authority)
+
+
+def test_v6_authority_requires_exact_amendment_context_and_exposed_only_scope() -> None:
+    proof = json.loads(
+        (_REPOSITORY / plan_module.ACCOUNT_ISOLATION_PROOF_RELATIVE_PATH).read_text()
+    )
+    acquisition_plan = json.loads(
+        (_REPOSITORY / plan_module.ACQUISITION_PLAN_RELATIVE_PATH).read_text()
+    )
+    payload = {
+        "schema_version": "program-002-exposed-acquisition-authority-v6",
+        "authority_id": "program-002-exposed-acquisition-2026-08-26-v6",
+        "program_id": plan_module.PROGRAM_ID,
+        "issued_date": "2026-08-26",
+        "status": "active-until-complete-or-terminal-blocker",
+        "source_authorization": {
+            "kind": "user-supplied-authorization-packet",
+            "sha256": "fd1a468fb152c6c18c0babda29c8393507a68558161b325d7f17348422093480",
+        },
+        "source_binding": {
+            "source_commit": "1" * 40,
+            "proof_evidence_commit": plan_module.REVIEWED_ACCOUNT_ISOLATION_PROOF_COMMIT,
+            "relationship": "ancestor-of-clean-synchronized-main-with-identical-bound-files",
+            "files": [
+                {
+                    "path": path,
+                    "sha256": hashlib.sha256((_REPOSITORY / path).read_bytes()).hexdigest(),
+                }
+                for path in plan_module.ACQUISITION_SOURCE_PATHS
+            ],
+        },
+        "bindings": plan_module._expected_acquisition_authority_bindings(),
+        "supersedes": {
+            "path": plan_module.ACQUISITION_AUTHORITY_V5_RELATIVE_PATH.as_posix(),
+            "sha256": plan_module.REVIEWED_ACQUISITION_AUTHORITY_V5_SHA256,
+            "disposition": (
+                "immutable-and-revoked-before-credential-loading-by-bound-source-drift"
+            ),
+        },
+        "authorized_scope": plan_module._expected_acquisition_scope(acquisition_plan),
+        "account_isolation": {
+            "proof_accepted": True,
+            "environment": proof["environment"],
+            "account_identity_hash": proof["account_identity_hash"],
+            "credential_key_id_hash": proof["credential_key_id_hash"],
+        },
+        "prohibited": {
+            key: True
+            for key in (
+                "strategy_execution_on_acquired_data",
+                "strategy_result_generation_or_read",
+                "discovery",
+                "walk_forward",
+                "robustness",
+                "controlled_dataset_acquisition_or_access",
+                "qualification",
+                "protected_holdout",
+                "paper_execution",
+                "broker_writes",
+                "live_execution",
+                "strategic_allocation_21_access",
+                "context_dataset_reacquisition_relabel_mutation_or_republication",
+            )
+        },
+        "authority": {
+            **{key: False for key in plan_module._AUTHORITY_KEYS},
+            "market_data_acquisition": True,
+            "strategy_implementation": True,
+        },
+    }
+    payload["authority_fingerprint"] = fingerprint(payload)
+    plan_module._verify_acquisition_authority_v6(_REPOSITORY, payload, proof)
+
+    tampered = json.loads(json.dumps(payload))
+    tampered["bindings"]["reused_context_dataset"]["dataset_id"] = "0" * 64
+    tampered["authority_fingerprint"] = fingerprint(
+        {key: value for key, value in tampered.items() if key != "authority_fingerprint"}
+    )
+    with pytest.raises(ValueError, match="bindings differ"):
+        plan_module._verify_acquisition_authority_v6(_REPOSITORY, tampered, proof)
+
+    v5 = {**payload, "schema_version": "program-002-exposed-acquisition-authority-v5"}
+    v5["authority_fingerprint"] = fingerprint(
+        {key: value for key, value in v5.items() if key != "authority_fingerprint"}
+    )
+    with pytest.raises(ValueError, match="identity or source differs"):
+        plan_module._verify_acquisition_authority_v6(_REPOSITORY, v5, proof)
 
 
 def test_authority_tampering_fails_before_plan_use(tmp_path: Path) -> None:
