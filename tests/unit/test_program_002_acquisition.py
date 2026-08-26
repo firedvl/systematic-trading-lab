@@ -1049,6 +1049,14 @@ def test_later_acquisition_attempt_creates_child_segment_lineage(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     plan = load_plan(_REPOSITORY)
+    v4_authority = replace(plan.authority, sha256="4" * 64)
+    v4_plan = replace(plan, authority=v4_authority)
+    v5_authority = replace(
+        plan.authority,
+        sha256="5" * 64,
+        payload={"supersedes": {"sha256": v4_authority.sha256}},
+    )
+    v5_plan = replace(plan, authority=v5_authority)
     monkeypatch.setattr(acquisition, "_validate_bar_segment_complete", lambda *_: None)
 
     def transport(url: str) -> HttpPage:
@@ -1056,7 +1064,7 @@ def test_later_acquisition_attempt_creates_child_segment_lineage(
 
     layout = StorageLayout(tmp_path)
     first = acquire_role_segments(
-        plan,
+        v4_plan,
         "exposed-context-only",
         layout,
         transport,
@@ -1064,7 +1072,7 @@ def test_later_acquisition_attempt_creates_child_segment_lineage(
         pace=lambda: None,
     )
     valid = json.loads((layout.dataset(first[0]) / "segment.json").read_text())
-    assert valid["acquisition_authority_sha256"] == plan.authority.sha256
+    assert valid["acquisition_authority_sha256"] == v4_authority.sha256
     stale_alias = layout.datasets / ".stale-segment.tmp"
     stale_alias.mkdir()
     stale_record = {**valid, "parent_segment_id": first[0]}
@@ -1084,8 +1092,8 @@ def test_later_acquisition_attempt_creates_child_segment_lineage(
     assert (
         acquisition._segment_correction_parent(
             layout,
-            plan,
-            bar_segments(plan, "exposed-context-only")[0],
+            v5_plan,
+            bar_segments(v5_plan, "exposed-context-only")[0],
             "exposed-context-only",
         )
         == first[0]
@@ -1093,7 +1101,7 @@ def test_later_acquisition_attempt_creates_child_segment_lineage(
     monkeypatch.setattr(Path, "glob", original_glob)
     foreign = dict(valid)
     foreign["identity"] = "f" * 64
-    foreign["plan_sha256"] = "0" * 64
+    foreign["acquisition_authority_sha256"] = "0" * 64
     foreign["content_identity"] = fingerprint(
         {key: value for key, value in foreign.items() if key != "content_identity"}
     )
@@ -1107,7 +1115,7 @@ def test_later_acquisition_attempt_creates_child_segment_lineage(
         json.dumps({**valid, "identity": "d" * 64}), encoding="utf-8"
     )
     second = acquire_role_segments(
-        plan,
+        v5_plan,
         "exposed-context-only",
         layout,
         transport,
@@ -1116,6 +1124,7 @@ def test_later_acquisition_attempt_creates_child_segment_lineage(
     )
     assert first != second
     record = json.loads((layout.dataset(second[0]) / "segment.json").read_text())
+    assert record["acquisition_authority_sha256"] == v5_authority.sha256
     assert record["acquisition_attempt_id"] == "synthetic-attempt-2"
     assert record["parent_segment_id"] == first[0]
 
