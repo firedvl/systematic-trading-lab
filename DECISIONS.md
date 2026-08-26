@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-26 — Accept Program 002 authority v4 only after finding-free review
+
+- Decision: accept authority v4 SHA-256/fingerprint `4c2f707c1c96a5671422faee41a1b6dcc3e78f42573519c7df38b3e9b1acba0a` / `a9eecc8ffbf2c91fdb66418b73ce920595035ca7b423a1acf2ad7cc0d5f1f8a9` as the prospective retry authority only after its separate finding-free review SHA-256/fingerprint `b47d49774af2e548203a9e125b02cd408b0dcd55037d0ab850cd1402df4c5787` / `baa1df63bd96ed2a8c0c6af0a617d17955defb9b521ddeea4591838df15724ac`. Require normal PR, green CI, merge, clean synchronized main, exact ancestry, and unchanged bound files before credential loading or client construction.
+- Context: source I3 `b88b41f31ee722d4542a5863623d48c7d6214085`, authority A3 `8e8c734ed77ac19cfaf394583a5a5facce07e8b6`, and review R3 `3487d354edf59f6fe9eeac88a0dde670e5664dd1` are consecutive. A3 adds only v4; R3 adds only review v2. The reviewer found no remaining correctness, regression, or evidence-loss gap after checking 25 source hashes, 16 binding hashes, 15 fingerprints, exact scope, numeric failure handling, and fail-closed preflight.
+- Consequences: v4 preserves the exact four bar roles and 657 quote windows. Only market-data acquisition and strategy implementation are true; strategy execution, qualification, controlled/protected access, PAPER, broker writes, and live execution remain false. Branch preflight exits 64 until the chain reaches clean synchronized main. No provider/account endpoint, credential value, market data, strategy result, controlled/protected state, or `strategic-allocation-21` state was accessed during review.
+- Revisit when: a later preflight rejects exact merged main, provider behavior changes the frozen scope, or another acquisition-boundary finding requires a new source and authority version.
+
 ## 2026-08-25 — Reject Program 002 authority v3 and bound provider JSON numbers
 
 - Decision: preserve authority v3 as immutable rejected-before-review history. Reject any provider integer or finite decimal that cannot be converted to canonical evidence within a character budget no larger than its response body. Require authority v4 to bind the numeric repair, rejected v3, its review-failure artifact, the original runtime failure, and unchanged acquisition scope before a new attempt.
