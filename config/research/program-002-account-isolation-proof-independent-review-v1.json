@@ -1,0 +1,64 @@
+{
+  "schema_version": "program-002-account-isolation-proof-independent-review-v1",
+  "review_id": "program-002-account-isolation-proof-independent-review-2026-08-25-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "status": "passed-before-proof-bound-acquisition-authority",
+  "verdict": "pass",
+  "review_date": "2026-08-25",
+  "review_method": "Fresh independent read-only security validation of the exact non-secret proof, frozen account-isolation contract, GET-only implementation, and focused tests.",
+  "reviewed_proof": {
+    "path": "config/research/program-002-account-isolation-proof-v1.json",
+    "sha256": "21800879cb4825dd147214e7a5720fb6d6978b00a887efd0a7789baa4a8d94e7",
+    "fingerprint": "a8a4063837a93d866aa1d0ca4bd3ecdeb6e196fd810efea9104f125588923ba7"
+  },
+  "reviewed_control": {
+    "path": "config/research/program-002-acquisition-control-amendment-v2.json",
+    "sha256": "ecabaf6a46ea24cd88dc7e62aa3e27d78180f57aff7af671840a092747e7b5b5",
+    "fingerprint": "6db1a382621c146f7d389c1997c5dc66c73471f530fcf1e89e1ec1f01eb9685a"
+  },
+  "verified_assertions": {
+    "exact_bytes_and_fingerprint": true,
+    "paper_environment_fixed_host": true,
+    "account_created_on_or_after_boundary": true,
+    "account_active": true,
+    "positions_empty": true,
+    "orders_empty": true,
+    "activity_history_empty": true,
+    "paper_funding_isolation": true,
+    "credential_key_hash_bound": true,
+    "get_only_scope": true,
+    "raw_responses_absent": true,
+    "credential_and_account_values_redacted": true,
+    "market_data_requested": false,
+    "broker_write_requested": false
+  },
+  "verification": {
+    "focused_pytest": "4 passed",
+    "canonical_json": "passed",
+    "sha256_recomputation": "passed",
+    "fingerprint_recomputation": "passed"
+  },
+  "findings": [],
+  "proof_gap": "The independent reviewer did not query Alpaca or inspect current environment values; provider truth and credential continuity remain bound by the reviewed proof execution and are rechecked by the historical client against the proof-bound key-ID hash.",
+  "protected_access": {
+    "credential_values": false,
+    "raw_account_response": false,
+    "market_or_quote_data": false,
+    "strategy_returns_or_candidates": false,
+    "controlled_or_protected_data": false,
+    "paper_broker_or_live_state": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "next_step": "Create and independently review the exact proof-bound Program 002 exposed-acquisition authority v2 before any historical market-data client construction.",
+  "review_fingerprint": "2776ada38e5912f7631bf694fa645854c8cbc0a8539a01ef4fe2472a56386478"
+}
