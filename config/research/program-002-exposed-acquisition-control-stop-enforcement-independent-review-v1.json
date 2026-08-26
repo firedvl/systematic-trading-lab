@@ -1,0 +1,72 @@
+{
+  "schema_version": "program-002-exposed-acquisition-control-stop-enforcement-independent-review-v1",
+  "review_id": "program-002-exposed-acquisition-control-stop-enforcement-independent-review-2026-08-26-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "reviewed_at": "2026-08-26T18:00:45Z",
+  "status": "passed-authority-revocation-before-merge",
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_source_commit": "1104d8973a746a2bb767edffb380ef14c028f261",
+  "parent_commit": "20d2faed1046b065b3c1453c3d84faccf4e96bf7",
+  "reviewed_incident_review": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-independent-review-v1.json",
+    "sha256": "f63d6d584b489a166443758d342b9f23a4a5cbe21645b3bb94847f049d9ea34a",
+    "fingerprint": "3d993728e8ecd57086c800c113b78ddf2ab72d19970402a06c177c337f2cb30c"
+  },
+  "revoked_authority": {
+    "path": "config/research/program-002-exposed-acquisition-authority-v5.json",
+    "sha256": "949260f3b45f902c67247de25987fdca94a75292137603c4b4996774a4fc7065",
+    "fingerprint": "88ca7a20e80827061f93886b8aee28fa55005a1e87101358bb228b11e2cd9630"
+  },
+  "reviewed_source_drift": {
+    "path": "src/systematic_trading_lab/program_002_acquisition.py",
+    "authority_bound_sha256": "f14e63ab0897095718076b700b24290dbb6582f0feaf00f0376ee081e074a61b",
+    "revoked_source_sha256": "2c67985cf2d3edbca312fa57483f74d3e64337564da07c7930a6a0594dae0b78",
+    "change": "Correct the acquisition-authority preflight docstring from reviewed v4 authority to reviewed v5 authority.",
+    "diff_scope": "one file, one line changed"
+  },
+  "verified_assertions": {
+    "reviewed_commit_contains_only_the_bound_source_docstring_correction": true,
+    "changed_file_is_in_acquisition_source_paths": true,
+    "current_source_sha_differs_from_authority_v5_binding": true,
+    "authority_v5_verifier_hashes_every_bound_source_file_during_plan_loading": true,
+    "plan_loading_occurs_before_dedicated_credential_loading": true,
+    "plan_loading_occurs_before_historical_client_construction": true,
+    "clean_synchronized_preflight_fails_closed_on_authority_source_identity": true,
+    "repository_source_preflight_remains_defense_in_depth": true,
+    "acquisition_and_research_semantics_are_unchanged": true,
+    "new_acquisition_requires_a_separate_prospective_authority_and_review": true
+  },
+  "verification": {
+    "focused_credential_stripped_tests": "5 passed",
+    "isolated_clean_synchronized_preflight": {
+      "head_main_origin_main": "1104d8973a746a2bb767edffb380ef14c028f261",
+      "exit_code": 64,
+      "error": "Program 002 acquisition authority identity or source differs",
+      "credential_environment_present": false,
+      "credential_loading_reached": false,
+      "historical_client_construction_reached": false,
+      "provider_request_reached": false
+    },
+    "git_diff_check": "passed"
+  },
+  "proof_gaps": [
+    "The reviewer did not inspect credential values or query provider or account endpoints.",
+    "The existing source-lineage unit test changes another bound source file; the isolated credential-stripped CLI preflight covers this exact source drift.",
+    "Remote CI and the final synchronized-main preflight remain post-merge facts."
+  ],
+  "scope_limit": "No credential value, provider or account endpoint, market or quote data, strategy result, controlled or protected data, PAPER or broker state, live state, or strategic-allocation-21 state was accessed during this review.",
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_step": "Merge through normal review and CI, then confirm the same credential-stripped exit 64 on clean synchronized main. No further acquisition is permitted. The user must close Program 002 or separately authorize a prospective planning phase before any new request or strategy execution.",
+  "review_fingerprint": "fea87406ad694226bf55151919cbbc1cd288b2f51b17783f3aaf30b049637c02"
+}
