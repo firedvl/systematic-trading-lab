@@ -1,0 +1,94 @@
+{
+  "schema_version": "program-002-exposed-acquisition-control-stop-enforcement-independent-review-v2",
+  "review_id": "program-002-exposed-acquisition-control-stop-enforcement-independent-review-2026-08-26-v2",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "reviewed_at": "2026-08-26T22:42:15Z",
+  "status": "passed-authority-v6-revocation-before-merge",
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_source_commit": "0ee88843ff56a1a580475e4608e3e82b66123841",
+  "parent_commit": "cbacbb72d2f1eb4170b7e578534801d8b0b02dda",
+  "reviewed_incident": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-v3.json",
+    "sha256": "ebc8f536d51fd701f9fc26f28630abff9f23a0b5edb3e794a5a3016337273618",
+    "fingerprint": "1f5350eb3f704c343044cd11ac328643fd1ae0939ebeaa030248ce031938b53a"
+  },
+  "reviewed_incident_review": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-independent-review-v2.json",
+    "sha256": "18ee95730f5af8698ff090c74df42774e1294dea8ff5552ad6c3b16495566e53",
+    "fingerprint": "23c20fb78b71c3e527eb5c4f916d58463fdb311daf2a66436c5d32f976047cbf"
+  },
+  "revoked_authority": {
+    "path": "config/research/program-002-exposed-acquisition-authority-v6.json",
+    "sha256": "1d40446ca391c7b9dd5b1e0575c033ba5813d1e921e193c26e401718be3256ec",
+    "fingerprint": "22481c9821e946a86dc32f51de30e6087a31af1a309068b56f4290d5c1590a49"
+  },
+  "revoked_authority_review": {
+    "path": "config/research/program-002-exposed-acquisition-authority-independent-review-v4.json",
+    "sha256": "5bb1fd3bff76589668166aafc20ec133bb39a9b182cfc9314d10803d3cb17ef4",
+    "fingerprint": "59d1605e1353b990f12b5cf51be2ce9b557b5850e8a71c372f1b6ae2a55b76bf"
+  },
+  "reviewed_source_drift": {
+    "path": "src/systematic_trading_lab/program_002_acquisition.py",
+    "authority_bound_sha256": "bfec55457af7beed7f5cca88e951a129ea3b91f9891c023460497eb34d3da822",
+    "revoked_source_sha256": "2aa535f839b7d18e936655dafaaa9bd02d4e31998ecea37a122b77148cc1872a",
+    "change": "Remove the terminal authority version from the acquisition-authority preflight docstring after the February completeness stop.",
+    "diff_scope": "one file, one line changed"
+  },
+  "verified_assertions": {
+    "reviewed_commit_has_the_incident_review_commit_as_sole_parent": true,
+    "reviewed_commit_contains_only_the_bound_source_docstring_change": true,
+    "changed_file_is_in_the_exact_twenty_five_file_authority_source_list": true,
+    "exactly_one_authority_bound_source_hash_differs": true,
+    "current_source_differs_from_authority_v6_binding": true,
+    "authority_v6_loader_hashes_every_bound_source_file": true,
+    "strict_plan_loading_fails_before_provider_contract_preflight": true,
+    "strict_plan_loading_fails_before_account_environment_read": true,
+    "strict_plan_loading_fails_before_credential_loading": true,
+    "strict_plan_loading_fails_before_historical_client_construction": true,
+    "strict_plan_loading_fails_before_any_action_branch_or_transport": true,
+    "corrected_incident_and_review_identities_reproduced": true,
+    "corrected_incident_and_review_authority_flags_are_all_false": true,
+    "acquisition_and_research_semantics_are_unchanged": true,
+    "new_acquisition_requires_a_new_prospective_authority_and_review": true
+  },
+  "verification": {
+    "credential_stripped_cli_preflight": {
+      "exit_code": 64,
+      "error": "Program 002 acquisition authority identity or source differs",
+      "credential_environment_present": false,
+      "credential_loading_reached": false,
+      "historical_client_construction_reached": false,
+      "provider_request_reached": false
+    },
+    "instrumented_offline_cli_order": {
+      "provider_contract_preflight_reached": false,
+      "account_environment_read_reached": false,
+      "credential_loading_reached": false,
+      "historical_client_construction_reached": false,
+      "action_function_reached": false
+    },
+    "ruff_format_check": "passed",
+    "ruff_check": "passed",
+    "git_diff_check": "passed"
+  },
+  "proof_gaps": [
+    "The reviewer did not inspect credential values or query provider or account endpoints.",
+    "The reviewer did not access protected, PAPER, broker, live, quote, cost, or strategy state.",
+    "The full test suite, remote CI, and final synchronized-main preflight remain later checks."
+  ],
+  "scope_limit": "No credential value, provider or account endpoint, new market or quote data, strategy result, controlled or protected data, PAPER or broker state, live state, or strategic-allocation-21 state was accessed during this review.",
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_step": "Merge through normal review and CI, then confirm the same credential-stripped exit 64 on clean synchronized main. Retain the source drift until the authorized prospective planning phase creates and independently reviews a new exact authority. No further acquisition or strategy execution is permitted.",
+  "review_fingerprint": "c06c679fc4c80db479e34c13ce01e9bac0a8d42367561d54b890cf60be086edf"
+}

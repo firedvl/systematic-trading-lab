@@ -1,0 +1,145 @@
+{
+  "schema_version": "program-002-exposed-acquisition-completeness-failure-independent-review-v2",
+  "review_id": "program-002-exposed-acquisition-completeness-failure-independent-review-2026-08-26-v2",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "reviewed_at": "2026-08-26T22:34:39Z",
+  "status": "passed-control-stop-before-authority-revocation",
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_commit": "38989bc50753c0e5980412cec7910d8f7db32efb",
+  "rejected_incident_commit": "d5c1f88db011be893918167fe74496703776e92e",
+  "base_main_commit": "b856518ac4536eb3602d55a6d34db007fd6118d8",
+  "reviewed_rejected_incident": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-v2.json",
+    "sha256": "a8307c50c809e2da45f101495847e3f55a437121e24d2eb5833085c8ece41516",
+    "fingerprint": "f6bf79ca1f2c90183fa0d12295c2a938b46e6da10edc0199405275878022f64f"
+  },
+  "reviewed_review_failure": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-v2-review-failure-v1.json",
+    "sha256": "964682916902869c8231fddf77414a6b6a5afb70d928ea4b2cafd118bb5e9c54",
+    "fingerprint": "7412f36dd435375ce5595f8e6f60dc9ac2447f6d6ea6b9d890635fa81aa74f91"
+  },
+  "reviewed_corrected_incident": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-v3.json",
+    "sha256": "ebc8f536d51fd701f9fc26f28630abff9f23a0b5edb3e794a5a3016337273618",
+    "fingerprint": "1f5350eb3f704c343044cd11ac328643fd1ae0939ebeaa030248ce031938b53a"
+  },
+  "reviewed_authority": {
+    "path": "config/research/program-002-exposed-acquisition-authority-v6.json",
+    "sha256": "1d40446ca391c7b9dd5b1e0575c033ba5813d1e921e193c26e401718be3256ec",
+    "fingerprint": "22481c9821e946a86dc32f51de30e6087a31af1a309068b56f4290d5c1590a49"
+  },
+  "reviewed_authority_review": {
+    "path": "config/research/program-002-exposed-acquisition-authority-independent-review-v4.json",
+    "sha256": "5bb1fd3bff76589668166aafc20ec133bb39a9b182cfc9314d10803d3cb17ef4",
+    "fingerprint": "59d1605e1353b990f12b5cf51be2ce9b557b5850e8a71c372f1b6ae2a55b76bf"
+  },
+  "reviewed_amendment": {
+    "path": "config/research/program-002-acquisition-no-trade-completeness-amendment-v1.json",
+    "sha256": "c04991ecec8d9792cc916488c76c6bc5882db5f5677a6bf583ade2f343c17ffd",
+    "fingerprint": "f6540b404cfc12a8885b58c799279239fa3df90a3b8bffe2b950289ee3b4b09c"
+  },
+  "reviewed_amendment_review": {
+    "path": "config/research/program-002-acquisition-no-trade-completeness-amendment-independent-review-v1.json",
+    "sha256": "55add70f3cbda1ae71d6d724f681679f8f50b7be8ef2d1e383adcc8523941722",
+    "fingerprint": "54a931d8997834a7eca918184c361bc46fd66887d02230111b39f83ccb6a7fd6"
+  },
+  "reviewed_context": {
+    "dataset_id": "f82aa71d00bc4b0bf7d4c9730a11d2e78e61c37ace64875cd76174da01045a0f",
+    "manifest_sha256": "8b36f4c17bb62612298e5c8a8d4fc0d62bd073cd398d5ab5bc21031093371c68",
+    "fingerprint": "1cf098112f0042e1942a2ec253341b7bae7cc152c40793ffb11967785bdcd87f",
+    "projection_id": "2822d5e3b7bb314043667d83c4196ffbdbb909317f189501112146cecde42618",
+    "projection_sha256": "6862a22819d49c5bc740b89f3bcdff86e1092e7652b266ae602cbb46a6260d99"
+  },
+  "reviewed_completed_segments": {
+    "segment_ids": [
+      "1157d5f1acae25511fd44d6131177bcd4ec4e25c8361c985be76facef9a57584",
+      "18f3c39fb0b523a850a9d1def5cd889528ac1aff6791d7de9ee25fc8edd81605",
+      "346e9bff155a33eacd871f5c726eb9058fa945384adb3c29552d0de8f1c64307",
+      "429e5145eb9efd8582b34fcdd72829b2de9a17ede7b37c1d2547a6989166bc6d",
+      "eb074e287c9d560b51703e5815497125033eb3ebd1975da30f30a72b4486f35b",
+      "09b8d6edd4897d51ffec62d6e668eb58ece0f9a0e445814ab4940d41e6f8dff5",
+      "2ea1aa7eafe1cd3ff95c992a96f7ca7979e631884d8cea21a6dc2a9346bf72e0"
+    ],
+    "raw_record_count": 183050,
+    "canonical_normalized_record_count": 130884,
+    "synthesized_normalized_record_count": 2,
+    "synthesized_coordinates": [
+      "MDY@2020-12-04T18:10:00Z",
+      "MDY@2020-12-04T18:25:00Z"
+    ]
+  },
+  "reviewed_failed_segment": {
+    "acquisition_attempt_id": "program-002-exposed-acquisition-20260826-v5",
+    "segment_identity": "14f60d294fb60df49f30626112d7e0c9663a2cc0375f9d234288a1a13ae8bbea",
+    "quarantine_identity": "6515226348cddcbc06daeac95cd0def483c156bb797aed32ed373085a0f2fa62",
+    "quarantine_sha256": "571da2c19efad7ded9ddfb257966ecb47298ebb12e22413a769a9f2341e527c5",
+    "page_count": 12,
+    "raw_record_count": 27273,
+    "actual_normalized_rows": 19259,
+    "expected_normalized_rows": 19266,
+    "canonical_sorted_normalized_fingerprint": "2e68522891739f7aaa23f525dc900b22cc760baef1ad19bd06c97515b7ada4e2",
+    "missing_intervals": [
+      "MDY@2021-02-03T16:40:00Z",
+      "MDY@2021-02-05T16:45:00Z",
+      "MDY@2021-02-05T16:50:00Z",
+      "MDY@2021-02-10T20:20:00Z",
+      "MDY@2021-02-22T18:25:00Z",
+      "MDY@2021-02-22T19:05:00Z",
+      "MDY@2021-02-22T19:20:00Z"
+    ],
+    "consecutive_pair": [
+      "MDY@2021-02-05T16:45:00Z",
+      "MDY@2021-02-05T16:50:00Z"
+    ],
+    "validation_errors": [],
+    "duplicate_intervals": [],
+    "quarantined_normalized_records": 0,
+    "pagination_terminated_with_null_next_page_token": true
+  },
+  "reviewed_runtime_evidence": {
+    "segment_journal_sha256": "ec632b61dc4947f6390288b922ea3751de1ccbb3b72d01e6cbfd9fdb559096c3",
+    "terminal_attempt_journal_sha256": "33e0534fd201d445998fd1f2683a213cd835476ca6d6be7dbfda729dd420ea41",
+    "published_manifest_count": 1,
+    "published_manifest_is_approved_context_only": true,
+    "v6_exposed_manifest_count": 0,
+    "v6_quote_segment_count": 0,
+    "quote_cost_report_count": 0,
+    "campaign_1_binding_count": 0
+  },
+  "verified_assertions": {
+    "ordered_base_rejected_correction_commit_lineage": true,
+    "rejected_incident_remains_byte_identical": true,
+    "review_failure_matches_the_transport_order_defect": true,
+    "v3_correction_scope_is_exact": true,
+    "all_artifact_sha256_and_fingerprints_reproduced": true,
+    "all_seven_completed_segments_rederived_from_stored_raw_bytes": true,
+    "only_the_two_authorized_december_coordinates_were_synthesized": true,
+    "february_canonical_sorted_fingerprint_reproduced": true,
+    "february_counts_and_seven_missing_coordinates_reproduced": true,
+    "february_consecutive_gap_reproduced": true,
+    "foreign_coordinate_and_consecutive_gap_stop_conditions_both_apply": true,
+    "quarantine_and_journal_hashes_reproduced": true,
+    "context_dataset_and_projection_identities_reproduced": true,
+    "no_exposed_quote_cost_or_campaign_binding_artifact_exists": true,
+    "authority_v6_must_be_revoked_before_further_credential_loading": true
+  },
+  "proof_gaps": [
+    "Artifact inspection cannot prove every historical non-access claim.",
+    "The reviewer did not inspect credential values, contact provider or account endpoints, inspect protected, PAPER, broker, or live state, or run the full test suite."
+  ],
+  "scope_limit": "No credential value, provider or account endpoint, new market or quote data, strategy result, controlled or protected data, PAPER or broker state, live state, or strategic-allocation-21 state was accessed during this review.",
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_step": "Accept this finding-free corrected-incident review, then revoke authority v6 before any further credential loading or acquisition. A later request requires the newly authorized prospective completeness/data-source planning chain.",
+  "review_fingerprint": "23c20fb78b71c3e527eb5c4f916d58463fdb311daf2a66436c5d32f976047cbf"
+}

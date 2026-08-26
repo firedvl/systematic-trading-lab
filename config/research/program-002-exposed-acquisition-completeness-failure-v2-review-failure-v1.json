@@ -1,0 +1,63 @@
+{
+  "schema_version": "program-002-exposed-acquisition-completeness-failure-v2-review-failure-v1",
+  "failure_id": "program-002-exposed-acquisition-completeness-failure-v2-review-failure-2026-08-26-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "reviewed_at": "2026-08-26T22:23:08Z",
+  "status": "rejected-before-control-stop-acceptance",
+  "verdict": "fail",
+  "reviewed_commit": "d5c1f88db011be893918167fe74496703776e92e",
+  "base_main_commit": "b856518ac4536eb3602d55a6d34db007fd6118d8",
+  "reviewed_incident": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-v2.json",
+    "sha256": "a8307c50c809e2da45f101495847e3f55a437121e24d2eb5833085c8ece41516",
+    "fingerprint": "f6bf79ca1f2c90183fa0d12295c2a938b46e6da10edc0199405275878022f64f"
+  },
+  "finding": {
+    "severity": "P1-high",
+    "title": "Failed February normalized-data fingerprint uses transport order",
+    "field": "failed_segment.normalized_record_fingerprint",
+    "recorded_value": "62dc556507f14cc621d9b6a97ab12d27a180289fce1587ad281298be840a45de",
+    "rederived_value": "2e68522891739f7aaa23f525dc900b22cc760baef1ad19bd06c97515b7ada4e2",
+    "cause": "The incident fingerprinted normalized records in provider transport order instead of canonical OHLCV records sorted by symbol and timestamp, which is the stored Program 002 segment representation.",
+    "impact": "A later reviewer cannot use the recorded field as exact normalized-evidence integrity proof. The row counts, seven missing coordinates, consecutive-gap classification, quarantine identity, and control stop remain unchanged.",
+    "required_remediation": "Preserve incident v2 as rejected history and create a corrected immutable v3 incident that binds this review failure and the canonical sorted normalized fingerprint."
+  },
+  "verified_assertions": {
+    "reviewed_commit_has_base_main_as_sole_parent": true,
+    "reviewed_commit_changes_only_incident_and_state_records": true,
+    "incident_sha256_and_fingerprint_reproduced": true,
+    "authority_v6_and_review_v4_identities_reproduced": true,
+    "amendment_and_review_identities_reproduced": true,
+    "context_dataset_and_projection_identities_reproduced": true,
+    "quarantine_and_journal_hashes_reproduced": true,
+    "all_seven_completed_segments_reload_from_stored_bytes": true,
+    "only_two_reviewed_december_rows_are_synthesized": true,
+    "february_page_chain_terminates_after_twelve_pages": true,
+    "february_raw_record_count_is_27273": true,
+    "february_normalized_row_count_is_19259_of_19266": true,
+    "seven_exact_mdy_gaps_reproduced": true,
+    "february_5_consecutive_pair_reproduced": true,
+    "failed_segment_normalized_fingerprint_reproduced": false,
+    "runtime_contains_only_the_approved_published_context_manifest": true,
+    "runtime_quote_journal_record_count_is_zero": true,
+    "no_further_acquisition_is_permitted_under_v6": true
+  },
+  "proof_gaps": [
+    "Artifact inspection supports the stated absence of exposed datasets, quotes, costs, Campaign 1 binding, and execution outputs but cannot independently prove every historical non-access claim.",
+    "The reviewer did not inspect credential values or query provider or account endpoints."
+  ],
+  "scope_limit": "No credential value, provider or account endpoint, new market or quote data, strategy result, controlled or protected data, PAPER or broker state, live state, or strategic-allocation-21 state was accessed during this review.",
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_step": "Publish and independently review a corrected v3 incident binding before accepting the February stop record or reviewing authority-v6 revocation.",
+  "failure_fingerprint": "7412f36dd435375ce5595f8e6f60dc9ac2447f6d6ea6b9d890635fa81aa74f91"
+}

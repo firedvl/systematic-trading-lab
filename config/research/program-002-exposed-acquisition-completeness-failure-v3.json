@@ -1,0 +1,286 @@
+{
+  "schema_version": "program-002-exposed-acquisition-completeness-failure-v3",
+  "incident_id": "program-002-exposed-acquisition-completeness-failure-2026-08-26-v3",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "observed_at": "2026-08-26T20:51:02.970659Z",
+  "source_main_commit": "b856518ac4536eb3602d55a6d34db007fd6118d8",
+  "source_authorization": {
+    "kind": "user-supplied-authorization-packet",
+    "sha256": "fd1a468fb152c6c18c0babda29c8393507a68558161b325d7f17348422093480"
+  },
+  "acquisition_authority": {
+    "path": "config/research/program-002-exposed-acquisition-authority-v6.json",
+    "sha256": "1d40446ca391c7b9dd5b1e0575c033ba5813d1e921e193c26e401718be3256ec",
+    "fingerprint": "22481c9821e946a86dc32f51de30e6087a31af1a309068b56f4290d5c1590a49",
+    "commit": "146fcdf2861538a4f62477ce5f4005297602590d"
+  },
+  "acquisition_authority_review": {
+    "path": "config/research/program-002-exposed-acquisition-authority-independent-review-v4.json",
+    "sha256": "5bb1fd3bff76589668166aafc20ec133bb39a9b182cfc9314d10803d3cb17ef4",
+    "fingerprint": "59d1605e1353b990f12b5cf51be2ce9b557b5850e8a71c372f1b6ae2a55b76bf",
+    "commit": "e353aa26113e4a493eecb8caaec5592e01f77be6"
+  },
+  "result": {
+    "status": "control-stop-after-seven-completed-exposed-segments-before-exposed-dataset-publication",
+    "historical_client_constructed": true,
+    "credential_environment_and_key_identity_matched_proof": true,
+    "provider_request_pages": 93,
+    "context_dataset_reused_without_reacquisition_or_mutation": true,
+    "context_projection_created": true,
+    "completed_exposed_segment_count": 7,
+    "exposed_block_1_published": false,
+    "exposed_block_2_published": false,
+    "exposed_block_3_published": false,
+    "quote_evidence_acquired": false,
+    "cost_artifact_published": false,
+    "campaign_1_binding_published": false
+  },
+  "context_dataset": {
+    "dataset_id": "f82aa71d00bc4b0bf7d4c9730a11d2e78e61c37ace64875cd76174da01045a0f",
+    "fingerprint": "1cf098112f0042e1942a2ec253341b7bae7cc152c40793ffb11967785bdcd87f",
+    "manifest_sha256": "8b36f4c17bb62612298e5c8a8d4fc0d62bd073cd398d5ab5bc21031093371c68",
+    "normalized_rows": 20280,
+    "disposition": "reused exact reviewed bytes without relabeling mutation reacquisition or republication"
+  },
+  "context_projection": {
+    "schema_version": "program-002-volume-context-projection-v2",
+    "projection_id": "2822d5e3b7bb314043667d83c4196ffbdbb909317f189501112146cecde42618",
+    "sha256": "6862a22819d49c5bc740b89f3bcdff86e1092e7652b266ae602cbb46a6260d99",
+    "source_dataset_id": "f82aa71d00bc4b0bf7d4c9730a11d2e78e61c37ace64875cd76174da01045a0f",
+    "source_dataset_fingerprint": "1cf098112f0042e1942a2ec253341b7bae7cc152c40793ffb11967785bdcd87f",
+    "acquisition_authority_sha256": "1d40446ca391c7b9dd5b1e0575c033ba5813d1e921e193c26e401718be3256ec",
+    "allowed_use": "same-clock volume context only; no target, benchmark, P&L, or gate"
+  },
+  "completed_exposed_segments": [
+    {
+      "request_start": "2020-07-27T13:30:00Z",
+      "request_end": "2020-07-31T19:55:00Z",
+      "segment_id": "1157d5f1acae25511fd44d6131177bcd4ec4e25c8361c985be76facef9a57584",
+      "parent_segment_id": "09301f286f9ef4d48cc303d998dfe2831b4dccfada831060ab728905ac3748b3",
+      "segment_artifact_sha256": "3f57b51f3eb60a0f991711482800f3778e59ab6e5e8f7813ff45d000850847e8",
+      "content_identity": "17b50a555b643147d4e46e99f7dff061a703661cd350551ed25f02ee89da2a33",
+      "raw_jsonl_sha256": "62e7d52b175db3bf3e14a9d75f2951aeba8792284f9146a7f21f58af30c7b9d4",
+      "raw_record_fingerprint": "a236473049b846672ffff002388bf3c5b7845473b4a2d90246aea09995d6a7aa",
+      "normalized_record_fingerprint": "ff7e7bdefb32ae6c9d32c1b6a626d8e829c6a104bbbaa3778c065d4796bdda6d",
+      "raw_page_count": 3,
+      "raw_record_count": 6725,
+      "provider_observed_normalized_record_count": 5070,
+      "synthesized_normalized_record_count": 0,
+      "canonical_normalized_record_count": 5070
+    },
+    {
+      "request_start": "2020-08-03T13:30:00Z",
+      "request_end": "2020-08-31T19:55:00Z",
+      "segment_id": "18f3c39fb0b523a850a9d1def5cd889528ac1aff6791d7de9ee25fc8edd81605",
+      "parent_segment_id": "dbe118c80afc25765cc67b1b7c3b080d6779a795bcf1624a9b3792caa6d2462b",
+      "segment_artifact_sha256": "3a52bf26d6fca1fc35f8b4db67bf348670183ae41c807debefa1d0f0f683601c",
+      "content_identity": "85088454ddda423599ad7dc841d5b82997165d8ad4dfa854c260fb7d3b71a7fe",
+      "raw_jsonl_sha256": "7ccabd0f2b05ee224c9de72156cd5915d256e03b85eb99543e7938720739e21a",
+      "raw_record_fingerprint": "10a14c37d95776dc09ca56fbbe5648143457052039caae709f9262f882689b6f",
+      "normalized_record_fingerprint": "95e33d737b64ca74ee10608c4ae1a718415d34c2f03009aaec9a6424c0faa7c7",
+      "raw_page_count": 13,
+      "raw_record_count": 29044,
+      "provider_observed_normalized_record_count": 21294,
+      "synthesized_normalized_record_count": 0,
+      "canonical_normalized_record_count": 21294
+    },
+    {
+      "request_start": "2020-09-01T13:30:00Z",
+      "request_end": "2020-09-30T19:55:00Z",
+      "segment_id": "346e9bff155a33eacd871f5c726eb9058fa945384adb3c29552d0de8f1c64307",
+      "parent_segment_id": "46b8afda4ba597529362739217a6faf0bcb6a3a9403aa2fe8631ba5ba36a92e4",
+      "segment_artifact_sha256": "e98aaaab44a2de7d58270800d3d9ffe60cddb0f2cfd7bad27e29dce10bbe163e",
+      "content_identity": "7d46ddb85333ca6a0b06daf611b8bce12d70536b7233a343f654848b77f10e99",
+      "raw_jsonl_sha256": "22341fdcf1508b7ac3f883b770b1b7a7972728d38cbf692e259d264baeea647d",
+      "raw_record_fingerprint": "6dd0d9a78ee9d31760cf081dbe2c3916754d3ee3406772012467b6ba17f9a36c",
+      "normalized_record_fingerprint": "b7c3e622ed6cb890e6d8b8080a7300c4ca2d26e968da25b22407baf158e38848",
+      "raw_page_count": 13,
+      "raw_record_count": 29845,
+      "provider_observed_normalized_record_count": 21294,
+      "synthesized_normalized_record_count": 0,
+      "canonical_normalized_record_count": 21294
+    },
+    {
+      "request_start": "2020-10-01T13:30:00Z",
+      "request_end": "2020-10-30T19:55:00Z",
+      "segment_id": "429e5145eb9efd8582b34fcdd72829b2de9a17ede7b37c1d2547a6989166bc6d",
+      "parent_segment_id": "a65437286c5087ce5404a100eafe20f8d77b76a7fcc5a637ae7797cbf8ef56c9",
+      "segment_artifact_sha256": "875262eb6df0cd6e9f777e181ec77ae686fa6c9ccf54b5229031f757d4ee473c",
+      "content_identity": "afee681b75167ab4985b6188d526f878bafb13974546064ab30015b65e481527",
+      "raw_jsonl_sha256": "04fb27ed0fb713a5346f814e0da16045b917acc9c762cfb7202ba72fb8d0eb9d",
+      "raw_record_fingerprint": "269fb5fe6d4d2e86e186193ca337af0a004319d502fae6732651060cfff2c29b",
+      "normalized_record_fingerprint": "798b0767d55b608e2de0a8ad71cf0fdaaf38c2064031b9e9f39e0ac7af0997c3",
+      "raw_page_count": 14,
+      "raw_record_count": 30985,
+      "provider_observed_normalized_record_count": 22308,
+      "synthesized_normalized_record_count": 0,
+      "canonical_normalized_record_count": 22308
+    },
+    {
+      "request_start": "2020-11-02T14:30:00Z",
+      "request_end": "2020-11-30T20:55:00Z",
+      "segment_id": "eb074e287c9d560b51703e5815497125033eb3ebd1975da30f30a72b4486f35b",
+      "parent_segment_id": "a2e66d19599f3c9222b0f55738ba886c758c7af0bd6643d53ee1ef2dab44dc79",
+      "segment_artifact_sha256": "5ac3960d1c60bdef2000f360b3b303325bee2af04f8e231a94fdd9497e3afefe",
+      "content_identity": "271522c05bc9e92347079292a4b6acfb72b9b71edc7e0f62f069885dc31c715c",
+      "raw_jsonl_sha256": "61cf811f4591e35a9db2bb682f775bb97e4e098fecf45620fe4fbb232c7977cd",
+      "raw_record_fingerprint": "d07f582b23d525b45e65948fb2ca187c8d9c334b053bcadb22646ec31b36c68f",
+      "normalized_record_fingerprint": "ca0240f3af2787b2db3434c847a972f00d1d74310165a4bb4f8d035743eb3320",
+      "raw_page_count": 13,
+      "raw_record_count": 28696,
+      "provider_observed_normalized_record_count": 19812,
+      "synthesized_normalized_record_count": 0,
+      "canonical_normalized_record_count": 19812
+    },
+    {
+      "request_start": "2020-12-01T14:30:00Z",
+      "request_end": "2020-12-31T20:55:00Z",
+      "segment_id": "09b8d6edd4897d51ffec62d6e668eb58ece0f9a0e445814ab4940d41e6f8dff5",
+      "parent_segment_id": null,
+      "segment_artifact_sha256": "2420a2ad195c83913a120ce5ab247cabc0fe300fb270c35adbc756616a7c95a1",
+      "content_identity": "59bc713702efcc5085c9a5253601f3adadd2d867caf7476d5d7c761ed3f088aa",
+      "raw_jsonl_sha256": "b342b4d49e94708c6e25355383fc1f700ce62d813bfdad7807848cc87ceda1ce",
+      "raw_record_fingerprint": "e899a42db3ad4306ff3d3cfde6907baf8ba07b95b0ab37c5c33d77cff2e0e9ba",
+      "normalized_record_fingerprint": "450c41c44f4c187c09b7efc23c18c7afd70184f836f66d11f29a9de0becfb063",
+      "completion_ledger_fingerprint": "e5461ade6d53292da8b068ebc1e83a002f3fb40a5119447d7aab9f272e9117c5",
+      "raw_page_count": 13,
+      "raw_record_count": 30029,
+      "provider_observed_normalized_record_count": 21838,
+      "synthesized_normalized_record_count": 2,
+      "canonical_normalized_record_count": 21840,
+      "synthesized_coordinates": [
+        "MDY@2020-12-04T18:10:00Z",
+        "MDY@2020-12-04T18:25:00Z"
+      ]
+    },
+    {
+      "request_start": "2021-01-04T14:30:00Z",
+      "request_end": "2021-01-29T20:55:00Z",
+      "segment_id": "2ea1aa7eafe1cd3ff95c992a96f7ca7979e631884d8cea21a6dc2a9346bf72e0",
+      "parent_segment_id": null,
+      "segment_artifact_sha256": "a60ce4b91a48d90d5a9e547e161e2e23f0b555c3a30858feb0127e7a8bc8599c",
+      "content_identity": "59574057f79f3bcc679ed526b9680c6179b72e7852ec3e3cac154fb921588a35",
+      "raw_jsonl_sha256": "20e0a1d1d9b14e41632f91bb1e5bdcfe34bdf030c7b53b64fb1fc20f479b427e",
+      "raw_record_fingerprint": "80b75373580fc362edd49130788d5a01a62e7276f7342a583098a695f80dbc47",
+      "normalized_record_fingerprint": "35777be438bd19311e2a36655d7e5232e46cc79232caf7478363b48d257eceba",
+      "raw_page_count": 12,
+      "raw_record_count": 27726,
+      "provider_observed_normalized_record_count": 19266,
+      "synthesized_normalized_record_count": 0,
+      "canonical_normalized_record_count": 19266
+    }
+  ],
+  "failed_segment": {
+    "role": "exposed-block-1",
+    "acquisition_attempt_id": "program-002-exposed-acquisition-20260826-v5",
+    "segment_identity": "14f60d294fb60df49f30626112d7e0c9663a2cc0375f9d234288a1a13ae8bbea",
+    "terminal_attempt_identity": "35ec323709f335b5e7d7e5d53999fbd637e3ecff99af54d7d45f7bc1f6d937ad",
+    "requested_start": "2021-02-01T14:30:00Z",
+    "requested_end": "2021-02-26T20:55:00Z",
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "all",
+    "page_count": 12,
+    "raw_record_count": 27273,
+    "expected_normalized_rows": 19266,
+    "actual_normalized_rows": 19259,
+    "normalized_record_fingerprint": "2e68522891739f7aaa23f525dc900b22cc760baef1ad19bd06c97515b7ada4e2",
+    "missing_intervals": [
+      "MDY@2021-02-03T16:40:00Z",
+      "MDY@2021-02-05T16:45:00Z",
+      "MDY@2021-02-05T16:50:00Z",
+      "MDY@2021-02-10T20:20:00Z",
+      "MDY@2021-02-22T18:25:00Z",
+      "MDY@2021-02-22T19:05:00Z",
+      "MDY@2021-02-22T19:20:00Z"
+    ],
+    "consecutive_missing_intervals": [
+      "MDY@2021-02-05T16:45:00Z",
+      "MDY@2021-02-05T16:50:00Z"
+    ],
+    "isolated_missing_intervals_have_observed_immediate_predecessor_and_successor": true,
+    "consecutive_pair_has_observed_outer_predecessor_and_successor": true,
+    "consecutive_pair_has_no_observed_internal_neighbor": true,
+    "raw_records_at_missing_coordinates": 0,
+    "duplicate_intervals": [],
+    "validation_errors": [],
+    "conflicts": [],
+    "quarantined_normalized_records": 0,
+    "pagination": {
+      "all_pages_include_next_page_token": true,
+      "intermediate_tokens_nonempty_and_unique": true,
+      "next_requests_match_tokens": true,
+      "terminal_token_is_null": true,
+      "raw_page_hashes_unique": true
+    },
+    "normalized_record_fingerprint_representation": "canonical validated OHLCV records sorted by symbol and timestamp"
+  },
+  "runtime_evidence": {
+    "quarantine_identity": "6515226348cddcbc06daeac95cd0def483c156bb797aed32ed373085a0f2fa62",
+    "quarantine_sha256": "571da2c19efad7ded9ddfb257966ecb47298ebb12e22413a769a9f2341e527c5",
+    "segment_journal_sha256": "ec632b61dc4947f6390288b922ea3751de1ccbb3b72d01e6cbfd9fdb559096c3",
+    "terminal_attempt_journal_sha256": "33e0534fd201d445998fd1f2683a213cd835476ca6d6be7dbfda729dd420ea41",
+    "stored_segment_reload_and_raw_rederivation_passed": true,
+    "failed_segment_raw_rederivation_passed": true,
+    "raw_response_bytes_retained": true,
+    "credential_values_persisted_or_printed": false
+  },
+  "diagnosis": {
+    "frozen_completeness_contract": "Every monthly segment requires one canonical row for every requested symbol and expected XNYS five-minute bar open; only the two exact December MDY omissions may be synthesized.",
+    "provider_behavior": "Complete February pagination omitted seven expected MDY coordinates without a transport, parsing, duplicate, conflict, outer-bound, or raw-integrity error.",
+    "amendment_failure_condition": "The missing set contains coordinates outside the exact eligible set and includes a consecutive gap.",
+    "root_cause": "The prospectively reviewed December-only completeness exception does not cover the provider records for the February 2021 segment.",
+    "semantics_boundary": "Filling, dropping, tolerating, or reacquiring the February gaps requires a new prospective data/completeness decision and cannot proceed under authority v6."
+  },
+  "protected_access": {
+    "strategy_code_executed": false,
+    "strategy_returns_or_candidates": false,
+    "controlled_block_a_or_b": false,
+    "protected_holdout": false,
+    "paper_broker_or_live_state": false,
+    "strategic_allocation_21": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "next_step": "The user authorized a prospective completeness/data-source planning phase. No new request is allowed until that phase defines exact semantics, receives independent review, is implemented and tested, and creates a new exact acquisition authority with a finding-free review and clean-main preflight.",
+  "corrected_at": "2026-08-26T22:23:08Z",
+  "supersedes": {
+    "rejected_incident": {
+      "path": "config/research/program-002-exposed-acquisition-completeness-failure-v2.json",
+      "sha256": "a8307c50c809e2da45f101495847e3f55a437121e24d2eb5833085c8ece41516",
+      "fingerprint": "f6bf79ca1f2c90183fa0d12295c2a938b46e6da10edc0199405275878022f64f",
+      "commit": "d5c1f88db011be893918167fe74496703776e92e"
+    },
+    "review_failure": {
+      "path": "config/research/program-002-exposed-acquisition-completeness-failure-v2-review-failure-v1.json",
+      "sha256": "964682916902869c8231fddf77414a6b6a5afb70d928ea4b2cafd118bb5e9c54",
+      "fingerprint": "7412f36dd435375ce5595f8e6f60dc9ac2447f6d6ea6b9d890635fa81aa74f91"
+    },
+    "correction_scope": "Replace only the failed February normalized-record fingerprint and define its canonical sorted representation. All runtime identities, counts, gaps, dispositions, and control flags remain unchanged."
+  },
+  "incident_fingerprint": "1f5350eb3f704c343044cd11ac328643fd1ae0939ebeaa030248ce031938b53a"
+}
