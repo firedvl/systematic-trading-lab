@@ -58,7 +58,7 @@ _IMPLEMENTATION_PATHS = (
     "src/systematic_trading_lab/program_002_acquisition.py",
     "src/systematic_trading_lab/config.py",
     "src/systematic_trading_lab/program_002_credentials.py",
-    "src/systematic_trading_lab/public_cli.py",
+    "src/systematic_trading_lab/cli.py",
     "tests/unit/test_program_002_massive_qualification.py",
     "tests/unit/test_program_002_acquisition.py",
 )

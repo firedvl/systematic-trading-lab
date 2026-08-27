@@ -451,8 +451,13 @@ def parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    raw_arguments = tuple(sys.argv[1:] if argv is None else argv)
+    if raw_arguments[:2] == ("program-002", "source"):
+        from .program_002_massive_qualification import main as massive_qualification_main
+
+        return massive_qualification_main(raw_arguments)
     try:
-        arguments = parser().parse_args(argv)
+        arguments = parser().parse_args(raw_arguments)
         load_dotenv()
         settings = load_settings()
         return run(arguments, settings)
