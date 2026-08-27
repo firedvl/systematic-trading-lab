@@ -1,0 +1,343 @@
+{
+  "schema_version": "program-002-missing-data-disposition-v1",
+  "disposition_id": "program-002-prospective-missing-data-disposition-2026-08-27-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "created_at": "2026-08-27T04:10:41Z",
+  "source_main": "23853ba44bc330111f091ecb2838e52683285f18",
+  "status": "PROPOSED-FROZEN-NOT-ACQUISITION-AUTHORITY",
+  "purpose": "Define a deterministic return-blind disposition for missing Program 002 bars and quote-calibration observations without acquiring data, admitting a real dataset, or executing a strategy.",
+  "evidence_basis": [
+    {
+      "path": "config/research/program-002-exposed-acquisition-completeness-failure-v3.json",
+      "sha256": "ebc8f536d51fd701f9fc26f28630abff9f23a0b5edb3e794a5a3016337273618",
+      "fingerprint": "1f5350eb3f704c343044cd11ac328643fd1ae0939ebeaa030248ce031938b53a"
+    },
+    {
+      "path": "config/research/program-002-exposed-acquisition-completeness-failure-independent-review-v2.json",
+      "sha256": "18ee95730f5af8698ff090c74df42774e1294dea8ff5552ad6c3b16495566e53",
+      "fingerprint": "23c20fb78b71c3e527eb5c4f916d58463fdb311daf2a66436c5d32f976047cbf"
+    },
+    {
+      "path": "config/research/program-002-minute-reconstruction-source-failure-v1.json",
+      "sha256": "f95850c120603608f616f2e88d579424f4dc80301aa1251b7188fcca89fc08cf",
+      "fingerprint": "b15a5acbce63758fe40619db1861f6e624d454651d9977fcddbda269b92cca2e"
+    },
+    {
+      "path": "config/research/program-002-minute-reconstruction-source-failure-independent-review-v1.json",
+      "sha256": "90f9f0a64a73951001846b305ff0927a249369224c8e7d03e4c2c30cfd599ae7",
+      "fingerprint": "e887f347b37c8ecc01506e876ec893e0eae56442f5f2fd250328323f145d8707"
+    },
+    {
+      "path": "config/research/cross-sectional-sector-etf-program-002-plan-proposal-v1.json",
+      "sha256": "2872d4d3301df0a85e1a5a2eba6e3ee533ee5573971121e99840041e7c8d2173",
+      "fingerprint": "701dc67ea2da1e45d235f4247724b2bc8eb62853561c2400c17a668342c6b81e"
+    },
+    {
+      "path": "config/research/cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1.json",
+      "sha256": "26c768f422e63e9f00e6adc88be2d57f5c6447972a9de1fa4873ab2826556aae"
+    },
+    {
+      "path": "config/research/program-002-acquisition-no-trade-completeness-amendment-v1.json",
+      "sha256": "c04991ecec8d9792cc916488c76c6bc5882db5f5677a6bf583ade2f343c17ffd",
+      "fingerprint": "f6540b404cfc12a8885b58c799279239fa3df90a3b8bffe2b950289ee3b4b09c"
+    }
+  ],
+  "known_missing_data": {
+    "affected_dataset_role": "exposed-block-1 evaluation bars; no exposed dataset was published",
+    "unaffected_dataset_role": "the separate 2020-06-26 through 2020-07-24 context-only dataset is complete and unchanged",
+    "symbol": "MDY",
+    "data_class": "adjusted SIP five-minute bars",
+    "quotes_affected": false,
+    "sessions": [
+      {
+        "session": "2020-12-04",
+        "missing_coordinates": [
+          "MDY@2020-12-04T18:10:00Z",
+          "MDY@2020-12-04T18:25:00Z"
+        ],
+        "evidence": "Two complete five-minute provider attempts omitted the same coordinates. The earlier reviewed predecessor-close zero-volume completion remains immutable historical evidence but is not eligible alpha data under this general disposition."
+      },
+      {
+        "session": "2021-02-03",
+        "missing_coordinates": [
+          "MDY@2021-02-03T16:40:00Z"
+        ]
+      },
+      {
+        "session": "2021-02-05",
+        "missing_coordinates": [
+          "MDY@2021-02-05T16:45:00Z",
+          "MDY@2021-02-05T16:50:00Z"
+        ]
+      },
+      {
+        "session": "2021-02-10",
+        "missing_coordinates": [
+          "MDY@2021-02-10T20:20:00Z"
+        ]
+      },
+      {
+        "session": "2021-02-22",
+        "missing_coordinates": [
+          "MDY@2021-02-22T18:25:00Z",
+          "MDY@2021-02-22T19:05:00Z",
+          "MDY@2021-02-22T19:20:00Z"
+        ]
+      }
+    ],
+    "maximum_scale_already_evidenced": {
+      "missing_five_minute_coordinates": 9,
+      "affected_sessions": 5,
+      "affected_symbols": 1,
+      "maximum_consecutive_missing_five_minute_bars": 2,
+      "february_expected_rows": 19266,
+      "february_observed_rows": 19259,
+      "february_missing_row_fraction": "0.0003633343714315374234402574484",
+      "february_affected_session_fraction": "0.2105263157894736842105263158",
+      "minute_source_rows_for_four_february_sessions": 1168,
+      "minute_source_nonempty_five_minute_controls": 305,
+      "minute_source_empty_target_buckets": 7
+    },
+    "cause_classification": {
+      "proved": "The provider payloads contain no valid record at the nine expected five-minute coordinates. February pagination was terminal, and same-provider one-minute reaggregation matched all 305 nonempty controls while the seven targets remained empty.",
+      "not_proved": "Persisted evidence does not distinguish no eligible consolidated observation from provider coverage, provider filtering, or another external market-data cause.",
+      "not_supported_by_evidence": [
+        "exchange closure or early-close semantics",
+        "listing or instrument-history boundary",
+        "corporate action",
+        "transport or pagination failure",
+        "duplicate, parse, normalization, or outer-bound failure"
+      ],
+      "strict_expectation_conclusion": "The full XNYS coordinate expectation is stricter than the attempted provider payload, but the evidence does not prove that no valid market observation should have been expected. No price may be invented to resolve that uncertainty."
+    },
+    "research_phase": "exposed discovery and causal context data; no controlled or protected data",
+    "candidate_results_informed_disposition": false
+  },
+  "deterministic_rules": {
+    "unit_of_disposition": "whole XNYS session",
+    "symbol_level_omission_allowed": false,
+    "ranking_universe": [
+      "IWM",
+      "MDY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "context_and_benchmark_symbol": "SPY",
+    "minimum_cross_sectional_coverage": {
+      "ranking_symbols": 12,
+      "spy": 1,
+      "total_symbols": 13,
+      "coverage_fraction": "1"
+    },
+    "full_session": "A scheduled full session is evaluation-eligible only when every one of the thirteen symbols has every one of its 78 expected XNYS five-minute bars. Any missing bar excludes the entire session from every family, configuration, scenario, benchmark, and later context use.",
+    "early_close": "A scheduled early close never trades. It is context-eligible only when every one of the thirteen symbols has every one of its 42 expected XNYS five-minute bars; otherwise it is context-ineligible and counts in rolling missingness diagnostics.",
+    "required_context": "The fixed twenty-session exposed context range, Controlled A's first twenty scheduled sessions, and Controlled B's final twenty Block A context sessions must be complete. An incomplete required-context session fails admission; no earlier or later replacement session is added.",
+    "rolling_context": "For later evaluation sessions, use the twenty most recent prior context-eligible sessions inside the unchanged chronology. The current session never contributes. A session excluded for missing data never contributes. If twenty prior eligible sessions do not exist, the evaluation session is structurally ineligible.",
+    "session_exclusion": "An excluded session is absent from all candidate and benchmark evaluation. It is not a candidate no-trade result, does not produce a trace, fill, P&L, return, rank, or gate observation, and is never replaced by a future date.",
+    "ties": "The existing exact Decimal residual-return ordering and symbol-ascending tie rule remain unchanged because an eligible session always contains the full twelve-symbol rank universe.",
+    "universe_composition_signal": false
+  },
+  "bar_completeness_requirements": {
+    "eligible_full_session_bars_per_symbol": 78,
+    "eligible_early_close_bars_per_symbol": 42,
+    "maximum_missing_bars_in_an_eligible_session": 0,
+    "thirty_minute_source_bars_per_bucket": 6,
+    "maximum_missing_components_in_a_required_aggregation": 0,
+    "decision_clock_new_york": "11:30",
+    "latest_decision_source_bar_open_new_york": "11:25",
+    "entry_bar_opens_new_york": [
+      "11:35",
+      "11:40",
+      "11:45"
+    ],
+    "exit_bar_opens_new_york": [
+      "13:35",
+      "13:40",
+      "13:45",
+      "15:35",
+      "15:40",
+      "15:45"
+    ],
+    "candidate_independence": "Every eligible full session must contain every entry and exit clock for all thirteen symbols before any candidate executes, even when a later candidate would not select a symbol or use a scenario.",
+    "missing_fill_action": "exclude the whole session before strategy execution; never delay the fill",
+    "interpolation": {
+      "forward_fill": false,
+      "backward_fill": false,
+      "linear_interpolation": false,
+      "synthetic_price": false,
+      "neighboring_symbol": false,
+      "spy_substitution": false,
+      "new_predecessor_close_zero_volume_rows": false,
+      "historical_december_completion_rows": "Preserve their bytes and lineage, but treat their raw provider coordinates as missing and exclude 2020-12-04 under this disposition."
+    }
+  },
+  "quote_completeness_requirements": {
+    "preselected_sessions": 73,
+    "fill_clocks_per_session": 9,
+    "windows_per_symbol": 657,
+    "symbols": 13,
+    "grid_observations_per_window": 60,
+    "minimum_eligible_grid_observations_per_symbol_window": 57,
+    "minimum_coverage_fraction_per_symbol_window": "0.95",
+    "minimum_eligible_observations_per_symbol_over_all_windows": 37449,
+    "aggregate_compensation_allowed": false,
+    "failed_window_action": "Fail the entire quote calibration. Do not drop the session or clock, interpolate a quote, choose a favorable fallback, or publish a cost model.",
+    "conservative_fallback": null,
+    "cost_calibration_failure_is_dataset_admission_failure": true
+  },
+  "maximum_allowable_data_loss": {
+    "maximum_excluded_trade_session_fraction_per_fixed_evaluation_period": "0.01",
+    "maximum_excluded_trade_sessions_per_fixed_evaluation_period": 1,
+    "fixed_evaluation_periods": "Each discovery block, each exposed walk-forward test fold, and each future controlled evaluation block after its frozen context-only prefix is assessed separately.",
+    "rolling_session_window": 20,
+    "maximum_incomplete_sessions_per_rolling_window": 1,
+    "maximum_same_symbol_incomplete_sessions_per_rolling_window": 1,
+    "maximum_contiguous_incomplete_sessions": 1,
+    "required_context_session_loss": 0,
+    "ceiling_rule": "Meeting a program-wide average cannot rescue a failed period, rolling-window, contiguity, symbol-concentration, required-context, or quote gate. No threshold may be raised after return observation."
+  },
+  "bias_diagnostics": {
+    "return_blind_inputs_only": true,
+    "required_outputs": [
+      "excluded-session count and fraction by fixed period",
+      "incomplete-session count in every rolling twenty-session window",
+      "maximum contiguous incomplete sessions",
+      "missing session and coordinate counts by symbol",
+      "maximum same-symbol incomplete sessions in every rolling twenty-session window",
+      "missing coordinate counts by calendar month and time of day",
+      "full-session versus scheduled-early-close missingness",
+      "required-context completeness",
+      "quote coverage by symbol, calibration session, and fill clock",
+      "dataset identity and admission fingerprint"
+    ],
+    "prohibited_bias_inputs": [
+      "candidate fills",
+      "candidate or benchmark P&L",
+      "candidate or benchmark returns",
+      "Sharpe or another performance metric",
+      "candidate rank, gate, or qualification result"
+    ],
+    "nonrandomness_failure": "Any exceeded period, rolling, contiguity, same-symbol, context, or quote ceiling fails admission. A reviewer may also fail admission when a return-blind structural diagnostic establishes a source, symbol, calendar, or clock mechanism that compromises the hypothesis; the reviewer may not waive a machine failure."
+  },
+  "admission_algorithm": [
+    "Bind the exact plan, universe, expected XNYS session table, expected five-minute coordinates, quote grid, and immutable dataset identities.",
+    "Before strategy code can run, compare observed bar coordinates with every expected coordinate for all thirteen symbols. Do not inspect OHLCV values except existing structural validity checks.",
+    "Mark a full session eligible only at thirteen-of-thirteen complete coverage. Mark a complete early close context-only. Mark any incomplete session excluded for the whole cross-section.",
+    "Require every fixed context-only session. Derive rolling context only from strictly prior complete context-eligible sessions; do not add a future replacement date.",
+    "Compute the fixed-period, rolling-window, contiguity, symbol, month, clock, and early-close diagnostics. Apply every ceiling without candidate data.",
+    "Validate all 657 preselected quote windows for every symbol at 57 of 60 or better. A failed or absent window fails calibration.",
+    "Publish one canonical structural report containing only eligible and ineligible sessions, reasons, counts, ratios, quote coverage, dataset identities, pass or fail, and an admission fingerprint.",
+    "Freeze and independently review the structural report before any later authority may bind it. A failed report cannot be used for strategy execution."
+  ],
+  "admission_output_contract": {
+    "allowed": [
+      "eligible sessions",
+      "ineligible sessions",
+      "missingness reasons and coordinates",
+      "eligible symbol counts and completeness ratios",
+      "quote-calibration coverage",
+      "bias diagnostics",
+      "dataset identities and fingerprints",
+      "admission pass or fail"
+    ],
+    "prohibited": [
+      "candidate fills",
+      "P&L",
+      "returns",
+      "Sharpe",
+      "candidate rankings",
+      "strategy pass or fail"
+    ],
+    "reference_implementation": "src/systematic_trading_lab/program_002_missing_data_admission.py"
+  },
+  "chronology_preservation": {
+    "changed": false,
+    "discovery_periods_moved_or_extended": false,
+    "exposed_folds_moved_or_extended": false,
+    "controlled_block_a": "2027-04-16..2027-10-15",
+    "controlled_block_b": "2027-10-18..2028-04-14",
+    "replacement_future_dates_allowed": false
+  },
+  "search_budget_preservation": {
+    "changed": false,
+    "families": 2,
+    "configurations": 8,
+    "maximum_specifications_per_exposed_campaign": 114,
+    "maximum_program_specifications": 232,
+    "maximum_infrastructure_attempts": 696,
+    "missing_data_decisions_consume_or_expand_search_budget": false
+  },
+  "controlled_period_applicability": {
+    "same_rule_as_exposed": true,
+    "controlled_data_accessed": false,
+    "controlled_a": "The first twenty scheduled sessions are required context and must all be complete. Evaluation begins at the unchanged twenty-first scheduled session. Every later session uses the same whole-session and loss ceilings.",
+    "controlled_b": "The final twenty scheduled Block A context sessions must all be complete. Block B uses the same whole-session and loss ceilings inside its unchanged dates.",
+    "different_missing_data_policy_allowed": false
+  },
+  "known_evidence_assessment": {
+    "real_dataset_admission_performed": false,
+    "bar_evidence_only_assessment": "The already-known source evidence exceeds this prospective disposition's ceilings: four February sessions fall in one fixed discovery period, four MDY failures cluster inside one twenty-session horizon, and the February 5 gap has two consecutive five-minute bars.",
+    "machine_conditions_already_known_to_fail": [
+      "period-session-loss-ceiling-exceeded:discovery-02",
+      "rolling-session-loss-ceiling-exceeded",
+      "rolling-symbol-concentration-ceiling-exceeded:MDY"
+    ],
+    "quote_admission_status": "not assessed because no Program 002 quote request or calibration occurred",
+    "scientifically_acceptable_disposition_mechanics": true,
+    "attempted_source_scientifically_admissible_under_disposition": false,
+    "different_source_recommended": true,
+    "reason": "Whole-session exclusion preserves rank semantics, but allowing the known clustered MDY-only gaps would select sessions on a symbol-specific data-availability process that may be tied to the volume feature. Raising the ceilings to fit those known gaps would be post-hoc discretion."
+  },
+  "failure_conditions": [
+    "any symbol-level drop, interpolation, synthetic alpha price, SPY substitution, or candidate-specific disposition",
+    "any missing bar in a session labeled eligible",
+    "any incomplete required-context session",
+    "any fixed period above one percent or one excluded trade session",
+    "more than one incomplete session or same-symbol incomplete session in any rolling twenty-session window",
+    "more than one contiguous incomplete session",
+    "any absent or below-57 quote window",
+    "any chronology extension, future replacement date, or search-budget change",
+    "any admission report containing strategy or performance output",
+    "any controlled or protected access during exposed admission",
+    "any failed fingerprint, immutable-evidence, or independent-review check"
+  ],
+  "next_authorization": "This artifact grants none. Program 002 remains stopped. Because the known source evidence fails the frozen disposition, a later user authorization would need to select and prospectively review a different data source before any implementation change, credential load, provider request, acquisition, or real dataset admission.",
+  "launch_control": {
+    "implementation_allowed": false,
+    "network_request_allowed": false,
+    "credentials_allowed": false,
+    "market_data_acquisition_allowed": false,
+    "real_dataset_admission_allowed": false,
+    "quote_acquisition_allowed": false,
+    "cost_calibration_allowed": false,
+    "cost_model_creation_allowed": false,
+    "strategy_execution_allowed": false,
+    "research_qualification_allowed": false,
+    "controlled_evaluation_allowed": false,
+    "protected_holdout_allowed": false,
+    "paper_execution_allowed": false,
+    "broker_writes_allowed": false,
+    "live_execution_allowed": false,
+    "strategic_allocation_21_access_allowed": false
+  },
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "disposition_fingerprint": "6cedb2ce40c6aae4365a4966d73dae415803bb1bc8d16cfe3fc952a57efa7ef4"
+}
