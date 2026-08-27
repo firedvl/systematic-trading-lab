@@ -1,0 +1,142 @@
+{
+  "schema_version": "program-002-missing-data-disposition-independent-review-v1",
+  "review_id": "program-002-missing-data-disposition-independent-review-2026-08-27-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "reviewed_at": "2026-08-27T04:45:49Z",
+  "status": "passed-prospective-disposition-before-real-admission",
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_commit": "2fde3d53682763e7e125b1940aa9971249dab4ef",
+  "reviewed_commit_parent": "f92afb3616921fc01f8dafdc53eda2dd42ba275f",
+  "starting_main_commit": "23853ba44bc330111f091ecb2838e52683285f18",
+  "reviewed_disposition": {
+    "path": "config/research/program-002-missing-data-disposition-v1.json",
+    "sha256": "26e7c84d97c08c7ef4439333aeb444a12a145f360140e93ebc1104118ec96699",
+    "fingerprint": "291c7bccce40440773b32157e1518abc31fe783e0a0b0763dfd100b55e95bbfe",
+    "status": "PROPOSED-FROZEN-NOT-ACQUISITION-AUTHORITY"
+  },
+  "reviewed_files": [
+    {
+      "path": "CURRENT_STATE.md",
+      "sha256": "175d668c951a27d82aadc3b4ffd11d0c344e8a39797e8eaddc823e0a593d2345"
+    },
+    {
+      "path": "DECISIONS.md",
+      "sha256": "9ecefd15cf2d8ba72c54d6877d7a189793f02eb431df742bc46052c581e6941e"
+    },
+    {
+      "path": "ROADMAP.md",
+      "sha256": "26e477d9fb4e1e60d7a2723dc391bcb7160b36d9d01f0c9212c8fd78ea42f520"
+    },
+    {
+      "path": "docs/research-campaigns/program-002-missing-data-disposition-v1.md",
+      "sha256": "948962375f188075e465f41446f7d06de2e6b55f67e5cd38949ba1d9ac4f5024"
+    },
+    {
+      "path": "src/systematic_trading_lab/program_002_missing_data_admission.py",
+      "sha256": "0722d4f15419f7a24b3c9ea18ee4c24e46dab560dd09a8681ae2dc571077d6cb"
+    },
+    {
+      "path": "tests/unit/test_intraday_source_provenance.py",
+      "sha256": "ee8b0a87ff8fec868d4488db621663c4e86c9e713d03f1425c42d262d3991d33"
+    },
+    {
+      "path": "tests/unit/test_program_002_missing_data_admission.py",
+      "sha256": "50ea58e525b8accfca8618001900320b3f56db6953c0210a5fa90022e530b62f"
+    }
+  ],
+  "prior_review_findings_resolved": [
+    {
+      "finding": "caller-overridable loss and quote thresholds",
+      "resolution": "The public entry point accepts no policy. Frozen thresholds are module constants and are reported in every admission artifact."
+    },
+    {
+      "finding": "caller-overridable session table and incomplete quote grid",
+      "resolution": "The public entry point derives and fingerprints the exact 1,531-session exposed table and all 657 preselected quote windows from reviewed plans. The generic evaluator is private and synthetic-only."
+    },
+    {
+      "finding": "early-close sessions could be labeled tradable",
+      "resolution": "Expected bar counts derive from XNYS. A 42-bar early close is always context-only and cannot be trade scheduled."
+    },
+    {
+      "finding": "causal twenty-session context was not enforced",
+      "resolution": "Each evaluation session now requires twenty strictly prior complete context-eligible sessions; the current session never contributes."
+    },
+    {
+      "finding": "missing coordinates, reasons, and clock diagnostics were absent",
+      "resolution": "Reports now emit exact missing UTC bar opens, structural reasons, and symbol, month, New York clock, early-close, rolling, and contiguous diagnostics."
+    },
+    {
+      "finding": "CURRENT_STATE.md did not record the control slice",
+      "resolution": "Current state now records the proposed disposition, known-source failure, authority stop, and pending review state at the reviewed commit."
+    }
+  ],
+  "review_challenges": {
+    "result_blind_motivation": "The rule is based only on persisted acquisition completeness evidence. No candidate fill, P&L, return, rank, or gate existed or informed it.",
+    "post_hoc_discretion": "The full cross-section, thresholds, fixed periods, rolling window, quote grid, chronology, and failure actions are fingerprinted and caller-non-overridable.",
+    "whole_session_economic_meaning": "Excluding the full session preserves the simultaneous cross-sectional rank universe. It reduces the sample but does not reinterpret a missing symbol as an investable signal.",
+    "symbol_omission_and_ranking": "No symbol-level omission is allowed. Every eligible session requires all twelve ranked ETFs plus SPY, so the ranking denominator and tie rule remain unchanged.",
+    "selection_bias": "The report measures period, rolling, same-symbol, contiguous, month, clock, and early-close concentration before returns. Any machine ceiling failure is terminal and cannot be waived.",
+    "maximum_loss": "One excluded trade session and one percent per fixed period, one incomplete or same-symbol-incomplete session per rolling twenty, one contiguous incomplete session, and zero required-context loss are restrictive rather than permissive for the known evidence.",
+    "quote_conservatism": "Every symbol in every one of 657 windows requires at least 57 of 60 eligible causal observations. A failed or absent window fails calibration; no interpolation, compensation, or cost fallback exists.",
+    "controlled_periods": "The same disposition applies to future Controlled A and B without access to either block. Later authorities must freeze reviewed calendar tables inside the unchanged block dates and may not alter this rule.",
+    "different_source": "A prospectively reviewed different source is scientifically cleaner than raising thresholds to admit the clustered MDY-only failures."
+  },
+  "verified_assertions": {
+    "disposition_sha256_reproduced": true,
+    "disposition_fingerprint_reproduced": true,
+    "all_reviewed_file_sha256_values_reproduced": true,
+    "public_entry_point_has_no_policy_or_schedule_override": true,
+    "exact_exposed_session_table_is_bound": true,
+    "exact_657_window_quote_grid_is_bound": true,
+    "early_closes_are_context_only": true,
+    "strictly_prior_twenty_session_context_is_enforced": true,
+    "missing_coordinates_reasons_and_clock_diagnostics_are_reported": true,
+    "whole_session_thirteen_symbol_coverage_is_required": true,
+    "interpolation_and_synthetic_alpha_data_are_prohibited": true,
+    "chronology_is_unchanged": true,
+    "search_budget_is_unchanged": true,
+    "all_authority_and_launch_flags_are_false": true,
+    "attempted_source_remains_inadmissible": true,
+    "different_source_is_recommended": true,
+    "zero_candidate_returns_were_generated_or_observed": true
+  },
+  "known_source_assessment": {
+    "proved_cause": "Provider payloads lacked valid observations at nine expected MDY five-minute coordinates across five sessions; same-provider one-minute evidence left all seven February targets empty while matching all 305 nonempty controls.",
+    "unproved_external_cause": "Persisted evidence does not distinguish no eligible consolidated observation from provider coverage, filtering, or another external market-data cause.",
+    "failed_conditions": [
+      "period-session-loss-ceiling-exceeded:discovery-02",
+      "rolling-session-loss-ceiling-exceeded",
+      "rolling-symbol-concentration-ceiling-exceeded:MDY"
+    ],
+    "attempted_source_admissible": false,
+    "different_source_scientifically_cleaner": true
+  },
+  "verification": {
+    "focused_test": {
+      "command": "uv run pytest -q tests/unit/test_program_002_missing_data_admission.py",
+      "result": "passed"
+    },
+    "ruff": "passed",
+    "git_diff_check": "passed"
+  },
+  "proof_gaps": [
+    "This is prospective synthetic validation. No real Program 002 dataset was admitted.",
+    "Controlled A and B remain unopened; their future exact session tables require separate reviewed calendar binding inside the unchanged dates.",
+    "The reviewer did not inspect credentials, contact a provider or account endpoint, run acquisition, execute a candidate, inspect returns, or access controlled, protected, PAPER, broker, live, or strategic-allocation-21 state."
+  ],
+  "scope_limit": "Independent prospective control review only. No credential loading, provider request, acquisition, real dataset admission, cost calibration, strategy execution, result access, qualification, controlled or protected access, PAPER action, broker write, live action, or strategic-allocation-21 access occurred.",
+  "required_next_user_action": "Separately authorize prospective different-source planning before any source selection, implementation change, credential load, provider request, acquisition, or real dataset admission. A new exact authority and finding-free review would still be required before any later request.",
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "d07ddce0ccb87770e458fafb2ff08f7d69a95f32ae70ea8f0cd91d251103bdd0"
+}
