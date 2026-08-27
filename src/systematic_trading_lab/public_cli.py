@@ -258,6 +258,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if arguments[0] == "research":
         return _run_public(research_parser().parse_args(arguments[1:]))
+    if arguments[:2] == ("program-002", "source"):
+        from .program_002_massive_qualification import main as massive_qualification_main
+
+        return massive_qualification_main(arguments)
     if arguments[0] == "data" and (
         len(arguments) == 1 or arguments[1] in {"-h", "--help", "list", "import-local"}
     ):

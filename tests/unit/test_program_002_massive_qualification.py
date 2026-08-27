@@ -15,6 +15,7 @@ from urllib.request import Request
 import pytest
 from pytest import CaptureFixture, MonkeyPatch
 
+import systematic_trading_lab.intraday_fed_policy_absorption_001_cli as dispatcher
 import systematic_trading_lab.program_002_massive_qualification as massive
 from systematic_trading_lab.config import non_broker_subprocess_environment
 from systematic_trading_lab.program_002_acquisition import HttpPage
@@ -77,6 +78,7 @@ def _authority() -> massive.QualificationAuthority:
     payload = {
         "attempt_id": "synthetic-massive-attempt-v1",
         "credential_identity_hash": hashlib.sha256(_KEY.encode()).hexdigest(),
+        "bindings": {"implementation": {"source_commit": "f" * 40}},
         "adjustment_proof": _adjustment_proof(),
         "trade_audit_contract": _trade_contract_payload(),
     }
@@ -434,6 +436,21 @@ def test_adjustment_and_corporate_action_contracts_fail_closed() -> None:
     with pytest.raises(massive.MassiveQualificationError, match="ticker differs"):
         massive.validate_corporate_action_chain(_acquired(split, [invalid]))
 
+    event = next(item for item in _chains() if item.kind == "ticker-event")
+    valid_event = {
+        "type": "ticker_change",
+        "date": "2021-01-04",
+        "ticker_change": {"ticker": event.symbol},
+    }
+    assert (
+        massive.validate_corporate_action_chain(_acquired(event, [valid_event]))["record_count"]
+        == 1
+    )
+    with pytest.raises(massive.MassiveQualificationError, match="ticker event is malformed"):
+        massive.validate_corporate_action_chain(
+            _acquired(event, [{**valid_event, "date": "2026-08-01"}])
+        )
+
 
 def test_full_synthetic_sample_executes_once_and_publishes_only_structural_evidence(
     tmp_path: Path,
@@ -471,6 +488,7 @@ def test_full_synthetic_sample_executes_once_and_publishes_only_structural_evide
     assert len(seen) == 630
     assert len(tuple(layout.datasets.iterdir())) == 630
     assert receipt["source_qualification"] == "PASS"
+    assert receipt["source_commit"] == "f" * 40
     assert receipt["request_chains"] == 630
     assert receipt["http_pages"] == 630
     assert receipt["credential_loads"] == 1
@@ -524,6 +542,7 @@ def test_failed_transport_is_quarantined_sealed_and_never_retried(tmp_path: Path
     report = layout.reports / "program-002" / "massive-qualification"
     receipt = massive._load_exact_record(report / "receipt.json", "synthetic receipt")
     assert receipt["source_qualification"] == "FAIL"
+    assert receipt["source_commit"] == "f" * 40
     assert receipt["authority_consumed"] is True
     assert receipt["http_pages"] == 1
     assert receipt["zero_strategy_returns_generated"] is True
@@ -630,6 +649,49 @@ def test_gate_failure_precedes_authority_and_environment_access(
     assert not any(tmp_path.iterdir())
 
 
+def test_missing_credential_remains_unconsumed_but_wrong_credential_is_terminal(
+    tmp_path: Path,
+) -> None:
+    plan = _plan()
+    gates = _pass_gates()
+    authority = _authority()
+    missing = StorageLayout(tmp_path / "missing")
+    with pytest.raises(massive.MassiveCredentialUnavailable, match="unavailable"):
+        massive.execute_massive_source_qualification(
+            plan,
+            gates,
+            authority,
+            missing,
+            environ={},
+            request_transport=lambda _: (_ for _ in ()).throw(AssertionError("transported")),
+            pace=lambda: None,
+        )
+    missing_report = missing.reports / "program-002" / "massive-qualification"
+    assert (missing_report / "claim.json").exists()
+    assert not any(
+        (missing_report / name).exists()
+        for name in ("credential-load.json", "consumed.json", "receipt.json", "outcome.json")
+    )
+
+    wrong = StorageLayout(tmp_path / "wrong")
+    with pytest.raises(massive.MassiveQualificationError, match="identity differs"):
+        massive.execute_massive_source_qualification(
+            plan,
+            gates,
+            authority,
+            wrong,
+            environ={"PROGRAM_002_MASSIVE_API_KEY": "wrong"},
+            request_transport=lambda _: (_ for _ in ()).throw(AssertionError("transported")),
+            pace=lambda: None,
+        )
+    wrong_report = wrong.reports / "program-002" / "massive-qualification"
+    wrong_receipt = massive._load_exact_record(wrong_report / "receipt.json", "wrong receipt")
+    assert wrong_receipt["source_qualification"] == "NOT-RUN-PRE-TRANSPORT-STOP"
+    assert wrong_receipt["credential_loads"] == 1
+    assert wrong_receipt["authority_consumed"] is False
+    assert (wrong_report / "outcome.json").exists()
+
+
 def test_client_uses_an_authorization_header_and_never_puts_the_key_in_the_url() -> None:
     chain = next(item for item in _chains() if item.kind == "split")
     seen: list[Request] = []
@@ -651,3 +713,39 @@ def test_subprocess_and_research_boundaries_strip_massive_credentials() -> None:
     ) == {"PATH": "/bin"}
     with pytest.raises(ValueError, match="forbids credentials"):
         reject_research_credentials({"PROGRAM_002_MASSIVE_API_KEY": "secret"})
+
+
+def test_documented_public_command_reaches_exact_authority_gate(
+    tmp_path: Path, monkeypatch: MonkeyPatch, capsys: CaptureFixture[str]
+) -> None:
+    authority = _REPOSITORY / massive._AUTHORITY_PATH
+    status = dispatcher.main(
+        (
+            "program-002",
+            "source",
+            "qualify-massive",
+            "--repository",
+            str(_REPOSITORY),
+            "--data-home",
+            str(tmp_path),
+            "--authority",
+            str(authority),
+        )
+    )
+    assert status == os.EX_USAGE
+    assert "gates have not passed" in capsys.readouterr().err
+
+    monkeypatch.setattr(massive, "load_pre_transport_gates", lambda _: _pass_gates())
+    status = dispatcher.main(
+        (
+            "program-002",
+            "source",
+            "qualify-massive",
+            "--repository",
+            str(_REPOSITORY),
+            "--authority",
+            str(tmp_path / "wrong.json"),
+        )
+    )
+    assert status == os.EX_USAGE
+    assert "requires exact authority path" in capsys.readouterr().err

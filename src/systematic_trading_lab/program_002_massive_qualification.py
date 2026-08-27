@@ -58,6 +58,7 @@ _IMPLEMENTATION_PATHS = (
     "src/systematic_trading_lab/program_002_acquisition.py",
     "src/systematic_trading_lab/config.py",
     "src/systematic_trading_lab/program_002_credentials.py",
+    "src/systematic_trading_lab/public_cli.py",
     "tests/unit/test_program_002_massive_qualification.py",
     "tests/unit/test_program_002_acquisition.py",
 )
@@ -87,6 +88,10 @@ _DOWNSTREAM_AUTHORITY_KEYS = frozenset(
 
 
 class MassiveQualificationError(RuntimeError):
+    pass
+
+
+class MassiveCredentialUnavailable(MassiveQualificationError):
     pass
 
 
@@ -808,14 +813,20 @@ def validate_corporate_action_chain(acquired: AcquiredMassiveChain) -> Mapping[s
             event_date = raw.get("date")
             change = _mapping(raw.get("ticker_change"), "Massive ticker change")
             event_ticker = change.get("ticker")
+            try:
+                parsed_event_date = (
+                    date.fromisoformat(event_date) if isinstance(event_date, str) else None
+                )
+            except ValueError as error:
+                raise MassiveQualificationError("Massive ticker event is malformed") from error
             if (
                 event_type != "ticker_change"
-                or not isinstance(event_date, str)
+                or parsed_event_date is None
+                or not _ACTION_START <= parsed_event_date <= _ACTION_END
                 or not isinstance(event_ticker, str)
                 or not event_ticker
             ):
                 raise MassiveQualificationError("Massive ticker event is malformed")
-            date.fromisoformat(event_date)
             ticker_events.add(event_ticker)
             identity = fingerprint(raw)
         else:
@@ -1326,11 +1337,11 @@ def read_massive_credential(
     environ: Mapping[str, str] | None = None,
 ) -> str:
     pre_transport_gate_preflight(gates)
-    attempt.mark_credential_load()
     values = os.environ if environ is None else environ
     value = values.get(_CREDENTIAL_NAME, "")
     if not value:
-        raise MassiveQualificationError("Massive qualification credential is unavailable")
+        raise MassiveCredentialUnavailable("Massive qualification credential is unavailable")
+    attempt.mark_credential_load()
     if hashlib.sha256(value.encode()).hexdigest() != authority.payload.get(
         "credential_identity_hash"
     ):
@@ -1353,6 +1364,11 @@ def execute_massive_source_qualification(
     pre_transport_gate_preflight(gates)
     chains = build_massive_request_plan(plan)
     credential_free_request_preflight(plan, chains)
+    bindings = _mapping(authority.payload.get("bindings"), "Massive authority bindings")
+    implementation = _mapping(bindings.get("implementation"), "Massive implementation binding")
+    source_commit = implementation.get("source_commit")
+    if not _is_commit(source_commit):
+        raise MassiveQualificationError("Massive implementation source commit differs")
     budget = QualificationBudget()
     shared_pace = RequestPacer() if pace is None else pace
     with OneUseAttempt(layout, authority) as attempt:
@@ -1402,6 +1418,7 @@ def execute_massive_source_qualification(
                 {
                     "authority_sha256": authority.sha256,
                     "authority_fingerprint": authority.authority_fingerprint,
+                    "source_commit": source_commit,
                     "credential_identity_hash": authority.payload["credential_identity_hash"],
                     "credential_loads": int(attempt.credential_loaded),
                     "request_chains": budget.request_chains,
@@ -1420,6 +1437,8 @@ def execute_massive_source_qualification(
                 {"receipt_fingerprint": receipt["receipt_fingerprint"]},
             )
             return receipt
+        except MassiveCredentialUnavailable:
+            raise
         except (
             MassiveQualificationError,
             Program002AcquisitionError,
@@ -1440,6 +1459,7 @@ def execute_massive_source_qualification(
                 "plan_sha256": plan.sha256,
                 "authority_sha256": authority.sha256,
                 "authority_fingerprint": authority.authority_fingerprint,
+                "source_commit": source_commit,
                 "credential_identity_hash": authority.payload.get("credential_identity_hash"),
                 "credential_loads": int(attempt.credential_loaded),
                 "request_plan_fingerprint": fingerprint([chain.identity for chain in chains]),
@@ -1478,6 +1498,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("action", choices=("plan-massive", "qualify-massive"))
     parser.add_argument("--repository", type=Path, default=Path.cwd())
     parser.add_argument("--data-home", type=Path, default=Path(".trading-lab"))
+    parser.add_argument("--authority", type=Path)
     parsed = parser.parse_args(
         arguments[2:] if arguments[:2] == ("program-002", "source") else arguments
     )
@@ -1496,6 +1517,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         gates = load_pre_transport_gates(parsed.repository)
         pre_transport_gate_preflight(gates)
+        expected_authority = (parsed.repository.resolve() / _AUTHORITY_PATH).resolve()
+        if parsed.authority is None or parsed.authority.resolve() != expected_authority:
+            raise MassiveQualificationError(
+                f"Massive qualification requires exact authority path: {expected_authority}"
+            )
         authority = load_qualification_authority(parsed.repository, plan, gates, chains)
         receipt = execute_massive_source_qualification(
             plan,
