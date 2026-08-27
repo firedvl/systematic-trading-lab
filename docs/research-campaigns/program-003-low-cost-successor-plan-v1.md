@@ -19,6 +19,8 @@ Program 003 therefore keeps the same return-blind hypothesis:
 
 No symbol, family, indicator, lookback, hold, or decision time is added.
 
+Program 003 binds the exact predecessor plan at SHA-256 `2872d4d3301df0a85e1a5a2eba6e3ee533ee5573971121e99840041e7c8d2173` and fingerprint `701dc67ea2da1e45d235f4247724b2bc8eb62853561c2400c17a668342c6b81e`. A future validator must load and verify that artifact before implementation or data access. Its economic, feature, configuration, portfolio, benchmark, metric, gate, budget, controlled-evaluation, statistical, and researcher-discretion controls remain in force except for the plan's explicit data, adjustment, missingness, and transaction-cost replacements.
+
 ## Canonical source design
 
 The sole candidate is Tiingo's Beta consolidated historical intraday endpoint:
@@ -56,7 +58,7 @@ The return-blind ceilings are:
 - At most one session with the same missing symbol in any rolling 252 expected sessions.
 - Zero loss in the fixed twenty-session required context.
 
-Any failed ceiling stops dataset admission and the program. These limits are based on block representativeness and missingness concentration. They do not admit the known clustered MDY gaps, which would fail the fixed-block and concentration rules.
+Any failed ceiling stops dataset admission and the program. A fixed block has about 125-126 full sessions: one loss is about 0.8%, while two are at least 1.59%, so one percent permits one isolated defect but not two in the same six-month block. The global rate is half that ceiling to prevent sparse block losses from accumulating; `floor(1499 * 0.005) = 7`. Sixty-three sessions define a trading-quarter concentration horizon, and 252 define a trading-year same-symbol recurrence horizon. Two adjacent excluded sessions indicate a continuing mechanism. Required context allows no loss because a missing member changes every affected fixed relative-volume denominator. These return-blind rules do not admit the known clustered MDY gaps, which fail the fixed-block, rolling-quarter, and same-symbol controls.
 
 ## Corporate actions
 
@@ -79,6 +81,8 @@ Program 003 does not require historical NBBO. It uses one universal conservative
 | Stress B | 20 bps | 5 bps | 25 bps | 15 minutes | 11:45 |
 
 The reserve covers possible commission, regulatory pass-through, rounding, and other small-order friction without asserting a broker-specific fee schedule. Current issuer-published 30-day median full spreads are 0-2 bps across the thirteen symbols. They are only a lower-bound sanity check, not historical spread evidence. Normal's five-basis-point adverse allowance per side is at least five times the largest current median half-spread before the separate reserve.
+
+Normal also matches the repository's existing return-blind `conservative-bps-v1` baseline of five adverse basis points plus a one-basis-point reserve. Prior SPY/QQQ SIP calibration found p99 half-spreads no greater than 0.36 bps, but that evidence does not cover this universe or prove future fills. Six basis points is not an empirical historical upper bound and may miss episodic adverse selection, bar-open uncertainty, latency, impact, queue position, partial fills, or broker-specific costs. It remains only the frozen Normal assumption. The inherited robustness gates also require Stress A, Stress B, Normal at a ten-minute delay, and Normal at a fifteen-minute delay to pass. Normal alone can never qualify a candidate, and later evidence may raise a stop but cannot lower costs after results.
 
 A zero-cost replay may later diagnose whether gross edge exists, but it can never qualify a candidate.
 
@@ -104,7 +108,9 @@ At a conservative 40 requests per hour, acquisition spans about 24.7 hours and t
 
 ## Chronology and next authority
 
-The exposed chronology remains unchanged through July 31, 2026. Controlled A, April 16 through October 15, 2027, and Controlled B, October 18, 2027 through April 14, 2028, remain unacquired and unopened. This plan cannot inspect or acquire either block.
+The exposed chronology remains unchanged through July 31, 2026. Controlled A, April 16 through October 15, 2027, and Controlled B, October 18, 2027 through April 14, 2028, remain unacquired and unopened. Controlled A's first twenty complete sessions are context only; evaluation starts on session 21. Controlled B may use only the final twenty complete Controlled A sessions as volume context and cannot be acquired until Controlled A passes every gate and a separate protected-result read is logged.
+
+Each controlled block retains the predecessor's sequence: a block-specific acquisition-only authority after the block ends, independent exact-byte dataset review and binding, then a distinct one-use evaluation authority. Candidate and benchmark grants are consumed atomically and create protected-read receipts before bounded reads. No replacement grant, retry, or reread exists after a receipt. Completed metrics remain hidden until a separate logged reviewer-and-reason event. `exchange-calendars` 4.13.2 ends before Controlled A ends, so a reviewed update must freeze exact session tables without moving block dates before any controlled acquisition.
 
 After the licensing, semantic, entitlement, implementation, synthetic-test, and independent-review preconditions pass, the next possible authorization is exactly one low-cost Tiingo structural qualification: at most 221 GET chains and responses, 16 MiB, one credential load, the fixed sample and corporate-action ranges, and no full acquisition, strategy execution, return observation, controlled access, PAPER, broker write, or live action.
 

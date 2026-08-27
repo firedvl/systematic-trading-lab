@@ -17,6 +17,39 @@
     "program_002_controls_mutable_by_this_plan": false,
     "program_002_retry_or_relaunch_allowed": false
   },
+  "inherited_predecessor_contract": {
+    "path": "config/research/cross-sectional-sector-etf-program-002-plan-proposal-v1.json",
+    "sha256": "2872d4d3301df0a85e1a5a2eba6e3ee533ee5573971121e99840041e7c8d2173",
+    "fingerprint": "701dc67ea2da1e45d235f4247724b2bc8eb62853561c2400c17a668342c6b81e",
+    "verification_rule": "A future Program 003 validator must load this exact predecessor artifact, reproduce its SHA-256 and fingerprint, and reject any missing or changed inherited path before implementation, data access, or strategy execution.",
+    "inherited_paths": [
+      "economic_contracts",
+      "feature_contract except its missing-input disposition",
+      "configuration_grid",
+      "portfolio_contract",
+      "execution_contract except its cost application, cost-model wording, and missing-fill disposition",
+      "benchmark_contract",
+      "chronology except its missing-data disposition",
+      "metric_contract",
+      "gates",
+      "campaigns_and_budget",
+      "controlled_evaluation",
+      "statistical_scope",
+      "researcher_degrees_of_freedom"
+    ],
+    "explicitly_superseded_paths": [
+      "program and plan identity",
+      "source, adjustment, and licensing architecture",
+      "feature_contract.invalid_input_action only for missing bars",
+      "execution_contract.cost_application",
+      "execution_contract.fill_model_limit cost wording",
+      "execution_contract.missing_fill_bar_action",
+      "missing-data disposition and thresholds",
+      "transaction-cost values and source",
+      "source and acquisition stop rules"
+    ],
+    "unlisted_inherited_change_allowed": false
+  },
   "repository_state": {
     "planning_base_main_commit": "62036fd035f5d6b7f4ef97264a179f958088d01d",
     "main_equal_origin_main_at_reconstruction": true,
@@ -69,49 +102,49 @@
     "configuration_count": 8,
     "configurations": [
       {
-        "configuration_id": "src-v1-l30-h120",
+        "configuration_id": "src-v1-l1-h4",
         "family_id": "sector-relative-continuation-v1",
         "lookback_minutes": 30,
         "hold_minutes": 120
       },
       {
-        "configuration_id": "src-v1-l30-h240",
+        "configuration_id": "src-v1-l1-h8",
         "family_id": "sector-relative-continuation-v1",
         "lookback_minutes": 30,
         "hold_minutes": 240
       },
       {
-        "configuration_id": "src-v1-l60-h120",
+        "configuration_id": "src-v1-l2-h4",
         "family_id": "sector-relative-continuation-v1",
         "lookback_minutes": 60,
         "hold_minutes": 120
       },
       {
-        "configuration_id": "src-v1-l60-h240",
+        "configuration_id": "src-v1-l2-h8",
         "family_id": "sector-relative-continuation-v1",
         "lookback_minutes": 60,
         "hold_minutes": 240
       },
       {
-        "configuration_id": "srr-v1-l30-h120",
+        "configuration_id": "srr-v1-l1-h4",
         "family_id": "sector-relative-reversal-v1",
         "lookback_minutes": 30,
         "hold_minutes": 120
       },
       {
-        "configuration_id": "srr-v1-l30-h240",
+        "configuration_id": "srr-v1-l1-h8",
         "family_id": "sector-relative-reversal-v1",
         "lookback_minutes": 30,
         "hold_minutes": 240
       },
       {
-        "configuration_id": "srr-v1-l60-h120",
+        "configuration_id": "srr-v1-l2-h4",
         "family_id": "sector-relative-reversal-v1",
         "lookback_minutes": 60,
         "hold_minutes": 120
       },
       {
-        "configuration_id": "srr-v1-l60-h240",
+        "configuration_id": "srr-v1-l2-h8",
         "family_id": "sector-relative-reversal-v1",
         "lookback_minutes": 60,
         "hold_minutes": 240
@@ -241,15 +274,38 @@
         "block_id": "controlled-a",
         "start": "2027-04-16",
         "end": "2027-10-15",
+        "warmup_context_sessions": 20,
+        "evaluation_begins_session_ordinal": 21,
         "state": "UNACQUIRED-UNOPENED-NOT-AUTHORIZED"
       },
       {
         "block_id": "controlled-b",
         "start": "2027-10-18",
         "end": "2028-04-14",
+        "volume_context": "Final twenty complete Controlled A sessions only.",
+        "dependency": "Controlled A passed every gate and its separate protected-result read was logged.",
         "state": "UNACQUIRED-UNOPENED-NOT-AUTHORIZED"
       }
     ],
+    "controlled_evaluation_invariants": {
+      "source": "Exact inherited_predecessor_contract.chronology and controlled_evaluation paths.",
+      "cohort_size": 1,
+      "authority_sequence": [
+        "block-specific acquisition-only authority after the block ends",
+        "independent exact-byte dataset review and binding",
+        "distinct one-use evaluation authority bound to one candidate, reviewed dataset identities, cost model, benchmark, gates, report schema, candidate specification, and benchmark template",
+        "atomic one-use candidate and benchmark grant consumption plus protected-read receipt before each bounded read",
+        "separate logged reviewer-and-reason event before completed metrics may be read"
+      ],
+      "acquisition_authority_can_grant_evaluation": false,
+      "replacement_read_grants_allowed": false,
+      "post_receipt_retry_or_reread_allowed": false,
+      "block_b_independent_acquisition_allowed": false,
+      "block_b_dependency": "Controlled A passed every controlled gate and its protected-result read was logged.",
+      "aggregation_can_rescue_failed_block": false,
+      "reselection_retuning_replacement_or_rerun": false,
+      "installed_calendar_limit": "exchange-calendars 4.13.2 ends before Controlled A ends. A reviewed calendar update must freeze exact session tables without moving either block date before controlled acquisition."
+    },
     "history_extension_allowed": false,
     "date_replacement_allowed": false,
     "controlled_acquisition_or_inspection_allowed": false
@@ -398,6 +454,15 @@
       "missingness_concentration": "The rolling-quarter, consecutive-session, and same-symbol annual ceilings reject clustered provider defects and likely regime or instrument bias even when global loss is small.",
       "known_gap_independence": "Thresholds are defined from block length and concentration risk, not from a count chosen to admit the nine known MDY omissions."
     },
+    "return_blind_numeric_derivation": {
+      "fixed_block_one_percent_and_one_session": "Each discovery or test block contains about 125-126 full sessions. One excluded session is about 0.8 percent, while two are at least 1.59 percent. A one-percent ceiling therefore permits one isolated defect but rejects two in the same six-month evidence block.",
+      "global_half_percent_and_seven_sessions": "The global rate is half the per-block ceiling so losses that are individually sparse cannot accumulate near the allowed block maximum across the program. floor(1499 * 0.005) = 7 fixes the count without reference to observed provider gaps.",
+      "rolling_63_sessions": "Sixty-three XNYS sessions approximate one trading quarter. More than one excluded session inside that horizon is treated as regime or calendar clustering even when each fixed block stays below one percent.",
+      "consecutive_sessions": "Two adjacent excluded sessions indicate a continuing outage or market-state mechanism rather than an isolated coordinate defect, so the maximum run length is one.",
+      "same_symbol_rolling_252_sessions": "Two failures for the same symbol within about one trading year establish recurrent instrument-specific missingness that can bias a cross-sectional rank or relative-volume feature, so only one is allowed.",
+      "required_context_zero": "The first twenty context sessions are a fixed feature input. Losing one changes every affected relative-volume denominator and there is no prospectively equivalent substitute, so no loss is allowed.",
+      "known_mdy_check": "The already exposed five-session MDY pattern fails the fixed-block, rolling-quarter, same-symbol annual, and source-qualification zero-missing-bar controls; no ceiling was selected to admit it."
+    },
     "full_acquisition_failure_action": "If any ceiling is exceeded, source qualification fails and the program stops without provider substitution or strategy execution."
   },
   "transaction_cost_model": {
@@ -431,6 +496,18 @@
         "entry_clock_new_york": "11:45"
       }
     },
+    "isolated_delay_scenarios": {
+      "normal-delay-2": {
+        "total_bps_per_side": "6",
+        "execution_delay_minutes": 10,
+        "entry_clock_new_york": "11:40"
+      },
+      "normal-delay-3": {
+        "total_bps_per_side": "6",
+        "execution_delay_minutes": 15,
+        "entry_clock_new_york": "11:45"
+      }
+    },
     "zero_cost_diagnostic": {
       "allowed_for_gross_edge_diagnosis": true,
       "qualification_input_allowed": false,
@@ -457,6 +534,14 @@
       },
       "historical_precision_claimed": false,
       "interpretation": "The 5 bps Normal adverse allowance per side is at least five times the largest current median half-spread, before the separate 1 bps reserve."
+    },
+    "return_blind_basis_and_challenge": {
+      "repository_precedent": "The existing strategy-neutral conservative-bps-v1 baseline uses 5 bps adverse fill plus 1 bp commission reserve per fill; Program 003 adopts those values without using Program 002 returns.",
+      "historical_execution_sanity_check": "The repository's prior SIP calibration found SPY/QQQ p99 half-spreads no greater than 0.36 bps, but that evidence does not cover this universe or establish future fills.",
+      "independent_challenge": "Six bps per side is not an empirical historical upper bound for all twelve ETFs. It may understate episodic adverse selection, bar-open execution uncertainty, latency, market impact, queue position, partial fills, or broker-specific costs.",
+      "disposition": "Retain 6 bps only as the frozen Normal planning assumption because its 5 bps adverse component is five times the largest current issuer median half-spread and matches the pre-existing return-blind repository baseline. It is not sufficient alone for qualification.",
+      "qualification_interpretation": "The inherited robustness gates require Stress A, Stress B, Normal-delay-2, and Normal-delay-3 to pass. A candidate that passes Normal but fails any required higher-cost or delayed scenario cannot qualify.",
+      "future_cost_evidence_rule": "No post-result evidence may lower a cost or delay. Evidence that the envelope is too low stops the program and requires a new prospective decision."
     },
     "historical_quote_or_nbbo_acquisition_required": false
   },
@@ -700,5 +785,5 @@
     "sec_section_31": "https://www.sec.gov/rules-regulations/fee-rate-advisories/section-31-transaction-fees-basic-information-firms",
     "finra_fee_schedule": "https://www.finra.org/rules-guidance/rule-filings/sr-finra-2024-019/fee-adjustment-schedule"
   },
-  "plan_fingerprint": "954fdf4874eb86ac9cf563781aeffe0e698cfd2e5cc8a3bcb104e0436dc81fa5"
+  "plan_fingerprint": "f5b184ff3e1604a151a82214d1cf91fbdffa6fc4fddf7d7ce0506a2e99427a42"
 }
