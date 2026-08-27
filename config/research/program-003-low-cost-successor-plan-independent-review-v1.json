@@ -1,0 +1,149 @@
+{
+  "schema_version": "program-003-low-cost-successor-plan-independent-review-v1",
+  "review_id": "program-003-low-cost-successor-plan-independent-review-2026-08-27-v1",
+  "program_id": "multi-hour-sector-etf-research-002",
+  "reviewed_at": "2026-08-27T22:23:06Z",
+  "status": {
+    "phase": "PROSPECTIVE",
+    "review": "REVIEWED",
+    "source_requests": "NOT AUTHORIZED",
+    "acquisition": "NOT AUTHORIZED",
+    "strategy_execution": "NOT AUTHORIZED"
+  },
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_commit": "c4b07eae3eaeee21ada5f66379be0ad4c37dd741",
+  "reviewed_commit_parent": "5c66fb5f2eaa687d35a008de80347b20885b272d",
+  "starting_main_commit": "62036fd035f5d6b7f4ef97264a179f958088d01d",
+  "reviewed_plan": {
+    "path": "config/research/program-003-low-cost-successor-plan-v1.json",
+    "sha256": "4b1fd55774f89caf853c27cfc521c94ad1b18435a22ee07c2333ca229e9e2c91",
+    "fingerprint": "f5b184ff3e1604a151a82214d1cf91fbdffa6fc4fddf7d7ce0506a2e99427a42",
+    "status": "PROPOSED-REVIEWED-NOT-AUTHORIZED"
+  },
+  "reviewed_documentation": {
+    "path": "docs/research-campaigns/program-003-low-cost-successor-plan-v1.md",
+    "sha256": "e2df463b9c54c05ccdc5fbf3a291bca90de87dbdc62dc311b09cdf44e3d56b40"
+  },
+  "reviewed_regression_test": {
+    "path": "tests/unit/test_program_003_planning.py",
+    "sha256": "a70b548211e7af8d87370e0bff3985fe2ec59fd483b7b58b1bd3b6c7579d9c14"
+  },
+  "predecessor_contract": {
+    "path": "config/research/cross-sectional-sector-etf-program-002-plan-proposal-v1.json",
+    "sha256": "2872d4d3301df0a85e1a5a2eba6e3ee533ee5573971121e99840041e7c8d2173",
+    "fingerprint": "701dc67ea2da1e45d235f4247724b2bc8eb62853561c2400c17a668342c6b81e"
+  },
+  "review_iterations": [
+    {
+      "reviewed_commit": "5c66fb5f2eaa687d35a008de80347b20885b272d",
+      "verdict": "fail",
+      "material_findings": [
+        "the successor retained Controlled A and B dates but did not bind the predecessor's warmup, authority sequence, one-use protected reads, result-access rule, or calendar stop",
+        "the missingness ceilings stated their effects but did not derive each numeric value and horizon independently of returns",
+        "the Normal cost case relied on lower-bound spread evidence without an explicit challenge or qualification interpretation",
+        "the force-fill regression assertion would still pass if a true value were added"
+      ]
+    },
+    {
+      "reviewed_commit": "c4b07eae3eaeee21ada5f66379be0ad4c37dd741",
+      "verdict": "pass",
+      "material_findings": []
+    }
+  ],
+  "prior_findings_resolved": [
+    {
+      "finding": "incomplete inherited controlled-evaluation contract",
+      "resolution": "The plan now binds the exact predecessor artifact by path, SHA-256, and fingerprint; imports its controlled-evaluation path; restates Block A warmup, Block B dependency, acquisition-review-evaluation sequence, one-use receipts, no reread, hidden metrics, and calendar-update stop; and tests the binding and core invariants."
+    },
+    {
+      "finding": "asserted rather than derived missingness ceilings",
+      "resolution": "The plan now derives one percent from the 125-126-session fixed blocks, seven as floor(1499 * 0.005), 63 and 252 as trading-quarter and trading-year concentration horizons, one as the isolated-defect ceiling, and zero from the fixed context denominator."
+    },
+    {
+      "finding": "Normal cost conservatism not demonstrated",
+      "resolution": "The plan identifies 6 bps per side as an assumption rather than a historical upper bound, binds the existing return-blind 5+1 bps repository precedent, records the uncovered execution risks, prohibits post-result cost reductions, and requires Stress A, Stress B, Normal-delay-2, and Normal-delay-3 to pass."
+    },
+    {
+      "finding": "permissive force-fill regression assertion",
+      "resolution": "The focused test now requires every fill and synthesis control to be exactly false."
+    }
+  ],
+  "review_challenges": {
+    "successor_legitimacy": "Pass. Program 002 stopped on source requirements before any strategy return existed. A new prospective data and cost architecture does not rescue a failed result.",
+    "configuration_adaptation": "Pass. The same two families, exact eight configuration IDs, lookbacks, holds, chronology, campaign budget, and predecessor scientific controls remain bound. No return informed them.",
+    "missingness_convenience": "Pass. The ceilings have return-blind block and concentration derivations, and the exposed five-session MDY pattern still fails the fixed-block, rolling-quarter, same-symbol annual, and qualification zero-missing-bar controls.",
+    "tiingo_beta_suitability": "Blocked today. Tiingo remains only a candidate until licensing, parameter, bar, revision, entitlement, corporate-action, ticker-identity, implementation, and structural qualification gates pass.",
+    "force_fill": "Pass at plan scope. Force fill and every synthesis path are false. A future adapter must bind explicit provider-confirmed false parameters before transport.",
+    "corporate_actions": "Conditionally sufficient for the intraday-only scope. Exact rational split normalization covers price and volume; distributions remain audit-only because no position owns an overnight entitlement. Endpoint entitlement and ticker identity remain pre-transport gates.",
+    "static_cost_conservatism": "Pass as a bounded assumption, not an empirical upper-bound claim. Normal uses 6 bps per side and a five-minute delay, while mandatory 12/25-bps cost-and-delay stresses plus isolated 10/15-minute Normal delays prevent Normal alone from qualifying.",
+    "historical_nbbo_removal": "Acceptable scoped tradeoff. It removes direct historical execution evidence, but the plan states that gap, uses a predeclared static envelope, retains capacity and robustness gates, and makes no precise fill claim.",
+    "low_cost_reproducibility": "Blocked on Starter. Current public terms prohibit durable free-tier persistence. Reproducibility requires a continuing $30 Power subscription or separate written durable-retention terms plus the remaining semantic gates.",
+    "hidden_degrees_of_freedom": "Pass. Provider count, sample, request ceiling, source failure action, adjustment rules, missingness, costs, delays, configurations, chronology, budget, controlled sequence, and all authority flags are fixed before any Program 003 data or return."
+  },
+  "verified_assertions": {
+    "plan_sha256_reproduced": true,
+    "plan_fingerprint_reproduced": true,
+    "documentation_sha256_reproduced": true,
+    "regression_test_sha256_reproduced": true,
+    "predecessor_sha256_and_fingerprint_reproduced": true,
+    "configuration_count_eight": true,
+    "configuration_ids_and_parameters_match_predecessor": true,
+    "known_mdy_coordinates_nine": true,
+    "qualification_sessions_fifteen": true,
+    "qualification_expected_rows_14742": true,
+    "qualification_request_chain_sum_221": true,
+    "full_acquisition_request_sum_988": true,
+    "full_acquisition_expected_rows_1546818": true,
+    "force_fill_and_synthesis_false": true,
+    "fallback_absent": true,
+    "historical_nbbo_not_required": true,
+    "controlled_contract_bound": true,
+    "all_authority_flags_false": true,
+    "controlled_and_protected_ranges_untouched": true,
+    "zero_candidate_returns_generated_or_observed": true
+  },
+  "verification": {
+    "focused_test": {
+      "command": "uv run pytest -q tests/unit/test_program_003_planning.py",
+      "result": "passed"
+    },
+    "independent_review_method": "Two fresh read-only exact-commit reviews against repository standards and the complete originating brief, followed by separate closure reviews of every finding on the corrected commit.",
+    "official_documentation_retrieved_date": "2026-08-27"
+  },
+  "proof_gaps": [
+    "No Tiingo subscription, entitlement, credential, response, bar, action record, or real qualification receipt has been accessed.",
+    "Public material does not bind the required after-hours, force-fill, timestamp, bucket, pagination, correction, revision, corporate-action entitlement, or ticker-identity semantics.",
+    "Starter cannot persist immutable evidence; Power retention lasts only while subscribed unless separate written terms apply.",
+    "The static transaction-cost envelope is a conservative planning assumption and robustness screen, not observed historical fill evidence or a market-impact model.",
+    "The 14,742 qualification bars and 1,546,818 full-acquisition rows are prospective expectations, not observed data.",
+    "Controlled A and B remain unopened and outside every authority in this plan."
+  ],
+  "scope_limit": "Independent prospective planning review only. No provider contact, credential access, subscription purchase, provider market-data request, sample download, adapter implementation, acquisition, real dataset admission, strategy implementation or execution, return access, research qualification, controlled or protected access, PAPER action, broker write, live action, or strategic-allocation-21 access occurred.",
+  "required_next_user_action": "No source qualification is currently authorizable. The user must first accept the continuing $30 Power retention obligation or obtain separate durable-retention terms, and provider-authored material must close every semantic and entitlement gap. After an isolated implementation passes synthetic tests and independent review, a separate user authorization may permit ONE-USE LOW-COST TIINGO STRUCTURAL SOURCE QUALIFICATION ONLY: at most 221 GET chains and responses, 16 MiB, one credential load, the exact thirteen symbols and fifteen sessions plus fixed action ranges, and no full acquisition, strategy execution, return observation, controlled access, PAPER, broker write, or live action.",
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "controlled_a": false,
+    "controlled_b": false,
+    "intraday_v3": false,
+    "daily_independent_2018_2019": false,
+    "strategic_allocation_21": false
+  },
+  "review_fingerprint": "55ea3dcb3fc122034b59909bd8431886aa61fac5e8c83ea2a53eb9fdbd060bdb"
+}
