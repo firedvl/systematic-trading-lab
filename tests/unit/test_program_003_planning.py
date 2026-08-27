@@ -122,3 +122,27 @@ def test_program_003_plan_is_exact_and_grants_no_authority() -> None:
     assert plan["next_authorization"]["current_state"] == "BLOCKED-BEFORE-AUTHORITY"
     assert not any(plan["authority"].values())
     assert not any(plan["protected_access"].values())
+
+
+def test_program_003_independent_review_binds_the_plan() -> None:
+    review = _load("config/research/program-003-low-cost-successor-plan-independent-review-v1.json")
+    unsigned = dict(review)
+
+    assert unsigned.pop("review_fingerprint") == fingerprint(unsigned)
+    assert review["verdict"] == "pass"
+    assert review["findings"] == []
+    assert [item["verdict"] for item in review["review_iterations"]] == ["fail", "pass"]
+
+    plan_binding = review["reviewed_plan"]
+    plan_path = _REPOSITORY / plan_binding["path"]
+    plan = json.loads(plan_path.read_text())
+    assert sha256(plan_path.read_bytes()).hexdigest() == plan_binding["sha256"]
+    assert plan["plan_fingerprint"] == plan_binding["fingerprint"]
+
+    documentation = review["reviewed_documentation"]
+    assert (
+        sha256((_REPOSITORY / documentation["path"]).read_bytes()).hexdigest()
+        == documentation["sha256"]
+    )
+    assert not any(review["authority"].values())
+    assert not any(review["protected_access"].values())
