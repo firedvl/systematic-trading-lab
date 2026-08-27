@@ -55,6 +55,12 @@ missing coordinates and reasons, per-period loss, symbol/month/clock concentrati
 contiguous gaps, quote coverage, pass or fail, and a fingerprint. It cannot contain a fill, P&L,
 return, Sharpe, candidate rank, or strategy gate.
 
+The exposed entry point accepts observed coverage, not an expected schedule or policy. It loads the
+reviewed plans and disposition, verifies the frozen 1,531-session XNYS table and 657-window quote-grid
+fingerprints, and applies fixed thresholds. The generic evaluator is private and exists only for
+synthetic mechanics tests; its output cannot stand in for real dataset admission. A later controlled
+authority must bind reviewed calendar tables without changing this rule or either block's dates.
+
 ## Scientific assessment
 
 Whole-session exclusion preserves the fixed cross-section and does not alter either hypothesis,

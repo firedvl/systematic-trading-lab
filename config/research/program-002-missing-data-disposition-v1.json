@@ -256,7 +256,23 @@
       "candidate rankings",
       "strategy pass or fail"
     ],
-    "reference_implementation": "src/systematic_trading_lab/program_002_missing_data_admission.py"
+    "reference_implementation": "src/systematic_trading_lab/program_002_missing_data_admission.py",
+    "public_entry_point": "assess_program_002_exposed_missing_data_admission",
+    "caller_policy_override_allowed": false,
+    "caller_expected_schedule_override_allowed": false,
+    "synthetic_mechanics_function_is_not_real_admission": "_assess_missing_data_admission",
+    "frozen_exposed_contract_binding": {
+      "plan_sha256": "2872d4d3301df0a85e1a5a2eba6e3ee533ee5573971121e99840041e7c8d2173",
+      "acquisition_plan_sha256": "26c768f422e63e9f00e6adc88be2d57f5c6447972a9de1fa4873ab2826556aae",
+      "expected_session_count": 1531,
+      "required_context_session_count": 20,
+      "evaluation_session_count": 1511,
+      "full_trade_session_count": 1499,
+      "early_close_session_count": 12,
+      "expected_session_table_fingerprint": "868722db6433197ea2ea8baf4b4ec86609433d73c5f0b56e7194c250dd3cc25e",
+      "expected_quote_window_count": 657,
+      "expected_quote_grid_fingerprint": "3eb70161181aab68f6fd23475e46fbe17b620ff5584c78f525e8816ece135577"
+    }
   },
   "chronology_preservation": {
     "changed": false,
@@ -339,5 +355,5 @@
     "broker_writes": false,
     "live_execution": false
   },
-  "disposition_fingerprint": "6cedb2ce40c6aae4365a4966d73dae415803bb1bc8d16cfe3fc952a57efa7ef4"
+  "disposition_fingerprint": "291c7bccce40440773b32157e1518abc31fe783e0a0b0763dfd100b55e95bbfe"
 }
