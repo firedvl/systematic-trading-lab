@@ -370,8 +370,11 @@ def acquire_segment(
     retry_wait: Callable[[float], None] = system_time.sleep,
     wall_clock: Callable[[], float] = system_time.time,
     quarantine_layout: StorageLayout | None = None,
+    request_attempt_limit: int = 5,
 ) -> AcquiredSegment:
     _endpoint(segment.endpoint, segment.kind)
+    if not 1 <= request_attempt_limit <= 5:
+        raise ValueError("request attempt limit must be between 1 and 5")
     pace = RequestPacer() if pace is None else pace
     token: str | None = None
     seen: set[str] = set()
@@ -388,7 +391,7 @@ def acquire_segment(
             if page is not None and page.attempts
             else getattr(error, "http_attempts", ())
         )
-        _quarantine_page(
+        error.quarantine_identity = _quarantine_page(  # type: ignore[attr-defined]
             quarantine_layout,
             segment,
             url,
@@ -402,7 +405,15 @@ def acquire_segment(
     for _ in range(segment.page_ceiling):
         url = segment.url(token)
         try:
-            page = _request(url, transport, pace, retryable, retry_wait, wall_clock)
+            page = _request(
+                url,
+                transport,
+                pace,
+                retryable,
+                retry_wait,
+                wall_clock,
+                request_attempt_limit,
+            )
         except Program002AcquisitionError as error:
             raise fail(error, getattr(error, "page", None)) from None
         try:
@@ -2303,9 +2314,10 @@ def _request(
     retryable: Callable[[int], bool],
     wait: Callable[[float], None],
     wall_clock: Callable[[], float],
+    attempt_limit: int,
 ) -> HttpPage:
     attempts: list[Mapping[str, Any]] = []
-    for attempt in range(1, 6):
+    for attempt in range(1, attempt_limit + 1):
         try:
             pace()
             page = transport(url)
@@ -2321,7 +2333,7 @@ def _request(
                 captured_body_truncated=len(body) == 8193,
             )
         except (URLError, TimeoutError, ConnectionResetError) as error:
-            delay = float(2 ** (attempt - 1)) if attempt < 5 else None
+            delay = float(2 ** (attempt - 1)) if attempt < attempt_limit else None
             attempts.append(
                 _http_attempt(
                     url,
@@ -2349,7 +2361,7 @@ def _request(
         if not retryable(page.status):
             attempts.append(_http_attempt(url, attempt, page=page, disposition="rejected"))
             _raise_request_error(f"nonretryable HTTP status {page.status}", attempts, page)
-        if attempt < 5:
+        if attempt < attempt_limit:
             headers = {key.lower(): value for key, value in page.headers.items()}
             retry_after = headers.get("retry-after")
             reset = headers.get("x-ratelimit-reset")
@@ -2933,9 +2945,9 @@ def _quarantine_page(
     *,
     previous_pages: Sequence[RawPage] = (),
     raw_records: Sequence[Mapping[str, Any]] = (),
-) -> None:
+) -> str | None:
     if layout is None:
-        return
+        return None
     body = page.body if isinstance(page, HttpPage | RawPage) else b""
     attempts = getattr(error, "http_attempts", getattr(page, "attempts", ()))
     evidence = {
@@ -2956,7 +2968,9 @@ def _quarantine_page(
         "raw_records": list(raw_records),
         "error": str(error),
     }
-    layout.write_quarantine(fingerprint(evidence), canonical_json(evidence) + "\n")
+    identity = fingerprint(evidence)
+    layout.write_quarantine(identity, canonical_json(evidence) + "\n")
+    return identity
 
 
 def _quarantine_acquired_segment(
