@@ -1,4 +1,4 @@
-"""Exact, one-use Program 002 minute-source reconstruction boundary."""
+"""Terminally revoked Program 002 minute-source reconstruction boundary."""
 
 from __future__ import annotations
 

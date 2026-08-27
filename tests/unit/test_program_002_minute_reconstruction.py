@@ -703,3 +703,27 @@ def test_cli_checks_authority_before_credentials(
     )
     assert order == ["plan", "authority"]
     assert "authority blocked" in capsys.readouterr().err
+
+
+def test_consumed_authority_rejects_another_data_home_before_credentials(
+    monkeypatch: MonkeyPatch, tmp_path: Path, capsys: CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(
+        reconstruction,
+        "read_acquisition_credentials",
+        lambda: (_ for _ in ()).throw(AssertionError("credentials loaded")),
+    )
+
+    assert (
+        reconstruction.main(
+            (
+                "--repository",
+                str(_REPOSITORY),
+                "--data-home",
+                str(tmp_path),
+                "acquire-source",
+            )
+        )
+        == 64
+    )
+    assert "minute-source implementation identity differs" in capsys.readouterr().err
