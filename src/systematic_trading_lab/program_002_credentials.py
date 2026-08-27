@@ -12,6 +12,7 @@ ACQUISITION_CREDENTIAL_NAMES = (
 )
 ACCOUNT_ENVIRONMENT_NAME = "PROGRAM_002_ACQUISITION_ACCOUNT_ENVIRONMENT"
 _RESEARCH_FORBIDDEN_MARKERS = ("APCA", "ALPACA", "BROKER", "IBKR")
+MASSIVE_CREDENTIAL_NAME = "PROGRAM_002_MASSIVE_API_KEY"
 
 
 def read_acquisition_credentials(
@@ -55,6 +56,7 @@ def reject_research_credentials(environ: Mapping[str, str] | None = None) -> Non
         if value
         and (
             (normalized := key.upper()).startswith("PROGRAM_002_ACQUISITION_")
+            or normalized == MASSIVE_CREDENTIAL_NAME
             or any(marker in normalized for marker in _RESEARCH_FORBIDDEN_MARKERS)
             or normalized.startswith(("PAPER", "LIVE"))
             or "_PAPER" in normalized

@@ -2315,6 +2315,7 @@ def _request(
     wait: Callable[[float], None],
     wall_clock: Callable[[], float],
     attempt_limit: int,
+    observe_page: Callable[[HttpPage], None] | None = None,
 ) -> HttpPage:
     attempts: list[Mapping[str, Any]] = []
     for attempt in range(1, attempt_limit + 1):
@@ -2347,6 +2348,8 @@ def _request(
                 wait(delay)
                 continue
             _raise_request_error("retryable network failure exhausted", attempts)
+        if observe_page is not None:
+            observe_page(page)
         if page.status == 200:
             attempts.append(_http_attempt(url, attempt, page=page, disposition="accepted"))
             if isinstance(pace, RequestPacer):
