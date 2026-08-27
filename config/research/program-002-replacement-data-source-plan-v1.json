@@ -392,6 +392,18 @@
       "used_for_canonical_bars": false,
       "used_for_source_qualification_audit": true,
       "rule": "Reaggregate only with a separately frozen provider condition, correction, timestamp, and bucketing specification. Compare against every provider aggregate in the bounded audit sample. Raw evidence may diagnose an omission but may not create a canonical bar.",
+      "audit_contract": {
+        "binding_time": "Before the one-use authority is created and before any credential load or market-data request",
+        "required_immutable_inputs": [
+          "exact provider-authored aggregate-eligibility and sale-condition specification bytes, source identity, retrieval date, revision where available, and SHA-256",
+          "complete included and excluded trade-condition code sets",
+          "correction, cancellation, duplicate, out-of-sequence, and late-report treatment",
+          "SIP timestamp event selection plus equal-timestamp ordering rule",
+          "America/New_York regular-session five-minute bucket boundaries and exact UTC bar-open labeling",
+          "exact Decimal first, high, low, last selection, integer share-volume sum, and field-by-field equality algorithm"
+        ],
+        "change_rule": "The authority must bind the exact contract bytes and implementation hash. No code set, event rule, timestamp, bucket, or comparison choice may change after authority creation or after any source observation. If Massive cannot provide an exact provider-authored specification before transport, source qualification fails without a request."
+      },
       "semantic_change_warning": "Aggregating all prints or combining venue feeds would change OHLCV and volume. That is prohibited under this plan."
     },
     "quotes": {
@@ -503,6 +515,7 @@
     "pre_transport_gates": [
       "signed or written plan terms permit internal non-display research, automated access, immutable raw retention, derived bars, and reproducible internal backtests",
       "authoritative adjustment contract proves exact split, cash-dividend, spin-off, price, volume, and as-of semantics compatible with provider-adjusted-all-v1",
+      "exact provider-authored aggregate eligibility and condition contract binds included and excluded codes, correction handling, SIP timestamp order, five-minute buckets, equality algorithm, source bytes, revision, and SHA-256",
       "future implementation and its exact request surface pass independent review",
       "future one-use authority and independent authority review bind the implementation commit, exact samples, credential identity hash, limits, and all-false strategy authorities"
     ],
@@ -593,6 +606,7 @@
       "implementation commit and source-surface hashes",
       "source-qualification receipt SHA-256 and fingerprint",
       "provider, plan, business entitlement, endpoint, source identity, and semantic contract",
+      "provider-authored aggregate eligibility and condition-contract SHA-256 plus exact audit algorithm",
       "exact universe and universe fingerprint",
       "exact exposed/context ranges and expected XNYS coordinate tables",
       "exact quote grid and sampling contract",
@@ -693,5 +707,5 @@
     "live_execution": false
   },
   "next_authorization": "After a finding-free independent review and clean merge, the next possible user authorization is ONE-USE SOURCE QUALIFICATION ONLY for the exact Massive sample and controls in this plan. It must not authorize full acquisition or strategy execution.",
-  "plan_fingerprint": "9faf5940b09a987b5de015ae6f225515f1b96442c7c692e7d91a3aa87922e524"
+  "plan_fingerprint": "4080f02cfd4ad57c2c3e4e535cc73de8743a40fb0d3e52d046e5c592cd06ae8d"
 }
