@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-27 — Propose Program 003 on low-cost bars without historical NBBO
+
+- Decision: create proposed successor `multi-hour-sector-etf-research-002` without reopening terminal Program 002. Preserve its untested twelve-ETF plus SPY hypothesis, eight configurations, chronology, and search budget. Select Tiingo's Beta consolidated historical intraday endpoint as the sole source candidate, keep raw unadjusted five-minute OHLCV as canonical evidence, derive exact split-normalized analytical price and volume, and replace historical NBBO with universal 6/12/25-basis-point-per-side costs plus 5/10/15-minute delays.
+- Context: Program 002 stopped on source requirements before any strategy return existed, so preserving its hypothesis is not result-driven rescue. Tiingo's advertised free limits fit the projected 988 requests and 295-590 MiB, but current terms prohibit durable Starter persistence. Power costs $30/month and allows persistence only while subscribed. Public material also leaves required bar, correction, corporate-action entitlement, and ticker-identity semantics unresolved.
+- Consequences: force fill, interpolation, provider blending, symbol dropping, and date replacement are prohibited. Missing data excludes the whole thirteen-symbol session under fixed global and concentration ceilings. One later structural qualification would bind fifteen sessions, 14,742 bars, 221 GET chains and responses, 16 MiB, and one credential load, but it is blocked before authority. No subscription, credential, request, acquisition, strategy return, controlled/protected access, PAPER action, broker write, or live action occurred; all authority remains false.
+- Revisit when: the user accepts a licensed durable-retention path or Tiingo grants separate terms, provider-authored material closes every semantic and entitlement gap, and a reviewed implementation plus separate one-use authority exists. A Tiingo failure stops the program; another provider requires a new prospective decision.
+
 ## 2026-08-26 — Stop Program 002 after the minute source cannot reconstruct any target
 
 - Decision: preserve the one-use attempt `program-002-minute-reconstruction-source-20260826-v1`, its four source segments, raw pages and records, claim, start, terminal outcome, and journals. Do not retry the provider, repair the reload mismatch under the consumed authority, publish a source proof, or admit a reconstructed row.

@@ -1,0 +1,704 @@
+{
+  "schema_version": "program-003-low-cost-successor-plan-v1",
+  "plan_id": "program-003-low-cost-successor-plan-2026-08-27-v1",
+  "program_ordinal": 3,
+  "program_id": "multi-hour-sector-etf-research-002",
+  "created_date": "2026-08-27",
+  "documentation_retrieved_date": "2026-08-27",
+  "status": "PROPOSED-NOT-AUTHORIZED-FOR-DATA-REQUESTS-ACQUISITION-OR-STRATEGY-EXECUTION",
+  "purpose": "Prospectively preserve the untested Program 002 economic hypothesis while replacing its institutional data and historical-NBBO requirements with a source-qualified low-cost architecture.",
+  "lineage": {
+    "predecessor_program_id": "multi-hour-sector-etf-research-001",
+    "predecessor_disposition": "STOPPED-TERMINAL",
+    "termination_reason": "Program 002 stopped before strategy execution because its frozen Alpaca source could not reconstruct required bars and its conditional Massive replacement failed adjustment, aggregate-eligibility, and licensing pre-transport gates.",
+    "strategy_outcomes_generated_or_observed": 0,
+    "result_driven_adaptation": false,
+    "successor_change": "Data, corporate-action, missingness, and transaction-cost architecture only.",
+    "program_002_controls_mutable_by_this_plan": false,
+    "program_002_retry_or_relaunch_allowed": false
+  },
+  "repository_state": {
+    "planning_base_main_commit": "62036fd035f5d6b7f4ef97264a179f958088d01d",
+    "main_equal_origin_main_at_reconstruction": true,
+    "worktree_clean_at_reconstruction": true,
+    "active_program_002_process_found": false,
+    "active_program_002_lease_or_lock_found": false,
+    "new_market_data_acquired": false,
+    "candidate_returns_generated_or_observed": false,
+    "controlled_or_protected_data_touched": false,
+    "paper_broker_or_live_authority_active": false
+  },
+  "scientific_hypothesis": {
+    "retention_verdict": "Retain unchanged. No Program 002 strategy return existed, so this is prospective hypothesis preservation rather than candidate rescue.",
+    "ranking_and_trading_symbols": [
+      "IWM",
+      "MDY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "context_and_benchmark_symbol": "SPY",
+    "spy_tradeable": false,
+    "families": [
+      {
+        "family_id": "sector-relative-continuation-v1",
+        "strategy_id": "multi-hour-sector-relative-continuation-v1",
+        "direction": "long-only"
+      },
+      {
+        "family_id": "sector-relative-reversal-v1",
+        "strategy_id": "multi-hour-sector-relative-reversal-v1",
+        "direction": "long-only"
+      }
+    ],
+    "lookback_minutes": [
+      30,
+      60
+    ],
+    "hold_minutes": [
+      120,
+      240
+    ],
+    "configuration_count": 8,
+    "configurations": [
+      {
+        "configuration_id": "src-v1-l30-h120",
+        "family_id": "sector-relative-continuation-v1",
+        "lookback_minutes": 30,
+        "hold_minutes": 120
+      },
+      {
+        "configuration_id": "src-v1-l30-h240",
+        "family_id": "sector-relative-continuation-v1",
+        "lookback_minutes": 30,
+        "hold_minutes": 240
+      },
+      {
+        "configuration_id": "src-v1-l60-h120",
+        "family_id": "sector-relative-continuation-v1",
+        "lookback_minutes": 60,
+        "hold_minutes": 120
+      },
+      {
+        "configuration_id": "src-v1-l60-h240",
+        "family_id": "sector-relative-continuation-v1",
+        "lookback_minutes": 60,
+        "hold_minutes": 240
+      },
+      {
+        "configuration_id": "srr-v1-l30-h120",
+        "family_id": "sector-relative-reversal-v1",
+        "lookback_minutes": 30,
+        "hold_minutes": 120
+      },
+      {
+        "configuration_id": "srr-v1-l30-h240",
+        "family_id": "sector-relative-reversal-v1",
+        "lookback_minutes": 30,
+        "hold_minutes": 240
+      },
+      {
+        "configuration_id": "srr-v1-l60-h120",
+        "family_id": "sector-relative-reversal-v1",
+        "lookback_minutes": 60,
+        "hold_minutes": 120
+      },
+      {
+        "configuration_id": "srr-v1-l60-h240",
+        "family_id": "sector-relative-reversal-v1",
+        "lookback_minutes": 60,
+        "hold_minutes": 240
+      }
+    ],
+    "additional_symbols_indicators_lookbacks_holds_decision_times_or_families_allowed": false
+  },
+  "portfolio_and_execution": {
+    "decision_time": "11:30:00 America/New_York",
+    "source_bar_timeframe": "5min",
+    "derived_feature_bar_timeframe": "30min",
+    "entry_clocks_new_york": [
+      "11:35",
+      "11:40",
+      "11:45"
+    ],
+    "holding_period_begins_at_actual_entry": true,
+    "construction": "long-flat",
+    "maximum_positions": 3,
+    "leverage": false,
+    "shorting": false,
+    "resizing": false,
+    "reentry": false,
+    "flat_at_session_close": true,
+    "early_close_trade_eligible": false,
+    "entry_and_exit_market_price": "Raw contemporaneous five-minute bar open at the frozen fill clock.",
+    "historical_nbbo_required": false
+  },
+  "chronology": {
+    "preserved_from_program_002": true,
+    "exposed_context_only": {
+      "start": "2020-06-26",
+      "end": "2020-07-24",
+      "session_count": 20,
+      "use": "same-clock relative-volume context only"
+    },
+    "discovery_blocks": [
+      {
+        "block_id": "discovery-01",
+        "start": "2020-07-27",
+        "end": "2021-01-22"
+      },
+      {
+        "block_id": "discovery-02",
+        "start": "2021-01-25",
+        "end": "2021-07-23"
+      },
+      {
+        "block_id": "discovery-03",
+        "start": "2021-07-26",
+        "end": "2022-01-21"
+      }
+    ],
+    "walk_forward": {
+      "kind": "rolling-fixed-parameter",
+      "training_sessions": 252,
+      "test_sessions": 126,
+      "step_sessions": 126,
+      "folds": [
+        {
+          "fold_id": "wf-01",
+          "train_start": "2021-01-25",
+          "train_end": "2022-01-21",
+          "test_start": "2022-01-24",
+          "test_end": "2022-07-25"
+        },
+        {
+          "fold_id": "wf-02",
+          "train_start": "2021-07-26",
+          "train_end": "2022-07-25",
+          "test_start": "2022-07-26",
+          "test_end": "2023-01-24"
+        },
+        {
+          "fold_id": "wf-03",
+          "train_start": "2022-01-24",
+          "train_end": "2023-01-24",
+          "test_start": "2023-01-25",
+          "test_end": "2023-07-26"
+        },
+        {
+          "fold_id": "wf-04",
+          "train_start": "2022-07-26",
+          "train_end": "2023-07-26",
+          "test_start": "2023-07-27",
+          "test_end": "2024-01-25"
+        },
+        {
+          "fold_id": "wf-05",
+          "train_start": "2023-01-25",
+          "train_end": "2024-01-25",
+          "test_start": "2024-01-26",
+          "test_end": "2024-07-26"
+        },
+        {
+          "fold_id": "wf-06",
+          "train_start": "2023-07-27",
+          "train_end": "2024-07-26",
+          "test_start": "2024-07-29",
+          "test_end": "2025-01-28"
+        },
+        {
+          "fold_id": "wf-07",
+          "train_start": "2024-01-26",
+          "train_end": "2025-01-28",
+          "test_start": "2025-01-29",
+          "test_end": "2025-07-30"
+        },
+        {
+          "fold_id": "wf-08",
+          "train_start": "2024-07-29",
+          "train_end": "2025-07-30",
+          "test_start": "2025-07-31",
+          "test_end": "2026-01-29"
+        },
+        {
+          "fold_id": "wf-09-final-exposed",
+          "train_start": "2025-01-29",
+          "train_end": "2026-01-29",
+          "test_start": "2026-01-30",
+          "test_end": "2026-07-31"
+        }
+      ]
+    },
+    "controlled_blocks": [
+      {
+        "block_id": "controlled-a",
+        "start": "2027-04-16",
+        "end": "2027-10-15",
+        "state": "UNACQUIRED-UNOPENED-NOT-AUTHORIZED"
+      },
+      {
+        "block_id": "controlled-b",
+        "start": "2027-10-18",
+        "end": "2028-04-14",
+        "state": "UNACQUIRED-UNOPENED-NOT-AUTHORIZED"
+      }
+    ],
+    "history_extension_allowed": false,
+    "date_replacement_allowed": false,
+    "controlled_acquisition_or_inspection_allowed": false
+  },
+  "exposed_campaign_budget": {
+    "maximum_strategy_campaigns": 2,
+    "maximum_parent_configurations": 8,
+    "maximum_run_specifications": 232,
+    "maximum_attempts_per_specification": 3,
+    "maximum_infrastructure_attempts": 696,
+    "partial_stage_merit_read_for_adaptation_allowed": false,
+    "program_002_results_used_to_set_budget": false
+  },
+  "data_architecture": {
+    "primary_candidate": {
+      "provider": "Tiingo",
+      "product": "Consolidated Equity Historical Intraday",
+      "endpoint_method": "GET",
+      "endpoint_origin": "https://api.tiingo.com",
+      "endpoint_path_template": "/tiingo/equity/intraday/<ticker>/prices",
+      "documentation_status": "BETA",
+      "documented_market_scope": "Tiingo consolidated equity pipeline built from exchanges, ATS, and OTC venues for supported U.S. equities and ETFs.",
+      "fallback": null
+    },
+    "required_effective_request_semantics": {
+      "start_date_bound": true,
+      "end_date_bound": true,
+      "resample_frequency": "5min",
+      "regular_session_only": true,
+      "after_hours_included": false,
+      "force_fill": false,
+      "columns": [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ]
+    },
+    "confirmed_public_parameter_names": [
+      "startDate",
+      "endDate",
+      "resampleFreq",
+      "columns"
+    ],
+    "unconfirmed_public_parameter_names": [
+      "after-hours control",
+      "force-fill control"
+    ],
+    "parameter_name_policy": "Do not infer names or defaults. A reviewed implementation and authority must bind provider-confirmed names and explicit false values before transport.",
+    "unresolved_public_semantics": [
+      "bar timestamp timezone and whether labels identify bar opens or closes",
+      "regular-session boundary treatment",
+      "resampling bucket alignment and partial-bucket treatment",
+      "force-fill algorithm and default",
+      "after-hours default",
+      "pagination or maximum historical response range",
+      "historical correction and revision policy"
+    ],
+    "flow": [
+      "create-only exact Tiingo response bodies and non-secret request metadata",
+      "parsed raw five-minute OHLCV with deterministic UTC/XNYS labels",
+      "separate immutable split and distribution records",
+      "repository-owned split-normalized analytical view",
+      "deterministic thirty-minute aggregation",
+      "Program 003 signal engine"
+    ],
+    "canonical_bar_policy": "Raw, unadjusted five-minute Tiingo OHLCV is canonical source evidence. Split-adjusted price and volume are deterministic derived analytical views and never replace raw fills.",
+    "raw_response_mutable": false,
+    "provider_adjusted_intraday_required": false,
+    "historical_nbbo_acquisition_required": false,
+    "alpaca_role": "Existing Program 002 evidence may be a read-only structural comparison only. No new Alpaca request and no substitution or blended canonical price is allowed.",
+    "provider_failure_action": "STOP. Another provider requires a new prospective user decision."
+  },
+  "force_fill_policy": {
+    "required_value": false,
+    "forward_fill": false,
+    "backward_fill": false,
+    "interpolation": false,
+    "synthetic_ohlc": false,
+    "previous_close_substitution": false,
+    "missing_interval_representation": "Absent and explicitly recorded as absent.",
+    "violation_action": "Fail source qualification or acquisition before dataset admission."
+  },
+  "corporate_actions": {
+    "canonical_split_source_candidate": "/tiingo/corporate-actions/<ticker>/splits",
+    "distribution_source_candidate": "/tiingo/corporate-actions/<ticker>/distributions",
+    "endpoint_status": "BETA-OR-EARLY-RELEASE-ENTITLEMENT-UNRESOLVED",
+    "split_adjustment": {
+      "event_ratio": "splitTo / splitFrom from positive finite source fields, reduced exactly as a rational number",
+      "anchor": "2026-07-31 exposed-range close",
+      "cumulative_factor_for_session_s": "Product of splitTo/splitFrom for active events with s < exDate <= 2026-07-31.",
+      "analytical_price": "raw OHLC divided by cumulative factor",
+      "analytical_volume": "raw volume multiplied by cumulative factor",
+      "numeric_representation": "Exact reduced rational numerator and denominator using standard-library Fraction; no float or discretionary rounding.",
+      "execution_fill_price": "raw contemporaneous bar open",
+      "relative_volume_input": "split-normalized analytical volume",
+      "event_cancellation_or_revision": "A changed active event creates new correction lineage and invalidates any prior unreviewed derived view."
+    },
+    "cash_distribution_adjustment": {
+      "applied_to_intraday_prices": false,
+      "applied_as_portfolio_cash_flow": false,
+      "reason": "Every position opens and closes within one session; price features are same-session; no position owns an overnight distribution entitlement.",
+      "records_retained_for_audit": true,
+      "scope_expansion_rule": "Any overnight holding, cross-session price return, or total-return benchmark requires a new prospective plan before use."
+    },
+    "symbol_identity": {
+      "baseline": "Exact frozen ticker strings and issuer identities.",
+      "permaticker_required": false,
+      "reason": "Current Tiingo documentation conflicts on availability and treats access as entitlement-gated.",
+      "ticker_change_action": "Fail qualification unless a prospectively reviewed issuer-backed mapping exists before any strategy result."
+    },
+    "noncanonical_public_audit_sources": [
+      "ETF issuer corporate-action notices",
+      "SEC issuer filings",
+      "issuer distribution histories"
+    ],
+    "expensive_corporate_action_vendor_allowed": false
+  },
+  "missing_data_policy": {
+    "policy_id": "program-003-whole-session-missingness-v1",
+    "prospective_and_return_blind": true,
+    "minimum_cross_section": "All twelve ranking symbols plus SPY.",
+    "trade_session_required_grid": "Every expected XNYS regular-session five-minute bar for all thirteen symbols. Early-close sessions are context-only and require their complete scheduled grid.",
+    "incomplete_trade_session_action": "Exclude the entire session from every configuration, benchmark, and later context use.",
+    "drop_only_missing_symbol_allowed": false,
+    "replace_excluded_date_allowed": false,
+    "interpolation_or_synthesis_allowed": false,
+    "relative_volume_context": "Use the twenty most recent prior complete XNYS sessions under the frozen feature rule. An incomplete session is never context; it does not become a substitute evaluation date.",
+    "maximum_loss": {
+      "expected_exposed_xnys_sessions": 1511,
+      "expected_full_trade_eligible_sessions": 1499,
+      "overall_excluded_full_session_rate_max": "0.005",
+      "overall_excluded_full_session_count_max": 7,
+      "excluded_full_sessions_per_predeclared_discovery_or_test_block_max": 1,
+      "excluded_full_session_rate_per_predeclared_discovery_or_test_block_max": "0.01",
+      "excluded_sessions_per_rolling_63_expected_sessions_max": 1,
+      "maximum_consecutive_excluded_sessions": 1,
+      "sessions_with_same_symbol_missing_per_rolling_252_expected_sessions_max": 1,
+      "required_exposed_context_loss_max": 0
+    },
+    "rationale": {
+      "representativeness": "The 0.5 percent global ceiling limits direct sample loss to seven of 1,499 full sessions.",
+      "cross_sectional_consistency": "Whole-session exclusion keeps the ranking universe identical for every candidate and benchmark.",
+      "chronology": "One loss per fixed block and no date replacement prevent later evidence from changing block length or membership.",
+      "missingness_concentration": "The rolling-quarter, consecutive-session, and same-symbol annual ceilings reject clustered provider defects and likely regime or instrument bias even when global loss is small.",
+      "known_gap_independence": "Thresholds are defined from block length and concentration risk, not from a count chosen to admit the nine known MDY omissions."
+    },
+    "full_acquisition_failure_action": "If any ceiling is exceeded, source qualification fails and the program stops without provider substitution or strategy execution."
+  },
+  "transaction_cost_model": {
+    "model_id": "program-003-static-cost-envelope-v1",
+    "frozen_before_strategy_returns": true,
+    "symbol_tiers": false,
+    "applies_to": "All twelve tradeable ETFs; SPY remains context-only.",
+    "commission_usd": "0",
+    "separate_regulatory_fee_formula": false,
+    "reserve_interpretation": "The all-in reserve covers possible commission, regulatory pass-through, rounding, and other small-order friction without claiming a broker-specific fee schedule.",
+    "scenarios": {
+      "normal": {
+        "adverse_spread_and_slippage_bps_per_side": "5",
+        "all_in_fee_and_uncertainty_reserve_bps_per_side": "1",
+        "total_bps_per_side": "6",
+        "execution_delay_minutes": 5,
+        "entry_clock_new_york": "11:35"
+      },
+      "stress_a": {
+        "adverse_spread_and_slippage_bps_per_side": "10",
+        "all_in_fee_and_uncertainty_reserve_bps_per_side": "2",
+        "total_bps_per_side": "12",
+        "execution_delay_minutes": 10,
+        "entry_clock_new_york": "11:40"
+      },
+      "stress_b": {
+        "adverse_spread_and_slippage_bps_per_side": "20",
+        "all_in_fee_and_uncertainty_reserve_bps_per_side": "5",
+        "total_bps_per_side": "25",
+        "execution_delay_minutes": 15,
+        "entry_clock_new_york": "11:45"
+      }
+    },
+    "zero_cost_diagnostic": {
+      "allowed_for_gross_edge_diagnosis": true,
+      "qualification_input_allowed": false,
+      "monetary_cost_bps_per_side": "0",
+      "execution_delay_minutes": 5
+    },
+    "public_liquidity_sanity_check": {
+      "retrieved_date": "2026-08-27",
+      "measure": "Issuer-published current 30-day median full NBBO spread; lower-bound sanity check only.",
+      "full_spread_bps": {
+        "IWM": 1,
+        "MDY": 2,
+        "XLB": 2,
+        "XLE": 2,
+        "XLF": 2,
+        "XLI": 1,
+        "XLK": 1,
+        "XLP": 1,
+        "XLRE": 2,
+        "XLU": 2,
+        "XLV": 1,
+        "XLY": 1,
+        "SPY": 0
+      },
+      "historical_precision_claimed": false,
+      "interpretation": "The 5 bps Normal adverse allowance per side is at least five times the largest current median half-spread, before the separate 1 bps reserve."
+    },
+    "historical_quote_or_nbbo_acquisition_required": false
+  },
+  "source_qualification": {
+    "status": "DESIGNED-BUT-BLOCKED-BEFORE-AUTHORITY",
+    "kind": "one-use structural Tiingo qualification",
+    "strategy_returns_allowed": false,
+    "exact_symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "fixed_sessions": {
+      "known_gap_full_sessions": [
+        "2020-12-04",
+        "2021-02-03",
+        "2021-02-05",
+        "2021-02-10",
+        "2021-02-22"
+      ],
+      "normal_controls": [
+        "2020-07-27",
+        "2023-07-17",
+        "2026-07-15"
+      ],
+      "early_close_control": [
+        "2022-11-25"
+      ],
+      "split_neighborhood": [
+        "2025-12-04",
+        "2025-12-05",
+        "2025-12-08"
+      ],
+      "distribution_neighborhood": [
+        "2024-06-10",
+        "2024-06-11",
+        "2024-06-12"
+      ],
+      "full_session_count": 14,
+      "early_close_session_count": 1,
+      "expected_bar_rows": 14742
+    },
+    "known_mdy_coordinates": [
+      "MDY@2020-12-04T18:10:00Z",
+      "MDY@2020-12-04T18:25:00Z",
+      "MDY@2021-02-03T16:40:00Z",
+      "MDY@2021-02-05T16:45:00Z",
+      "MDY@2021-02-05T16:50:00Z",
+      "MDY@2021-02-10T20:20:00Z",
+      "MDY@2021-02-22T18:25:00Z",
+      "MDY@2021-02-22T19:05:00Z",
+      "MDY@2021-02-22T19:20:00Z"
+    ],
+    "fixed_corporate_action_controls": {
+      "split": "XLB, XLE, XLK, XLU, and XLY must each identify the issuer-announced 2-for-1 split effective for trading on 2025-12-05.",
+      "distribution": "IWM must identify the issuer-published 2024-06-11 ex-date distribution; no dividend adjustment is applied to intraday bars."
+    },
+    "pre_transport_gates": [
+      "The plan used for qualification permits durable create-only raw persistence. Starter and trial plans fail this gate under the current Tiingo Terms of Use.",
+      "The account is entitled to the Beta consolidated historical endpoint and the required split and distribution endpoints for all thirteen symbols.",
+      "Provider-authored documentation or written terms bind the exact after-hours and force-fill parameter names and explicit false values.",
+      "Provider-authored documentation or written terms bind UTC/bar-label, regular-session, five-minute bucket, resampling, correction, and revision semantics.",
+      "A future isolated adapter and qualification implementation pass synthetic tests and independent review.",
+      "A future one-use authority binds the exact implementation commit, account-plan identity hash, endpoint, sample, limits, and all-false strategy authorities."
+    ],
+    "request_budget": {
+      "single_session_bar_chains": 195,
+      "full_range_split_chains": 13,
+      "full_range_distribution_chains": 13,
+      "maximum_logical_request_chains": 221,
+      "maximum_http_responses": 221,
+      "maximum_response_bytes": 16777216,
+      "maximum_credential_loads": 1,
+      "method": "GET",
+      "origin": "https://api.tiingo.com",
+      "redirects": false,
+      "pagination": "Not expected for exact-session requests and not publicly documented. Any pagination, truncation marker, or response-range drift fails qualification unless prospectively bound before authority."
+    },
+    "pass_criteria": [
+      "Exactly 14,742 bars exist at the expected XNYS regular-session coordinates with no duplicate or foreign coordinate.",
+      "All nine known MDY coordinates exist as real provider bars; no force-filled or synthetic row is accepted.",
+      "Every full control has 78 bars per symbol and the early close has 42 bars per symbol.",
+      "Each stored response reparses and rederives to identical canonical structural evidence; provider correction and revision behavior matches the pre-transport contract.",
+      "Dates, timestamps, numeric fields, resampling, volume inclusion, after-hours exclusion, and force-fill exclusion match the frozen contract.",
+      "The five issuer-known splits and the fixed IWM distribution control match the corporate-action ledger.",
+      "Exact rational split factors transform price and volume as specified without float arithmetic.",
+      "Raw response bodies, request identities, action records, derived structural counts, and the terminal receipt persist under the licensed plan."
+    ],
+    "failure_action": "Consume the one-use authority, retain only evidence permitted by the applicable license, publish a terminal structural failure receipt, perform no full acquisition, and do not try another provider.",
+    "success_action": "Publish a structural pass receipt with no strategy return. Full acquisition still needs separate user authorization and review."
+  },
+  "free_tier_and_low_cost_feasibility": {
+    "starter": {
+      "monthly_cost_usd": 0,
+      "unique_symbols_per_month": 500,
+      "requests_per_hour": 50,
+      "requests_per_day": 1000,
+      "bandwidth_gb_per_month": 1,
+      "durable_persistence_allowed": false,
+      "disposition": "NOT SCIENTIFICALLY USABLE for this repository because immutable raw persistence is mandatory."
+    },
+    "power_individual_option": {
+      "monthly_cost_usd": 30,
+      "requests_per_hour": 10000,
+      "requests_per_day": 100000,
+      "bandwidth_gb_per_month": 40,
+      "purchase_authorized": false,
+      "retention": "Tiingo data may persist only while the eligible paid plan remains active; cancellation or downgrade requires deletion unless separate written terms apply."
+    },
+    "qualification_projection": {
+      "requests": 221,
+      "starter_minimum_clock_hours_at_limit": "4.42",
+      "planned_clock_hours_at_40_requests_per_hour": "5.53",
+      "response_budget_mib": 16,
+      "starter_usable": false
+    },
+    "full_exposed_projection": {
+      "monthly_symbol_bar_requests": 962,
+      "corporate_action_requests": 26,
+      "total_requests": 988,
+      "monthly_chunks_per_symbol": 74,
+      "expected_bar_rows": 1546818,
+      "estimated_raw_json_mib": [
+        295,
+        590
+      ],
+      "estimate_basis": "1,546,818 expected rows at a planning envelope of 200-400 raw JSON bytes per row; Tiingo bandwidth accounting and actual response size remain unverified.",
+      "starter_minimum_clock_hours_at_limit": "19.76",
+      "planned_duration_at_40_requests_per_hour": "Two calendar days",
+      "working_storage_reservation_gib": 2,
+      "pagination_needed": "No for the proposed monthly application chunks if provider limits permit; public maximum-range and pagination semantics are unresolved and must pass qualification.",
+      "restart_safety": "One create-only receipt per symbol-month/action chain, deterministic pending/completed state, response hash, atomic publication, and resume from the first absent receipt.",
+      "starter_bandwidth_risk": "Estimated below 1 GB, but qualification must measure provider-counted bytes. Exceeding a prospectively frozen ceiling stops rather than purchases an upgrade."
+    },
+    "projected_recurring_market_data_cost_usd": 30,
+    "projection_condition": "Only if the user later accepts Tiingo Power and keeps it active while Tiingo data is retained. Current authorized and incurred cost is $0."
+  },
+  "implementation_plan": {
+    "status": "DESIGN-ONLY-NOT-IMPLEMENTED",
+    "reuse": [
+      "source-neutral content-addressed storage and atomic publication",
+      "XNYS calendar and expected-bar scheduling",
+      "OHLCV validation, fingerprints, Parquet encoding, and universe validation",
+      "Program 002 scientific mechanics only as a read-only template"
+    ],
+    "do_not_reuse_directly": [
+      "Program 002 Alpaca acquisition authority modules",
+      "Program 002 Massive qualification module",
+      "Program 002 hard-bound missing-data admission module",
+      "Program 002 frozen plan or authority files"
+    ],
+    "future_changes": [
+      "Add an isolated read-only Tiingo documentation-bound adapter using the standard library.",
+      "Add a persistent token-bucket limiter and symbol-month receipt ledger for free/low-cost limits.",
+      "Store exact licensed response bodies create-only and resume only absent chains.",
+      "Add a standard-library Fraction split layer and audit-only distribution ledger.",
+      "Add Program 003 structural source qualification with the exact one-use sample and limits.",
+      "Add Program 003 whole-session admission with fixed concentration ceilings.",
+      "Bind program-003-static-cost-envelope-v1 directly in future run specifications.",
+      "Add launch control that fails before credentials or transport unless every pre-transport gate and separate user authority pass."
+    ],
+    "new_dependency_required": false,
+    "network_acquisition_in_this_phase": false
+  },
+  "stop_rules": [
+    "Stop before qualification authority while Starter persistence is prohibited or any Beta/request/corporate-action semantic gate is unresolved.",
+    "Stop after any failed one-use structural qualification; do not shop providers.",
+    "Stop full acquisition if missingness exceeds any fixed global, block, rolling, consecutive, same-symbol, or context ceiling.",
+    "Stop on source revision drift, unlicensed persistence, force-filled data, ticker ambiguity, corporate-action mismatch, request-scope drift, or budget exhaustion.",
+    "Do not inspect strategy returns until a later full dataset passes independent admission and a separate strategy-execution authority exists.",
+    "Do not acquire or inspect Controlled A or B under this plan."
+  ],
+  "prohibitions": [
+    "no Massive subscription, credential, endpoint, repair, or relaunch",
+    "no Tiingo or Alpaca credential access",
+    "no Tiingo or Alpaca market-data request",
+    "no paid plan purchase",
+    "no market-data acquisition or dataset admission",
+    "no strategy implementation or execution",
+    "no candidate return, discovery, walk-forward, robustness, qualification, or controlled evaluation",
+    "no protected or controlled data access",
+    "no PAPER action, broker write, or live action",
+    "no provider blending, gap substitution, interpolation, or force fill"
+  ],
+  "next_authorization": {
+    "current_state": "BLOCKED-BEFORE-AUTHORITY",
+    "required_preconditions": [
+      "User accepts either the $30/month Power retention obligation or Tiingo provides separate written durable-retention terms; no purchase is implied by this plan.",
+      "Provider-authored material resolves exact force-fill, after-hours, timestamp, resampling, revision, split/distribution entitlement, and ticker-identity semantics.",
+      "The isolated implementation and exact authority artifact pass synthetic tests and independent review on clean synchronized main."
+    ],
+    "exact_scope_after_preconditions": "ONE-USE LOW-COST TIINGO STRUCTURAL SOURCE QUALIFICATION ONLY: at most 221 GET chains, 221 responses, 16 MiB, one credential load, the exact thirteen symbols and fifteen sessions, exact split/distribution ranges, create-only licensed raw evidence, and no full acquisition, strategy execution, return observation, controlled access, PAPER, broker write, or live action."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "controlled_a": false,
+    "controlled_b": false,
+    "intraday_v3": false,
+    "daily_independent_2018_2019": false,
+    "strategic_allocation_21": false
+  },
+  "official_sources": {
+    "tiingo_consolidated_intraday": "https://www.tiingo.com/documentation/equity-realtime-stock-data",
+    "tiingo_changelog": "https://www.tiingo.com/documentation/general/changelog",
+    "tiingo_pricing": "https://www.tiingo.com/pricing",
+    "tiingo_general_limits": "https://www.tiingo.com/documentation/general",
+    "tiingo_terms": "https://api.tiingo.com/tos/",
+    "tiingo_splits": "https://www.tiingo.com/documentation/corporate-actions/splits",
+    "tiingo_distributions": "https://www.tiingo.com/documentation/corporate-actions/dividends",
+    "tiingo_search": "https://www.tiingo.com/documentation/utilities/search",
+    "tiingo_symbology": "https://www.tiingo.com/documentation/appendix/symbology",
+    "state_street_split_notice": "https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx",
+    "iwm_issuer_page": "https://www.ishares.com/us/products/239710/IWM",
+    "state_street_spread_pages": "https://www.ssga.com/us/en/intermediary/etfs",
+    "sec_section_31": "https://www.sec.gov/rules-regulations/fee-rate-advisories/section-31-transaction-fees-basic-information-firms",
+    "finra_fee_schedule": "https://www.finra.org/rules-guidance/rule-filings/sr-finra-2024-019/fee-adjustment-schedule"
+  },
+  "plan_fingerprint": "954fdf4874eb86ac9cf563781aeffe0e698cfd2e5cc8a3bcb104e0436dc81fa5"
+}
