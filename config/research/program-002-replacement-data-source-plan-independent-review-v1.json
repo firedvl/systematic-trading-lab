@@ -1,0 +1,132 @@
+{
+  "schema_version": "program-002-replacement-data-source-plan-independent-review-v1",
+  "review_id": "program-002-replacement-data-source-plan-independent-review-2026-08-27-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "reviewed_at": "2026-08-27T10:25:31Z",
+  "status": {
+    "phase": "PROSPECTIVE",
+    "review": "REVIEWED",
+    "source_requests": "NOT AUTHORIZED",
+    "acquisition": "NOT AUTHORIZED",
+    "strategy_execution": "NOT AUTHORIZED"
+  },
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_commit": "f6298531e58eec2a5fbeb6fbd526a3e0c23506ed",
+  "reviewed_commit_parent": "5bb025f2921f9ee953425acd3c6a7c847d2bdbbd",
+  "starting_main_commit": "0c30f8c01bfb7d3c8ede8af274b71c34c3b43fea",
+  "reviewed_plan": {
+    "path": "config/research/program-002-replacement-data-source-plan-v1.json",
+    "sha256": "01e89da41c3c74080c3a3e5f88c5aa11e5fa5ba6a5fc66ba73b4bfdff3562036",
+    "fingerprint": "4080f02cfd4ad57c2c3e4e535cc73de8743a40fb0d3e52d046e5c592cd06ae8d",
+    "requirements_fingerprint": "c4daa7ab84da0dc6a567445201a2c3eb3d2a47c7176243c71e253fd795a284ea",
+    "status": "PROSPECTIVE-REVIEWED-NOT-AUTHORIZED"
+  },
+  "reviewed_documentation": {
+    "path": "docs/research-campaigns/program-002-replacement-data-source-plan-v1.md",
+    "sha256": "6966cc28840cc3b89193416775cd1891aa1ab29a866dd3b2897f33d7337319a3"
+  },
+  "reviewed_regression_test": {
+    "path": "tests/unit/test_program_002_replacement_source_plan.py",
+    "sha256": "4fe19e47b1502be85109ef2ad72d5c08b846da28ce003e27dbc855b19acf035e"
+  },
+  "review_iterations": [
+    {
+      "reviewed_commit": "5bb025f2921f9ee953425acd3c6a7c847d2bdbbd",
+      "verdict": "fail",
+      "material_findings": [
+        "the raw-trade audit deferred its qualifying-condition, correction, timestamp, and bucketing contract",
+        "no focused regression test protected the new artifact"
+      ]
+    },
+    {
+      "reviewed_commit": "f6298531e58eec2a5fbeb6fbd526a3e0c23506ed",
+      "verdict": "pass",
+      "material_findings": []
+    }
+  ],
+  "prior_findings_resolved": [
+    {
+      "finding": "unbound raw-trade eligibility and correction semantics",
+      "resolution": "Before the one-use authority or any source request, provider-authored bytes must bind condition codes, corrections and cancellations, duplicates and late reports, SIP timestamp ordering, buckets, exact OHLCV equality, source revision, SHA-256, and implementation hash. Missing proof fails before transport."
+    },
+    {
+      "finding": "no automated regression for the source plan",
+      "resolution": "The focused test rejects duplicate JSON keys and verifies both fingerprints, all seven immutable binding hashes, all-false authority, no fallback, one provider attempt, and the 8,658-row, 468-window, 28,080-observation, and 630-chain formulas."
+    },
+    {
+      "finding": "the required review artifact did not yet exist at the first review checkpoint",
+      "resolution": "This artifact serializes the fresh review against exact commit f629853 and binds the reviewed plan, documentation, and regression test."
+    }
+  ],
+  "review_challenges": {
+    "semantic_compatibility": "Massive is only a conditional primary. Its SIP market definition fits, but exact provider-adjusted-all-v1 corporate-action compatibility must be proved before transport or the plan fails.",
+    "sip_and_nbbo_claims": "Massive documents CTA and UTP SIP sourcing and historical official NBBO. The plan does not claim that unobserved sample density or all-symbol continuity already passed.",
+    "historical_quotes": "The endpoint documents history to 2003-09-10, enough for exposed dates. Every one of 468 qualification windows must still meet 57 of 60 causal observations.",
+    "aggregate_omissions": "A provider aggregate omitted for lack of a qualifying trade remains a missing required coordinate and invokes whole-session disposition. Raw trades cannot fill it.",
+    "raw_trade_semantics": "The audit is diagnostic only and now has a fully pre-transport binding requirement. Any unbound condition or correction choice fails rather than adapting after source observation.",
+    "adjustments": "Public aggregate documentation establishes split adjustment only. Cash-dividend, spin-off, price, volume, and as-of compatibility remain mandatory written pre-transport gates.",
+    "licensing_and_retention": "Public individual terms are inadmissible. A Business contract must expressly grant internal non-display research, automation, immutable retention after subscription, derived artifacts, hashes, backups, and reproducible backtests before spend or transport.",
+    "pricing": "The published Business price is 2499 USD per month. The 2499 to 4998 USD estimate is limited to one or two later billing months and excludes taxes, negotiation, future price changes, and controlled periods.",
+    "provider_shopping": "Only Massive has one future qualification attempt. Any legal, entitlement, semantic, structural, completeness, density, or quality failure ends the plan; another provider requires new user-authorized prospective planning without strategy results.",
+    "qualification_bounds": "The sample binds 630 exact request chains, 5000 pages, 5368709120 bytes, one credential load, HTTPS GET to api.massive.com, and no redirects.",
+    "architecture": "No evaluated two-source or fallback design preserves the same SIP and historical-NBBO semantics with less provenance or selection risk.",
+    "hidden_degrees_of_freedom": "Symbols, dates, clocks, pass criteria, condition contract, adjustment gate, legal gate, failure action, request surface, and provider count are fixed before any request. Candidate outcomes cannot alter them."
+  },
+  "verified_assertions": {
+    "plan_sha256_reproduced": true,
+    "plan_fingerprint_reproduced": true,
+    "requirements_fingerprint_reproduced": true,
+    "documentation_sha256_reproduced": true,
+    "regression_test_sha256_reproduced": true,
+    "seven_immutable_binding_sha256_values_reproduced": true,
+    "duplicate_json_keys_rejected": true,
+    "all_twelve_authority_flags_false": true,
+    "fallback_absent": true,
+    "maximum_provider_qualification_attempts_one": true,
+    "expected_bar_rows_8658": true,
+    "quote_symbol_windows_468": true,
+    "quote_grid_observations_28080": true,
+    "request_chain_sum_630": true,
+    "maximum_pages_5000": true,
+    "maximum_bytes_5368709120": true,
+    "maximum_credential_loads_one": true,
+    "known_mdy_coordinates_nine": true,
+    "raw_trades_cannot_enter_canonical_bars": true,
+    "corporate_action_gate_precedes_transport": true,
+    "license_gate_precedes_spend_credentials_and_transport": true,
+    "controlled_and_protected_ranges_untouched": true,
+    "zero_candidate_returns_generated_or_observed": true
+  },
+  "verification": {
+    "focused_test": {
+      "command": "uv run pytest -q tests/unit/test_program_002_replacement_source_plan.py",
+      "result": "passed"
+    },
+    "independent_review_method": "Fresh read-only exact-commit review of repository bindings, source-neutral requirements, provider claims, source semantics, qualification limits, pricing and licensing gates, provider-shopping controls, authority state, and focused regression coverage.",
+    "official_documentation_retrieved_date": "2026-08-27"
+  },
+  "proof_gaps": [
+    "No contract, entitlement, adjustment formula, condition-specification bytes, ETF continuity, aggregate row, raw trade, quote, or corporate-action record has been obtained from Massive.",
+    "Public documentation does not establish the required immutable retention and derived-research rights or exact provider-adjusted-all-v1 compatibility; both remain pre-transport gates.",
+    "The 8,658 aggregate rows and 468 quote windows are prospective pass criteria, not observed results.",
+    "Controlled A and B remain unopened and outside every authority in this plan."
+  ],
+  "scope_limit": "Independent prospective source-plan review only. No credential load, subscription purchase, provider market-data request, sample download, connector implementation, acquisition, real dataset admission, cost-model construction, strategy or backtest execution, result access, qualification, controlled or protected access, PAPER action, broker write, live action, or strategic-allocation-21 access occurred.",
+  "required_next_user_action": "After this review and its normal merge, the next possible user action is a separate authorization for ONE-USE SOURCE QUALIFICATION ONLY. That authority must bind the exact Massive sample, reviewed implementation, legal and semantic pre-transport proofs, credential identity hash, resource ceilings, one-use exhaustion, and all-false acquisition and strategy authorities.",
+  "authority": {
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "bd4b41d1cdbf0da7256b28d1f6a53ced79d8cf0fb08449726057e0cd52c121d6"
+}
