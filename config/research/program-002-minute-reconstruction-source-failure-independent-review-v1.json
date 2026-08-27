@@ -1,0 +1,180 @@
+{
+  "schema_version": "program-002-minute-reconstruction-source-failure-independent-review-v1",
+  "review_id": "program-002-minute-reconstruction-source-failure-independent-review-2026-08-27-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "reviewed_at": "2026-08-27T02:34:47Z",
+  "status": "passed-terminal-failure-and-repository-bound-revocation-before-merge",
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_closeout_commit": "0ed00fb7d5021a3e7631e4e02a13b04122e3d8a6",
+  "reviewed_revocation_commit": "49bb011b69327b97fbee74e0862a60c0d58600ec",
+  "reviewed_failure_commit": "83dfecaec03c7fbcf44aeb94b72327abe9dc16c6",
+  "source_main_commit": "589394e01142879c00112e4cf84d7783f492bd30",
+  "reviewed_failure": {
+    "path": "config/research/program-002-minute-reconstruction-source-failure-v1.json",
+    "sha256": "f95850c120603608f616f2e88d579424f4dc80301aa1251b7188fcca89fc08cf",
+    "fingerprint": "b15a5acbce63758fe40619db1861f6e624d454651d9977fcddbda269b92cca2e"
+  },
+  "reviewed_repository_artifacts": {
+    "completeness_source_plan": {
+      "path": "config/research/program-002-acquisition-completeness-data-source-plan-v1.json",
+      "sha256": "c45a5f749a120d600973753804533f7b7a9f352b0335d89a32bde990f3227735",
+      "fingerprint": "07edec3a871a68f9c0a9d64842d6b8e668bf1c2af77cd885b12c61e27d27e8f8"
+    },
+    "completeness_source_plan_review": {
+      "path": "config/research/program-002-acquisition-completeness-data-source-plan-independent-review-v1.json",
+      "sha256": "27470f80dcd89c05c614cc2ab81206e726263bf00afe0c21b5faa5dfb4f75bb0",
+      "fingerprint": "3dfad1b705d07d47915b19048d02e8ef352afc290e40ad5b4347485a08f710a5"
+    },
+    "implementation_review": {
+      "path": "config/research/program-002-minute-reconstruction-implementation-independent-review-v1.json",
+      "sha256": "3bcca44d26c6fb13365366e37c4ab51bf6ecbbd4df5311f0552a5f074660a720",
+      "fingerprint": "17ceca581d3479829a979c5d51c08621986c15b45b150656bfebe1217f4aa8eb"
+    },
+    "source_authority": {
+      "path": "config/research/program-002-minute-reconstruction-source-authority-v1.json",
+      "artifact_commit": "e21609e13f8015cc7756372dbfe4fd80e21f65fb",
+      "sha256": "25282d3ec7d38db42ff7e01874178517f34e1c0e45d3923af004880a18d8938f",
+      "fingerprint": "ffd516fc9c367fc17241145cbf95bfd1ce9a848f3534153ad16fb2e3c3919daf"
+    },
+    "source_authority_review": {
+      "path": "config/research/program-002-minute-reconstruction-source-authority-independent-review-v1.json",
+      "artifact_commit": "1e3e831156890606af5ec5791e982415e8b77300",
+      "sha256": "c44f9d825fe55bc0e47f0f59926beb77a20196ce335d10bd9e3044a1e56f7aa6",
+      "fingerprint": "67cb163da67dcbe76d18c1df3f3db9784d6185e8e1219bd5fa2f74954e59337e"
+    }
+  },
+  "reviewed_attempt_evidence": {
+    "acquisition_attempt_id": "program-002-minute-reconstruction-source-20260826-v1",
+    "claim": {
+      "sha256": "37c3c572fae43d31f635c5aa0b7dc1303e2cd43c02367c0e8447554402603c47",
+      "fingerprint": "047f7f7d928f697f16cdb9cf47fc69907ddaa73fe7ac68168353f50d1a66676c"
+    },
+    "start": {
+      "sha256": "54a99b577f5f15bdde41e77abc537bbf9862766841048b6d56c4d12169cb6543",
+      "fingerprint": "70535373f8aa70c6ed41f415adfa39a5c601e1a09fdc7f1295ae3b764c49e985"
+    },
+    "outcome": {
+      "sha256": "9fb434b6d2623a8775e0d6c530b9e488545a9530889320fcdb9422212945fd45",
+      "fingerprint": "325d56473748b7207003b0dea4087e1addd48cc5fbcfdddd46408c5e2fccdf07",
+      "disposition": "failed-no-retry"
+    },
+    "segment_journal": {
+      "sha256": "147a2bcae55b4030ca747908c72e19ba4d139b27792b9d085932bc745ebb7676",
+      "record_count": 4
+    }
+  },
+  "reviewed_source_segments": [
+    {
+      "identity": "5d1d7325a4e9edfac8300304a95a89b279cf5c61bc70659b3a4ac0bc0bee2e9f",
+      "raw_minute_record_count": 336,
+      "raw_page_sha256": "50c5bbe273c6f155ef482447602a32f4847ba9d5b001182aed001acf5193c3e9",
+      "raw_records_sha256": "20d788ecb62ec0937cd49994350e29255810c06c59e4fcb0272d43fc2b0c7638",
+      "raw_records_fingerprint": "8743d8520cc31f8d3164f9ef3f0aad60abfcfde0317b9713f9eb2e3e6cfa5df0",
+      "segment_sha256": "db77833d34c874b7de0e829e53895ebe78a4b252827597ee533ba3ca1619ab04"
+    },
+    {
+      "identity": "9990f035f7a8b13d2ccad7882fb00775f322cd50836948bac3c76cfb857a75c5",
+      "raw_minute_record_count": 275,
+      "raw_page_sha256": "9f10805c02f326ee904228624c7cdb199fbec56141bc63458f42d73e16c2fa27",
+      "raw_records_sha256": "04c919ad5920e80643cb3d49bc91588ac7ac2a995191e1f49a49b374f0903a4e",
+      "raw_records_fingerprint": "a92f0051c00195d907f5eb1bf408046ce522a7555f9bad2445798b803e2613b3",
+      "segment_sha256": "5619cbadec89aea61c77ef77988937df6eb5e87e2b98e26eec59902af693a841"
+    },
+    {
+      "identity": "fa6dcdc75142166c5df112aed70043036848ff0026782fe98f8d9854ff498fae",
+      "raw_minute_record_count": 274,
+      "raw_page_sha256": "28827a9c9c21d7d1256e1f1c9e5b33eba2aa6dcc2e019e1a7397aa7f6068168b",
+      "raw_records_sha256": "83df91d669c3f6fcf87986d9c1616a0d82f693cbbe21d85da528fc7946bebd6b",
+      "raw_records_fingerprint": "19dd9184b54fbaa9a4be0494e79458622ea4066a6f8ffbf056dd770bfa157d90",
+      "segment_sha256": "edb38b10d8c52e369c0819e8092a4b153a61fa0d4e90daf20cc4726b90629a59"
+    },
+    {
+      "identity": "223c992e5b54e19d3d93774dadc6d156635172ce8cf0887c7b686477ef8f5b27",
+      "raw_minute_record_count": 283,
+      "raw_page_sha256": "ae35a070ee3d03559db108d4b5a1d074e8f0cc331071b2a1ef06e96a3d0011f6",
+      "raw_records_sha256": "f00a10fef6007151e0d7965b1a323c292a71f130a344a19464a26e8766be980b",
+      "raw_records_fingerprint": "edd5bbaa67722fcfedf7d54a3dccec3d6e8e9d46ce29b8ea1e6f30ea4f001d62",
+      "segment_sha256": "ec1c71bb00e184ed541191d446bb42ab229926c25cba8379b6e9c51b5440284c"
+    }
+  ],
+  "reviewed_processing_failure": {
+    "error": "minute-source raw record evidence differs",
+    "stage": "source-proof reload after all four immutable source segments were published",
+    "root_cause": "Canonical JSON stores Decimal provider fields as JSON strings. Reload parses those quoted fields as strings while raw page revalidation parses numeric tokens as Decimal.",
+    "raw_jsonl_files_are_exact_canonical_page_projections": true,
+    "raw_jsonl_value_corruption_observed": false,
+    "scientific_impact": "Repairing the representation mismatch cannot reconstruct a target because every authorized target bucket is empty."
+  },
+  "reviewed_scientific_result": {
+    "raw_minute_record_count": 1168,
+    "expected_five_minute_coordinate_count": 312,
+    "nonempty_five_minute_coordinate_count": 305,
+    "exact_frozen_control_match_count": 305,
+    "frozen_control_mismatches": [],
+    "empty_five_minute_coordinate_count": 7,
+    "empty_coordinates_equal_authorized_targets": true,
+    "provider_source_can_reconstruct_authorized_targets": false,
+    "source_proof_published": false
+  },
+  "reviewed_source_revocation": {
+    "path": "src/systematic_trading_lab/program_002_minute_reconstruction.py",
+    "authority_bound_sha256": "056d6b361add88d87268f656bff2bd7cefee0ba9eb532cbd34e1268f164846fe",
+    "revoked_source_sha256": "44b769929d80f6b4e84c39180374c36e060cc944db94897852c9d85b0d0f2a7d",
+    "regression_test_path": "tests/unit/test_program_002_minute_reconstruction.py",
+    "regression_test_sha256": "8dd70723738b573e8c35f734a6e68acb9c15326fd90195881c5269c90cfca170",
+    "effect": "The authority loader fails before data-home comparator loading, claim creation, credentials, client construction, or transport for every data home."
+  },
+  "verified_assertions": {
+    "failure_artifact_hash_and_fingerprint_reproduced": true,
+    "all_five_repository_bindings_reproduced": true,
+    "claim_start_outcome_and_journal_bindings_reproduced": true,
+    "four_source_segment_page_record_and_segment_hashes_reproduced": true,
+    "raw_records_are_exact_canonical_page_projections": true,
+    "all_four_requests_used_one_http_200_attempt_and_terminal_pagination": true,
+    "source_proof_is_absent": true,
+    "no_canonical_row_was_admitted": true,
+    "scientific_result_reproduced_without_outputting_market_values": true,
+    "terminal_no_retry_disposition_is_bound": true,
+    "cross_data_home_replay_is_blocked_before_credentials": true,
+    "current_state_matches_terminal_runtime_evidence": true,
+    "all_post_failure_authority_and_downstream_action_flags_are_false": true,
+    "zero_candidate_returns_were_generated_or_observed": true
+  },
+  "verification": {
+    "credential_stripped_cli_preflight": {
+      "exit_code": 64,
+      "error": "minute-source implementation identity differs",
+      "credential_environment_not_inspected": true,
+      "comparator_loading_reached": false,
+      "claim_creation_reached": false,
+      "credential_loading_reached": false,
+      "client_construction_reached": false,
+      "provider_request_reached": false
+    },
+    "focused_test_file": {
+      "command": "uv run pytest tests/unit/test_program_002_minute_reconstruction.py -q",
+      "result": "21 passed"
+    },
+    "alternate_data_home_regression": "passed"
+  },
+  "proof_gaps": [
+    "The reviewer did not load credentials, contact provider or account endpoints, run acquisition, inspect strategy returns, or access controlled, protected, PAPER, broker, live, or strategic-allocation-21 state.",
+    "Historical credential and provider assertions were verified from immutable local evidence rather than fresh endpoint queries.",
+    "The full quality gates, remote CI, and final clean synchronized-main preflight remain later checks."
+  ],
+  "scope_limit": "No credential value, provider or account endpoint, new market or quote data, strategy result, controlled or protected data, PAPER or broker state, live state, or strategic-allocation-21 state was accessed during this review.",
+  "authority": {
+    "market_data_acquisition": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_user_action": "Separately authorize a prospective plan that selects a different source or an explicit independently reviewed missing-data disposition before any new implementation, authority, credential load, request, reconstruction, admission, or strategy execution.",
+  "review_fingerprint": "e887f347b37c8ecc01506e876ec893e0eae56442f5f2fd250328323f145d8707"
+}
