@@ -1,0 +1,656 @@
+{
+  "schema_version": "program-004-marketparquet-successor-plan-v1",
+  "plan_id": "program-004-marketparquet-successor-plan-2026-08-27-v1",
+  "program_ordinal": 4,
+  "program_id": "multi-hour-sector-etf-research-003",
+  "created_date": "2026-08-27",
+  "documentation_retrieved_date": "2026-08-27",
+  "status": "PROSPECTIVE-NOT-AUTHORIZED-FOR-PURCHASE-DOWNLOAD-QUALIFICATION-OR-STRATEGY-EXECUTION",
+  "purpose": "Preserve the untested Program 003 economic hypothesis while prospectively replacing its subscription-bound Tiingo data architecture with a one-time MarketParquet archive whose delivered files may be retained perpetually.",
+  "lineage": {
+    "predecessor_program_id": "multi-hour-sector-etf-research-002",
+    "predecessor_disposition": "PROSPECTIVE-BLOCKED-BEFORE-AUTHORITY",
+    "predecessor_strategy_outcomes_generated_or_observed": 0,
+    "predecessor_source_qualification_executed": false,
+    "predecessor_rejection_was_strategy_evidence": false,
+    "replacement_reason": "Tiingo's public terms require an eligible paid subscription while persisted data is retained and deletion after cancellation or downgrade unless separate terms apply. That conflicts with immutable research evidence retained without a permanent subscription.",
+    "successor_change": "Data source, provenance, adjustment representation, retention, and acquisition architecture only.",
+    "economic_hypothesis_changed": false,
+    "program_002_remains_terminal": true,
+    "program_002_or_003_immutable_lineage_mutable_by_this_plan": false
+  },
+  "predecessor_contract": {
+    "plan_path": "config/research/program-003-low-cost-successor-plan-v1.json",
+    "plan_sha256": "4b1fd55774f89caf853c27cfc521c94ad1b18435a22ee07c2333ca229e9e2c91",
+    "plan_fingerprint": "f5b184ff3e1604a151a82214d1cf91fbdffa6fc4fddf7d7ce0506a2e99427a42",
+    "review_path": "config/research/program-003-low-cost-successor-plan-independent-review-v1.json",
+    "review_sha256": "7f7aa36f382ce93b0d3046023e02782626be354a2c44f4c95d1f0fe64284556d",
+    "review_fingerprint": "55ea3dcb3fc122034b59909bd8431886aa61fac5e8c83ea2a53eb9fdbd060bdb",
+    "verification_rule": "A future Program 004 implementation must reproduce both predecessor hashes and fingerprints before any credential load, provider request, dataset access, or strategy execution.",
+    "inherited_unchanged": [
+      "scientific_hypothesis",
+      "portfolio construction",
+      "decision, entry, hold, and exit chronology",
+      "eight-configuration search ceiling",
+      "exposed chronology and campaign budget",
+      "whole-session missing-data policy and every numeric ceiling",
+      "6/12/25 bps-per-side cost scenarios and 5/10/15-minute delays",
+      "normal-cost isolated 10-minute and 15-minute delay checks",
+      "controlled A and B dates, warmup, dependency, one-use reads, and hidden metrics",
+      "no historical NBBO requirement",
+      "no interpolation, synthesis, symbol dropping, date replacement, or provider blending",
+      "all PAPER, broker-write, live, and protected controls"
+    ],
+    "superseded_only": [
+      "program and plan identity",
+      "Tiingo source, endpoint, entitlement, and request architecture",
+      "Tiingo subscription and retention gate",
+      "raw-unadjusted source and repository-owned split-normalization representation",
+      "Tiingo corporate-action endpoint contract",
+      "Tiingo structural qualification request budget",
+      "Tiingo acquisition projection and next authorization"
+    ],
+    "unlisted_inherited_change_allowed": false
+  },
+  "repository_state": {
+    "planning_base_main_commit": "4e5f724a32e28a7fc26326e658ed7ef942e0acb6",
+    "main_equal_origin_main_at_reconstruction": true,
+    "worktree_clean_at_reconstruction": true,
+    "active_program_002_or_003_process_found": false,
+    "active_program_002_or_003_lease_or_lock_found": false,
+    "program_003_source_qualification_status": "DESIGNED-BUT-BLOCKED-BEFORE-AUTHORITY",
+    "marketparquet_purchase_or_subscription_occurred": false,
+    "marketparquet_credential_loaded": false,
+    "marketparquet_data_request_or_download_occurred": false,
+    "strategy_returns_generated_or_observed": false,
+    "controlled_or_protected_data_touched": false,
+    "paper_broker_or_live_authority_active": false
+  },
+  "preserved_economic_contract": {
+    "ranking_and_trading_symbols": [
+      "IWM",
+      "MDY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "context_and_benchmark_symbol": "SPY",
+    "spy_tradeable": false,
+    "families": [
+      "sector-relative-continuation-v1",
+      "sector-relative-reversal-v1"
+    ],
+    "lookback_minutes": [
+      30,
+      60
+    ],
+    "hold_minutes": [
+      120,
+      240
+    ],
+    "configuration_count": 8,
+    "decision_time": "11:30:00 America/New_York",
+    "portfolio": {
+      "construction": "long-flat",
+      "maximum_positions": 3,
+      "fractional_equal_dollar_slots": true,
+      "leverage": false,
+      "shorting": false,
+      "resizing": false,
+      "reentry": false,
+      "flat_at_session_close": true
+    },
+    "additional_search_allowed": false
+  },
+  "licensing_gate": {
+    "verdict": "PASS-FOR-CONSTRAINED-INTERNAL-RESEARCH",
+    "basis": "The published MarketParquet data license permits personal trading and investment research; commercial or noncommercial backtesting, modeling, and analysis for the account owner or its single organization; copies on owned machines, servers, and private cloud storage; non-reconstructable derived results; use by AI/ML models and coding agents the licensee operates; and perpetual use of delivered files after Keep Current cancellation or account closure.",
+    "permitted": {
+      "personal_quantitative_research": true,
+      "systematic_backtesting": true,
+      "durable_local_storage": true,
+      "immutable_hash_frozen_copies": true,
+      "private_encrypted_backups": true,
+      "private_server_or_cloud_storage": true,
+      "repeated_future_backtests": true,
+      "local_coding_or_ai_agents_operated_by_licensee": true,
+      "retained_research_provenance": true,
+      "continued_use_after_keep_current_cancellation_or_account_closure": true,
+      "non_reconstructable_derived_reports": true
+    },
+    "interpretation_note": "Immutable snapshots and backups are stored copies within the expressly permitted machine, server, and private-cloud scope. This plan keeps them private and encrypted where remote. The license uses the term perpetual for files already delivered.",
+    "prohibited": {
+      "raw_file_redistribution": true,
+      "trivially_transformed_dataset_or_api_for_third_parties": true,
+      "public_hosting_or_repository_commit": true,
+      "credential_sharing_outside_the_organization": true,
+      "raw_bar_transmission_to_ai_or_agents_not_operated_by_the_licensee": true
+    },
+    "scope_limits": "The plan covers one person or one organization and local or privately operated tools only. External hosted-model transmission, cross-organization sharing, and reconstructable derived outputs are outside scope and require written MarketParquet confirmation before use.",
+    "purchase_time_gate": "Before payment, capture exact license, terms, pricing, methodology, and documentation bytes. Any material reduction in perpetual retention, private-copy, research, backtest, or local-agent rights stops purchase and requires a new reviewed plan.",
+    "legal_advice_claimed": false
+  },
+  "purchase_design": {
+    "product": "MarketParquet Complete Archive",
+    "advertised_price_retrieved_2026_08_27_usd": "79",
+    "future_maximum_pre_tax_archive_price_usd": "89",
+    "future_maximum_total_charge_including_tax_usd": "100",
+    "payment_method": "Manual user purchase only; no repository or agent payment automation.",
+    "account_required": true,
+    "keep_current_subscription_allowed": false,
+    "recurring_cost_required_usd_per_month": "0",
+    "optional_keep_current_advertised_usd_per_month": "15",
+    "optional_keep_current_authorized": false,
+    "price_or_tax_cap_exceeded_action": "Do not purchase; require new user authorization.",
+    "purchase_authority_active": false
+  },
+  "marketparquet_public_contract": {
+    "product_scope": "Split-adjusted OHLCV for US-listed ETFs from January 2000 to present, delivered as daily-partitioned Apache Parquet files.",
+    "native_timeframes": [
+      "1min",
+      "5min",
+      "30min",
+      "1hour",
+      "daily"
+    ],
+    "native_timeframe_claim": "MarketParquet says every timeframe is delivered natively by its institutional vendor and MarketParquet does not resample.",
+    "file_partition": "One file per trading date containing all ETFs for that date.",
+    "path_pattern": "by_date/etf_5min/YYYY/YYYY-MM-DD.parquet; exact API delivery path is discovered from the authenticated download response and is not trusted as a filesystem contract.",
+    "intraday_schema": [
+      "timestamp TIMESTAMP[us]",
+      "symbol STRING",
+      "asset_type STRING",
+      "open FLOAT64",
+      "high FLOAT64",
+      "low FLOAT64",
+      "close FLOAT64",
+      "volume FLOAT64"
+    ],
+    "timestamp_semantics": {
+      "label": "bar open",
+      "source_timezone": "US/Eastern timezone-naive",
+      "extended_session": "04:00 through 19:59 at one-minute granularity where trades exist",
+      "regular_session": "09:30 through 15:59 at one-minute granularity",
+      "five_minute_expected_grid_requires_post_purchase_validation": true
+    },
+    "bar_formation": {
+      "synthetic_or_fill_forward_bars": false,
+      "bar_exists_only_when_vendor_observed_trade_activity": true,
+      "zero_volume_vendor_rows_may_exist": true,
+      "exact_duplicates_dropped": true,
+      "conflicting_same_key_rows_keep_latest_vendor_correction": true,
+      "deterministic_sort": "timestamp then symbol"
+    },
+    "adjustment": {
+      "prices": "Historical prices divided by later split ratios.",
+      "volume": "Historical volumes multiplied by later split ratios.",
+      "dividends_embedded": false,
+      "total_return_series": false
+    },
+    "corrections": "Recent dates and the trailing thirty-day vendor window may be rewritten; older repairs use explicit force-overwrite, and split events may rebase full history. Public changelog entries record affected tickers.",
+    "advertised_complete_etf_archive_sizes": {
+      "1min": "15.4 GB",
+      "5min": "6.8 GB",
+      "30min": "2.3 GB",
+      "1hour": "1.5 GB"
+    },
+    "dynamic_page_note": "Official pages showed different current-through dates during retrieval. Program 004 binds only exact acquired files and their hashes, never a mutable website current-through label.",
+    "public_intraday_sample_limitation": "The free downloadable sample is recent daily data. Public browsing does not establish exact Program 004 intraday rows, so real structural qualification remains post-purchase."
+  },
+  "provenance_gate": {
+    "verdict": "CONDITIONALLY-SUFFICIENT-FOR-CONSERVATIVE-MULTI-HOUR-ETF-OHLCV",
+    "documented_source": "An unnamed institutional market-data vendor that builds native bars from exchange trade feeds; MarketParquet says it does not scrape prices or synthesize bars.",
+    "independently_audited": false,
+    "official_sip_claimed": false,
+    "cta_or_utp_equivalence_claimed": false,
+    "nbbo_claimed_or_required": false,
+    "taq_claimed": false,
+    "named_exchange_or_vendor_claimed": false,
+    "reason": "Program 004 needs credible trade-derived OHLCV for liquid ETFs over multi-hour holds, not quote reconstruction or historical NBBO. The documented exchange-feed origin is sufficient only after the exact files pass the frozen structural qualification and full missingness admission gates.",
+    "failure_action": "Stop Program 004. Do not substitute another provider."
+  },
+  "canonical_data_design": {
+    "selected_source": "MarketParquet etf_5min",
+    "fallback": null,
+    "selected_timeframe": "provider-native-5min",
+    "one_minute_source_selected": false,
+    "selection_reason": "The strategy consumes five-minute bars. Native five-minute files preserve provider bucket semantics, use less than half the advertised storage of one-minute files, and avoid adding an unneeded repository resampling contract. Qualification still verifies every expected regular-session coordinate.",
+    "raw_source_evidence": "Retain every downloaded whole-date etf_5min Parquet file byte-for-byte, including non-target ETFs and extended-session rows, under the private ignored data root.",
+    "canonical_projection": "Deterministically filter the exact thirteen symbols and XNYS regular-session five-minute bar-open grid, attach America/New_York to each naive timestamp, convert to UTC, sort by timestamp then symbol, and retain provider FLOAT64 values without integer volume coercion.",
+    "adjustment_policy_id": "provider-split-adjusted-no-dividends-v1",
+    "generic_import_reuse_allowed": false,
+    "generic_import_blockers": [
+      "The generic parser would misread timezone-naive Eastern timestamps as UTC.",
+      "Existing adjustment labels do not represent split-only, no-dividend data.",
+      "Existing OHLCVBar requires integer volume while the provider schema uses FLOAT64 and split adjustment can produce fractional volume.",
+      "Existing generic admission requires a complete requested grid instead of applying Program 003's bounded whole-session disposition."
+    ],
+    "future_implementation_rule": "Use an isolated MarketParquet adapter and Program 004 dataset boundary. Do not relabel the data as provider-adjusted-all-v1, round volume to integer, or route naive timestamps through the generic parser. Before strategy authority, exact 6/12/25 bps synthetic replays must pass without the predecessor engine's finite-Decimal accounting mismatch.",
+    "thirty_minute_features": "Aggregate six consecutive admitted native five-minute bars by first open, maximum high, minimum low, last close, and summed volume, preserving the inherited 11:30 decision contract."
+  },
+  "split_adjusted_compatibility": {
+    "verdict": "COMPATIBLE-WITH-THE-INHERITED-ECONOMIC-STRATEGY",
+    "assumptions": [
+      "Within each session, one positive split scale applies consistently to every OHLC price for a symbol.",
+      "Volume uses the reciprocal share-unit conversion documented by MarketParquet.",
+      "The replay uses fractional Decimal share units and bps-on-notional costs, with no integer-share rounding or per-share fee.",
+      "Dividends are not embedded in prices.",
+      "Provider FLOAT64 rounding remains source observation precision and is not represented as exact contemporaneous raw-price recovery."
+    ],
+    "notation": "For split scale s > 0, adjusted price p' = p / s, adjusted volume v' = v * s, and corresponding adjusted share units q' = q * s.",
+    "proofs": {
+      "same_session_return": "p_exit' / p_entry' - 1 = (p_exit / s) / (p_entry / s) - 1 = p_exit / p_entry - 1.",
+      "spy_relative_return": "Each symbol's own scale cancels in its return, so ETF return minus SPY return is unchanged even when their split scales differ.",
+      "ranking_and_top_three": "Unchanged residual returns and unchanged relative-volume inputs preserve continuation/reversal order, symbol tie-breaks, activity gates, and top-three selection.",
+      "notional_and_weight": "q' * p' = (q * s) * (p / s) = q * p, so equal-dollar slot notional, unused cash, weights, and position count are unchanged.",
+      "profit_and_cost": "q' * (p_exit' - p_entry') = q * (p_exit - p_entry); every bps charge on notional is also unchanged.",
+      "equity_and_drawdown": "Every marked position value and cash flow is unchanged, so the full equity curve, percentage return, and peak-to-trough percentage drawdown are unchanged.",
+      "capacity": "p' * v' = (p / s) * (v * s) = p * v, so prior median dollar volume and the one-percent capacity ratio are unchanged.",
+      "common_portfolio_scale": "The all-in fee reserve is bps-on-notional and therefore unchanged; the inherited common scale is identical."
+    },
+    "non_equivalent_models": [
+      "Integer-share rounding changes residual cash under a split representation.",
+      "Per-share fees change when q becomes q * s.",
+      "A fixed per-order dollar fee can change the common scale if handled outside the inherited bps reserve.",
+      "Inconsistent price or volume scaling, dividend-adjusted prices, or a nonconstant intraday scale breaks the proof."
+    ],
+    "disposition": "Program 003 already froze fractional shares and an all-in bps cost envelope with no separate regulatory-fee formula. Program 004 binds those rules; it does not reuse the predecessor engine's optional per-share regulatory-fee path."
+  },
+  "volume_and_dividend_policy": {
+    "relative_volume_definition": "Current 09:30-11:30 volume divided by the arithmetic mean of the same interval over the twenty most recent prior complete sessions.",
+    "away_from_split": "A common volume scale multiplies numerator and denominator and cancels exactly.",
+    "immediately_before_split": "All current and lookback observations share the later archive scale, so the ratio is unchanged.",
+    "immediately_after_split_with_spanning_lookback": "Pre-split observations are converted to post-split-equivalent share units while post-split observations already use those units. The normalized statistic equals the counterfactual ratio expressed in one common share unit; the unnormalized raw share-count ratio is dimensionally inconsistent and is not the Program 003 target.",
+    "after_split_once_lookback_clears": "All observations already share the new unit and the ratio is unchanged.",
+    "split_volume_failure": "Any evidence that price and volume were not adjusted reciprocally, or that a split neighborhood was inconsistently rebased, fails qualification or admission.",
+    "dividend_adjustment_applied": false,
+    "dividend_cash_flow_applied": false,
+    "dividend_reason": "Every signal price return and every position begins and ends within one session after the opening ex-date adjustment. Prior-session context uses volume and dollar-volume capacity, not an overnight price return. No position owns an overnight dividend entitlement.",
+    "ex_dividend_session_rule": "Treat like any other full session. Use split-adjusted, non-dividend-adjusted traded prices; no total-return smoothing or cash credit.",
+    "scope_expansion_rule": "Any overnight holding, cross-session price return, or total-return benchmark requires a new prospective plan."
+  },
+  "split_effective_session_policy": {
+    "rule": "Do not exclude a session solely because a split is effective. Admit it only when the complete thirteen-symbol grid, documented reciprocal price/volume adjustment, and split-neighborhood continuity checks pass.",
+    "prospective_and_return_blind": true,
+    "pre_applied_or_partial_rebase_action": "Fail qualification or dataset admission. Do not repair, refresh, or replace the date inside an executed campaign.",
+    "reason": "Under a consistent session-wide scale, all inherited signal and replay quantities are representation-invariant. A blanket exclusion adds no scientific protection after the structural checks pass."
+  },
+  "correction_and_immutability_policy": {
+    "mutable_vendor_archive_acknowledged": true,
+    "acquisition_rule": "Download exact files once, retain exact bytes, hash each file with SHA-256, and freeze an ordered source manifest. Never silently refresh an admitted dataset.",
+    "archive_version_identity": "Fingerprint the ordered acquisition timestamp, exact URL identity without secret query material, trading date, byte count, SHA-256, license/terms/methodology snapshot hashes, canonical projection hash, and normalization version.",
+    "future_vendor_correction": "Record as a distinct source dataset version. Do not replace prior bytes or rerun a campaign after strategy evidence without a new reviewed disposition and user authority.",
+    "mixed_rebase_detection": "Full admission scans split continuity and all expected coordinates across the frozen date set. Any partial or inconsistent rebase fails before strategy execution.",
+    "raw_data_committed_to_git": false,
+    "derived_report_rule": "Commit only aggregates that cannot reconstruct underlying bars."
+  },
+  "source_qualification": {
+    "status": "DESIGNED-NOT-AUTHORIZED",
+    "kind": "one-use post-purchase MarketParquet structural qualification",
+    "strategy_returns_allowed": false,
+    "exact_asset_type": "etf_5min",
+    "exact_symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "fixed_sessions": {
+      "known_mdy_gap_sessions": [
+        "2020-12-04",
+        "2021-02-03",
+        "2021-02-05",
+        "2021-02-10",
+        "2021-02-22"
+      ],
+      "normal_controls": [
+        "2020-07-27",
+        "2023-07-17",
+        "2026-07-15"
+      ],
+      "early_close_control": [
+        "2022-11-25"
+      ],
+      "split_neighborhood": [
+        "2025-12-04",
+        "2025-12-05",
+        "2025-12-08"
+      ],
+      "distribution_neighborhood": [
+        "2024-06-10",
+        "2024-06-11",
+        "2024-06-12"
+      ],
+      "date_file_count": 15,
+      "full_session_count": 14,
+      "early_close_session_count": 1,
+      "expected_regular_session_rows": 14742
+    },
+    "known_mdy_coordinates": [
+      "MDY@2020-12-04T18:10:00Z",
+      "MDY@2020-12-04T18:25:00Z",
+      "MDY@2021-02-03T16:40:00Z",
+      "MDY@2021-02-05T16:45:00Z",
+      "MDY@2021-02-05T16:50:00Z",
+      "MDY@2021-02-10T20:20:00Z",
+      "MDY@2021-02-22T18:25:00Z",
+      "MDY@2021-02-22T19:05:00Z",
+      "MDY@2021-02-22T19:20:00Z"
+    ],
+    "split_control": {
+      "symbols": [
+        "XLB",
+        "XLE",
+        "XLK",
+        "XLU",
+        "XLY"
+      ],
+      "issuer_announced_ratio": "2-for-1 effective for trading 2025-12-05",
+      "price_continuity_rule": "For each symbol, both 2025-12-05 09:30 open / 2025-12-04 15:55 close and 2025-12-08 09:30 open / 2025-12-05 15:55 close must be at least 0.75 and at most 1.333333333333333333333333333. This return-blind bound rejects an unapplied or double-applied factor-of-two discontinuity without claiming normal overnight equality.",
+      "volume_rule": "Every required volume must be finite and positive. Reciprocal split adjustment is bound by the captured MarketParquet methodology; adjusted-only files cannot independently reconstruct contemporaneous raw share volume.",
+      "proof_limit": "This structural control rejects obvious partial, absent, or early price rebasing. It does not independently audit the unnamed upstream vendor or prove exact raw-to-adjusted rounding."
+    },
+    "purchase_and_transport_budget": {
+      "manual_purchase_caps_from_purchase_design": true,
+      "maximum_logical_date_chains": 15,
+      "maximum_authenticated_presigned_url_responses": 15,
+      "maximum_presigned_file_responses": 15,
+      "maximum_http_responses": 30,
+      "maximum_downloaded_bytes": 134217728,
+      "maximum_credential_loads": 1,
+      "method": "GET",
+      "authenticated_origin": "https://marketparquet.com",
+      "authenticated_path_template": "/api/v1/download/etf_5min/YYYY-MM-DD",
+      "presigned_url_expiry_seconds": 60,
+      "redirects_from_authenticated_origin": false,
+      "transport_failure_action": "Stop without retry. A new exact authority is required for another transport attempt."
+    },
+    "credential_isolation": "Load one dedicated MarketParquet API key from an environment variable only after the exact authority is claimed. Never print, persist, hash, prompt with, or pass it to the presigned object host. Reject broker, PAPER, LIVE, Tiingo, and Alpaca credentials in the qualification process.",
+    "pass_criteria": [
+      "The purchase-time license gate still passes, the charge stays within both caps, and Keep Current is absent.",
+      "Exactly fifteen expected etf_5min date files are retained byte-for-byte under the private ignored root with unique SHA-256 hashes and an ordered manifest.",
+      "Each file has the documented intraday schema and reparses twice to identical sorted canonical projection bytes and hash.",
+      "Attaching America/New_York to each naive bar-open timestamp and converting to UTC yields exactly 14,742 required regular-session rows: 78 bars per symbol on fourteen full sessions and 42 per symbol on the early close.",
+      "Every required (symbol, UTC bar-open) coordinate occurs exactly once; there are no duplicate, conflicting, missing, or foreign coordinates in the canonical regular-session projection.",
+      "All nine exposed MDY coordinates exist as real provider rows. No Alpaca equality is required and no source may patch a failure.",
+      "Every OHLC value is finite and positive; high is at least open, low, and close; low is at most open, high, and close.",
+      "Every required regular-session volume is finite and strictly positive. Provider volume is retained without integer rounding.",
+      "The December 2025 split neighborhood satisfies split_control.price_continuity_rule for XLB, XLE, XLK, XLU, and XLY, and the captured methodology still binds reciprocal volume adjustment.",
+      "The June 2024 IWM distribution neighborhood remains split-only, non-total-return input under the published no-dividend contract; no dividend cash flow or price rewrite is introduced by Program 004.",
+      "Extended-session rows remain only in raw evidence; no bar outside the XNYS regular-session grid enters the canonical projection.",
+      "All source, projection, license, terms, methodology, and acquisition receipt hashes reproduce before the terminal receipt is published."
+    ],
+    "success_action": "Publish a structural pass receipt only. Do not download the remaining exposed range, admit a research dataset, implement or run a strategy, or observe a return.",
+    "failure_action": "Publish a terminal structural failure receipt, retain only licensed private evidence, stop Program 004, and do not try another provider."
+  },
+  "full_acquisition_design": {
+    "authority_active": false,
+    "preconditions": [
+      "The one-use source qualification passed.",
+      "A fresh independent review bound the exact qualification bytes and receipt.",
+      "The user granted a separate full-exposed-acquisition authority."
+    ],
+    "exact_date_range": {
+      "start": "2020-06-26",
+      "end": "2026-07-31",
+      "expected_xnys_date_files": 1511
+    },
+    "download_scope": "Only etf_5min files for the exact expected XNYS dates. Reuse the exact fifteen qualification files; download at most 1,496 additional files.",
+    "maximum_total_source_bytes": 8589934592,
+    "working_disk_reservation_bytes": 17179869184,
+    "size_basis": "The complete 2000-present ETF five-minute archive is advertised as 6.8 GB and recent whole-universe date files are about 3 MB. Exact target-range bytes are unknowable until the post-purchase manifest; 8 GiB source and 16 GiB working caps fail closed above that envelope.",
+    "filter": "Retain whole-date raw files privately; canonicalize only the thirteen symbols and regular-session grid.",
+    "admission": "Apply the inherited Program 003 whole-session missing-data policy and every global, fixed-block, rolling, consecutive, same-symbol, and required-context ceiling before dataset freeze.",
+    "success_sequence": [
+      "freeze exact raw bytes and license snapshots",
+      "build and hash canonical projections",
+      "publish immutable dataset identity and structural receipt",
+      "fresh independent exact-byte review",
+      "separate user strategy-implementation and execution authority"
+    ],
+    "strategy_execution_allowed": false
+  },
+  "inherited_missing_data_policy": {
+    "source": "Exact predecessor_contract plan missing_data_policy",
+    "incomplete_required_bar_action": "Exclude the entire thirteen-symbol session from every configuration, benchmark, and later context use.",
+    "marketparquet_invalid_required_bar": "A duplicate key, invalid OHLC value, non-finite volume, or zero-volume required regular-session row is treated as a missing required bar and counts against every inherited whole-session ceiling.",
+    "drop_symbol_interpolate_blend_or_replace_date": false,
+    "maximum_loss": {
+      "expected_exposed_xnys_sessions": 1511,
+      "expected_full_trade_eligible_sessions": 1499,
+      "overall_excluded_full_session_rate_max": "0.005",
+      "overall_excluded_full_session_count_max": 7,
+      "excluded_full_sessions_per_fixed_discovery_or_test_block_max": 1,
+      "excluded_full_session_rate_per_fixed_discovery_or_test_block_max": "0.01",
+      "excluded_sessions_per_rolling_63_expected_sessions_max": 1,
+      "maximum_consecutive_excluded_sessions": 1,
+      "sessions_with_same_symbol_missing_per_rolling_252_expected_sessions_max": 1,
+      "required_exposed_context_loss_max": 0
+    },
+    "changed_for_marketparquet": false
+  },
+  "inherited_cost_model": {
+    "historical_nbbo_required": false,
+    "fractional_shares": true,
+    "integer_share_rounding": false,
+    "per_share_or_fixed_dollar_fee": false,
+    "scenarios": {
+      "normal": {
+        "total_bps_per_side": "6",
+        "delay_minutes": 5,
+        "entry_time_new_york": "11:35"
+      },
+      "stress_a": {
+        "total_bps_per_side": "12",
+        "delay_minutes": 10,
+        "entry_time_new_york": "11:40"
+      },
+      "stress_b": {
+        "total_bps_per_side": "25",
+        "delay_minutes": 15,
+        "entry_time_new_york": "11:45"
+      }
+    },
+    "isolated_normal_delay_checks_minutes": [
+      10,
+      15
+    ],
+    "normal_alone_can_qualify": false,
+    "changed_for_marketparquet": false
+  },
+  "chronology_and_protected_boundaries": {
+    "exposed_range_end": "2026-07-31",
+    "controlled_a": {
+      "start": "2027-04-16",
+      "end": "2027-10-15",
+      "warmup_context_sessions": 20,
+      "evaluation_begins_session_ordinal": 21,
+      "state": "UNACQUIRED-UNOPENED-NOT-AUTHORIZED"
+    },
+    "controlled_b": {
+      "start": "2027-10-18",
+      "end": "2028-04-14",
+      "dependency": "Controlled A passed every gate and its separate protected-result read was logged.",
+      "volume_context": "Final twenty complete Controlled A sessions only.",
+      "state": "UNACQUIRED-UNOPENED-NOT-AUTHORIZED"
+    },
+    "inherited_acquisition_review_evaluation_sequence_unchanged": true,
+    "v3_june_daily_2018_2019_paper_broker_live_state_unchanged": true,
+    "controlled_acquisition_or_inspection_allowed": false
+  },
+  "hf_data_library_role": {
+    "role": "NON-CANONICAL-AUDIT-ONLY",
+    "documented_pre_march_2022_source": "PiTrading consolidated CTA/UTP-derived one-minute OHLCV.",
+    "documented_post_march_2022_source": "IEX Exchange HIST only, about 2-3 percent of consolidated volume.",
+    "structural_break": true,
+    "post_2022_trade_break_messages_consumed": false,
+    "permitted_future_checks": [
+      "pre-March-2022 MDY gap presence",
+      "split or corporate-action sanity",
+      "structural timestamp validation"
+    ],
+    "canonical_or_patch_source": false,
+    "blending_or_replacement_allowed": false,
+    "reason": "The March 2022 consolidated-to-IEX-only break changes volume and potentially OHLC, so one source cannot represent the full 2020-2026 Program 004 range consistently."
+  },
+  "private_storage_and_provenance": {
+    "root": ".trading-lab/program-004-marketparquet",
+    "git_ignored": true,
+    "retain_for_each_file": [
+      "exact original bytes",
+      "SHA-256",
+      "acquisition timestamp",
+      "trading date",
+      "byte count",
+      "source request identity without credentials or signed query material",
+      "archive/product identity",
+      "license, terms, pricing, methodology, and documentation snapshot hashes",
+      "canonical projection hash",
+      "normalization version"
+    ],
+    "dataset_identity": "Fingerprint the ordered source-file manifest and canonical projection manifest. Every research reference uses only that immutable dataset ID.",
+    "raw_data_publication": false,
+    "payment_receipt_publication": false,
+    "credential_or_presigned_url_persistence": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "manual_purchase": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "controlled_a": false,
+    "controlled_b": false,
+    "intraday_v3": false,
+    "june": false,
+    "daily_independent_2018_2019": false,
+    "strategic_allocation_21": false,
+    "paper_broker_or_live_state": false
+  },
+  "prohibitions": [
+    "Do not purchase MarketParquet or Keep Current under this plan.",
+    "Do not load a MarketParquet, Tiingo, or Alpaca credential.",
+    "Do not request or download historical market data.",
+    "Do not run a strategy or compute or observe a candidate return.",
+    "Do not access controlled, protected, PAPER, broker, or live state.",
+    "Do not patch or blend MarketParquet with HF Data Library or another provider.",
+    "Do not refresh immutable source bytes after strategy evidence exists.",
+    "Do not commit raw or reconstructable MarketParquet data."
+  ],
+  "stop_rules": [
+    "A material purchase-time license reduction stops before payment.",
+    "A price above either frozen cap stops before payment.",
+    "Any Keep Current enrollment or recurring charge stops the authority.",
+    "Any source-qualification failure stops Program 004 without provider substitution.",
+    "Any full-acquisition missingness ceiling failure stops before dataset admission or strategy execution.",
+    "Any evidence that adjusted price, volume, timestamp, or dividend semantics differ from this plan stops before strategy execution.",
+    "Any request for integer shares, per-share fees, overnight returns, or total-return prices requires a new prospective plan."
+  ],
+  "next_authorization": {
+    "current_state": "NOT-AUTHORIZED",
+    "exact_scope": "ONE-TIME MARKETPARQUET COMPLETE ARCHIVE MANUAL PURCHASE PLUS FIFTEEN-FILE ETF_5MIN STRUCTURAL QUALIFICATION ONLY: at most $89 pre-tax and $100 total, no Keep Current, one credential load, fifteen authenticated download-URL responses, fifteen presigned file responses, 128 MiB, the exact fifteen dates and thirteen symbols, private immutable evidence, and no remaining exposed-range acquisition, dataset admission, strategy implementation or execution, return observation, controlled access, PAPER, broker write, or live action.",
+    "preconditions": [
+      "This plan and its focused synthetic checks pass repository quality gates.",
+      "A fresh finding-free independent review binds the exact plan, documentation, and test bytes.",
+      "The planning PR merges through green CI and main is clean and synchronized.",
+      "The user separately grants the exact authorization text above."
+    ]
+  },
+  "official_sources": [
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://marketparquet.com/data/etfs",
+      "use": "ETF coverage, timeframes, sizes, one-time archive price, optional Keep Current"
+    },
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://marketparquet.com/pricing",
+      "use": "price, perpetual access claim, permitted research use, optional subscription"
+    },
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://marketparquet.com/license",
+      "use": "research, backtest, storage, AI-agent, derived-output, redistribution, and perpetual-use rights"
+    },
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://marketparquet.com/terms",
+      "use": "effective 2026-07-29 purchase, account, cancellation, retention, acceptable-use, and change terms"
+    },
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://marketparquet.com/documentation",
+      "use": "schema, API, authentication, date listing, and presigned download flow"
+    },
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://marketparquet.com/data-quality",
+      "use": "provenance, native bars, timestamps, sessions, adjustments, missing bars, duplicates, and corrections"
+    },
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://marketparquet.com/faq",
+      "use": "coverage, partitioning, timezone, split/dividend treatment, and download shape"
+    },
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://marketparquet.com/browse/etf_5min",
+      "use": "date-file availability shape and recent whole-universe file-size envelope"
+    },
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://marketparquet.com/browse/etf_1min",
+      "use": "one-minute alternative comparison"
+    },
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://hfdatalibrary.com/pages/docs",
+      "use": "HF Data Library source splice and methodology"
+    },
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://hfdatalibrary.com/pages/issues",
+      "use": "HF source break, IEX volume share, OHLC differences, and trade-break limitation"
+    },
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://hfdatalibrary.com/pages/data",
+      "use": "HF coverage and source summary"
+    },
+    {
+      "retrieved_date": "2026-08-27",
+      "url": "https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx",
+      "use": "fixed December 2025 split qualification controls"
+    }
+  ],
+  "plan_fingerprint": "e6d228a3d256e611985f2185d1db50cba2481b2a441977e71f46903b1876d19b"
+}
