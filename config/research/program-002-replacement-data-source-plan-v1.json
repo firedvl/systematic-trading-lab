@@ -1,0 +1,711 @@
+{
+  "schema_version": "program-002-replacement-data-source-plan-v1",
+  "plan_id": "program-002-massive-replacement-source-2026-08-27-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "created_date": "2026-08-27",
+  "documentation_retrieved_date": "2026-08-27",
+  "source_main": "0c30f8c01bfb7d3c8ede8af274b71c34c3b43fea",
+  "status": {
+    "phase": "PROSPECTIVE",
+    "review_contract": "Only the separate independent-review artifact may establish REVIEWED status.",
+    "source_requests": "NOT AUTHORIZED",
+    "acquisition": "NOT AUTHORIZED",
+    "strategy_execution": "NOT AUTHORIZED"
+  },
+  "purpose": "Freeze source-neutral Program 002 replacement-data requirements, compare current providers without requesting market data, select one prospective primary, and design later source-qualification and acquisition authorities.",
+  "repository_state": {
+    "main_and_origin_main": "0c30f8c01bfb7d3c8ede8af274b71c34c3b43fea",
+    "worktree_was_clean": true,
+    "previous_source": "Alpaca Market Data API SIP bars and quotes",
+    "previous_source_disposition": "terminally inadmissible; consumed minute-source authority; retry prohibited",
+    "active_program_002_acquisition_process": false,
+    "active_program_002_research_process": false,
+    "stale_program_002_lease": false,
+    "terminal_attempt_claim_fingerprint": "047f7f7d928f697f16cdb9cf47fc69907ddaa73feac68168353f50d1a66676c",
+    "terminal_attempt_outcome": "failed-no-retry",
+    "candidate_returns_generated_or_observed": false,
+    "controlled_or_protected_data_accessed": false,
+    "strategic_allocation_21_accessed": false
+  },
+  "immutable_bindings": {
+    "program_plan": {
+      "path": "config/research/cross-sectional-sector-etf-program-002-plan-proposal-v1.json",
+      "sha256": "2872d4d3301df0a85e1a5a2eba6e3ee533ee5573971121e99840041e7c8d2173",
+      "fingerprint": "701dc67ea2da1e45d235f4247724b2bc8eb62853561c2400c17a668342c6b81e"
+    },
+    "data_acquisition_plan": {
+      "path": "config/research/cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1.json",
+      "sha256": "26c768f422e63e9f00e6adc88be2d57f5c6447972a9de1fa4873ab2826556aae"
+    },
+    "universe": {
+      "path": "config/research/multi-hour-sector-etfs-v1.json",
+      "sha256": "8f07f73fd93f9432501d579e43616e1d9a09d6db77c347a6bed4151f2210c312",
+      "fingerprint": "ef23e533aa7a91262200bd7a77a65f9b6d8b4d473573850c33ef014701177790"
+    },
+    "missing_data_disposition": {
+      "path": "config/research/program-002-missing-data-disposition-v1.json",
+      "sha256": "26e7c84d97c08c7ef4439333aeb444a12a145f360140e93ebc1104118ec96699",
+      "fingerprint": "291c7bccce40440773b32157e1518abc31fe783e0a0b0763dfd100b55e95bbfe"
+    },
+    "missing_data_disposition_review": {
+      "path": "config/research/program-002-missing-data-disposition-independent-review-v1.json",
+      "sha256": "7b23457dced43c78e8925ac5dad9d75da77feae7018ce91551c26a86d9df1372",
+      "fingerprint": "d07ddce0ccb87770e458fafb2ff08f7d69a95f32ae70ea8f0cd91d251103bdd0"
+    },
+    "terminal_source_failure": {
+      "path": "config/research/program-002-minute-reconstruction-source-failure-v1.json",
+      "sha256": "f95850c120603608f616f2e88d579424f4dc80301aa1251b7188fcca89fc08cf",
+      "fingerprint": "b15a5acbce63758fe40619db1861f6e624d454651d9977fcddbda269b92cca2e"
+    },
+    "terminal_source_failure_review": {
+      "path": "config/research/program-002-minute-reconstruction-source-failure-independent-review-v1.json",
+      "sha256": "90f9f0a64a73951001846b305ff0927a249369224c8e7d03e4c2c30cfd599ae7",
+      "fingerprint": "e887f347b37c8ecc01506e876ec893e0eae56442f5f2fd250328323f145d8707"
+    }
+  },
+  "selection_sequence": {
+    "requirements_frozen_before_provider_recommendation": true,
+    "profitability_used": false,
+    "candidate_results_used": false,
+    "known_gap_use": "source completeness cross-check only"
+  },
+  "source_neutral_requirements": {
+    "bars": [
+      {
+        "id": "BAR-001",
+        "requirement": "All thirteen frozen U.S. ETF symbols are covered for every exposed and context range; later controlled ranges remain sealed and require separate authority after their end dates.",
+        "required": true
+      },
+      {
+        "id": "BAR-002",
+        "requirement": "Provide immutable five-minute OHLCV or immutable consolidated trades from which the exact frozen five-minute representation can be built without interpolation.",
+        "required": true
+      },
+      {
+        "id": "BAR-003",
+        "requirement": "Regular XNYS bars use UTC bar-open labels, exact event timestamps, positive OHLC, integer nonnegative consolidated volume, and no silent force fill.",
+        "required": true
+      },
+      {
+        "id": "BAR-004",
+        "requirement": "A full session has 78 bars per symbol and an early close has 42; all thirteen symbols and all six five-minute components of each required thirty-minute bucket must be present.",
+        "required": true
+      },
+      {
+        "id": "BAR-005",
+        "requirement": "Price and volume adjustment semantics must be proven compatible with the frozen provider-adjusted-all-v1 treatment of splits, cash dividends, and spin-offs. No repository-inferred corporate action is allowed.",
+        "required": true
+      },
+      {
+        "id": "BAR-006",
+        "requirement": "The source must expose missing intervals as absence; it must not return interpolated, forward-filled, backward-filled, or synthetic bars when no qualifying trade exists.",
+        "required": true
+      }
+    ],
+    "quotes": [
+      {
+        "id": "QUOTE-001",
+        "requirement": "Historical consolidated U.S. equity NBBO supplies bid price, ask price, bid size, ask size, and event timestamps for every frozen symbol and all 73 predeclared calibration sessions.",
+        "required": true
+      },
+      {
+        "id": "QUOTE-002",
+        "requirement": "The source supports the 657 session-clock windows and deterministic one-second sampling with a latest strictly prior quote no more than five seconds old.",
+        "required": true
+      },
+      {
+        "id": "QUOTE-003",
+        "requirement": "Every symbol/window must yield at least 57 of 60 eligible observations. One absent or failed window fails calibration; no synthetic spread or aggregate compensation is allowed.",
+        "required": true
+      }
+    ],
+    "provenance": [
+      {
+        "id": "PROV-001",
+        "requirement": "Bind provider, product/feed, endpoint or flat-file path, exact request, timestamps, page or file identity, retrieval time, source revision where available, and response bytes.",
+        "required": true
+      },
+      {
+        "id": "PROV-002",
+        "requirement": "Persist exact raw bytes create-only, SHA-256 each page/file, canonicalize records deterministically, and fingerprint raw, normalized, adjustment, and manifest artifacts.",
+        "required": true
+      },
+      {
+        "id": "PROV-003",
+        "requirement": "The contract must permit private internal research, automated retrieval, immutable local raw retention, derived bars, and reproducible internal backtests for the needed retention period.",
+        "required": true
+      }
+    ],
+    "operational": [
+      {
+        "id": "OPS-001",
+        "requirement": "The product must be available to the user at a disclosed or contractually confirmed cost without a manual per-file workflow.",
+        "required": true
+      },
+      {
+        "id": "OPS-002",
+        "requirement": "Use a provider-specific credential in a data-only process; research workers must not inherit the credential.",
+        "required": true
+      },
+      {
+        "id": "OPS-003",
+        "requirement": "Pagination, retry, byte limits, staging, quarantine, and publication must fail closed and be resumable only under prospectively bound rules.",
+        "required": true
+      }
+    ],
+    "scientific": [
+      {
+        "id": "SCI-001",
+        "requirement": "Preserve the universe, SPY role, 11:30 New York decision, 30/60-minute lookbacks, 2/4-hour holds, long/flat construction, eight configurations, chronology, gates, search budget, and controlled blocks.",
+        "required": true
+      },
+      {
+        "id": "SCI-002",
+        "requirement": "Apply the frozen whole-session missing-data disposition with no symbol omission, interpolation, synthetic price, replacement date, delayed-fill workaround, or candidate exception.",
+        "required": true
+      },
+      {
+        "id": "SCI-003",
+        "requirement": "Predeclare one primary and at most one fallback before any source request. A failed source may not trigger an open-ended provider search.",
+        "required": true
+      }
+    ]
+  },
+  "source_neutral_requirements_fingerprint": "c4daa7ab84da0dc6a567445201a2c3eb3d2a47c7176243c71e253fd795a284ea",
+  "official_sources": [
+    {
+      "provider": "Massive",
+      "title": "Stocks REST API overview",
+      "url": "https://massive.com/docs/rest/stocks/overview?assetClass=stocks&license=personal&name=stocks_developer",
+      "facts_used": "SIP origin, U.S. market scope, stock endpoints, plans"
+    },
+    {
+      "provider": "Massive",
+      "title": "Custom Bars (OHLC)",
+      "url": "https://massive.com/docs/rest/stocks/aggregates/custom-bars",
+      "facts_used": "qualifying-trade aggregates, absent empty intervals, split adjustment, bar-start timestamp, pagination"
+    },
+    {
+      "provider": "Massive",
+      "title": "Historical trades",
+      "url": "https://massive.com/docs/rest/stocks/trades-quotes/trades",
+      "facts_used": "conditions, participant and SIP timestamps, history, next_url"
+    },
+    {
+      "provider": "Massive",
+      "title": "Historical quotes",
+      "url": "https://massive.com/docs/rest/stocks/trades-quotes/quotes",
+      "facts_used": "historical NBBO, bid and ask fields, participant and SIP timestamps, history, next_url"
+    },
+    {
+      "provider": "Massive",
+      "title": "Stocks flat files overview",
+      "url": "https://massive.com/docs/flat-files/stocks/overview?assetClass=stocks&license=personal&name=stocks_basic",
+      "facts_used": "SIP flat files, UTC timestamps, U.S. venues, unadjusted files"
+    },
+    {
+      "provider": "Massive",
+      "title": "Stocks individual pricing",
+      "url": "https://massive.com/pricing?product=stocks",
+      "facts_used": "$199 Advanced monthly plan, all-history trades and quotes, flat files, individual-use restriction"
+    },
+    {
+      "provider": "Massive",
+      "title": "Stocks business pricing",
+      "url": "https://massive.com/business",
+      "facts_used": "$2,499 monthly plan, business use, 20+ years trades and quotes, flat files"
+    },
+    {
+      "provider": "Massive",
+      "title": "Market Data Terms of Service",
+      "url": "https://massive.com/terms/market_data_terms.pdf",
+      "facts_used": "individual-use and non-display restrictions; need separate written rights"
+    },
+    {
+      "provider": "Databento",
+      "title": "Securities information processor guide",
+      "url": "https://databento.com/microstructure/sip",
+      "facts_used": "Databento equities use direct proprietary feeds, not SIP"
+    },
+    {
+      "provider": "Databento",
+      "title": "Synthetic NBBO example",
+      "url": "https://databento.com/docs/examples/equities/consolidated-bbo",
+      "facts_used": "direct-feed synthetic NBBO differs from official SIP NBBO"
+    },
+    {
+      "provider": "Databento",
+      "title": "Venues and datasets",
+      "url": "https://databento.com/docs/knowledge-base/datasets",
+      "facts_used": "equity datasets, schemas, derived consolidation"
+    },
+    {
+      "provider": "Databento",
+      "title": "Aggregate bars schema",
+      "url": "https://databento.com/docs/schemas-and-data-formats/ohlcv",
+      "facts_used": "one-minute bars, start timestamps, no record without a trade"
+    },
+    {
+      "provider": "Databento",
+      "title": "Pricing",
+      "url": "https://databento.com/pricing",
+      "facts_used": "usage pricing and authenticated exact-cost requirement"
+    },
+    {
+      "provider": "Tiingo",
+      "title": "Equity Realtime REST API",
+      "url": "https://www.tiingo.com/documentation/equity-realtime-stock-data",
+      "facts_used": "beta consolidated bars, force-fill option, undocumented historical quote events"
+    },
+    {
+      "provider": "Tiingo",
+      "title": "IEX API",
+      "url": "https://www.tiingo.com/documentation/iex",
+      "facts_used": "IEX-only bars and current top-of-book, not consolidated historical NBBO"
+    },
+    {
+      "provider": "Tiingo",
+      "title": "Pricing",
+      "url": "https://www.tiingo.com/about/pricing",
+      "facts_used": "$30 individual pricing, rate and bandwidth limits, internal-use label"
+    },
+    {
+      "provider": "Tiingo",
+      "title": "Terms of Use",
+      "url": "https://app.tiingo.com/tos/",
+      "facts_used": "paid-plan retention ends with subscription absent separate written agreement"
+    }
+  ],
+  "provider_comparison": {
+    "massive": {
+      "provider": "Massive.com, formerly Polygon.io",
+      "disposition": "CONDITIONAL-PRIMARY",
+      "required_bar_coverage": "20+ years of U.S. stock minute aggregates and trades; all thirteen ETFs require later symbol/date proof",
+      "required_quote_coverage": "Historical NBBO quotes documented back to 2003-09-10; density requires later qualification",
+      "consolidated_or_sip": "Yes. Massive documents CTA/UTP SIP sourcing and SIP-named stock flat files.",
+      "earliest_history": "2003-09-10 for documented trades and quotes; enough for exposed Program 002 ranges",
+      "etf_support": "U.S. stock product includes exchange-listed equities; exact thirteen-symbol continuity remains a qualification gate",
+      "timestamps": "Aggregate start in Unix milliseconds; trades and quotes include nanosecond participant and SIP timestamps",
+      "adjustments": "REST aggregates document split adjustment only; flat files are unadjusted. Cash-dividend and spin-off equivalence to provider-adjusted-all-v1 is unresolved and mandatory.",
+      "raw_trades": true,
+      "historical_nbbo": true,
+      "missing_interval_semantics": "No aggregate is emitted when no qualifying trade occurs",
+      "pagination_or_bulk": "REST next_url pagination and daily S3-compatible flat files",
+      "reproducibility": "Raw pages/files can be hashed, but source revision policy and long-term retention rights require contract confirmation",
+      "licensing_and_storage": "Individual terms are not admissible for this workflow. The Business contract must expressly permit internal non-display research and immutable raw retention.",
+      "current_plan": "Stocks Business",
+      "current_price_usd_per_month": 2499,
+      "estimated_program_002_exposed_cost_usd": [
+        2499,
+        4998
+      ],
+      "estimated_storage_gib": [
+        2,
+        10
+      ],
+      "implementation_complexity": "moderate; new adapter, provider-specific pagination, quote sampler, and adjustment-contract enforcement",
+      "scientific_compatibility": "best available single-source SIP fit, conditional on corporate-action and license proof",
+      "completeness_verification": "provider aggregates plus bounded raw SIP trade audit and exact historical NBBO density checks"
+    },
+    "databento": {
+      "provider": "Databento",
+      "disposition": "REJECTED",
+      "required_bar_coverage": "Selected direct venue feeds reach 2020, but no contemporaneous full-market SIP-equivalent consolidation is documented",
+      "required_quote_coverage": "Venue BBO or later derived BBO products; no 2020 official SIP NBBO equivalent",
+      "consolidated_or_sip": "No. Databento explicitly documents direct proprietary equity feeds and synthetic consolidation.",
+      "earliest_history": "2018 for several individual venue feeds; later for derived consolidated products",
+      "etf_support": "ETFs supported by relevant venues, subject to symbol verification",
+      "timestamps": "Nanosecond ts_event and Databento capture ts_recv; not SIP receipt semantics",
+      "adjustments": "Separate corporate-action factors; bars are not documented as pre-adjusted",
+      "raw_trades": true,
+      "historical_nbbo": false,
+      "missing_interval_semantics": "OHLCV omits intervals with no trade",
+      "pagination_or_bulk": "Historical stream and batch APIs in DBN, CSV, or JSON",
+      "reproducibility": "Batch artifacts support hashes; free redownload lasts 30 days",
+      "licensing_and_storage": "Dataset-specific rights require confirmation",
+      "current_plan": "usage-based historical; exact quote requires authenticated estimator",
+      "current_price": "from $0.40/GB marketing floor; no defensible public Program 002 total",
+      "implementation_complexity": "high; multiple prop feeds and synthetic market reconstruction",
+      "scientific_compatibility": "rejected because synthetic direct-feed consolidation is a material change from SIP",
+      "completeness_verification": "strong venue-level auditability but not frozen market-definition equivalence"
+    },
+    "tiingo": {
+      "provider": "Tiingo",
+      "disposition": "REJECTED",
+      "required_bar_coverage": "Beta consolidated historical bars with no documented earliest date or complete thirteen-ETF guarantee",
+      "required_quote_coverage": "No documented historical consolidated quote-event endpoint capable of the frozen windows",
+      "consolidated_or_sip": "Consolidated derived metrics are described, but not official SIP/NBBO; IEX is one venue",
+      "earliest_history": "Undocumented for beta consolidated bars; IEX intraday begins August 2017",
+      "etf_support": "U.S. ETFs described",
+      "timestamps": "Historical bar date documented; exact bar-label and quote-event semantics insufficient",
+      "adjustments": "Intraday adjustment behavior not documented",
+      "raw_trades": false,
+      "historical_nbbo": false,
+      "missing_interval_semantics": "force-filled bars are optional and must be disabled; exact defaults and algorithm are not fully documented",
+      "pagination_or_bulk": "REST and WebSocket; no suitable historical quote bulk contract found",
+      "reproducibility": "API available, but beta semantics may change",
+      "licensing_and_storage": "Paid data must be deleted after subscription ends absent a separate written agreement",
+      "current_plan": "Power individual",
+      "current_price_usd_per_month": 30,
+      "implementation_complexity": "high as a two-provider design; quote source still missing",
+      "scientific_compatibility": "rejected for historical quote failure, beta bar semantics, adjustment uncertainty, and retention conflict",
+      "completeness_verification": "insufficient public historical quote contract"
+    }
+  },
+  "architecture_decision": {
+    "single_source_selected": true,
+    "two_source_selected": false,
+    "reason": "Massive is the only evaluated provider that documents both SIP-derived bars/trades and historical NBBO. A second provider would add timestamp, market-definition, provenance, and selection degrees of freedom without curing the adjustment or license gates.",
+    "primary": {
+      "provider": "Massive.com",
+      "product": "Stocks Business historical SIP-derived stock data",
+      "plan": "Stocks Business",
+      "status": "prospective primary only; no subscription, source request, or acquisition authorized",
+      "technical_endpoints": {
+        "bars": "GET https://api.massive.com/v2/aggs/ticker/{ticker}/range/5/minute/{from}/{to}",
+        "trades": "GET https://api.massive.com/v3/trades/{ticker}",
+        "quotes": "GET https://api.massive.com/v3/quotes/{ticker}",
+        "corporate_actions": "Massive stock splits, dividends, and ticker-event reference endpoints under a future frozen contract"
+      }
+    },
+    "fallback": null,
+    "fallback_reason": "Databento changes SIP semantics and lacks a 2020 official NBBO equivalent; Tiingo lacks documented historical consolidated quote events and durable retention. Naming either would create a non-equivalent escape hatch.",
+    "maximum_provider_qualification_attempts": 1,
+    "provider_shopping_rule": "Only Massive may receive a future source-qualification attempt under this plan. Any legal, entitlement, semantic, structural, completeness, density, or data-quality failure ends the plan. Another provider requires a new user-authorized prospective plan written without strategy results."
+  },
+  "source_semantics": {
+    "provider": "Massive.com",
+    "market_definition": "CTA/UTP SIP-derived U.S. stock trades and official historical NBBO as documented by Massive",
+    "bars": {
+      "authoritative_product": "provider-generated five-minute custom aggregates",
+      "timezone": "UTC storage with America/New_York XNYS session interpretation",
+      "timestamp": "provider aggregate start timestamp converted exactly to UTC bar-open label",
+      "session": "scheduled XNYS regular session only; extended-hours records remain raw evidence and never normalize",
+      "qualifying_trade_policy": "Massive aggregate eligibility rules; no bar when no qualifying trade occurs",
+      "adjustment_request": false,
+      "adjustment_target": "Exact compatibility with frozen provider-adjusted-all-v1 for splits, cash dividends, and spin-offs",
+      "adjustment_gate": "Before any market-data request, written provider terms or authoritative documentation must define the required factors and their price/volume application. A future implementation plan must freeze the exact formula and as-of policy. If that proof is unavailable, source qualification fails before transport.",
+      "volume": "provider aggregate qualifying-trade share volume, transformed only by a proven provider corporate-action volume factor",
+      "missing_data": "Absent aggregate means a missing required coordinate. Apply whole-session exclusion; never fill from a prior close or raw trade."
+    },
+    "raw_trade_role": {
+      "used_for_canonical_bars": false,
+      "used_for_source_qualification_audit": true,
+      "rule": "Reaggregate only with a separately frozen provider condition, correction, timestamp, and bucketing specification. Compare against every provider aggregate in the bounded audit sample. Raw evidence may diagnose an omission but may not create a canonical bar.",
+      "audit_contract": {
+        "binding_time": "Before the one-use authority is created and before any credential load or market-data request",
+        "required_immutable_inputs": [
+          "exact provider-authored aggregate-eligibility and sale-condition specification bytes, source identity, retrieval date, revision where available, and SHA-256",
+          "complete included and excluded trade-condition code sets",
+          "correction, cancellation, duplicate, out-of-sequence, and late-report treatment",
+          "SIP timestamp event selection plus equal-timestamp ordering rule",
+          "America/New_York regular-session five-minute bucket boundaries and exact UTC bar-open labeling",
+          "exact Decimal first, high, low, last selection, integer share-volume sum, and field-by-field equality algorithm"
+        ],
+        "change_rule": "The authority must bind the exact contract bytes and implementation hash. No code set, event rule, timestamp, bucket, or comparison choice may change after authority creation or after any source observation. If Massive cannot provide an exact provider-authored specification before transport, source qualification fails without a request."
+      },
+      "semantic_change_warning": "Aggregating all prints or combining venue feeds would change OHLCV and volume. That is prohibited under this plan."
+    },
+    "quotes": {
+      "product": "Massive historical stock NBBO",
+      "timestamp": "nanosecond SIP timestamp converted to UTC; participant timestamp retained as raw provenance",
+      "fields": [
+        "bid_price",
+        "ask_price",
+        "bid_size",
+        "ask_size",
+        "sip_timestamp",
+        "participant_timestamp"
+      ],
+      "sampling": "For each frozen clock, retain the five-second causal lookback and sample sixty one-second instants in [clock-30s, clock+30s). Use the latest unique SIP-timestamped quote strictly before the instant and no more than five seconds old.",
+      "eligibility": "Positive bid, ask, and sizes; ask at least bid; matching symbol; otherwise retain raw and count ineligible.",
+      "coverage": "At least 57 of 60 observations for every symbol/session/clock; one failed window fails calibration."
+    },
+    "symbol_mapping": "Use the exact frozen ticker strings. Any provider ticker event, alias, or mapping request requires a prospectively bound mapping and may not replace a universe member.",
+    "source_revision": "Bind retrieval time, response request_id where present, next_url chain, raw byte hashes, and any provider file/version marker. Later changed bytes create correction lineage; they never overwrite."
+  },
+  "known_mdy_gap_cross_check": {
+    "purpose": "Cross-provider structural completeness only; never strategy selection or performance analysis",
+    "coordinates": [
+      "MDY@2020-12-04T18:10:00Z",
+      "MDY@2020-12-04T18:25:00Z",
+      "MDY@2021-02-03T16:40:00Z",
+      "MDY@2021-02-05T16:45:00Z",
+      "MDY@2021-02-05T16:50:00Z",
+      "MDY@2021-02-10T20:20:00Z",
+      "MDY@2021-02-22T18:25:00Z",
+      "MDY@2021-02-22T19:05:00Z",
+      "MDY@2021-02-22T19:20:00Z"
+    ],
+    "interpretation": {
+      "massive_aggregate_present": "Supports a provider-specific omission or filter difference in the failed source; it does not prove the Massive dataset passes other gates.",
+      "massive_aggregate_absent_and_no_eligible_raw_trade": "Raises confidence that the interval had no trade eligible under the chosen aggregate definition. The session still fails Program 002 completeness.",
+      "massive_aggregate_absent_but_eligible_raw_trade_present": "Treat as an aggregate construction or coverage inconsistency and fail source qualification.",
+      "raw_trade_only_bar": "Prohibited; never use it to bypass the missing-data disposition."
+    }
+  },
+  "source_qualification_design": {
+    "status": "DESIGNED-NOT-CREATED-NOT-AUTHORIZED",
+    "future_authority_kind": "one-use structural source qualification",
+    "provider": "Massive.com Stocks Business",
+    "sample_symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "bar_sessions": {
+      "known_gap_full_sessions": [
+        "2020-12-04",
+        "2021-02-03",
+        "2021-02-05",
+        "2021-02-10",
+        "2021-02-22"
+      ],
+      "fixed_full_controls": [
+        "2020-07-27",
+        "2023-07-17",
+        "2026-07-15"
+      ],
+      "fixed_early_close_control": "2022-11-25",
+      "full_session_count": 8,
+      "early_close_session_count": 1,
+      "expected_aggregate_rows": 8658
+    },
+    "raw_trade_audit": {
+      "symbol_sessions": [
+        "MDY@2020-12-04",
+        "MDY@2021-02-03",
+        "MDY@2021-02-05",
+        "MDY@2021-02-10",
+        "MDY@2021-02-22",
+        "SPY@2023-07-17"
+      ],
+      "canonical_admission_allowed": false
+    },
+    "quote_sessions": [
+      "2020-07-27",
+      "2021-02-16",
+      "2023-07-17",
+      "2026-07-15"
+    ],
+    "quote_fill_clocks_new_york": [
+      "11:35",
+      "11:40",
+      "11:45",
+      "13:35",
+      "13:40",
+      "13:45",
+      "15:35",
+      "15:40",
+      "15:45"
+    ],
+    "quote_symbol_windows": 468,
+    "quote_grid_observations": 28080,
+    "corporate_action_scope": "Exact thirteen symbols from 2020-06-26 through 2026-07-31 for metadata/factor validation only",
+    "pre_transport_gates": [
+      "signed or written plan terms permit internal non-display research, automated access, immutable raw retention, derived bars, and reproducible internal backtests",
+      "authoritative adjustment contract proves exact split, cash-dividend, spin-off, price, volume, and as-of semantics compatible with provider-adjusted-all-v1",
+      "exact provider-authored aggregate eligibility and condition contract binds included and excluded codes, correction handling, SIP timestamp order, five-minute buckets, equality algorithm, source bytes, revision, and SHA-256",
+      "future implementation and its exact request surface pass independent review",
+      "future one-use authority and independent authority review bind the implementation commit, exact samples, credential identity hash, limits, and all-false strategy authorities"
+    ],
+    "resource_limits": {
+      "request_chain_budget": {
+        "aggregate_symbol_sessions": 117,
+        "raw_trade_symbol_sessions": 6,
+        "quote_symbol_windows": 468,
+        "corporate_action_symbol_endpoint_pairs": 39,
+        "expected_and_maximum_total": 630,
+        "rule": "The future authority must allow only these exact provider, endpoint, symbol, and time-range chains. Retries stay inside a chain; no spare chain may query another coordinate."
+      },
+      "maximum_logical_request_chains": 630,
+      "maximum_http_pages": 5000,
+      "maximum_response_bytes": 5368709120,
+      "maximum_credential_loads": 1,
+      "redirects": false,
+      "method": "GET only",
+      "origin": "api.massive.com only"
+    },
+    "pass_criteria": [
+      "all 8,658 expected aggregate rows exist at the exact XNYS UTC bar-open coordinates",
+      "all nine known MDY coordinates exist as provider aggregates",
+      "all full controls have 78 bars per symbol and the early close has 42 per symbol",
+      "every audited nonempty raw-trade bucket exactly matches provider aggregate OHLCV under the frozen provider eligibility contract",
+      "no audited provider aggregate omits a bucket containing a provider-eligible raw trade",
+      "every one of 468 quote symbol-windows has at least 57 of 60 eligible observations",
+      "aggregate, raw trade, quote, and corporate-action timestamps and symbol mappings match the frozen semantics",
+      "all corporate-action records and factors needed by the sample are complete and deterministic",
+      "every response page, request identity, adjustment record, normalized sample, and receipt is hashed and reproducible"
+    ],
+    "failure_action": "Exhaust the one-use authority, retain bounded raw evidence and a terminal failure receipt, publish no qualification pass, perform no full acquisition, and do not try another provider.",
+    "receipt_contract": "A pass receipt contains structural counts, exact coordinates, quote coverage, semantic checks, raw hashes, cost bytes, and no prices except immutable source evidence. It contains no candidate fill, P&L, return, rank, strategy gate, or qualification result."
+  },
+  "proposed_acquisition_architecture": {
+    "status": "DESIGN-ONLY-NOT-IMPLEMENTED",
+    "adapter_boundary": "A Massive-specific read-only adapter behind the existing dataset/acquisition storage boundary. It imports no strategy, PAPER, order, broker, or live module.",
+    "proposed_commands": {
+      "source_qualification": "uv run trading-lab program-002 source qualify-massive --authority <reviewed-one-use-authority>",
+      "full_exposed_acquisition": "uv run trading-lab program-002 source acquire-massive-exposed --authority <reviewed-full-acquisition-authority>"
+    },
+    "credential": {
+      "environment_variable": "PROGRAM_002_MASSIVE_API_KEY",
+      "provider_specific": true,
+      "reuse_alpaca_credentials": false,
+      "dedicated_unused_broker_account_required": false,
+      "reason": "Massive is a data vendor and the selected key has no broker-order authority. A dedicated Program 002 key under the licensed account and process isolation are sufficient.",
+      "research_worker_inheritance": false
+    },
+    "raw_storage": "Create-only exact response bytes per request/page, non-secret request metadata, response request_id, next_url chain, retrieval time, and SHA-256. Corporate-action records and trade-condition specifications are separate immutable source inputs.",
+    "normalization": "Parse exact decimal prices and integer volumes, apply only the separately reviewed provider factor contract, convert to UTC bar-open labels, filter to expected XNYS coordinates, and preserve all filtered records in raw evidence.",
+    "manifests": "Bind provider, product, business entitlement, endpoint, request range, symbol, adjustment contract and snapshot, condition rules, timestamp policy, calendar, raw hashes, normalized fingerprint, parent correction lineage, qualification receipt, and authority identities.",
+    "pagination": "Follow next_url exactly until absent. Reject origin, path, query-scope, cursor-cycle, page-limit, schema, or ordering drift. Never silently truncate.",
+    "retry": "Retry only prospectively listed transient transport statuses within a fixed per-page attempt ceiling. Semantic, entitlement, completeness, pagination, or validation failures are terminal and cannot trigger provider substitution.",
+    "completeness_admission": "Run the existing frozen Program 002 whole-session and quote-window admission boundary before any strategy authority can bind the dataset.",
+    "publication": "Stage privately, fsync, validate, create-only publish content-addressed raw and normalized artifacts, then obtain independent exact-byte review before later use.",
+    "expected_exposed_rows": {
+      "context_only": 20280,
+      "exposed_block_1": 508638,
+      "exposed_block_2": 509184,
+      "exposed_block_3": 508716,
+      "total": 1546818
+    },
+    "expected_storage_mib": {
+      "bars": [
+        512,
+        1024
+      ],
+      "quotes": [
+        1024,
+        5120
+      ],
+      "working_reservation": 10240
+    }
+  },
+  "full_acquisition_authority_design": {
+    "status": "DESIGNED-NOT-CREATED-NOT-AUTHORIZED",
+    "precondition": "A finding-free source-qualification receipt from the exact one-use authority and an independently reviewed implementation",
+    "provider_binding": "Massive Stocks Business SIP-derived aggregates and historical NBBO under the exact reviewed contract",
+    "bar_ranges": [
+      "2020-06-26..2020-07-24 context-only",
+      "2020-07-27..2022-07-25 exposed-block-1",
+      "2022-07-26..2024-07-26 exposed-block-2",
+      "2024-07-29..2026-07-31 exposed-block-3"
+    ],
+    "quote_grid": "The exact frozen 73 sessions by nine clocks by thirteen symbols",
+    "must_bind": [
+      "implementation commit and source-surface hashes",
+      "source-qualification receipt SHA-256 and fingerprint",
+      "provider, plan, business entitlement, endpoint, source identity, and semantic contract",
+      "provider-authored aggregate eligibility and condition-contract SHA-256 plus exact audit algorithm",
+      "exact universe and universe fingerprint",
+      "exact exposed/context ranges and expected XNYS coordinate tables",
+      "exact quote grid and sampling contract",
+      "missing-data disposition and review identities",
+      "raw, adjustment, canonical, manifest, and publication hash contracts",
+      "retry, page, request, byte, credential-load, and one-use claim limits",
+      "controlled and protected exclusions",
+      "all strategy, qualification, PAPER, broker-write, and live authorities false"
+    ],
+    "controlled_blocks": "Not included. Controlled A and B remain sealed and require later period-specific acquisition-only authorities after their fixed end dates.",
+    "strategy_execution": false
+  },
+  "pricing_and_licensing": {
+    "retrieved_date": "2026-08-27",
+    "recommended_plan": "Massive Stocks Business",
+    "published_monthly_price_usd": 2499,
+    "published_startup_discount": "up to 50% for the first year; eligibility is not assumed",
+    "expected_exposed_source_qualification_and_acquisition_cost_usd": [
+      2499,
+      4998
+    ],
+    "cost_basis": "One business-plan month if later qualification, review, and exposed acquisition fit one billing period; two months if the authority/review boundary crosses renewal. Taxes, negotiated terms, and future price changes are excluded.",
+    "future_controlled_cost": "Not estimated. Controlled dates are future and require then-current pricing and separate authority.",
+    "individual_advanced_price_usd_per_month": 199,
+    "individual_plan_disposition": "Not admissible under public terms for this workflow because non-display strategy research, derived work, and raw retention are not clearly granted.",
+    "required_written_rights": [
+      "private internal non-display research and backtesting",
+      "automated REST retrieval",
+      "immutable local raw and normalized retention after subscription ends for audit and reproducibility",
+      "deterministic derived five- and thirty-minute bars and adjustment artifacts",
+      "internal hashes, manifests, reports, and backups",
+      "no public redistribution of raw market data"
+    ],
+    "license_failure_action": "Fail before credentials, subscription purchase, or market-data request."
+  },
+  "preserved_science": {
+    "universe": [
+      "IWM",
+      "MDY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "spy_role": "context and benchmark",
+    "decision_new_york": "11:30",
+    "lookbacks_minutes": [
+      30,
+      60
+    ],
+    "holds_hours": [
+      2,
+      4
+    ],
+    "construction": "long-flat",
+    "configuration_count": 8,
+    "chronology_changed": false,
+    "missing_data_disposition_changed": false,
+    "search_budget_changed": false,
+    "controlled_a": "2027-04-16..2027-10-15 untouched",
+    "controlled_b": "2027-10-18..2028-04-14 untouched"
+  },
+  "prohibitions": [
+    "no previous-source retry",
+    "no provider credentials",
+    "no provider API or market-data request",
+    "no sample or full market-data download",
+    "no connector implementation",
+    "no real-data admission",
+    "no strategy or backtest execution",
+    "no candidate P&L or return observation",
+    "no cost model from new evidence",
+    "no Campaign 1 authority",
+    "no controlled or protected access",
+    "no PAPER action",
+    "no broker write",
+    "no live action",
+    "no strategic-allocation-21 access"
+  ],
+  "authority": {
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "next_authorization": "After a finding-free independent review and clean merge, the next possible user authorization is ONE-USE SOURCE QUALIFICATION ONLY for the exact Massive sample and controls in this plan. It must not authorize full acquisition or strategy execution.",
+  "plan_fingerprint": "4080f02cfd4ad57c2c3e4e535cc73de8743a40fb0d3e52d046e5c592cd06ae8d"
+}
