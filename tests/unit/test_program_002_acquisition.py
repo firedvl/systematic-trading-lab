@@ -1201,6 +1201,7 @@ def test_non_broker_subprocess_environment_removes_program_002_credentials() -> 
             "PROGRAM_002_ACQUISITION_ACCOUNT_ENVIRONMENT": "paper",
             "PROGRAM_002_ACQUISITION_API_KEY_ID": "key",
             "PROGRAM_002_ACQUISITION_API_SECRET_KEY": "secret",
+            "PROGRAM_002_MASSIVE_API_KEY": "massive",
             "APCA_API_KEY_ID": "other",
             "GIT_CONFIG_GLOBAL": "other",
         }

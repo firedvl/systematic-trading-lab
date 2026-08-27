@@ -1,0 +1,110 @@
+{
+  "schema_version": "program-002-massive-pre-transport-gates-v1",
+  "gate_id": "program-002-massive-pre-transport-stop-2026-08-27-v1",
+  "program_id": "multi-hour-sector-etf-research-001",
+  "provider": "Massive.com",
+  "product": "Stocks Business",
+  "reviewed_on": "2026-08-27",
+  "status": "PRE-TRANSPORT-STOP",
+  "bindings": {
+    "replacement_source_plan": {
+      "path": "config/research/program-002-replacement-data-source-plan-v1.json",
+      "sha256": "01e89da41c3c74080c3a3e5f88c5aa11e5fa5ba6a5fc66ba73b4bfdff3562036",
+      "fingerprint": "4080f02cfd4ad57c2c3e4e535cc73de8743a40fb0d3e52d046e5c592cd06ae8d"
+    },
+    "replacement_source_plan_review": {
+      "path": "config/research/program-002-replacement-data-source-plan-independent-review-v1.json",
+      "sha256": "9b349c9928dc47121b2422a02bfc0950d2ca10f6c8900bf8cb64447100932a76",
+      "fingerprint": "bd4b41d1cdbf0da7256b28d1f6a53ced79d8cf0fb08449726057e0cd52c121d6"
+    }
+  },
+  "adjustment_semantics": {
+    "verdict": "fail",
+    "requested_adjusted_flag": false,
+    "answers": {
+      "1_canonical_request": "Use adjusted=false. Massive adjusted=true is split-only and cannot represent the frozen provider-adjusted-all-v1 target.",
+      "2_split_prices": "Massive documents a historical split price factor, but the complete Program 002 factor application contract is not proved.",
+      "3_split_volume": "Massive documents that split-adjusted aggregates modify volume, but not the exact factor, rounding, or compatibility required by Program 002.",
+      "4_cash_dividends": "Massive states that historical market data is not dividend-adjusted. A separate dividend price factor exists, but no complete frozen application contract is available.",
+      "5_stock_dividends": "The splits endpoint classifies stock_dividend events, but aggregate price and volume treatment is not documented completely.",
+      "6_spin_offs": "No authoritative Massive stock-market-data contract was found for spin-off price and volume factors.",
+      "7_historical_revisions": "Splits and dividends are updated daily; no immutable vintage, revision history, or correction contract was found.",
+      "8_point_in_time": "The corporate-action endpoints expose event-date filters but no as-of or source-vintage parameter.",
+      "9_later_revisions": "Later provider revisions could change current reference responses; raw local capture preserves retrieved bytes but cannot prove or recreate an undocumented provider vintage.",
+      "10_scientific_match": "Not proved. Public evidence covers split adjustment only and does not establish the exact split, dividend, spin-off, price, volume, and as-of meaning frozen for Program 002."
+    },
+    "official_sources": [
+      "https://massive.com/docs/rest/stocks/aggregates/custom-bars",
+      "https://massive.com/knowledge-base/article/is-massives-stock-data-adjusted-for-splits-or-dividends",
+      "https://massive.com/knowledge-base/article/why-does-volume-return-as-a-decimal-value-from-the-aggregates-endpoint",
+      "https://massive.com/docs/rest/stocks/corporate-actions/splits",
+      "https://massive.com/docs/rest/stocks/corporate-actions/dividends",
+      "https://massive.com/docs/rest/stocks/corporate-actions/ticker-events"
+    ],
+    "missing_proof": [
+      "exact price-factor formula covering splits, cash dividends, stock dividends, and spin-offs",
+      "exact volume-factor formula and rounding",
+      "spin-off representation and factors",
+      "corporate-action revision and correction policy",
+      "point-in-time or exact as-of semantics"
+    ]
+  },
+  "aggregate_eligibility_contract": {
+    "verdict": "fail",
+    "reason": "No immutable provider-authored specification bytes bind the complete included and excluded sale-condition codes, corrections, cancellations, duplicates, late reports, equal-SIP-timestamp ordering, bucket construction, and exact OHLCV equality algorithm.",
+    "raw_trade_audit_implementation_may_run_synthetically": true,
+    "real_trade_audit_authorized": false
+  },
+  "licensing_and_retention": {
+    "verdict": "fail",
+    "business_terms_date": "2025-09-02",
+    "market_data_terms_date": "2025-08-28",
+    "official_sources": [
+      "https://massive.com/legal/businesses-terms-of-service",
+      "https://massive.com/legal/market-data-terms-of-service",
+      "https://massive.com/business-stocks"
+    ],
+    "disposition": {
+      "automated_api_acquisition": "not unambiguously granted for this complete use",
+      "internal_non_display_research_and_backtesting": "requires separate written license",
+      "immutable_raw_storage": "not granted after termination",
+      "post_subscription_retention": "public terms require deletion",
+      "derived_artifacts_and_hashes": "not unambiguously granted",
+      "internal_backups": "narrow backup language does not grant reproducible research retention",
+      "reproducible_future_audits_and_backtests": "not granted"
+    },
+    "local_written_contract_evidence_found": false,
+    "required_sales_legal_questions": [
+      "Will an executed Business order form or written amendment, with precedence over the Market Data Terms and applicable third-party agreements, permit automated API acquisition of licensed historical U.S. equities data for internal use?",
+      "Will it permit internal non-display quantitative research and historical backtesting?",
+      "Will it permit immutable local retention of raw responses, request and response metadata, normalized data, and cryptographic hashes?",
+      "Will it permit continued internal retention and use after subscription expiry or termination for reproducible backtests and audit?",
+      "Will it permit creation, retention, and internal use of derived research artifacts, factors, manifests, reports, and hashes?",
+      "Will it permit encrypted internal backups, and what deletion, audit, retention, exchange, SIP, or third-party restrictions survive termination?"
+    ]
+  },
+  "execution_disposition": {
+    "massive_subscription_or_credential_availability": "not inspected because pre-transport gates failed",
+    "qualification_authority_created": false,
+    "credential_loaded": false,
+    "provider_request_made": false,
+    "one_use_authority_consumed": false,
+    "source_qualification_result": "NOT-RUN-PRE-TRANSPORT-STOP",
+    "program_002_disposition": "STOPPED"
+  },
+  "authority": {
+    "source_requests": false,
+    "source_qualification": false,
+    "full_market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "gate_fingerprint": "f0618bdbb8d6ff384778a49b0888fd5c6958874bd03c9e9c2889e9f0a982134a"
+}
