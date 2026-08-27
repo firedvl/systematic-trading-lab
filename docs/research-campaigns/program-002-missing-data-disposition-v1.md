@@ -1,6 +1,7 @@
 # Program 002 prospective missing-data disposition
 
-Status: proposed and frozen for independent review. This is not acquisition authority.
+Status: proposed, frozen, and independently reviewed without findings. This is not acquisition
+authority.
 
 ## Evidence and cause
 
@@ -74,6 +75,11 @@ used by the strategy. Raising the limits to retain these sessions would be a pos
 accommodation.
 The disposition mechanics are scientifically acceptable, but the attempted source is not admissible
 under them. A different source is the next scientifically cleaner path.
+
+The finding-free independent review is
+`config/research/program-002-missing-data-disposition-independent-review-v1.json`. Its SHA-256 and
+fingerprint are `7b23457dced43c78e8925ac5dad9d75da77feae7018ce91551c26a86d9df1372` and
+`d07ddce0ccb87770e458fafb2ff08f7d69a95f32ae70ea8f0cd91d251103bdd0`.
 
 No chronology or search budget changed. The same rule applies to Controlled A and B without reading
 either block. All acquisition, admission, strategy, qualification, controlled, protected, PAPER,

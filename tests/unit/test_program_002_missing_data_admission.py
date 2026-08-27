@@ -149,6 +149,26 @@ def test_frozen_disposition_binds_the_return_blind_control() -> None:
     assert set(payload["authority"].values()) == {False}
 
 
+def test_independent_review_is_finding_free_and_fingerprint_bound() -> None:
+    path = (
+        _REPOSITORY
+        / "config/research/program-002-missing-data-disposition-independent-review-v1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    bound = dict(payload)
+    review_fingerprint = bound.pop("review_fingerprint")
+
+    assert fingerprint(bound) == review_fingerprint
+    assert payload["reviewed_commit"] == "2fde3d53682763e7e125b1940aa9971249dab4ef"
+    assert payload["reviewed_disposition"]["sha256"] == (
+        "26e7c84d97c08c7ef4439333aeb444a12a145f360140e93ebc1104118ec96699"
+    )
+    assert payload["verdict"] == "pass"
+    assert payload["findings"] == []
+    assert payload["known_source_assessment"]["attempted_source_admissible"] is False
+    assert set(payload["authority"].values()) == {False}
+
+
 def test_public_admission_boundary_has_no_schedule_or_policy_override() -> None:
     parameters = set(
         inspect.signature(assess_program_002_exposed_missing_data_admission).parameters
