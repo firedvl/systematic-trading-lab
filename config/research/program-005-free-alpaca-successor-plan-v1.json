@@ -38,6 +38,7 @@
     "program_004_strategy_outcomes_generated_or_observed": 0,
     "program_004_source_qualification_executed": false,
     "program_004_marketparquet_purchase_occurred": false,
+    "program_004_marketparquet_path_abandoned_without_purchase": true,
     "result_driven_adaptation": false,
     "replacement_reasons": [
       "Avoid a paid archive before purchase.",
@@ -48,7 +49,7 @@
     "successor_change": "Data source, provenance, missing-session disposition, adjustment representation, retention gate, credential boundary, and acquisition architecture only.",
     "economic_hypothesis_changed": false,
     "prior_programs_mutable_by_this_plan": false,
-    "zero_candidate_returns_informed_source_changes": true
+    "candidate_return_evidence_informed_source_changes": false
   },
   "predecessor_contract": {
     "plan_path": "config/research/program-004-marketparquet-successor-plan-v1.json",
@@ -640,5 +641,5 @@
     "state_street_etfs": "https://www.ssga.com/us/en/intermediary/etfs",
     "state_street_split_notice": "https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx"
   },
-  "plan_fingerprint": "35f7591feeb6527401429525247aa575d837b2700bddce9f9f125939945d4207"
+  "plan_fingerprint": "09f32075e651f95bb4fc882c0d032955e76ccd5f3abc2a4fa0a56357e82fc556"
 }

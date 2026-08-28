@@ -4,7 +4,7 @@ Program 005, `multi-hour-sector-etf-research-004`, is a prospective successor to
 preserves the untested economic hypothesis and replaces only the prospective data, provenance,
 missingness, adjustment, retention, credential, and acquisition contract. This plan grants no
 provider contact, credential, request, acquisition, strategy, controlled, PAPER, broker-write, or
-live authority.
+live authority. Program 004's paid MarketParquet path is abandoned before purchase.
 
 ## Lineage and actual state
 

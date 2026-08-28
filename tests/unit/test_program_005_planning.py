@@ -55,6 +55,8 @@ def test_program_005_plan_binds_lineage_and_grants_no_authority() -> None:
     assert plan["lineage"]["program_003_strategy_outcomes_generated_or_observed"] == 0
     assert plan["lineage"]["program_004_strategy_outcomes_generated_or_observed"] == 0
     assert plan["lineage"]["result_driven_adaptation"] is False
+    assert plan["lineage"]["program_004_marketparquet_path_abandoned_without_purchase"] is True
+    assert plan["lineage"]["candidate_return_evidence_informed_source_changes"] is False
     assert plan["repository_state"]["marketparquet_purchase_occurred"] is False
     assert plan["repository_state"]["stale_runtime_exception"]["present"] is True
 
