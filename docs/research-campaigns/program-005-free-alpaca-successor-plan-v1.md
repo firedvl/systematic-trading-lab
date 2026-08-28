@@ -138,11 +138,14 @@ They stay excluded even if a later response contains every bar. This makes later
 irrelevant to campaign membership. It also avoids pretending the exposed defect is a random sample
 from future provider behavior.
 
-The numeric ceiling is derived separately and before comparing known gaps. The exposed full-session
-chronology spans seven calendar years, 2020 through 2026. The smallest non-zero whole-session allowance is
-one potential source-loss slot per represented calendar year, so the total budget is seven sessions. Against
-1,499 full trade-eligible sessions, the exact rate is `7 / 1499`, or about 0.46698%, and at least 1,492
-sessions remain. The prompt's suggested 0.5% is not an input. Only after freezing seven does the fixed
+The numeric ceiling is derived separately and before comparing known gaps. Each predeclared discovery
+or test block has 125-126 full sessions. One loss is at most 0.8% of a block; two are at least 1.5873%.
+The fixed 1% block ceiling therefore separates one isolated loss from two losses without using a return
+or a known gap. Apply the same 1% source-loss ceiling to all 1,499 full trade-eligible sessions with a
+two-sided 95% exact Clopper-Pearson upper bound. At `p=0.01`, the binomial CDF is
+`0.017691212591` for seven losses, below the `0.025` upper-tail alpha, and `0.036959445291` for
+eight, above it. Seven is the largest permitted count: exactly `7 / 1499`, about 0.46698%, leaving
+at least 1,492 sessions. The prompt's suggested 0.5% is not an input. Only afterward does the fixed
 quarantine consume five slots and leave at most two unexpected exclusions.
 
 Unexpected exclusions must be isolated: at most one per calendar year, at most one per fixed discovery or
@@ -153,11 +156,15 @@ rolling-quarter window containing the fixed quarantine, and no new MDY exclusion
 rolling-year window. The initial twenty context sessions allow zero loss.
 
 Before admission, a structural report must list exclusions and coordinates by symbol, month, year,
-and five-minute time; fixed-block, rolling, contiguous, and same-symbol counts; SPY morning
-absolute-return, range, and volume quartiles without strategy returns; and all context completeness.
-The fixed quarantine appears separately. Its known 2020-2021 MDY clustering does not become a tolerance;
-return-blind SPY regime and volume diagnostics must still show that the cluster does not threaten
-representativeness, or admission stops. No threshold may be relaxed after acquisition.
+and five-minute time; fixed-block, rolling, contiguous, and same-symbol counts; and all context
+completeness. It also ranks every full trade-eligible session by three return-blind SPY 09:30-11:30
+metrics: absolute morning return, morning high-low range, and morning volume. Each deterministic
+quartile sorts by metric and then date. The tests use the high-return, high-range, and low-volume tails
+with Bonferroni alpha `0.05 / 3`. Admission fails at four tail members among five exclusions, five
+among six, or five among seven; their exact binomial tail probabilities are `0.015625`,
+`0.004638671875`, and `0.01287841796875`. A missing required SPY bar makes the diagnostic
+unavailable and fails admission. No reviewer may override or reinterpret the result, and no threshold
+may be relaxed after acquisition.
 
 The already-exposed nine gaps may remain absent during source qualification. No other missing
 coordinate is allowed on those fixed sessions. Their absence is handled by unconditional whole-date
@@ -174,12 +181,14 @@ Historical NBBO remains unnecessary. The cost model is unchanged:
 | Stress B | 25 bps | 15 minutes | 11:45 | 13:45 | 15:45 |
 
 Normal also runs at 10- and 15-minute delays and cannot qualify alone. Zero cost is diagnostic only.
-Current issuer pages report 30-day median full spreads from 0 to 2 bps across the universe. Normal's
-five-basis-point adverse component is at least five times the largest current median half-spread,
-before a separate one-basis-point reserve. This is a conservative planning assumption, not a
-historical upper bound. It does not observe episodic adverse selection, latency, impact, queue
-position, partial fills, or broker-specific costs. Evidence that the envelope is too low stops the
-program; later evidence cannot lower it.
+Hash-bound issuer pages for all twelve traded ETFs, retrieved August 27, 2026, report 30-day median
+full spreads from 0 to 2 bps as of August 26. The plan records each URL, retrieval timestamp, byte
+count, SHA-256 value, reported date, and spread, plus a mutable-source warning. Normal's five-basis-point
+adverse component is at least five times the largest current median half-spread, before a separate
+one-basis-point reserve. This is a conservative planning assumption, not a historical upper bound. It
+does not observe episodic adverse selection, latency, impact, queue position, partial fills, or
+broker-specific costs. Evidence that the envelope is too low stops the program; later evidence cannot
+lower it.
 
 ## One-use structural qualification
 
@@ -251,10 +260,11 @@ provider automatically.
 
 ## Exact next authorization
 
-The committed tests execute mock-only pagination, completeness, exclusion, adjustment, credential, origin,
-and authority controls. They add no network-capable adapter. The next data authority is not yet eligible
-because the retention gate is unresolved. After that gate, a reviewed adapter, green CI, and a separate user
-grant, the exact scope may be:
+The committed tests construct both full frozen request variants, reject defaults and end extension, and
+execute mock-only pagination, completeness, concentration, objective SPY bias, adjustment, credential,
+origin, and authority controls. They add no network-capable adapter. The next data authority is not yet
+eligible because the retention gate is unresolved. After that gate, a reviewed adapter, green CI, and a
+separate user grant, the exact scope may be:
 
 > ONE-USE FREE ALPACA BASIC HISTORICAL SIP STRUCTURAL SOURCE QUALIFICATION ONLY: zero provider
 > subscription cost; GET-only data.alpaca.markets/v2/stocks/bars; feed=sip; timeframe=5Min; paired

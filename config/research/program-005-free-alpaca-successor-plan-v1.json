@@ -281,16 +281,19 @@
     "global_loss_limit": {
       "expected_exposed_xnys_sessions": 1511,
       "expected_full_trade_eligible_sessions": 1499,
-      "represented_calendar_years": [
-        2020,
-        2021,
-        2022,
-        2023,
-        2024,
-        2025,
-        2026
+      "fixed_discovery_or_test_block_full_session_counts": [
+        125,
+        126
       ],
-      "source_exclusion_slots_per_represented_calendar_year": 1,
+      "fixed_block_source_loss_rate_ceiling": "0.01",
+      "fixed_block_interpretation": "One loss is at most 0.8 percent of a 125-126-session block; two losses are at least 1.5873 percent. A one-percent ceiling therefore permits one isolated loss but rejects two within any predeclared block.",
+      "interval_method": "two-sided 95 percent exact Clopper-Pearson upper bound",
+      "null_source_loss_probability": "0.01",
+      "two_sided_alpha": "0.05",
+      "upper_tail_alpha": "0.025",
+      "binomial_cdf_at_p_0_01_for_k_7": "0.017691212591",
+      "binomial_cdf_at_p_0_01_for_k_8": "0.036959445291",
+      "selection_rule": "Choose the largest integer k for which the two-sided 95 percent exact Clopper-Pearson upper bound on the source-loss probability is at most one percent; equivalently, BinomialCDF(k; n=1499, p=0.01) must be at most 0.025.",
       "overall_excluded_full_session_rate_exact": "7/1499",
       "overall_excluded_full_session_rate_decimal": "0.00466977985323549",
       "overall_excluded_full_session_count_max": 7,
@@ -298,14 +301,16 @@
       "known_quarantine_count": 5,
       "unexpected_excluded_full_session_count_max": 2,
       "prompt_suggested_rate_used_as_derivation_input": false,
-      "derivation": "Before comparing any known gap, allow the smallest non-zero whole-session source-loss budget: one potential exclusion slot for each calendar year represented by the exposed full-session chronology, 2020 through 2026. Seven years produce seven total slots. Against 1,499 full trade-eligible sessions, the exact rate is 7/1499, about 0.46698 percent; 1,492 sessions remain. Only after freezing seven are the five known quarantines compared, leaving two unexpected slots."
+      "derivation": "Before comparing any known gap, use the predeclared 125-126-session blocks to set a one-percent source-loss ceiling that separates one isolated loss from two losses in a block. Apply that ceiling to all 1,499 full trade-eligible sessions with a two-sided 95 percent exact Clopper-Pearson upper bound. At p=0.01, the binomial CDF is 0.017691212591 for seven losses, below 0.025, and 0.036959445291 for eight, above 0.025. Seven is therefore the largest permitted count. Only afterward do the five fixed quarantines consume five slots and leave two unexpected slots."
     },
     "concentration_limits": {
       "unexpected_exclusions_per_calendar_year_max": 1,
       "unexpected_exclusions_per_predeclared_discovery_or_test_block_max": 1,
+      "unexpected_exclusion_rolling_window_sessions": 63,
       "unexpected_exclusions_per_rolling_63_expected_sessions_max": 1,
       "maximum_consecutive_total_exclusions": 1,
       "unexpected_exclusion_adjacent_to_any_quarantined_or_unexpected_exclusion_allowed": false,
+      "same_missing_symbol_rolling_window_sessions": 252,
       "unexpected_sessions_with_same_missing_symbol_per_rolling_252_expected_sessions_max": 1,
       "unexpected_exclusion_in_block_or_rolling_63_window_containing_the_known_quarantine_allowed": false,
       "unexpected_mdy_exclusion_in_rolling_252_window_containing_a_quarantined_mdy_session_allowed": false,
@@ -322,11 +327,36 @@
         "SPY morning absolute-return, range, and volume quartiles computed without strategy returns",
         "initial and rolling context completeness"
       ],
+      "spy_morning_diagnostics": {
+        "population": "All 1,499 full trade-eligible sessions before source-missingness disposition, including an excluded session when its complete SPY morning is available.",
+        "window": "09:30 through the 11:30 New York decision: open at 09:30 and bars opened 09:30 through 11:25.",
+        "metrics": [
+          "absolute SPY return from the 09:30 open to the 11:25 bar close",
+          "SPY high-low range across bars opened 09:30 through 11:25 divided by the minimum low",
+          "sum of SPY volume across bars opened 09:30 through 11:25"
+        ],
+        "quartile_rule": "For each metric, sort ascending by metric and then session date. Each tail contains ceil(population session count / 4) sessions. Test the highest absolute-return tail, highest range tail, and lowest volume tail.",
+        "familywise_alpha": "0.05",
+        "bonferroni_test_count": 3,
+        "per_test_alpha_exact": "1/60",
+        "rejection_counts_by_total_exclusions": {
+          "5": 4,
+          "6": 5,
+          "7": 5
+        },
+        "exact_binomial_tail_probabilities_at_rejection_count": {
+          "5": "0.015625",
+          "6": "0.004638671875",
+          "7": "0.01287841796875"
+        },
+        "unavailable_rule": "A missing SPY bar needed for any diagnostic makes the diagnostic unavailable and fails dataset admission.",
+        "decision_rule": "Reject dataset admission if any tested tail reaches its frozen rejection count. Reviewer discretion cannot override, waive, or reinterpret this result."
+      },
       "known_quarantine_shown_separately": true,
       "no_numeric_limit_may_be_relaxed_after_acquisition": true,
-      "failure_action": "Any global, fixed-block, rolling, consecutive, same-symbol, adjacency, context, or corporate-action exclusion ceiling failure stops dataset admission before strategy execution."
+      "failure_action": "Any global, fixed-block, rolling, consecutive, same-symbol, adjacency, context, corporate-action, or SPY tail-test failure stops dataset admission before strategy execution."
     },
-    "known_mdy_comparison_after_derivation": "The chronology-derived global ceiling permits seven total sessions. The five fixed quarantine sessions consume five slots and leave two isolated unexpected slots. The known quarantine's 2020-2021 MDY clustering is predeclared, is not generalized into an annual or symbol tolerance, and remains subject to return-blind SPY regime and volume diagnostics; evidence that the cluster threatens representativeness stops admission. No new exclusion may join its block, rolling-quarter window, or MDY rolling-year window."
+    "known_mdy_comparison_after_derivation": "The exact-binomial global ceiling permits seven total sessions. The five fixed quarantine sessions consume five slots and leave two isolated unexpected slots. The known quarantine's 2020-2021 MDY clustering is predeclared, is not generalized into an annual or symbol tolerance, and must pass the three objective return-blind SPY tail tests. No new exclusion may join its block, rolling-quarter window, or MDY rolling-year window."
   },
   "transaction_cost_model": {
     "model_id": "program-003-static-cost-envelope-v1",
@@ -357,7 +387,133 @@
     "zero_cost_can_qualify": false,
     "cost_review": {
       "retrieved_date": "2026-08-27",
+      "retrieved_at_utc": "2026-08-28T02:27:04Z",
       "current_issuer_median_full_spread_range_bps": "0-2",
+      "issuer_evidence_hash_scope": "SHA-256 of each issuer HTTPS response body after HTTP content decoding.",
+      "source_bodies_committed": false,
+      "mutable_source_warning": "Issuer pages and reported spreads change. These hashes preserve the reviewed retrieval identity but are not expected to match later retrievals; reverify before source qualification or strategy authority.",
+      "issuer_spread_evidence": [
+        {
+          "ticker": "IWM",
+          "issuer": "iShares",
+          "url": "https://www.ishares.com/us/products/239710/ishares-russell-2000-etf",
+          "sha256": "595b0f9a812f0653274680e5fd17725bf229e7335b00f43211bb28b99cfc4859",
+          "byte_count": 1703696,
+          "reported_as_of": "2026-08-26",
+          "reported_30_day_median_full_spread_percent": "0.00",
+          "reported_30_day_median_full_spread_bps": "0"
+        },
+        {
+          "ticker": "MDY",
+          "issuer": "State Street",
+          "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-spdr-sp-midcap-400-etf-trust-mdy",
+          "sha256": "683a7d58370ad625e44ee644ee0982d2cc20ebdef53dceeb4b3d430706e01230",
+          "byte_count": 229145,
+          "reported_as_of": "2026-08-26",
+          "reported_30_day_median_full_spread_percent": "0.02",
+          "reported_30_day_median_full_spread_bps": "2"
+        },
+        {
+          "ticker": "XLB",
+          "issuer": "State Street",
+          "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-materials-select-sector-spdr-etf-xlb",
+          "sha256": "9eb1c4baec48e5a7bcafb51f0f781d3c0eeac321ea17d91cd799bed8e742d75c",
+          "byte_count": 233394,
+          "reported_as_of": "2026-08-26",
+          "reported_30_day_median_full_spread_percent": "0.02",
+          "reported_30_day_median_full_spread_bps": "2"
+        },
+        {
+          "ticker": "XLE",
+          "issuer": "State Street",
+          "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-energy-select-sector-spdr-etf-xle",
+          "sha256": "4cd7c4d30863966cd6d8584b8499a1a6e5e33858f7b92ce94fbe2c0ccde3b963",
+          "byte_count": 231522,
+          "reported_as_of": "2026-08-26",
+          "reported_30_day_median_full_spread_percent": "0.02",
+          "reported_30_day_median_full_spread_bps": "2"
+        },
+        {
+          "ticker": "XLF",
+          "issuer": "State Street",
+          "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-financial-select-sector-spdr-etf-xlf",
+          "sha256": "f122e789961cf8a6a27dbeb57128bc9d297b1dc37286b24be374d7b3db06abcf",
+          "byte_count": 234506,
+          "reported_as_of": "2026-08-26",
+          "reported_30_day_median_full_spread_percent": "0.02",
+          "reported_30_day_median_full_spread_bps": "2"
+        },
+        {
+          "ticker": "XLI",
+          "issuer": "State Street",
+          "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-industrial-select-sector-spdr-etf-xli",
+          "sha256": "4e0064effa864de59b50bc78eec7a52e1c8fbc8ffd56ac153c4d1c52bfe1506d",
+          "byte_count": 240861,
+          "reported_as_of": "2026-08-26",
+          "reported_30_day_median_full_spread_percent": "0.01",
+          "reported_30_day_median_full_spread_bps": "1"
+        },
+        {
+          "ticker": "XLK",
+          "issuer": "State Street",
+          "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-technology-select-sector-spdr-etf-xlk",
+          "sha256": "a51787034578d59bc46778219902fc59eeee97068f39903a4aef35f57bde6076",
+          "byte_count": 235847,
+          "reported_as_of": "2026-08-26",
+          "reported_30_day_median_full_spread_percent": "0.01",
+          "reported_30_day_median_full_spread_bps": "1"
+        },
+        {
+          "ticker": "XLP",
+          "issuer": "State Street",
+          "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-consumer-staples-select-sector-spdr-etf-xlp",
+          "sha256": "8cb510dbc8089bc543803fc37ac26f5bcbdd9b34420dc4bb1c665faf552107d1",
+          "byte_count": 234859,
+          "reported_as_of": "2026-08-26",
+          "reported_30_day_median_full_spread_percent": "0.01",
+          "reported_30_day_median_full_spread_bps": "1"
+        },
+        {
+          "ticker": "XLRE",
+          "issuer": "State Street",
+          "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-real-estate-select-sector-spdr-etf-xlre",
+          "sha256": "9b5c1f0da2e94d13ca56a5f9a720ea0f0b5f8aafcf28e4ed41326530de6215ce",
+          "byte_count": 236818,
+          "reported_as_of": "2026-08-26",
+          "reported_30_day_median_full_spread_percent": "0.02",
+          "reported_30_day_median_full_spread_bps": "2"
+        },
+        {
+          "ticker": "XLU",
+          "issuer": "State Street",
+          "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-utilities-select-sector-spdr-etf-xlu",
+          "sha256": "49d6b5ea3a8ed644fa0377a0c35edc56a7fe5eb859f8840ff7b6ca3bcc224251",
+          "byte_count": 234299,
+          "reported_as_of": "2026-08-26",
+          "reported_30_day_median_full_spread_percent": "0.02",
+          "reported_30_day_median_full_spread_bps": "2"
+        },
+        {
+          "ticker": "XLV",
+          "issuer": "State Street",
+          "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-health-care-select-sector-spdr-etf-xlv",
+          "sha256": "e402984efaff550c3043d7dd8a4f6cb416128aebf59d383a31e08e7870046313",
+          "byte_count": 234916,
+          "reported_as_of": "2026-08-26",
+          "reported_30_day_median_full_spread_percent": "0.01",
+          "reported_30_day_median_full_spread_bps": "1"
+        },
+        {
+          "ticker": "XLY",
+          "issuer": "State Street",
+          "url": "https://www.ssga.com/us/en/intermediary/etfs/state-street-consumer-discretionary-select-sector-spdr-etf-xly",
+          "sha256": "6641caf91cd012bf868af570b1acf18763a438fb1393da35a55d6e24e7904e70",
+          "byte_count": 238529,
+          "reported_as_of": "2026-08-26",
+          "reported_30_day_median_full_spread_percent": "0.01",
+          "reported_30_day_median_full_spread_bps": "1"
+        }
+      ],
       "normal_adverse_allowance_bps_per_side": "5",
       "normal_uncertainty_reserve_bps_per_side": "1",
       "disposition": "Retain 6 bps per side as a conservative planning assumption, not a historical upper bound. Its adverse component is at least five times the largest current median half-spread, and every qualifying candidate must also pass 12 and 25 bps plus longer delays.",
@@ -573,7 +729,7 @@
     "separate user strategy-execution authorization"
   ],
   "synthetic_test_plan": [
-    "inclusive start and end",
+    "full frozen raw and split,spin-off request serialization with inclusive start and end and no defaults or end extension",
     "next_page_token pagination and repeated-token rejection",
     "5Min regular-session alignment",
     "thirteen-symbol session completeness",
@@ -585,6 +741,7 @@
     "same-symbol rolling-252 concentration",
     "exact global threshold pass and fail",
     "missing SPY",
+    "objective SPY morning quartile-tail pass, fail, and unavailable diagnostics",
     "split price scaling and reciprocal volume scaling",
     "relative-volume history spanning a split",
     "cash-dividend session behavior",
@@ -671,5 +828,5 @@
     "state_street_etfs": "https://www.ssga.com/us/en/intermediary/etfs",
     "state_street_split_notice": "https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx"
   },
-  "plan_fingerprint": "512020bc671d9a22a19b40c5920d7bc5450b747565788464ff767c21ebcc10fb"
+  "plan_fingerprint": "e6b6a9c30059f91d9c66be42320d3847933e0d5caf56d12a13579e14c801002e"
 }
