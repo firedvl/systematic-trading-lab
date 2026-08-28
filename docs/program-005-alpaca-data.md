@@ -40,7 +40,8 @@ unavailable after the claim, before client construction or provider transport. T
 rule makes the result a terminal `FAIL`: do not run activation or qualification again, delete the
 local authority store, create v3, or switch providers. The public closeout changes an
 authority-bound file, so v2 also fails validation from a later clean checkout. Credential-free
-preflight remains available as contract documentation; it grants no authority.
+preflight remains available as contract documentation; it grants no authority. The terminal review
+passed with no findings while recording that Alpaca source suitability remains unobserved.
 
 The full-scope preflight builds the historical deterministic request set, but full execution is
 prohibited because qualification failed and no qualification dataset exists.
