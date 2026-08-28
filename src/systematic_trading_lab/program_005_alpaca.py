@@ -13,6 +13,7 @@ import tempfile
 import time
 from collections import Counter, defaultdict
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
@@ -1456,6 +1457,12 @@ def execute_acquisition(
             raise Program005Error("Program 005 scope already has a terminal receipt")
         if (scope_root / "terminal-transport-failure.json").exists():
             raise Program005Error("Program 005 scope already has a terminal transport failure")
+        if (scope_root / "terminal-qualification-failure.json").exists():
+            raise Program005Error("Program 005 scope already has a terminal qualification failure")
+        if (scope_root / "structural-failure.json").exists():
+            raise Program005Error("Program 005 scope already has a structural failure")
+        if (scope_root / "claim.json").exists():
+            raise Program005Error("Program 005 one-use authority was already claimed")
         _publish_record(
             scope_root / "claim.json",
             {
@@ -1466,20 +1473,19 @@ def execute_acquisition(
                 "source_commit": authority.get("source_commit"),
                 "request_plan_fingerprint": preflight["request_plan_fingerprint"],
             },
-            allow_identical=True,
-        )
-        key_id, secret_key = read_credentials(environ)
-        client = AlpacaBarsClient(
-            key_id,
-            secret_key,
-            transport=transport,
-            pace=pace,
         )
         budget = AcquisitionBudget(
             int(preflight["maximum_http_responses_to_acquire"]),
             int(preflight["maximum_downloaded_bytes"]),
         )
         try:
+            key_id, secret_key = read_credentials(environ)
+            client = AlpacaBarsClient(
+                key_id,
+                secret_key,
+                transport=transport,
+                pace=pace,
+            )
             for chain in chains:
                 if chain.reused_from_qualification:
                     load_chain(chain, _chain_root(private_root, scope, chain))
@@ -1513,6 +1519,23 @@ def execute_acquisition(
                 _publish_record(scope_root / "terminal-transport-failure.json", failure)
             else:
                 _replace_record(scope_root / "last-transport-failure.json", failure)
+            raise
+        except Exception as error:
+            if scope == "qualification":
+                failure = {
+                    "schema_version": "program-005-private-qualification-failure-v1",
+                    "scope": scope,
+                    "failure_class": (
+                        "structural" if isinstance(error, Program005Error) else "internal"
+                    ),
+                    "completed_response_count": budget.responses,
+                    "completed_response_bytes": budget.response_bytes,
+                    "automatic_retry_count": 0,
+                    "credentials_stored": False,
+                    "strategy_calculation_performed": False,
+                }
+                with suppress(OSError):
+                    _publish_record(scope_root / "terminal-qualification-failure.json", failure)
             raise
         receipt = {
             "schema_version": "program-005-private-acquisition-receipt-v1",

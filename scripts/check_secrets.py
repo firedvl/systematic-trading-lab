@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import re
 import subprocess
 import sys
@@ -33,6 +35,9 @@ PRIVATE_MARKET_DATA_SUFFIXES = frozenset(
         ".sqlite",
         ".sqlite3",
     }
+)
+PRIVATE_BINARY_DATA_SUFFIXES = frozenset(
+    {".arrow", ".db", ".feather", ".parquet", ".sqlite", ".sqlite3"}
 )
 PUBLIC_MARKET_DATA_ROOTS = (
     "data/",
@@ -80,6 +85,16 @@ def _contains_json_market_observation(text: str, suffix: str) -> bool:
     return any(_contains_market_observation(value) for value in values)
 
 
+def _contains_csv_market_observation(text: str) -> bool:
+    try:
+        reader = csv.DictReader(io.StringIO(text))
+        keys = {str(key).strip().lower() for key in reader.fieldnames or ()}
+        has_bar_schema = keys >= _PROVIDER_BAR_KEYS or keys >= _CANONICAL_BAR_KEYS
+        return has_bar_schema and next(reader, None) is not None
+    except csv.Error:
+        return False
+
+
 def tracked_files() -> list[Path]:
     result = subprocess.run(
         ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
@@ -95,10 +110,15 @@ def main() -> int:
     paths = tracked_files()
     for path in paths:
         normalized = path.as_posix().lower()
-        if normalized.startswith(PUBLIC_MARKET_DATA_ROOTS) or (
-            "program-005" in normalized
-            and path.suffix.lower() in PRIVATE_MARKET_DATA_SUFFIXES
-            and normalized not in PUBLIC_PROGRAM_005_JSON
+        suffix = path.suffix.lower()
+        if (
+            suffix in PRIVATE_BINARY_DATA_SUFFIXES
+            or normalized.startswith(PUBLIC_MARKET_DATA_ROOTS)
+            or (
+                "program-005" in normalized
+                and suffix in PRIVATE_MARKET_DATA_SUFFIXES
+                and normalized not in PUBLIC_PROGRAM_005_JSON
+            )
         ):
             findings.append(f"{path}:private-market-data-path")
             continue
@@ -106,15 +126,14 @@ def main() -> int:
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
-        if path.suffix.lower() in {".json", ".jsonl"} and _contains_json_market_observation(
-            text, path.suffix.lower()
+        if (suffix in {".json", ".jsonl"} and _contains_json_market_observation(text, suffix)) or (
+            suffix == ".csv" and _contains_csv_market_observation(text)
         ):
             findings.append(f"{path}:private-market-data-content")
             continue
         for number, line in enumerate(text.splitlines(), 1):
             if any(pattern.search(line) for pattern in PATTERNS) or (
-                path.suffix.lower() in {".json", ".jsonl"}
-                and PROGRAM_005_JSON_CREDENTIAL.search(line)
+                suffix in {".json", ".jsonl"} and PROGRAM_005_JSON_CREDENTIAL.search(line)
             ):
                 findings.append(f"{path}:{number}")
     if findings:

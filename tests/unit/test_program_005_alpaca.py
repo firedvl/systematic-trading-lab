@@ -548,6 +548,73 @@ def test_terminal_failure_and_unreviewed_full_scope_stop_before_credentials(
     assert credential_reads == []
 
 
+def test_qualification_claim_and_failure_block_all_reentry_before_credentials(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    credential_reads: list[bool] = []
+
+    def record_credentials(
+        _environ: Mapping[str, str] | None = None,
+    ) -> tuple[str, str]:
+        credential_reads.append(True)
+        return "key", "secret"
+
+    monkeypatch.setattr(program_005, "load_contract", lambda _: object())
+    monkeypatch.setattr(program_005, "build_request_plan", lambda *_: ())
+    monkeypatch.setattr(
+        program_005,
+        "credential_free_preflight",
+        lambda *_: {
+            "request_plan_fingerprint": "synthetic-plan",
+            "maximum_http_responses_to_acquire": 1,
+            "maximum_downloaded_bytes": 1024,
+        },
+    )
+    monkeypatch.setattr(program_005, "load_active_authority", lambda *_: {})
+    monkeypatch.setattr(program_005, "read_credentials", record_credentials)
+    monkeypatch.setattr(
+        program_005,
+        "freeze_dataset",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            program_005.Program005Error("synthetic parse failure")
+        ),
+    )
+
+    private_root = tmp_path / ".trading-lab/program-005-free-alpaca"
+    with pytest.raises(program_005.Program005Error, match="synthetic parse failure"):
+        program_005.execute_acquisition(
+            tmp_path,
+            private_root,
+            "qualification",
+            tmp_path / "authority.json",
+        )
+    assert (private_root / "qualification/claim.json").exists()
+    assert (private_root / "qualification/terminal-qualification-failure.json").exists()
+
+    with pytest.raises(program_005.Program005Error, match="terminal qualification failure"):
+        program_005.execute_acquisition(
+            tmp_path,
+            private_root,
+            "qualification",
+            tmp_path / "authority.json",
+        )
+    assert credential_reads == [True]
+
+    interrupted_repository = tmp_path / "interrupted"
+    interrupted_root = interrupted_repository / ".trading-lab/program-005-free-alpaca"
+    claim = interrupted_root / "qualification/claim.json"
+    claim.parent.mkdir(parents=True)
+    claim.write_text("{}\n", encoding="utf-8")
+    with pytest.raises(program_005.Program005Error, match="already claimed"):
+        program_005.execute_acquisition(
+            interrupted_repository,
+            interrupted_root,
+            "qualification",
+            interrupted_repository / "authority.json",
+        )
+    assert credential_reads == [True]
+
+
 def test_authority_requires_exact_repository_source_inventory(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
@@ -710,6 +777,14 @@ def test_cli_preflight_and_repository_safety_guard(
         + "\n",
         encoding="utf-8",
     )
+    escaped_csv = Path("notes/snapshot.csv")
+    escaped_csv.parent.mkdir(parents=True)
+    escaped_csv.write_text(
+        "timestamp,symbol,open,high,low,close,volume\n2021-02-03T16:40:00Z,MDY,1,2,1,2,100\n",
+        encoding="utf-8",
+    )
+    escaped_parquet = Path("notes/snapshot.parquet")
+    escaped_parquet.write_bytes(b"synthetic-binary-placeholder")
     secret_path = Path("credential.env")
     secret_path.write_text("PROGRAM_005_ALPACA_API_SECRET_KEY=synthetic-value\n", encoding="utf-8")
     export_path = Path("credential.sh")
@@ -729,6 +804,8 @@ def test_cli_preflight_and_repository_safety_guard(
             private_path,
             raw_path,
             config_data,
+            escaped_csv,
+            escaped_parquet,
             secret_path,
             export_path,
             json_secret_path,
@@ -740,6 +817,8 @@ def test_cli_preflight_and_repository_safety_guard(
     assert "private-market-data-path" in errors
     assert "leaks/body.json:private-market-data-content" in errors
     assert "config/research/program-005-bars.jsonl:private-market-data-path" in errors
+    assert "notes/snapshot.csv:private-market-data-content" in errors
+    assert "notes/snapshot.parquet:private-market-data-path" in errors
     assert "credential.env:1" in errors
     assert "credential.sh:1" in errors
     assert "credential.json:1" in errors
