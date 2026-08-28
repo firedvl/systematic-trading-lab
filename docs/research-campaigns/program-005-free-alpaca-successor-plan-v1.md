@@ -65,8 +65,10 @@ asof=2026-07-31
 Alpaca documents `start` and `end` as inclusive. `limit` applies to all returned points, not each
 symbol. A caller must pass each `next_page_token` back as `page_token` until it becomes null. The
 reference lists `raw`, `split`, `dividend`, `spin-off`, `all`, and comma-separated combinations.
-Every parameter is explicit; no provider default is part of the contract. The free entitlement and
-limits must be rechecked before each future authority. Any paid-plan requirement stops Program 005.
+Every parameter is explicit; no provider default is part of the contract. A committed evidence manifest maps
+each claim to a retrieved representation, section, SHA-256, and byte count without copying third-party source
+bodies into the repository. The free entitlement and limits must be rechecked before each future authority.
+Any paid-plan requirement stops Program 005.
 
 The repository's generic Alpaca adapter cannot be reused unchanged. It defaults to IEX and
 `adjustment=all`, and it extends `end` under an obsolete exclusive-end assumption. A future Program
@@ -79,8 +81,9 @@ The free transport contract passes. The retention contract does not yet pass.
 Alpaca says the Historical API may support charting, backtesting, and trading strategies. Its current
 customer agreement also incorporates Nasdaq and NYSE market-data agreements where applicable and
 says a customer may not reproduce, distribute, sell, or commercially exploit market data in any
-manner without Alpaca's written consent. The reviewed public material does not expressly grant
-private immutable raw-response copies, backups, or retained derived research artifacts.
+manner without Alpaca's written consent. Both incorporated agreements were accessible during the final
+review: they permit personal use and restrict furnishing data to others, but neither expressly grants private
+immutable raw-response copies, backups, or retained derived research artifacts.
 
 Program 005 therefore remains contract-gated. Applicable terms or written Alpaca confirmation must
 permit noncommercial personal research, private immutable raw pages, private backups, canonical
@@ -135,12 +138,15 @@ They stay excluded even if a later response contains every bar. This makes later
 irrelevant to campaign membership. It also avoids pretending the exposed defect is a random sample
 from future provider behavior.
 
-The numeric ceiling is derived separately. There are 1,499 full trade-eligible sessions. A 0.5%
-ceiling preserves at least 99.5% and is half the one-percent fixed-block ceiling used to limit local
-sample loss. `floor(1499 * 0.005) = 7`, so no more than seven full sessions may be excluded. The fixed
-quarantine consumes five slots and leaves at most two unexpected exclusions.
+The numeric ceiling is derived separately and before comparing known gaps. The exposed full-session
+chronology spans seven calendar years, 2020 through 2026. The smallest non-zero whole-session allowance is
+one potential source-loss slot per represented calendar year, so the total budget is seven sessions. Against
+1,499 full trade-eligible sessions, the exact rate is `7 / 1499`, or about 0.46698%, and at least 1,492
+sessions remain. The prompt's suggested 0.5% is not an input. Only after freezing seven does the fixed
+quarantine consume five slots and leave at most two unexpected exclusions.
 
-Unexpected exclusions must be isolated: at most one per fixed discovery or test block, at most one
+Unexpected exclusions must be isolated: at most one per calendar year, at most one per fixed discovery or
+test block, at most one
 per rolling 63 expected sessions, none consecutive or adjacent to another exclusion, and at most one
 with the same missing symbol per rolling 252 sessions. No unexpected exclusion may join a block or
 rolling-quarter window containing the fixed quarantine, and no new MDY exclusion may join its
@@ -149,7 +155,9 @@ rolling-year window. The initial twenty context sessions allow zero loss.
 Before admission, a structural report must list exclusions and coordinates by symbol, month, year,
 and five-minute time; fixed-block, rolling, contiguous, and same-symbol counts; SPY morning
 absolute-return, range, and volume quartiles without strategy returns; and all context completeness.
-The fixed quarantine appears separately. No threshold may be relaxed after acquisition.
+The fixed quarantine appears separately. Its known 2020-2021 MDY clustering does not become a tolerance;
+return-blind SPY regime and volume diagnostics must still show that the cluster does not threaten
+representativeness, or admission stops. No threshold may be relaxed after acquisition.
 
 The already-exposed nine gaps may remain absent during source qualification. No other missing
 coordinate is allowed on those fixed sessions. Their absence is handled by unconditional whole-date
@@ -243,8 +251,10 @@ provider automatically.
 
 ## Exact next authorization
 
-The next data authority is not yet eligible because the retention gate is unresolved. After that gate,
-a reviewed adapter, green CI, and a separate user grant, the exact scope may be:
+The committed tests execute mock-only pagination, completeness, exclusion, adjustment, credential, origin,
+and authority controls. They add no network-capable adapter. The next data authority is not yet eligible
+because the retention gate is unresolved. After that gate, a reviewed adapter, green CI, and a separate user
+grant, the exact scope may be:
 
 > ONE-USE FREE ALPACA BASIC HISTORICAL SIP STRUCTURAL SOURCE QUALIFICATION ONLY: zero provider
 > subscription cost; GET-only data.alpaca.markets/v2/stocks/bars; feed=sip; timeframe=5Min; paired
@@ -259,12 +269,17 @@ This plan does not grant that authority.
 
 ## Sources retrieved August 27, 2026
 
+The auditable claim map is
+`config/research/program-005-alpaca-public-contract-evidence-v1.json`.
+
 - [Alpaca Market Data API plans](https://docs.alpaca.markets/us/docs/about-market-data-api)
 - [Alpaca Market Data FAQ](https://docs.alpaca.markets/us/docs/market-data-faq)
 - [Alpaca historical stock bars reference](https://docs.alpaca.markets/us/reference/stockbars)
 - [Alpaca Historical API overview](https://docs.alpaca.markets/us/v1.4.2/docs/historical-api)
 - [Alpaca customer agreement](https://files.alpaca.markets/disclosures/library/AcctAppMarginAndCustAgmt.pdf)
 - [Alpaca disclosures and incorporated agreements](https://alpaca.markets/disclosures)
+- [Nasdaq OMX Global Subscriber Agreement](https://files.alpaca.markets/disclosures/library/NASDAQ+OMX+Global+Subscriber+Agreement.pdf)
+- [NYSE Market Data Display Services Agreement](https://files.alpaca.markets/disclosures/library/NYSE+Market+Data+Display+Services+Agreement.pdf)
 - [iShares IWM issuer page](https://www.ishares.com/us/products/239710/ishares-russell-2000-etf)
 - [State Street ETF pages](https://www.ssga.com/us/en/intermediary/etfs)
 - [State Street sector ETF split notice](https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx)

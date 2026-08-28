@@ -7,6 +7,9 @@ from decimal import Decimal
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
+
+import pytest
 
 from systematic_trading_lab.calendar import expected_bar_timestamps, expected_sessions
 from systematic_trading_lab.domain import Symbol, Timeframe
@@ -19,6 +22,7 @@ from systematic_trading_lab.multi_hour_sector_etf_synthetic import (
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _PLAN_PATH = "config/research/program-005-free-alpaca-successor-plan-v1.json"
+_EVIDENCE_PATH = "config/research/program-005-alpaca-public-contract-evidence-v1.json"
 _SYMBOLS = (
     "IWM",
     "MDY",
@@ -44,6 +48,106 @@ def _load(path: str) -> dict[str, Any]:
 
 def _feature(trace: Any, symbol: str) -> Any:
     return next(item for item in trace.ordered_features if item.symbol == Symbol(symbol))
+
+
+def _run_mock_transport(
+    *,
+    authorized: bool,
+    endpoint: str,
+    load_credentials: Any,
+    fetch: Any,
+    maximum_pages: int = 4,
+) -> list[Any]:
+    parsed = urlsplit(endpoint)
+    if not authorized:
+        raise PermissionError("source request authority is false")
+    if (parsed.scheme, parsed.netloc, parsed.path, parsed.query, parsed.fragment) != (
+        "https",
+        "data.alpaca.markets",
+        "/v2/stocks/bars",
+        "",
+        "",
+    ):
+        raise PermissionError("endpoint is outside the frozen GET-only origin and path")
+
+    credentials = load_credentials()
+    token: str | None = None
+    seen_tokens: set[str] = set()
+    rows: list[Any] = []
+    for _ in range(maximum_pages):
+        page = fetch(credentials, token)
+        if "next_page_token" not in page:
+            raise ValueError("next_page_token field is required")
+        rows.extend(page["rows"])
+        next_token = page["next_page_token"]
+        if next_token is None:
+            return rows
+        if next_token in seen_tokens:
+            raise ValueError("repeated next_page_token")
+        seen_tokens.add(next_token)
+        token = next_token
+    raise ValueError("page cap exceeded")
+
+
+def _run_mock_strategy(*, dataset_admitted: bool, authorized: bool, execute: Any) -> Any:
+    if not dataset_admitted or not authorized:
+        raise PermissionError("strategy execution requires admission and separate authority")
+    return execute()
+
+
+def _mock_admission(
+    quarantine: dict[int, set[str]],
+    unexpected: dict[int, set[str]],
+    *,
+    year_by_session: dict[int, int],
+    block_by_session: dict[int, str],
+    ambiguous_actions: set[int] | None = None,
+    initial_context: set[int] | None = None,
+    action_ledger_resolved: bool = True,
+) -> tuple[set[int], set[str]]:
+    unexpected = {index: set(symbols) for index, symbols in unexpected.items()}
+    for index in ambiguous_actions or set():
+        unexpected.setdefault(index, set()).add("AMBIGUOUS_ACTION")
+    excluded = set(quarantine) | set(unexpected)
+    failures: set[str] = set()
+
+    if len(excluded) > 7:
+        failures.add("global-count")
+    if len(unexpected) > 2:
+        failures.add("unexpected-count")
+    if any(
+        sum(year_by_session[index] == year for index in unexpected) > 1
+        for year in set(year_by_session.values())
+    ):
+        failures.add("calendar-year")
+
+    quarantine_blocks = {block_by_session[index] for index in quarantine}
+    unexpected_blocks = [block_by_session[index] for index in unexpected]
+    if len(unexpected_blocks) != len(set(unexpected_blocks)):
+        failures.add("fixed-block")
+    if quarantine_blocks.intersection(unexpected_blocks):
+        failures.add("quarantine-block")
+
+    ordered = sorted(excluded)
+    if any(right - left == 1 for left, right in zip(ordered, ordered[1:], strict=False)):
+        failures.add("adjacent")
+    if any(
+        0 < abs(index - other) <= 62 for index in unexpected for other in excluded if index != other
+    ):
+        failures.add("rolling-63")
+    if any(
+        0 < abs(index - other) <= 251
+        and bool(symbols.intersection((quarantine | unexpected)[other]))
+        for index, symbols in unexpected.items()
+        for other in excluded
+        if index != other
+    ):
+        failures.add("same-symbol-rolling-252")
+    if excluded.intersection(initial_context or set()):
+        failures.add("initial-context")
+    if not action_ledger_resolved:
+        failures.add("action-ledger")
+    return excluded, failures
 
 
 def test_program_005_plan_binds_lineage_and_grants_no_authority() -> None:
@@ -112,6 +216,21 @@ def test_free_sip_contract_is_explicit_and_retention_stays_fail_closed() -> None
     assert plan["source_qualification"]["status"].endswith("CONTRACT-GATED")
     assert plan["next_authorization"]["granted_by_this_plan"] is False
 
+    binding = plan["public_contract_evidence"]
+    assert binding["path"] == _EVIDENCE_PATH
+    evidence_path = _REPOSITORY / binding["path"]
+    evidence = json.loads(evidence_path.read_text())
+    unsigned_evidence = dict(evidence)
+    assert unsigned_evidence.pop("evidence_fingerprint") == fingerprint(unsigned_evidence)
+    assert sha256(evidence_path.read_bytes()).hexdigest() == binding["sha256"]
+    assert evidence["evidence_fingerprint"] == binding["fingerprint"]
+    assert evidence["access_history"]["remaining_access_gap"] is False
+    assert evidence["retention_assessment"]["verdict"] == retention["verdict"]
+    assert {source["source_id"] for source in evidence["sources"]} >= {
+        "nasdaq-global-subscriber-agreement",
+        "nyse-market-data-display-agreement",
+    }
+
 
 def test_qualification_sample_exercises_pagination_without_requiring_known_gaps() -> None:
     plan = _load(_PLAN_PATH)
@@ -143,12 +262,17 @@ def test_missing_session_policy_is_whole_date_and_has_two_unexpected_slots() -> 
     limits = policy["concentration_limits"]
 
     assert quarantine["session_count"] == len(quarantine["sessions"]) == 5
-    assert loss["overall_excluded_full_session_count_max"] == int(
-        loss["expected_full_trade_eligible_sessions"]
-        * Decimal(loss["overall_excluded_full_session_rate_max"])
-    )
+    assert loss["represented_calendar_years"] == list(range(2020, 2027))
+    assert loss["source_exclusion_slots_per_represented_calendar_year"] == 1
+    numerator, denominator = map(int, loss["overall_excluded_full_session_rate_exact"].split("/"))
+    assert numerator == len(loss["represented_calendar_years"])
+    assert denominator == loss["expected_full_trade_eligible_sessions"]
+    assert Decimal(numerator) / Decimal(denominator) < Decimal("0.005")
     assert loss["overall_excluded_full_session_count_max"] == 7
+    assert loss["minimum_retained_full_trade_eligible_sessions"] == 1_492
     assert loss["unexpected_excluded_full_session_count_max"] == 2
+    assert loss["prompt_suggested_rate_used_as_derivation_input"] is False
+    assert limits["unexpected_exclusions_per_calendar_year_max"] == 1
     assert limits["maximum_consecutive_total_exclusions"] == 1
     assert limits["required_initial_context_loss_max"] == 0
 
@@ -170,6 +294,194 @@ def test_missing_session_policy_is_whole_date_and_has_two_unexpected_slots() -> 
     assert policy["incomplete_session_action"].startswith("Exclude the whole session")
     assert policy["symbol_drop_or_rerank_allowed"] is False
     assert policy["forward_fill_backward_fill_interpolation_or_synthesis_allowed"] is False
+
+
+def test_mock_admission_covers_threshold_concentration_and_action_failures() -> None:
+    quarantine = {
+        10: {"MDY"},
+        100: {"MDY"},
+        200: {"MDY"},
+        300: {"MDY"},
+        400: {"MDY"},
+    }
+    years = {index: 2020 + index // 100 for index in range(800)}
+    blocks = {index: f"block-{index // 80}" for index in range(800)}
+    passing_unexpected = {500: {"SPY"}, 600: {"XLK"}}
+
+    excluded, failures = _mock_admission(
+        quarantine,
+        passing_unexpected,
+        year_by_session=years,
+        block_by_session=blocks,
+    )
+    assert len(excluded) == 7
+    assert failures == set()
+
+    _, threshold_failures = _mock_admission(
+        quarantine,
+        passing_unexpected,
+        year_by_session=years,
+        block_by_session=blocks,
+        ambiguous_actions={700},
+    )
+    assert {"global-count", "unexpected-count"} <= threshold_failures
+
+    _, rolling_failures = _mock_admission(
+        {},
+        {500: {"XLF"}, 562: {"XLE"}},
+        year_by_session=years,
+        block_by_session=blocks,
+    )
+    assert "rolling-63" in rolling_failures
+
+    _, adjacency_failures = _mock_admission(
+        {},
+        {500: {"XLF"}, 501: {"XLE"}},
+        year_by_session=years,
+        block_by_session=blocks,
+    )
+    assert {"adjacent", "rolling-63", "calendar-year", "fixed-block"} <= adjacency_failures
+
+    _, symbol_failures = _mock_admission(
+        {100: {"MDY"}},
+        {300: {"MDY"}},
+        year_by_session=years,
+        block_by_session=blocks,
+    )
+    assert "same-symbol-rolling-252" in symbol_failures
+
+    action_exclusions, action_failures = _mock_admission(
+        {},
+        {},
+        year_by_session=years,
+        block_by_session=blocks,
+        ambiguous_actions={700},
+        action_ledger_resolved=False,
+    )
+    assert action_exclusions == {700}
+    assert "action-ledger" in action_failures
+
+
+def test_mock_completeness_detects_missing_bars_across_sessions_and_spy() -> None:
+    days = (datetime(2025, 1, 6, tzinfo=UTC), datetime(2025, 1, 7, tzinfo=UTC))
+    expected_by_day = {
+        day.date(): {
+            (symbol, timestamp)
+            for symbol in _SYMBOLS
+            for timestamp in expected_bar_timestamps(
+                day, day.replace(hour=23, minute=59), Timeframe.FIVE_MINUTES
+            )
+        }
+        for day in days
+    }
+    actual = set().union(*expected_by_day.values())
+    first_timestamps = sorted(
+        timestamp for symbol, timestamp in expected_by_day[days[0].date()] if symbol == "MDY"
+    )
+    second_timestamps = sorted(
+        timestamp for symbol, timestamp in expected_by_day[days[1].date()] if symbol == "SPY"
+    )
+    actual.remove(("MDY", first_timestamps[10]))
+    actual.remove(("SPY", second_timestamps[-1]))
+
+    missing_by_day = {
+        day: expected - actual for day, expected in expected_by_day.items() if expected - actual
+    }
+    assert set(missing_by_day) == {day.date() for day in days}
+    assert {symbol for missing in missing_by_day.values() for symbol, _ in missing} == {
+        "MDY",
+        "SPY",
+    }
+    excluded, _ = _mock_admission(
+        {},
+        {
+            index: {symbol for symbol, _ in missing_by_day[day.date()]}
+            for index, day in enumerate(days, start=500)
+        },
+        year_by_session={500: 2025, 501: 2025},
+        block_by_session={500: "block-a", 501: "block-b"},
+    )
+    assert excluded == {500, 501}
+    assert all(
+        timestamp.minute % 5 == 0
+        for expected in expected_by_day.values()
+        for _, timestamp in expected
+    )
+
+
+def test_mock_transport_paginates_and_denies_ungranted_actions() -> None:
+    plan = _load(_PLAN_PATH)
+    calls = {"credential_loads": 0, "fetches": 0, "strategies": 0}
+    synthetic_credentials = object()
+    start = "2025-12-01T14:30:00Z"
+    end = "2025-12-12T20:55:00Z"
+
+    def load_credentials() -> object:
+        calls["credential_loads"] += 1
+        return synthetic_credentials
+
+    def fetch(credentials: object, token: str | None) -> dict[str, Any]:
+        assert credentials is synthetic_credentials
+        calls["fetches"] += 1
+        if token is None:
+            return {"rows": [start], "next_page_token": "page-2"}
+        assert token == "page-2"
+        return {"rows": [end], "next_page_token": None}
+
+    with pytest.raises(PermissionError, match="authority is false"):
+        _run_mock_transport(
+            authorized=plan["authority"]["source_requests"],
+            endpoint=plan["alpaca_basic_historical_sip_contract"]["endpoint"],
+            load_credentials=load_credentials,
+            fetch=fetch,
+        )
+    assert calls == {"credential_loads": 0, "fetches": 0, "strategies": 0}
+
+    rows = _run_mock_transport(
+        authorized=True,
+        endpoint=plan["alpaca_basic_historical_sip_contract"]["endpoint"],
+        load_credentials=load_credentials,
+        fetch=fetch,
+    )
+    assert rows == [start, end]
+    assert calls["credential_loads"] == 1
+    assert calls["fetches"] == 2
+
+    def repeated_token_fetch(credentials: object, token: str | None) -> dict[str, Any]:
+        assert credentials is synthetic_credentials
+        return {"rows": [], "next_page_token": "repeat"}
+
+    with pytest.raises(ValueError, match="repeated next_page_token"):
+        _run_mock_transport(
+            authorized=True,
+            endpoint=plan["alpaca_basic_historical_sip_contract"]["endpoint"],
+            load_credentials=load_credentials,
+            fetch=repeated_token_fetch,
+        )
+    with pytest.raises(PermissionError, match="outside the frozen"):
+        _run_mock_transport(
+            authorized=True,
+            endpoint="https://api.alpaca.markets/v2/orders",
+            load_credentials=load_credentials,
+            fetch=fetch,
+        )
+
+    def execute_strategy() -> None:
+        calls["strategies"] += 1
+
+    with pytest.raises(PermissionError, match="admission and separate authority"):
+        _run_mock_strategy(
+            dataset_admitted=False,
+            authorized=True,
+            execute=execute_strategy,
+        )
+    with pytest.raises(PermissionError, match="admission and separate authority"):
+        _run_mock_strategy(
+            dataset_admitted=True,
+            authorized=plan["authority"]["strategy_execution"],
+            execute=execute_strategy,
+        )
+    assert calls["strategies"] == 0
 
 
 def test_split_normalization_and_dividend_gap_preserve_same_session_features() -> None:

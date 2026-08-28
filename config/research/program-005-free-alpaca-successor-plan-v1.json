@@ -103,10 +103,17 @@
     "reverify_before_each_authority": true,
     "free_contract_failure_action": "Stop Program 005. Do not buy Algo Trader Plus or select another provider under this plan."
   },
+  "public_contract_evidence": {
+    "path": "config/research/program-005-alpaca-public-contract-evidence-v1.json",
+    "sha256": "68f95b417bf287506eb123441f83344d5337acee2df3227052d9434b0e07de87",
+    "fingerprint": "bb389757b60777cc20549c58201b71f130151dfb1ec65d2959ec1b082f911c2e",
+    "source_bodies_committed": false,
+    "reverify_before_each_authority": true
+  },
   "licensing_and_retention_gate": {
     "verdict": "MATERIAL-AMBIGUITY-BLOCKS-PROVIDER-AUTHORITY",
     "api_use_documentation": "Alpaca describes the Historical API as usable for charting, backtesting, and powering trading strategies.",
-    "customer_agreement": "The current customer agreement incorporates Nasdaq and NYSE market-data agreements where applicable and says market data may not be reproduced, distributed, sold, or commercially exploited in any manner without Alpaca's written consent.",
+    "customer_agreement": "The current customer agreement incorporates Nasdaq and NYSE market-data agreements where applicable and says market data may not be reproduced, distributed, sold, or commercially exploited in any manner without Alpaca's written consent. Both incorporated agreements were accessible and reviewed before freeze; neither expressly grants the required immutable-copy rights.",
     "durable_private_raw_retention_explicitly_permitted": false,
     "immutable_local_copy_and_backup_rights_explicitly_permitted": false,
     "derived_research_artifact_retention_explicitly_permitted": false,
@@ -274,13 +281,27 @@
     "global_loss_limit": {
       "expected_exposed_xnys_sessions": 1511,
       "expected_full_trade_eligible_sessions": 1499,
-      "overall_excluded_full_session_rate_max": "0.005",
+      "represented_calendar_years": [
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "source_exclusion_slots_per_represented_calendar_year": 1,
+      "overall_excluded_full_session_rate_exact": "7/1499",
+      "overall_excluded_full_session_rate_decimal": "0.00466977985323549",
       "overall_excluded_full_session_count_max": 7,
+      "minimum_retained_full_trade_eligible_sessions": 1492,
       "known_quarantine_count": 5,
       "unexpected_excluded_full_session_count_max": 2,
-      "derivation": "A 0.5 percent ceiling retains at least 99.5 percent of full trade-eligible sessions and is half the one-percent fixed-block ceiling. floor(1499 * 0.005) = 7. The count is derived before comparing the known quarantine."
+      "prompt_suggested_rate_used_as_derivation_input": false,
+      "derivation": "Before comparing any known gap, allow the smallest non-zero whole-session source-loss budget: one potential exclusion slot for each calendar year represented by the exposed full-session chronology, 2020 through 2026. Seven years produce seven total slots. Against 1,499 full trade-eligible sessions, the exact rate is 7/1499, about 0.46698 percent; 1,492 sessions remain. Only after freezing seven are the five known quarantines compared, leaving two unexpected slots."
     },
     "concentration_limits": {
+      "unexpected_exclusions_per_calendar_year_max": 1,
       "unexpected_exclusions_per_predeclared_discovery_or_test_block_max": 1,
       "unexpected_exclusions_per_rolling_63_expected_sessions_max": 1,
       "maximum_consecutive_total_exclusions": 1,
@@ -305,7 +326,7 @@
       "no_numeric_limit_may_be_relaxed_after_acquisition": true,
       "failure_action": "Any global, fixed-block, rolling, consecutive, same-symbol, adjacency, context, or corporate-action exclusion ceiling failure stops dataset admission before strategy execution."
     },
-    "known_mdy_comparison_after_derivation": "The independently derived global ceiling permits seven total sessions. The five fixed quarantine sessions consume five slots and leave two isolated unexpected slots. Their clustered MDY pattern is never generalized into a tolerance: no new exclusion may join its block, rolling-quarter window, or MDY rolling-year window."
+    "known_mdy_comparison_after_derivation": "The chronology-derived global ceiling permits seven total sessions. The five fixed quarantine sessions consume five slots and leave two isolated unexpected slots. The known quarantine's 2020-2021 MDY clustering is predeclared, is not generalized into an annual or symbol tolerance, and remains subject to return-blind SPY regime and volume diagnostics; evidence that the cluster threatens representativeness stops admission. No new exclusion may join its block, rolling-quarter window, or MDY rolling-year window."
   },
   "transaction_cost_model": {
     "model_id": "program-003-static-cost-envelope-v1",
@@ -572,6 +593,13 @@
     "no provider request before authority",
     "no strategy execution before dataset admission"
   ],
+  "synthetic_validation_scope": {
+    "status": "EXECUTABLE-MOCK-ONLY",
+    "test_path": "tests/unit/test_program_005_planning.py",
+    "network_capable_adapter_implemented": false,
+    "real_credentials_or_provider_responses_used": false,
+    "future_adapter_must_reuse_or_supersede_these_controls_under_separate_review": true
+  },
   "stop_rules": [
     "Historical SIP is not free under Basic when end is at least fifteen minutes old.",
     "Basic acquisition requires Algo Trader Plus or another paid market-data plan.",
@@ -637,9 +665,11 @@
     "alpaca_historical_api": "https://docs.alpaca.markets/us/v1.4.2/docs/historical-api",
     "alpaca_customer_agreement": "https://files.alpaca.markets/disclosures/library/AcctAppMarginAndCustAgmt.pdf",
     "alpaca_disclosures": "https://alpaca.markets/disclosures",
+    "nasdaq_global_subscriber_agreement": "https://files.alpaca.markets/disclosures/library/NASDAQ+OMX+Global+Subscriber+Agreement.pdf",
+    "nyse_market_data_display_agreement": "https://files.alpaca.markets/disclosures/library/NYSE+Market+Data+Display+Services+Agreement.pdf",
     "iwm_issuer_page": "https://www.ishares.com/us/products/239710/ishares-russell-2000-etf",
     "state_street_etfs": "https://www.ssga.com/us/en/intermediary/etfs",
     "state_street_split_notice": "https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx"
   },
-  "plan_fingerprint": "09f32075e651f95bb4fc882c0d032955e76ccd5f3abc2a4fa0a56357e82fc556"
+  "plan_fingerprint": "512020bc671d9a22a19b40c5920d7bc5450b747565788464ff767c21ebcc10fb"
 }

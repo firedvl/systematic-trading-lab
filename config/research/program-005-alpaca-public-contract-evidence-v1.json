@@ -1,0 +1,155 @@
+{
+  "schema_version": "program-005-alpaca-public-contract-evidence-v1",
+  "evidence_id": "program-005-alpaca-public-contract-evidence-2026-08-27-v1",
+  "provider": "Alpaca Market Data API",
+  "retrieved_at_utc": "2026-08-28T02:02:11Z",
+  "retrieved_date_america_los_angeles": "2026-08-27",
+  "preservation": "The repository retains this claim map, retrieval metadata, byte counts, and SHA-256 values. It does not commit third-party source bodies.",
+  "sources": [
+    {
+      "source_id": "alpaca-market-data-plans",
+      "title": "About Market Data API",
+      "url": "https://docs.alpaca.markets/us/docs/about-market-data-api.md",
+      "representation": "provider Markdown",
+      "sha256": "b1a70c6e2df2b6032dc20a5c6d74d7849d25e356d30b9c0c55af9a09c4993ae2",
+      "byte_count": 8217,
+      "relevant_section": "Trading API Subscriptions - Equities",
+      "mapped_claims": [
+        "Basic pricing is free.",
+        "U.S. stock and ETF history begins in 2016.",
+        "Basic permits 200 historical API calls per minute and restricts only the latest fifteen minutes."
+      ]
+    },
+    {
+      "source_id": "alpaca-market-data-faq",
+      "title": "Market Data FAQ",
+      "url": "https://docs.alpaca.markets/us/docs/market-data-faq.md",
+      "representation": "provider Markdown",
+      "sha256": "c1208c3bcfb7f2ec6aa6ea398b629d08f680c52d635fd133c36a3129663e9901",
+      "byte_count": 26575,
+      "relevant_section": "Stocks - difference between IEX and SIP data",
+      "mapped_claims": [
+        "Historical SIP is available without a subscription when explicit end is at least fifteen minutes old.",
+        "The historical feed parameter selects SIP or IEX.",
+        "Minute bars use left-inclusive, right-exclusive trade buckets labeled by the left boundary."
+      ]
+    },
+    {
+      "source_id": "alpaca-historical-stock-bars",
+      "title": "Historical bars",
+      "url": "https://docs.alpaca.markets/us/reference/stockbars.md",
+      "representation": "provider Markdown OpenAPI reference",
+      "sha256": "c69f35cfc4d20fb0c79a6a80876a562e2260a062ce8e1dd901e09ca140bff233",
+      "byte_count": 17662,
+      "relevant_section": "GET /v2/stocks/bars parameters and response schema",
+      "mapped_claims": [
+        "The endpoint is GET https://data.alpaca.markets/v2/stocks/bars and supports native 5Min bars.",
+        "Start and end are inclusive.",
+        "Limit is at most 10,000 total data points per page and pagination uses page_token and next_page_token.",
+        "Feed sip covers all U.S. exchanges.",
+        "Adjustment supports raw, split, dividend, spin-off, all, and comma-separated combinations including split,spin-off."
+      ]
+    },
+    {
+      "source_id": "alpaca-historical-api-overview",
+      "title": "Historical API",
+      "url": "https://docs.alpaca.markets/us/v1.4.2/docs/historical-api.md",
+      "representation": "provider Markdown",
+      "sha256": "6b00036af67dfd58e2faf8d80591ecf7ef22138150c213934b93430c1fbe1ef3",
+      "byte_count": 1041,
+      "relevant_section": "Historical API overview",
+      "mapped_claims": [
+        "Alpaca describes historical data as usable for charting, backtesting, and trading strategies.",
+        "This usage statement is not an express retention or reproduction license."
+      ]
+    },
+    {
+      "source_id": "alpaca-customer-agreement",
+      "title": "Alpaca Customer Agreement V26.2026.07",
+      "url": "https://files.alpaca.markets/disclosures/library/AcctAppMarginAndCustAgmt.pdf",
+      "representation": "provider PDF",
+      "sha256": "d086d69f063bba1e9693fffbb3185c4469b24b47bda79f587053bd771580fcf6",
+      "byte_count": 478094,
+      "relevant_section": "Sections 1, 2(d), and 30 - Use of Market Data",
+      "mapped_claims": [
+        "The agreement incorporates the Nasdaq and NYSE subscriber agreements when applicable.",
+        "Section 30 prohibits reproducing, distributing, selling, or commercially exploiting market data without Alpaca's written consent.",
+        "The agreement does not expressly permit private immutable raw copies, backups, or retained derived audit artifacts."
+      ]
+    },
+    {
+      "source_id": "alpaca-disclosures-index",
+      "title": "Alpaca - Disclosures and Agreements",
+      "url": "https://alpaca.markets/disclosures",
+      "representation": "provider HTML",
+      "sha256": "b47f52daafc7fe588c104b3b47dc37a30c265239ed7872c9afbf789433a412fc",
+      "byte_count": 112843,
+      "relevant_section": "Securities Agreements",
+      "mapped_claims": [
+        "Alpaca links the Nasdaq OMX Global Subscriber Agreement and NYSE Market Data Display Services Agreement as current securities agreements."
+      ]
+    },
+    {
+      "source_id": "nasdaq-global-subscriber-agreement",
+      "title": "NASDAQ OMX Global Subscriber Agreement Version 2013.1",
+      "url": "https://files.alpaca.markets/disclosures/library/NASDAQ+OMX+Global+Subscriber+Agreement.pdf",
+      "representation": "provider-linked PDF",
+      "sha256": "54dc85b3e4a2a4d023a1de66373f0221f868ecfa8f7638ef122dade7e46a3b53",
+      "byte_count": 427324,
+      "relevant_section": "Terms and Conditions sections 1-2",
+      "mapped_claims": [
+        "A non-professional subscriber receives a personal-use license and may not provide access to another person or place.",
+        "Section 2 permits later use only as allowed by the agreement and applicable Nasdaq requirements.",
+        "The text does not expressly grant immutable local reproduction, backup, or research-archive rights."
+      ]
+    },
+    {
+      "source_id": "nyse-market-data-display-agreement",
+      "title": "Agreement for Market Data Display Services",
+      "url": "https://files.alpaca.markets/disclosures/library/NYSE+Market+Data+Display+Services+Agreement.pdf",
+      "representation": "provider-linked PDF",
+      "sha256": "d5a672e2895c69398b3064e16719354940aa6f585f3c4f22e058ff0a778933e2",
+      "byte_count": 175675,
+      "relevant_section": "Paragraphs 5, 7, and 11",
+      "mapped_claims": [
+        "A subscriber may not furnish market data to another person or entity.",
+        "A non-professional subscriber may receive market data only for personal, non-business use.",
+        "The text does not expressly grant immutable local reproduction, backup, or research-archive rights."
+      ]
+    }
+  ],
+  "claim_map": {
+    "free_basic_historical_sip": [
+      "alpaca-market-data-plans",
+      "alpaca-market-data-faq"
+    ],
+    "historical_bars_request_contract": [
+      "alpaca-historical-stock-bars",
+      "alpaca-market-data-faq"
+    ],
+    "backtesting_use_but_no_retention_license": [
+      "alpaca-historical-api-overview",
+      "alpaca-customer-agreement"
+    ],
+    "incorporated_market_data_terms": [
+      "alpaca-customer-agreement",
+      "alpaca-disclosures-index",
+      "nasdaq-global-subscriber-agreement",
+      "nyse-market-data-display-agreement"
+    ]
+  },
+  "access_history": {
+    "initial_nasdaq_and_nyse_pdf_retrieval_gap": "The first review reported HTTP 403 responses for both incorporated agreement PDFs.",
+    "final_retrieval": "Both provider-linked PDFs returned HTTP 200 and were reviewed before this manifest was frozen.",
+    "remaining_access_gap": false
+  },
+  "retention_assessment": {
+    "verdict": "MATERIAL-AMBIGUITY-BLOCKS-PROVIDER-AUTHORITY",
+    "reason": "Personal non-business use and backtesting are described, but Alpaca separately prohibits reproduction without written consent and no reviewed agreement expressly authorizes immutable local raw copies, backups, or retained derived audit artifacts.",
+    "written_alpaca_confirmation_or_clear_applicable_terms_required": true,
+    "provider_contact_authorized_by_program_005": false,
+    "paid_plan_fallback_authorized": false
+  },
+  "mutable_source_warning": "These provider-controlled pages and linked agreements may change without preserving the retrieved representation. Re-fetch and re-hash every source immediately before any future authority; any content or link change requires a fresh contractual review.",
+  "evidence_fingerprint": "bb389757b60777cc20549c58201b71f130151dfb1ec65d2959ec1b082f911c2e"
+}
