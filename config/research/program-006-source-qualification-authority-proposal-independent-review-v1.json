@@ -1,0 +1,149 @@
+{
+  "schema_version": "program-006-source-qualification-authority-proposal-independent-review-v1",
+  "review_id": "program-006-source-qualification-authority-proposal-independent-review-2026-08-28-v1",
+  "program_id": "multi-hour-sector-etf-research-005",
+  "reviewed_at": "2026-08-28T22:02:41Z",
+  "status": "PASS-CONTROL-DESIGN-BLOCKED-CREDENTIALS",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_proposal": {
+    "path": "config/research/program-006-source-qualification-authority-proposal-v1.json",
+    "sha256": "38e28483386fbfac917894558136208b6d0f4418a0c03b6e0e84797a3976ad8e",
+    "fingerprint": "3c4248fd85dea7455ac2800a428e843e7f5d26f8fe7688b7b3820609c12cbbce",
+    "proposal_id": "program-006-source-qualification-authority-proposal-2026-08-28-v1",
+    "schema_version": "program-006-source-qualification-authority-proposal-v1",
+    "proposal_artifact_commit": "af39bf7dd71fc458989158558061f1c162858f32"
+  },
+  "reviewed_implementation": {
+    "source_commit": "b171ac84dede1f98190f071c600227d09fecc772",
+    "implementation_root": "09864e09a02fd98cb75670555dfdfe127e6c72bfc473c97bf212522c0cdf713c",
+    "source_files": [
+      {
+        "path": "pyproject.toml",
+        "sha256": "0872d76edc4c9c10b93c15ad0dbf6f3d855c9196e1799566f6790fb936b581ce"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "dbab746a99639212a2d719b89bf92d46e579a944c019051de46d5141db295978"
+      },
+      {
+        "path": "src/systematic_trading_lab/__init__.py",
+        "sha256": "500e5a33c6a1067a9ce2e3c5b074256a7d1207d18ab797830d5c704d5def0942"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/cli.py",
+        "sha256": "a259e80d9303b6788162afa0a8285905b54fdee31c39fc248f008cc2d5057df2"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "eb4ab0d1f5e2f4b2ed42a212bd7997fa1c16c461dd9ce4f0ff40847d4e97d39c"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_005_alpaca.py",
+        "sha256": "1b5f53776d7dd0021d051b9c8ce7bab4722570823b9da1405f7d9ba8a1e20393"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_006_alpaca.py",
+        "sha256": "dc9381330edbc0480509413a2723a0956435a69aaa5ba6a0f3e0edee4a113cf3"
+      },
+      {
+        "path": "uv.lock",
+        "sha256": "d6d60aa5d93644dd3bf932ef84f6793bab6d33992659ed48e968850c6673c00d"
+      }
+    ]
+  },
+  "reviewed_implementation_review": {
+    "path": "config/research/program-006-credential-safe-qualification-implementation-independent-review-v1.json",
+    "sha256": "2308b33aebe23a3d69f18abe0e718da3b85de3c165df486d22e88b7f97ae406f",
+    "fingerprint": "6d8bfa3884c0dfcb17012ba45202417adfcb87f1a89322a99394ef53032828f0"
+  },
+  "review_scope": "scientific legitimacy, frozen sample, credential safety, one-use consumption, TOCTOU, mutable provenance, terminal lineage, and protected boundaries",
+  "verified_assertions": {
+    "successor_is_legitimate_after_zero_provider_requests": true,
+    "change_is_control_plane_repair_not_provider_shopping": true,
+    "exact_twenty_two_session_sample_is_preserved": true,
+    "credential_presence_reveals_no_secret_information": true,
+    "missing_credentials_cannot_activate_or_consume_authority": true,
+    "consumption_boundary_tracks_first_provider_transport_attempt": true,
+    "multiple_provider_looks_are_not_permitted": true,
+    "toctou_controls_are_preserved": true,
+    "mutable_provenance_cannot_self_authorize": true,
+    "program_005_terminal_records_are_immutable": true,
+    "scientific_controls_are_unchanged": true,
+    "controlled_and_protected_boundaries_are_untouched": true
+  },
+  "credential_presence_at_review": [
+    {
+      "name": "PROGRAM_006_ALPACA_API_KEY_ID",
+      "present": false
+    },
+    {
+      "name": "PROGRAM_006_ALPACA_API_SECRET_KEY",
+      "present": false
+    }
+  ],
+  "verification": {
+    "independent_reviewer": "different fresh read-only reviewer",
+    "findings": "none under the documented trusted-local-user contract",
+    "question_answers": {
+      "1_successor_legitimate": "YES; Program 005 made zero provider requests, responses, or byte reads.",
+      "2_control_plane_not_provider_shopping": "YES; provider and scientific inputs are unchanged.",
+      "3_exact_sample": "YES; all 22 sessions are unchanged.",
+      "4_presence_privacy": "YES; output contains only names and booleans.",
+      "5_missing_credentials_consume": "NO; absence stops before active authority or claim publication.",
+      "6_consumption_boundary": "YES; the claim is written immediately before the first transport invocation.",
+      "7_multiple_provider_looks": "NO; zero retry and existing-state rejection preserve one use.",
+      "8_toctou": "YES; repository bindings and credential presence are revalidated under lock.",
+      "9_mutable_provenance_self_authorizes": "NO; every child mutation changes the public root and the previously supplied root fails.",
+      "10_program_005_immutable": "YES; terminal artifacts remain exact and statically bound.",
+      "11_scientific_controls": "YES; the qualification differs only by Program 006 credential names.",
+      "12_protected_boundaries": "YES; all authority flags remain false."
+    },
+    "proposal_sha256": "38e28483386fbfac917894558136208b6d0f4418a0c03b6e0e84797a3976ad8e",
+    "proposal_fingerprint": "3c4248fd85dea7455ac2800a428e843e7f5d26f8fe7688b7b3820609c12cbbce",
+    "implementation_root": "09864e09a02fd98cb75670555dfdfe127e6c72bfc473c97bf212522c0cdf713c",
+    "binding_count": 22,
+    "focused_tests": "10 passed, 1 skipped; the skipped test requires this review artifact",
+    "mutation_check": "self-rehashed proposal, review, and implementation children invalidate the previously supplied root",
+    "provider_or_strategy_execution": "not performed"
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "credential_values": false,
+    "provider_or_account_endpoint": false,
+    "market_observations": false,
+    "strategy_returns": false,
+    "controlled_protected_paper_broker_or_live": false
+  },
+  "proof_gap": "The review used committed public artifacts and synthetic checks. It did not inspect credential values, activate an authority, construct a real provider transport, contact Alpaca, access market observations, run qualification or strategy code, or access controlled, protected, PAPER, broker, or live state. The exact committed-chain test remains pending until this review artifact is committed.",
+  "required_next_user_action": "In one Codex integrated-terminal shell, enter and export PROGRAM_006_ALPACA_API_KEY_ID and PROGRAM_006_ALPACA_API_SECRET_KEY without printing them, then run the documented credential-preflight command. Only after it passes may a new exact one-use authorization handoff publish a caller-supplied root.",
+  "review_fingerprint": "51309ca1383f298278bbc081801a7cb0dd0983188bd83d98cf916ade87f31e33"
+}
