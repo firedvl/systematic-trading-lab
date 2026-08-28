@@ -11,8 +11,8 @@
     "qualification_authorized": false
   },
   "implementation_binding": {
-    "source_commit": "a22f3c856ea521d01333cb552689c3390184a54c",
-    "source_commit_parent": "16f1fc6a5a16e28bde6bf3f5fcd6303d42130703",
+    "source_commit": "cc0b9439d12c3c90d6ab408624b5580c67f6e553",
+    "source_commit_parent": "b8ffbdc6dc650b9eade279242b85c13d63683303",
     "relationship": "exact implementation commit with identical current bytes required",
     "source_files": [
       {
@@ -21,7 +21,7 @@
       },
       {
         "path": "scripts/check_secrets.py",
-        "sha256": "a6e85e915d51521cd7294bbe98af97ce72d3d4898dd8706474ae74cbbc7e594d"
+        "sha256": "e5bf1ec7b1015ee66792f5782e40e49ba2b69f12ce28647b85810a3b0145af06"
       },
       {
         "path": "src/systematic_trading_lab/__init__.py",
@@ -49,7 +49,7 @@
       },
       {
         "path": "src/systematic_trading_lab/program_005_alpaca.py",
-        "sha256": "85248292cff9843a8f9568bb22bd7e23e3dad2762f390e5a557a0ecf6cd5005c"
+        "sha256": "9bfd8f5c3982e8fb63b613f7869b979eefdf607d411b663fdac643b6de02fa48"
       },
       {
         "path": "uv.lock",
@@ -267,5 +267,5 @@
     "controlled_or_protected_state_accessed": false,
     "paper_broker_or_live_state_accessed": false
   },
-  "proposal_fingerprint": "79f2b2cb3cb51548715121d2cd890a93177aec5da486a53f5c2216a9095c6807"
+  "proposal_fingerprint": "1fde0958349f194d2dd8fee7899853066da65423b4bed991ac317ac41920148f"
 }
