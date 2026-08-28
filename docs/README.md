@@ -6,6 +6,7 @@ Start with the research path. Open the controlled campaign and paper documents o
 
 - [Getting started](getting-started.md) — install, fixture data, first backtest, and first walk-forward run
 - [Data policy](data-policy.md) — cataloged data, local files, validation, and adjustment rules
+- [Program 005 private Alpaca data](program-005-alpaca-data.md) — public recipe, private storage, credential isolation, and qualification preflight
 - [Open-source guidance](OPEN_SOURCE.md) — project scope and useful contribution areas
 
 ## Strategy research

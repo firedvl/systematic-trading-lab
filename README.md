@@ -55,6 +55,15 @@ uv run trading-lab research walk-forward \
 
 The five-session fixture checks installation and command flow. Use longer history before interpreting research metrics. Runtime data defaults to `.trading-lab/` and is not committed.
 
+Program 005 provides a credential-free preflight for its private Alpaca SIP dataset recipe:
+
+```console
+uv run trading-lab data acquire program-005 preflight --scope qualification
+```
+
+See [Program 005 private Alpaca data](docs/program-005-alpaca-data.md) for the private storage,
+credential, authority, and reproduction rules. No Program 005 source request is active by default.
+
 ## Using historical data
 
 Alpaca imports are read-only and require research mode plus credentials:

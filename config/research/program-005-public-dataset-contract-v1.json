@@ -1,0 +1,103 @@
+{
+  "schema_version": "program-005-public-dataset-contract-v1",
+  "contract_id": "program-005-alpaca-sip-5min-public-contract-v1",
+  "program_id": "multi-hour-sector-etf-research-004",
+  "status": "PUBLIC-REPRODUCTION-RECIPE-NO-MARKET-OBSERVATIONS",
+  "retention_policy": {
+    "path": "config/research/program-005-private-data-retention-policy-v1.json",
+    "sha256": "af2c733852e65d3958553d64e214b11856f0d44e2cf11c876839e61a9ce62ac7",
+    "fingerprint": "0b14f3afdd012a4b8f3e021ddaee1460528b70b5509f2bee92371378a65953e0"
+  },
+  "corporate_action_ledger": {
+    "path": "config/research/program-005-corporate-action-ledger-v1.json",
+    "sha256": "0e9b24d27085cc97108cc614697e5655cfc0b8aa42d09251504acc12e659da0f",
+    "fingerprint": "a7b1e169e2add558f3ca991f565646cdd00d1fa56598cbcba8f0755252f32efb"
+  },
+  "provider_contract": {
+    "provider": "Alpaca Basic historical equities",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "method": "GET",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustments": [
+      "raw",
+      "split,spin-off"
+    ],
+    "sort": "asc",
+    "limit": 10000,
+    "asof": "2026-07-31",
+    "start_boundary": "inclusive",
+    "end_boundary": "inclusive",
+    "redirects": false,
+    "requests_per_minute": 120
+  },
+  "symbols": [
+    "IWM",
+    "MDY",
+    "SPY",
+    "XLB",
+    "XLE",
+    "XLF",
+    "XLI",
+    "XLK",
+    "XLP",
+    "XLRE",
+    "XLU",
+    "XLV",
+    "XLY"
+  ],
+  "full_range": {
+    "start_session": "2020-06-26",
+    "end_session": "2026-07-31",
+    "expected_xnys_sessions": 1531,
+    "expected_full_sessions": 1519,
+    "expected_early_close_sessions": 12,
+    "expected_rows_per_adjustment_view": 1546818,
+    "expected_paired_rows": 3093636
+  },
+  "qualification_shape": {
+    "sessions": 22,
+    "symbols": 13,
+    "ranges": 13,
+    "paired_logical_chains": 26,
+    "expected_http_responses": 28,
+    "maximum_http_responses": 60,
+    "maximum_downloaded_bytes": 67108864,
+    "maximum_credential_loads": 1,
+    "transport_retries": 0
+  },
+  "private_artifacts": {
+    "raw_page_schema": "program-005-private-raw-page-v1",
+    "source_manifest_schema": "program-005-private-source-manifest-v1",
+    "canonical_raw_schema": "program-005-canonical-raw-bars-v1",
+    "analytical_schema": "program-005-split-spin-off-bars-v1",
+    "missingness_schema": "program-005-structural-missingness-report-v1",
+    "action_schema": "program-005-corporate-action-report-v1"
+  },
+  "public_manifest_fields": [
+    "dataset_id",
+    "provider",
+    "feed",
+    "timeframe",
+    "symbols",
+    "requested_range",
+    "adjustments",
+    "source_commit",
+    "schema_versions",
+    "structural_counts",
+    "canonical_hashes",
+    "acquisition_algorithm_version",
+    "missingness_disposition",
+    "corporate_action_policy"
+  ],
+  "private_manifest_fields_prohibited_in_public_projection": [
+    "credential_identity",
+    "raw_page_filenames",
+    "raw_response_bytes",
+    "request_page_metadata",
+    "retrieval_timestamps",
+    "private_storage_locations"
+  ],
+  "observation_count": 0,
+  "contract_fingerprint": "9e3e91e1e28a76f3bf636c64e2e2d52b6a9886171f740ed71ca29bf1bbd79415"
+}

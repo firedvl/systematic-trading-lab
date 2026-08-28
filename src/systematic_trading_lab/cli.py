@@ -251,6 +251,14 @@ def parser() -> argparse.ArgumentParser:
     yahoo.add_argument("--start", required=True, help="UTC date or RFC-3339 start")
     yahoo.add_argument("--end", required=True, help="UTC date or RFC-3339 end")
     yahoo.add_argument("--universe-config", type=Path, required=True)
+    acquire = data.add_parser("acquire", help="run a policy-bound private acquisition")
+    acquire_program = acquire.add_subparsers(dest="acquire_program", required=True)
+    program_005 = acquire_program.add_parser(
+        "program-005", help="reproduce the Program 005 Alpaca SIP dataset"
+    )
+    program_005.add_argument("action", choices=("preflight", "run"))
+    program_005.add_argument("--scope", choices=("qualification", "full"), required=True)
+    program_005.add_argument("--authority", type=Path)
     for name in ("validate", "describe"):
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
@@ -1251,6 +1259,29 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
                 "home": str(settings.home),
             }
         )
+        return 0
+    if arguments.data_command == "acquire":
+        if arguments.acquire_program != "program-005":
+            raise ValueError("unsupported private acquisition program")
+        from .program_005_alpaca import credential_free_preflight, execute_acquisition
+
+        repository = Path(__file__).resolve().parents[2]
+        if arguments.action == "preflight":
+            if arguments.authority is not None:
+                raise ValueError("Program 005 preflight does not accept an authority")
+            _print(credential_free_preflight(repository, arguments.scope))
+            return 0
+        if settings.mode is not TradingMode.RESEARCH:
+            raise ValueError("Program 005 acquisition requires TRADING_LAB_MODE=research")
+        if arguments.authority is None:
+            raise ValueError("Program 005 run requires --authority")
+        acquisition_result = execute_acquisition(
+            repository,
+            repository / ".trading-lab/program-005-free-alpaca",
+            arguments.scope,
+            arguments.authority,
+        )
+        _print(acquisition_result)
         return 0
     service = DatasetService(layout)
     if arguments.data_command == "import-fixture":
