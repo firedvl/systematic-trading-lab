@@ -1,0 +1,123 @@
+{
+  "schema_version": "program-005-source-qualification-activation-independent-review-v1",
+  "review_id": "program-005-source-qualification-activation-independent-review-2026-08-28-v1",
+  "program_id": "multi-hour-sector-etf-research-004",
+  "reviewed_at": "2026-08-28T12:19:11Z",
+  "status": "BLOCKED-BEFORE-CREDENTIAL-LOAD",
+  "verdict": "FAIL",
+  "reviewed_main": "cf2990d365fa8497360efaf9fe82246462c93260",
+  "reviewed_authorization": {
+    "kind": "user-supplied-one-use-program-005-source-qualification-authorization-packet",
+    "sha256": "9d92a877ef7cd2b487f9947e5f5fd046d0c72a2a8c67a2378642f47bad03ada0",
+    "authorized_proposal_id": "program-005-source-qualification-authority-proposal-2026-08-28-v1"
+  },
+  "reviewed_proposal": {
+    "path": "config/research/program-005-source-qualification-authority-proposal-v1.json",
+    "sha256": "adcd6e6b138bc49c44f8f4a386af9d7883466bdacc3ba45969aec382ebd9a1bd",
+    "fingerprint": "1fde0958349f194d2dd8fee7899853066da65423b4bed991ac317ac41920148f",
+    "implementation_source_commit": "cc0b9439d12c3c90d6ab408624b5580c67f6e553"
+  },
+  "rejected_candidate_authority": {
+    "authority_id": "program-005-source-qualification-authority-2026-08-28-v1",
+    "sha256": "7e2f63243a726d7ce63a6f08c9487bc5a6cbd519a7cc9725dc0b01cf1d8d862c",
+    "fingerprint": "62f180747f0b516aed278bf1532d5673cf386872238b4b5360f10b311c87f977",
+    "source_commit": "b3fa39974e3c13dfeffebbd1bb03faa96e4f771a",
+    "disposition": "REJECTED-NOT-COMMITTED-NOT-ACTIVE-DISCARDED"
+  },
+  "findings": [
+    {
+      "severity": "high",
+      "title": "Candidate authority did not preserve the proposal's exact implementation binding",
+      "evidence": {
+        "proposal_source_commit": "cc0b9439d12c3c90d6ab408624b5580c67f6e553",
+        "candidate_source_commit": "b3fa39974e3c13dfeffebbd1bb03faa96e4f771a",
+        "proposal_secret_guard_sha256": "e5bf1ec7b1015ee66792f5782e40e49ba2b69f12ce28647b85810a3b0145af06",
+        "candidate_secret_guard_sha256": "600ede524492e6b93c89a9c2f69bf9e8e23d1404a1ce924b0c236006ce3dab63"
+      },
+      "effect": "The exact reviewed proposal and user authorization did not cover the candidate source bytes. The candidate was discarded before credentials or runtime claim creation."
+    },
+    {
+      "severity": "high",
+      "security_impact": "medium-bounded-to-the-frozen-qualification-request-set",
+      "title": "Runtime does not enforce the claimed authorization and review provenance",
+      "evidence": {
+        "loader_path": "src/systematic_trading_lab/program_005_alpaca.py",
+        "loader_line": 1561,
+        "enforced_binding_block_line": 1601,
+        "accepted_refingerprinted_mutations": [
+          "authority_id",
+          "source_authorization",
+          "bindings.authority_proposal",
+          "bindings.readiness_review",
+          "bindings.program_plan_review",
+          "bindings.provider_contract_evidence",
+          "qualification_contract deletion",
+          "authority.subscription_purchase=true"
+        ],
+        "rejected_negative_controls": [
+          "bindings.program_plan.sha256 mutation",
+          "request_plan_fingerprint mutation"
+        ]
+      },
+      "effect": "A locally supplied and re-fingerprinted authority can bypass the required exact user-authorization and independent-review provenance before credential and provider access. The request plan, endpoint, transport budgets, quarantine, and one-use claim remain separately bounded."
+    }
+  ],
+  "verified_preflight": {
+    "method": "GET",
+    "origin": "https://data.alpaca.markets",
+    "path": "/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustments": [
+      "raw",
+      "split,spin-off"
+    ],
+    "session_count": 22,
+    "symbol_count": 13,
+    "range_count": 13,
+    "paired_logical_chain_count": 26,
+    "expected_http_responses": 28,
+    "maximum_http_responses": 60,
+    "maximum_downloaded_bytes": 67108864,
+    "requests_per_minute": 120,
+    "maximum_credential_loads": 1,
+    "automatic_transport_retries": 0,
+    "credential_loaded": false,
+    "provider_request_made": false
+  },
+  "stop_state": {
+    "missing_credential_variables": [
+      "PROGRAM_005_ALPACA_API_KEY_ID",
+      "PROGRAM_005_ALPACA_API_SECRET_KEY"
+    ],
+    "active_authority_exists": false,
+    "authority_consumed": false,
+    "credential_load_count": 0,
+    "qualification_claim_created": false,
+    "program_005_private_root_created": false,
+    "provider_request_count": 0,
+    "provider_observation_accessed": false,
+    "strategy_return_generated_or_read": false,
+    "controlled_or_protected_state_accessed": false,
+    "paper_broker_or_live_state_accessed": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Repair the active-authority loader fail closed, bind the repaired bytes in a new prospective proposal, obtain a fresh finding-free independent review, merge through green CI, and obtain new exact user authorization. The current authorization packet cannot be used for a repaired or replacement proposal.",
+  "review_fingerprint": "76314643d8dd1b6f88620c8340a58bbd1847c70dcc377836671cd0feac9f7c11"
+}
