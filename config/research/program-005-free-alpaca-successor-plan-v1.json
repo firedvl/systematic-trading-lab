@@ -1,0 +1,644 @@
+{
+  "schema_version": "program-005-free-alpaca-successor-plan-v1",
+  "plan_id": "program-005-free-alpaca-successor-plan-2026-08-27-v1",
+  "program_ordinal": 5,
+  "program_id": "multi-hour-sector-etf-research-004",
+  "created_date": "2026-08-27",
+  "documentation_retrieved_date": "2026-08-27",
+  "status": "PROSPECTIVE-CONTRACT-GATED-NOT-AUTHORIZED-FOR-PROVIDER-CONTACT-REQUESTS-ACQUISITION-OR-STRATEGY-EXECUTION",
+  "purpose": "Preserve the untested Program 004 economic hypothesis while replacing its prospective paid MarketParquet source with Alpaca Basic historical SIP at zero recurring data cost.",
+  "repository_state": {
+    "reconstructed_commit": "afe1cfd4ebb71d1cb1eafb3a6a25d05350b45e76",
+    "main_commit": "afe1cfd4ebb71d1cb1eafb3a6a25d05350b45e76",
+    "origin_main_commit": "afe1cfd4ebb71d1cb1eafb3a6a25d05350b45e76",
+    "clean_and_synchronized_at_start": true,
+    "active_program_005_process": false,
+    "active_program_002_003_or_004_process": false,
+    "stale_runtime_exception": {
+      "present": true,
+      "campaign_id": "intraday-exposed-003",
+      "run_id_prefix": "ie003r-90bf",
+      "last_heartbeat": "2026-08-22T20:46:03Z",
+      "recorded_pid": 20769,
+      "recorded_pid_present": false,
+      "program_005_action": "Record only. Program 005 authority does not permit clearing another campaign's runtime lease."
+    },
+    "program_002_state": "STOPPED-TERMINAL-BEFORE-STRATEGY-EXECUTION",
+    "program_003_state": "PROSPECTIVE-BLOCKED-BEFORE-AUTHORITY",
+    "program_004_state": "PROSPECTIVE-REVIEWED-NO-PURCHASE-OR-QUALIFICATION",
+    "marketparquet_purchase_occurred": false,
+    "program_003_or_004_strategy_returns_generated_or_observed": 0,
+    "controlled_protected_paper_broker_or_live_state_touched": false
+  },
+  "lineage": {
+    "predecessor_program_id": "multi-hour-sector-etf-research-003",
+    "predecessor_disposition": "PROSPECTIVE-REVIEWED-NO-PURCHASE-OR-EXECUTION",
+    "program_002_termination_was_strategy_evidence": false,
+    "program_003_strategy_outcomes_generated_or_observed": 0,
+    "program_004_strategy_outcomes_generated_or_observed": 0,
+    "program_004_source_qualification_executed": false,
+    "program_004_marketparquet_purchase_occurred": false,
+    "result_driven_adaptation": false,
+    "replacement_reasons": [
+      "Avoid a paid archive before purchase.",
+      "Use a documented free historical SIP path.",
+      "Keep acquisition reproducible and restart-safe.",
+      "Handle already-exposed Alpaca missing bars through a new return-blind whole-session policy."
+    ],
+    "successor_change": "Data source, provenance, missing-session disposition, adjustment representation, retention gate, credential boundary, and acquisition architecture only.",
+    "economic_hypothesis_changed": false,
+    "prior_programs_mutable_by_this_plan": false,
+    "zero_candidate_returns_informed_source_changes": true
+  },
+  "predecessor_contract": {
+    "plan_path": "config/research/program-004-marketparquet-successor-plan-v1.json",
+    "plan_sha256": "b4d00e040b80eb9323bb87475cc2ece54e60ebecc6ea6dcde1a95d87fd927237",
+    "plan_fingerprint": "2b740810f1365d20c11d1cf3bb83cdd0e06e72c30a5070ff0648031f29d893fc",
+    "review_path": "config/research/program-004-marketparquet-successor-plan-independent-review-v1.json",
+    "review_sha256": "c0d7a482c46bf49bff3d9f7f1fbd107c82d2c9d2e491f6e1cae7c3cd16c4067b",
+    "review_fingerprint": "5343b70c5cfe9e6c4342286cb6e1bac9c75b8344b620ce1110d69f90ec99efd0",
+    "inherited_unchanged": [
+      "economic hypothesis and eight configurations",
+      "portfolio and execution clocks",
+      "exposed chronology and nine walk-forward folds",
+      "232-specification search ceiling and stopping rules",
+      "6/12/25-basis-point cost envelope and delay checks",
+      "Controlled A and B contract",
+      "V3, June, daily 2018-2019, PAPER, broker, live, and strategic-allocation-21 isolation"
+    ],
+    "unlisted_inherited_change_allowed": false
+  },
+  "alpaca_basic_historical_sip_contract": {
+    "retrieved_date": "2026-08-27",
+    "trading_api_plan": "Basic",
+    "price_usd_per_month": "0",
+    "historical_equities_available_since": 2016,
+    "historical_api_requests_per_minute": 200,
+    "historical_sip_without_algo_trader_plus": true,
+    "free_sip_condition": "The explicit request end must be at least fifteen minutes old.",
+    "algo_trader_plus_required": false,
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "method": "GET",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "start_boundary": "inclusive",
+    "end_boundary": "inclusive",
+    "sort": "asc",
+    "limit": 10000,
+    "limit_scope": "total data points per response page, not per symbol",
+    "pagination_request_parameter": "page_token",
+    "pagination_response_parameter": "next_page_token",
+    "pagination_rule": "Drain each unique non-empty next_page_token through null; a repeated token, missing terminal token field, or page beyond a frozen cap fails the chain.",
+    "adjustment_modes_documented": [
+      "raw",
+      "split",
+      "dividend",
+      "spin-off",
+      "all",
+      "comma-separated combinations"
+    ],
+    "selected_asof": "2026-07-31",
+    "explicit_parameter_rule": "Never rely on provider defaults. Freeze symbols, timeframe, start, end, feed, adjustment, sort, limit, and asof in every request identity.",
+    "reverify_before_each_authority": true,
+    "free_contract_failure_action": "Stop Program 005. Do not buy Algo Trader Plus or select another provider under this plan."
+  },
+  "licensing_and_retention_gate": {
+    "verdict": "MATERIAL-AMBIGUITY-BLOCKS-PROVIDER-AUTHORITY",
+    "api_use_documentation": "Alpaca describes the Historical API as usable for charting, backtesting, and powering trading strategies.",
+    "customer_agreement": "The current customer agreement incorporates Nasdaq and NYSE market-data agreements where applicable and says market data may not be reproduced, distributed, sold, or commercially exploited in any manner without Alpaca's written consent.",
+    "durable_private_raw_retention_explicitly_permitted": false,
+    "immutable_local_copy_and_backup_rights_explicitly_permitted": false,
+    "derived_research_artifact_retention_explicitly_permitted": false,
+    "required_resolution": "Applicable terms or written Alpaca confirmation must expressly permit noncommercial personal research, private immutable raw response retention, private backups, canonical derived artifacts, and audit reproduction without a paid recurring plan.",
+    "provider_contact_authorized": false,
+    "paid_plan_fallback_authorized": false,
+    "hash_only_refetch_fallback_scientifically_acceptable": false,
+    "hash_only_refetch_reason": "Hashes can detect later provider corrections but cannot reconstruct the frozen bytes. Re-fetching a moving source therefore fails exact campaign reproducibility.",
+    "qualification_eligible_before_resolution": false,
+    "failure_action": "Keep the prospective plan but do not load credentials, request data, or escalate to a paid plan."
+  },
+  "preserved_economic_contract": {
+    "ranking_and_trading_symbols": [
+      "IWM",
+      "MDY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "context_and_benchmark_symbol": "SPY",
+    "spy_tradeable": false,
+    "families": [
+      "sector-relative-continuation-v1",
+      "sector-relative-reversal-v1"
+    ],
+    "lookback_minutes": [
+      30,
+      60
+    ],
+    "hold_minutes": [
+      120,
+      240
+    ],
+    "decision_time_new_york": "11:30",
+    "configuration_count": 8,
+    "portfolio": {
+      "construction": "long-flat",
+      "maximum_positions": 3,
+      "equal_fee_safe_fractional_slots": true,
+      "leverage": false,
+      "shorting": false,
+      "resizing": false,
+      "reentry": false,
+      "flat_at_session_close": true
+    },
+    "entry_times_new_york": [
+      "11:35",
+      "11:40",
+      "11:45"
+    ],
+    "exit_times_new_york": {
+      "120": [
+        "13:35",
+        "13:40",
+        "13:45"
+      ],
+      "240": [
+        "15:35",
+        "15:40",
+        "15:45"
+      ]
+    },
+    "holding_period_begins_at_actual_entry": true,
+    "early_close_trade_eligible": false,
+    "early_close_context_rule": "A complete scheduled early-close grid may supply 09:30-11:30 context but may not be evaluated because exact four-hour exits are unavailable.",
+    "additional_search_allowed": false
+  },
+  "chronology_and_protected_boundaries": {
+    "preserved_from_predecessor": true,
+    "context_start": "2020-06-26",
+    "context_end": "2020-07-24",
+    "context_sessions": 20,
+    "discovery_start": "2020-07-27",
+    "exposed_end": "2026-07-31",
+    "discovery_block_count": 3,
+    "walk_forward_fold_count": 9,
+    "training_window_pnl_read_allowed": false,
+    "controlled_a": {
+      "start": "2027-04-16",
+      "end": "2027-10-15",
+      "state": "UNACQUIRED-UNOPENED-NOT-AUTHORIZED"
+    },
+    "controlled_b": {
+      "start": "2027-10-18",
+      "end": "2028-04-14",
+      "state": "UNACQUIRED-UNOPENED-NOT-AUTHORIZED"
+    },
+    "controlled_contract_changed": false,
+    "history_extension_allowed": false,
+    "date_replacement_allowed": false
+  },
+  "search_budget": {
+    "maximum_strategy_campaigns": 2,
+    "maximum_parent_configurations": 8,
+    "maximum_run_specifications": 232,
+    "maximum_attempts_per_specification": 3,
+    "maximum_infrastructure_attempts": 696,
+    "partial_stage_merit_read_for_adaptation_allowed": false,
+    "changed_for_program_005": false
+  },
+  "canonical_data_architecture": {
+    "primary_source": "Alpaca Basic historical SIP stock bars",
+    "fallback": null,
+    "canonical_source_view": {
+      "adjustment": "raw",
+      "use": "Immutable provider evidence, raw contemporaneous fill prices, marks, and P&L inputs."
+    },
+    "analytical_source_view": {
+      "adjustment": "split,spin-off",
+      "use": "Frozen analytical OHLCV for same-session return features, prior twenty-session relative volume, and prior median dollar-volume capacity."
+    },
+    "paired_request_rule": "Raw and analytical chains use identical method, endpoint, symbols, timeframe, start, end, feed, sort, limit, and asof; only adjustment differs. Both views are predeclared and neither may be queried reactively to repair a gap.",
+    "dividend_adjustment_requested": false,
+    "all_adjustment_requested": false,
+    "one_minute_reconstruction_allowed": false,
+    "provider_blending_allowed": false,
+    "generic_alpaca_provider_reuse_allowed": false,
+    "generic_provider_blockers": [
+      "It defaults to IEX rather than SIP.",
+      "It requests adjustment=all rather than raw plus split,spin-off views.",
+      "It extends end by one interval under an obsolete exclusive-end assumption, while the current stock-bars reference documents inclusive end."
+    ],
+    "future_adapter_scope": "A later separately authorized Program 005 adapter must implement this exact GET-only contract. No adapter is added by this plan."
+  },
+  "corporate_action_policy": {
+    "split_price_rule": "Use the frozen split,spin-off analytical view for cross-session comparable features. Use raw contemporaneous prices for every fill, mark, and P&L calculation.",
+    "split_volume_rule": "Alpaca documents split adjustment of both price and volume. The analytical view must scale price and volume reciprocally and keep one constant factor within each symbol-session.",
+    "relative_volume_rule": "Split-normalized volume places the current morning and twenty prior mornings in one share unit. Raw volume may not cross a split boundary in this feature.",
+    "equal_dollar_rule": "Fractional equal-dollar sizing and bps-on-notional costs use raw fill prices. A constant analytical scale cannot change target notional, cost, or raw P&L.",
+    "cash_dividend_rule": "Do not adjust prices or add cash. Every return feature starts after the open and every position opens and closes in one session, so no position owns the overnight distribution entitlement.",
+    "ordinary_dividend_session_action": "Eligible when the complete grid and every other admission control pass.",
+    "spin_off_rule": "Use the predeclared split,spin-off analytical price view. If the action identity, effective date, factor, or within-session constancy is ambiguous, exclude the affected session from evaluation and context and count it against the total exclusion ceiling. An unresolved action ledger fails dataset admission.",
+    "action_ledger_rule": "Before dataset freeze, bind issuer or exchange evidence for every in-range split or spin-off and reconcile it to raw-versus-analytical factor changes. An unexplained factor change fails admission.",
+    "correction_rule": "A later provider correction or corporate-action change creates a new dataset version. It cannot overwrite frozen pages or reopen an exposed campaign."
+  },
+  "missing_data_policy": {
+    "policy_id": "program-005-fixed-quarantine-plus-isolated-loss-v1",
+    "prospective_and_return_blind": true,
+    "minimum_cross_section": "All twelve ranking ETFs plus SPY at every required regular-session five-minute bar open.",
+    "required_grid": "Every bar needed for the causal lookback, 11:30 decision, selected execution delay, holding interval, exit, and prior twenty complete-session context.",
+    "incomplete_session_action": "Exclude the whole session from every configuration, benchmark, and later context use.",
+    "symbol_drop_or_rerank_allowed": false,
+    "forward_fill_backward_fill_interpolation_or_synthesis_allowed": false,
+    "alternate_provider_timeframe_or_date_substitution_allowed": false,
+    "known_quarantine": {
+      "sessions": [
+        "2020-12-04",
+        "2021-02-03",
+        "2021-02-05",
+        "2021-02-10",
+        "2021-02-22"
+      ],
+      "session_count": 5,
+      "source_fact": "Nine required MDY five-minute coordinates were already absent, and prior one-minute evidence also left the February targets absent.",
+      "action": "Exclude all five sessions unconditionally even if a later Alpaca response contains every coordinate. Do not use them as evaluation dates or future relative-volume context.",
+      "reason": "Fixed exclusion prevents a later provider correction from changing campaign membership and uses no strategy return. It is a quarantine, not a tolerance inferred from the missing count."
+    },
+    "global_loss_limit": {
+      "expected_exposed_xnys_sessions": 1511,
+      "expected_full_trade_eligible_sessions": 1499,
+      "overall_excluded_full_session_rate_max": "0.005",
+      "overall_excluded_full_session_count_max": 7,
+      "known_quarantine_count": 5,
+      "unexpected_excluded_full_session_count_max": 2,
+      "derivation": "A 0.5 percent ceiling retains at least 99.5 percent of full trade-eligible sessions and is half the one-percent fixed-block ceiling. floor(1499 * 0.005) = 7. The count is derived before comparing the known quarantine."
+    },
+    "concentration_limits": {
+      "unexpected_exclusions_per_predeclared_discovery_or_test_block_max": 1,
+      "unexpected_exclusions_per_rolling_63_expected_sessions_max": 1,
+      "maximum_consecutive_total_exclusions": 1,
+      "unexpected_exclusion_adjacent_to_any_quarantined_or_unexpected_exclusion_allowed": false,
+      "unexpected_sessions_with_same_missing_symbol_per_rolling_252_expected_sessions_max": 1,
+      "unexpected_exclusion_in_block_or_rolling_63_window_containing_the_known_quarantine_allowed": false,
+      "unexpected_mdy_exclusion_in_rolling_252_window_containing_a_quarantined_mdy_session_allowed": false,
+      "required_initial_context_loss_max": 0
+    },
+    "bias_audit": {
+      "required_reports": [
+        "excluded sessions and coordinates by symbol",
+        "excluded sessions by month and year",
+        "missing coordinates by five-minute bar-open time",
+        "fixed-block and rolling-63-session counts",
+        "contiguous exclusion runs",
+        "same-symbol rolling-252-session counts",
+        "SPY morning absolute-return, range, and volume quartiles computed without strategy returns",
+        "initial and rolling context completeness"
+      ],
+      "known_quarantine_shown_separately": true,
+      "no_numeric_limit_may_be_relaxed_after_acquisition": true,
+      "failure_action": "Any global, fixed-block, rolling, consecutive, same-symbol, adjacency, context, or corporate-action exclusion ceiling failure stops dataset admission before strategy execution."
+    },
+    "known_mdy_comparison_after_derivation": "The independently derived global ceiling permits seven total sessions. The five fixed quarantine sessions consume five slots and leave two isolated unexpected slots. Their clustered MDY pattern is never generalized into a tolerance: no new exclusion may join its block, rolling-quarter window, or MDY rolling-year window."
+  },
+  "transaction_cost_model": {
+    "model_id": "program-003-static-cost-envelope-v1",
+    "changed_for_program_005": false,
+    "historical_nbbo_required": false,
+    "scenarios": {
+      "normal": {
+        "total_bps_per_side": "6",
+        "delay_minutes": 5,
+        "entry_time_new_york": "11:35"
+      },
+      "stress_a": {
+        "total_bps_per_side": "12",
+        "delay_minutes": 10,
+        "entry_time_new_york": "11:40"
+      },
+      "stress_b": {
+        "total_bps_per_side": "25",
+        "delay_minutes": 15,
+        "entry_time_new_york": "11:45"
+      }
+    },
+    "isolated_normal_delay_checks_minutes": [
+      10,
+      15
+    ],
+    "normal_alone_can_qualify": false,
+    "zero_cost_can_qualify": false,
+    "cost_review": {
+      "retrieved_date": "2026-08-27",
+      "current_issuer_median_full_spread_range_bps": "0-2",
+      "normal_adverse_allowance_bps_per_side": "5",
+      "normal_uncertainty_reserve_bps_per_side": "1",
+      "disposition": "Retain 6 bps per side as a conservative planning assumption, not a historical upper bound. Its adverse component is at least five times the largest current median half-spread, and every qualifying candidate must also pass 12 and 25 bps plus longer delays.",
+      "limitations": "No historical NBBO is acquired. Episodic adverse selection, bar-open uncertainty, latency, impact, queue position, partial fills, and broker-specific costs remain unobserved.",
+      "future_rule": "Evidence that the envelope is too low stops the program; no post-return evidence may lower cost or delay."
+    }
+  },
+  "source_qualification": {
+    "status": "DESIGNED-NOT-AUTHORIZED-CONTRACT-GATED",
+    "kind": "one-use free Alpaca Basic historical SIP structural qualification",
+    "strategy_calculation_or_return_allowed": false,
+    "preconditions": [
+      "The licensing and retention gate passes in a reviewed artifact without requiring a paid plan.",
+      "Current official documentation still confirms Basic price zero, historical SIP access for end at least fifteen minutes old, and 200 historical requests per minute.",
+      "A future isolated adapter passes the complete mock test plan and independent review.",
+      "A separate user authority binds the exact implementation commit, requests, sample, limits, credential boundary, and all-false strategy authorities."
+    ],
+    "exact_symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "request_contract": {
+      "method": "GET",
+      "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+      "feed": "sip",
+      "timeframe": "5Min",
+      "adjustments": [
+        "raw",
+        "split,spin-off"
+      ],
+      "sort": "asc",
+      "limit": 10000,
+      "asof": "2026-07-31",
+      "start_and_end": "Exact inclusive first and last regular-session bar-open timestamps for each frozen chain.",
+      "redirects": false,
+      "rate_limit_requests_per_minute": 120
+    },
+    "fixed_sessions": {
+      "known_quarantine_sessions": [
+        "2020-12-04",
+        "2021-02-03",
+        "2021-02-05",
+        "2021-02-10",
+        "2021-02-22"
+      ],
+      "normal_controls": [
+        "2020-07-27",
+        "2023-07-17",
+        "2026-07-15"
+      ],
+      "early_close_control": [
+        "2022-11-25"
+      ],
+      "distribution_neighborhood": [
+        "2024-06-10",
+        "2024-06-11",
+        "2024-06-12"
+      ],
+      "pagination_and_split_block": [
+        "2025-12-01",
+        "2025-12-02",
+        "2025-12-03",
+        "2025-12-04",
+        "2025-12-05",
+        "2025-12-08",
+        "2025-12-09",
+        "2025-12-10",
+        "2025-12-11",
+        "2025-12-12"
+      ],
+      "unique_session_count": 22,
+      "full_session_count": 21,
+      "early_close_session_count": 1,
+      "expected_rows_per_adjustment_view": 21840,
+      "expected_paired_rows_before_known_gaps": 43680
+    },
+    "known_mdy_coordinates": [
+      "MDY@2020-12-04T18:10:00Z",
+      "MDY@2020-12-04T18:25:00Z",
+      "MDY@2021-02-03T16:40:00Z",
+      "MDY@2021-02-05T16:45:00Z",
+      "MDY@2021-02-05T16:50:00Z",
+      "MDY@2021-02-10T20:20:00Z",
+      "MDY@2021-02-22T18:25:00Z",
+      "MDY@2021-02-22T19:05:00Z",
+      "MDY@2021-02-22T19:20:00Z"
+    ],
+    "transport_budget": {
+      "logical_chains_per_adjustment_view": 13,
+      "maximum_logical_chains": 26,
+      "expected_http_responses": 28,
+      "maximum_http_responses": 60,
+      "maximum_downloaded_bytes": 67108864,
+      "maximum_credential_loads": 1,
+      "transport_failure_retries": 0
+    },
+    "pass_criteria": [
+      "Every request is an exact frozen GET to data.alpaca.markets with explicit SIP, 5Min, inclusive bounds, adjustment, sort, limit, and asof parameters.",
+      "The ten-session December block exceeds 10,000 points per view, returns a non-empty next_page_token, and drains through a null token without duplicate or conflicting coordinates.",
+      "Every normal, early-close, distribution, and split control contains each expected coordinate exactly once in both views.",
+      "The nine known MDY coordinates may be present or absent. No other coordinate may be absent on a quarantined session, and the five sessions remain excluded either way.",
+      "Raw and analytical coordinate sets match exactly after the permitted known-coordinate disposition.",
+      "All OHLC values are finite and positive, ranges are valid, and volume is finite and strictly positive.",
+      "Raw-versus-analytical price factors are positive and constant within each symbol-session; volume is reciprocal across split factors; every factor change reconciles to the frozen action ledger.",
+      "The December 2025 issuer-known 2-for-1 split controls and the June 2024 IWM cash-distribution control match the corporate-action policy.",
+      "Repeated parsing of frozen pages produces the same sorted canonical bytes and hashes.",
+      "No strategy feature, fill, P&L, return, or candidate gate is calculated."
+    ],
+    "success_action": "Publish one structural receipt only. Do not acquire the remaining chronology, admit a dataset, implement or run a strategy, or observe a return.",
+    "failure_action": "Consume the one-use authority, retain only evidence permitted by the resolved terms, publish a terminal structural failure receipt, and stop without alternate parameters or providers."
+  },
+  "full_acquisition_design": {
+    "status": "DESIGNED-NOT-AUTHORIZED",
+    "preconditions": [
+      "The one-use source qualification passed.",
+      "A fresh independent review bound the qualification bytes and receipt.",
+      "The user granted a separate full exposed acquisition authority."
+    ],
+    "exact_range": {
+      "start": "2020-06-26",
+      "end": "2026-07-31",
+      "expected_xnys_sessions": 1531,
+      "full_sessions": 1519,
+      "early_close_sessions": 12,
+      "expected_rows_per_adjustment_view": 1546818,
+      "expected_paired_rows": 3093636
+    },
+    "segmentation": "One exact XNYS session per raw chain and one paired split,spin-off chain. Reuse the twenty-two qualified sessions; do not request them again.",
+    "qualification_logical_chains_reused": 26,
+    "remaining_sessions_after_qualification": 1509,
+    "maximum_additional_logical_chains": 3018,
+    "expected_additional_http_responses": 3018,
+    "maximum_pages_per_chain": 4,
+    "maximum_additional_http_responses": 12072,
+    "throttle_requests_per_minute": 120,
+    "documented_basic_limit_requests_per_minute": 200,
+    "expected_transport_minutes_after_qualification": "25.15 plus checkpoint and network overhead",
+    "maximum_transport_minutes_at_page_cap_before_backoff": "100.6",
+    "estimated_source_bytes": "0.4-0.8 GiB for paired JSON pages; prospective estimate only",
+    "maximum_source_bytes": 4294967296,
+    "working_disk_reservation_bytes": 8589934592,
+    "restart_model": "Write each response page create-only, fsync it, hash it, then atomically advance the chain checkpoint with the exact next_page_token. On restart, verify every completed page and resume only the recorded token. Never publish duplicate chain identities.",
+    "credential_separation": "Only the isolated fetch process receives credentials. Dataset admission and research workers receive frozen paths and manifests only.",
+    "success_sequence": [
+      "freeze exact raw and analytical pages",
+      "build the structural missingness and corporate-action reports",
+      "apply fixed quarantine and unexpected-loss ceilings",
+      "freeze canonical and analytical dataset hashes",
+      "fresh independent dataset admission review",
+      "bind exact source, data, cost, and strategy inputs",
+      "obtain separate strategy execution authority"
+    ],
+    "strategy_execution_allowed": false
+  },
+  "immutable_dataset_policy": {
+    "private_ignored_root": ".trading-lab/program-005-free-alpaca",
+    "retention_requires_licensing_gate_pass": true,
+    "persist_per_page": [
+      "exact non-secret request identity",
+      "response bytes and SHA-256",
+      "incoming and outgoing page tokens",
+      "retrieval timestamp",
+      "provider and SIP feed",
+      "5Min timeframe and adjustment",
+      "requested and actual bounds",
+      "symbol set and asof",
+      "source commit"
+    ],
+    "persist_per_dataset": [
+      "ordered raw-page manifest",
+      "ordered analytical-page manifest",
+      "canonical raw dataset hash",
+      "analytical dataset hash",
+      "missingness report hash",
+      "corporate-action ledger hash",
+      "normalization version"
+    ],
+    "silent_refresh_allowed": false,
+    "correction_action": "Create a new dataset version. Never replace a dataset used by a campaign."
+  },
+  "credential_isolation": {
+    "dedicated_unused_brokerage_account_required": false,
+    "reason": "Historical GET isolation is enforced by a smaller process and network boundary; requiring a second brokerage account adds account state without reducing the key's authority inside the allowed process.",
+    "credential_source": "Environment variables loaded once by the future fetch process after exact authority claim.",
+    "allowed_method": "GET",
+    "allowed_origin": "https://data.alpaca.markets",
+    "allowed_path": "/v2/stocks/bars",
+    "redirects": false,
+    "trading_api_origins_allowed": false,
+    "order_or_account_endpoints_allowed": false,
+    "research_workers_receive_credentials": false,
+    "logging_rule": "Never print, persist, hash, or place credentials in prompts, fixtures, manifests, or exceptions."
+  },
+  "dataset_admission_sequence": [
+    "one-use structural source qualification",
+    "separately authorized full exposed acquisition",
+    "structural missingness report",
+    "corporate-action validation",
+    "immutable dataset freeze",
+    "independent dataset admission review",
+    "exact source, data, and cost binding",
+    "separate user strategy-execution authorization"
+  ],
+  "synthetic_test_plan": [
+    "inclusive start and end",
+    "next_page_token pagination and repeated-token rejection",
+    "5Min regular-session alignment",
+    "thirteen-symbol session completeness",
+    "one missing bar",
+    "multiple missing bars in one session",
+    "missing bars across sessions",
+    "rolling-63 and fixed-block missingness",
+    "contiguous exclusions",
+    "same-symbol rolling-252 concentration",
+    "exact global threshold pass and fail",
+    "missing SPY",
+    "split price scaling and reciprocal volume scaling",
+    "relative-volume history spanning a split",
+    "cash-dividend session behavior",
+    "ambiguous corporate-action session exclusion",
+    "credential isolation and origin allowlist",
+    "no provider request before authority",
+    "no strategy execution before dataset admission"
+  ],
+  "stop_rules": [
+    "Historical SIP is not free under Basic when end is at least fifteen minutes old.",
+    "Basic acquisition requires Algo Trader Plus or another paid market-data plan.",
+    "Applicable terms do not permit the required private immutable retention.",
+    "Any missingness or concentration ceiling fails.",
+    "Corporate-action semantics or the action ledger remain ambiguous.",
+    "Inclusive bounds, pagination, correction, or data integrity differ from the frozen contract.",
+    "Source behavior changes materially.",
+    "A paid provider, fallback provider, alternate timeframe, or reactive parameter search is proposed."
+  ],
+  "next_authorization": {
+    "current_state": "INELIGIBLE-UNTIL-LICENSING-AND-RETENTION-GATE-PASSES",
+    "exact_scope": "ONE-USE FREE ALPACA BASIC HISTORICAL SIP STRUCTURAL SOURCE QUALIFICATION ONLY: zero provider subscription cost; GET-only data.alpaca.markets/v2/stocks/bars; feed=sip; timeframe=5Min; paired adjustment=raw and adjustment=split,spin-off requests; asof=2026-07-31; the exact twenty-two sessions and thirteen symbols; at most twenty-six logical chains, sixty HTTP responses, 64 MiB, 120 requests/minute, and one credential load; private immutable evidence only under resolved retention rights; no remaining chronology acquisition, dataset admission, strategy implementation or execution, return observation, controlled or protected access, PAPER action, broker write, or live action.",
+    "preconditions": [
+      "Applicable terms or written Alpaca confirmation resolve private immutable retention without a paid plan.",
+      "The future isolated adapter and complete mock suite pass review and repository gates.",
+      "A fresh finding-free review binds the exact implementation, request manifest, limits, and credential boundary.",
+      "The user separately grants the exact authorization text."
+    ],
+    "granted_by_this_plan": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "controlled_a": false,
+    "controlled_b": false,
+    "intraday_v3": false,
+    "june": false,
+    "daily_independent_2018_2019": false,
+    "strategic_allocation_21": false,
+    "paper_broker_or_live_state": false
+  },
+  "prohibitions": [
+    "Do not contact Alpaca under this plan.",
+    "Do not load Alpaca, MarketParquet, Tiingo, Massive, PAPER, broker, or live credentials.",
+    "Do not make an Alpaca API request or acquire historical data.",
+    "Do not purchase MarketParquet or subscribe to Massive, Tiingo persistence, or Algo Trader Plus.",
+    "Do not run a strategy, calculate a candidate fill, or compute or observe P&L or a return.",
+    "Do not access controlled, protected, PAPER, broker, live, June, V3, daily 2018-2019, or strategic-allocation-21 state.",
+    "Do not fill, interpolate, reconstruct, blend, rerank, replace a date, or reactively change Alpaca parameters.",
+    "Do not clear the unrelated stale intraday-exposed-003 lease under Program 005 authority.",
+    "Do not commit raw or reconstructable market data."
+  ],
+  "official_sources": {
+    "alpaca_market_data_plans": "https://docs.alpaca.markets/us/docs/about-market-data-api",
+    "alpaca_market_data_faq": "https://docs.alpaca.markets/us/docs/market-data-faq",
+    "alpaca_historical_stock_bars": "https://docs.alpaca.markets/us/reference/stockbars",
+    "alpaca_historical_api": "https://docs.alpaca.markets/us/v1.4.2/docs/historical-api",
+    "alpaca_customer_agreement": "https://files.alpaca.markets/disclosures/library/AcctAppMarginAndCustAgmt.pdf",
+    "alpaca_disclosures": "https://alpaca.markets/disclosures",
+    "iwm_issuer_page": "https://www.ishares.com/us/products/239710/ishares-russell-2000-etf",
+    "state_street_etfs": "https://www.ssga.com/us/en/intermediary/etfs",
+    "state_street_split_notice": "https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx"
+  },
+  "plan_fingerprint": "35f7591feeb6527401429525247aa575d837b2700bddce9f9f125939945d4207"
+}
