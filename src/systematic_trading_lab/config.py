@@ -129,6 +129,7 @@ def non_broker_subprocess_environment(
                 "GIT_",
                 "PROGRAM_002_ACQUISITION_",
                 "PROGRAM_002_MASSIVE_",
+                "PROGRAM_005_ALPACA_",
                 "TRADING_LAB_PAPER_",
             )
         )

@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-28 — Retain Program 005 data privately and implement qualification only
+
+- Decision: treat the public repository as the Program 005 reproduction recipe and keep raw pages, canonical bars, analytical bars, checkpoints, manifests, backups, and frozen datasets under `.trading-lab/program-005-free-alpaca/`. Implement the exact GET-only Alpaca SIP adapter and one-use structural qualification path. Keep full acquisition execution blocked until exact qualification bytes, its receipt, and a finding-free review are bound in code.
+- Context: the user resolved the prior retention ambiguity for their private personal research and prohibited public distribution of provider observations. The frozen plan already fixes the provider, request set, adjustment pair, missingness rules, five-session MDY quarantine, corporate-action policy, and qualification budget. No Program 005 credential, provider request, private observation, or strategy result exists.
+- Consequences: public source control contains code, contracts, hashes, schemas, and observation-free manifests only. The repository guard rejects raw/canonical market-data shapes and common Program 005 credential assignment forms. Raw and analytical coordinates must match, all fixed quarantine gates are recomputed, terminal qualification failure stops before credential access, and active authority must bind the fixed repository source inventory to both its reviewed commit and current bytes. Every authority flag remains false until the user separately authorizes the exact one-use qualification proposal.
+- Revisit when: the implementation-bound proposal and fresh independent review are on clean synchronized main and the user explicitly authorizes only the one-use free Alpaca Basic historical SIP structural qualification. Full acquisition needs a later reviewed qualification-byte, receipt, and review-binding implementation plus separate authority.
+
 ## 2026-08-27 — Propose contract-gated Program 005 on free Alpaca historical SIP
 
 - Decision: create prospective successor `multi-hour-sector-etf-research-004`, abandon Program 004's paid MarketParquet path before purchase, and preserve the untested twelve-ETF plus SPY hypothesis, eight configurations, chronology, 232-specification ceiling, 6/12/25-bps costs, delays, and protected controlled contract. Select explicit Alpaca Basic SIP `5Min` bars with raw canonical pages and a paired `split,spin-off` analytical view; use no fallback.

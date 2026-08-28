@@ -1,0 +1,136 @@
+{
+  "schema_version": "program-005-source-qualification-readiness-independent-review-v1",
+  "review_id": "program-005-source-qualification-readiness-independent-review-2026-08-28-v1",
+  "program_id": "multi-hour-sector-etf-research-004",
+  "reviewed_at": "2026-08-28T11:35:07Z",
+  "status": "PASSED-READY-FOR-SEPARATE-USER-AUTHORIZATION",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_source": {
+    "base_commit": "16f1fc6a5a16e28bde6bf3f5fcd6303d42130703",
+    "initial_implementation_commit": "a22f3c856ea521d01333cb552689c3390184a54c",
+    "initial_proposal_commit": "b8ffbdc6dc650b9eade279242b85c13d63683303",
+    "remediated_implementation_source_commit": "cc0b9439d12c3c90d6ab408624b5580c67f6e553",
+    "reviewed_proposal_commit": "f9b2f0cad1f4884804c84740000612fd0d463b77"
+  },
+  "reviewed_proposal": {
+    "path": "config/research/program-005-source-qualification-authority-proposal-v1.json",
+    "sha256": "adcd6e6b138bc49c44f8f4a386af9d7883466bdacc3ba45969aec382ebd9a1bd",
+    "fingerprint": "1fde0958349f194d2dd8fee7899853066da65423b4bed991ac317ac41920148f",
+    "request_plan_fingerprint": "5be6a24c41303d726f6afd3350b3e80ab9d26fed6457762a282e593a3dde5bfb",
+    "status": "READY FOR USER AUTHORIZATION",
+    "active_authority": false,
+    "all_authority_flags_false": true
+  },
+  "review_iterations": [
+    {
+      "iteration": 1,
+      "reviewed_commit": "b8ffbdc6dc650b9eade279242b85c13d63683303",
+      "verdict": "FINDINGS-REQUIRE-REMEDIATION",
+      "findings": [
+        {
+          "severity": "high",
+          "title": "Failed structural qualification could reenter after the one-use claim"
+        },
+        {
+          "severity": "medium",
+          "title": "Generic CSV market observations could evade the repository guard"
+        }
+      ],
+      "resolution": "Commit cc0b9439d12c3c90d6ab408624b5580c67f6e553 made the persisted claim irrevocable before credentials, terminalized post-claim qualification failures, added crash-reentry tests, parsed generic CSV bar content, and rejected generic binary market-data formats. Commit f9b2f0cad1f4884804c84740000612fd0d463b77 rebound the inactive proposal to the repaired source."
+    },
+    {
+      "iteration": 2,
+      "reviewed_commit": "f9b2f0cad1f4884804c84740000612fd0d463b77",
+      "verdict": "PASS",
+      "findings": [],
+      "independent_reviewer": "fresh read-only closure reviewer distinct from iteration 1"
+    }
+  ],
+  "verified_scope": {
+    "session_count": 22,
+    "symbol_count": 13,
+    "range_count": 13,
+    "paired_logical_chain_count": 26,
+    "expected_http_responses": 28,
+    "maximum_http_responses": 60,
+    "maximum_downloaded_bytes": 67108864,
+    "requests_per_minute": 120,
+    "maximum_credential_loads": 1,
+    "automatic_transport_retries": 0,
+    "method": "GET",
+    "origin": "https://data.alpaca.markets",
+    "path": "/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustments": [
+      "raw",
+      "split,spin-off"
+    ]
+  },
+  "verified_assertions": {
+    "private_and_public_data_are_separated": true,
+    "public_artifacts_contain_no_market_observations": true,
+    "generic_csv_json_jsonl_and_binary_leakage_controls_pass": true,
+    "credentials_are_loaded_only_after_authority_claim": true,
+    "every_claim_blocks_reentry_before_credentials_or_transport": true,
+    "post_claim_failure_records_exclude_observations_and_credentials": true,
+    "fixed_origin_get_only_and_no_redirect_transport": true,
+    "request_pagination_restart_and_aggregate_budgets_are_deterministic": true,
+    "raw_pages_and_datasets_are_create_only": true,
+    "raw_and_analytical_coordinate_sets_must_match": true,
+    "split_spin_off_price_and_reciprocal_volume_controls_pass": true,
+    "ordinary_dividend_cash_credit_is_disabled": true,
+    "incomplete_required_symbol_sessions_are_excluded_whole": true,
+    "fixed_mdy_quarantine_and_concentration_gates_are_recomputed": true,
+    "full_scope_execution_is_blocked_before_credentials": true,
+    "cli_preflight_loads_no_credentials_and_creates_no_runtime_catalog": true,
+    "strategy_features_fills_pnl_returns_and_candidate_gates_are_absent": true,
+    "proposal_schema_and_status_are_not_executable_authority": true,
+    "proposal_all_false_authority_map_reproduced": true,
+    "six_artifact_bindings_reproduced": true,
+    "ten_source_hashes_match_commit_and_current_bytes": true
+  },
+  "verification": {
+    "focused_program_005_pytest": "13 passed",
+    "full_pytest": "1269 passed, 4 skipped",
+    "ruff_format": "256 files formatted",
+    "ruff_check": "passed",
+    "mypy": "251 source files clean",
+    "secret_and_private_data_scan": "518 files scanned, passed",
+    "shell_syntax": "passed",
+    "git_diff_check": "passed",
+    "wheel_build": "passed",
+    "wheel_sha256": "94fad49438d5e8211d7739ea332fa3e979f778e40edae379b33c8f955bcbc62a",
+    "runtime_build_manifest_source_commit": "f9b2f0cad1f4884804c84740000612fd0d463b77"
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "credential_values": false,
+    "provider_or_account_endpoint": false,
+    "private_market_observations": false,
+    "private_dataset_creation": false,
+    "strategy_returns_or_candidates": false,
+    "controlled_or_protected_data": false,
+    "paper_broker_or_live_state": false
+  },
+  "proof_gap": "No real credential or provider path was exercised. This review establishes implementation and non-active-authority readiness only; it does not establish provider behavior, entitlement, source qualification, dataset admission, or financial validity.",
+  "required_next_user_action": "After this reviewed slice is on clean synchronized main, the user may separately authorize ONE-USE FREE ALPACA BASIC HISTORICAL SIP STRUCTURAL SOURCE QUALIFICATION ONLY for the exact reviewed proposal. That future authorization must grant no remaining acquisition, strategy, controlled, protected, PAPER, broker-write, or live authority.",
+  "review_fingerprint": "84f17d4378418af3b6dec58d8c6494e95a86f7913e4907da494d59b0b3ec01bc"
+}

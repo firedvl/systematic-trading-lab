@@ -1,5 +1,20 @@
 # Data policy
 
+## Private provider data and public reproducibility
+
+Historical market data acquired for a user's own private research may be retained in private local
+or private backup storage when their applicable rights permit it. Source control remains a recipe,
+not a dataset: it may contain acquisition code, exact contracts, observation-free manifests,
+schemas, validation rules, structural counts, and hashes, but never raw or reconstructable provider
+market observations.
+
+Program 005 stores private bytes under the Git-ignored
+`.trading-lab/program-005-free-alpaca/` root. Raw pages, canonical and analytical OHLCV, acquisition
+checkpoints, secret-bearing files, and private manifests stay there. Immutable dataset publication is
+create-only; a provider correction creates a new dataset identity. See
+[Program 005 private Alpaca data](program-005-alpaca-data.md) and the fingerprinted
+`config/research/program-005-private-data-retention-policy-v1.json` policy.
+
 ## Rapid Research inputs
 
 Rapid Research can read immutable cataloged daily datasets without writing controlled experiment state. It can also import a complete user-supplied daily CSV or Parquet file into its separate `rapid-research/datasets/` namespace. The local importer requires exact `timestamp,symbol,open,high,low,close,volume` fields, UTC midnight timestamps, increasing rows per symbol, no duplicate bars, valid OHLC relationships, nonnegative integer volume, and complete XNYS sessions for every included symbol.

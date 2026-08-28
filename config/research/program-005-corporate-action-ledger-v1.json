@@ -1,0 +1,79 @@
+{
+  "schema_version": "program-005-corporate-action-ledger-v1",
+  "ledger_id": "program-005-alpaca-sip-asof-2026-07-31-actions-v1",
+  "program_id": "multi-hour-sector-etf-research-004",
+  "status": "FROZEN-BEFORE-PROVIDER-OBSERVATIONS",
+  "scope": {
+    "start_session": "2020-06-26",
+    "end_session": "2026-07-31",
+    "asof": "2026-07-31",
+    "adjustments": [
+      "raw",
+      "split,spin-off"
+    ]
+  },
+  "bindings": {
+    "program_plan": {
+      "path": "config/research/program-005-free-alpaca-successor-plan-v1.json",
+      "sha256": "3a71573086418aa8ff53d8359110dee1a951caa333ffd35eccedd8d38678cb11",
+      "fingerprint": "79a73d143700c643d67c2f862b5bfe3655df9706276a1b70e189c425d4397cb7"
+    },
+    "retention_policy": {
+      "path": "config/research/program-005-private-data-retention-policy-v1.json",
+      "sha256": "af2c733852e65d3958553d64e214b11856f0d44e2cf11c876839e61a9ce62ac7",
+      "fingerprint": "0b14f3afdd012a4b8f3e021ddaee1460528b70b5509f2bee92371378a65953e0"
+    }
+  },
+  "split_events": [
+    {
+      "action_id": "state-street-select-sector-spdr-2-for-1-2025-12-05",
+      "symbols": [
+        "XLB",
+        "XLE",
+        "XLK",
+        "XLU",
+        "XLY"
+      ],
+      "ratio_new_to_old": "2",
+      "record_date": "2025-12-02",
+      "payable_after_market_close": "2025-12-04",
+      "first_post_action_trading_session": "2025-12-05",
+      "analytical_price_factor_before_effective_session": "0.5",
+      "analytical_volume_factor_before_effective_session": "2",
+      "analytical_price_factor_from_effective_session": "1",
+      "analytical_volume_factor_from_effective_session": "1",
+      "issuer_evidence": "https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx",
+      "exchange_evidence": "https://www.miaxglobal.com/alert/2025/12/04/miax-exchange-group-options-markets-corporate-action-alert-spdr-stock-1"
+    }
+  ],
+  "ordinary_dividend_controls": [
+    {
+      "control_id": "iwm-june-2024-distribution-neighborhood",
+      "symbol": "IWM",
+      "sessions": [
+        "2024-06-10",
+        "2024-06-11",
+        "2024-06-12"
+      ],
+      "raw_to_analytical_price_factor": "1",
+      "raw_to_analytical_volume_factor": "1",
+      "dividend_adjustment_requested": false,
+      "cash_credit_allowed": false,
+      "overnight_total_return_semantics_allowed": false
+    }
+  ],
+  "spin_off_controls": {
+    "qualification_realized_event_count": 0,
+    "realized_semantics_qualified": false,
+    "full_dataset_rule": "Every realized in-range spin-off requires issuer or exchange evidence and exact paired price and reciprocal-volume factor validation before admission."
+  },
+  "default_factor_rule": {
+    "analytical_price_factor": "1",
+    "analytical_volume_factor": "1",
+    "unlisted_non_unit_factor_allowed": false,
+    "ambiguous_factor_counts_as_missingness": false,
+    "failure_action": "Stop dataset admission before strategy execution."
+  },
+  "provider_observation_count": 0,
+  "ledger_fingerprint": "a7b1e169e2add558f3ca991f565646cdd00d1fa56598cbcba8f0755252f32efb"
+}
