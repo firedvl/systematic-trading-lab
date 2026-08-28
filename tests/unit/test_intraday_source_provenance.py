@@ -230,6 +230,7 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "systematic_trading_lab/program_002_massive_qualification.py",
         "systematic_trading_lab/program_002_minute_reconstruction.py",
         "systematic_trading_lab/program_005_alpaca.py",
+        "systematic_trading_lab/program_006_alpaca.py",
         "systematic_trading_lab/public_cli.py",
         "systematic_trading_lab/rapid_004.py",
         "systematic_trading_lab/rapid_004_runner.py",
