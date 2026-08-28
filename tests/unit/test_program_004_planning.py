@@ -20,6 +20,7 @@ from systematic_trading_lab.multi_hour_sector_etf_synthetic import (
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _PLAN_PATH = "config/research/program-004-marketparquet-successor-plan-v1.json"
+_REVIEW_PATH = "config/research/program-004-marketparquet-successor-plan-independent-review-v1.json"
 
 
 def _load(path: str) -> dict[str, Any]:
@@ -120,6 +121,33 @@ def test_program_004_plan_binds_predecessor_and_grants_no_authority() -> None:
     )
     assert not any(plan["authority"].values())
     assert not any(plan["protected_access"].values())
+
+
+def test_program_004_independent_review_binds_plan_documentation_and_test() -> None:
+    review = _load(_REVIEW_PATH)
+    unsigned = dict(review)
+
+    assert unsigned.pop("review_fingerprint") == fingerprint(unsigned)
+    assert review["verdict"] == "pass"
+    assert review["findings"] == []
+    assert [item["verdict"] for item in review["review_iterations"]] == ["fail", "pass"]
+
+    plan_binding = review["reviewed_plan"]
+    plan_path = _REPOSITORY / plan_binding["path"]
+    plan = json.loads(plan_path.read_text())
+    assert sha256(plan_path.read_bytes()).hexdigest() == plan_binding["sha256"]
+    assert plan["plan_fingerprint"] == plan_binding["fingerprint"]
+
+    documentation = review["reviewed_documentation"]
+    assert (
+        sha256((_REPOSITORY / documentation["path"]).read_bytes()).hexdigest()
+        == documentation["sha256"]
+    )
+    assert review["reviewed_regression_test"]["sha256"] == (
+        "f10f9618bcc97cd64b69004a105e2b4f845a0117110a8a6c5aec06afac527244"
+    )
+    assert not any(review["authority"].values())
+    assert not any(review["protected_access"].values())
 
 
 def test_full_acquisition_count_includes_context_and_reuses_qualification_files() -> None:

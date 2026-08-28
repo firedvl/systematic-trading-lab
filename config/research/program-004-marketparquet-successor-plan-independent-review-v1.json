@@ -1,0 +1,149 @@
+{
+  "schema_version": "program-004-marketparquet-successor-plan-independent-review-v1",
+  "review_id": "program-004-marketparquet-successor-plan-independent-review-2026-08-27-v1",
+  "program_id": "multi-hour-sector-etf-research-003",
+  "reviewed_at": "2026-08-28T00:06:15Z",
+  "status": {
+    "phase": "PROSPECTIVE",
+    "review": "REVIEWED",
+    "purchase": "NOT AUTHORIZED",
+    "source_requests": "NOT AUTHORIZED",
+    "acquisition": "NOT AUTHORIZED",
+    "strategy_execution": "NOT AUTHORIZED"
+  },
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_commit": "e13bd32157053f9eeaba01e5552ba906832d7f86",
+  "reviewed_commit_parent": "635587b75501cbf97765a740f564e3c5dbb8d520",
+  "starting_main_commit": "4e5f724a32e28a7fc26326e658ed7ef942e0acb6",
+  "reviewed_plan": {
+    "path": "config/research/program-004-marketparquet-successor-plan-v1.json",
+    "sha256": "b4d00e040b80eb9323bb87475cc2ece54e60ebecc6ea6dcde1a95d87fd927237",
+    "fingerprint": "2b740810f1365d20c11d1cf3bb83cdd0e06e72c30a5070ff0648031f29d893fc",
+    "status": "PROSPECTIVE-REVIEWED-NOT-AUTHORIZED"
+  },
+  "reviewed_documentation": {
+    "path": "docs/research-campaigns/program-004-marketparquet-successor-plan-v1.md",
+    "sha256": "8e8ea4fe5e5299c5cd76a6d66b80d4a1baf9f7f99e4cf4a3a65b495417c95db3"
+  },
+  "reviewed_regression_test": {
+    "path": "tests/unit/test_program_004_planning.py",
+    "sha256": "f10f9618bcc97cd64b69004a105e2b4f845a0117110a8a6c5aec06afac527244"
+  },
+  "review_iterations": [
+    {
+      "reviewed_commit": "635587b75501cbf97765a740f564e3c5dbb8d520",
+      "verdict": "fail",
+      "material_findings": [
+        "the full-acquisition design counted only the 1,511 exposed evaluation sessions and omitted the twenty required context sessions",
+        "the synthetic split-equivalence replay used zero bps and did not exercise the frozen 6, 12, and 25 bps cost cases"
+      ]
+    },
+    {
+      "reviewed_commit": "e13bd32157053f9eeaba01e5552ba906832d7f86",
+      "verdict": "pass",
+      "material_findings": []
+    }
+  ],
+  "prior_findings_resolved": [
+    {
+      "finding": "full acquisition omitted required context files",
+      "resolution": "The plan now distinguishes twenty context sessions from 1,511 exposed evaluation sessions, caps the inclusive range at 1,531 files, reuses all fifteen qualification files, and permits at most 1,516 additional files. The focused test derives every count through the repository XNYS calendar."
+    },
+    {
+      "finding": "positive-cost split invariance lacked an executable exact proof",
+      "resolution": "The focused test now uses exact Fraction arithmetic, includes a 3-for-2 split scale, runs the frozen 6, 12, and 25 bps cases with their 5-, 10-, and 15-minute delays, and proves reciprocal fill prices and quantities, equal notionals and costs, equal gross and net profit, equal equity curves and drawdown, and zero accounting error."
+    }
+  ],
+  "review_challenges": {
+    "successor_legitimacy": "Pass. Program 003 produced and exposed zero strategy returns and never ran Tiingo qualification. Program 004 changes only the prospective data and provenance architecture.",
+    "license_and_retention": "Pass for the constrained plan. The cited standard license permits personal research and backtesting, private copies, self-operated coding agents, and perpetual use of downloaded files after Keep Current cancellation or account closure. Raw redistribution remains prohibited.",
+    "purchase_model": "Pass. The plan records the advertised $79 one-time archive, prohibits Keep Current and every recurring subscription, and caps any later manual authority at $89 pre-tax and $100 total.",
+    "source_provenance": "Conditionally sufficient for conservative multi-hour ETF OHLCV. The source remains an unnamed institutional vendor using exchange trade feeds; the plan makes no SIP, CTA/UTP, NBBO, or TAQ claim.",
+    "canonical_timeframe": "Pass. Native etf_5min avoids repository resampling and its added bucket contract while meeting the fixed strategy input.",
+    "split_adjusted_prices_and_fills": "Pass. Constant within-session price scaling preserves same-session returns, residual ranks, fractional equal-dollar notionals, bps costs, P&L, marks, and drawdown. Integer shares and per-share fees remain prohibited.",
+    "relative_volume": "Pass under the documented reciprocal volume adjustment. The common share-unit representation preserves same-clock relative volume across split-spanning windows and preserves dollar-volume capacity.",
+    "dividends_and_split_sessions": "Pass. Dividends remain excluded with no cash credit because all price returns and positions are same-session. Split-effective sessions remain eligible only after complete-grid and reciprocal-adjustment structural checks.",
+    "corrections_and_immutability": "Pass. Exact downloaded bytes and projections are hashed and frozen. Later vendor corrections require a distinct dataset version and cannot silently replace exposed evidence.",
+    "missing_data": "Pass. The inherited whole-session exclusion and every global, fixed-block, rolling, consecutive, same-symbol, and required-context ceiling remain unchanged.",
+    "mdy_qualification": "Pass. The exact fifteen-file structural qualification includes every one of the nine exposed MDY coordinates without requiring agreement with Alpaca and contains no strategy calculation.",
+    "hf_data_library": "Pass. HF Data Library is audit-only because of its March 2022 consolidated-to-IEX source break and cannot patch, replace, or blend MarketParquet data.",
+    "provider_shopping": "Pass. MarketParquet is the sole primary and fallback is absent. Any failure stops Program 004 pending a new user-authorized plan.",
+    "cost_model": "Pass as a frozen conservative planning envelope rather than observed fill evidence. Normal, Stress A, and Stress B remain 6, 12, and 25 bps per side with 5-, 10-, and 15-minute delays; Normal alone cannot qualify.",
+    "chronology_and_protected_state": "Pass. The exposed chronology, Controlled A and B dates and dependencies, V3, June, daily 2018-2019, PAPER, broker, live, and strategic-allocation-21 boundaries remain unchanged and unopened.",
+    "authority": "Pass. Purchase, subscription, credential, source-request, acquisition, admission, strategy, controlled, protected, PAPER, broker-write, and live authority remain false."
+  },
+  "verified_assertions": {
+    "plan_sha256_reproduced": true,
+    "plan_fingerprint_reproduced": true,
+    "documentation_sha256_reproduced": true,
+    "regression_test_sha256_reproduced": true,
+    "predecessor_plan_and_review_bound": true,
+    "configuration_count_eight": true,
+    "qualification_sessions_fifteen": true,
+    "qualification_expected_rows_14742": true,
+    "known_mdy_coordinates_nine": true,
+    "full_acquisition_context_sessions_20": true,
+    "full_acquisition_exposed_sessions_1511": true,
+    "full_acquisition_date_files_1531": true,
+    "full_acquisition_additional_files_max_1516": true,
+    "fractional_split_ratio_covered": true,
+    "exact_cost_cases_6_12_25_bps_covered": true,
+    "fallback_absent": true,
+    "historical_nbbo_not_required": true,
+    "all_authority_flags_false": true,
+    "controlled_and_protected_ranges_untouched": true,
+    "zero_strategy_returns_generated_or_observed": true
+  },
+  "verification": {
+    "focused_test": {
+      "command": "uv run pytest -q tests/unit/test_program_004_planning.py",
+      "result": "5 passed"
+    },
+    "ruff": {
+      "command": "uv run ruff check tests/unit/test_program_004_planning.py",
+      "result": "passed"
+    },
+    "independent_review_method": "Two read-only exact-commit reviews against repository policy and the complete originating brief, followed by a fresh closure review of both findings on the corrected commit.",
+    "official_documentation_retrieved_date": "2026-08-27"
+  },
+  "proof_gaps": [
+    "No MarketParquet purchase, credential, authenticated response, paid archive, date file, or real qualification receipt was accessed.",
+    "The institutional source vendor is unnamed, so official SIP, CTA/UTP equivalence, NBBO, TAQ, and upstream trade eligibility remain unproved and unclaimed.",
+    "Private backup rights are a plan interpretation of permitted private copies, not a separate contract clause or legal opinion.",
+    "No Program 004 adapter, actual provider FLOAT64 row, correction history, split neighborhood, or volume rounding was inspected or replayed.",
+    "The static cost envelope is a conservative return-blind planning assumption and robustness screen, not historical quote, fill, or market-impact evidence.",
+    "The 14,742 qualification rows, 1,531 full-acquisition files, and 8 GiB source envelope are prospective bounds, not observed data.",
+    "Controlled A and B remain unopened and outside every authority in this plan."
+  ],
+  "scope_limit": "Independent prospective planning review only. No provider contact, purchase, subscription, credential access, source request, sample or paid download, adapter implementation, acquisition, real dataset admission, strategy implementation or execution, return access, research qualification, controlled or protected access, PAPER action, broker write, live action, or strategic-allocation-21 access occurred.",
+  "required_next_user_action": "After merge on clean synchronized main, the user may separately authorize ONE-TIME MARKETPARQUET COMPLETE ARCHIVE MANUAL PURCHASE PLUS FIFTEEN-FILE ETF_5MIN STRUCTURAL QUALIFICATION ONLY: at most $89 pre-tax and $100 total, no Keep Current, one credential load, fifteen authenticated download-URL responses, fifteen presigned file responses, 128 MiB, the exact fifteen dates and thirteen symbols, private immutable evidence, and no remaining exposed-range acquisition, dataset admission, strategy implementation or execution, return observation, controlled access, PAPER, broker write, or live action.",
+  "authority": {
+    "provider_contact": false,
+    "manual_purchase": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "controlled_a": false,
+    "controlled_b": false,
+    "intraday_v3": false,
+    "june": false,
+    "daily_independent_2018_2019": false,
+    "strategic_allocation_21": false,
+    "paper_broker_or_live_state": false
+  },
+  "review_fingerprint": "5343b70c5cfe9e6c4342286cb6e1bac9c75b8344b620ce1110d69f90ec99efd0"
+}
