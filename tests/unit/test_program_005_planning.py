@@ -174,13 +174,11 @@ def _mock_admission(
     policy: dict[str, Any],
     year_by_session: dict[int, int],
     block_by_session: dict[int, str],
-    ambiguous_actions: set[int] | None = None,
+    ambiguous_action_factors: set[int] | None = None,
     initial_context: set[int] | None = None,
     action_ledger_resolved: bool = True,
 ) -> tuple[set[int], set[str]]:
     unexpected = {index: set(symbols) for index, symbols in unexpected.items()}
-    for index in ambiguous_actions or set():
-        unexpected.setdefault(index, set()).add("AMBIGUOUS_ACTION")
     excluded = set(quarantine) | set(unexpected)
     failures: set[str] = set()
     loss = policy["global_loss_limit"]
@@ -257,6 +255,8 @@ def _mock_admission(
         failures.add("initial-context")
     if not action_ledger_resolved:
         failures.add("action-ledger")
+    if ambiguous_action_factors:
+        failures.add("action-factor-ambiguity")
     return excluded, failures
 
 
@@ -1025,11 +1025,10 @@ def test_mock_admission_covers_threshold_concentration_and_action_failures() -> 
 
     _, threshold_failures = _mock_admission(
         quarantine,
-        passing_unexpected,
+        {**passing_unexpected, 700: {"XLE"}},
         policy=policy,
         year_by_session=years,
         block_by_session=blocks,
-        ambiguous_actions={700},
     )
     assert {"global-count", "unexpected-count"} <= threshold_failures
 
@@ -1066,11 +1065,20 @@ def test_mock_admission_covers_threshold_concentration_and_action_failures() -> 
         policy=policy,
         year_by_session=years,
         block_by_session=blocks,
-        ambiguous_actions={700},
+        ambiguous_action_factors={700},
+    )
+    assert action_exclusions == set()
+    assert action_failures == {"action-factor-ambiguity"}
+
+    _, ledger_failures = _mock_admission(
+        {},
+        {},
+        policy=policy,
+        year_by_session=years,
+        block_by_session=blocks,
         action_ledger_resolved=False,
     )
-    assert action_exclusions == {700}
-    assert "action-ledger" in action_failures
+    assert ledger_failures == {"action-ledger"}
 
 
 def test_spy_and_mdy_bias_gate_has_objective_tail_thresholds_and_unavailable_failure() -> None:
@@ -1504,6 +1512,8 @@ def test_split_normalization_and_dividend_gap_preserve_same_session_features() -
     )
     actions = plan["corporate_action_policy"]
     assert "cannot be admitted from Alpaca output alone" in actions["spin_off_rule"]
+    assert actions["ambiguous_split_or_spin_off_factor_counts_as_missing_session"] is False
+    assert actions["ambiguous_split_or_spin_off_factor_action"].startswith("Stop dataset admission")
     assert (
         "contains no issuer- or exchange-identified realized spin-off"
         in actions["qualification_realized_spin_off_scope"]

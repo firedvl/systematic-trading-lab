@@ -253,6 +253,8 @@
     "cash_dividend_rule": "Do not adjust prices or add cash. Every return feature starts after the open and every position opens and closes in one session, so no position owns the overnight distribution entitlement.",
     "ordinary_dividend_session_action": "Eligible when the complete grid and every other admission control pass.",
     "spin_off_rule": "A realized in-range spin-off cannot be admitted from Alpaca output alone. Before dataset admission, bind issuer or exchange evidence for its exact symbol, action identity, effective date, and factor, then prove the raw-versus-analytical price factor and reciprocal volume factor are exact and constant within each affected symbol-session. Ambiguity, incompatibility, or an unexplained factor stops the entire dataset admission; excluding only the affected session cannot cure an unresolved action contract.",
+    "ambiguous_split_or_spin_off_factor_counts_as_missing_session": false,
+    "ambiguous_split_or_spin_off_factor_action": "Stop dataset admission before strategy execution even when every missing-data gate would otherwise pass.",
     "qualification_realized_spin_off_scope": "The frozen twenty-two-session qualification sample contains no issuer- or exchange-identified realized spin-off. Its split,spin-off chains qualify explicit request serialization, paired coordinate behavior, and the realized split controls only; they do not source-qualify Alpaca's realized spin-off semantics.",
     "action_ledger_rule": "Before dataset freeze, bind issuer or exchange evidence for every in-range split or spin-off and reconcile every exact raw-versus-analytical price and reciprocal volume factor to that ledger. Every realized in-range spin-off must pass this gate even though qualification contains no realized spin-off. An incomplete ledger, unexplained factor, or provider/action-evidence incompatibility stops dataset admission.",
     "correction_rule": "A later provider correction or corporate-action change creates a new dataset version. It cannot overwrite frozen pages or reopen an exposed campaign."
@@ -1116,7 +1118,8 @@
     "relative-volume history spanning a split",
     "cash-dividend session behavior",
     "pre-exposed incident inventory, bounded membership, chronology, calendar, block, adjacency, clock, and global-budget failures",
-    "ambiguous corporate-action session exclusion and unresolved action-ledger failure",
+    "ambiguous split or spin-off factor as a terminal admission failure separate from missing-session accounting",
+    "unresolved action-ledger failure",
     "no realized spin-off in the qualification claim and future realized-spin-off admission stop",
     "credential isolation and origin allowlist",
     "no provider request before authority",
@@ -1200,5 +1203,5 @@
     "state_street_etfs": "https://www.ssga.com/us/en/intermediary/etfs",
     "state_street_split_notice": "https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx"
   },
-  "plan_fingerprint": "170bf0da590a820b4a6316bece3f65cffb21c5c47137a67f211b9d3d884d97a5"
+  "plan_fingerprint": "79a73d143700c643d67c2f862b5bfe3655df9706276a1b70e189c425d4397cb7"
 }
