@@ -1,0 +1,209 @@
+{
+  "schema_version": "program-005-free-alpaca-successor-plan-independent-review-v1",
+  "review_id": "program-005-free-alpaca-successor-plan-independent-review-2026-08-28-v1",
+  "program_id": "multi-hour-sector-etf-research-004",
+  "reviewed_at": "2026-08-28T04:26:28Z",
+  "status": {
+    "phase": "PROSPECTIVE",
+    "review": "REVIEWED",
+    "provider_contact": "NOT AUTHORIZED",
+    "source_requests": "NOT AUTHORIZED",
+    "source_qualification": "NOT AUTHORIZED-CONTRACT-GATED",
+    "acquisition": "NOT AUTHORIZED",
+    "strategy_execution": "NOT AUTHORIZED"
+  },
+  "verdict": "pass",
+  "findings": [],
+  "reviewed_commit": "c1581e21ced07dc94d8eb5f4226a23dffcf501cb",
+  "reviewed_commit_parent": "b238b9e91d1638bd7205b46dff846ff93f9d8e40",
+  "starting_main_commit": "afe1cfd4ebb71d1cb1eafb3a6a25d05350b45e76",
+  "reviewed_plan": {
+    "path": "config/research/program-005-free-alpaca-successor-plan-v1.json",
+    "sha256": "3a71573086418aa8ff53d8359110dee1a951caa333ffd35eccedd8d38678cb11",
+    "fingerprint": "79a73d143700c643d67c2f862b5bfe3655df9706276a1b70e189c425d4397cb7",
+    "status": "PROSPECTIVE-REVIEWED-NOT-AUTHORIZED-CONTRACT-GATED"
+  },
+  "reviewed_documentation": {
+    "path": "docs/research-campaigns/program-005-free-alpaca-successor-plan-v1.md",
+    "sha256": "60b9c8caa5167ea335de75307b570a8fdcf34d288499a4bbc7bf1fd760010c26"
+  },
+  "reviewed_regression_test": {
+    "path": "tests/unit/test_program_005_planning.py",
+    "sha256": "3eea82142990ad566b3d6a22700ebee2376027047d973225ac14a98d51a48813"
+  },
+  "reviewed_public_contract_evidence": {
+    "path": "config/research/program-005-alpaca-public-contract-evidence-v1.json",
+    "sha256": "68f95b417bf287506eb123441f83344d5337acee2df3227052d9434b0e07de87",
+    "fingerprint": "bb389757b60777cc20549c58201b71f130151dfb1ec65d2959ec1b082f911c2e"
+  },
+  "reviewed_pre_exposed_incident": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-v3.json",
+    "sha256": "ebc8f536d51fd701f9fc26f28630abff9f23a0b5edb3e794a5a3016337273618",
+    "fingerprint": "1f5350eb3f704c343044cd11ac328643fd1ae0939ebeaa030248ce031938b53a"
+  },
+  "reviewed_pre_exposed_incident_review": {
+    "path": "config/research/program-002-exposed-acquisition-completeness-failure-independent-review-v2.json",
+    "sha256": "18ee95730f5af8698ff090c74df42774e1294dea8ff5552ad6c3b16495566e53",
+    "fingerprint": "23c20fb78b71c3e527eb5c4f916d58463fdb311daf2a66436c5d32f976047cbf"
+  },
+  "review_iterations": [
+    {
+      "reviewed_commit": "3920af3f1ae5fd033758205f25f6eb4f8ccffd55",
+      "verdict": "fail",
+      "material_findings": [
+        "the fixed MDY cluster lacked deterministic month, year, and five-minute-clock admission gates",
+        "qualification ranges and paired chain identities were not exact enough to prove later reuse without resegmentation"
+      ]
+    },
+    {
+      "reviewed_commit": "43a6718eb79d19e77746672935cb3dbe83526486",
+      "verdict": "fail",
+      "material_findings": [
+        "the known-quarantine class lacked a complete hash-bound incident inventory and could appear reusable as a source-specific bypass",
+        "the qualification sample contained no realized spin-off but did not state that realized spin-off semantics remained unqualified",
+        "the mock transport did not enforce chain-specific page caps, the aggregate response cap, or the byte cap"
+      ]
+    },
+    {
+      "reviewed_commit": "b238b9e91d1638bd7205b46dff846ff93f9d8e40",
+      "verdict": "fail",
+      "material_findings": [
+        "the mock admission helper still converted an ambiguous action factor into an ordinary unexpected missing-session exclusion"
+      ]
+    },
+    {
+      "reviewed_commit": "c1581e21ced07dc94d8eb5f4226a23dffcf501cb",
+      "verdict": "pass",
+      "material_findings": []
+    }
+  ],
+  "prior_findings_resolved": [
+    {
+      "finding": "fixed-cluster concentration controls were incomplete",
+      "resolution": "The plan now freezes exact discovery-block, monthly, complete-year, partial-year, five-minute-clock, strategy-clock, nonadjacency, context, and SPY/MDY morning-tail gates. Every gate has a deterministic failure action and no reviewer waiver."
+    },
+    {
+      "finding": "qualification chain identities and full-acquisition reuse were ambiguous",
+      "resolution": "The plan now freezes thirteen exact ranges and twenty-six paired chain identities with inclusive UTC bounds, dates, expected rows, expected and maximum pages, and retained reuse of the ten-session December chains without resegmentation."
+    },
+    {
+      "finding": "the fixed exclusion class could appear to be a reusable Alpaca-specific exception",
+      "resolution": "The class is now an immutable pre-exposed design quarantine. It binds the reviewed complete two-December-plus-seven-February incident inventory, forbids subsets, additions, future reuse, and post-acquisition waiver, and makes no randomness or general-reliability claim."
+    },
+    {
+      "finding": "qualification did not exercise a realized spin-off",
+      "resolution": "The plan and receipt scope now state that the sample contains no realized spin-off. Every in-range realized spin-off remains blocked on issuer or exchange evidence plus exact raw-versus-analytical price and reciprocal-volume factor validation before dataset admission."
+    },
+    {
+      "finding": "mock transport resource ceilings were incomplete",
+      "resolution": "The mock enforces a chain-ID-to-page-cap manifest, sixty aggregate responses, and 64 MiB. Boundary tests reject a third singleton page, a seventh retained-range page, the sixty-first response, and 64 MiB plus one byte."
+    },
+    {
+      "finding": "ambiguous corporate-action factors could consume missing-data tolerance",
+      "resolution": "Action-factor ambiguity now remains outside the exclusion set and always creates a terminal admission failure, even when every missing-data gate otherwise passes."
+    }
+  ],
+  "review_challenges": {
+    "01_program_004_transition_legitimate": "Pass. Program 004 produced and exposed zero strategy returns, ran no qualification, and made no MarketParquet purchase. Program 005 changes only the prospective source and data contract.",
+    "02_return_to_alpaca_legitimate": "Pass. Program 005 is a new return-blind contract. It does not revise Program 002 or reinterpret a strategy result.",
+    "03_missing_session_threshold_independent": "Pass. The exact seven-of-1,499 ceiling and its finding-free review are hash-bound to Program 003, whose selected source was Tiingo and whose derivation predated Program 005.",
+    "04_whole_session_exclusion_preserves_cross_section": "Pass. Any required missing bar removes the whole session from all configurations, benchmark use, and later context, so every included session remains exactly thirteen of thirteen symbols.",
+    "05_concentration_and_bias_controls_sufficient": "Pass for the prospective design. The pre-exposed class has fixed incident, chronology, block, month, year, adjacency, clock, context, and SPY/MDY gates; every future unexpected exclusion remains under the inherited annual, block, rolling, adjacency, and same-symbol controls.",
+    "06_raw_plus_split_normalized_handling_correct": "Pass conditionally. Raw pages supply fills, marks, and P&L. The paired split,spin-off view supplies cross-session features only after exact price-factor, reciprocal-volume, within-session constancy, and action-ledger checks.",
+    "07_dividends_and_spin_offs_prospective": "Pass with an explicit proof gap. Ordinary dividends need no adjustment because all returns and holdings are same-session. The qualification sample has no realized spin-off, and any ambiguous, incompatible, or unexplained in-range split or spin-off factor stops dataset admission rather than consuming missingness tolerance.",
+    "08_six_bps_normal_conservative_enough": "Pass as a frozen planning baseline, not a historical upper bound. Current issuer pages report zero-to-two-basis-point median full spreads; mandatory twelve- and twenty-five-basis-point cases and ten- and fifteen-minute delay checks prevent Normal alone from qualifying.",
+    "09_historical_nbbo_unnecessary": "Pass for this static conservative envelope. The plan does not claim observed fills, queue position, historical spreads, or an NBBO-calibrated bound.",
+    "10_free_basic_sip_contract_accurate": "Pass from the committed current official-source evidence. Basic is zero dollars, equity history begins in 2016, the historical allowance is 200 requests per minute, historical SIP is available when explicit end is at least fifteen minutes old, and stock bars support SIP, native 5Min, inclusive bounds, 10,000-point token pagination, and adjustment modes.",
+    "11_private_retention_and_reproducibility_acceptable": "Fail for authority, as required. Public terms do not expressly grant the private immutable raw copies, backups, derived artifacts, and audit reproduction required by the plan. Material ambiguity blocks provider contact, credentials, requests, and qualification.",
+    "12_hidden_degrees_of_freedom_absent": "Pass. Source, endpoint, parameters, ranges, chain identities, adjustment pair, missingness membership, thresholds, action gates, chronology, costs, and stopping actions are fixed. No fallback or adaptive request is allowed.",
+    "13_search_budget_unchanged": "Pass. The two families, eight configurations, and 232-specification ceiling remain unchanged.",
+    "14_controlled_boundaries_preserved": "Pass. Controlled A and B, V3, June, daily 2018-2019, PAPER, broker, live, and strategic-allocation-21 remain inaccessible and every protected flag is false."
+  },
+  "verified_assertions": {
+    "plan_sha256_reproduced": true,
+    "plan_fingerprint_reproduced": true,
+    "documentation_sha256_reproduced": true,
+    "regression_test_sha256_reproduced": true,
+    "public_contract_evidence_sha256_and_fingerprint_reproduced": true,
+    "complete_pre_exposed_incident_and_review_bindings_reproduced": true,
+    "configuration_count_eight": true,
+    "qualification_request_ranges_thirteen": true,
+    "qualification_logical_chains_twenty_six": true,
+    "qualification_sessions_twenty_two": true,
+    "qualification_expected_responses_twenty_eight": true,
+    "qualification_maximum_responses_sixty": true,
+    "qualification_maximum_bytes_67108864": true,
+    "known_mdy_coordinates_nine": true,
+    "pre_exposed_quarantine_sessions_five": true,
+    "global_exclusion_limit_seven_of_1499": true,
+    "unexpected_exclusion_slots_two": true,
+    "full_acquisition_sessions_1531": true,
+    "full_acquisition_expected_paired_rows_3093636": true,
+    "full_acquisition_expected_additional_responses_3018": true,
+    "qualification_sample_realized_spin_off_count_zero": true,
+    "ambiguous_action_factor_is_terminal_and_not_missingness": true,
+    "fallback_absent": true,
+    "historical_nbbo_not_required": true,
+    "all_authority_flags_false": true,
+    "controlled_and_protected_ranges_untouched": true,
+    "zero_strategy_returns_generated_or_observed": true
+  },
+  "verification": {
+    "focused_test": {
+      "command": "uv run pytest -q tests/unit/test_program_005_planning.py",
+      "result": "12 passed"
+    },
+    "ruff_format": {
+      "command": "uv run ruff format --check .",
+      "result": "passed"
+    },
+    "ruff_lint": {
+      "command": "uv run ruff check .",
+      "result": "passed"
+    },
+    "mypy": {
+      "command": "uv run mypy src tests",
+      "result": "passed"
+    },
+    "independent_review_method": "Two fresh read-only exact-commit reviews against the complete user brief and repository controls, followed by exact-commit closure reviews after every material finding.",
+    "official_documentation_retrieved_date": "2026-08-27"
+  },
+  "proof_gaps": [
+    "No Alpaca provider or account endpoint, credential, market-data response, or real structural qualification receipt was accessed.",
+    "Applicable public terms do not expressly permit the required immutable private raw pages, backups, derived artifacts, and reproducible audit use; this blocks every provider authority.",
+    "The qualification sample contains no issuer- or exchange-identified realized spin-off, so realized spin-off semantics remain unqualified and admission-blocking until exact evidence exists.",
+    "Current issuer spread pages do not prove historical spreads, fills, impact, queue position, partial fills, or a historical upper bound.",
+    "No network-capable Program 005 adapter exists. Mock enforcement does not prove future provider behavior.",
+    "The 3,093,636 paired rows, 0.4-0.8 GiB source estimate, and 25.15-minute expected transport are prospective calculations, not observed acquisition results.",
+    "Artifact inspection cannot prove every historical non-access claim."
+  ],
+  "scope_limit": "Independent prospective planning review only. No provider contact, subscription, credential access, source request, real qualification, acquisition, dataset admission, strategy implementation or execution, return access, research qualification, controlled or protected access, PAPER action, broker write, live action, or strategic-allocation-21 access occurred.",
+  "required_next_user_action": "No data authorization is currently eligible. First resolve the retention gate through applicable terms or written Alpaca confirmation without a paid plan, then implement and independently review the fixed GET-only adapter and mock controls. After those preconditions pass on clean synchronized main, the user may separately authorize ONE-USE FREE ALPACA BASIC HISTORICAL SIP STRUCTURAL SOURCE QUALIFICATION ONLY: the exact thirteen ranges, twenty-six paired chains, twenty-two sessions, thirteen symbols, at most sixty HTTP responses, 64 MiB, 120 requests per minute, one credential load, no strategy calculation or return, and no remaining acquisition or protected authority.",
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "controlled_a": false,
+    "controlled_b": false,
+    "intraday_v3": false,
+    "june": false,
+    "daily_independent_2018_2019": false,
+    "strategic_allocation_21": false,
+    "paper_broker_or_live_state": false
+  },
+  "review_fingerprint": "276e08b440012739d36d666c05cec2ba6421f4e381c6b148752fb2c7682960e6"
+}

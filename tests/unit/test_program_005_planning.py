@@ -26,6 +26,7 @@ from systematic_trading_lab.multi_hour_sector_etf_synthetic import (
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _PLAN_PATH = "config/research/program-005-free-alpaca-successor-plan-v1.json"
+_REVIEW_PATH = "config/research/program-005-free-alpaca-successor-plan-independent-review-v1.json"
 _EVIDENCE_PATH = "config/research/program-005-alpaca-public-contract-evidence-v1.json"
 _INCIDENT_PATH = "config/research/program-002-exposed-acquisition-completeness-failure-v3.json"
 _INCIDENT_REVIEW_PATH = (
@@ -412,6 +413,52 @@ def test_program_005_plan_binds_lineage_and_grants_no_authority() -> None:
     assert plan["search_budget"]["maximum_run_specifications"] == 232
     assert not any(plan["authority"].values())
     assert not any(plan["protected_access"].values())
+
+
+def test_program_005_independent_review_binds_final_artifacts() -> None:
+    review = _load(_REVIEW_PATH)
+    unsigned = dict(review)
+
+    assert unsigned.pop("review_fingerprint") == fingerprint(unsigned)
+    assert review["verdict"] == "pass"
+    assert review["findings"] == []
+    assert review["reviewed_commit"] == "c1581e21ced07dc94d8eb5f4226a23dffcf501cb"
+    assert [item["verdict"] for item in review["review_iterations"]] == [
+        "fail",
+        "fail",
+        "fail",
+        "pass",
+    ]
+    assert len(review["review_challenges"]) == 14
+
+    plan_binding = review["reviewed_plan"]
+    plan_path = _REPOSITORY / plan_binding["path"]
+    plan = json.loads(plan_path.read_text())
+    assert sha256(plan_path.read_bytes()).hexdigest() == plan_binding["sha256"]
+    assert plan["plan_fingerprint"] == plan_binding["fingerprint"]
+
+    documentation = review["reviewed_documentation"]
+    assert (
+        sha256((_REPOSITORY / documentation["path"]).read_bytes()).hexdigest()
+        == documentation["sha256"]
+    )
+    assert review["reviewed_regression_test"] == {
+        "path": "tests/unit/test_program_005_planning.py",
+        "sha256": "3eea82142990ad566b3d6a22700ebee2376027047d973225ac14a98d51a48813",
+    }
+    for key, fingerprint_field in (
+        ("reviewed_public_contract_evidence", "evidence_fingerprint"),
+        ("reviewed_pre_exposed_incident", "incident_fingerprint"),
+        ("reviewed_pre_exposed_incident_review", "review_fingerprint"),
+    ):
+        binding = review[key]
+        path = _REPOSITORY / binding["path"]
+        artifact = json.loads(path.read_text())
+        assert sha256(path.read_bytes()).hexdigest() == binding["sha256"]
+        assert artifact[fingerprint_field] == binding["fingerprint"]
+
+    assert not any(review["authority"].values())
+    assert not any(review["protected_access"].values())
 
 
 def test_free_sip_contract_is_explicit_and_retention_stays_fail_closed() -> None:
