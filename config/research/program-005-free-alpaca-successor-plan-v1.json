@@ -330,10 +330,81 @@
         "validation_rule": "Every fixed quarantine must remain in discovery-only evidence; no walk-forward test, final exposed fold, controlled block, or initial context session may be quarantined under this class.",
         "maximum_consecutive_fixed_quarantine_sessions": 1,
         "observed_maximum_consecutive_fixed_quarantine_sessions": 1,
+        "calendar_concentration_contract": {
+          "affected_months": {
+            "2020-12": {
+              "full_sessions_before_quarantine": 21,
+              "fixed_quarantine_sessions": 1,
+              "retained_full_sessions": 20
+            },
+            "2021-02": {
+              "full_sessions_before_quarantine": 19,
+              "fixed_quarantine_sessions": 4,
+              "retained_full_sessions": 15
+            }
+          },
+          "minimum_retained_full_sessions_per_affected_month": 15,
+          "monthly_floor_origin": "The inherited final-exposed-fold and controlled-block gates each require at least fifteen active sessions. Requiring at least fifteen complete opportunities in every affected month is stricter than those gates require of a month and prevents the fixed quarantine from removing the ability to supply that pre-existing evidence floor.",
+          "affected_complete_calendar_years": {
+            "2021": {
+              "full_sessions_before_quarantine": 251,
+              "fixed_quarantine_sessions": 4,
+              "retained_full_sessions": 247
+            }
+          },
+          "minimum_retained_full_sessions_per_affected_complete_calendar_year": 240,
+          "complete_year_floor_origin": "Two times the independently anchored 120-session discovery-block retention floor.",
+          "affected_partial_calendar_years": {
+            "2020": {
+              "fixed_quarantine_sessions": 1,
+              "governing_fixed_block": "discovery-01"
+            }
+          },
+          "partial_year_rule": "A boundary year that is not fully exposed must pass its fixed discovery-block retention and balance gates; it is not compared with a fabricated full-year denominator.",
+          "decision_rule": "Fail admission if an affected month or complete year falls below its retained-session floor or an affected partial year fails its governing fixed-block gates. Counts are machine gates, not reviewer-only reports."
+        },
+        "clock_concentration_contract": {
+          "missing_coordinate_count": 9,
+          "regular_session_five_minute_clock_count": 78,
+          "fixed_coordinate_counts_by_new_york_clock": {
+            "11:40": 1,
+            "11:45": 1,
+            "11:50": 1,
+            "13:10": 1,
+            "13:25": 2,
+            "14:05": 1,
+            "14:20": 1,
+            "15:20": 1
+          },
+          "uniform_coordinate_reference_population": 116922,
+          "coordinates_per_clock": 1499,
+          "bonferroni_clock_test_count": 78,
+          "familywise_alpha": "0.05",
+          "per_clock_alpha_exact": "1/1560",
+          "rejection_count_at_one_clock": 3,
+          "exact_hypergeometric_tail_probability_at_rejection_count": "0.000166744196",
+          "bonferroni_union_bound_at_rejection_count": "0.013006047261",
+          "observed_maximum_coordinates_at_one_clock": 2,
+          "fixed_sessions_missing_at_exact_strategy_clocks": {
+            "11:30-decision": 0,
+            "11:35-normal-entry": 0,
+            "11:40-stress-a-entry": 1,
+            "11:45-stress-b-entry": 1,
+            "13:35-normal-two-hour-exit": 0,
+            "13:40-stress-a-two-hour-exit": 0,
+            "13:45-stress-b-two-hour-exit": 0,
+            "15:35-normal-four-hour-exit": 0,
+            "15:40-stress-a-four-hour-exit": 0,
+            "15:45-stress-b-four-hour-exit": 0
+          },
+          "maximum_fixed_sessions_missing_at_any_exact_strategy_clock": 1,
+          "reference_limit": "The clock tail is an exact uniform-coordinate randomization reference, not evidence that provider omissions are random. It detects a repeated clock mechanism and supplements the exact strategy-clock cap.",
+          "decision_rule": "Fail admission if any five-minute clock reaches three fixed missing coordinates or any exact decision, entry, or exit clock is missing on more than one fixed session. Reviewer override is prohibited."
+        },
         "bounded_membership": "Only the five exact known quarantine dates. No later date may be added to this class.",
         "global_budget_treatment": "All five count against the inherited seven-session global ceiling.",
         "unexpected_recurrence_limits_apply": false,
-        "acceptance_rule": "All fixed membership, discovery-only, 120-session retention, unchanged block-balance, nonadjacency, global-budget, context, and SPY randomization-reference gates must pass. Failure of any part stops dataset admission without reviewer override.",
+        "acceptance_rule": "All fixed membership, discovery-only, 120-session block retention, unchanged block-balance, nonadjacency, month, year, clock, global-budget, context, and SPY/MDY randomization-reference gates must pass. Failure of any part stops dataset admission without reviewer override.",
         "reason": "The fixed dates use no strategy return, remove no validation observation, leave 122, 122, and 125 complete discovery sessions, preserve the original three-session block-opportunity range, and never form an adjacent outage. Whole-session exclusion contains the known MDY-specific mechanism. The class creates no generalized block, month, year, rolling-window, clock, or same-symbol allowance for a later defect.",
         "post_acquisition_change_or_waiver_allowed": false
       },
@@ -357,43 +428,47 @@
         "fixed-block and rolling-63-session counts",
         "contiguous exclusion runs",
         "same-symbol rolling-252-session counts",
-        "SPY morning absolute-return, range, and volume quartiles computed without strategy returns",
+        "SPY and MDY morning absolute-return, range, and volume quartiles computed without strategy returns",
         "initial and rolling context completeness"
       ],
-      "spy_morning_diagnostics": {
-        "population": "All 1,499 full trade-eligible sessions before source-missingness disposition, including an excluded session when its complete SPY morning is available.",
+      "spy_and_mdy_morning_diagnostics": {
+        "reference_symbols": [
+          "SPY",
+          "MDY"
+        ],
+        "population": "All 1,499 full trade-eligible sessions before source-missingness disposition, including an excluded session when each reference symbol's complete morning is available.",
         "window": "09:30 through the 11:30 New York decision: open at 09:30 and bars opened 09:30 through 11:25.",
         "metrics": [
-          "absolute SPY return from the 09:30 open to the 11:25 bar close",
-          "SPY high-low range across bars opened 09:30 through 11:25 divided by the minimum low",
-          "sum of SPY volume across bars opened 09:30 through 11:25"
+          "per-symbol absolute return from the 09:30 open to the 11:25 bar close",
+          "per-symbol high-low range across bars opened 09:30 through 11:25 divided by the minimum low",
+          "per-symbol volume across bars opened 09:30 through 11:25"
         ],
         "quartile_rule": "For each metric, sort ascending by metric and then session date. Each tail contains ceil(population session count / 4) sessions. Test the highest absolute-return tail, highest range tail, and lowest volume tail.",
         "familywise_alpha": "0.05",
-        "bonferroni_test_count": 3,
-        "per_test_alpha_exact": "1/60",
+        "bonferroni_test_count": 6,
+        "per_test_alpha_exact": "1/120",
         "finite_population_sessions": 1499,
         "tail_size_sessions": 375,
         "reference_null": "uniform selection of exclusion dates without replacement from the deterministic 1,499-session population",
         "rejection_counts_by_total_exclusions": {
-          "5": 4,
+          "5": 5,
           "6": 5,
-          "7": 5
+          "7": 6
         },
         "exact_hypergeometric_tail_probabilities_at_rejection_count": {
-          "5": "0.015507647780",
+          "5": "0.000960330049",
           "6": "0.004572816581",
-          "7": "0.012724502532"
+          "7": "0.001312142201"
         },
         "interpretation_limit": "These are exact randomization-reference probabilities under the uniform-date null. The fixed exclusions were not randomly sampled, so this gate neither proves missing-completely-at-random behavior nor independently admits the quarantine. It supplements the deterministic discovery-only, retention, balance, nonadjacency, and no-expansion gates.",
-        "unavailable_rule": "A missing SPY bar needed for any diagnostic makes the diagnostic unavailable and fails dataset admission.",
+        "unavailable_rule": "A missing SPY or MDY bar needed for any diagnostic makes the diagnostic unavailable and fails dataset admission.",
         "decision_rule": "Reject dataset admission if any tested tail reaches its frozen rejection count. Reviewer discretion cannot override, waive, or reinterpret this result."
       },
       "known_quarantine_shown_separately": true,
       "no_numeric_limit_may_be_relaxed_after_acquisition": true,
-      "failure_action": "Any global coverage, fixed-quarantine structure, unexpected fixed-block, unexpected rolling, total consecutive, unexpected same-symbol, adjacency, context, corporate-action, or SPY randomization-reference failure stops dataset admission before strategy execution."
+      "failure_action": "Any global coverage, fixed-quarantine block, month, year, clock, unexpected fixed-block, unexpected rolling, total consecutive, unexpected same-symbol, adjacency, context, corporate-action, or SPY/MDY randomization-reference failure stops dataset admission before strategy execution."
     },
-    "known_mdy_comparison_after_derivation": "The independently pre-existing global ceiling permits seven total sessions. The five fixed quarantine sessions consume five slots and leave two isolated unexpected slots. Their exact one-plus-four discovery-block concentration is declared rather than hidden. The quarantine removes no validation date, leaves 122, 122, and 125 complete discovery sessions against a 120-session floor, does not increase the original three-session block imbalance, contains no adjacent dates, cannot expand, and must pass three objective SPY randomization-reference tests. No new exclusion may join a quarantine block, rolling-quarter window, or MDY rolling-year window."
+    "known_mdy_comparison_after_derivation": "The independently pre-existing global ceiling permits seven total sessions. The five fixed quarantine sessions consume five slots and leave two isolated unexpected slots. Their exact one-plus-four discovery-block concentration is declared rather than hidden. The quarantine removes no validation date, leaves 122, 122, and 125 complete discovery sessions against a 120-session block floor, leaves 20 and 15 complete sessions in the affected months against a fifteen-session floor, leaves 247 complete 2021 sessions against a 240-session floor, does not increase the original three-session block imbalance, contains no adjacent dates, stays below the exact clock-recurrence thresholds, cannot expand, and must pass six objective SPY/MDY randomization-reference tests. No new exclusion may join a quarantine block, rolling-quarter window, or MDY rolling-year window."
   },
   "transaction_cost_model": {
     "model_id": "program-003-static-cost-envelope-v1",
@@ -599,6 +674,225 @@
       "redirects": false,
       "rate_limit_requests_per_minute": 120
     },
+    "request_ranges": [
+      {
+        "range_id": "normal-2020-07-27",
+        "purpose": "normal control",
+        "session_dates": [
+          "2020-07-27"
+        ],
+        "start_inclusive": "2020-07-27T13:30:00Z",
+        "end_inclusive": "2020-07-27T19:55:00Z",
+        "expected_rows_per_adjustment_view": 1014,
+        "expected_pages_per_adjustment_view": 1,
+        "maximum_pages_per_adjustment_view": 2,
+        "logical_chain_ids": [
+          "normal-2020-07-27--raw",
+          "normal-2020-07-27--split-spin-off"
+        ]
+      },
+      {
+        "range_id": "quarantine-2020-12-04",
+        "purpose": "known MDY quarantine",
+        "session_dates": [
+          "2020-12-04"
+        ],
+        "start_inclusive": "2020-12-04T14:30:00Z",
+        "end_inclusive": "2020-12-04T20:55:00Z",
+        "expected_rows_per_adjustment_view": 1014,
+        "expected_pages_per_adjustment_view": 1,
+        "maximum_pages_per_adjustment_view": 2,
+        "logical_chain_ids": [
+          "quarantine-2020-12-04--raw",
+          "quarantine-2020-12-04--split-spin-off"
+        ]
+      },
+      {
+        "range_id": "quarantine-2021-02-03",
+        "purpose": "known MDY quarantine",
+        "session_dates": [
+          "2021-02-03"
+        ],
+        "start_inclusive": "2021-02-03T14:30:00Z",
+        "end_inclusive": "2021-02-03T20:55:00Z",
+        "expected_rows_per_adjustment_view": 1014,
+        "expected_pages_per_adjustment_view": 1,
+        "maximum_pages_per_adjustment_view": 2,
+        "logical_chain_ids": [
+          "quarantine-2021-02-03--raw",
+          "quarantine-2021-02-03--split-spin-off"
+        ]
+      },
+      {
+        "range_id": "quarantine-2021-02-05",
+        "purpose": "known MDY quarantine",
+        "session_dates": [
+          "2021-02-05"
+        ],
+        "start_inclusive": "2021-02-05T14:30:00Z",
+        "end_inclusive": "2021-02-05T20:55:00Z",
+        "expected_rows_per_adjustment_view": 1014,
+        "expected_pages_per_adjustment_view": 1,
+        "maximum_pages_per_adjustment_view": 2,
+        "logical_chain_ids": [
+          "quarantine-2021-02-05--raw",
+          "quarantine-2021-02-05--split-spin-off"
+        ]
+      },
+      {
+        "range_id": "quarantine-2021-02-10",
+        "purpose": "known MDY quarantine",
+        "session_dates": [
+          "2021-02-10"
+        ],
+        "start_inclusive": "2021-02-10T14:30:00Z",
+        "end_inclusive": "2021-02-10T20:55:00Z",
+        "expected_rows_per_adjustment_view": 1014,
+        "expected_pages_per_adjustment_view": 1,
+        "maximum_pages_per_adjustment_view": 2,
+        "logical_chain_ids": [
+          "quarantine-2021-02-10--raw",
+          "quarantine-2021-02-10--split-spin-off"
+        ]
+      },
+      {
+        "range_id": "quarantine-2021-02-22",
+        "purpose": "known MDY quarantine",
+        "session_dates": [
+          "2021-02-22"
+        ],
+        "start_inclusive": "2021-02-22T14:30:00Z",
+        "end_inclusive": "2021-02-22T20:55:00Z",
+        "expected_rows_per_adjustment_view": 1014,
+        "expected_pages_per_adjustment_view": 1,
+        "maximum_pages_per_adjustment_view": 2,
+        "logical_chain_ids": [
+          "quarantine-2021-02-22--raw",
+          "quarantine-2021-02-22--split-spin-off"
+        ]
+      },
+      {
+        "range_id": "early-close-2022-11-25",
+        "purpose": "early-close control",
+        "session_dates": [
+          "2022-11-25"
+        ],
+        "start_inclusive": "2022-11-25T14:30:00Z",
+        "end_inclusive": "2022-11-25T17:55:00Z",
+        "expected_rows_per_adjustment_view": 546,
+        "expected_pages_per_adjustment_view": 1,
+        "maximum_pages_per_adjustment_view": 2,
+        "logical_chain_ids": [
+          "early-close-2022-11-25--raw",
+          "early-close-2022-11-25--split-spin-off"
+        ]
+      },
+      {
+        "range_id": "normal-2023-07-17",
+        "purpose": "normal control",
+        "session_dates": [
+          "2023-07-17"
+        ],
+        "start_inclusive": "2023-07-17T13:30:00Z",
+        "end_inclusive": "2023-07-17T19:55:00Z",
+        "expected_rows_per_adjustment_view": 1014,
+        "expected_pages_per_adjustment_view": 1,
+        "maximum_pages_per_adjustment_view": 2,
+        "logical_chain_ids": [
+          "normal-2023-07-17--raw",
+          "normal-2023-07-17--split-spin-off"
+        ]
+      },
+      {
+        "range_id": "distribution-2024-06-10",
+        "purpose": "IWM cash-distribution neighborhood",
+        "session_dates": [
+          "2024-06-10"
+        ],
+        "start_inclusive": "2024-06-10T13:30:00Z",
+        "end_inclusive": "2024-06-10T19:55:00Z",
+        "expected_rows_per_adjustment_view": 1014,
+        "expected_pages_per_adjustment_view": 1,
+        "maximum_pages_per_adjustment_view": 2,
+        "logical_chain_ids": [
+          "distribution-2024-06-10--raw",
+          "distribution-2024-06-10--split-spin-off"
+        ]
+      },
+      {
+        "range_id": "distribution-2024-06-11",
+        "purpose": "IWM cash-distribution neighborhood",
+        "session_dates": [
+          "2024-06-11"
+        ],
+        "start_inclusive": "2024-06-11T13:30:00Z",
+        "end_inclusive": "2024-06-11T19:55:00Z",
+        "expected_rows_per_adjustment_view": 1014,
+        "expected_pages_per_adjustment_view": 1,
+        "maximum_pages_per_adjustment_view": 2,
+        "logical_chain_ids": [
+          "distribution-2024-06-11--raw",
+          "distribution-2024-06-11--split-spin-off"
+        ]
+      },
+      {
+        "range_id": "distribution-2024-06-12",
+        "purpose": "IWM cash-distribution neighborhood",
+        "session_dates": [
+          "2024-06-12"
+        ],
+        "start_inclusive": "2024-06-12T13:30:00Z",
+        "end_inclusive": "2024-06-12T19:55:00Z",
+        "expected_rows_per_adjustment_view": 1014,
+        "expected_pages_per_adjustment_view": 1,
+        "maximum_pages_per_adjustment_view": 2,
+        "logical_chain_ids": [
+          "distribution-2024-06-12--raw",
+          "distribution-2024-06-12--split-spin-off"
+        ]
+      },
+      {
+        "range_id": "pagination-split-2025-12-01-to-2025-12-12",
+        "purpose": "token pagination and issuer-known split neighborhood",
+        "session_dates": [
+          "2025-12-01",
+          "2025-12-02",
+          "2025-12-03",
+          "2025-12-04",
+          "2025-12-05",
+          "2025-12-08",
+          "2025-12-09",
+          "2025-12-10",
+          "2025-12-11",
+          "2025-12-12"
+        ],
+        "start_inclusive": "2025-12-01T14:30:00Z",
+        "end_inclusive": "2025-12-12T20:55:00Z",
+        "expected_rows_per_adjustment_view": 10140,
+        "expected_pages_per_adjustment_view": 2,
+        "maximum_pages_per_adjustment_view": 6,
+        "logical_chain_ids": [
+          "pagination-split-2025-12-01-to-2025-12-12--raw",
+          "pagination-split-2025-12-01-to-2025-12-12--split-spin-off"
+        ]
+      },
+      {
+        "range_id": "normal-2026-07-15",
+        "purpose": "normal control",
+        "session_dates": [
+          "2026-07-15"
+        ],
+        "start_inclusive": "2026-07-15T13:30:00Z",
+        "end_inclusive": "2026-07-15T19:55:00Z",
+        "expected_rows_per_adjustment_view": 1014,
+        "expected_pages_per_adjustment_view": 1,
+        "maximum_pages_per_adjustment_view": 2,
+        "logical_chain_ids": [
+          "normal-2026-07-15--raw",
+          "normal-2026-07-15--split-spin-off"
+        ]
+      }
+    ],
     "fixed_sessions": {
       "known_quarantine_sessions": [
         "2020-12-04",
@@ -689,8 +983,11 @@
       "expected_rows_per_adjustment_view": 1546818,
       "expected_paired_rows": 3093636
     },
-    "segmentation": "One exact XNYS session per raw chain and one paired split,spin-off chain. Reuse the twenty-two qualified sessions; do not request them again.",
+    "segmentation": "For the 1,509 sessions not covered by qualification, use one exact XNYS session per raw chain and one paired split,spin-off chain. Reuse the twelve singleton qualification ranges and the one retained ten-session pagination range under their original chain identities; do not resegment or request their twenty-two sessions again.",
+    "qualification_sessions_covered_and_reused": 22,
+    "qualification_request_ranges_reused": 13,
     "qualification_logical_chains_reused": 26,
+    "qualification_multi_session_request_ranges_reused": 1,
     "remaining_sessions_after_qualification": 1509,
     "maximum_additional_logical_chains": 3018,
     "expected_additional_http_responses": 3018,
@@ -865,5 +1162,5 @@
     "state_street_etfs": "https://www.ssga.com/us/en/intermediary/etfs",
     "state_street_split_notice": "https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx"
   },
-  "plan_fingerprint": "4e5c4ab9b1ee2bb92014c5b900574835fe49c050d61b8fd840cb238de3366f30"
+  "plan_fingerprint": "6300442556a626f1936857a5c4cc1de6fe736b0bbb1c22c5f5b94624c14a6eac"
 }

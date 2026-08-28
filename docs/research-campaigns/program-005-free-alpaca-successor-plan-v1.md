@@ -154,27 +154,42 @@ budget and cannot gain another member. They remove no walk-forward test or contr
 three discovery blocks have 123, 126, and 125 full sessions before quarantine and 122, 122, and 125
 afterward. Each remains above the 120-session floor derived as twice the inherited 60-active-session
 gate, and the original three-session difference in block opportunity does not increase. No two fixed
-dates are adjacent. These rules, the SPY diagnostic below, and exact membership are all mandatory; one
-failure stops admission. Their cluster grants no generalized source-loss tolerance. Unexpected
-exclusions must be isolated: at most one per calendar year, one per fixed discovery or test block, and
-one per rolling 63 expected sessions; none may be consecutive or adjacent to another exclusion; and at
-most one may have the same missing symbol per rolling 252 sessions. No unexpected exclusion may join a
-block or rolling-quarter window containing the fixed quarantine, and no new MDY exclusion may join its
-rolling-year window. The initial twenty context sessions allow zero loss.
+dates are adjacent.
+
+The fixed calendar and clock pattern has machine pass/fail gates. December 2020 retains twenty of
+twenty-one full sessions after one quarantine; February 2021 retains fifteen of nineteen after four.
+Each affected month must retain at least fifteen full sessions. Complete calendar year 2021 retains
+247 of 251 and must retain at least 240, twice the 120-session block floor. Partial 2020 is governed by
+its fixed discovery-block gates rather than a fabricated full-year denominator. The nine coordinates
+occupy eight of the 78 regular-session five-minute clocks; only 13:25 New York repeats, with two
+coordinates. Admission fails if any clock reaches three coordinates. The exact uniform-coordinate
+tail probability at three is `0.000166744196`; the 78-test Bonferroni union bound is
+`0.013006047261`. The frozen strategy clocks have no affected decision or exit, one affected session
+at the 11:40 entry, and one at the 11:45 entry; no exact strategy clock may lose more than one fixed
+session. These references do not assert random omissions. The exact counts, floors, and rejection
+rules are mandatory and reviewer override is prohibited.
+
+The cluster grants no generalized source-loss tolerance. Unexpected exclusions must be isolated: at
+most one per calendar year, one per fixed discovery or test block, and one per rolling 63 expected
+sessions; none may be consecutive or adjacent to another exclusion; and at most one may have the same
+missing symbol per rolling 252 sessions. No unexpected exclusion may join a block or rolling-quarter
+window containing the fixed quarantine, and no new MDY exclusion may join its rolling-year window. The
+initial twenty context sessions allow zero loss.
 
 Before admission, a structural report must list exclusions and coordinates by symbol, month, year,
 and five-minute time; fixed-block, rolling, contiguous, and same-symbol counts; and all context
-completeness. It also ranks every full trade-eligible session by three return-blind SPY 09:30-11:30
-metrics: absolute morning return, morning high-low range, and morning volume. Each deterministic
-quartile sorts by metric and then date, placing 375 of the 1,499 sessions in each tested tail. The tests
-use the high-return, high-range, and low-volume tails with Bonferroni alpha `0.05 / 3`. Admission
-fails at four tail members among five exclusions, five among six, or five among seven. Under the exact
-uniform-date randomization reference, the hypergeometric tail probabilities are `0.015507647780`,
-`0.004572816581`, and `0.012724502532`. The fixed dates were not randomly sampled, so these values do
-not prove missing-completely-at-random behavior and cannot admit the quarantine by themselves. They
-supplement the discovery-only, retention, balance, nonadjacency, and no-expansion gates. A missing
-required SPY bar makes the diagnostic unavailable and fails admission. No reviewer may override or
-reinterpret the result, and no threshold may be relaxed after acquisition.
+completeness. It also ranks every full trade-eligible session separately for SPY and MDY by three
+return-blind 09:30-11:30 metrics: absolute morning return, morning high-low range, and morning volume.
+Each deterministic quartile sorts by metric and then date, placing 375 of the 1,499 sessions in each
+tested tail. The six tests use the high-return, high-range, and low-volume tails with Bonferroni alpha
+`0.05 / 6 = 1 / 120`. Admission fails at five tail members among five exclusions, five among six, or
+six among seven. Under the exact uniform-date randomization reference, the hypergeometric tail
+probabilities are `0.000960330049`, `0.004572816581`, and `0.001312142201`. The fixed dates were not
+randomly sampled, so these values do not prove missing-completely-at-random behavior and cannot admit
+the quarantine by themselves. They supplement the deterministic calendar, clock, discovery-only,
+retention, balance, nonadjacency, and no-expansion gates. A missing required SPY or MDY bar makes the
+diagnostic unavailable and fails admission. No reviewer may override or reinterpret the result, and no
+threshold may be relaxed after acquisition.
 
 The already-exposed nine gaps may remain absent during source qualification. No other missing
 coordinate is allowed on those fixed sessions. Their absence is handled by unconditional whole-date
@@ -212,11 +227,31 @@ credential load, and twenty-two exact sessions:
 - June 10-12, 2024 around the fixed IWM distribution control.
 - Ten sessions from December 1-12, 2025 around the five issuer-known 2-for-1 sector ETF splits.
 
+The exact ranges are frozen below. Each range creates two logical chain IDs by appending `--raw` and
+`--split-spin-off` to the range ID.
+
+| Range ID | Inclusive UTC start | Inclusive UTC end | Sessions | Expected pages/view |
+| --- | --- | --- | ---: | ---: |
+| `normal-2020-07-27` | `2020-07-27T13:30:00Z` | `2020-07-27T19:55:00Z` | 1 | 1 |
+| `quarantine-2020-12-04` | `2020-12-04T14:30:00Z` | `2020-12-04T20:55:00Z` | 1 | 1 |
+| `quarantine-2021-02-03` | `2021-02-03T14:30:00Z` | `2021-02-03T20:55:00Z` | 1 | 1 |
+| `quarantine-2021-02-05` | `2021-02-05T14:30:00Z` | `2021-02-05T20:55:00Z` | 1 | 1 |
+| `quarantine-2021-02-10` | `2021-02-10T14:30:00Z` | `2021-02-10T20:55:00Z` | 1 | 1 |
+| `quarantine-2021-02-22` | `2021-02-22T14:30:00Z` | `2021-02-22T20:55:00Z` | 1 | 1 |
+| `early-close-2022-11-25` | `2022-11-25T14:30:00Z` | `2022-11-25T17:55:00Z` | 1 | 1 |
+| `normal-2023-07-17` | `2023-07-17T13:30:00Z` | `2023-07-17T19:55:00Z` | 1 | 1 |
+| `distribution-2024-06-10` | `2024-06-10T13:30:00Z` | `2024-06-10T19:55:00Z` | 1 | 1 |
+| `distribution-2024-06-11` | `2024-06-11T13:30:00Z` | `2024-06-11T19:55:00Z` | 1 | 1 |
+| `distribution-2024-06-12` | `2024-06-12T13:30:00Z` | `2024-06-12T19:55:00Z` | 1 | 1 |
+| `pagination-split-2025-12-01-to-2025-12-12` | `2025-12-01T14:30:00Z` | `2025-12-12T20:55:00Z` | 10 | 2 |
+| `normal-2026-07-15` | `2026-07-15T13:30:00Z` | `2026-07-15T19:55:00Z` | 1 | 1 |
+
 The sample has twenty-one full sessions, one early close, 21,840 expected rows per adjustment view,
 and 43,680 paired rows before the permitted known gaps. Twelve samples use one-session chains. The
 December block contains 10,140 rows per view, so `limit=10000` must exercise real token pagination.
-The cap is twenty-six logical chains, sixty HTTP responses, 64 MiB, and one credential load. A
-transport failure has no retry under the one-use authority.
+The manifest therefore has thirteen ranges and twenty-six logical chains. It expects twenty-eight
+HTTP responses and caps them at sixty, 64 MiB, and one credential load. A transport failure has no
+retry under the one-use authority.
 
 A pass requires exact inclusive boundaries, token exhaustion, unique coordinates, valid finite
 OHLCV, matching paired coordinate sets, reproducible parse and hash results, constant action factors,
@@ -232,12 +267,14 @@ Full acquisition remains separate and unauthorized. The range contains 1,531 XNY
 full sessions and twelve early closes. One adjustment view contains 1,546,818 expected rows; the pair
 contains 3,093,636.
 
-The simple restart boundary is one XNYS session per adjustment view. Reuse the twenty-two qualified
-sessions and request at most 3,018 additional chains for the remaining 1,509 sessions. With one page
-per chain, 120 requests per minute takes about 25.15 transport minutes plus checkpoints and network
-overhead. Each chain is capped at four pages, for a worst-case 12,072 additional responses and about
-100.6 transport minutes before backoff. Paired JSON pages are estimated at 0.4-0.8 GiB; the source cap
-is 4 GiB and working reservation is 8 GiB.
+Reuse all thirteen qualification ranges and their original twenty-six chain identities. The twelve
+singleton ranges remain singleton chains, and the ten-session December range remains one retained
+multi-session chain per adjustment view. It is neither resegmented nor requested again. Each of the
+remaining 1,509 sessions gets one raw and one paired analytical chain, for at most 3,018 additional
+chains. With one page per chain, 120 requests per minute takes about 25.15 transport minutes plus
+checkpoints and network overhead. Each additional chain is capped at four pages, for a worst-case
+12,072 additional responses and about 100.6 transport minutes before backoff. Paired JSON pages are
+estimated at 0.4-0.8 GiB; the source cap is 4 GiB and working reservation is 8 GiB.
 
 Each response page is create-only, fsynced, hashed, and bound to its incoming and outgoing token
 before an atomic checkpoint advances. Restart verifies every completed page and resumes only the
@@ -270,16 +307,17 @@ provider automatically.
 
 ## Exact next authorization
 
-The committed tests construct both full frozen request variants, reject defaults and end extension, and
-execute mock-only pagination, completeness, concentration, objective SPY bias, adjustment, credential,
-origin, and authority controls. They add no network-capable adapter. The next data authority is not yet
+The committed tests construct all twenty-six frozen requests, reject defaults and end extension, and
+execute mock-only pagination, completeness, concentration, objective SPY/MDY bias, adjustment,
+credential, origin, and authority controls. They add no network-capable adapter. The next data authority is not yet
 eligible because the retention gate is unresolved. After that gate, a reviewed adapter, green CI, and a
 separate user grant, the exact scope may be:
 
 > ONE-USE FREE ALPACA BASIC HISTORICAL SIP STRUCTURAL SOURCE QUALIFICATION ONLY: zero provider
 > subscription cost; GET-only data.alpaca.markets/v2/stocks/bars; feed=sip; timeframe=5Min; paired
-> adjustment=raw and adjustment=split,spin-off requests; asof=2026-07-31; the exact twenty-two
-> sessions and thirteen symbols; at most twenty-six logical chains, sixty HTTP responses, 64 MiB,
+> adjustment=raw and adjustment=split,spin-off requests; asof=2026-07-31; the exact thirteen frozen
+> request ranges, twenty-six original logical chain identities, twenty-two sessions, and thirteen
+> symbols; at most sixty HTTP responses, 64 MiB,
 > 120 requests/minute, and one credential load; private immutable evidence only under resolved
 > retention rights; no remaining chronology acquisition, dataset admission, strategy implementation
 > or execution, return observation, controlled or protected access, PAPER action, broker write, or

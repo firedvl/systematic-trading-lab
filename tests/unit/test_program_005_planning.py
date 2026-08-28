@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from copy import deepcopy
 from dataclasses import replace
-from datetime import UTC, datetime, time
+from datetime import UTC, datetime, time, timedelta
 from decimal import Decimal
 from hashlib import sha256
 from math import comb
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -54,17 +56,23 @@ def _feature(trace: Any, symbol: str) -> Any:
     return next(item for item in trace.ordered_features if item.symbol == Symbol(symbol))
 
 
-def _qualification_requests(plan: dict[str, Any], *, start: str, end: str) -> list[dict[str, Any]]:
+def _full_session_count(start: datetime, end: datetime) -> int:
+    bars = expected_bar_timestamps(start, end, Timeframe.FIVE_MINUTES)
+    return sum(count == 78 for count in Counter(bar.date() for bar in bars).values())
+
+
+def _qualification_requests(plan: dict[str, Any]) -> list[dict[str, Any]]:
     qualification = plan["source_qualification"]
     contract = qualification["request_contract"]
     return [
         {
+            "chain_id": request_range["logical_chain_ids"][adjustment_index],
             "method": contract["method"],
             "url": contract["endpoint"],
             "params": {
                 "symbols": ",".join(qualification["exact_symbols"]),
-                "start": start,
-                "end": end,
+                "start": request_range["start_inclusive"],
+                "end": request_range["end_inclusive"],
                 "feed": contract["feed"],
                 "timeframe": contract["timeframe"],
                 "adjustment": adjustment,
@@ -73,7 +81,8 @@ def _qualification_requests(plan: dict[str, Any], *, start: str, end: str) -> li
                 "asof": contract["asof"],
             },
         }
-        for adjustment in contract["adjustments"]
+        for request_range in qualification["request_ranges"]
+        for adjustment_index, adjustment in enumerate(contract["adjustments"])
     ]
 
 
@@ -241,32 +250,45 @@ def _hypergeometric_tail_probability(
     return Decimal(numerator) / Decimal(comb(population, draws))
 
 
-def _mock_spy_bias_failures(
+def _mock_morning_bias_failures(
     policy: dict[str, Any],
     excluded: set[int],
-    metrics: dict[int, tuple[Decimal, Decimal, Decimal] | None],
+    metrics_by_symbol: dict[str, dict[int, tuple[Decimal, Decimal, Decimal] | None]],
 ) -> set[str]:
-    gate = policy["bias_audit"]["spy_morning_diagnostics"]
-    if any(metrics.get(session) is None for session in excluded):
-        return {"spy-diagnostic-unavailable"}
+    gate = policy["bias_audit"]["spy_and_mdy_morning_diagnostics"]
+    if any(
+        metrics_by_symbol[symbol].get(session) is None
+        for symbol in gate["reference_symbols"]
+        for session in excluded
+    ):
+        return {"morning-diagnostic-unavailable"}
     if str(len(excluded)) not in gate["rejection_counts_by_total_exclusions"]:
         return {"unsupported-exclusion-count"}
 
-    available = {session: value for session, value in metrics.items() if value is not None}
-    tail_size = (len(available) + 3) // 4
-    ordered = [
-        sorted(available, key=lambda session: (available[session][metric_index], session))
-        for metric_index in range(3)
-    ]
-    tails = {
-        "high-absolute-return": set(ordered[0][-tail_size:]),
-        "high-range": set(ordered[1][-tail_size:]),
-        "low-volume": set(ordered[2][:tail_size]),
-    }
     rejection_count = gate["rejection_counts_by_total_exclusions"][str(len(excluded))]
-    return {
-        name for name, tail in tails.items() if len(excluded.intersection(tail)) >= rejection_count
-    }
+    failures: set[str] = set()
+    for symbol in gate["reference_symbols"]:
+        available = {
+            session: value
+            for session, value in metrics_by_symbol[symbol].items()
+            if value is not None
+        }
+        tail_size = (len(available) + 3) // 4
+        ordered = [
+            sorted(available, key=lambda session: (available[session][metric_index], session))
+            for metric_index in range(3)
+        ]
+        tails = {
+            "high-absolute-return": set(ordered[0][-tail_size:]),
+            "high-range": set(ordered[1][-tail_size:]),
+            "low-volume": set(ordered[2][:tail_size]),
+        }
+        failures.update(
+            f"{symbol}-{name}"
+            for name, tail in tails.items()
+            if len(excluded.intersection(tail)) >= rejection_count
+        )
+    return failures
 
 
 def test_program_005_plan_binds_lineage_and_grants_no_authority() -> None:
@@ -383,6 +405,35 @@ def test_qualification_sample_exercises_pagination_without_requiring_known_gaps(
 
     assert qualification["exact_symbols"] == list(_SYMBOLS)
     assert qualification["request_contract"]["adjustments"] == ["raw", "split,spin-off"]
+    request_ranges = qualification["request_ranges"]
+    assert len(request_ranges) == 13
+    assert len({item["range_id"] for item in request_ranges}) == 13
+    assert (
+        len({chain_id for item in request_ranges for chain_id in item["logical_chain_ids"]}) == 26
+    )
+    assert {session for item in request_ranges for session in item["session_dates"]} == {
+        session
+        for group in (
+            "known_quarantine_sessions",
+            "normal_controls",
+            "early_close_control",
+            "distribution_neighborhood",
+            "pagination_and_split_block",
+        )
+        for session in sessions[group]
+    }
+    for item in request_ranges:
+        timestamps = expected_bar_timestamps(
+            datetime.fromisoformat(item["start_inclusive"].replace("Z", "+00:00")),
+            datetime.fromisoformat(item["end_inclusive"].replace("Z", "+00:00")),
+            Timeframe.FIVE_MINUTES,
+        )
+        assert timestamps[0].isoformat().replace("+00:00", "Z") == item["start_inclusive"]
+        assert timestamps[-1].isoformat().replace("+00:00", "Z") == item["end_inclusive"]
+        assert {timestamp.date().isoformat() for timestamp in timestamps} == set(
+            item["session_dates"]
+        )
+        assert len(timestamps) * len(_SYMBOLS) == item["expected_rows_per_adjustment_view"]
     assert len(qualification["known_mdy_coordinates"]) == 9
     assert sessions["unique_session_count"] == 22
     assert sessions["expected_rows_per_adjustment_view"] == (
@@ -394,7 +445,31 @@ def test_qualification_sample_exercises_pagination_without_requiring_known_gaps(
     pagination_rows = len(sessions["pagination_and_split_block"]) * 78 * len(_SYMBOLS)
     assert pagination_rows == 10_140
     assert pagination_rows > qualification["request_contract"]["limit"]
-    assert qualification["transport_budget"]["expected_http_responses"] == 28
+    budget = qualification["transport_budget"]
+    assert budget["logical_chains_per_adjustment_view"] == len(request_ranges) == 13
+    assert (
+        budget["maximum_logical_chains"]
+        == sum(len(item["logical_chain_ids"]) for item in request_ranges)
+        == 26
+    )
+    assert (
+        budget["expected_http_responses"]
+        == sum(
+            item["expected_pages_per_adjustment_view"]
+            * len(qualification["request_contract"]["adjustments"])
+            for item in request_ranges
+        )
+        == 28
+    )
+    assert (
+        budget["maximum_http_responses"]
+        == sum(
+            item["maximum_pages_per_adjustment_view"]
+            * len(qualification["request_contract"]["adjustments"])
+            for item in request_ranges
+        )
+        == 60
+    )
     assert qualification["strategy_calculation_or_return_allowed"] is False
 
 
@@ -519,6 +594,96 @@ def test_missing_session_policy_is_whole_date_and_has_two_unexpected_slots() -> 
         for left, right in zip(quarantine_indices, quarantine_indices[1:], strict=False)
     )
     assert fixed_contract["observed_maximum_consecutive_fixed_quarantine_sessions"] == 1
+
+    calendar_gate = fixed_contract["calendar_concentration_contract"]
+    for month, values in calendar_gate["affected_months"].items():
+        year, month_number = map(int, month.split("-"))
+        next_month = (
+            datetime(year + 1, 1, 1, tzinfo=UTC)
+            if month_number == 12
+            else datetime(year, month_number + 1, 1, tzinfo=UTC)
+        )
+        full_sessions = _full_session_count(
+            datetime(year, month_number, 1, tzinfo=UTC), next_month - timedelta(minutes=1)
+        )
+        fixed_count = sum(day.strftime("%Y-%m") == month for day in quarantine_dates)
+        assert full_sessions == values["full_sessions_before_quarantine"]
+        assert fixed_count == values["fixed_quarantine_sessions"]
+        assert full_sessions - fixed_count == values["retained_full_sessions"]
+        assert (
+            values["retained_full_sessions"]
+            >= calendar_gate["minimum_retained_full_sessions_per_affected_month"]
+        )
+    complete_year = calendar_gate["affected_complete_calendar_years"]["2021"]
+    full_2021 = _full_session_count(
+        datetime(2021, 1, 1, tzinfo=UTC), datetime(2021, 12, 31, 23, 59, tzinfo=UTC)
+    )
+    fixed_2021 = sum(day.year == 2021 for day in quarantine_dates)
+    assert full_2021 == complete_year["full_sessions_before_quarantine"]
+    assert fixed_2021 == complete_year["fixed_quarantine_sessions"]
+    assert full_2021 - fixed_2021 == complete_year["retained_full_sessions"]
+    assert (
+        complete_year["retained_full_sessions"]
+        >= calendar_gate["minimum_retained_full_sessions_per_affected_complete_calendar_year"]
+        == 2 * fixed_contract["minimum_retained_full_sessions_per_discovery_block"]
+    )
+
+    clock_gate = fixed_contract["clock_concentration_contract"]
+    new_york = ZoneInfo("America/New_York")
+    coordinate_clock_counts = Counter(
+        datetime.fromisoformat(coordinate.split("@")[1].replace("Z", "+00:00"))
+        .astimezone(new_york)
+        .strftime("%H:%M")
+        for coordinate in plan["source_qualification"]["known_mdy_coordinates"]
+    )
+    assert (
+        dict(sorted(coordinate_clock_counts.items()))
+        == clock_gate["fixed_coordinate_counts_by_new_york_clock"]
+    )
+    assert (
+        max(coordinate_clock_counts.values())
+        == clock_gate["observed_maximum_coordinates_at_one_clock"]
+        < clock_gate["rejection_count_at_one_clock"]
+    )
+    clock_tail = _hypergeometric_tail_probability(
+        population=clock_gate["uniform_coordinate_reference_population"],
+        tail_size=clock_gate["coordinates_per_clock"],
+        draws=clock_gate["missing_coordinate_count"],
+        at_least=clock_gate["rejection_count_at_one_clock"],
+    )
+    assert clock_tail.quantize(Decimal("0.000000000001")) == Decimal(
+        clock_gate["exact_hypergeometric_tail_probability_at_rejection_count"]
+    )
+    assert (clock_tail * clock_gate["bonferroni_clock_test_count"]).quantize(
+        Decimal("0.000000000001")
+    ) == Decimal(clock_gate["bonferroni_union_bound_at_rejection_count"])
+    hypothesis = plan["preserved_economic_contract"]
+    costs = plan["transaction_cost_model"]["scenarios"]
+    exact_strategy_clocks = {
+        hypothesis["decision_time_new_york"],
+        *(scenario["entry_time_new_york"] for scenario in costs.values()),
+        *(clock for clocks in hypothesis["exit_times_new_york"].values() for clock in clocks),
+    }
+    stored_strategy_counts = clock_gate["fixed_sessions_missing_at_exact_strategy_clocks"]
+    assert {label.split("-", 1)[0] for label in stored_strategy_counts} == exact_strategy_clocks
+    derived_strategy_counts = {
+        label: len(
+            {
+                datetime.fromisoformat(coordinate.split("@")[1].replace("Z", "+00:00")).date()
+                for coordinate in plan["source_qualification"]["known_mdy_coordinates"]
+                if datetime.fromisoformat(coordinate.split("@")[1].replace("Z", "+00:00"))
+                .astimezone(new_york)
+                .strftime("%H:%M")
+                == label.split("-", 1)[0]
+            }
+        )
+        for label in stored_strategy_counts
+    }
+    assert derived_strategy_counts == stored_strategy_counts
+    assert (
+        max(derived_strategy_counts.values())
+        <= (clock_gate["maximum_fixed_sessions_missing_at_any_exact_strategy_clock"])
+    )
     assert limits["unexpected_exclusions_per_calendar_year_max"] == 1
     assert limits["maximum_consecutive_total_exclusions"] == 1
     assert limits["required_initial_context_loss_max"] == 0
@@ -616,26 +781,28 @@ def test_mock_admission_covers_threshold_concentration_and_action_failures() -> 
     assert "action-ledger" in action_failures
 
 
-def test_spy_bias_gate_has_objective_tail_thresholds_and_unavailable_failure() -> None:
+def test_spy_and_mdy_bias_gate_has_objective_tail_thresholds_and_unavailable_failure() -> None:
     policy = _load(_PLAN_PATH)["missing_data_policy"]
-    gate = policy["bias_audit"]["spy_morning_diagnostics"]
+    gate = policy["bias_audit"]["spy_and_mdy_morning_diagnostics"]
     metrics: dict[int, tuple[Decimal, Decimal, Decimal] | None] = {
         session: (Decimal(session), Decimal(session), Decimal(session)) for session in range(40)
     }
+    metrics_by_symbol = {symbol: dict(metrics) for symbol in gate["reference_symbols"]}
 
-    assert gate["per_test_alpha_exact"] == "1/60"
+    assert gate["reference_symbols"] == ["SPY", "MDY"]
+    assert gate["per_test_alpha_exact"] == "1/120"
     assert gate["reference_null"] == (
         "uniform selection of exclusion dates without replacement from the deterministic "
         "1,499-session population"
     )
     assert "neither proves missing-completely-at-random" in gate["interpretation_limit"]
-    assert gate["rejection_counts_by_total_exclusions"] == {"5": 4, "6": 5, "7": 5}
+    assert gate["rejection_counts_by_total_exclusions"] == {"5": 5, "6": 5, "7": 6}
     assert gate["finite_population_sessions"] == 1_499
     assert gate["tail_size_sessions"] == 375
     assert gate["exact_hypergeometric_tail_probabilities_at_rejection_count"] == {
-        "5": "0.015507647780",
+        "5": "0.000960330049",
         "6": "0.004572816581",
-        "7": "0.012724502532",
+        "7": "0.001312142201",
     }
     for draws, rejection_count in gate["rejection_counts_by_total_exclusions"].items():
         probability = _hypergeometric_tail_probability(
@@ -647,17 +814,19 @@ def test_spy_bias_gate_has_objective_tail_thresholds_and_unavailable_failure() -
         assert probability.quantize(Decimal("0.000000000001")) == Decimal(
             gate["exact_hypergeometric_tail_probabilities_at_rejection_count"][draws]
         )
-        assert probability < Decimal(1) / Decimal(60)
-    assert _mock_spy_bias_failures(policy, {0, 10, 20, 25, 30}, metrics) == set()
-    assert _mock_spy_bias_failures(policy, {15, 36, 37, 38, 39}, metrics) == {
-        "high-absolute-return",
-        "high-range",
+        assert probability < Decimal(1) / Decimal(120)
+    assert _mock_morning_bias_failures(policy, {0, 10, 20, 25, 30}, metrics_by_symbol) == set()
+    assert _mock_morning_bias_failures(policy, {35, 36, 37, 38, 39}, metrics_by_symbol) == {
+        "SPY-high-absolute-return",
+        "SPY-high-range",
+        "MDY-high-absolute-return",
+        "MDY-high-range",
     }
 
-    unavailable = dict(metrics)
-    unavailable[20] = None
-    assert _mock_spy_bias_failures(policy, {0, 10, 20, 25, 30}, unavailable) == {
-        "spy-diagnostic-unavailable"
+    unavailable = {symbol: dict(values) for symbol, values in metrics_by_symbol.items()}
+    unavailable["MDY"][20] = None
+    assert _mock_morning_bias_failures(policy, {0, 10, 20, 25, 30}, unavailable) == {
+        "morning-diagnostic-unavailable"
     }
 
 
@@ -713,14 +882,37 @@ def test_mock_completeness_detects_missing_bars_across_sessions_and_spy() -> Non
 
 def test_mock_transport_paginates_and_denies_ungranted_actions() -> None:
     plan = _load(_PLAN_PATH)
+    qualification = plan["source_qualification"]
     calls = {"credential_loads": 0, "fetches": 0, "strategies": 0}
     request_calls: list[dict[str, Any]] = []
     synthetic_credentials = object()
-    start = "2025-12-01T14:30:00Z"
-    end = "2025-12-12T20:55:00Z"
-    requests = _qualification_requests(plan, start=start, end=end)
+    expected_range_identities = [
+        ("normal-2020-07-27", "2020-07-27T13:30:00Z", "2020-07-27T19:55:00Z"),
+        ("quarantine-2020-12-04", "2020-12-04T14:30:00Z", "2020-12-04T20:55:00Z"),
+        ("quarantine-2021-02-03", "2021-02-03T14:30:00Z", "2021-02-03T20:55:00Z"),
+        ("quarantine-2021-02-05", "2021-02-05T14:30:00Z", "2021-02-05T20:55:00Z"),
+        ("quarantine-2021-02-10", "2021-02-10T14:30:00Z", "2021-02-10T20:55:00Z"),
+        ("quarantine-2021-02-22", "2021-02-22T14:30:00Z", "2021-02-22T20:55:00Z"),
+        ("early-close-2022-11-25", "2022-11-25T14:30:00Z", "2022-11-25T17:55:00Z"),
+        ("normal-2023-07-17", "2023-07-17T13:30:00Z", "2023-07-17T19:55:00Z"),
+        ("distribution-2024-06-10", "2024-06-10T13:30:00Z", "2024-06-10T19:55:00Z"),
+        ("distribution-2024-06-11", "2024-06-11T13:30:00Z", "2024-06-11T19:55:00Z"),
+        ("distribution-2024-06-12", "2024-06-12T13:30:00Z", "2024-06-12T19:55:00Z"),
+        (
+            "pagination-split-2025-12-01-to-2025-12-12",
+            "2025-12-01T14:30:00Z",
+            "2025-12-12T20:55:00Z",
+        ),
+        ("normal-2026-07-15", "2026-07-15T13:30:00Z", "2026-07-15T19:55:00Z"),
+    ]
+    assert [
+        (item["range_id"], item["start_inclusive"], item["end_inclusive"])
+        for item in qualification["request_ranges"]
+    ] == expected_range_identities
+    requests = _qualification_requests(plan)
     expected_requests = [
         {
+            "chain_id": f"{range_id}--{chain_suffix}",
             "method": "GET",
             "url": "https://data.alpaca.markets/v2/stocks/bars",
             "params": {
@@ -735,9 +927,12 @@ def test_mock_transport_paginates_and_denies_ungranted_actions() -> None:
                 "asof": "2026-07-31",
             },
         }
-        for adjustment in ("raw", "split,spin-off")
+        for range_id, start, end in expected_range_identities
+        for adjustment, chain_suffix in (("raw", "raw"), ("split,spin-off", "split-spin-off"))
     ]
-    maximum_pages = plan["full_acquisition_design"]["maximum_pages_per_chain"]
+    maximum_pages = max(
+        item["maximum_pages_per_adjustment_view"] for item in qualification["request_ranges"]
+    )
     assert requests == expected_requests
 
     def load_credentials() -> object:
@@ -748,12 +943,15 @@ def test_mock_transport_paginates_and_denies_ungranted_actions() -> None:
         assert credentials is synthetic_credentials
         calls["fetches"] += 1
         request_calls.append(deepcopy(request))
-        adjustment = request["params"]["adjustment"]
+        chain_id = request["chain_id"]
         token = request["params"].get("page_token")
-        if token is None:
-            return {"rows": [start], "next_page_token": f"{adjustment}-page-2"}
-        assert token == f"{adjustment}-page-2"
-        return {"rows": [end], "next_page_token": None}
+        if chain_id.startswith("pagination-split"):
+            if token is None:
+                return {"rows": [chain_id], "next_page_token": f"{chain_id}-page-2"}
+            assert token == f"{chain_id}-page-2"
+            return {"rows": [f"{chain_id}-page-2"], "next_page_token": None}
+        assert token is None
+        return {"rows": [chain_id], "next_page_token": None}
 
     with pytest.raises(PermissionError, match="authority is false"):
         _run_mock_transport(
@@ -774,22 +972,24 @@ def test_mock_transport_paginates_and_denies_ungranted_actions() -> None:
         fetch=fetch,
         maximum_pages=maximum_pages,
     )
-    assert rows == [start, end, start, end]
+    assert len(rows) == qualification["transport_budget"]["expected_http_responses"] == 28
     assert calls["credential_loads"] == 1
-    assert calls["fetches"] == 4
-    assert [request["params"]["adjustment"] for request in request_calls] == [
-        "raw",
-        "raw",
-        "split,spin-off",
-        "split,spin-off",
+    assert calls["fetches"] == 28
+    first_page_calls = [
+        request for request in request_calls if "page_token" not in request["params"]
     ]
-    assert "page_token" not in request_calls[0]["params"]
-    assert request_calls[1]["params"]["page_token"] == "raw-page-2"
+    assert first_page_calls == expected_requests
+    pagination_calls = [request for request in request_calls if "page_token" in request["params"]]
+    assert len(pagination_calls) == 2
+    assert all(
+        request["params"]["page_token"] == f"{request['chain_id']}-page-2"
+        for request in pagination_calls
+    )
 
     missing_feed = deepcopy(requests)
     missing_feed[0]["params"].pop("feed")
     extended_end = deepcopy(requests)
-    extended_end[0]["params"]["end"] = "2025-12-12T21:00:00Z"
+    extended_end[0]["params"]["end"] = "2020-07-27T20:00:00Z"
     for invalid_requests in (missing_feed, extended_end):
         credential_loads = calls["credential_loads"]
         with pytest.raises(ValueError, match="differs from the frozen"):
