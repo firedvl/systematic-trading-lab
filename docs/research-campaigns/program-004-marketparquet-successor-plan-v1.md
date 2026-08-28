@@ -217,9 +217,10 @@ execution.
 ## Later full acquisition
 
 After a qualification pass, independent exact-byte review, and separate user authority, a later phase
-may acquire only the 1,511 expected `etf_5min` date files from June 26, 2020 through July 31, 2026. It
-would reuse the exact fifteen qualified files and download at most 1,496 more. Source bytes are capped
-at 8 GiB with 16 GiB working storage.
+may acquire only the 1,531 expected `etf_5min` date files from June 26, 2020 through July 31, 2026:
+twenty context sessions plus 1,511 exposed evaluation sessions. It would reuse the exact fifteen
+qualified files and download at most 1,516 more. Source bytes are capped at 8 GiB with 16 GiB working
+storage.
 
 Full admission keeps Program 003's missing-data policy unchanged: an incomplete required bar excludes
 the whole thirteen-symbol session; no symbol is dropped and no bar, provider, or date is substituted.

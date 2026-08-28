@@ -409,9 +409,13 @@
     "exact_date_range": {
       "start": "2020-06-26",
       "end": "2026-07-31",
-      "expected_xnys_date_files": 1511
+      "required_context_date_files": 20,
+      "exposed_evaluation_date_files": 1511,
+      "expected_xnys_date_files": 1531
     },
-    "download_scope": "Only etf_5min files for the exact expected XNYS dates. Reuse the exact fifteen qualification files; download at most 1,496 additional files.",
+    "qualification_date_files_reused": 15,
+    "maximum_additional_date_files": 1516,
+    "download_scope": "Only etf_5min files for the exact expected XNYS dates. Reuse the exact fifteen qualification files; download at most 1,516 additional files.",
     "maximum_total_source_bytes": 8589934592,
     "working_disk_reservation_bytes": 17179869184,
     "size_basis": "The complete 2000-present ETF five-minute archive is advertised as 6.8 GB and recent whole-universe date files are about 3 MB. Exact target-range bytes are unknowable until the post-purchase manifest; 8 GiB source and 16 GiB working caps fail closed above that envelope.",
@@ -652,5 +656,5 @@
       "use": "fixed December 2025 split qualification controls"
     }
   ],
-  "plan_fingerprint": "e6d228a3d256e611985f2185d1db50cba2481b2a441977e71f46903b1876d19b"
+  "plan_fingerprint": "2b740810f1365d20c11d1cf3bb83cdd0e06e72c30a5070ff0648031f29d893fc"
 }
