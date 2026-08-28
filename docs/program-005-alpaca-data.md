@@ -35,13 +35,34 @@ uv run trading-lab data acquire program-005 preflight --scope qualification
 uv run trading-lab data acquire program-005 preflight --scope full
 ```
 
-The real command is intentionally unavailable without a separately reviewed active authority file:
+After the v2 proposal and its finding-free review are merged, the user must separately authorize the
+exact root printed in the readiness handoff. Activation derives the authority from the fixed
+repository artifacts; it does not accept an operator-written authority file:
 
 ```console
+uv run trading-lab data acquire program-005 activate \
+  --scope qualification \
+  --authorization-root EXACT_USER_AUTHORIZED_ROOT
+
 uv run trading-lab data acquire program-005 run \
   --scope qualification \
-  --authority path/to/active-authority.json
+  --authorization-root EXACT_USER_AUTHORIZED_ROOT
 ```
+
+The root is the external authorization input. A newly computed root for changed artifacts has no
+user authority. The loader reconstructs the authority from the exact proposal, review, scientific
+contract, and implementation manifest, then requires canonical equality with the create-only file
+under `.trading-lab/program-005-free-alpaca/qualification/active-authority.json`. It also requires a
+clean `HEAD == main == origin/main`, rejects changes to authority-relevant source after review, and
+revalidates the whole chain under the run lock before publishing the one-use claim or loading
+credentials. Later control-only commits may move `main` when the reviewed implementation bytes stay
+unchanged.
+
+Artifact hashes prove identity; they do not grant authority by themselves. Computing or rehashing a
+proposal, review, or authority cannot transfer the user's authorization to those new bytes. The
+local tool assumes the invoking user and host administrator are trusted, as stated in the repository
+threat model. Deleting or replacing the complete local authority store invalidates its evidence; it
+is not a supported reset or a new authorization.
 
 The full-scope preflight builds the future deterministic request set, but full execution remains
 fail-closed until exact qualification dataset bytes, its terminal receipt, and a finding-free

@@ -256,9 +256,9 @@ def parser() -> argparse.ArgumentParser:
     program_005 = acquire_program.add_parser(
         "program-005", help="reproduce the Program 005 Alpaca SIP dataset"
     )
-    program_005.add_argument("action", choices=("preflight", "run"))
+    program_005.add_argument("action", choices=("preflight", "activate", "run"))
     program_005.add_argument("--scope", choices=("qualification", "full"), required=True)
-    program_005.add_argument("--authority", type=Path)
+    program_005.add_argument("--authorization-root")
     for name in ("validate", "describe"):
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
@@ -1263,23 +1263,39 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
     if arguments.data_command == "acquire":
         if arguments.acquire_program != "program-005":
             raise ValueError("unsupported private acquisition program")
-        from .program_005_alpaca import credential_free_preflight, execute_acquisition
+        from .program_005_alpaca import (
+            activate_authority,
+            credential_free_preflight,
+            execute_acquisition,
+        )
 
         repository = Path(__file__).resolve().parents[2]
         if arguments.action == "preflight":
-            if arguments.authority is not None:
-                raise ValueError("Program 005 preflight does not accept an authority")
+            if arguments.authorization_root is not None:
+                raise ValueError("Program 005 preflight does not accept an authorization root")
             _print(credential_free_preflight(repository, arguments.scope))
             return 0
         if settings.mode is not TradingMode.RESEARCH:
             raise ValueError("Program 005 acquisition requires TRADING_LAB_MODE=research")
-        if arguments.authority is None:
-            raise ValueError("Program 005 run requires --authority")
+        if arguments.authorization_root is None:
+            raise ValueError("Program 005 activate and run require --authorization-root")
+        if arguments.action == "activate":
+            if arguments.scope != "qualification":
+                raise ValueError("Program 005 may activate only qualification authority")
+            _print(activate_authority(repository, arguments.authorization_root))
+            return 0
+        authority_path = (
+            repository
+            / ".trading-lab/program-005-free-alpaca"
+            / arguments.scope
+            / "active-authority.json"
+        )
         acquisition_result = execute_acquisition(
             repository,
             repository / ".trading-lab/program-005-free-alpaca",
             arguments.scope,
-            arguments.authority,
+            authority_path,
+            arguments.authorization_root,
         )
         _print(acquisition_result)
         return 0
