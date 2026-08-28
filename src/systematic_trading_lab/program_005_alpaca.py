@@ -1305,6 +1305,8 @@ def freeze_dataset(
     private_root: Path,
     *,
     source_commit: str,
+    program_id: str = "multi-hour-sector-etf-research-004",
+    credential_names: Sequence[str] = _CREDENTIAL_NAMES,
 ) -> Mapping[str, Any]:
     if scope not in {"qualification", "full"}:
         raise Program005Error("Program 005 freeze scope is invalid")
@@ -1409,7 +1411,7 @@ def freeze_dataset(
         missingness_sha256 = hashlib.sha256(missingness_contents.encode()).hexdigest()
         stable_identity = {
             "schema_version": "program-005-private-dataset-identity-v1",
-            "program_id": "multi-hour-sector-etf-research-004",
+            "program_id": program_id,
             "scope": scope,
             "source_commit": source_commit,
             "plan_sha256": _PLAN_SHA256,
@@ -1432,7 +1434,7 @@ def freeze_dataset(
             "pages": source_pages,
             "page_count": len(source_pages),
             "response_bytes": sum(int(page["byte_count"]) for page in source_pages),
-            "credential_names": list(_CREDENTIAL_NAMES),
+            "credential_names": list(credential_names),
             "credentials_stored": False,
         }
         private_manifest = {
@@ -1463,6 +1465,7 @@ def freeze_dataset(
             analytical_count,
             missingness,
             action_report,
+            program_id=program_id,
         )
         for filename, record in (
             ("source-manifest.json", source_manifest),
@@ -2801,12 +2804,14 @@ def _public_manifest(
     analytical_count: int,
     missingness: Mapping[str, Any],
     action_report: Mapping[str, Any],
+    *,
+    program_id: str = "multi-hour-sector-etf-research-004",
 ) -> Mapping[str, Any]:
     contract = _mapping(bundle.public_contract.get("provider_contract"), "provider contract")
     result = {
         "schema_version": "program-005-public-dataset-manifest-v1",
         "dataset_id": dataset_id,
-        "program_id": "multi-hour-sector-etf-research-004",
+        "program_id": program_id,
         "scope": scope,
         "provider": contract.get("provider"),
         "feed": contract.get("feed"),

@@ -15,6 +15,11 @@ create-only; a provider correction creates a new dataset identity. See
 [Program 005 private Alpaca data](program-005-alpaca-data.md) and the fingerprinted
 `config/research/program-005-private-data-retention-policy-v1.json` policy.
 
+Prospective Program 006 preserves those public/private rules under the separate Git-ignored
+`.trading-lab/program-006-free-alpaca/` root. Its credential-presence command reports names only;
+credential values remain process-environment-only and never enter manifests or logs. See
+[Program 006 Alpaca source qualification](program-006-alpaca-qualification.md).
+
 ## Rapid Research inputs
 
 Rapid Research can read immutable cataloged daily datasets without writing controlled experiment state. It can also import a complete user-supplied daily CSV or Parquet file into its separate `rapid-research/datasets/` namespace. The local importer requires exact `timestamp,symbol,open,high,low,close,volume` fields, UTC midnight timestamps, increasing rows per symbol, no duplicate bars, valid OHLC relationships, nonnegative integer volume, and complete XNYS sessions for every included symbol.

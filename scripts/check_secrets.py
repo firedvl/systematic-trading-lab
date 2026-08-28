@@ -15,12 +15,12 @@ from typing import Any
 PATTERNS = (
     re.compile(r"(?i)(?:secret|token|password|api[_-]?key)\s*=\s*['\"][^'\"]+['\"]"),
     re.compile(r"(?m)^\s*(?:APCA_API_KEY_ID|APCA_API_SECRET_KEY)\s*=\s*\S+"),
-    re.compile(r"(?m)^\s*(?:export\s+)?PROGRAM_005_ALPACA_API_(?:KEY_ID|SECRET_KEY)\s*=\s*\S+"),
+    re.compile(r"(?m)^\s*(?:export\s+)?PROGRAM_00[56]_ALPACA_API_(?:KEY_ID|SECRET_KEY)\s*=\s*\S+"),
     re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
 )
-PROGRAM_005_JSON_CREDENTIAL = re.compile(
-    r"""["']PROGRAM_005_ALPACA_API_(?:KEY_ID|SECRET_KEY)["']\s*:\s*\S+"""
+PROGRAM_JSON_CREDENTIAL = re.compile(
+    r"""["']PROGRAM_00[56]_ALPACA_API_(?:KEY_ID|SECRET_KEY)["']\s*:\s*\S+"""
 )
 
 PRIVATE_MARKET_DATA_SUFFIXES = frozenset(
@@ -44,9 +44,10 @@ PUBLIC_MARKET_DATA_ROOTS = (
     "datasets/",
     "market-data/",
     "program-005-free-alpaca/",
+    "program-006-free-alpaca/",
     "raw-data/",
 )
-PUBLIC_PROGRAM_005_JSON = frozenset(
+PUBLIC_PROGRAM_JSON = frozenset(
     {
         "config/research/program-005-alpaca-public-contract-evidence-v1.json",
         "config/research/program-005-authority-binding-repair-implementation-independent-review-v1.json",
@@ -61,6 +62,9 @@ PUBLIC_PROGRAM_005_JSON = frozenset(
         "config/research/program-005-source-qualification-readiness-independent-review-v1.json",
         "config/research/program-005-source-qualification-terminal-failure-independent-review-v1.json",
         "config/research/program-005-source-qualification-terminal-failure-v1.json",
+        "config/research/program-006-credential-safe-qualification-implementation-independent-review-v1.json",
+        "config/research/program-006-source-qualification-authority-proposal-independent-review-v1.json",
+        "config/research/program-006-source-qualification-authority-proposal-v1.json",
     }
 )
 _PROVIDER_BAR_KEYS = frozenset({"t", "o", "h", "l", "c", "v"})
@@ -120,9 +124,9 @@ def main() -> int:
             suffix in PRIVATE_BINARY_DATA_SUFFIXES
             or normalized.startswith(PUBLIC_MARKET_DATA_ROOTS)
             or (
-                "program-005" in normalized
+                ("program-005" in normalized or "program-006" in normalized)
                 and suffix in PRIVATE_MARKET_DATA_SUFFIXES
-                and normalized not in PUBLIC_PROGRAM_005_JSON
+                and normalized not in PUBLIC_PROGRAM_JSON
             )
         ):
             findings.append(f"{path}:private-market-data-path")
@@ -138,7 +142,7 @@ def main() -> int:
             continue
         for number, line in enumerate(text.splitlines(), 1):
             if any(pattern.search(line) for pattern in PATTERNS) or (
-                suffix in {".json", ".jsonl"} and PROGRAM_005_JSON_CREDENTIAL.search(line)
+                suffix in {".json", ".jsonl"} and PROGRAM_JSON_CREDENTIAL.search(line)
             ):
                 findings.append(f"{path}:{number}")
     if findings:

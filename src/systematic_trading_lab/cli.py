@@ -259,6 +259,11 @@ def parser() -> argparse.ArgumentParser:
     program_005.add_argument("action", choices=("preflight", "activate", "run"))
     program_005.add_argument("--scope", choices=("qualification", "full"), required=True)
     program_005.add_argument("--authorization-root")
+    program_006 = acquire_program.add_parser(
+        "program-006", help="run the credential-safe Program 006 Alpaca SIP qualification"
+    )
+    program_006.add_argument("action", choices=("credential-preflight", "activate", "run"))
+    program_006.add_argument("--authorization-root")
     for name in ("validate", "describe"):
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
@@ -1261,6 +1266,36 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         )
         return 0
     if arguments.data_command == "acquire":
+        if arguments.acquire_program == "program-006":
+            from .program_006_alpaca import (
+                activate_authority as activate_program_006_authority,
+            )
+            from .program_006_alpaca import credential_presence_preflight
+            from .program_006_alpaca import execute_qualification as execute_program_006
+
+            repository = Path(__file__).resolve().parents[2]
+            if arguments.action == "credential-preflight":
+                if arguments.authorization_root is not None:
+                    raise ValueError(
+                        "Program 006 credential preflight does not accept an authorization root"
+                    )
+                missing = credential_presence_preflight()
+                print("PASS" if not missing else "\n".join(f"MISSING: {name}" for name in missing))
+                return 0 if not missing else 1
+            if settings.mode is not TradingMode.RESEARCH:
+                raise ValueError("Program 006 qualification requires TRADING_LAB_MODE=research")
+            if arguments.authorization_root is None:
+                raise ValueError("Program 006 activate and run require --authorization-root")
+            if arguments.action == "activate":
+                _print(activate_program_006_authority(repository, arguments.authorization_root))
+                return 0
+            program_006_result = execute_program_006(
+                repository,
+                repository / ".trading-lab/program-006-free-alpaca",
+                arguments.authorization_root,
+            )
+            _print(program_006_result)
+            return 0
         if arguments.acquire_program != "program-005":
             raise ValueError("unsupported private acquisition program")
         from .program_005_alpaca import (
