@@ -115,11 +115,15 @@ Cash dividends are not requested as an adjustment and create no cash credit. Eve
 starts after the open and every position closes in the same session, so the strategy never owns an
 overnight distribution entitlement. A complete ordinary ex-dividend session remains eligible.
 
-The paired analytical view handles documented spin-off price factors. Before dataset freeze, an
-issuer- or exchange-backed action ledger must explain every split or spin-off factor change. An
-ambiguous effective date, factor, action identity, or factor that changes within a session excludes
-the affected session and counts against the loss ceiling. An unresolved ledger fails admission.
-Later provider corrections create a new dataset version and cannot overwrite frozen pages.
+The qualification sample contains no issuer- or exchange-identified realized spin-off. Its paired
+chains can qualify explicit `split,spin-off` request serialization and the realized split controls,
+but they cannot source-qualify realized spin-off semantics. Before dataset admission, an issuer- or
+exchange-backed action ledger must explain every in-range split or spin-off factor change. Every
+realized spin-off requires exact evidence for the symbol, action, effective date, and factor, plus
+exact raw-versus-analytical price and reciprocal-volume factor validation with one constant factor
+inside each affected symbol-session. Ambiguity, incompatibility, or an incomplete ledger stops the
+entire dataset admission; dropping only the affected session cannot cure an unresolved action
+contract. Later provider corrections create a new dataset version and cannot overwrite frozen pages.
 
 ## Missing-session disposition
 
@@ -129,14 +133,24 @@ missing bar excludes the whole session from every configuration, benchmark, and 
 The program never drops one symbol, reranks, fills, interpolates, reconstructs, blends, or replaces a
 date.
 
-The five sessions already known to contain nine missing MDY coordinates are a fixed quarantine:
+The five sessions already known to contain nine missing MDY coordinates form one immutable
+`pre-exposed design quarantine`:
 
 - December 4, 2020
 - February 3, 5, 10, and 22, 2021
 
-They stay excluded even if a later response contains every bar. This makes later provider corrections
-irrelevant to campaign membership. It also avoids pretending the exposed defect is a random sample
-from future provider behavior.
+Eligibility is incident-specific: the structural incident had to be fully enumerated before any
+Program 005 acquisition, strategy execution, or return observation. Program 005 hash-binds the
+corrected Program 002 incident at
+`ebc8f536d51fd701f9fc26f28630abff9f23a0b5edb3e794a5a3016337273618` and its finding-free review
+at `18ee95730f5af8698ff090c74df42774e1294dea8ff5552ad6c3b16495566e53`. The reviewed union of the
+two December synthesized coordinates and seven February missing intervals must equal all nine
+Program 005 coordinates exactly. A missing coordinate, added coordinate, or selected subset makes
+the class ineligible and stops admission.
+
+The five dates stay excluded even if a later response contains every bar. This makes later provider
+corrections irrelevant to campaign membership. The class cannot accept a future incident, makes no
+claim that the omissions were random, and provides no evidence of Alpaca's general reliability.
 
 The global ceiling is not a new number chosen for Alpaca. Program 003 froze and independently reviewed
 the source-neutral `7 / 1499` ceiling while Tiingo was the selected source. That plan allowed at most
@@ -145,12 +159,13 @@ one-half-percent program-wide accumulation limit: `floor(1499 * 0.005) = 7`. It 
 known MDY pattern failed its concentration controls. Program 005 preserves that exact pre-existing
 ceiling, leaving at least 1,492 sessions, and separately reviews only the fixed-date disposition. This
 is a source-coverage control, not a power calculation, confidence interval, or missing-at-random claim.
-Only afterward does the fixed quarantine consume five slots and leave at most two unexpected
+Only afterward does the pre-exposed design quarantine consume five slots and leave at most two unexpected
 exclusions.
 
-The fixed quarantine has one date in `discovery-01` and four in `discovery-02`. Those exact dates are
+The pre-exposed design quarantine has one date in `discovery-01` and four in `discovery-02`. Those exact dates are
 design exclusions whether or not future provider data is complete. They all count against the global
-budget and cannot gain another member. They remove no walk-forward test or controlled observation. The
+budget and cannot gain another member. They remove no initial-context, walk-forward test, or controlled
+observation. The
 three discovery blocks have 123, 126, and 125 full sessions before quarantine and 122, 122, and 125
 afterward. Each remains above the 120-session floor derived as twice the inherited 60-active-session
 gate, and the original three-session difference in block opportunity does not increase. No two fixed
@@ -169,11 +184,13 @@ at the 11:40 entry, and one at the 11:45 entry; no exact strategy clock may lose
 session. These references do not assert random omissions. The exact counts, floors, and rejection
 rules are mandatory and reviewer override is prohibited.
 
-The cluster grants no generalized source-loss tolerance. Unexpected exclusions must be isolated: at
+The class grants no generalized source-loss tolerance. The inherited recurrence controls apply to
+every future unexpected exclusion, never to expand or waive this already bounded incident. Unexpected
+exclusions must be isolated: at
 most one per calendar year, one per fixed discovery or test block, and one per rolling 63 expected
 sessions; none may be consecutive or adjacent to another exclusion; and at most one may have the same
 missing symbol per rolling 252 sessions. No unexpected exclusion may join a block or rolling-quarter
-window containing the fixed quarantine, and no new MDY exclusion may join its rolling-year window. The
+window containing the pre-exposed design quarantine, and no new MDY exclusion may join its rolling-year window. The
 initial twenty context sessions allow zero loss.
 
 Before admission, a structural report must list exclusions and coordinates by symbol, month, year,
@@ -184,9 +201,9 @@ Each deterministic quartile sorts by metric and then date, placing 375 of the 1,
 tested tail. The six tests use the high-return, high-range, and low-volume tails with Bonferroni alpha
 `0.05 / 6 = 1 / 120`. Admission fails at five tail members among five exclusions, five among six, or
 six among seven. Under the exact uniform-date randomization reference, the hypergeometric tail
-probabilities are `0.000960330049`, `0.004572816581`, and `0.001312142201`. The fixed dates were not
+probabilities are `0.000960330049`, `0.004572816581`, and `0.001312142201`. The pre-exposed dates were not
 randomly sampled, so these values do not prove missing-completely-at-random behavior and cannot admit
-the quarantine by themselves. They supplement the deterministic calendar, clock, discovery-only,
+the design quarantine by themselves. They supplement the deterministic calendar, clock, discovery-only,
 retention, balance, nonadjacency, and no-expansion gates. A missing required SPY or MDY bar makes the
 diagnostic unavailable and fails admission. No reviewer may override or reinterpret the result, and no
 threshold may be relaxed after acquisition.
@@ -221,7 +238,7 @@ The qualification is designed but contract-gated and unauthorized. It contains n
 calculation. It uses all thirteen symbols, both adjustment views, 120 requests per minute, one
 credential load, and twenty-two exact sessions:
 
-- The five fixed MDY quarantine sessions.
+- The five pre-exposed MDY design-quarantine sessions.
 - Normal controls on July 27, 2020; July 17, 2023; and July 15, 2026.
 - The November 25, 2022 early close.
 - June 10-12, 2024 around the fixed IWM distribution control.
@@ -251,12 +268,17 @@ and 43,680 paired rows before the permitted known gaps. Twelve samples use one-s
 December block contains 10,140 rows per view, so `limit=10000` must exercise real token pagination.
 The manifest therefore has thirteen ranges and twenty-six logical chains. It expects twenty-eight
 HTTP responses and caps them at sixty, 64 MiB, and one credential load. A transport failure has no
-retry under the one-use authority.
+retry under the one-use authority. Each singleton chain is capped at two pages; each retained
+ten-session December chain is capped at six. The adapter must enforce those chain-specific caps, the
+aggregate sixty-response cap, and the 64 MiB cap independently.
 
 A pass requires exact inclusive boundaries, token exhaustion, unique coordinates, valid finite
 OHLCV, matching paired coordinate sets, reproducible parse and hash results, constant action factors,
 reciprocal split volume, action-ledger reconciliation, and no unexpected missing bar. The nine known
-MDY coordinates may exist or remain absent. The five dates stay quarantined in either case.
+MDY coordinates may exist or remain absent. The five dates stay quarantined in either case. The
+receipt must state that the sample contains no realized spin-off and therefore does not qualify
+realized spin-off semantics. Every later in-range realized spin-off remains blocked on issuer or
+exchange evidence and exact paired-factor validation before dataset admission.
 
 A pass publishes only a structural receipt. A failure publishes a terminal structural receipt and
 stops without alternate parameters or another provider.

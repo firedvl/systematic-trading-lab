@@ -27,6 +27,11 @@ from systematic_trading_lab.multi_hour_sector_etf_synthetic import (
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _PLAN_PATH = "config/research/program-005-free-alpaca-successor-plan-v1.json"
 _EVIDENCE_PATH = "config/research/program-005-alpaca-public-contract-evidence-v1.json"
+_INCIDENT_PATH = "config/research/program-002-exposed-acquisition-completeness-failure-v3.json"
+_INCIDENT_REVIEW_PATH = (
+    "config/research/"
+    "program-002-exposed-acquisition-completeness-failure-independent-review-v2.json"
+)
 _PROGRAM_003_PATH = "config/research/program-003-low-cost-successor-plan-v1.json"
 _PROGRAM_002_PATH = "config/research/cross-sectional-sector-etf-program-002-plan-proposal-v1.json"
 _SYMBOLS = (
@@ -93,7 +98,9 @@ def _run_mock_transport(
     expected_requests: list[dict[str, Any]],
     load_credentials: Any,
     fetch: Any,
-    maximum_pages: int = 4,
+    maximum_pages_by_chain_id: dict[str, int],
+    maximum_http_responses: int,
+    maximum_response_bytes: int,
 ) -> list[Any]:
     if not authorized:
         raise PermissionError("source request authority is false")
@@ -115,17 +122,30 @@ def _run_mock_transport(
             "",
         ):
             raise PermissionError("endpoint is outside the frozen GET-only origin and path")
+    if set(maximum_pages_by_chain_id) != {request["chain_id"] for request in requests}:
+        raise ValueError("page-cap manifest differs from the frozen request chains")
 
     credentials = load_credentials()
     rows: list[Any] = []
+    response_count = 0
+    response_bytes = 0
     for request in requests:
         token: str | None = None
         seen_tokens: set[str] = set()
-        for _ in range(maximum_pages):
+        for _ in range(maximum_pages_by_chain_id[request["chain_id"]]):
+            if response_count >= maximum_http_responses:
+                raise ValueError("response cap exceeded")
             page_request = deepcopy(request)
             if token is not None:
                 page_request["params"]["page_token"] = token
             page = fetch(credentials, page_request)
+            response_count += 1
+            page_bytes = page.get("encoded_size_bytes")
+            if type(page_bytes) is not int or page_bytes < 0:
+                raise ValueError("encoded response byte count is required")
+            response_bytes += page_bytes
+            if response_bytes > maximum_response_bytes:
+                raise ValueError("response byte cap exceeded")
             if "next_page_token" not in page:
                 raise ValueError("next_page_token field is required")
             rows.extend(page["rows"])
@@ -186,7 +206,7 @@ def _mock_admission(
     ):
         failures.add("fixed-block")
     quarantine_overlap_allowed = limits[
-        "unexpected_exclusion_in_block_or_rolling_63_window_containing_the_known_quarantine_allowed"
+        "unexpected_exclusion_in_block_or_rolling_63_window_containing_the_pre_exposed_design_quarantine_allowed"
     ]
     if not quarantine_overlap_allowed and quarantine_blocks.intersection(unexpected_blocks):
         failures.add("quarantine-block")
@@ -238,6 +258,71 @@ def _mock_admission(
     if not action_ledger_resolved:
         failures.add("action-ledger")
     return excluded, failures
+
+
+def _mock_pre_exposed_quarantine_failures(
+    *,
+    facts: dict[str, int | bool],
+    policy: dict[str, Any],
+) -> set[str]:
+    contract = policy["concentration_limits"][
+        "pre_exposed_design_quarantine_concentration_contract"
+    ]
+    calendar = contract["calendar_concentration_contract"]
+    clock = contract["clock_concentration_contract"]
+    loss = policy["global_loss_limit"]
+    failures: set[str] = set()
+    boolean_gates = {
+        "return_blind": "return-blind",
+        "incident_inventory_complete": "incident-inventory",
+        "membership_exact": "bounded-membership",
+        "fixed_block_counts_exact": "fixed-block-counts",
+        "morning_bias_gate_passed": "morning-bias",
+    }
+    failures.update(failure for fact, failure in boolean_gates.items() if not facts[fact])
+    if facts["selected_subset_allowed"]:
+        failures.add("selected-subset")
+    if facts["future_membership_allowed"]:
+        failures.add("future-membership")
+    if facts["eligibility_reusable_for_future_incidents"]:
+        failures.add("reusable-eligibility")
+    if facts["post_acquisition_change_or_waiver_allowed"]:
+        failures.add("post-acquisition-waiver")
+    for scope in ("initial_context", "walk_forward_test", "controlled"):
+        if facts[f"{scope}_session_count"]:
+            failures.add(f"{scope}-scope")
+    if (
+        facts["minimum_block_retention"]
+        < contract["minimum_retained_full_sessions_per_discovery_block"]
+    ):
+        failures.add("block-retention")
+    if facts["post_block_count_difference"] > facts["pre_block_count_difference"]:
+        failures.add("block-balance")
+    if (
+        facts["maximum_consecutive_sessions"]
+        > contract["maximum_consecutive_fixed_quarantine_sessions"]
+    ):
+        failures.add("adjacent")
+    if (
+        facts["minimum_month_retention"]
+        < calendar["minimum_retained_full_sessions_per_affected_month"]
+    ):
+        failures.add("month-retention")
+    if (
+        facts["minimum_complete_year_retention"]
+        < calendar["minimum_retained_full_sessions_per_affected_complete_calendar_year"]
+    ):
+        failures.add("year-retention")
+    if facts["maximum_coordinates_at_one_clock"] >= clock["rejection_count_at_one_clock"]:
+        failures.add("five-minute-clock")
+    if (
+        facts["maximum_sessions_at_one_strategy_clock"]
+        > clock["maximum_fixed_sessions_missing_at_any_exact_strategy_clock"]
+    ):
+        failures.add("strategy-clock")
+    if facts["quarantine_session_count"] > loss["pre_exposed_design_quarantine_count"]:
+        failures.add("global-budget")
+    return failures
 
 
 def _hypergeometric_tail_probability(
@@ -414,7 +499,7 @@ def test_qualification_sample_exercises_pagination_without_requiring_known_gaps(
     assert {session for item in request_ranges for session in item["session_dates"]} == {
         session
         for group in (
-            "known_quarantine_sessions",
+            "pre_exposed_design_quarantine_sessions",
             "normal_controls",
             "early_close_control",
             "distribution_neighborhood",
@@ -471,16 +556,65 @@ def test_qualification_sample_exercises_pagination_without_requiring_known_gaps(
         == 60
     )
     assert qualification["strategy_calculation_or_return_allowed"] is False
+    action_coverage = qualification["realized_corporate_action_coverage"]
+    assert action_coverage["issuer_identified_split_neighborhood_present"] is True
+    assert action_coverage["cash_distribution_neighborhood_present"] is True
+    assert action_coverage["issuer_or_exchange_identified_realized_spin_off_present"] is False
+    assert action_coverage["realized_spin_off_event_count"] == 0
+    assert "not source-qualified" in action_coverage["qualification_claim_limit"]
+    assert "stops dataset admission" in action_coverage["future_dataset_gate"]
 
 
 def test_missing_session_policy_is_whole_date_and_has_two_unexpected_slots() -> None:
     plan = _load(_PLAN_PATH)
     policy = plan["missing_data_policy"]
-    quarantine = policy["known_quarantine"]
+    quarantine = policy["pre_exposed_design_quarantine"]
     loss = policy["global_loss_limit"]
     limits = policy["concentration_limits"]
 
     assert quarantine["session_count"] == len(quarantine["sessions"]) == 5
+    assert quarantine["classification"] == "immutable pre-exposed design quarantine"
+    assert quarantine["incident_coordinate_count"] == 9
+    assert quarantine["incident_inventory_complete"] is True
+    assert quarantine["selected_subset_allowed"] is False
+    assert quarantine["future_membership_allowed"] is False
+    incident_binding = quarantine["incident_inventory_binding"]
+    assert incident_binding["incident_path"] == _INCIDENT_PATH
+    assert incident_binding["review_path"] == _INCIDENT_REVIEW_PATH
+    incident_path = _REPOSITORY / incident_binding["incident_path"]
+    incident_review_path = _REPOSITORY / incident_binding["review_path"]
+    incident = _load(incident_binding["incident_path"])
+    incident_review = _load(incident_binding["review_path"])
+    assert sha256(incident_path.read_bytes()).hexdigest() == incident_binding["incident_sha256"]
+    assert (
+        sha256(incident_review_path.read_bytes()).hexdigest() == incident_binding["review_sha256"]
+    )
+    assert incident["incident_fingerprint"] == incident_binding["incident_fingerprint"]
+    assert incident_review["review_fingerprint"] == incident_binding["review_fingerprint"]
+    assert incident_review["reviewed_corrected_incident"] == {
+        "path": incident_binding["incident_path"],
+        "sha256": incident_binding["incident_sha256"],
+        "fingerprint": incident_binding["incident_fingerprint"],
+    }
+    assert incident_review["verified_assertions"][
+        "only_the_two_authorized_december_coordinates_were_synthesized"
+    ]
+    assert incident_review["verified_assertions"][
+        "february_counts_and_seven_missing_coordinates_reproduced"
+    ]
+    incident_coordinates = [
+        coordinate
+        for segment in incident["completed_exposed_segments"]
+        for coordinate in segment.get("synthesized_coordinates", [])
+    ] + incident["failed_segment"]["missing_intervals"]
+    assert sorted(incident_coordinates) == sorted(
+        plan["source_qualification"]["known_mdy_coordinates"]
+    )
+    assert {coordinate.split("@", 1)[1][:10] for coordinate in incident_coordinates} == set(
+        quarantine["sessions"]
+    )
+    assert incident["protected_access"]["strategy_returns_or_candidates"] is False
+    assert incident["observed_at"][:10] < plan["created_date"]
     program_003 = _load(_PROGRAM_003_PATH)
     predecessor_chronology = program_003["chronology"]
     blocks = [
@@ -513,7 +647,7 @@ def test_missing_session_policy_is_whole_date_and_has_two_unexpected_slots() -> 
         for block in predecessor_chronology["discovery_blocks"]
     }
     fixed_counts = {block: count for block, count in fixed_counts.items() if count}
-    fixed_contract = limits["known_quarantine_concentration_contract"]
+    fixed_contract = limits["pre_exposed_design_quarantine_concentration_contract"]
     assert (
         fixed_counts
         == fixed_contract["fixed_counts_by_predeclared_discovery_block"]
@@ -522,7 +656,11 @@ def test_missing_session_policy_is_whole_date_and_has_two_unexpected_slots() -> 
             "discovery-02": 4,
         }
     )
-    assert fixed_contract["unexpected_recurrence_limits_apply"] is False
+    assert fixed_contract["inherited_recurrence_limits_apply_to_this_pre_exposed_incident"] is False
+    assert (
+        fixed_contract["inherited_recurrence_limits_apply_to_future_unexpected_exclusions"] is True
+    )
+    assert fixed_contract["eligibility_is_reusable_for_future_incidents"] is False
     assert fixed_contract["post_acquisition_change_or_waiver_allowed"] is False
     origin_path = _REPOSITORY / loss["origin_plan_path"]
     origin_review_path = _REPOSITORY / loss["origin_review_path"]
@@ -583,7 +721,29 @@ def test_missing_session_policy_is_whole_date_and_has_two_unexpected_slots() -> 
     ]
     assert (
         sum(start <= day <= end for day in quarantine_dates for start, end in test_ranges)
-        == (fixed_contract["fixed_quarantine_sessions_in_walk_forward_test_folds"])
+        == (fixed_contract["pre_exposed_quarantine_sessions_in_walk_forward_test_folds"])
+    )
+    chronology = plan["chronology_and_protected_boundaries"]
+    context_range = (
+        datetime.fromisoformat(chronology["context_start"]).date(),
+        datetime.fromisoformat(chronology["context_end"]).date(),
+    )
+    controlled_ranges = [
+        (
+            datetime.fromisoformat(chronology[key]["start"]).date(),
+            datetime.fromisoformat(chronology[key]["end"]).date(),
+        )
+        for key in ("controlled_a", "controlled_b")
+    ]
+    assert (
+        sum(context_range[0] <= day <= context_range[1] for day in quarantine_dates)
+        == fixed_contract["pre_exposed_quarantine_sessions_in_initial_context"]
+        == 0
+    )
+    assert (
+        sum(start <= day <= end for day in quarantine_dates for start, end in controlled_ranges)
+        == fixed_contract["pre_exposed_quarantine_sessions_in_controlled_blocks"]
+        == 0
     )
     exposed_dates = expected_sessions(
         datetime(2020, 7, 27, tzinfo=UTC), datetime(2021, 2, 22, 23, 59, tzinfo=UTC)
@@ -706,6 +866,138 @@ def test_missing_session_policy_is_whole_date_and_has_two_unexpected_slots() -> 
     assert policy["incomplete_session_action"].startswith("Exclude the whole session")
     assert policy["symbol_drop_or_rerank_allowed"] is False
     assert policy["forward_fill_backward_fill_interpolation_or_synthesis_allowed"] is False
+
+
+def test_pre_exposed_quarantine_negative_mocks_cover_every_fixed_gate() -> None:
+    policy = _load(_PLAN_PATH)["missing_data_policy"]
+    contract = policy["concentration_limits"][
+        "pre_exposed_design_quarantine_concentration_contract"
+    ]
+    calendar = contract["calendar_concentration_contract"]
+    clock = contract["clock_concentration_contract"]
+    facts: dict[str, int | bool] = {
+        "return_blind": policy["prospective_and_return_blind"],
+        "incident_inventory_complete": True,
+        "membership_exact": True,
+        "fixed_block_counts_exact": True,
+        "morning_bias_gate_passed": True,
+        "selected_subset_allowed": policy["pre_exposed_design_quarantine"][
+            "selected_subset_allowed"
+        ],
+        "future_membership_allowed": policy["pre_exposed_design_quarantine"][
+            "future_membership_allowed"
+        ],
+        "eligibility_reusable_for_future_incidents": contract[
+            "eligibility_is_reusable_for_future_incidents"
+        ],
+        "post_acquisition_change_or_waiver_allowed": contract[
+            "post_acquisition_change_or_waiver_allowed"
+        ],
+        "initial_context_session_count": contract[
+            "pre_exposed_quarantine_sessions_in_initial_context"
+        ],
+        "walk_forward_test_session_count": contract[
+            "pre_exposed_quarantine_sessions_in_walk_forward_test_folds"
+        ],
+        "controlled_session_count": contract[
+            "pre_exposed_quarantine_sessions_in_controlled_blocks"
+        ],
+        "minimum_block_retention": min(
+            contract["post_quarantine_full_trade_eligible_sessions_by_discovery_block"].values()
+        ),
+        "pre_block_count_difference": contract[
+            "pre_quarantine_maximum_discovery_block_session_count_difference"
+        ],
+        "post_block_count_difference": contract[
+            "post_quarantine_maximum_discovery_block_session_count_difference"
+        ],
+        "maximum_consecutive_sessions": contract[
+            "observed_maximum_consecutive_fixed_quarantine_sessions"
+        ],
+        "minimum_month_retention": min(
+            item["retained_full_sessions"] for item in calendar["affected_months"].values()
+        ),
+        "minimum_complete_year_retention": min(
+            item["retained_full_sessions"]
+            for item in calendar["affected_complete_calendar_years"].values()
+        ),
+        "maximum_coordinates_at_one_clock": clock["observed_maximum_coordinates_at_one_clock"],
+        "maximum_sessions_at_one_strategy_clock": max(
+            clock["fixed_sessions_missing_at_exact_strategy_clocks"].values()
+        ),
+        "quarantine_session_count": policy["pre_exposed_design_quarantine"]["session_count"],
+    }
+    assert _mock_pre_exposed_quarantine_failures(facts=facts, policy=policy) == set()
+
+    cases: tuple[tuple[str, int | bool, str], ...] = (
+        ("return_blind", False, "return-blind"),
+        ("incident_inventory_complete", False, "incident-inventory"),
+        ("membership_exact", False, "bounded-membership"),
+        ("fixed_block_counts_exact", False, "fixed-block-counts"),
+        ("morning_bias_gate_passed", False, "morning-bias"),
+        ("selected_subset_allowed", True, "selected-subset"),
+        ("future_membership_allowed", True, "future-membership"),
+        (
+            "eligibility_reusable_for_future_incidents",
+            True,
+            "reusable-eligibility",
+        ),
+        (
+            "post_acquisition_change_or_waiver_allowed",
+            True,
+            "post-acquisition-waiver",
+        ),
+        ("initial_context_session_count", 1, "initial_context-scope"),
+        ("walk_forward_test_session_count", 1, "walk_forward_test-scope"),
+        ("controlled_session_count", 1, "controlled-scope"),
+        (
+            "minimum_block_retention",
+            contract["minimum_retained_full_sessions_per_discovery_block"] - 1,
+            "block-retention",
+        ),
+        (
+            "post_block_count_difference",
+            int(facts["pre_block_count_difference"]) + 1,
+            "block-balance",
+        ),
+        (
+            "maximum_consecutive_sessions",
+            contract["maximum_consecutive_fixed_quarantine_sessions"] + 1,
+            "adjacent",
+        ),
+        (
+            "minimum_month_retention",
+            calendar["minimum_retained_full_sessions_per_affected_month"] - 1,
+            "month-retention",
+        ),
+        (
+            "minimum_complete_year_retention",
+            calendar["minimum_retained_full_sessions_per_affected_complete_calendar_year"] - 1,
+            "year-retention",
+        ),
+        (
+            "maximum_coordinates_at_one_clock",
+            clock["rejection_count_at_one_clock"],
+            "five-minute-clock",
+        ),
+        (
+            "maximum_sessions_at_one_strategy_clock",
+            clock["maximum_fixed_sessions_missing_at_any_exact_strategy_clock"] + 1,
+            "strategy-clock",
+        ),
+        (
+            "quarantine_session_count",
+            policy["global_loss_limit"]["pre_exposed_design_quarantine_count"] + 1,
+            "global-budget",
+        ),
+    )
+    for field, value, expected_failure in cases:
+        changed = dict(facts)
+        changed[field] = value
+        assert expected_failure in _mock_pre_exposed_quarantine_failures(
+            facts=changed,
+            policy=policy,
+        )
 
 
 def test_mock_admission_covers_threshold_concentration_and_action_failures() -> None:
@@ -930,9 +1222,13 @@ def test_mock_transport_paginates_and_denies_ungranted_actions() -> None:
         for range_id, start, end in expected_range_identities
         for adjustment, chain_suffix in (("raw", "raw"), ("split,spin-off", "split-spin-off"))
     ]
-    maximum_pages = max(
-        item["maximum_pages_per_adjustment_view"] for item in qualification["request_ranges"]
-    )
+    maximum_pages_by_chain_id = {
+        chain_id: item["maximum_pages_per_adjustment_view"]
+        for item in qualification["request_ranges"]
+        for chain_id in item["logical_chain_ids"]
+    }
+    transport_budget = qualification["transport_budget"]
+    assert sum(maximum_pages_by_chain_id.values()) == transport_budget["maximum_http_responses"]
     assert requests == expected_requests
 
     def load_credentials() -> object:
@@ -947,11 +1243,19 @@ def test_mock_transport_paginates_and_denies_ungranted_actions() -> None:
         token = request["params"].get("page_token")
         if chain_id.startswith("pagination-split"):
             if token is None:
-                return {"rows": [chain_id], "next_page_token": f"{chain_id}-page-2"}
+                return {
+                    "rows": [chain_id],
+                    "next_page_token": f"{chain_id}-page-2",
+                    "encoded_size_bytes": 1,
+                }
             assert token == f"{chain_id}-page-2"
-            return {"rows": [f"{chain_id}-page-2"], "next_page_token": None}
+            return {
+                "rows": [f"{chain_id}-page-2"],
+                "next_page_token": None,
+                "encoded_size_bytes": 1,
+            }
         assert token is None
-        return {"rows": [chain_id], "next_page_token": None}
+        return {"rows": [chain_id], "next_page_token": None, "encoded_size_bytes": 1}
 
     with pytest.raises(PermissionError, match="authority is false"):
         _run_mock_transport(
@@ -960,7 +1264,9 @@ def test_mock_transport_paginates_and_denies_ungranted_actions() -> None:
             expected_requests=expected_requests,
             load_credentials=load_credentials,
             fetch=fetch,
-            maximum_pages=maximum_pages,
+            maximum_pages_by_chain_id=maximum_pages_by_chain_id,
+            maximum_http_responses=transport_budget["maximum_http_responses"],
+            maximum_response_bytes=transport_budget["maximum_downloaded_bytes"],
         )
     assert calls == {"credential_loads": 0, "fetches": 0, "strategies": 0}
 
@@ -970,7 +1276,9 @@ def test_mock_transport_paginates_and_denies_ungranted_actions() -> None:
         expected_requests=expected_requests,
         load_credentials=load_credentials,
         fetch=fetch,
-        maximum_pages=maximum_pages,
+        maximum_pages_by_chain_id=maximum_pages_by_chain_id,
+        maximum_http_responses=transport_budget["maximum_http_responses"],
+        maximum_response_bytes=transport_budget["maximum_downloaded_bytes"],
     )
     assert len(rows) == qualification["transport_budget"]["expected_http_responses"] == 28
     assert calls["credential_loads"] == 1
@@ -999,13 +1307,15 @@ def test_mock_transport_paginates_and_denies_ungranted_actions() -> None:
                 expected_requests=expected_requests,
                 load_credentials=load_credentials,
                 fetch=fetch,
-                maximum_pages=maximum_pages,
+                maximum_pages_by_chain_id=maximum_pages_by_chain_id,
+                maximum_http_responses=transport_budget["maximum_http_responses"],
+                maximum_response_bytes=transport_budget["maximum_downloaded_bytes"],
             )
         assert calls["credential_loads"] == credential_loads
 
     def repeated_token_fetch(credentials: object, request: dict[str, Any]) -> dict[str, Any]:
         assert credentials is synthetic_credentials
-        return {"rows": [], "next_page_token": "repeat"}
+        return {"rows": [], "next_page_token": "repeat", "encoded_size_bytes": 1}
 
     with pytest.raises(ValueError, match="repeated next_page_token"):
         _run_mock_transport(
@@ -1014,8 +1324,89 @@ def test_mock_transport_paginates_and_denies_ungranted_actions() -> None:
             expected_requests=expected_requests[:1],
             load_credentials=load_credentials,
             fetch=repeated_token_fetch,
-            maximum_pages=maximum_pages,
+            maximum_pages_by_chain_id={
+                requests[0]["chain_id"]: maximum_pages_by_chain_id[requests[0]["chain_id"]]
+            },
+            maximum_http_responses=transport_budget["maximum_http_responses"],
+            maximum_response_bytes=transport_budget["maximum_downloaded_bytes"],
         )
+
+    def endless_page_fetch(credentials: object, request: dict[str, Any]) -> dict[str, Any]:
+        assert credentials is synthetic_credentials
+        token = request["params"].get("page_token")
+        return {
+            "rows": [],
+            "next_page_token": "page-2" if token is None else f"{token}-next",
+            "encoded_size_bytes": 1,
+        }
+
+    december_request = next(
+        request for request in requests if request["chain_id"].startswith("pagination-split")
+    )
+    for bounded_request, expected_page_cap in (
+        (requests[0], 2),
+        (december_request, 6),
+    ):
+        assert maximum_pages_by_chain_id[bounded_request["chain_id"]] == expected_page_cap
+        with pytest.raises(ValueError, match="page cap exceeded"):
+            _run_mock_transport(
+                authorized=True,
+                requests=[bounded_request],
+                expected_requests=[bounded_request],
+                load_credentials=load_credentials,
+                fetch=endless_page_fetch,
+                maximum_pages_by_chain_id={bounded_request["chain_id"]: expected_page_cap},
+                maximum_http_responses=transport_budget["maximum_http_responses"],
+                maximum_response_bytes=transport_budget["maximum_downloaded_bytes"],
+            )
+
+    overflow_counts: Counter[str] = Counter()
+
+    def cap_filling_fetch(credentials: object, request: dict[str, Any]) -> dict[str, Any]:
+        assert credentials is synthetic_credentials
+        chain_id = request["chain_id"]
+        overflow_counts[chain_id] += 1
+        return {
+            "rows": [],
+            "next_page_token": f"{chain_id}-page-{overflow_counts[chain_id] + 1}",
+            "encoded_size_bytes": 1,
+        }
+
+    with pytest.raises(ValueError, match="response cap exceeded"):
+        _run_mock_transport(
+            authorized=True,
+            requests=requests[:1],
+            expected_requests=expected_requests[:1],
+            load_credentials=load_credentials,
+            fetch=cap_filling_fetch,
+            maximum_pages_by_chain_id={requests[0]["chain_id"]: 61},
+            maximum_http_responses=transport_budget["maximum_http_responses"],
+            maximum_response_bytes=transport_budget["maximum_downloaded_bytes"],
+        )
+    assert sum(overflow_counts.values()) == transport_budget["maximum_http_responses"]
+
+    def oversized_page_fetch(credentials: object, request: dict[str, Any]) -> dict[str, Any]:
+        assert credentials is synthetic_credentials
+        return {
+            "rows": [],
+            "next_page_token": None,
+            "encoded_size_bytes": transport_budget["maximum_downloaded_bytes"] + 1,
+        }
+
+    with pytest.raises(ValueError, match="response byte cap exceeded"):
+        _run_mock_transport(
+            authorized=True,
+            requests=requests[:1],
+            expected_requests=expected_requests[:1],
+            load_credentials=load_credentials,
+            fetch=oversized_page_fetch,
+            maximum_pages_by_chain_id={
+                requests[0]["chain_id"]: maximum_pages_by_chain_id[requests[0]["chain_id"]]
+            },
+            maximum_http_responses=transport_budget["maximum_http_responses"],
+            maximum_response_bytes=transport_budget["maximum_downloaded_bytes"],
+        )
+
     outside_requests = deepcopy(requests[:1])
     outside_requests[0]["url"] = "https://api.alpaca.markets/v2/orders"
     with pytest.raises(PermissionError, match="outside the frozen"):
@@ -1025,7 +1416,13 @@ def test_mock_transport_paginates_and_denies_ungranted_actions() -> None:
             expected_requests=outside_requests,
             load_credentials=load_credentials,
             fetch=fetch,
-            maximum_pages=maximum_pages,
+            maximum_pages_by_chain_id={
+                outside_requests[0]["chain_id"]: maximum_pages_by_chain_id[
+                    outside_requests[0]["chain_id"]
+                ]
+            },
+            maximum_http_responses=transport_budget["maximum_http_responses"],
+            maximum_response_bytes=transport_budget["maximum_downloaded_bytes"],
         )
 
     def execute_strategy() -> None:
@@ -1105,6 +1502,13 @@ def test_split_normalization_and_dividend_gap_preserve_same_session_features() -
     assert plan["corporate_action_policy"]["ordinary_dividend_session_action"].startswith(
         "Eligible"
     )
+    actions = plan["corporate_action_policy"]
+    assert "cannot be admitted from Alpaca output alone" in actions["spin_off_rule"]
+    assert (
+        "contains no issuer- or exchange-identified realized spin-off"
+        in actions["qualification_realized_spin_off_scope"]
+    )
+    assert "Every realized in-range spin-off" in actions["action_ledger_rule"]
 
 
 def test_full_acquisition_counts_calendar_rows_requests_and_storage() -> None:
