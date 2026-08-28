@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-28 — Reject Program 005 activation before credentials
+
+- Decision: do not activate or consume the authorized Program 005 qualification. Discard the candidate authority before commit, credentials, runtime claim creation, or provider contact.
+- Context: fresh pre-credential review found that the candidate source commit changed one file bound by the exact reviewed proposal. Bounded independent validation also proved that `load_active_authority` accepts re-fingerprinted changes to the authority ID, user-authorization record, four claimed review/proposal bindings, the qualification-contract summary, and the prohibited subscription flag. The frozen request plan, endpoint, budgets, quarantine, and persisted one-use claim remain separately enforced, but exact authorization provenance does not.
+- Consequences: activation-review SHA-256/fingerprint is `f7df27d39c8bbef5134b7238981571e660194de26486fbd7a70d177636743df8` / `76314643d8dd1b6f88620c8340a58bbd1847c70dcc377836671cd0feac9f7c11`. No active authority or Program 005 private root exists; authority consumption, credential loads, provider requests, observations, and strategy returns remain zero. Every controlled, protected, PAPER, broker-write, and live flag remains false. The two Program 005 credential variables were also absent, but the failed authority review is independently terminal for this authorization packet.
+- Revisit when: a fail-closed loader repair is bound in a new prospective proposal, passes a fresh independent review and green CI, reaches clean synchronized main, and receives new exact user authorization. Do not reuse the August 28 authorization packet for changed proposal bytes.
+
 ## 2026-08-28 — Retain Program 005 data privately and implement qualification only
 
 - Decision: treat the public repository as the Program 005 reproduction recipe and keep raw pages, canonical bars, analytical bars, checkpoints, manifests, backups, and frozen datasets under `.trading-lab/program-005-free-alpaca/`. Implement the exact GET-only Alpaca SIP adapter and one-use structural qualification path. Keep full acquisition execution blocked until exact qualification bytes, its receipt, and a finding-free review are bound in code.
