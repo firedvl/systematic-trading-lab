@@ -1,0 +1,101 @@
+{
+  "schema_version": "program-005-source-qualification-terminal-failure-independent-review-v1",
+  "review_id": "program-005-source-qualification-terminal-failure-independent-review-2026-08-28-v1",
+  "program_id": "multi-hour-sector-etf-research-004",
+  "reviewed_at": "2026-08-28T20:46:08Z",
+  "status": "PASS-TERMINAL-FAILURE-VERIFIED",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_execution_main": "ed851e526bd2dbd5dee56f092739e6192eb29864",
+  "reviewed_closeout_commit": "68ebf063947a6c5b6280abc229dc6ca0e4924230",
+  "reviewed_failure": {
+    "path": "config/research/program-005-source-qualification-terminal-failure-v1.json",
+    "sha256": "20ff82cf99ddd396c3b1dff73df2dfdc4a002278270d631f6de1ca1b8deed99f",
+    "fingerprint": "51bd01b08b99746fb2379cd3afbb6a51609f0d9dffcb643f36e73e3a6cff4841"
+  },
+  "reviewed_private_records": {
+    "active_authority": {
+      "sha256": "8d808b08d2d8394953f514d624d12a6f89689a155ed85c250279bd5a2336607e",
+      "fingerprint": "a5f95e11a5e636d88bbaeecb149b290899685d297cd797b49c6b23ed2f5f5620"
+    },
+    "one_use_claim": {
+      "sha256": "9ec5c923be62f1d80c344e5084652a275cd274727d02310a5d31d96603b4801e",
+      "fingerprint": "fb45d3640998626716932baa186f661cc0d4a727b6c17f911ea864a865b94111"
+    },
+    "terminal_qualification_failure": {
+      "sha256": "cd5be10b8ddd97a6845ae8397a36abb7fbd402d72bc437029aa4a7ba9a1b5bb8",
+      "fingerprint": "6cc0c0322d4a44b7e3f262358b08f0d65cb9fff13a4738a2834d13a4390b21aa"
+    }
+  },
+  "reviewed_authority": {
+    "external_authorization_root": "a5f95e11a5e636d88bbaeecb149b290899685d297cd797b49c6b23ed2f5f5620",
+    "authority_id": "program-005-source-qualification-authority-2026-08-28-v2",
+    "implementation_root": "82659ef32ddc00968bd588e24de1677d51788de23edca321cab93f37750f7114",
+    "activation_succeeded": true,
+    "one_use_consumed": true
+  },
+  "reviewed_runtime_outcome": {
+    "failure_stage": "credential read after the create-only claim and before client construction",
+    "failure_reason": "Program 005 acquisition credentials are required",
+    "credential_access_attempt_count": 1,
+    "credential_load_count": 0,
+    "provider_request_count": 0,
+    "http_response_count": 0,
+    "response_bytes": 0,
+    "automatic_transport_retries": 0,
+    "source_qualification": "FAIL",
+    "structural_source_suitability": "NOT-EVALUATED"
+  },
+  "revocation": {
+    "authority_bound_path": "scripts/check_secrets.py",
+    "reviewed_sha256": "097850b9bcc8274d2e070806a546a785e5d152bdf8a89bd664b7d4c1d52d14d2",
+    "closeout_sha256": "7c68312f51aaa0ae087c9e52ca84df25c6ffce0815971ea95ed3ceffaa8eaa2e",
+    "v2_valid_on_later_clean_main": false,
+    "purpose": "admit only the non-secret terminal failure and review artifacts to the repository leakage scan"
+  },
+  "verified_assertions": {
+    "external_root_equals_active_authority_fingerprint": true,
+    "active_authority_bytes_are_canonical": true,
+    "claim_matches_authority_and_implementation": true,
+    "terminal_failure_record_is_canonical": true,
+    "one_use_authority_is_consumed": true,
+    "credential_values_were_not_loaded_printed_or_persisted": true,
+    "provider_transport_did_not_begin": true,
+    "request_response_byte_and_retry_counts_are_zero": true,
+    "no_source_page_manifest_or_dataset_exists": true,
+    "no_real_market_observation_entered_git": true,
+    "no_strategy_return_was_generated_or_read": true,
+    "controlled_protected_paper_broker_and_live_state_stayed_untouched": true,
+    "authority_bound_source_drift_revokes_v2": true,
+    "retry_replacement_authority_full_acquisition_and_strategy_execution_are_prohibited": true
+  },
+  "verification": {
+    "private_record_cross_hash_audit": "passed",
+    "focused_program_005_tests": "22 passed",
+    "secret_and_private_data_scan": "passed; 524 files scanned",
+    "git_diff_check": "passed",
+    "tracked_program_005_private_files": 0,
+    "private_response_page_count": 0,
+    "private_dataset_count": 0
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gap": "No provider request or response occurred, so raw, split/spin-off, quarantine, missingness, corporate-action, timestamp, session, and grid suitability remain unobserved. The review validates the terminal failure and boundaries only.",
+  "required_next_action": "None for Program 005. Preserve the private records and stop without retry, v3 authority, fallback source, full acquisition, dataset admission, or strategy execution.",
+  "review_fingerprint": "23fe61c933cece1a81a2cca5ecc6490dc6aa7d98f9a09946e8560e0ba38435f2"
+}
