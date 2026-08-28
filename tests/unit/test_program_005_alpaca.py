@@ -1392,6 +1392,19 @@ def test_cli_preflight_and_repository_safety_guard(
     )
     public_path = Path("config/research/program-005-private-data-retention-policy-v1.json")
     public_path.write_text("{}\n", encoding="utf-8")
+    new_public_paths = [
+        Path(
+            "config/research/"
+            "program-005-authority-binding-repair-implementation-independent-review-v1.json"
+        ),
+        Path("config/research/program-005-source-qualification-authority-proposal-v2.json"),
+        Path(
+            "config/research/"
+            "program-005-source-qualification-authority-proposal-independent-review-v2.json"
+        ),
+    ]
+    for path in new_public_paths:
+        path.write_text("{}\n", encoding="utf-8")
     monkeypatch.setattr(
         guard,
         "tracked_files",
@@ -1405,6 +1418,7 @@ def test_cli_preflight_and_repository_safety_guard(
             export_path,
             json_secret_path,
             public_path,
+            *new_public_paths,
         ],
     )
     assert guard.main() == 1
@@ -1418,6 +1432,7 @@ def test_cli_preflight_and_repository_safety_guard(
     assert "credential.sh:1" in errors
     assert "credential.json:1" in errors
     assert str(public_path) not in errors
+    assert all(str(path) not in errors for path in new_public_paths)
 
 
 def test_repository_contains_no_program_005_observations_or_private_artifacts() -> None:
