@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-28 — Stop Program 005 after the consumed credential failure
+
+- Decision: record Program 005 source qualification as `FAIL`, preserve the local active authority, claim, lock, and terminal failure records unchanged, and prohibit retry or replacement authority. Change the authority-bound public secret-scan allowlist only to admit the non-secret failure and review artifacts; that source drift revokes v2 on every later clean checkout.
+- Context: exact root `a5f95e11a5e636d88bbaeecb149b290899685d297cd797b49c6b23ed2f5f5620` activated on clean synchronized main `ed851e526bd2dbd5dee56f092739e6192eb29864`. The single run passed its under-lock validation and published claim fingerprint `fb45d3640998626716932baa186f661cc0d4a727b6c17f911ea864a865b94111`. The required credential pair was then unavailable, before client construction or transport. One credential-access attempt occurred; successful loads, requests, responses, bytes, and retries were zero.
+- Consequences: failure artifact SHA-256/fingerprint is `20ff82cf99ddd396c3b1dff73df2dfdc4a002278270d631f6de1ca1b8deed99f` / `51bd01b08b99746fb2379cd3afbb6a51609f0d9dffcb643f36e73e3a6cff4841`. The one-use authority is consumed. No raw or analytical chain, MDY coordinate, missingness, action, timestamp, session, or grid property was observed; no source manifest or dataset exists. No market observation entered Git, no strategy return was generated or read, and controlled/protected, PAPER, broker, and live state stayed untouched. Every effective authority flag is false.
+- Revisit when: never for Program 005. Do not retry, issue v3, change provider, alter the sample, acquire the full range, admit a dataset, or execute a strategy.
+
 ## 2026-08-28 — Bind Program 005 authority to reviewed implementation and control roots
 
 - Decision: derive Program 005 authority v2 only from the fixed proposal, finding-free proposal review, finding-free implementation review, exact scientific contract, and ten-file implementation manifest. Require the user-authorized authority fingerprint through `--authorization-root`; accept the active authority only at its fixed ignored path and only when its canonical bytes equal the derived packet. Revalidate the full chain under the one-use lock before claim publication.

@@ -35,39 +35,15 @@ uv run trading-lab data acquire program-005 preflight --scope qualification
 uv run trading-lab data acquire program-005 preflight --scope full
 ```
 
-After the v2 proposal and its finding-free review are merged, the user must separately authorize the
-exact root printed in the readiness handoff. Activation derives the authority from the fixed
-repository artifacts; it does not accept an operator-written authority file:
+Authority v2 was activated and claimed once on August 28, 2026. The required credential pair was
+unavailable after the claim, before client construction or provider transport. The frozen one-use
+rule makes the result a terminal `FAIL`: do not run activation or qualification again, delete the
+local authority store, create v3, or switch providers. The public closeout changes an
+authority-bound file, so v2 also fails validation from a later clean checkout. Credential-free
+preflight remains available as contract documentation; it grants no authority.
 
-```console
-uv run trading-lab data acquire program-005 activate \
-  --scope qualification \
-  --authorization-root EXACT_USER_AUTHORIZED_ROOT
-
-uv run trading-lab data acquire program-005 run \
-  --scope qualification \
-  --authorization-root EXACT_USER_AUTHORIZED_ROOT
-```
-
-The root is the external authorization input. A newly computed root for changed artifacts has no
-user authority. The loader reconstructs the authority from the exact proposal, review, scientific
-contract, and implementation manifest, then requires canonical equality with the create-only file
-under `.trading-lab/program-005-free-alpaca/qualification/active-authority.json`. It also requires a
-clean `HEAD == main == origin/main`, rejects changes to authority-relevant source after review, and
-revalidates the whole chain under the run lock before publishing the one-use claim or loading
-credentials. Later control-only commits may move `main` when the reviewed implementation bytes stay
-unchanged.
-
-Artifact hashes prove identity; they do not grant authority by themselves. Computing or rehashing a
-proposal, review, or authority cannot transfer the user's authorization to those new bytes. The
-local tool assumes the invoking user and host administrator are trusted, as stated in the repository
-threat model. Deleting or replacing the complete local authority store invalidates its evidence; it
-is not a supported reset or a new authorization.
-
-The full-scope preflight builds the future deterministic request set, but full execution remains
-fail-closed until exact qualification dataset bytes, its terminal receipt, and a finding-free
-independent review are bound and enforced. A later reviewed implementation may enable that scope;
-provider corrections must create a new identity rather than silently refreshing a frozen dataset.
+The full-scope preflight builds the historical deterministic request set, but full execution is
+prohibited because qualification failed and no qualification dataset exists.
 
 The one-use qualification covers 22 sessions, 13 symbols, 26 paired chains, 28 expected responses,
 60 maximum responses, 64 MiB, one credential load, no retries, and 120 requests per minute. The full
