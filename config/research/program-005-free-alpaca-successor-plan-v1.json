@@ -281,19 +281,14 @@
     "global_loss_limit": {
       "expected_exposed_xnys_sessions": 1511,
       "expected_full_trade_eligible_sessions": 1499,
-      "fixed_discovery_or_test_block_full_session_counts": [
-        125,
-        126
-      ],
-      "fixed_block_source_loss_rate_ceiling": "0.01",
-      "fixed_block_interpretation": "One loss is at most 0.8 percent of a 125-126-session block; two losses are at least 1.5873 percent. A one-percent ceiling therefore permits one isolated loss but rejects two within any predeclared block.",
-      "interval_method": "two-sided 95 percent exact Clopper-Pearson upper bound",
-      "null_source_loss_probability": "0.01",
-      "two_sided_alpha": "0.05",
-      "upper_tail_alpha": "0.025",
-      "binomial_cdf_at_p_0_01_for_k_7": "0.017691212591",
-      "binomial_cdf_at_p_0_01_for_k_8": "0.036959445291",
-      "selection_rule": "Choose the largest integer k for which the two-sided 95 percent exact Clopper-Pearson upper bound on the source-loss probability is at most one percent; equivalently, BinomialCDF(k; n=1499, p=0.01) must be at most 0.025.",
+      "rule_origin": "Exact source-neutral Program 003 missing-data ceiling, frozen and independently reviewed before Program 005 selected Alpaca.",
+      "origin_plan_path": "config/research/program-003-low-cost-successor-plan-v1.json",
+      "origin_plan_sha256": "4b1fd55774f89caf853c27cfc521c94ad1b18435a22ee07c2333ca229e9e2c91",
+      "origin_plan_fingerprint": "f5b184ff3e1604a151a82214d1cf91fbdffa6fc4fddf7d7ce0506a2e99427a42",
+      "origin_review_path": "config/research/program-003-low-cost-successor-plan-independent-review-v1.json",
+      "origin_review_sha256": "7f7aa36f382ce93b0d3046023e02782626be354a2c44f4c95d1f0fe64284556d",
+      "origin_review_fingerprint": "55ea3dcb3fc122034b59909bd8431886aa61fac5e8c83ea2a53eb9fdbd060bdb",
+      "origin_rule_path": "missing_data_policy.maximum_loss",
       "overall_excluded_full_session_rate_exact": "7/1499",
       "overall_excluded_full_session_rate_decimal": "0.00466977985323549",
       "overall_excluded_full_session_count_max": 7,
@@ -301,9 +296,47 @@
       "known_quarantine_count": 5,
       "unexpected_excluded_full_session_count_max": 2,
       "prompt_suggested_rate_used_as_derivation_input": false,
-      "derivation": "Before comparing any known gap, use the predeclared 125-126-session blocks to set a one-percent source-loss ceiling that separates one isolated loss from two losses in a block. Apply that ceiling to all 1,499 full trade-eligible sessions with a two-sided 95 percent exact Clopper-Pearson upper bound. At p=0.01, the binomial CDF is 0.017691212591 for seven losses, below 0.025, and 0.036959445291 for eight, above 0.025. Seven is therefore the largest permitted count. Only afterward do the five fixed quarantines consume five slots and leave two unexpected slots."
+      "independence_evidence": "Program 003 selected Tiingo, not Alpaca, and its frozen derivation expressly recorded that the known five-session MDY pattern failed its block, rolling-quarter, and same-symbol controls. Program 005 therefore does not choose a new global number to admit Alpaca; it preserves the exact pre-existing total ceiling and separately justifies only the bounded fixed-date disposition.",
+      "scientific_scope": "The seven-session ceiling is a prospective source-coverage control, not a power calculation, confidence interval, missing-completely-at-random claim, or substitute for concentration checks. The inherited program expressly makes no formal power claim and treats the session as only an upper-bound sampling unit because serial and cross-symbol dependence reduce effective observations.",
+      "derivation": "Program 003 froze a one-percent and one-session ceiling within each 125-126-session evidence block, then imposed the stricter one-half-percent program-wide accumulation ceiling. floor(1499 * 0.005) = 7. That source-neutral rule and its finding-free review predate this successor and remain unchanged. Only afterward do the five exact design quarantines consume five slots and leave two unexpected slots."
     },
     "concentration_limits": {
+      "fixed_discovery_or_test_block_full_session_counts": [
+        125,
+        126
+      ],
+      "known_quarantine_concentration_contract": {
+        "fixed_counts_by_predeclared_discovery_block": {
+          "discovery-01": 1,
+          "discovery-02": 4
+        },
+        "pre_quarantine_full_trade_eligible_sessions_by_discovery_block": {
+          "discovery-01": 123,
+          "discovery-02": 126,
+          "discovery-03": 125
+        },
+        "post_quarantine_full_trade_eligible_sessions_by_discovery_block": {
+          "discovery-01": 122,
+          "discovery-02": 122,
+          "discovery-03": 125
+        },
+        "frozen_minimum_active_sessions_per_discovery_block": 60,
+        "minimum_retained_full_sessions_per_discovery_block": 120,
+        "retention_floor_derivation": "Two times the inherited 60-active-session discovery gate. A block with at least 120 complete opportunities never requires more than a 50 percent activation rate solely because sessions were removed.",
+        "pre_quarantine_maximum_discovery_block_session_count_difference": 3,
+        "post_quarantine_maximum_discovery_block_session_count_difference": 3,
+        "block_balance_rule": "The fixed quarantine may not increase the original maximum difference in full-session opportunity across the three discovery blocks.",
+        "fixed_quarantine_sessions_in_walk_forward_test_folds": 0,
+        "validation_rule": "Every fixed quarantine must remain in discovery-only evidence; no walk-forward test, final exposed fold, controlled block, or initial context session may be quarantined under this class.",
+        "maximum_consecutive_fixed_quarantine_sessions": 1,
+        "observed_maximum_consecutive_fixed_quarantine_sessions": 1,
+        "bounded_membership": "Only the five exact known quarantine dates. No later date may be added to this class.",
+        "global_budget_treatment": "All five count against the inherited seven-session global ceiling.",
+        "unexpected_recurrence_limits_apply": false,
+        "acceptance_rule": "All fixed membership, discovery-only, 120-session retention, unchanged block-balance, nonadjacency, global-budget, context, and SPY randomization-reference gates must pass. Failure of any part stops dataset admission without reviewer override.",
+        "reason": "The fixed dates use no strategy return, remove no validation observation, leave 122, 122, and 125 complete discovery sessions, preserve the original three-session block-opportunity range, and never form an adjacent outage. Whole-session exclusion contains the known MDY-specific mechanism. The class creates no generalized block, month, year, rolling-window, clock, or same-symbol allowance for a later defect.",
+        "post_acquisition_change_or_waiver_allowed": false
+      },
       "unexpected_exclusions_per_calendar_year_max": 1,
       "unexpected_exclusions_per_predeclared_discovery_or_test_block_max": 1,
       "unexpected_exclusion_rolling_window_sessions": 63,
@@ -339,24 +372,28 @@
         "familywise_alpha": "0.05",
         "bonferroni_test_count": 3,
         "per_test_alpha_exact": "1/60",
+        "finite_population_sessions": 1499,
+        "tail_size_sessions": 375,
+        "reference_null": "uniform selection of exclusion dates without replacement from the deterministic 1,499-session population",
         "rejection_counts_by_total_exclusions": {
           "5": 4,
           "6": 5,
           "7": 5
         },
-        "exact_binomial_tail_probabilities_at_rejection_count": {
-          "5": "0.015625",
-          "6": "0.004638671875",
-          "7": "0.01287841796875"
+        "exact_hypergeometric_tail_probabilities_at_rejection_count": {
+          "5": "0.015507647780",
+          "6": "0.004572816581",
+          "7": "0.012724502532"
         },
+        "interpretation_limit": "These are exact randomization-reference probabilities under the uniform-date null. The fixed exclusions were not randomly sampled, so this gate neither proves missing-completely-at-random behavior nor independently admits the quarantine. It supplements the deterministic discovery-only, retention, balance, nonadjacency, and no-expansion gates.",
         "unavailable_rule": "A missing SPY bar needed for any diagnostic makes the diagnostic unavailable and fails dataset admission.",
         "decision_rule": "Reject dataset admission if any tested tail reaches its frozen rejection count. Reviewer discretion cannot override, waive, or reinterpret this result."
       },
       "known_quarantine_shown_separately": true,
       "no_numeric_limit_may_be_relaxed_after_acquisition": true,
-      "failure_action": "Any global, fixed-block, rolling, consecutive, same-symbol, adjacency, context, corporate-action, or SPY tail-test failure stops dataset admission before strategy execution."
+      "failure_action": "Any global coverage, fixed-quarantine structure, unexpected fixed-block, unexpected rolling, total consecutive, unexpected same-symbol, adjacency, context, corporate-action, or SPY randomization-reference failure stops dataset admission before strategy execution."
     },
-    "known_mdy_comparison_after_derivation": "The exact-binomial global ceiling permits seven total sessions. The five fixed quarantine sessions consume five slots and leave two isolated unexpected slots. The known quarantine's 2020-2021 MDY clustering is predeclared, is not generalized into an annual or symbol tolerance, and must pass the three objective return-blind SPY tail tests. No new exclusion may join its block, rolling-quarter window, or MDY rolling-year window."
+    "known_mdy_comparison_after_derivation": "The independently pre-existing global ceiling permits seven total sessions. The five fixed quarantine sessions consume five slots and leave two isolated unexpected slots. Their exact one-plus-four discovery-block concentration is declared rather than hidden. The quarantine removes no validation date, leaves 122, 122, and 125 complete discovery sessions against a 120-session floor, does not increase the original three-session block imbalance, contains no adjacent dates, cannot expand, and must pass three objective SPY randomization-reference tests. No new exclusion may join a quarantine block, rolling-quarter window, or MDY rolling-year window."
   },
   "transaction_cost_model": {
     "model_id": "program-003-static-cost-envelope-v1",
@@ -828,5 +865,5 @@
     "state_street_etfs": "https://www.ssga.com/us/en/intermediary/etfs",
     "state_street_split_notice": "https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx"
   },
-  "plan_fingerprint": "e6b6a9c30059f91d9c66be42320d3847933e0d5caf56d12a13579e14c801002e"
+  "plan_fingerprint": "4e5c4ab9b1ee2bb92014c5b900574835fe49c050d61b8fd840cb238de3366f30"
 }

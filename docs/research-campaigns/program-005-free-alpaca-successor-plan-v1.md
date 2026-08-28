@@ -138,33 +138,43 @@ They stay excluded even if a later response contains every bar. This makes later
 irrelevant to campaign membership. It also avoids pretending the exposed defect is a random sample
 from future provider behavior.
 
-The numeric ceiling is derived separately and before comparing known gaps. Each predeclared discovery
-or test block has 125-126 full sessions. One loss is at most 0.8% of a block; two are at least 1.5873%.
-The fixed 1% block ceiling therefore separates one isolated loss from two losses without using a return
-or a known gap. Apply the same 1% source-loss ceiling to all 1,499 full trade-eligible sessions with a
-two-sided 95% exact Clopper-Pearson upper bound. At `p=0.01`, the binomial CDF is
-`0.017691212591` for seven losses, below the `0.025` upper-tail alpha, and `0.036959445291` for
-eight, above it. Seven is the largest permitted count: exactly `7 / 1499`, about 0.46698%, leaving
-at least 1,492 sessions. The prompt's suggested 0.5% is not an input. Only afterward does the fixed
-quarantine consume five slots and leave at most two unexpected exclusions.
+The global ceiling is not a new number chosen for Alpaca. Program 003 froze and independently reviewed
+the source-neutral `7 / 1499` ceiling while Tiingo was the selected source. That plan allowed at most
+one excluded session and one percent in each 125-126-session evidence block, then imposed a stricter
+one-half-percent program-wide accumulation limit: `floor(1499 * 0.005) = 7`. It also recorded that the
+known MDY pattern failed its concentration controls. Program 005 preserves that exact pre-existing
+ceiling, leaving at least 1,492 sessions, and separately reviews only the fixed-date disposition. This
+is a source-coverage control, not a power calculation, confidence interval, or missing-at-random claim.
+Only afterward does the fixed quarantine consume five slots and leave at most two unexpected
+exclusions.
 
-Unexpected exclusions must be isolated: at most one per calendar year, at most one per fixed discovery or
-test block, at most one
-per rolling 63 expected sessions, none consecutive or adjacent to another exclusion, and at most one
-with the same missing symbol per rolling 252 sessions. No unexpected exclusion may join a block or
-rolling-quarter window containing the fixed quarantine, and no new MDY exclusion may join its
+The fixed quarantine has one date in `discovery-01` and four in `discovery-02`. Those exact dates are
+design exclusions whether or not future provider data is complete. They all count against the global
+budget and cannot gain another member. They remove no walk-forward test or controlled observation. The
+three discovery blocks have 123, 126, and 125 full sessions before quarantine and 122, 122, and 125
+afterward. Each remains above the 120-session floor derived as twice the inherited 60-active-session
+gate, and the original three-session difference in block opportunity does not increase. No two fixed
+dates are adjacent. These rules, the SPY diagnostic below, and exact membership are all mandatory; one
+failure stops admission. Their cluster grants no generalized source-loss tolerance. Unexpected
+exclusions must be isolated: at most one per calendar year, one per fixed discovery or test block, and
+one per rolling 63 expected sessions; none may be consecutive or adjacent to another exclusion; and at
+most one may have the same missing symbol per rolling 252 sessions. No unexpected exclusion may join a
+block or rolling-quarter window containing the fixed quarantine, and no new MDY exclusion may join its
 rolling-year window. The initial twenty context sessions allow zero loss.
 
 Before admission, a structural report must list exclusions and coordinates by symbol, month, year,
 and five-minute time; fixed-block, rolling, contiguous, and same-symbol counts; and all context
 completeness. It also ranks every full trade-eligible session by three return-blind SPY 09:30-11:30
 metrics: absolute morning return, morning high-low range, and morning volume. Each deterministic
-quartile sorts by metric and then date. The tests use the high-return, high-range, and low-volume tails
-with Bonferroni alpha `0.05 / 3`. Admission fails at four tail members among five exclusions, five
-among six, or five among seven; their exact binomial tail probabilities are `0.015625`,
-`0.004638671875`, and `0.01287841796875`. A missing required SPY bar makes the diagnostic
-unavailable and fails admission. No reviewer may override or reinterpret the result, and no threshold
-may be relaxed after acquisition.
+quartile sorts by metric and then date, placing 375 of the 1,499 sessions in each tested tail. The tests
+use the high-return, high-range, and low-volume tails with Bonferroni alpha `0.05 / 3`. Admission
+fails at four tail members among five exclusions, five among six, or five among seven. Under the exact
+uniform-date randomization reference, the hypergeometric tail probabilities are `0.015507647780`,
+`0.004572816581`, and `0.012724502532`. The fixed dates were not randomly sampled, so these values do
+not prove missing-completely-at-random behavior and cannot admit the quarantine by themselves. They
+supplement the discovery-only, retention, balance, nonadjacency, and no-expansion gates. A missing
+required SPY bar makes the diagnostic unavailable and fails admission. No reviewer may override or
+reinterpret the result, and no threshold may be relaxed after acquisition.
 
 The already-exposed nine gaps may remain absent during source qualification. No other missing
 coordinate is allowed on those fixed sessions. Their absence is handled by unconditional whole-date

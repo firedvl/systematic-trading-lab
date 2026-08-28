@@ -26,6 +26,7 @@ _REPOSITORY = Path(__file__).resolve().parents[2]
 _PLAN_PATH = "config/research/program-005-free-alpaca-successor-plan-v1.json"
 _EVIDENCE_PATH = "config/research/program-005-alpaca-public-contract-evidence-v1.json"
 _PROGRAM_003_PATH = "config/research/program-003-low-cost-successor-plan-v1.json"
+_PROGRAM_002_PATH = "config/research/cross-sectional-sector-etf-program-002-plan-proposal-v1.json"
 _SYMBOLS = (
     "IWM",
     "MDY",
@@ -230,16 +231,14 @@ def _mock_admission(
     return excluded, failures
 
 
-def _binomial_cdf(*, successes: int, trials: int, probability: Decimal) -> Decimal:
-    return sum(
-        (
-            Decimal(comb(trials, count))
-            * probability**count
-            * (Decimal(1) - probability) ** (trials - count)
-            for count in range(successes + 1)
-        ),
-        start=Decimal(0),
+def _hypergeometric_tail_probability(
+    *, population: int, tail_size: int, draws: int, at_least: int
+) -> Decimal:
+    numerator = sum(
+        comb(tail_size, count) * comb(population - tail_size, draws - count)
+        for count in range(at_least, min(tail_size, draws) + 1)
     )
+    return Decimal(numerator) / Decimal(comb(population, draws))
 
 
 def _mock_spy_bias_failures(
@@ -407,7 +406,8 @@ def test_missing_session_policy_is_whole_date_and_has_two_unexpected_slots() -> 
     limits = policy["concentration_limits"]
 
     assert quarantine["session_count"] == len(quarantine["sessions"]) == 5
-    predecessor_chronology = _load(_PROGRAM_003_PATH)["chronology"]
+    program_003 = _load(_PROGRAM_003_PATH)
+    predecessor_chronology = program_003["chronology"]
     blocks = [
         (block["start"], block["end"]) for block in predecessor_chronology["discovery_blocks"]
     ] + [
@@ -425,25 +425,41 @@ def test_missing_session_policy_is_whole_date_and_has_two_unexpected_slots() -> 
     }
     assert (
         sorted(block_counts)
-        == loss["fixed_discovery_or_test_block_full_session_counts"]
+        == limits["fixed_discovery_or_test_block_full_session_counts"]
         == [
             125,
             126,
         ]
     )
-    assert loss["fixed_block_source_loss_rate_ceiling"] == "0.01"
-    trials = loss["expected_full_trade_eligible_sessions"]
-    probability = Decimal(loss["null_source_loss_probability"])
-    cdf_at_seven = _binomial_cdf(successes=7, trials=trials, probability=probability)
-    cdf_at_eight = _binomial_cdf(successes=8, trials=trials, probability=probability)
-    assert cdf_at_seven.quantize(Decimal("0.000000000001")) == Decimal(
-        loss["binomial_cdf_at_p_0_01_for_k_7"]
+    fixed_counts = {
+        block["block_id"]: sum(
+            block["start"] <= session <= block["end"] for session in quarantine["sessions"]
+        )
+        for block in predecessor_chronology["discovery_blocks"]
+    }
+    fixed_counts = {block: count for block, count in fixed_counts.items() if count}
+    fixed_contract = limits["known_quarantine_concentration_contract"]
+    assert (
+        fixed_counts
+        == fixed_contract["fixed_counts_by_predeclared_discovery_block"]
+        == {
+            "discovery-01": 1,
+            "discovery-02": 4,
+        }
     )
-    assert cdf_at_eight.quantize(Decimal("0.000000000001")) == Decimal(
-        loss["binomial_cdf_at_p_0_01_for_k_8"]
+    assert fixed_contract["unexpected_recurrence_limits_apply"] is False
+    assert fixed_contract["post_acquisition_change_or_waiver_allowed"] is False
+    origin_path = _REPOSITORY / loss["origin_plan_path"]
+    origin_review_path = _REPOSITORY / loss["origin_review_path"]
+    assert sha256(origin_path.read_bytes()).hexdigest() == loss["origin_plan_sha256"]
+    assert sha256(origin_review_path.read_bytes()).hexdigest() == loss["origin_review_sha256"]
+    assert program_003["plan_fingerprint"] == loss["origin_plan_fingerprint"]
+    assert (
+        _load(loss["origin_review_path"])["review_fingerprint"] == loss["origin_review_fingerprint"]
     )
-    assert cdf_at_seven < Decimal(loss["upper_tail_alpha"])
-    assert cdf_at_eight > Decimal(loss["upper_tail_alpha"])
+    origin_loss = program_003["missing_data_policy"]["maximum_loss"]
+    assert origin_loss["overall_excluded_full_session_rate_max"] == "0.005"
+    assert origin_loss["overall_excluded_full_session_count_max"] == 7
     numerator, denominator = map(int, loss["overall_excluded_full_session_rate_exact"].split("/"))
     assert numerator == 7
     assert denominator == loss["expected_full_trade_eligible_sessions"]
@@ -452,6 +468,57 @@ def test_missing_session_policy_is_whole_date_and_has_two_unexpected_slots() -> 
     assert loss["minimum_retained_full_trade_eligible_sessions"] == 1_492
     assert loss["unexpected_excluded_full_session_count_max"] == 2
     assert loss["prompt_suggested_rate_used_as_derivation_input"] is False
+
+    program_002_blocks = _load(_PROGRAM_002_PATH)["chronology"]["discovery_blocks"]
+    pre_quarantine = {
+        block["block_id"]: block["trade_eligible_full_sessions"] for block in program_002_blocks
+    }
+    post_quarantine = {
+        block: count - fixed_counts.get(block, 0) for block, count in pre_quarantine.items()
+    }
+    assert (
+        pre_quarantine
+        == fixed_contract["pre_quarantine_full_trade_eligible_sessions_by_discovery_block"]
+    )
+    assert (
+        post_quarantine
+        == fixed_contract["post_quarantine_full_trade_eligible_sessions_by_discovery_block"]
+    )
+    assert (
+        min(post_quarantine.values())
+        >= fixed_contract["minimum_retained_full_sessions_per_discovery_block"]
+        == 2 * fixed_contract["frozen_minimum_active_sessions_per_discovery_block"]
+    )
+    assert (
+        max(pre_quarantine.values()) - min(pre_quarantine.values())
+        == fixed_contract["pre_quarantine_maximum_discovery_block_session_count_difference"]
+    )
+    assert (
+        max(post_quarantine.values()) - min(post_quarantine.values())
+        == fixed_contract["post_quarantine_maximum_discovery_block_session_count_difference"]
+    )
+
+    quarantine_dates = {datetime.fromisoformat(value).date() for value in quarantine["sessions"]}
+    test_ranges = [
+        (
+            datetime.fromisoformat(fold["test_start"]).date(),
+            datetime.fromisoformat(fold["test_end"]).date(),
+        )
+        for fold in predecessor_chronology["walk_forward"]["folds"]
+    ]
+    assert (
+        sum(start <= day <= end for day in quarantine_dates for start, end in test_ranges)
+        == (fixed_contract["fixed_quarantine_sessions_in_walk_forward_test_folds"])
+    )
+    exposed_dates = expected_sessions(
+        datetime(2020, 7, 27, tzinfo=UTC), datetime(2021, 2, 22, 23, 59, tzinfo=UTC)
+    )
+    quarantine_indices = sorted(exposed_dates.index(day) for day in quarantine_dates)
+    assert all(
+        right - left > 1
+        for left, right in zip(quarantine_indices, quarantine_indices[1:], strict=False)
+    )
+    assert fixed_contract["observed_maximum_consecutive_fixed_quarantine_sessions"] == 1
     assert limits["unexpected_exclusions_per_calendar_year_max"] == 1
     assert limits["maximum_consecutive_total_exclusions"] == 1
     assert limits["required_initial_context_loss_max"] == 0
@@ -557,12 +624,30 @@ def test_spy_bias_gate_has_objective_tail_thresholds_and_unavailable_failure() -
     }
 
     assert gate["per_test_alpha_exact"] == "1/60"
+    assert gate["reference_null"] == (
+        "uniform selection of exclusion dates without replacement from the deterministic "
+        "1,499-session population"
+    )
+    assert "neither proves missing-completely-at-random" in gate["interpretation_limit"]
     assert gate["rejection_counts_by_total_exclusions"] == {"5": 4, "6": 5, "7": 5}
-    assert gate["exact_binomial_tail_probabilities_at_rejection_count"] == {
-        "5": "0.015625",
-        "6": "0.004638671875",
-        "7": "0.01287841796875",
+    assert gate["finite_population_sessions"] == 1_499
+    assert gate["tail_size_sessions"] == 375
+    assert gate["exact_hypergeometric_tail_probabilities_at_rejection_count"] == {
+        "5": "0.015507647780",
+        "6": "0.004572816581",
+        "7": "0.012724502532",
     }
+    for draws, rejection_count in gate["rejection_counts_by_total_exclusions"].items():
+        probability = _hypergeometric_tail_probability(
+            population=gate["finite_population_sessions"],
+            tail_size=gate["tail_size_sessions"],
+            draws=int(draws),
+            at_least=rejection_count,
+        )
+        assert probability.quantize(Decimal("0.000000000001")) == Decimal(
+            gate["exact_hypergeometric_tail_probabilities_at_rejection_count"][draws]
+        )
+        assert probability < Decimal(1) / Decimal(60)
     assert _mock_spy_bias_failures(policy, {0, 10, 20, 25, 30}, metrics) == set()
     assert _mock_spy_bias_failures(policy, {15, 36, 37, 38, 39}, metrics) == {
         "high-absolute-return",
