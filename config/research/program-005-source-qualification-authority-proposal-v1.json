@@ -1,0 +1,271 @@
+{
+  "schema_version": "program-005-source-qualification-authority-proposal-v1",
+  "proposal_id": "program-005-source-qualification-authority-proposal-2026-08-28-v1",
+  "program_id": "multi-hour-sector-etf-research-004",
+  "status": "READY FOR USER AUTHORIZATION",
+  "scope": "one-use free Alpaca Basic historical SIP structural source qualification only",
+  "active_authority": false,
+  "source_authorization": {
+    "kind": "user-supplied-program-005-retention-and-implementation-authorization-packet",
+    "sha256": "a2532592a05c5e57c1a5584003df0a551724382d582d3150192054a75bf20975",
+    "qualification_authorized": false
+  },
+  "implementation_binding": {
+    "source_commit": "a22f3c856ea521d01333cb552689c3390184a54c",
+    "source_commit_parent": "16f1fc6a5a16e28bde6bf3f5fcd6303d42130703",
+    "relationship": "exact implementation commit with identical current bytes required",
+    "source_files": [
+      {
+        "path": "pyproject.toml",
+        "sha256": "0872d76edc4c9c10b93c15ad0dbf6f3d855c9196e1799566f6790fb936b581ce"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "a6e85e915d51521cd7294bbe98af97ce72d3d4898dd8706474ae74cbbc7e594d"
+      },
+      {
+        "path": "src/systematic_trading_lab/__init__.py",
+        "sha256": "500e5a33c6a1067a9ce2e3c5b074256a7d1207d18ab797830d5c704d5def0942"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/cli.py",
+        "sha256": "627852cec874e3d1ddcb8909017681b2b5c0ee49391b5edd83f721687fef6282"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "ab529709d26d5f6453b0b0bab732c4417aee424586806ad4884942f0dfc4dfeb"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_005_alpaca.py",
+        "sha256": "85248292cff9843a8f9568bb22bd7e23e3dad2762f390e5a557a0ecf6cd5005c"
+      },
+      {
+        "path": "uv.lock",
+        "sha256": "d6d60aa5d93644dd3bf932ef84f6793bab6d33992659ed48e968850c6673c00d"
+      }
+    ]
+  },
+  "bindings": {
+    "program_plan": {
+      "path": "config/research/program-005-free-alpaca-successor-plan-v1.json",
+      "sha256": "3a71573086418aa8ff53d8359110dee1a951caa333ffd35eccedd8d38678cb11",
+      "fingerprint": "79a73d143700c643d67c2f862b5bfe3655df9706276a1b70e189c425d4397cb7"
+    },
+    "program_plan_review": {
+      "path": "config/research/program-005-free-alpaca-successor-plan-independent-review-v1.json",
+      "sha256": "6155632a474351084d7a8b6670dde0ddf30f7cca3d6bd77abad9f4d5546c493e",
+      "fingerprint": "276e08b440012739d36d666c05cec2ba6421f4e381c6b148752fb2c7682960e6"
+    },
+    "provider_contract_evidence": {
+      "path": "config/research/program-005-alpaca-public-contract-evidence-v1.json",
+      "sha256": "68f95b417bf287506eb123441f83344d5337acee2df3227052d9434b0e07de87",
+      "fingerprint": "bb389757b60777cc20549c58201b71f130151dfb1ec65d2959ec1b082f911c2e"
+    },
+    "retention_policy": {
+      "path": "config/research/program-005-private-data-retention-policy-v1.json",
+      "sha256": "af2c733852e65d3958553d64e214b11856f0d44e2cf11c876839e61a9ce62ac7",
+      "fingerprint": "0b14f3afdd012a4b8f3e021ddaee1460528b70b5509f2bee92371378a65953e0"
+    },
+    "public_dataset_contract": {
+      "path": "config/research/program-005-public-dataset-contract-v1.json",
+      "sha256": "4f9a7c8b7e1efe9ffe20235cf88f26b2eefc71f27c483539b79d3ee7a52784ae",
+      "fingerprint": "9e3e91e1e28a76f3bf636c64e2e2d52b6a9886171f740ed71ca29bf1bbd79415"
+    },
+    "corporate_action_ledger": {
+      "path": "config/research/program-005-corporate-action-ledger-v1.json",
+      "sha256": "0e9b24d27085cc97108cc614697e5655cfc0b8aa42d09251504acc12e659da0f",
+      "fingerprint": "a7b1e169e2add558f3ca991f565646cdd00d1fa56598cbcba8f0755252f32efb"
+    }
+  },
+  "qualification": {
+    "request_plan_fingerprint": "5be6a24c41303d726f6afd3350b3e80ab9d26fed6457762a282e593a3dde5bfb",
+    "request_contract": {
+      "method": "GET",
+      "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+      "feed": "sip",
+      "timeframe": "5Min",
+      "adjustments": [
+        "raw",
+        "split,spin-off"
+      ],
+      "sort": "asc",
+      "limit": 10000,
+      "asof": "2026-07-31",
+      "boundaries": "inclusive first and last regular-session bar-open timestamps",
+      "redirects": false
+    },
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "sessions": [
+      "2020-07-27",
+      "2020-12-04",
+      "2021-02-03",
+      "2021-02-05",
+      "2021-02-10",
+      "2021-02-22",
+      "2022-11-25",
+      "2023-07-17",
+      "2024-06-10",
+      "2024-06-11",
+      "2024-06-12",
+      "2025-12-01",
+      "2025-12-02",
+      "2025-12-03",
+      "2025-12-04",
+      "2025-12-05",
+      "2025-12-08",
+      "2025-12-09",
+      "2025-12-10",
+      "2025-12-11",
+      "2025-12-12",
+      "2026-07-15"
+    ],
+    "range_ids": [
+      "normal-2020-07-27",
+      "quarantine-2020-12-04",
+      "quarantine-2021-02-03",
+      "quarantine-2021-02-05",
+      "quarantine-2021-02-10",
+      "quarantine-2021-02-22",
+      "early-close-2022-11-25",
+      "normal-2023-07-17",
+      "distribution-2024-06-10",
+      "distribution-2024-06-11",
+      "distribution-2024-06-12",
+      "pagination-split-2025-12-01-to-2025-12-12",
+      "normal-2026-07-15"
+    ],
+    "logical_chain_ids": [
+      "normal-2020-07-27--raw",
+      "normal-2020-07-27--split-spin-off",
+      "quarantine-2020-12-04--raw",
+      "quarantine-2020-12-04--split-spin-off",
+      "quarantine-2021-02-03--raw",
+      "quarantine-2021-02-03--split-spin-off",
+      "quarantine-2021-02-05--raw",
+      "quarantine-2021-02-05--split-spin-off",
+      "quarantine-2021-02-10--raw",
+      "quarantine-2021-02-10--split-spin-off",
+      "quarantine-2021-02-22--raw",
+      "quarantine-2021-02-22--split-spin-off",
+      "early-close-2022-11-25--raw",
+      "early-close-2022-11-25--split-spin-off",
+      "normal-2023-07-17--raw",
+      "normal-2023-07-17--split-spin-off",
+      "distribution-2024-06-10--raw",
+      "distribution-2024-06-10--split-spin-off",
+      "distribution-2024-06-11--raw",
+      "distribution-2024-06-11--split-spin-off",
+      "distribution-2024-06-12--raw",
+      "distribution-2024-06-12--split-spin-off",
+      "pagination-split-2025-12-01-to-2025-12-12--raw",
+      "pagination-split-2025-12-01-to-2025-12-12--split-spin-off",
+      "normal-2026-07-15--raw",
+      "normal-2026-07-15--split-spin-off"
+    ],
+    "shape": {
+      "session_count": 22,
+      "symbol_count": 13,
+      "range_count": 13,
+      "paired_logical_chain_count": 26,
+      "expected_rows_per_adjustment_view": 21840,
+      "expected_paired_rows_before_known_gaps": 43680
+    },
+    "transport_budget": {
+      "expected_http_responses": 28,
+      "maximum_http_responses": 60,
+      "maximum_downloaded_bytes": 67108864,
+      "requests_per_minute": 120,
+      "maximum_credential_loads": 1,
+      "automatic_transport_retries": 0
+    },
+    "credential_boundary": {
+      "environment_variables": [
+        "PROGRAM_005_ALPACA_API_KEY_ID",
+        "PROGRAM_005_ALPACA_API_SECRET_KEY"
+      ],
+      "credential_values_present": false,
+      "credential_load_before_separate_authorization": false
+    },
+    "fixed_mdy_quarantine": {
+      "sessions": [
+        "2020-12-04",
+        "2021-02-03",
+        "2021-02-05",
+        "2021-02-10",
+        "2021-02-22"
+      ],
+      "coordinate_count": 9,
+      "membership_immutable": true,
+      "sessions_excluded_regardless_of_provider_response": true
+    },
+    "structural_controls": {
+      "raw_and_analytical_coordinate_sets_equal": true,
+      "incomplete_required_symbol_session_excluded_for_all_candidates_and_benchmark": true,
+      "artificial_fill_interpolation_reconstruction_provider_blending_or_date_replacement": false,
+      "raw_split_spin_off_factor_and_reciprocal_volume_validation": true,
+      "ordinary_dividend_cash_credit": false,
+      "strategy_feature_fill_pnl_return_or_candidate_gate_calculation": false
+    }
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "activation_contract": {
+    "required_next_action": "The user must separately authorize this exact one-use structural qualification only after a fresh finding-free independent review and green merged CI on clean synchronized main.",
+    "proposal_mutation_is_activation": false,
+    "active_authority_must_be_a_separate_reviewed_artifact": true,
+    "qualification_failure_consumes_future_one_use_authority": true,
+    "success_stops_after_structural_receipt": true,
+    "remaining_chronology_acquisition_or_dataset_admission_allowed": false
+  },
+  "state_at_proposal": {
+    "credential_loaded": false,
+    "provider_request_made": false,
+    "provider_observation_accessed": false,
+    "private_dataset_created": false,
+    "strategy_return_generated_or_read": false,
+    "controlled_or_protected_state_accessed": false,
+    "paper_broker_or_live_state_accessed": false
+  },
+  "proposal_fingerprint": "79f2b2cb3cb51548715121d2cd890a93177aec5da486a53f5c2216a9095c6807"
+}
