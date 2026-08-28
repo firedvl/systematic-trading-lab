@@ -1,0 +1,104 @@
+{
+  "schema_version": "program-005-authority-binding-repair-implementation-independent-review-v1",
+  "review_id": "program-005-authority-binding-repair-implementation-independent-review-2026-08-28-v1",
+  "program_id": "multi-hour-sector-etf-research-004",
+  "reviewed_at": "2026-08-28T13:45:17Z",
+  "status": "PASS",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_implementation": {
+    "source_commit": "928e6bb797be987d5e37c180a23fdd5f2476b603",
+    "implementation_root": "82659ef32ddc00968bd588e24de1677d51788de23edca321cab93f37750f7114",
+    "source_files": [
+      {
+        "path": "pyproject.toml",
+        "sha256": "0872d76edc4c9c10b93c15ad0dbf6f3d855c9196e1799566f6790fb936b581ce"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "097850b9bcc8274d2e070806a546a785e5d152bdf8a89bd664b7d4c1d52d14d2"
+      },
+      {
+        "path": "src/systematic_trading_lab/__init__.py",
+        "sha256": "500e5a33c6a1067a9ce2e3c5b074256a7d1207d18ab797830d5c704d5def0942"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/cli.py",
+        "sha256": "5f8473cb1fee6758f482599c4f88a60f57c5cccbabe38fa4467c897f7e367450"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "ab529709d26d5f6453b0b0bab732c4417aee424586806ad4884942f0dfc4dfeb"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_005_alpaca.py",
+        "sha256": "cca74f79333c45c38aa8019935ef047720422f5d445ec9393df1a10bf1ae1f0d"
+      },
+      {
+        "path": "uv.lock",
+        "sha256": "d6d60aa5d93644dd3bf932ef84f6793bab6d33992659ed48e968850c6673c00d"
+      }
+    ]
+  },
+  "verified_assertions": {
+    "old_loader_failure_reproduced": true,
+    "external_authorization_root_required": true,
+    "proposal_review_source_binding_enforced": true,
+    "implementation_control_commit_circularity_closed": true,
+    "execution_toctou_revalidation_before_claim": true,
+    "one_use_state_is_monotonic": true,
+    "adversarial_mutation_matrix_passed": true,
+    "legitimate_exact_packet_loads": true,
+    "credentials_and_provider_requests_unavailable": true
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "credential_values": false,
+    "provider_or_account_endpoint": false,
+    "market_observations": false,
+    "strategy_returns": false,
+    "controlled_protected_paper_broker_or_live": false
+  },
+  "verification": {
+    "pre_fix_reproduction": "Against cdd726a39bb4c847bc169369610caa8bb16e8528, a changed authority_id with a recomputed authority_fingerprint was accepted by the old loader.",
+    "focused_exact_source_commit": "22 Program 005 tests passed; Ruff and mypy passed.",
+    "full_repository_suite_before_final_cli_assertions": "1278 passed and 4 skipped; the later exact-source focused run covered the added CLI assertions.",
+    "adversarial_matrix": "51 proposal, implementation-review, review, source, scientific-scope, limit, quarantine, and authority mutations were locally rehashed and rejected; five repository-drift classes were rejected.",
+    "independent_candidate_review": "A fresh read-only reviewer found no concrete in-scope bypass or regression after applying the repository's trusted-invoker and local-host threat model.",
+    "review_hypotheses_resolved": {
+      "new_root": "A new derived root is a different operator grant; the original user-authorized root cannot authorize changed bytes.",
+      "local_state_deletion": "Wholesale local artifact deletion is an explicit hostile-administrator residual risk, not a supported reset.",
+      "documentation": "Activation and run commands now use the fixed authority path and external authorization root; CLI failure cases are tested."
+    }
+  },
+  "proof_gap": "The review used synthetic Git repositories and did not create the v2 proposal or proposal review, authenticate an operating-system user, resist a hostile administrator, inspect credentials, contact Alpaca, access provider observations, run qualification, or access strategy, controlled, protected, PAPER, broker, or live state.",
+  "review_fingerprint": "60b2eaa62d84e36b716fdd3b52943cfa60c4f27fff97d0686ff83f477e6a93a8"
+}

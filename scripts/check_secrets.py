@@ -49,12 +49,15 @@ PUBLIC_MARKET_DATA_ROOTS = (
 PUBLIC_PROGRAM_005_JSON = frozenset(
     {
         "config/research/program-005-alpaca-public-contract-evidence-v1.json",
+        "config/research/program-005-authority-binding-repair-implementation-independent-review-v1.json",
         "config/research/program-005-corporate-action-ledger-v1.json",
         "config/research/program-005-free-alpaca-successor-plan-independent-review-v1.json",
         "config/research/program-005-free-alpaca-successor-plan-v1.json",
         "config/research/program-005-private-data-retention-policy-v1.json",
         "config/research/program-005-public-dataset-contract-v1.json",
         "config/research/program-005-source-qualification-authority-proposal-v1.json",
+        "config/research/program-005-source-qualification-authority-proposal-independent-review-v2.json",
+        "config/research/program-005-source-qualification-authority-proposal-v2.json",
         "config/research/program-005-source-qualification-readiness-independent-review-v1.json",
     }
 )

@@ -26,12 +26,23 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 from zoneinfo import ZoneInfo
 
 from .calendar import expected_bar_timestamps, expected_sessions
+from .config import non_broker_subprocess_environment
 from .domain import Timeframe
 from .fingerprints import canonical_json, fingerprint
 
 _PLAN_PATH = Path("config/research/program-005-free-alpaca-successor-plan-v1.json")
 _PLAN_SHA256 = "3a71573086418aa8ff53d8359110dee1a951caa333ffd35eccedd8d38678cb11"
 _PLAN_FINGERPRINT = "79a73d143700c643d67c2f862b5bfe3655df9706276a1b70e189c425d4397cb7"
+_PLAN_REVIEW_PATH = Path(
+    "config/research/program-005-free-alpaca-successor-plan-independent-review-v1.json"
+)
+_PLAN_REVIEW_SHA256 = "6155632a474351084d7a8b6670dde0ddf30f7cca3d6bd77abad9f4d5546c493e"
+_PLAN_REVIEW_FINGERPRINT = "276e08b440012739d36d666c05cec2ba6421f4e381c6b148752fb2c7682960e6"
+_PROVIDER_EVIDENCE_PATH = Path(
+    "config/research/program-005-alpaca-public-contract-evidence-v1.json"
+)
+_PROVIDER_EVIDENCE_SHA256 = "68f95b417bf287506eb123441f83344d5337acee2df3227052d9434b0e07de87"
+_PROVIDER_EVIDENCE_FINGERPRINT = "bb389757b60777cc20549c58201b71f130151dfb1ec65d2959ec1b082f911c2e"
 _RETENTION_PATH = Path("config/research/program-005-private-data-retention-policy-v1.json")
 _RETENTION_SHA256 = "af2c733852e65d3958553d64e214b11856f0d44e2cf11c876839e61a9ce62ac7"
 _RETENTION_FINGERPRINT = "0b14f3afdd012a4b8f3e021ddaee1460528b70b5509f2bee92371378a65953e0"
@@ -41,6 +52,15 @@ _PUBLIC_CONTRACT_FINGERPRINT = "9e3e91e1e28a76f3bf636c64e2e2d52b6a9886171f740ed7
 _ACTION_LEDGER_PATH = Path("config/research/program-005-corporate-action-ledger-v1.json")
 _ACTION_LEDGER_SHA256 = "0e9b24d27085cc97108cc614697e5655cfc0b8aa42d09251504acc12e659da0f"
 _ACTION_LEDGER_FINGERPRINT = "a7b1e169e2add558f3ca991f565646cdd00d1fa56598cbcba8f0755252f32efb"
+_IMPLEMENTATION_REVIEW_PATH = Path(
+    "config/research/program-005-authority-binding-repair-implementation-independent-review-v1.json"
+)
+_AUTHORITY_PROPOSAL_PATH = Path(
+    "config/research/program-005-source-qualification-authority-proposal-v2.json"
+)
+_AUTHORITY_REVIEW_PATH = Path(
+    "config/research/program-005-source-qualification-authority-proposal-independent-review-v2.json"
+)
 _ORIGIN = "https://data.alpaca.markets"
 _ENDPOINT = f"{_ORIGIN}/v2/stocks/bars"
 _CREDENTIAL_NAMES = (
@@ -49,17 +69,22 @@ _CREDENTIAL_NAMES = (
 )
 _MAX_PAGE_BYTES = 64 * 1024**2
 _RETRYABLE_STATUSES = frozenset({408, 425, 429, 500, 502, 503, 504})
-_AUTHORITY_FALSE_KEYS = frozenset(
-    {
-        "strategy_implementation",
-        "strategy_execution",
-        "research_qualification",
-        "controlled_evaluation",
-        "protected_holdout",
-        "paper_execution",
-        "broker_writes",
-        "live_execution",
-    }
+_AUTHORITY_KEYS = (
+    "provider_contact",
+    "subscription_purchase",
+    "credential_access",
+    "source_requests",
+    "source_qualification",
+    "market_data_acquisition",
+    "real_dataset_admission",
+    "strategy_implementation",
+    "strategy_execution",
+    "research_qualification",
+    "controlled_evaluation",
+    "protected_holdout",
+    "paper_execution",
+    "broker_writes",
+    "live_execution",
 )
 _AUTHORITY_SOURCE_PATHS = (
     Path("pyproject.toml"),
@@ -72,6 +97,35 @@ _AUTHORITY_SOURCE_PATHS = (
     Path("src/systematic_trading_lab/fingerprints.py"),
     Path("src/systematic_trading_lab/program_005_alpaca.py"),
     Path("uv.lock"),
+)
+_IMPLEMENTATION_REVIEW_ASSERTIONS = frozenset(
+    {
+        "old_loader_failure_reproduced",
+        "external_authorization_root_required",
+        "proposal_review_source_binding_enforced",
+        "implementation_control_commit_circularity_closed",
+        "execution_toctou_revalidation_before_claim",
+        "one_use_state_is_monotonic",
+        "adversarial_mutation_matrix_passed",
+        "legitimate_exact_packet_loads",
+        "credentials_and_provider_requests_unavailable",
+    }
+)
+_REVIEW_ASSERTIONS = frozenset(
+    {
+        "proposal_bound_implementation_mutation_rejected",
+        "proposal_mutation_rejected",
+        "review_mutation_rejected",
+        "external_authorization_root_required",
+        "implementation_control_commit_circularity_closed",
+        "execution_revalidates_complete_trust_chain",
+        "one_use_state_is_monotonic",
+        "child_rehash_cannot_broaden_authority",
+        "exact_scientific_scope_is_mechanically_bound",
+        "legitimate_exact_packet_loads",
+        "all_adversarial_mutations_rejected",
+        "credentials_and_provider_requests_unavailable_during_review",
+    }
 )
 _FIXED_BLOCKS = (
     ("discovery-01", date(2020, 7, 27), date(2021, 1, 22)),
@@ -363,6 +417,20 @@ def load_contract(repository: Path) -> ContractBundle:
         "plan_fingerprint",
         _PLAN_FINGERPRINT,
         "Program 005 plan",
+    )
+    _load_bound_artifact(
+        repository / _PLAN_REVIEW_PATH,
+        _PLAN_REVIEW_SHA256,
+        "review_fingerprint",
+        _PLAN_REVIEW_FINGERPRINT,
+        "Program 005 plan review",
+    )
+    _load_bound_artifact(
+        repository / _PROVIDER_EVIDENCE_PATH,
+        _PROVIDER_EVIDENCE_SHA256,
+        "evidence_fingerprint",
+        _PROVIDER_EVIDENCE_FINGERPRINT,
+        "Program 005 provider evidence",
     )
     retention = _load_bound_artifact(
         repository / _RETENTION_PATH,
@@ -1425,6 +1493,7 @@ def execute_acquisition(
     private_root: Path,
     scope: str,
     authority_path: Path,
+    authorization_root: str,
     *,
     environ: Mapping[str, str] | None = None,
     transport: Callable[[Request], HttpPage] = _urlopen_page,
@@ -1439,7 +1508,11 @@ def execute_acquisition(
             "bytes, receipt, and independent-review bindings"
         )
     authority = load_active_authority(
-        repository, authority_path, scope, str(preflight["request_plan_fingerprint"])
+        repository,
+        authority_path,
+        scope,
+        str(preflight["request_plan_fingerprint"]),
+        authorization_root,
     )
     expected_private_root = repository.resolve() / ".trading-lab/program-005-free-alpaca"
     if private_root.resolve() != expected_private_root:
@@ -1463,6 +1536,16 @@ def execute_acquisition(
             raise Program005Error("Program 005 scope already has a structural failure")
         if (scope_root / "claim.json").exists():
             raise Program005Error("Program 005 one-use authority was already claimed")
+        authority = load_active_authority(
+            repository,
+            authority_path,
+            scope,
+            str(preflight["request_plan_fingerprint"]),
+            authorization_root,
+        )
+        implementation = _mapping(
+            authority.get("implementation_binding"), "active implementation binding"
+        )
         _publish_record(
             scope_root / "claim.json",
             {
@@ -1470,7 +1553,9 @@ def execute_acquisition(
                 "scope": scope,
                 "authority_id": authority.get("authority_id"),
                 "authority_fingerprint": authority.get("authority_fingerprint"),
-                "source_commit": authority.get("source_commit"),
+                "source_commit": implementation.get("source_commit"),
+                "implementation_root": implementation.get("implementation_root"),
+                "authority_bindings": authority.get("bindings"),
                 "request_plan_fingerprint": preflight["request_plan_fingerprint"],
             },
         )
@@ -1495,14 +1580,14 @@ def execute_acquisition(
                     _chain_root(private_root, scope, chain),
                     client,
                     budget,
-                    source_commit=str(authority.get("source_commit")),
+                    source_commit=str(implementation.get("source_commit")),
                 )
             public_manifest = freeze_dataset(
                 bundle,
                 scope,
                 chains,
                 private_root,
-                source_commit=str(authority.get("source_commit")),
+                source_commit=str(implementation.get("source_commit")),
             )
         except Program005TransportError as error:
             failure = {
@@ -1563,92 +1648,570 @@ def load_active_authority(
     path: Path,
     scope: str,
     request_plan_fingerprint: str,
+    authorization_root: str,
 ) -> Mapping[str, Any]:
+    repository = repository.resolve()
+    if scope != "qualification" or path.resolve() != _active_authority_path(repository, scope):
+        raise Program005Error("Program 005 active authority path or scope differs")
+    expected = derive_active_authority(repository)
     try:
-        raw = path.resolve().read_bytes()
+        raw = path.read_bytes()
     except OSError as error:
         raise Program005Error("Program 005 source authority is absent or unreadable") from error
     authority = _load_json_object(raw, "Program 005 authority")
-    unsigned = dict(authority)
-    stored_fingerprint = unsigned.pop("authority_fingerprint", None)
     if (
-        stored_fingerprint != fingerprint(unsigned)
-        or authority.get("schema_version") != "program-005-source-authority-v1"
-        or authority.get("status") != "ACTIVE-ONE-USE"
-        or authority.get("program_id") != "multi-hour-sector-etf-research-004"
-        or authority.get("scope") != scope
-        or authority.get("request_plan_fingerprint") != request_plan_fingerprint
+        request_plan_fingerprint != expected.get("request_plan_fingerprint")
+        or authorization_root != expected.get("authority_fingerprint")
+        or raw != (canonical_json(expected) + "\n").encode()
+        or authority != expected
     ):
-        raise Program005Error("Program 005 source authority is not active or differs")
-    flags = _mapping(authority.get("authority"), "Program 005 authority flags")
-    expected_true = {
-        "provider_contact",
-        "credential_access",
-        "source_requests",
-        "source_qualification" if scope == "qualification" else "market_data_acquisition",
-    }
-    if scope == "full":
-        expected_true.add("real_dataset_admission")
-    if any(flags.get(name) is not True for name in expected_true) or any(
-        flags.get(name) is not False for name in _AUTHORITY_FALSE_KEYS
-    ):
-        raise Program005Error("Program 005 source authority flags differ")
-    if scope == "qualification" and any(
-        flags.get(name) is not False
-        for name in ("market_data_acquisition", "real_dataset_admission")
-    ):
-        raise Program005Error("Program 005 qualification authority is overbroad")
-    bindings = _mapping(authority.get("bindings"), "Program 005 authority bindings")
-    exact_bindings = {
-        "program_plan": (_PLAN_PATH, _PLAN_SHA256, _PLAN_FINGERPRINT),
-        "retention_policy": (
-            _RETENTION_PATH,
-            _RETENTION_SHA256,
-            _RETENTION_FINGERPRINT,
-        ),
-        "public_dataset_contract": (
-            _PUBLIC_CONTRACT_PATH,
-            _PUBLIC_CONTRACT_SHA256,
-            _PUBLIC_CONTRACT_FINGERPRINT,
-        ),
-        "corporate_action_ledger": (
-            _ACTION_LEDGER_PATH,
-            _ACTION_LEDGER_SHA256,
-            _ACTION_LEDGER_FINGERPRINT,
-        ),
-    }
-    for name, (expected_path, sha256, fingerprint_value) in exact_bindings.items():
-        _require_binding(bindings.get(name), expected_path, sha256, fingerprint_value, name)
-    source_commit = authority.get("source_commit")
-    if (
-        not isinstance(source_commit, str)
-        or len(source_commit) != 40
-        or any(value not in "0123456789abcdef" for value in source_commit)
-    ):
-        raise Program005Error("Program 005 authority source commit is invalid")
-    result = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", source_commit, "HEAD"],
-        cwd=repository,
-        check=False,
-        capture_output=True,
-    )
-    if result.returncode != 0:
-        raise Program005Error("Program 005 authority source commit is not an ancestor")
-    source_files = authority.get("source_files")
-    if not isinstance(source_files, list) or len(source_files) != len(_AUTHORITY_SOURCE_PATHS):
-        raise Program005Error("Program 005 authority source files are absent")
-    for raw_file, expected_path in zip(source_files, _AUTHORITY_SOURCE_PATHS, strict=True):
-        item = _mapping(raw_file, "Program 005 source file")
-        relative = item.get("path")
-        file_sha256 = item.get("sha256")
-        if (
-            relative != expected_path.as_posix()
-            or not isinstance(file_sha256, str)
-            or _file_sha256(repository / expected_path) != file_sha256
-            or _git_file_sha256(repository, source_commit, expected_path) != file_sha256
-        ):
-            raise Program005Error("Program 005 authority source binding differs")
+        raise Program005Error("Program 005 source authority is not exact or externally authorized")
     return authority
+
+
+def derive_active_authority(repository: Path) -> Mapping[str, Any]:
+    repository = repository.resolve()
+    preflight = credential_free_preflight(repository, "qualification")
+    proposal, proposal_binding = _load_control_artifact(
+        repository,
+        _AUTHORITY_PROPOSAL_PATH,
+        "proposal_fingerprint",
+        "Program 005 authority proposal",
+    )
+    review, review_binding = _load_control_artifact(
+        repository,
+        _AUTHORITY_REVIEW_PATH,
+        "review_fingerprint",
+        "Program 005 authority review",
+    )
+    implementation_review, implementation_review_binding = _load_control_artifact(
+        repository,
+        _IMPLEMENTATION_REVIEW_PATH,
+        "review_fingerprint",
+        "Program 005 implementation review",
+    )
+    implementation = _validate_authority_proposal(
+        repository,
+        proposal,
+        implementation_review,
+        implementation_review_binding,
+        preflight,
+    )
+    _validate_authority_review(
+        proposal,
+        proposal_binding,
+        review,
+        implementation,
+        implementation_review_binding,
+    )
+    _repository_authority_preflight(
+        repository,
+        implementation,
+        implementation_review,
+        proposal_binding,
+        review,
+    )
+    activation = _mapping(proposal.get("activation_contract"), "activation contract")
+    unsigned: dict[str, Any] = {
+        "schema_version": "program-005-source-authority-v2",
+        "status": "ACTIVE-ONE-USE",
+        "authority_id": activation.get("future_authority_id"),
+        "program_id": "multi-hour-sector-etf-research-004",
+        "scope": "qualification",
+        "request_plan_fingerprint": preflight["request_plan_fingerprint"],
+        "authority": _authority_flags(active=True),
+        "bindings": {
+            "authority_proposal": proposal_binding,
+            "independent_review": review_binding,
+        },
+        "implementation_binding": implementation,
+    }
+    return {**unsigned, "authority_fingerprint": fingerprint(unsigned)}
+
+
+def activate_authority(repository: Path, authorization_root: str) -> Mapping[str, Any]:
+    repository = repository.resolve()
+    authority = derive_active_authority(repository)
+    if authority.get("authority_fingerprint") != authorization_root:
+        raise Program005Error("Program 005 external authorization root differs")
+    path = _active_authority_path(repository, "qualification")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with (path.parent / "run.lock").open("a+b") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        if any(
+            (path.parent / name).exists()
+            for name in (
+                "active-authority.json",
+                "claim.json",
+                "receipt.json",
+                "terminal-transport-failure.json",
+                "terminal-qualification-failure.json",
+                "structural-failure.json",
+            )
+        ):
+            raise Program005Error("Program 005 authority state already exists")
+        _write_fsynced(path, (canonical_json(authority) + "\n").encode(), exclusive=True)
+    return authority
+
+
+def _validate_authority_proposal(
+    repository: Path,
+    proposal: Mapping[str, Any],
+    implementation_review: Mapping[str, Any],
+    implementation_review_binding: Mapping[str, Any],
+    preflight: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    expected_keys = {
+        "schema_version",
+        "proposal_id",
+        "program_id",
+        "status",
+        "scope",
+        "execution_scope",
+        "active_authority",
+        "implementation_binding",
+        "bindings",
+        "qualification",
+        "authority",
+        "trust_model",
+        "activation_contract",
+        "state_at_proposal",
+        "proposal_fingerprint",
+    }
+    activation = _mapping(proposal.get("activation_contract"), "proposal activation contract")
+    trust = _mapping(proposal.get("trust_model"), "proposal trust model")
+    if (
+        set(proposal) != expected_keys
+        or proposal.get("schema_version")
+        != "program-005-source-qualification-authority-proposal-v2"
+        or proposal.get("proposal_id")
+        != "program-005-source-qualification-authority-proposal-2026-08-28-v2"
+        or proposal.get("program_id") != "multi-hour-sector-etf-research-004"
+        or proposal.get("status") != "READY FOR EXACT USER AUTHORIZATION"
+        or proposal.get("scope")
+        != "one-use free Alpaca Basic historical SIP structural source qualification only"
+        or proposal.get("execution_scope") != "qualification"
+        or proposal.get("active_authority") is not False
+        or proposal.get("authority") != _authority_flags(active=False)
+        or trust
+        != {
+            "child_hashes_are_integrity_evidence_not_authorization": True,
+            "external_authorization_root_required": True,
+            "reviewed_source_is_immutable_for_one_use_authority": True,
+            "code_change_requires_new_proposal_review_and_user_authorization": True,
+            "qualification_execution_revalidates_complete_chain": True,
+        }
+        or activation.get("future_authority_id")
+        != "program-005-source-qualification-authority-2026-08-28-v2"
+        or activation.get("authority_creation_is_deterministic") is not True
+        or activation.get("authorization_root_is_external") is not True
+        or activation.get("qualification_failure_consumes_one_use_authority") is not True
+        or activation.get("remaining_acquisition_or_strategy_authority") is not False
+        or any(_mapping(proposal.get("state_at_proposal"), "proposal state").values())
+    ):
+        raise Program005Error("Program 005 authority proposal semantics differ")
+    bindings = _mapping(proposal.get("bindings"), "proposal bindings")
+    static_bindings = _static_authority_bindings()
+    if set(bindings) != {*static_bindings, "implementation_review"}:
+        raise Program005Error("Program 005 authority proposal bindings differ")
+    for name, expected in static_bindings.items():
+        if bindings.get(name) != expected:
+            raise Program005Error("Program 005 authority proposal bindings differ")
+    if bindings.get("implementation_review") != implementation_review_binding:
+        raise Program005Error("Program 005 implementation review binding differs")
+    implementation = _mapping(proposal.get("implementation_binding"), "implementation binding")
+    source_files = implementation.get("source_files")
+    if (
+        set(implementation) != {"source_commit", "implementation_root", "source_files"}
+        or not _is_lower_hex(implementation.get("source_commit"), 40)
+        or not isinstance(source_files, list)
+        or len(source_files) != len(_AUTHORITY_SOURCE_PATHS)
+        or implementation.get("implementation_root") != fingerprint(source_files)
+    ):
+        raise Program005Error("Program 005 implementation binding differs")
+    for item, expected_path in zip(source_files, _AUTHORITY_SOURCE_PATHS, strict=True):
+        source = _mapping(item, "implementation source file")
+        if (
+            set(source) != {"path", "sha256"}
+            or source.get("path") != expected_path.as_posix()
+            or not _is_lower_hex(source.get("sha256"), 64)
+        ):
+            raise Program005Error("Program 005 implementation source manifest differs")
+    reviewed = _mapping(
+        implementation_review.get("reviewed_implementation"), "reviewed implementation"
+    )
+    assertions = _mapping(
+        implementation_review.get("verified_assertions"), "implementation review assertions"
+    )
+    if (
+        set(implementation_review)
+        != {
+            "schema_version",
+            "review_id",
+            "program_id",
+            "reviewed_at",
+            "status",
+            "verdict",
+            "findings",
+            "reviewed_implementation",
+            "verified_assertions",
+            "authority",
+            "protected_access",
+            "verification",
+            "proof_gap",
+            "review_fingerprint",
+        }
+        or implementation_review.get("schema_version")
+        != "program-005-authority-binding-repair-implementation-independent-review-v1"
+        or implementation_review.get("review_id")
+        != "program-005-authority-binding-repair-implementation-independent-review-2026-08-28-v1"
+        or implementation_review.get("program_id") != "multi-hour-sector-etf-research-004"
+        or not isinstance(implementation_review.get("reviewed_at"), str)
+        or implementation_review.get("status") != "PASS"
+        or implementation_review.get("verdict") != "PASS"
+        or implementation_review.get("findings") != []
+        or reviewed.get("implementation_root") != implementation.get("implementation_root")
+        or reviewed.get("source_files") != source_files
+        or not _is_lower_hex(reviewed.get("source_commit"), 40)
+        or set(assertions) != _IMPLEMENTATION_REVIEW_ASSERTIONS
+        or any(value is not True for value in assertions.values())
+        or implementation_review.get("authority") != _authority_flags(active=False)
+        or any(
+            _mapping(
+                implementation_review.get("protected_access"),
+                "implementation review access",
+            ).values()
+        )
+        or not _mapping(
+            implementation_review.get("verification"), "implementation review verification"
+        )
+        or not isinstance(implementation_review.get("proof_gap"), str)
+    ):
+        raise Program005Error("Program 005 implementation review differs")
+    _validate_proposal_qualification(repository, proposal, preflight)
+    return implementation
+
+
+def _validate_authority_review(
+    proposal: Mapping[str, Any],
+    proposal_binding: Mapping[str, Any],
+    review: Mapping[str, Any],
+    implementation: Mapping[str, Any],
+    implementation_review_binding: Mapping[str, Any],
+) -> None:
+    expected_keys = {
+        "schema_version",
+        "review_id",
+        "program_id",
+        "reviewed_at",
+        "status",
+        "verdict",
+        "findings",
+        "reviewed_proposal",
+        "reviewed_implementation",
+        "reviewed_implementation_review",
+        "review_scope",
+        "verified_assertions",
+        "verification",
+        "authority",
+        "protected_access",
+        "proof_gap",
+        "required_next_user_action",
+        "review_fingerprint",
+    }
+    reviewed_proposal = _mapping(review.get("reviewed_proposal"), "reviewed proposal")
+    assertions = _mapping(review.get("verified_assertions"), "proposal review assertions")
+    if (
+        set(review) != expected_keys
+        or review.get("schema_version")
+        != "program-005-source-qualification-authority-proposal-independent-review-v2"
+        or review.get("review_id")
+        != "program-005-source-qualification-authority-proposal-independent-review-2026-08-28-v2"
+        or review.get("program_id") != "multi-hour-sector-etf-research-004"
+        or review.get("status") != "PASSED-READY-FOR-EXACT-USER-AUTHORIZATION"
+        or review.get("verdict") != "PASS"
+        or review.get("findings") != []
+        or reviewed_proposal
+        != {
+            **dict(proposal_binding),
+            "proposal_id": proposal.get("proposal_id"),
+            "schema_version": proposal.get("schema_version"),
+            "proposal_artifact_commit": reviewed_proposal.get("proposal_artifact_commit"),
+        }
+        or not _is_lower_hex(reviewed_proposal.get("proposal_artifact_commit"), 40)
+        or review.get("reviewed_implementation") != implementation
+        or review.get("reviewed_implementation_review") != implementation_review_binding
+        or review.get("review_scope")
+        != "active-authority loading, activation, and qualification execution trust-chain semantics"
+        or set(assertions) != _REVIEW_ASSERTIONS
+        or any(value is not True for value in assertions.values())
+        or not _mapping(review.get("verification"), "proposal review verification")
+        or review.get("authority") != _authority_flags(active=False)
+        or any(_mapping(review.get("protected_access"), "proposal review access").values())
+        or not isinstance(review.get("proof_gap"), str)
+        or not isinstance(review.get("required_next_user_action"), str)
+    ):
+        raise Program005Error("Program 005 independent authority review differs")
+
+
+def _validate_proposal_qualification(
+    repository: Path, proposal: Mapping[str, Any], preflight: Mapping[str, Any]
+) -> None:
+    bundle = load_contract(repository)
+    chains = build_request_plan(bundle, "qualification")
+    qualification = _mapping(proposal.get("qualification"), "proposal qualification")
+    sessions = list(
+        dict.fromkeys(day.isoformat() for chain in chains for day in chain.session_dates)
+    )
+    range_ids = list(dict.fromkeys(chain.range_id for chain in chains))
+    raw_rows = sum(
+        len(expected_bar_timestamps(chain.start, chain.end, Timeframe.FIVE_MINUTES))
+        * len(chain.symbols)
+        for chain in chains
+        if chain.adjustment == "raw"
+    )
+    plan_qualification = _mapping(bundle.plan.get("source_qualification"), "source qualification")
+    quarantine = _mapping(bundle.plan.get("missing_data_policy"), "missing-data policy")
+    quarantine = _mapping(quarantine.get("pre_exposed_design_quarantine"), "fixed quarantine")
+    expected = {
+        "request_plan_fingerprint": preflight["request_plan_fingerprint"],
+        "request_contract": {
+            "method": "GET",
+            "endpoint": _ENDPOINT,
+            "feed": "sip",
+            "timeframe": "5Min",
+            "adjustments": ["raw", "split,spin-off"],
+            "sort": "asc",
+            "limit": 10000,
+            "asof": "2026-07-31",
+            "boundaries": "inclusive first and last regular-session bar-open timestamps",
+            "redirects": False,
+        },
+        "symbols": list(chains[0].symbols),
+        "sessions": sessions,
+        "range_ids": range_ids,
+        "logical_chain_ids": [chain.chain_id for chain in chains],
+        "shape": {
+            "session_count": len(sessions),
+            "symbol_count": len(chains[0].symbols),
+            "range_count": len(range_ids),
+            "paired_logical_chain_count": len(chains),
+            "expected_rows_per_adjustment_view": raw_rows,
+            "expected_paired_rows_before_known_gaps": raw_rows * 2,
+        },
+        "transport_budget": {
+            "expected_http_responses": preflight["expected_http_responses_to_acquire"],
+            "maximum_http_responses": preflight["maximum_http_responses_to_acquire"],
+            "maximum_downloaded_bytes": preflight["maximum_downloaded_bytes"],
+            "requests_per_minute": preflight["requests_per_minute"],
+            "maximum_credential_loads": preflight["maximum_credential_loads"],
+            "automatic_transport_retries": preflight["automatic_transport_retries"],
+        },
+        "credential_boundary": {
+            "environment_variables": list(_CREDENTIAL_NAMES),
+            "credential_values_present": False,
+            "credential_load_before_separate_authorization": False,
+        },
+        "fixed_mdy_quarantine": {
+            "sessions": list(quarantine.get("sessions", [])),
+            "coordinate_count": len(
+                _sequence(plan_qualification.get("known_mdy_coordinates"), "known MDY coordinates")
+            ),
+            "membership_immutable": True,
+            "sessions_excluded_regardless_of_provider_response": True,
+        },
+        "structural_controls": {
+            "raw_and_analytical_coordinate_sets_equal": True,
+            "incomplete_required_symbol_session_excluded_for_all_candidates_and_benchmark": True,
+            (
+                "artificial_fill_interpolation_reconstruction_provider_blending_or_date_replacement"
+            ): False,
+            "raw_split_spin_off_factor_and_reciprocal_volume_validation": True,
+            "ordinary_dividend_cash_credit": False,
+            "strategy_feature_fill_pnl_return_or_candidate_gate_calculation": False,
+        },
+    }
+    if qualification != expected:
+        raise Program005Error("Program 005 proposal qualification contract differs")
+
+
+def _repository_authority_preflight(
+    repository: Path,
+    implementation: Mapping[str, Any],
+    implementation_review: Mapping[str, Any],
+    proposal_binding: Mapping[str, Any],
+    review: Mapping[str, Any],
+) -> None:
+    source_commit = str(implementation.get("source_commit"))
+    implementation_review_source = str(
+        _mapping(
+            implementation_review.get("reviewed_implementation"), "reviewed implementation"
+        ).get("source_commit")
+    )
+    environment = non_broker_subprocess_environment()
+    environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
+    command = (
+        "git",
+        "--no-replace-objects",
+        "-c",
+        "core.fsmonitor=false",
+        "-C",
+        str(repository),
+    )
+
+    def git(*arguments: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            (*command, *arguments),
+            check=check,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+
+    try:
+        head = git("rev-parse", "HEAD").stdout.strip()
+        main_commit = git("rev-parse", "refs/heads/main").stdout.strip()
+        origin_main = git("rev-parse", "refs/remotes/origin/main").stdout.strip()
+        dirty = git("status", "--porcelain", "--untracked-files=all").stdout
+
+        def added(relative: Path) -> str:
+            commits = git(
+                "log", "--diff-filter=A", "--format=%H", "--", relative.as_posix()
+            ).stdout.splitlines()
+            if len(commits) != 1:
+                raise Program005Error("Program 005 control artifact history differs")
+            return commits[0]
+
+        implementation_review_added = added(_IMPLEMENTATION_REVIEW_PATH)
+        proposal_added = added(_AUTHORITY_PROPOSAL_PATH)
+        review_added = added(_AUTHORITY_REVIEW_PATH)
+        ancestry = tuple(
+            git("merge-base", "--is-ancestor", earlier, later, check=False).returncode
+            for earlier, later in (
+                (implementation_review_source, implementation_review_added),
+                (implementation_review_added, source_commit),
+                (source_commit, proposal_added),
+                (proposal_added, review_added),
+                (review_added, head),
+            )
+        )
+        changed = git(
+            "diff",
+            "--name-only",
+            source_commit,
+            head,
+            "--",
+            *(path.as_posix() for path in _AUTHORITY_SOURCE_PATHS),
+        ).stdout
+        committed_artifacts = {
+            _IMPLEMENTATION_REVIEW_PATH: git(
+                "show", f"{implementation_review_added}:{_IMPLEMENTATION_REVIEW_PATH.as_posix()}"
+            ).stdout.encode(),
+            _AUTHORITY_PROPOSAL_PATH: git(
+                "show", f"{proposal_added}:{_AUTHORITY_PROPOSAL_PATH.as_posix()}"
+            ).stdout.encode(),
+            _AUTHORITY_REVIEW_PATH: git(
+                "show", f"{review_added}:{_AUTHORITY_REVIEW_PATH.as_posix()}"
+            ).stdout.encode(),
+        }
+    except (OSError, subprocess.CalledProcessError, ValueError) as error:
+        raise Program005Error("Program 005 repository identity is unavailable") from error
+    reviewed_proposal = _mapping(review.get("reviewed_proposal"), "reviewed proposal")
+    if dirty or head != main_commit or head != origin_main:
+        raise Program005Error("Program 005 authority requires clean synchronized main")
+    if (
+        len(
+            {
+                implementation_review_source,
+                implementation_review_added,
+                source_commit,
+                proposal_added,
+                review_added,
+            }
+        )
+        != 5
+        or any(ancestry)
+        or changed
+        or reviewed_proposal.get("proposal_artifact_commit") != proposal_added
+        or proposal_binding.get("sha256")
+        != hashlib.sha256((repository / _AUTHORITY_PROPOSAL_PATH).read_bytes()).hexdigest()
+        or any(
+            committed != (repository / relative).read_bytes()
+            for relative, committed in committed_artifacts.items()
+        )
+    ):
+        raise Program005Error("Program 005 reviewed implementation or control lineage differs")
+    source_files = _sequence(implementation.get("source_files"), "implementation source files")
+    for item, relative in zip(source_files, _AUTHORITY_SOURCE_PATHS, strict=True):
+        binding = _mapping(item, "implementation source file")
+        expected_sha256 = str(binding.get("sha256"))
+        if (
+            _file_sha256(repository / relative) != expected_sha256
+            or _git_file_sha256(repository, source_commit, relative) != expected_sha256
+        ):
+            raise Program005Error("Program 005 reviewed implementation bytes differ")
+
+
+def _load_control_artifact(
+    repository: Path, relative: Path, fingerprint_field: str, label: str
+) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
+    path = repository / relative
+    try:
+        raw = path.read_bytes()
+    except OSError as error:
+        raise Program005Error(f"{label} is absent or unreadable") from error
+    payload = _load_json_object(raw, label)
+    unsigned = dict(payload)
+    fingerprint_value = unsigned.pop(fingerprint_field, None)
+    if not _is_lower_hex(fingerprint_value, 64) or fingerprint_value != fingerprint(unsigned):
+        raise Program005Error(f"{label} differs")
+    return payload, {
+        "path": relative.as_posix(),
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "fingerprint": fingerprint_value,
+    }
+
+
+def _static_authority_bindings() -> Mapping[str, Mapping[str, str]]:
+    return {
+        "program_plan": _binding(_PLAN_PATH, _PLAN_SHA256, _PLAN_FINGERPRINT),
+        "program_plan_review": _binding(
+            _PLAN_REVIEW_PATH, _PLAN_REVIEW_SHA256, _PLAN_REVIEW_FINGERPRINT
+        ),
+        "provider_contract_evidence": _binding(
+            _PROVIDER_EVIDENCE_PATH,
+            _PROVIDER_EVIDENCE_SHA256,
+            _PROVIDER_EVIDENCE_FINGERPRINT,
+        ),
+        "retention_policy": _binding(_RETENTION_PATH, _RETENTION_SHA256, _RETENTION_FINGERPRINT),
+        "public_dataset_contract": _binding(
+            _PUBLIC_CONTRACT_PATH, _PUBLIC_CONTRACT_SHA256, _PUBLIC_CONTRACT_FINGERPRINT
+        ),
+        "corporate_action_ledger": _binding(
+            _ACTION_LEDGER_PATH, _ACTION_LEDGER_SHA256, _ACTION_LEDGER_FINGERPRINT
+        ),
+    }
+
+
+def _binding(path: Path, sha256: str, fingerprint_value: str) -> Mapping[str, str]:
+    return {"path": path.as_posix(), "sha256": sha256, "fingerprint": fingerprint_value}
+
+
+def _authority_flags(*, active: bool) -> Mapping[str, bool]:
+    enabled = {"provider_contact", "credential_access", "source_requests", "source_qualification"}
+    return {key: active and key in enabled for key in _AUTHORITY_KEYS}
+
+
+def _active_authority_path(repository: Path, scope: str) -> Path:
+    return repository / ".trading-lab/program-005-free-alpaca" / scope / "active-authority.json"
+
+
+def _is_lower_hex(value: Any, length: int) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == length
+        and all(character in "0123456789abcdef" for character in value)
+    )
 
 
 def _qualification_chains(plan: Mapping[str, Any]) -> tuple[RequestChain, ...]:
