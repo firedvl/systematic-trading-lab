@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-29 - Remove all Program 007 execution callbacks
+
+- Decision: make synthetic responses immutable under normal assignment, consume them only through a module function, derive the execution root inside the source, and replace the injected clock with an exact built-in UTC `datetime`. Public and internal qualification paths accept neither a callable nor a storage root.
+- Context: V3 review bypassed the intended synthetic-only boundary by replacing `SyntheticPageSource.next_response`, replacing `_private_root`, and supplying a callback through the public `now` parameter. Each path could perform provider I/O while authority was false; the root mutation could also direct raw bytes into a tracked path.
+- Consequences: the source is slotted and rejects normal reassignment, no replaceable response method exists, and the execution path derives its root from the source's own temporary workspace. Callback-capable clock and timezone objects fail before invocation or write. The frozen sample, ledger v2, provider contract, science, costs, delays, and budgets do not change; every authority flag remains false.
+- Revisit when: a separate reviewed one-use authority design introduces real transport. Do not generalize the synthetic entry point for that work.
+
 ## 2026-08-29 - Confine Program 007 execution to synthetic storage
 
 - Decision: expose only `execute_synthetic_qualification`, accept finite in-memory `RawResponse` values through the concrete `SyntheticPageSource`, and write only to that source's OS-owned temporary workspace. Reject arbitrary callbacks and alternate roots before any source read or filesystem write. Add a real transport later only through a separate authority-gated implementation.

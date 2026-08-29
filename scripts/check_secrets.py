@@ -81,6 +81,7 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-007-raw-source-contract-implementation-v1.json",
         "config/research/program-007-raw-source-contract-implementation-v2.json",
         "config/research/program-007-raw-source-contract-implementation-v3.json",
+        "config/research/program-007-raw-source-contract-implementation-v4.json",
         "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
     }
 )
