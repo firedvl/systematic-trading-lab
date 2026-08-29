@@ -1,8 +1,26 @@
 # Program 006 Alpaca source qualification
 
-Program 006, `multi-hour-sector-etf-research-005`, is the prospective control-plane successor to
-terminal Program 005. Program 005 remains consumed and failed. Program 006 changes only credential
-and one-use authority ordering; Alpaca source suitability remains unobserved.
+Program 006, `multi-hour-sector-etf-research-005`, is terminally consumed and failed. It changed
+only Program 005's credential and one-use authority ordering, then ran its exact structural source
+qualification once.
+
+## Terminal outcome
+
+Exact root `56125cd74d917c938b1076160f3a6e7c408149d4048d8b0f55f693262fec47c2`
+activated on clean synchronized main `8ed3bc3f700bbf2b014527c12dc45e0e8cb26def`. The run passed
+both credential-presence checks, loaded credentials once, and wrote its immutable claim immediately
+before the first transport. It made 23 requests and received 23 responses totaling 2,503,402 bytes,
+with zero retries.
+
+Response 23 was the first raw page for
+`pagination-split-2025-12-01-to-2025-12-12`. Parsing stopped because a bar timestamp was outside the
+exact XNYS grid. The failed body was not stored. Offline checks on the 22 stored pages found all 13
+symbols, the same nine fixed MDY gaps in both views, no unexpected gaps, and non-constant paired
+adjustment price factors in all 11 completed pairs. No receipt, source manifest, or dataset exists.
+
+The source-qualification result is `FAIL`. Preserve the ignored private records and pages. Do not
+activate or run Program 006 again, issue replacement authority, switch sources, acquire the full
+range, admit a dataset, or execute a strategy.
 
 ## Failure lineage
 
@@ -34,10 +52,9 @@ The command prints only `PASS` or one `MISSING: <VARIABLE_NAME>` line per absent
 run repeatedly. It does not activate authority, load credential values, construct a provider client,
 contact Alpaca, or write private state.
 
-The v2 readiness review records a `PASS` from the intended runtime without reading credential
-values into an artifact. Presence is process-local and not durable. In the Codex integrated
-terminal, use one shell session for entry, preflight, and any later separately authorized
-qualification command:
+The v2 readiness review recorded a `PASS` from the intended runtime without reading credential
+values into an artifact. Presence is process-local and not durable. The following historical entry
+flow explains how the consumed run received its credentials; it grants no authority to rerun:
 
 ```console
 read -rs PROGRAM_006_ALPACA_API_KEY_ID
@@ -110,8 +127,7 @@ separate Git-ignored `.trading-lab/program-006-free-alpaca/` root.
 
 ## Current authorization gate
 
-Current status is `READY FOR NEW EXACT ONE-USE QUALIFICATION AUTHORIZATION`. Proposal v2 and its
-finding-free review remain inactive. The external root binds the exact final synchronized main
-commit and must be supplied separately by the user. Until activation, all authority flags are
-false. No provider request, qualification, acquisition, dataset admission, strategy execution,
-controlled evaluation, protected access, PAPER action, broker write, or live action is allowed.
+Current status is `TERMINAL-FAIL-CONSUMED-NO-RETRY`. Every effective authority flag is false. The
+credential preflight remains only a names-only diagnostic; neither `activate` nor `run` is allowed.
+Controlled evaluation, protected access, PAPER, broker writes, and live execution remain untouched
+and prohibited.

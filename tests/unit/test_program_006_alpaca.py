@@ -274,12 +274,19 @@ def test_exact_committed_chain_loads_and_self_rehashed_control_mutations_fail(
         capture_output=True,
         text=True,
     )
-    head = subprocess.run(
-        ("git", "-C", str(_REPOSITORY), "rev-parse", "HEAD"),
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
+    terminal = (
+        _REPOSITORY / "config/research/program-006-source-qualification-terminal-failure-v1.json"
+    )
+    head = (
+        str(json.loads(terminal.read_text(encoding="utf-8"))["execution_main"])
+        if terminal.exists()
+        else subprocess.run(
+            ("git", "-C", str(_REPOSITORY), "rev-parse", "HEAD"),
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    )
     subprocess.run(
         ("git", "-C", str(repository), "checkout", "-B", "main", head),
         check=True,
