@@ -7,6 +7,7 @@ import io
 import json
 import os
 from copy import deepcopy
+from email.message import Message
 from fractions import Fraction
 from pathlib import Path
 from typing import Any, cast
@@ -874,7 +875,7 @@ def test_dormant_http_transport_closes_http_error_response(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     body = io.BytesIO(b"denied")
-    error = HTTPError(metadata.ENDPOINT, 401, "unauthorized", {}, body)
+    error = HTTPError(metadata.ENDPOINT, 401, "unauthorized", Message(), body)
 
     class Opener:
         def open(self, _request: Any, *, timeout: int) -> None:
