@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import subprocess
 from collections import defaultdict
 from datetime import UTC, date, datetime
 from decimal import Decimal
@@ -25,6 +26,9 @@ _SCHEMA_PATH = (
 )
 _PROPOSAL_PATH = (
     _REPOSITORY / "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json"
+)
+_IMPLEMENTATION_PATH = (
+    _REPOSITORY / "config/research/program-007-raw-source-contract-implementation-v1.json"
 )
 _NOW = datetime(2026, 8, 28, 20, tzinfo=UTC)
 
@@ -154,6 +158,33 @@ def test_action_ledger_schema_hash_fingerprint_and_symbol_coverage() -> None:
         if item["conclusion"] == "NO-APPLICABLE-ACTION-FOUND"
     } == {"IWM", "MDY", "SPY", "XLF", "XLI", "XLP", "XLRE", "XLV"}
     assert all(value is False for value in ledger["authority"].values())
+
+
+def test_non_authorizing_implementation_artifact_binds_exact_source_commit() -> None:
+    implementation = _load(_IMPLEMENTATION_PATH)
+    unsigned = dict(implementation)
+    stored_fingerprint = unsigned.pop("implementation_fingerprint")
+    assert stored_fingerprint == fingerprint(unsigned)
+    binding = implementation["implementation_binding"]
+    assert binding["implementation_root"] == fingerprint(binding["source_files"])
+    for source in binding["source_files"]:
+        contents = subprocess.run(
+            ["git", "show", f"{binding['source_commit']}:{source['path']}"],
+            cwd=_REPOSITORY,
+            check=True,
+            capture_output=True,
+        ).stdout
+        assert hashlib.sha256(contents).hexdigest() == source["sha256"]
+    for name in ("proposal_binding", "action_ledger_binding", "action_schema_binding"):
+        artifact = implementation[name]
+        assert (
+            hashlib.sha256((_REPOSITORY / artifact["path"]).read_bytes()).hexdigest()
+            == (artifact["sha256"])
+        )
+    assert implementation["fresh_sample"]["expected_canonical_coordinates"] == 14_742
+    assert implementation["synthetic_verification"]["provider_requests"] == 0
+    assert implementation["synthetic_verification"]["strategy_calculations"] == 0
+    assert all(value is False for value in implementation["authority"].values())
 
 
 def test_action_ledger_mutation_unknown_action_and_inconsistent_ratio_fail_closed() -> None:
