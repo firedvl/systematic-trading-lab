@@ -104,11 +104,14 @@ def _frozen_chain(chain_id: str) -> program_007.RequestChain:
 
 def _execute_frozen_chain(
     chain: program_007.RequestChain,
-    private_root: Path,
-    page_source: program_007.PageSource,
+    page_source: program_007.SyntheticPageSource,
 ) -> program_007.QualificationResult:
     result = program_007._execute_chain(
-        chain, private_root, page_source, program_007._Budget(), lambda: _NOW
+        chain,
+        page_source.private_root,
+        page_source,
+        program_007._Budget(),
+        lambda: _NOW,
     )
     return program_007.QualificationResult((result,))
 
@@ -355,26 +358,19 @@ def test_ambiguous_and_inconsistent_synthetic_actions_fail_closed() -> None:
 
 
 def test_frozen_proposal_and_range_substitution_fail_before_source(tmp_path: Path) -> None:
-    calls = 0
-
-    def source(intent: program_007.RequestIntent) -> program_007.RawResponse:
-        nonlocal calls
-        calls += 1
-        raise AssertionError(f"unexpected source invocation: {intent.url}")
+    source = program_007.SyntheticPageSource(())
 
     proposal = _load(_PROPOSAL_PATH)
     proposal["request_plan"][0]["start"] = "2021-07-09T13:30:00Z"
     mutated = json.dumps(proposal, separators=(",", ":")).encode()
     with pytest.raises(program_007.Program007Error, match="proposal fingerprint differs"):
-        program_007.execute_qualification(mutated, tmp_path / "mutation", source)
+        program_007.execute_synthetic_qualification(mutated, source)
 
     with pytest.raises(program_007.Program007Error, match="proposal bytes differ"):
-        program_007.execute_qualification(
-            _PROPOSAL_PATH.read_bytes() + b"\n", tmp_path / "reformatted", source
-        )
+        program_007.execute_synthetic_qualification(_PROPOSAL_PATH.read_bytes() + b"\n", source)
 
     with pytest.raises(program_007.Program007Error, match="proposal must be exact bytes"):
-        program_007.execute_qualification(cast(Any, (_chain(),)), tmp_path / "substitution", source)
+        program_007.execute_synthetic_qualification(cast(Any, (_chain(),)), source)
 
     with pytest.raises(program_007.Program007Error, match="exact frozen request plan"):
         program_007._execute_qualification(
@@ -386,11 +382,30 @@ def test_frozen_proposal_and_range_substitution_fail_before_source(tmp_path: Pat
             _chain(), tmp_path / "chain-substitution", source, program_007._Budget(), lambda: _NOW
         )
 
-    assert calls == 0
+    transport_calls = 0
+
+    def transport_capable_source(intent: program_007.RequestIntent) -> program_007.RawResponse:
+        nonlocal transport_calls
+        transport_calls += 1
+        raise AssertionError(f"unexpected source invocation: {intent.url}")
+
+    with pytest.raises(program_007.Program007Error, match="synthetic responses only"):
+        program_007.execute_synthetic_qualification(
+            _PROPOSAL_PATH.read_bytes(), cast(Any, transport_capable_source)
+        )
+
+    exact_chains = program_007.frozen_request_chains(_PROPOSAL_PATH.read_bytes())
+    with pytest.raises(program_007.Program007Error, match="owned synthetic workspace"):
+        program_007._execute_qualification(
+            exact_chains, tmp_path / "alternate-root", source, now=lambda: _NOW
+        )
+
+    assert not source.intents
+    assert transport_calls == 0
     assert not any(tmp_path.iterdir())
 
 
-def test_frozen_raw_contract_and_full_14742_coordinate_shape(tmp_path: Path) -> None:
+def test_frozen_raw_contract_and_full_14742_coordinate_shape() -> None:
     proposal_bytes = _PROPOSAL_PATH.read_bytes()
     chains = program_007.frozen_request_chains(proposal_bytes)
     assert len(chains) == 6
@@ -414,21 +429,16 @@ def test_frozen_raw_contract_and_full_14742_coordinate_shape(tmp_path: Path) -> 
         else:
             pages[(chain.chain_id, None)] = _body(rows)
 
-    intents: list[program_007.RequestIntent] = []
-
-    def source(intent: program_007.RequestIntent) -> program_007.RawResponse:
-        assert (
-            tmp_path
-            / "chains"
-            / intent.chain_identity
-            / "requests"
-            / f"{intent.page_index:05d}.json"
-        ).is_file()
-        intents.append(intent)
-        return program_007.RawResponse(200, pages[(intent.chain_id, intent.incoming_page_token)])
-
-    result = program_007.execute_qualification(proposal_bytes, tmp_path, source, now=lambda: _NOW)
+    responses = []
+    for chain in chains:
+        responses.append(program_007.RawResponse(200, pages[(chain.chain_id, None)]))
+        if chain.chain_id == "pagination-2023-05-16-to-2023-05-30":
+            responses.append(program_007.RawResponse(200, pages[(chain.chain_id, "page-2")]))
+    source = program_007.SyntheticPageSource(responses)
+    result = program_007.execute_synthetic_qualification(proposal_bytes, source, now=lambda: _NOW)
+    intents = source.intents
     assert result.response_count == len(intents) == 7
+    assert all(source.intent_files_present)
     assert result.canonical_row_count == 14_742
     assert result.raw_row_count == 14_743
     assert [len(item.canonical_rows) for item in result.chains] == [
@@ -472,12 +482,10 @@ def test_frozen_raw_contract_and_full_14742_coordinate_shape(tmp_path: Path) -> 
     assert not forbidden & _recursive_keys(summary)
     assert summary["canonical_row_count"] == 14_742
     assert summary["extended_hours_row_count"] == 1
-    assert (tmp_path / "private-manifest.json").is_file()
+    assert (source.private_root / "private-manifest.json").is_file()
 
 
-def test_valid_extended_hours_are_retained_and_restart_never_recontacts_source(
-    tmp_path: Path,
-) -> None:
+def test_valid_extended_hours_are_retained_and_restart_never_rereads_source() -> None:
     chain = _frozen_chain("pagination-2023-05-16-to-2023-05-30")
     rows = [
         *(_complete_rows(chain)),
@@ -488,26 +496,20 @@ def test_valid_extended_hours_are_retained_and_restart_never_recontacts_source(
         None: _body(rows[:9_999], "page-2"),
         "page-2": _body(rows[9_999:]),
     }
-    calls = 0
-
-    def source(intent: program_007.RequestIntent) -> program_007.RawResponse:
-        nonlocal calls
-        calls += 1
-        return program_007.RawResponse(200, bodies[intent.incoming_page_token])
-
-    result = _execute_frozen_chain(chain, tmp_path, source)
-    assert calls == 2
+    source = program_007.SyntheticPageSource(
+        (program_007.RawResponse(200, bodies[None]), program_007.RawResponse(200, bodies["page-2"]))
+    )
+    result = _execute_frozen_chain(chain, source)
+    assert len(source.intents) == 2
     assert len(result.chains[0].raw_rows) == 10_142
     assert len(result.chains[0].canonical_rows) == 10_140
     assert result.chains[0].canonical_rows[0].timestamp == chain.start
     assert result.chains[0].canonical_rows[-1].timestamp == chain.end
 
-    def forbidden_source(intent: program_007.RequestIntent) -> program_007.RawResponse:
-        raise AssertionError(f"unexpected replay: {intent.url}")
-
-    restarted = _execute_frozen_chain(chain, tmp_path, forbidden_source)
+    restarted = _execute_frozen_chain(chain, source)
     assert restarted == result
-    raw_path = tmp_path / "chains" / chain.identity / "pages/00001/body.json"
+    assert len(source.intents) == 2
+    raw_path = source.private_root / "chains" / chain.identity / "pages/00001/body.json"
     assert raw_path.read_bytes() == bodies[None]
 
 
@@ -524,7 +526,7 @@ def test_valid_extended_hours_are_retained_and_restart_never_recontacts_source(
         "corrupt-json",
     ],
 )
-def test_invalid_raw_pages_fail_after_exact_bytes_are_retained(tmp_path: Path, case: str) -> None:
+def test_invalid_raw_pages_fail_after_exact_bytes_are_retained(case: str) -> None:
     chain = _frozen_chain("normal-2021-07-08")
     row = _bar(chain.start)
     rows = [("SPY", row)]
@@ -560,81 +562,75 @@ def test_invalid_raw_pages_fail_after_exact_bytes_are_retained(tmp_path: Path, c
             program_007.parse_raw_page(body, chain)
         return
 
+    source = program_007.SyntheticPageSource((program_007.RawResponse(200, body),))
     with pytest.raises(program_007.Program007Error):
-        _execute_frozen_chain(
-            chain,
-            tmp_path,
-            lambda intent: program_007.RawResponse(200, body),
-        )
-    page_root = tmp_path / "chains" / chain.identity / "pages/00001"
+        _execute_frozen_chain(chain, source)
+    page_root = source.private_root / "chains" / chain.identity / "pages/00001"
     assert (page_root / "body.json").read_bytes() == body
     validation = _load(page_root / "validation.json")
     assert validation["raw_structural_status"] == "FAIL"
 
 
-def test_missing_canonical_row_excludes_the_whole_session(tmp_path: Path) -> None:
+def test_missing_canonical_row_excludes_the_whole_session() -> None:
     chain = _frozen_chain("normal-2021-07-08")
     body = _body(_complete_rows(chain)[:-1])
+    source = program_007.SyntheticPageSource((program_007.RawResponse(200, body),))
     with pytest.raises(program_007.Program007Error, match="whole session is ineligible"):
-        _execute_frozen_chain(
-            chain,
-            tmp_path,
-            lambda intent: program_007.RawResponse(200, body),
-        )
-    outcome = _load(tmp_path / "chains" / chain.identity / "validation.json")
+        _execute_frozen_chain(chain, source)
+    outcome = _load(source.private_root / "chains" / chain.identity / "validation.json")
     assert outcome["status"] == "FAIL"
     assert outcome["missing_coordinate_count"] == 1
     assert outcome["incomplete_sessions"] == ["2021-07-08"]
 
 
-def test_forced_pagination_progression_and_token_cycle_rejection(tmp_path: Path) -> None:
+def test_forced_pagination_progression_and_token_cycle_rejection() -> None:
     chain = _frozen_chain("pagination-2023-05-16-to-2023-05-30")
     rows = _complete_rows(chain)
-    successful_root = tmp_path / "success"
     responses = {
         None: _body(rows[:9_999], "page-2"),
         "page-2": _body(rows[9_999:]),
     }
-    intents: list[program_007.RequestIntent] = []
-
-    def source(intent: program_007.RequestIntent) -> program_007.RawResponse:
-        intents.append(intent)
-        return program_007.RawResponse(200, responses[intent.incoming_page_token])
-
-    result = _execute_frozen_chain(chain, successful_root, source)
-    assert len(result.chains[0].pages) == 2
-    assert parse_qs(urlparse(intents[1].url).query)["page_token"] == ["page-2"]
-
-    cycle_root = tmp_path / "cycle"
-    cycle_responses = iter(
+    source = program_007.SyntheticPageSource(
         (
+            program_007.RawResponse(200, responses[None]),
+            program_007.RawResponse(200, responses["page-2"]),
+        )
+    )
+    result = _execute_frozen_chain(chain, source)
+    assert len(result.chains[0].pages) == 2
+    assert parse_qs(urlparse(source.intents[1].url).query)["page_token"] == ["page-2"]
+
+    cycle_responses = (
+        program_007.RawResponse(200, body)
+        for body in (
             _body(rows[:1], "loop"),
             _body(rows[1:2], "loop"),
         )
     )
-    with pytest.raises(program_007.Program007Error, match="token is repeated"):
-        _execute_frozen_chain(
-            chain,
-            cycle_root,
-            lambda intent: program_007.RawResponse(200, next(cycle_responses)),
+    cycle_source = program_007.SyntheticPageSource(
+        (
+            next(cycle_responses),
+            next(cycle_responses),
         )
-    assert (cycle_root / "chains" / chain.identity / "pages/00002/body.json").is_file()
+    )
+    with pytest.raises(program_007.Program007Error, match="token is repeated"):
+        _execute_frozen_chain(chain, cycle_source)
+    assert (
+        cycle_source.private_root / "chains" / chain.identity / "pages/00002/body.json"
+    ).is_file()
 
 
 def test_page_response_and_total_byte_ceilings_fail_closed(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     chain = _frozen_chain("pagination-2023-05-16-to-2023-05-30")
     rows = _complete_rows(chain)
     oversized = _body(rows)
     monkeypatch.setattr(program_007, "MAXIMUM_RESPONSE_PAGE_BYTES", len(oversized) - 1)
-    page_root = tmp_path / "page"
+    page_source = program_007.SyntheticPageSource((program_007.RawResponse(200, oversized),))
     with pytest.raises(program_007.Program007Error, match="8 MiB page ceiling"):
-        _execute_frozen_chain(
-            chain,
-            page_root,
-            lambda intent: program_007.RawResponse(200, oversized),
-        )
+        _execute_frozen_chain(chain, page_source)
+    page_root = page_source.private_root
     assert not (page_root / "chains" / chain.identity / "pages/00001/body.json").exists()
     assert (page_root / "chains" / chain.identity / "requests/00001.json").is_file()
 
@@ -642,62 +638,55 @@ def test_page_response_and_total_byte_ceilings_fail_closed(
     first = _body(rows[:1], "page-2")
     second = _body(rows[1:])
     monkeypatch.setattr(program_007, "MAXIMUM_DOWNLOADED_BYTES", len(first) + len(second) - 1)
-    total_root = tmp_path / "total"
-    responses = iter((first, second))
+    total_source = program_007.SyntheticPageSource(
+        (program_007.RawResponse(200, first), program_007.RawResponse(200, second))
+    )
     with pytest.raises(program_007.Program007Error, match="downloaded-byte ceiling"):
-        _execute_frozen_chain(
-            chain,
-            total_root,
-            lambda intent: program_007.RawResponse(200, next(responses)),
-        )
+        _execute_frozen_chain(chain, total_source)
+    total_root = total_source.private_root
     assert (total_root / "chains" / chain.identity / "pages/00001/body.json").is_file()
     assert not (total_root / "chains" / chain.identity / "pages/00002/body.json").exists()
 
 
 def test_page_and_response_count_ceilings_are_exact(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     chain = _frozen_chain("pagination-2023-05-16-to-2023-05-30")
     rows = _complete_rows(chain)
-    page_responses = iter(
-        _body([rows[index]], f"more-{index}") for index in range(chain.maximum_pages)
+    page_source = program_007.SyntheticPageSource(
+        tuple(
+            program_007.RawResponse(200, _body([rows[index]], f"more-{index}"))
+            for index in range(chain.maximum_pages)
+        )
     )
     with pytest.raises(program_007.Program007Error, match="page ceiling"):
-        _execute_frozen_chain(
-            chain,
-            tmp_path / "pages",
-            lambda intent: program_007.RawResponse(200, next(page_responses)),
+        _execute_frozen_chain(chain, page_source)
+
+    response_source = program_007.SyntheticPageSource(
+        tuple(
+            program_007.RawResponse(200, _body([rows[index]], f"more-{index + 1}"))
+            for index in range(2)
         )
+    )
 
     monkeypatch.setattr(program_007, "MAXIMUM_HTTP_RESPONSES", 1)
     with pytest.raises(program_007.Program007Error, match="response ceiling"):
-        _execute_frozen_chain(
-            chain,
-            tmp_path / "responses",
-            lambda intent: program_007.RawResponse(
-                200, _body([rows[intent.page_index - 1]], f"more-{intent.page_index}")
-            ),
-        )
+        _execute_frozen_chain(chain, response_source)
 
 
-def test_ambiguous_send_is_never_retried(tmp_path: Path) -> None:
+def test_ambiguous_send_is_never_retried() -> None:
     chain = _frozen_chain("normal-2021-07-08")
-    calls = 0
-
-    def ambiguous(intent: program_007.RequestIntent) -> program_007.RawResponse:
-        nonlocal calls
-        calls += 1
-        raise TimeoutError("synthetic ambiguous send")
+    source = program_007.SyntheticPageSource((None,))
 
     with pytest.raises(program_007.Program007Error, match="zero-retry"):
-        _execute_frozen_chain(chain, tmp_path, ambiguous)
-    assert calls == 1
-    assert (tmp_path / "chains" / chain.identity / "requests/00001.json").is_file()
-    assert not (tmp_path / "chains" / chain.identity / "pages/00001").exists()
+        _execute_frozen_chain(chain, source)
+    assert len(source.intents) == 1
+    assert (source.private_root / "chains" / chain.identity / "requests/00001.json").is_file()
+    assert not (source.private_root / "chains" / chain.identity / "pages/00001").exists()
 
     with pytest.raises(program_007.Program007Error, match="zero-retry"):
-        _execute_frozen_chain(chain, tmp_path, ambiguous)
-    assert calls == 1
+        _execute_frozen_chain(chain, source)
+    assert len(source.intents) == 1
 
 
 def test_dst_early_close_holiday_adjacency_and_multi_day_bar_opens() -> None:

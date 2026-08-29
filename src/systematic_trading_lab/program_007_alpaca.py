@@ -196,6 +196,54 @@ class RawResponse:
             raise Program007Error("Program 007 response body must be bytes")
 
 
+class SyntheticPageSource:
+    """Finite in-memory responses stored in an owned temporary workspace."""
+
+    def __init__(self, responses: Sequence[RawResponse | None]) -> None:
+        if type(responses) not in {list, tuple} or any(
+            response is not None and type(response) is not RawResponse for response in responses
+        ):
+            raise Program007Error("Program 007 synthetic responses are invalid")
+        self._responses = tuple(responses)
+        self._intents: list[RequestIntent] = []
+        self._intent_files_present: list[bool] = []
+        self._workspace = tempfile.TemporaryDirectory(prefix="program-007-synthetic-")
+        self._private_root = Path(self._workspace.name)
+
+    @property
+    def private_root(self) -> Path:
+        return self._private_root
+
+    @property
+    def intents(self) -> tuple[RequestIntent, ...]:
+        return tuple(self._intents)
+
+    @property
+    def intent_files_present(self) -> tuple[bool, ...]:
+        return tuple(self._intent_files_present)
+
+    def next_response(self, intent: RequestIntent) -> RawResponse:
+        if type(intent) is not RequestIntent:
+            raise Program007Error("Program 007 synthetic request intent is invalid")
+        response_index = len(self._intents)
+        self._intents.append(intent)
+        self._intent_files_present.append(
+            (
+                self.private_root
+                / "chains"
+                / intent.chain_identity
+                / "requests"
+                / f"{intent.page_index:05d}.json"
+            ).is_file()
+        )
+        if response_index >= len(self._responses):
+            raise Program007Error("Program 007 synthetic response is missing")
+        response = self._responses[response_index]
+        if response is None:
+            raise Program007Error("Program 007 synthetic response is ambiguous")
+        return response
+
+
 @dataclass(frozen=True, order=True)
 class RawBar:
     symbol: str
@@ -312,9 +360,6 @@ class QualificationResult:
             "reconstructable_private_values": False,
             "strategy_outputs": 0,
         }
-
-
-type PageSource = Callable[[RequestIntent], RawResponse]
 
 
 @dataclass
@@ -478,23 +523,23 @@ def project_rth(rows: Sequence[RawBar], chain: RequestChain) -> tuple[RawBar, ..
     return tuple(sorted(row for row in rows if row.timestamp in grid))
 
 
-def execute_qualification(
+def execute_synthetic_qualification(
     proposal_bytes: bytes,
-    private_root: Path,
-    page_source: PageSource,
+    page_source: SyntheticPageSource,
     *,
     now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> QualificationResult:
-    """Run the exact frozen proposal against an injected offline source."""
-    return _execute_qualification(
-        frozen_request_chains(proposal_bytes), private_root, page_source, now=now
-    )
+    """Run the exact frozen proposal against finite in-memory responses."""
+    chains = frozen_request_chains(proposal_bytes)
+    if type(page_source) is not SyntheticPageSource:
+        raise Program007Error("Program 007 execution accepts synthetic responses only")
+    return _execute_qualification(chains, page_source.private_root, page_source, now=now)
 
 
 def _execute_qualification(
     chains: Sequence[RequestChain],
     private_root: Path,
-    page_source: PageSource,
+    page_source: SyntheticPageSource,
     *,
     now: Callable[[], datetime],
 ) -> QualificationResult:
@@ -503,6 +548,7 @@ def _execute_qualification(
         exact_chains != _frozen_request_chains()
     ):
         raise Program007Error("Program 007 execution requires the exact frozen request plan")
+    _require_synthetic_source(private_root, page_source)
     private_root.mkdir(parents=True, exist_ok=True)
     if private_root.is_symlink():
         raise Program007Error("Program 007 private root must not be a symlink")
@@ -1157,12 +1203,13 @@ def normalize_share_volume(
 def _execute_chain(
     chain: RequestChain,
     private_root: Path,
-    page_source: PageSource,
+    page_source: SyntheticPageSource,
     budget: _Budget,
     now: Callable[[], datetime],
 ) -> ChainResult:
     if type(chain) is not RequestChain or chain not in _frozen_request_chains():
         raise Program007Error("Program 007 request chain is outside the exact frozen plan")
+    _require_synthetic_source(private_root, page_source)
     chain_root = private_root / "chains" / chain.identity
     requests_root = chain_root / "requests"
     pages_root = chain_root / "pages"
@@ -1207,7 +1254,7 @@ def _execute_chain(
                 },
             )
             try:
-                response = page_source(intent)
+                response = page_source.next_response(intent)
             except Exception:
                 raise Program007Error(
                     "Program 007 request outcome is ambiguous; zero-retry policy blocks replay"
@@ -1343,6 +1390,15 @@ def _execute_chain(
             "Program 007 canonical RTH completeness failed; the whole session is ineligible"
         )
     return ChainResult(chain, raw_rows, canonical_rows, tuple(pages))
+
+
+def _require_synthetic_source(private_root: Path, page_source: SyntheticPageSource) -> None:
+    if (
+        type(page_source) is not SyntheticPageSource
+        or not isinstance(private_root, Path)
+        or private_root != page_source.private_root
+    ):
+        raise Program007Error("Program 007 execution requires its owned synthetic workspace")
 
 
 def _validate_restart_state(private_root: Path, chains: Sequence[RequestChain]) -> None:
