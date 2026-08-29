@@ -190,9 +190,9 @@ class RawResponse:
     body: bytes
 
     def __post_init__(self) -> None:
-        if isinstance(self.status, bool) or not isinstance(self.status, int):
+        if type(self.status) is not int:
             raise Program007Error("Program 007 response status is invalid")
-        if not isinstance(self.body, bytes):
+        if type(self.body) is not bytes:
             raise Program007Error("Program 007 response body must be bytes")
 
 
@@ -373,6 +373,8 @@ class _Budget:
         self.requests += 1
 
     def accept_response(self, body: bytes) -> None:
+        if type(body) is not bytes:
+            raise Program007Error("Program 007 response body must be bytes")
         if self.responses >= MAXIMUM_HTTP_RESPONSES:
             raise Program007Error("Program 007 HTTP response ceiling exceeded")
         if len(body) > MAXIMUM_RESPONSE_PAGE_BYTES:
@@ -384,7 +386,7 @@ class _Budget:
 
 
 def frozen_request_chains(proposal_bytes: bytes) -> tuple[RequestChain, ...]:
-    if not isinstance(proposal_bytes, bytes):
+    if type(proposal_bytes) is not bytes:
         raise Program007Error("Program 007 proposal must be exact bytes")
     proposal = _load_json_object(proposal_bytes, "Program 007 proposal")
     unsigned = dict(proposal)
@@ -550,9 +552,8 @@ def _execute_qualification(
     _require_synthetic_source(page_source)
     private_root = page_source._private_root
     private_root.mkdir(parents=True, exist_ok=True)
-    if private_root.is_symlink():
-        raise Program007Error("Program 007 private root must not be a symlink")
-    with _exclusive_lock(private_root / ".program-007.lock"):
+    _require_owned_path(private_root, private_root)
+    with _exclusive_lock(private_root, private_root / ".program-007.lock"):
         _validate_restart_state(private_root, exact_chains)
         budget = _Budget()
         results = tuple(
@@ -560,6 +561,7 @@ def _execute_qualification(
         )
         result = QualificationResult(results)
         _publish_record(
+            private_root,
             private_root / "private-manifest.json",
             result.private_manifest(),
             allow_identical=True,
@@ -1214,6 +1216,8 @@ def _execute_chain(
     chain_root = private_root / "chains" / chain.identity
     requests_root = chain_root / "requests"
     pages_root = chain_root / "pages"
+    _require_owned_path(private_root, requests_root)
+    _require_owned_path(private_root, pages_root)
     requests_root.mkdir(parents=True, exist_ok=True)
     pages_root.mkdir(parents=True, exist_ok=True)
     rows: list[RawBar] = []
@@ -1234,10 +1238,12 @@ def _execute_chain(
         intent_path = requests_root / f"{page_index:05d}.json"
         page_root = pages_root / f"{page_index:05d}"
         outcome_path = page_root / "validation.json"
+        _require_owned_path(private_root, intent_path)
+        _require_owned_path(private_root, page_root)
         budget.reserve_request()
         retained_response = intent_path.exists()
         if retained_response:
-            intent_record = _load_record(intent_path)
+            intent_record = _load_record(private_root, intent_path)
             _validate_intent(intent_record, intent)
             if not page_root.exists():
                 raise Program007Error(
@@ -1245,6 +1251,7 @@ def _execute_chain(
                 )
         else:
             _publish_record(
+                private_root,
                 intent_path,
                 {
                     "schema_version": "program-007-private-request-intent-v1",
@@ -1260,18 +1267,20 @@ def _execute_chain(
                 raise Program007Error(
                     "Program 007 request outcome is ambiguous; zero-retry policy blocks replay"
                 ) from None
-            if not isinstance(response, RawResponse):
+            if type(response) is not RawResponse:
                 raise Program007Error(
                     "Program 007 request outcome is ambiguous; zero-retry policy blocks replay"
                 )
             budget.accept_response(response.body)
-            _retain_response(page_root, intent, response, observed_at)
+            _retain_response(private_root, page_root, intent, response, observed_at)
 
-        response = _load_response(page_root, intent)
+        response = _load_response(private_root, page_root, intent)
         if retained_response:
             budget.accept_response(response.body)
 
-        existing_outcome = _load_record(outcome_path) if outcome_path.exists() else None
+        existing_outcome = (
+            _load_record(private_root, outcome_path) if outcome_path.exists() else None
+        )
         if existing_outcome is not None and existing_outcome.get("raw_structural_status") == "FAIL":
             raise Program007Error(_string(existing_outcome.get("failure"), "stored failure"))
         try:
@@ -1316,7 +1325,7 @@ def _execute_chain(
                 "canonical_row_count": len(canonical),
                 "extended_hours_row_count": len(page_rows) - len(canonical),
             }
-            _publish_validation(outcome_path, outcome, observed_at, existing_outcome)
+            _publish_validation(private_root, outcome_path, outcome, observed_at, existing_outcome)
         except Program007Error as error:
             failure = {
                 "schema_version": "program-007-private-page-validation-v1",
@@ -1328,7 +1337,7 @@ def _execute_chain(
                 "rth_projection_status": "NOT-RUN",
                 "failure": str(error),
             }
-            _publish_validation(outcome_path, failure, observed_at, existing_outcome)
+            _publish_validation(private_root, outcome_path, failure, observed_at, existing_outcome)
             raise
 
         seen_hashes.add(response_sha256)
@@ -1383,9 +1392,11 @@ def _execute_chain(
     }
     chain_outcome_path = chain_root / "validation.json"
     existing_chain_outcome = (
-        _load_record(chain_outcome_path) if chain_outcome_path.exists() else None
+        _load_record(private_root, chain_outcome_path) if chain_outcome_path.exists() else None
     )
-    _publish_validation(chain_outcome_path, chain_outcome, observed_at, existing_chain_outcome)
+    _publish_validation(
+        private_root, chain_outcome_path, chain_outcome, observed_at, existing_chain_outcome
+    )
     if missing or extra:
         raise Program007Error(
             "Program 007 canonical RTH completeness failed; the whole session is ineligible"
@@ -1413,15 +1424,15 @@ def _next_synthetic_response(
         raise Program007Error("Program 007 synthetic request intent is invalid")
     response_index = len(page_source._intents)
     page_source._intents.append(intent)
-    page_source._intent_files_present.append(
-        (
-            page_source._private_root
-            / "chains"
-            / intent.chain_identity
-            / "requests"
-            / f"{intent.page_index:05d}.json"
-        ).is_file()
+    intent_path = (
+        page_source._private_root
+        / "chains"
+        / intent.chain_identity
+        / "requests"
+        / f"{intent.page_index:05d}.json"
     )
+    _require_owned_path(page_source._private_root, intent_path)
+    page_source._intent_files_present.append(intent_path.is_file())
     if response_index >= len(page_source._responses):
         raise Program007Error("Program 007 synthetic response is missing")
     response = page_source._responses[response_index]
@@ -1432,16 +1443,22 @@ def _next_synthetic_response(
 
 def _validate_restart_state(private_root: Path, chains: Sequence[RequestChain]) -> None:
     chains_root = private_root / "chains"
+    _require_owned_path(private_root, chains_root)
     if not chains_root.exists():
         return
     allowed = {chain.identity for chain in chains}
     for chain_root in chains_root.iterdir():
+        _require_owned_path(private_root, chain_root)
         if not chain_root.is_dir() or chain_root.name not in allowed:
             raise Program007Error("Program 007 private root contains a foreign chain")
         requests_root = chain_root / "requests"
         pages_root = chain_root / "pages"
+        _require_owned_path(private_root, requests_root)
+        _require_owned_path(private_root, pages_root)
         if requests_root.exists():
             for intent in requests_root.glob("*.json"):
+                _require_owned_path(private_root, intent)
+                _require_owned_path(private_root, pages_root / intent.stem)
                 if not (pages_root / intent.stem).is_dir():
                     raise Program007Error(
                         "Program 007 request outcome is ambiguous; zero-retry policy blocks replay"
@@ -1449,11 +1466,13 @@ def _validate_restart_state(private_root: Path, chains: Sequence[RequestChain]) 
 
 
 def _retain_response(
+    private_root: Path,
     target: Path,
     intent: RequestIntent,
     response: RawResponse,
     observed_at: datetime,
 ) -> None:
+    _require_owned_path(private_root, target)
     sha256 = hashlib.sha256(response.body).hexdigest()
     receipt = {
         "schema_version": "program-007-private-raw-page-receipt-v1",
@@ -1472,8 +1491,10 @@ def _retain_response(
         "credentials_stored": False,
     }
     target.parent.mkdir(parents=True, exist_ok=True)
+    _require_owned_path(private_root, target)
     temporary = Path(tempfile.mkdtemp(prefix=f".{target.name}-", dir=target.parent))
     try:
+        _require_owned_path(private_root, temporary)
         _write_fsynced(temporary / "body.json", response.body)
         receipt_with_fingerprint = dict(receipt)
         receipt_with_fingerprint["record_fingerprint"] = fingerprint(receipt)
@@ -1482,6 +1503,7 @@ def _retain_response(
             (canonical_json(receipt_with_fingerprint) + "\n").encode(),
         )
         _fsync_directory(temporary)
+        _require_owned_path(private_root, target)
         os.rename(temporary, target)
         _fsync_directory(target.parent)
     finally:
@@ -1489,9 +1511,12 @@ def _retain_response(
             shutil.rmtree(temporary)
 
 
-def _load_response(root: Path, intent: RequestIntent) -> RawResponse:
-    receipt = _load_record(root / "receipt.json")
-    body = (root / "body.json").read_bytes()
+def _load_response(private_root: Path, root: Path, intent: RequestIntent) -> RawResponse:
+    _require_owned_path(private_root, root)
+    receipt = _load_record(private_root, root / "receipt.json")
+    body_path = root / "body.json"
+    _require_owned_path(private_root, body_path)
+    body = body_path.read_bytes()
     sha256 = hashlib.sha256(body).hexdigest()
     if (
         receipt.get("schema_version") != "program-007-private-raw-page-receipt-v1"
@@ -1535,6 +1560,7 @@ def _validate_intent(record: Mapping[str, Any], intent: RequestIntent) -> None:
 
 
 def _publish_validation(
+    private_root: Path,
     path: Path,
     record: Mapping[str, Any],
     observed_at: datetime,
@@ -1547,26 +1573,34 @@ def _publish_validation(
         if comparable != dict(record):
             raise Program007Error("Program 007 immutable validation outcome differs")
         return
-    _publish_record(path, {**record, "validated_at_utc": _iso_utc(observed_at)})
+    _publish_record(private_root, path, {**record, "validated_at_utc": _iso_utc(observed_at)})
 
 
 def _publish_record(
-    path: Path, record: Mapping[str, Any], *, allow_identical: bool = False
+    private_root: Path,
+    path: Path,
+    record: Mapping[str, Any],
+    *,
+    allow_identical: bool = False,
 ) -> None:
     payload = dict(record)
     payload["record_fingerprint"] = fingerprint(payload)
     contents = (canonical_json(payload) + "\n").encode()
+    _require_owned_path(private_root, path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    _require_owned_path(private_root, path)
     try:
         _write_fsynced(path, contents, exclusive=True)
     except FileExistsError:
+        _require_owned_path(private_root, path)
         if allow_identical and path.read_bytes() == contents:
             return
         raise Program007Error(f"Program 007 create-only artifact exists: {path.name}") from None
     _fsync_directory(path.parent)
 
 
-def _load_record(path: Path) -> Mapping[str, Any]:
+def _load_record(private_root: Path, path: Path) -> Mapping[str, Any]:
+    _require_owned_path(private_root, path)
     raw = path.read_bytes()
     record = _load_json_object(raw, path.name)
     unsigned = dict(record)
@@ -1577,6 +1611,9 @@ def _load_record(path: Path) -> Mapping[str, Any]:
 
 
 def _load_json_object(raw: bytes, label: str) -> dict[str, Any]:
+    if type(raw) is not bytes:
+        raise Program007Error(f"{label} must be exact bytes")
+
     def reject_constant(value: str) -> None:
         raise Program007Error(f"{label} contains non-finite number: {value}")
 
@@ -1604,14 +1641,19 @@ def _load_json_object(raw: bytes, label: str) -> dict[str, Any]:
 
 
 def _write_fsynced(path: Path, contents: bytes, *, exclusive: bool = False) -> None:
-    with path.open("xb" if exclusive else "wb") as handle:
+    flags = os.O_WRONLY | os.O_CREAT | (os.O_EXCL if exclusive else os.O_TRUNC)
+    flags |= getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags, 0o600)
+    with os.fdopen(descriptor, "wb") as handle:
         handle.write(contents)
         handle.flush()
         os.fsync(handle.fileno())
 
 
 def _fsync_directory(path: Path) -> None:
-    descriptor = os.open(path, os.O_RDONLY)
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_DIRECTORY", 0)
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags)
     try:
         os.fsync(descriptor)
     finally:
@@ -1619,13 +1661,38 @@ def _fsync_directory(path: Path) -> None:
 
 
 @contextmanager
-def _exclusive_lock(path: Path) -> Iterator[None]:
-    with path.open("a+b") as handle:
+def _exclusive_lock(private_root: Path, path: Path) -> Iterator[None]:
+    _require_owned_path(private_root, path)
+    flags = os.O_CREAT | os.O_RDWR | getattr(os, "O_CLOEXEC", 0)
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags, 0o600)
+    with os.fdopen(descriptor, "a+b") as handle:
         fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
         try:
             yield
         finally:
             fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def _require_owned_path(private_root: Path, path: Path) -> None:
+    try:
+        relative = path.relative_to(private_root)
+        if ".." in relative.parts or private_root.is_symlink() or not private_root.is_dir():
+            raise ValueError
+        resolved_root = private_root.resolve(strict=True)
+        current = private_root
+        for index, part in enumerate(relative.parts):
+            current /= part
+            if current.is_symlink():
+                raise ValueError
+            if index < len(relative.parts) - 1 and current.exists() and not current.is_dir():
+                raise ValueError
+        if not path.resolve(strict=False).is_relative_to(resolved_root):
+            raise ValueError
+    except (OSError, RuntimeError, ValueError) as error:
+        raise Program007Error(
+            "Program 007 private storage path is outside its owned root or contains a symlink"
+        ) from error
 
 
 def _parse_bar_timestamp(value: Any) -> datetime:

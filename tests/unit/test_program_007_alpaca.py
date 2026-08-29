@@ -455,6 +455,84 @@ def test_frozen_proposal_and_range_substitution_fail_before_source(tmp_path: Pat
     assert not any(tmp_path.iterdir())
 
 
+def test_callback_capable_scalar_subclasses_are_rejected_without_invocation() -> None:
+    callbacks: list[str] = []
+
+    class CallbackBytes(bytes):
+        def __len__(self) -> int:
+            callbacks.append("len")
+            raise AssertionError("unexpected bytes length callback")
+
+        def decode(self, *args: object, **kwargs: object) -> str:
+            callbacks.append("decode")
+            raise AssertionError("unexpected bytes decode callback")
+
+    class CallbackInt(int):
+        def __eq__(self, other: object) -> bool:
+            callbacks.append("eq")
+            raise AssertionError(f"unexpected integer comparison callback: {other!r}")
+
+    proposal_bytes = CallbackBytes(_PROPOSAL_PATH.read_bytes())
+    response_bytes = CallbackBytes(b"{}")
+    source = program_007.SyntheticPageSource(())
+
+    with pytest.raises(program_007.Program007Error, match="proposal must be exact bytes"):
+        program_007.execute_synthetic_qualification(proposal_bytes, source, observed_at=_NOW)
+    with pytest.raises(program_007.Program007Error, match="response body must be bytes"):
+        program_007.RawResponse(200, response_bytes)
+    with pytest.raises(program_007.Program007Error, match="response status is invalid"):
+        program_007.RawResponse(CallbackInt(200), b"{}")
+    with pytest.raises(program_007.Program007Error, match="response body must be bytes"):
+        program_007._Budget().accept_response(response_bytes)
+    with pytest.raises(program_007.Program007Error, match="must be exact bytes"):
+        program_007._load_json_object(response_bytes, "synthetic response")
+
+    assert callbacks == []
+    assert not source.intents
+    assert not any(source.private_root.iterdir())
+
+
+@pytest.mark.parametrize(
+    "placement",
+    ["chains", "chain", "requests", "pages", "request-file", "page"],
+)
+def test_synthetic_storage_rejects_internal_symlinks(placement: str, tmp_path: Path) -> None:
+    chain = _frozen_chain("normal-2021-07-08")
+    source = program_007.SyntheticPageSource(())
+    root = source.private_root
+    chains_root = root / "chains"
+    chain_root = chains_root / chain.identity
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "sentinel").write_bytes(b"unchanged")
+
+    if placement == "chains":
+        chains_root.symlink_to(outside, target_is_directory=True)
+    elif placement == "chain":
+        chains_root.mkdir()
+        chain_root.symlink_to(outside, target_is_directory=True)
+    elif placement in {"requests", "pages"}:
+        chain_root.mkdir(parents=True)
+        (chain_root / placement).symlink_to(outside, target_is_directory=True)
+    elif placement == "request-file":
+        (chain_root / "requests").mkdir(parents=True)
+        redirected = outside / "redirected.json"
+        redirected.write_bytes(b"unchanged")
+        (chain_root / "requests/00001.json").symlink_to(redirected)
+    else:
+        (chain_root / "pages").mkdir(parents=True)
+        (chain_root / "pages/00001").symlink_to(outside, target_is_directory=True)
+
+    before = {path.name: path.read_bytes() for path in outside.iterdir()}
+    with pytest.raises(program_007.Program007Error, match="contains a symlink"):
+        program_007.execute_synthetic_qualification(
+            _PROPOSAL_PATH.read_bytes(), source, observed_at=_NOW
+        )
+
+    assert not source.intents
+    assert {path.name: path.read_bytes() for path in outside.iterdir()} == before
+
+
 def test_frozen_raw_contract_and_full_14742_coordinate_shape() -> None:
     proposal_bytes = _PROPOSAL_PATH.read_bytes()
     chains = program_007.frozen_request_chains(proposal_bytes)
