@@ -34,8 +34,10 @@ The command prints only `PASS` or one `MISSING: <VARIABLE_NAME>` line per absent
 run repeatedly. It does not activate authority, load credential values, construct a provider client,
 contact Alpaca, or write private state.
 
-The current macOS Codex runtime does not contain either name. In the Codex integrated terminal, use
-one shell session for entry, preflight, and any later separately authorized qualification command:
+The v2 readiness review records a `PASS` from the intended runtime without reading credential
+values into an artifact. Presence is process-local and not durable. In the Codex integrated
+terminal, use one shell session for entry, preflight, and any later separately authorized
+qualification command:
 
 ```console
 read -rs PROGRAM_006_ALPACA_API_KEY_ID
@@ -106,9 +108,10 @@ Missing credentials before activation write no authority. Missing credentials un
 no claim. Git or binding drift writes no claim. The active authority and immutable claim use the
 separate Git-ignored `.trading-lab/program-006-free-alpaca/` root.
 
-## Current stop
+## Current authorization gate
 
-Current status is `BLOCKED-CREDENTIALS-NOT-VISIBLE-TO-RUNTIME`. All authority flags are false. No
-external authorization root is effective, and no provider request, qualification, acquisition,
-dataset admission, strategy execution, controlled evaluation, protected access, PAPER action,
-broker write, or live action is allowed.
+Current status is `READY FOR NEW EXACT ONE-USE QUALIFICATION AUTHORIZATION`. Proposal v2 and its
+finding-free review remain inactive. The external root binds the exact final synchronized main
+commit and must be supplied separately by the user. Until activation, all authority flags are
+false. No provider request, qualification, acquisition, dataset admission, strategy execution,
+controlled evaluation, protected access, PAPER action, broker write, or live action is allowed.
