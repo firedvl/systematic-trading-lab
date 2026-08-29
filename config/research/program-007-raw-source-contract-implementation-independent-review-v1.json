@@ -1,0 +1,145 @@
+{
+  "schema_version": "program-007-raw-source-contract-implementation-independent-review-v1",
+  "review_id": "program-007-raw-source-contract-implementation-independent-review-2026-08-29-v1",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "reviewed_at": "2026-08-29T09:08:16Z",
+  "status": "PASS",
+  "verdict": "PASS",
+  "findings": [],
+  "program_completion": {
+    "status": "BLOCKED-PRE-AUTHORITY",
+    "resolved_ledger_symbols": 10,
+    "unresolved_ledger_symbols": [
+      "IWM",
+      "MDY",
+      "SPY"
+    ],
+    "dataset_admission": "BLOCKED",
+    "ledger_backed_normalization": "BLOCKED",
+    "one_use_authority_proposal_eligible": false
+  },
+  "reviewed_implementation": {
+    "source_commit": "b06b6c77b170705ce52b18ae5058e96f861c29e1",
+    "implementation_root": "1e3fc58344fa2c4f72cd8f3638c63f9fd2e9e69ceb8c7265a2b7768aed7c9df8",
+    "source_files": [
+      {
+        "path": "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
+        "sha256": "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34"
+      },
+      {
+        "path": "config/research/program-007-nyse-corpax-retrieval-manifest-v1.json",
+        "sha256": "48b85bb63c02e59b8538eed741237d9d9a386dc36caa4c3cc1e7b5856bd735f5"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v2.schema.json",
+        "sha256": "36b74f6b8facd55176eba8d08075d6eb3276ae938bf424c3af75adaba81c8d78"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v2.json",
+        "sha256": "3b815581d0da66db427243bce34f9ced5021f73719acd2b5d5e277d57065d53a"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "5c25803213298c58d048e8017372a2506752aede7144134b8fbbfecf499f0714"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_alpaca.py",
+        "sha256": "935c7d6ff9607b72d902707e6ebb41ffe347360a523c59b27e6b637d97a26f06"
+      },
+      {
+        "path": "tests/unit/test_program_007_alpaca.py",
+        "sha256": "cf6f1d04331f4e76e1d56dbff6e956c49e18760502cc20adce0472ce4d55037e"
+      },
+      {
+        "path": "tests/unit/test_program_007_forensic_contract.py",
+        "sha256": "a11a673ce763b724143a5ae09d58c6c36741a5fe6ae91d8cb3eb4a0b3f5c0c0d"
+      }
+    ]
+  },
+  "implementation_artifact_binding": {
+    "path": "config/research/program-007-raw-source-contract-implementation-v6.json",
+    "sha256": "9903d4c243e94c34879cc5edd086747b4687b33224167db549782229f259b188",
+    "fingerprint": "4e611bd85f4f59f045c1cf981ac77cc5359fce7205bedf698bd3f84050c57456"
+  },
+  "review_scope": "repository standards and provenance; complete Program 007 source-contract specification; raw-first ordering; XNYS projection; pagination and zero retry; action-ledger disposition and exact share-unit normalization; capability-held private evidence; same-process concurrency; authority and privacy boundaries",
+  "review_results": {
+    "standards": "The earlier provenance finding is resolved by immutable V6 implementation and review artifacts plus state, roadmap, decision, secret-guard, and regression-test bindings.",
+    "specification": "No material source/spec correctness findings at the bound source commit. Exact qualification completeness is correct; unresolved ledger coverage remains an explicit pre-authority blocker rather than an implementation defect.",
+    "storage_boundary": "No material findings after the final per-source RLock fix. The unnamed evidence descriptor removes child-path inode provenance from all evidence reads and writes."
+  },
+  "required_challenges": {
+    "raw_first_pipeline_before_validation": "PASS",
+    "extended_hours_coexists_with_exact_rth_projection": "PASS",
+    "malformed_and_out_of_bounds_rows_fail_after_bounded_retention": "PASS",
+    "public_action_ledger_exhaustive": "BLOCKED-IWM-MDY-SPY-COVERAGE-UNRESOLVED",
+    "action_sources_authoritative": "PASS-FOR-RESOLVED-CONCLUSIONS; BLOCKED-FOR-THREE-UNRESOLVED-SYMBOLS",
+    "per_symbol_affirmative_or_no_action_coverage": "BLOCKED-IWM-MDY-SPY-COVERAGE-UNRESOLVED",
+    "split_spanning_volume_normalization_exact": "PASS",
+    "unnecessary_adjusted_price_transformations_absent": "PASS",
+    "spin_off_and_non_split_handling_fail_closed": "PASS",
+    "qualification_falsifiable": "PASS",
+    "fresh_sample_unchanged_and_unobserved": "PASS-ARTIFACT-LEVEL",
+    "program_006_private_observations_absent_from_public_artifacts": "PASS-STATIC-AND-SECRET-SCAN",
+    "strategy_calculation_occurred": "NO",
+    "provider_request_occurred": "NO"
+  },
+  "resolved_findings": [
+    {
+      "severity": "HIGH",
+      "finding": "Descriptor-relative child path opens could accept attacker-selected pre-existing external inodes.",
+      "resolution": "All logical evidence now uses one unnamed file descriptor opened during source construction; workspace child paths are never reopened."
+    },
+    {
+      "severity": "MEDIUM",
+      "finding": "flock on one shared open-file description did not serialize same-process threads.",
+      "resolution": "One exact per-source RLock now covers evidence load, validation, append, fsync, and flock release; a barrier regression proves the second caller waits."
+    }
+  ],
+  "verification": {
+    "independent_reviewers": "fresh standards, specification, and storage-boundary reviewers",
+    "focused_tests": "46 passed across Program 007 source and forensic tests",
+    "sanitized_full_suite": "1335 passed, 4 skipped",
+    "ruff": "passed",
+    "mypy": "passed",
+    "secret_private_data_scan": "passed after staging V6 and review artifacts",
+    "provider_or_strategy_execution": "not performed"
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "credential_values_or_presence": false,
+    "provider_or_account_endpoint": false,
+    "program_006_private_observations": false,
+    "strategy_returns": false,
+    "controlled_protected_paper_broker_or_live": false
+  },
+  "proof_gap": "The synthetic evidence log persists only while the same SyntheticPageSource object holds its unnamed descriptor. A future authorized real transport needs a separately reviewed persistent store. This review did not resolve public unit-changing-action coverage for IWM, MDY, or SPY and did not inspect credentials, private observations, providers, strategy outputs, controlled or protected state, PAPER, broker, or live state.",
+  "review_fingerprint": "7c6517671aa9a8e0fa9f13e3f1adf94343639c45b49a602b4efd8cc62b3b6841"
+}

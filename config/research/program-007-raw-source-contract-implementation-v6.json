@@ -1,0 +1,213 @@
+{
+  "schema_version": "program-007-raw-source-contract-implementation-v6",
+  "implementation_id": "program-007-raw-source-contract-implementation-2026-08-29-v6",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "status": "IMPLEMENTED-SYNTHETICALLY-LEDGER-COVERAGE-INCOMPLETE-NOT-AUTHORIZED",
+  "supersession": {
+    "previous_path": "config/research/program-007-raw-source-contract-implementation-v5.json",
+    "previous_sha256": "a5c52a4c2ce58618f5a4708d883c38d17b28a5b0b088d4b1702fe20a02d4f1e7",
+    "previous_fingerprint": "052bc7f2b7b900b64d3fa6ecea64cbc9759ac49640ea39fbdea2db0ae34a597c",
+    "review_verdict": "NOT-FINDING-FREE",
+    "findings": [
+      "Descriptor-relative child path opens could accept a pre-existing external directory moved under the workspace or a hard-linked external regular file because O_NOFOLLOW did not establish inode provenance."
+    ]
+  },
+  "implementation_binding": {
+    "source_commit": "b06b6c77b170705ce52b18ae5058e96f861c29e1",
+    "implementation_root": "1e3fc58344fa2c4f72cd8f3638c63f9fd2e9e69ceb8c7265a2b7768aed7c9df8",
+    "source_files": [
+      {
+        "path": "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
+        "sha256": "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34"
+      },
+      {
+        "path": "config/research/program-007-nyse-corpax-retrieval-manifest-v1.json",
+        "sha256": "48b85bb63c02e59b8538eed741237d9d9a386dc36caa4c3cc1e7b5856bd735f5"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v2.schema.json",
+        "sha256": "36b74f6b8facd55176eba8d08075d6eb3276ae938bf424c3af75adaba81c8d78"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v2.json",
+        "sha256": "3b815581d0da66db427243bce34f9ced5021f73719acd2b5d5e277d57065d53a"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "5c25803213298c58d048e8017372a2506752aede7144134b8fbbfecf499f0714"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_alpaca.py",
+        "sha256": "935c7d6ff9607b72d902707e6ebb41ffe347360a523c59b27e6b637d97a26f06"
+      },
+      {
+        "path": "tests/unit/test_program_007_alpaca.py",
+        "sha256": "cf6f1d04331f4e76e1d56dbff6e956c49e18760502cc20adce0472ce4d55037e"
+      },
+      {
+        "path": "tests/unit/test_program_007_forensic_contract.py",
+        "sha256": "a11a673ce763b724143a5ae09d58c6c36741a5fe6ae91d8cb3eb4a0b3f5c0c0d"
+      }
+    ]
+  },
+  "proposal_binding": {
+    "path": "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
+    "sha256": "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34",
+    "fingerprint": "d0ec31e7b6947ed6fe3e1118a6f5536daddae34ebbe9dffcc3b3f932dd9d41c0"
+  },
+  "action_ledger_binding": {
+    "path": "config/research/program-007-unit-changing-action-ledger-v2.json",
+    "sha256": "3b815581d0da66db427243bce34f9ced5021f73719acd2b5d5e277d57065d53a",
+    "fingerprint": "0ec39d6f38d469e099862173ff710c0e737b39b464e233e291c9e9b20c089c25"
+  },
+  "action_schema_binding": {
+    "path": "config/research/program-007-unit-changing-action-ledger-v2.schema.json",
+    "sha256": "36b74f6b8facd55176eba8d08075d6eb3276ae938bf424c3af75adaba81c8d78"
+  },
+  "nyse_retrieval_manifest_binding": {
+    "path": "config/research/program-007-nyse-corpax-retrieval-manifest-v1.json",
+    "sha256": "48b85bb63c02e59b8538eed741237d9d9a386dc36caa4c3cc1e7b5856bd735f5",
+    "fingerprint": "b0fc71436088824df6126bbfd950232e0b55da6233b34c11b40480c3495dcbeb",
+    "entries_fingerprint": "bdcea47c663440353ce3b31abdd43222d907f9b7c93f55247d79da19414cbac1"
+  },
+  "execution_boundary": {
+    "entrypoint": "execute_synthetic_qualification",
+    "finite_in_memory_responses_only": true,
+    "synthetic_source_normal_assignment_immutable": true,
+    "response_consumption_is_module_owned": true,
+    "dynamic_response_dispatch": false,
+    "caller_callable_inputs": false,
+    "proposal_body_and_status_require_exact_builtins": true,
+    "observation_time": "exact built-in datetime with datetime.UTC identity",
+    "caller_selected_storage_root_accepted": false,
+    "private_execution_root_parameter_present": false,
+    "owned_os_temporary_workspace": true,
+    "workspace_purpose": "root-identity and foreign-entry canary only",
+    "foreign_workspace_entries_accepted": false,
+    "workspace_child_paths_opened_for_evidence": false,
+    "evidence_storage": "one capability-held unnamed tempfile created before source publication",
+    "evidence_descriptor_identity_revalidated": true,
+    "evidence_file_required_link_count": 0,
+    "evidence_log_schema": "program-007-private-evidence-log-entry-v1",
+    "logical_entries_create_only": true,
+    "logical_key_allowlist_enforced": true,
+    "canonical_json_lines_required": true,
+    "payload_encoding": "strict canonical Base64",
+    "payload_byte_count_bound": true,
+    "payload_sha256_bound": true,
+    "entry_fingerprint_bound": true,
+    "append_fsync_required": true,
+    "same_process_callers_serialized_by_per_source_rlock": true,
+    "descriptor_flock_required": true,
+    "request_intent_persisted_before_response_read": true,
+    "bounded_raw_body_fsynced_before_receipt_parse_or_semantic_validation": true,
+    "restart_uses_retained_page_without_source_read": true,
+    "restart_scope": "same SyntheticPageSource object while its unnamed evidence descriptor remains open",
+    "process_restart_attachment_supported": false,
+    "provider_transport_present": false,
+    "future_real_transport_requirement": "Separate authority-gated persistent-store implementation bound to the exact reviewed authority and ignored private root."
+  },
+  "ledger_disposition": {
+    "resolved_symbols": [
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "unresolved_symbols": [
+      "IWM",
+      "MDY",
+      "SPY"
+    ],
+    "dataset_admission": "BLOCKED",
+    "ledger_backed_normalization": "BLOCKED",
+    "one_use_authority_proposal_eligible": false,
+    "completion_condition": "Bind complete public issuer or exchange unit-action coverage for IWM, MDY, and SPY in a new reviewed ledger version."
+  },
+  "fresh_sample": {
+    "changed": false,
+    "normal_sessions": [
+      "2021-07-08",
+      "2022-01-25",
+      "2022-11-15"
+    ],
+    "pagination_range": [
+      "2023-05-16",
+      "2023-05-30"
+    ],
+    "pagination_xnys_sessions": 10,
+    "early_close_pre_split": "2025-11-28",
+    "post_split": "2025-12-15",
+    "expected_canonical_coordinates": 14742
+  },
+  "synthetic_verification": {
+    "alpaca_or_market_data_provider_requests": 0,
+    "public_nyse_research_requests": 326,
+    "credential_reads_or_presence_checks": 0,
+    "private_program_006_pages_read": 0,
+    "strategy_calculations": 0,
+    "frozen_session_count": 15,
+    "frozen_chain_count": 6,
+    "synthetic_response_count": 7,
+    "expected_canonical_coordinates": 14742,
+    "actual_canonical_coordinates": 14742,
+    "synthetic_extended_hours_rows_retained_raw_only": 1,
+    "focused_tests": "46 passed across tests/unit/test_program_007_alpaca.py and tests/unit/test_program_007_forensic_contract.py",
+    "storage_boundary_tests": "Six static workspace placements reject before source use; reflective root mutation and root inode replacement reject; injected external directories and hard links are neither read nor written; noncanonical and invalid-Base64 log entries reject; incomplete logical pages block zero-retry restart before source consumption; concurrent same-source callers serialize before loading evidence.",
+    "sanitized_full_suite": "1335 passed, 4 skipped",
+    "json_schema": "Draft 2020-12 metaschema and ledger instance validation passed",
+    "ruff": "passed for Program 007 source and tests",
+    "mypy": "passed for Program 007 source and tests",
+    "secret_scan": "passed after staging V6 and independent-review public hash-only artifacts"
+  },
+  "review": {
+    "status": "PASS",
+    "scope": "finding-free synthetic source implementation at the exact bound source commit",
+    "review_axes": [
+      "repository standards and provenance",
+      "complete Program 007 specification and fourteen required challenges",
+      "capability-held storage and restart boundary"
+    ],
+    "resolved_findings": [
+      "Child path reopening accepted attacker-selected pre-existing external inodes; V6 removes every child-path evidence read and write.",
+      "A shared flock did not serialize concurrent callers using one open-file description; the final source adds one per-source RLock around the complete evidence context."
+    ],
+    "known_nonimplementation_blocker": "IWM, MDY, and SPY remain COVERAGE-UNRESOLVED; complete ledger coverage, dataset admission, ledger-backed normalization, and one-use authority proposal eligibility remain blocked."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "4e611bd85f4f59f045c1cf981ac77cc5359fce7205bedf698bd3f84050c57456"
+}

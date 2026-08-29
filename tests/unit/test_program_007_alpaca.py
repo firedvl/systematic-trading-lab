@@ -44,8 +44,15 @@ _IMPLEMENTATION_V3_PATH = (
 _IMPLEMENTATION_V4_PATH = (
     _REPOSITORY / "config/research/program-007-raw-source-contract-implementation-v4.json"
 )
-_IMPLEMENTATION_PATH = (
+_IMPLEMENTATION_V5_PATH = (
     _REPOSITORY / "config/research/program-007-raw-source-contract-implementation-v5.json"
+)
+_IMPLEMENTATION_PATH = (
+    _REPOSITORY / "config/research/program-007-raw-source-contract-implementation-v6.json"
+)
+_IMPLEMENTATION_REVIEW_PATH = (
+    _REPOSITORY
+    / "config/research/program-007-raw-source-contract-implementation-independent-review-v1.json"
 )
 _NOW = datetime(2026, 8, 28, 20, tzinfo=UTC)
 
@@ -256,6 +263,9 @@ def test_non_authorizing_implementation_artifact_binds_exact_source_commit() -> 
     assert hashlib.sha256(_IMPLEMENTATION_V4_PATH.read_bytes()).hexdigest() == (
         "4cec636042b8213d7ec15b5d6f72a702dffc36e7721e56486227f3931976e765"
     )
+    assert hashlib.sha256(_IMPLEMENTATION_V5_PATH.read_bytes()).hexdigest() == (
+        "a5c52a4c2ce58618f5a4708d883c38d17b28a5b0b088d4b1702fe20a02d4f1e7"
+    )
     implementation = _load(_IMPLEMENTATION_PATH)
     unsigned = dict(implementation)
     stored_fingerprint = unsigned.pop("implementation_fingerprint")
@@ -288,6 +298,21 @@ def test_non_authorizing_implementation_artifact_binds_exact_source_commit() -> 
     assert implementation["synthetic_verification"]["alpaca_or_market_data_provider_requests"] == 0
     assert implementation["synthetic_verification"]["strategy_calculations"] == 0
     assert all(value is False for value in implementation["authority"].values())
+
+    review = _load(_IMPLEMENTATION_REVIEW_PATH)
+    unsigned_review = dict(review)
+    review_fingerprint = unsigned_review.pop("review_fingerprint")
+    assert review_fingerprint == fingerprint(unsigned_review)
+    assert review["status"] == review["verdict"] == "PASS"
+    assert review["findings"] == []
+    reviewed = review["reviewed_implementation"]
+    assert reviewed["source_commit"] == binding["source_commit"]
+    assert reviewed["implementation_root"] == binding["implementation_root"]
+    artifact = review["implementation_artifact_binding"]
+    assert artifact["path"] == _IMPLEMENTATION_PATH.relative_to(_REPOSITORY).as_posix()
+    assert hashlib.sha256(_IMPLEMENTATION_PATH.read_bytes()).hexdigest() == artifact["sha256"]
+    assert stored_fingerprint == artifact["fingerprint"]
+    assert all(value is False for value in review["authority"].values())
 
 
 def test_action_ledger_mutation_unknown_action_and_inconsistent_ratio_fail_closed() -> None:

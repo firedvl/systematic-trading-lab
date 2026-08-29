@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-29 - Hold Program 007 synthetic evidence by capability
+
+- Decision: create one unnamed `TemporaryFile` before publishing a `SyntheticPageSource`, keep its descriptor for the source lifetime, and use the visible temporary workspace only as a root-identity and foreign-entry canary. Store create-only logical evidence as canonical JSON lines that bind strict Base64 payloads, byte counts, SHA-256 values, and fingerprints. Serialize each evidence context with one per-source `RLock` and `flock`.
+- Context: V5's descriptor-relative child paths and no-follow opens did not prove inode origin. A pre-existing external directory moved under the workspace or an external hard-linked file could still be opened. After child paths were removed, `flock` alone did not serialize threads that shared one open-file description, so concurrent callers could load the same stale evidence snapshot.
+- Consequences: no evidence read or write reopens a workspace child path. Request intent is appended and fsynced before synthetic response consumption, and each bounded raw body is appended and fsynced before receipt creation, parsing, or semantic validation. Zero-retry restart works only with the same source object while its unnamed descriptor remains open. The proposal, sample, ledger, strategy science, costs, delays, budgets, and authority state do not change.
+- Revisit when: a separately reviewed one-use authority design introduces real transport. That design must bind an authority-gated persistent store and exact ignored private root; it must not reuse this synthetic lifetime boundary.
+
 ## 2026-08-29 - Require inert Program 007 inputs and contained storage
 
 - Decision: accept only exact built-in proposal bytes, response bytes, and response status integers. Reject every symbolic link in a used path below the source-owned temporary root, verify resolved containment before each read or write, and use no-follow final file opens.
