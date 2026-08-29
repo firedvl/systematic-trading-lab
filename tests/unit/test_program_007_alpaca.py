@@ -20,9 +20,12 @@ from systematic_trading_lab.domain import Timeframe
 from systematic_trading_lab.fingerprints import fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
-_LEDGER_PATH = _REPOSITORY / "config/research/program-007-unit-changing-action-ledger-v1.json"
+_LEDGER_PATH = _REPOSITORY / "config/research/program-007-unit-changing-action-ledger-v2.json"
 _SCHEMA_PATH = (
-    _REPOSITORY / "config/research/program-007-unit-changing-action-ledger-v1.schema.json"
+    _REPOSITORY / "config/research/program-007-unit-changing-action-ledger-v2.schema.json"
+)
+_NYSE_MANIFEST_PATH = (
+    _REPOSITORY / "config/research/program-007-nyse-corpax-retrieval-manifest-v1.json"
 )
 _PROPOSAL_PATH = (
     _REPOSITORY / "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json"
@@ -161,7 +164,7 @@ def test_action_ledger_schema_hash_fingerprint_and_symbol_coverage() -> None:
     assert_strict_objects(schema)
     program_007.validate_action_ledger(ledger)
     assert ledger["ledger_fingerprint"] == (
-        "eb61c7a117973977bd2f7947c965f5f0d3061beee43635bd39f893da738ea921"
+        "0ec39d6f38d469e099862173ff710c0e737b39b464e233e291c9e9b20c089c25"
     )
     assert [item["symbol"] for item in ledger["symbols"]] == list(program_007.SYMBOLS)
     assert {item["symbol"] for item in ledger["actions"]} == {
@@ -175,8 +178,44 @@ def test_action_ledger_schema_hash_fingerprint_and_symbol_coverage() -> None:
         item["symbol"]
         for item in ledger["symbols"]
         if item["conclusion"] == "NO-APPLICABLE-ACTION-FOUND"
-    } == {"IWM", "MDY", "SPY", "XLF", "XLI", "XLP", "XLRE", "XLV"}
+    } == {"XLF", "XLI", "XLP", "XLRE", "XLV"}
+    assert {
+        item["symbol"] for item in ledger["symbols"] if item["conclusion"] == "COVERAGE-UNRESOLVED"
+    } == {"IWM", "MDY", "SPY"}
+    coverage = ledger["archive_coverage"]
+    assert coverage["status"] == "INCOMPLETE"
+    assert coverage["dataset_admission"] == "BLOCKED"
+    assert coverage["unresolved_symbols"] == ["IWM", "MDY", "SPY"]
+    assert coverage["nyse_corpax"]["forward_splits_in_scope"] is False
+    assert coverage["nyse_corpax"]["target_record_count"] == 12
     assert all(value is False for value in ledger["authority"].values())
+
+
+def test_nyse_retrieval_manifest_is_public_hash_only_evidence() -> None:
+    ledger = _ledger()
+    manifest = _load(_NYSE_MANIFEST_PATH)
+    unsigned = dict(manifest)
+    stored_fingerprint = unsigned.pop("manifest_fingerprint")
+    assert stored_fingerprint == fingerprint(unsigned)
+    assert manifest["entries_fingerprint"] == fingerprint(manifest["entries"])
+    assert manifest["entry_count"] == len(manifest["entries"]) == 326
+    binding = ledger["archive_coverage"]["nyse_corpax"]["retrieval_manifest_binding"]
+    assert hashlib.sha256(_NYSE_MANIFEST_PATH.read_bytes()).hexdigest() == binding["sha256"]
+    assert stored_fingerprint == binding["fingerprint"]
+    assert manifest["entries_fingerprint"] == binding["entries_fingerprint"]
+    assert all(
+        set(entry)
+        == {
+            "kind",
+            "start",
+            "end",
+            "response_sha256",
+            "response_bytes",
+            "reported_count",
+            "result_count",
+        }
+        for entry in manifest["entries"]
+    )
 
 
 def test_non_authorizing_implementation_artifact_binds_exact_source_commit() -> None:
@@ -210,6 +249,12 @@ def test_action_ledger_mutation_unknown_action_and_inconsistent_ratio_fail_close
     ledger = _ledger()
     ledger["symbols"][0]["continuity_notes"] += " mutation"
     with pytest.raises(program_007.Program007Error, match="fingerprint"):
+        program_007.validate_action_ledger(ledger)
+
+    ledger = _ledger()
+    ledger["archive_coverage"]["dataset_admission"] = "READY"
+    _refingerprint(ledger)
+    with pytest.raises(program_007.Program007Error, match="archive coverage disposition"):
         program_007.validate_action_ledger(ledger)
 
     ledger = _ledger()
@@ -258,11 +303,17 @@ def test_ledger_normalization_uses_effective_session_boundary_and_exact_volume()
     pre = date(2025, 11, 28)
     effective = date(2025, 12, 5)
     post = date(2025, 12, 15)
-    assert program_007.share_unit_factor(ledger, "XLB", pre, post) == 2
-    assert program_007.share_unit_factor(ledger, "XLB", effective, post) == 1
-    assert program_007.share_unit_factor(ledger, "XLB", post, pre) == Fraction(1, 2)
-    assert program_007.share_unit_factor(ledger, "SPY", pre, post) == 1
-    assert program_007.normalize_share_volume(Decimal("10.5"), ledger, "XLB", pre, post) == 21
+    actions = ledger["actions"]
+    assert program_007.share_unit_factor_for_actions(actions, "XLB", pre, post) == 2
+    assert program_007.share_unit_factor_for_actions(actions, "XLB", effective, post) == 1
+    assert program_007.share_unit_factor_for_actions(actions, "XLB", post, pre) == Fraction(1, 2)
+    assert program_007.share_unit_factor_for_actions(actions, "SPY", pre, post) == 1
+    with pytest.raises(program_007.Program007Error, match="IWM, MDY, SPY"):
+        program_007.require_action_ledger_admission(ledger)
+    with pytest.raises(program_007.Program007Error, match="dataset admission is blocked"):
+        program_007.share_unit_factor(ledger, "XLB", pre, post)
+    with pytest.raises(program_007.Program007Error, match="dataset admission is blocked"):
+        program_007.normalize_share_volume(Decimal("10.5"), ledger, "XLB", pre, post)
 
 
 def test_ambiguous_and_inconsistent_synthetic_actions_fail_closed() -> None:

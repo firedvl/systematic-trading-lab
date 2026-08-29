@@ -75,6 +75,9 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-006-source-qualification-terminal-failure-v1.json",
         "config/research/program-007-unit-changing-action-ledger-v1.json",
         "config/research/program-007-unit-changing-action-ledger-v1.schema.json",
+        "config/research/program-007-unit-changing-action-ledger-v2.json",
+        "config/research/program-007-unit-changing-action-ledger-v2.schema.json",
+        "config/research/program-007-nyse-corpax-retrieval-manifest-v1.json",
         "config/research/program-007-raw-source-contract-implementation-v1.json",
         "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
     }

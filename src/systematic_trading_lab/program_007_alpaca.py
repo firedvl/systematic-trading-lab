@@ -54,6 +54,10 @@ _NEW_YORK = ZoneInfo("America/New_York")
 _CHAIN_ID = re.compile(r"[a-z0-9][a-z0-9-]*")
 _HEX_64 = re.compile(r"[0-9a-f]{64}")
 _ACTION_SYMBOLS = frozenset({"XLB", "XLE", "XLK", "XLU", "XLY"})
+_UNRESOLVED_ACTION_SYMBOLS = ("IWM", "MDY", "SPY")
+_RESOLVED_ACTION_SYMBOLS = tuple(
+    symbol for symbol in SYMBOLS if symbol not in _UNRESOLVED_ACTION_SYMBOLS
+)
 _AUTHORITY_FIELDS = frozenset(
     {
         "provider_contact",
@@ -531,6 +535,7 @@ def validate_action_ledger(ledger: Mapping[str, Any]) -> None:
         "actions",
         "historical_context",
         "evidence",
+        "archive_coverage",
         "authority",
         "ledger_fingerprint",
     }
@@ -540,17 +545,17 @@ def validate_action_ledger(ledger: Mapping[str, Any]) -> None:
     if stored_fingerprint != fingerprint(unsigned):
         raise Program007Error("Program 007 action ledger fingerprint differs")
     if (
-        ledger["schema_version"] != "program-007-unit-changing-action-ledger-v1"
+        ledger["schema_version"] != "program-007-unit-changing-action-ledger-v2"
         or not _string(ledger["ledger_id"], "ledger id")
         or ledger["program_id"] != PROGRAM_ID
-        or ledger["status"] != "PUBLIC-EVIDENCE-COMPLETE-NON-AUTHORIZING"
+        or ledger["status"] != "PUBLIC-EVIDENCE-INCOMPLETE-DATASET-ADMISSION-BLOCKED"
     ):
         raise Program007Error("Program 007 action ledger identity differs")
     schema_binding = _mapping(ledger["schema_binding"], "schema binding")
     _exact_keys(schema_binding, {"path", "sha256"}, "schema binding")
     if (
         schema_binding["path"]
-        != "config/research/program-007-unit-changing-action-ledger-v1.schema.json"
+        != "config/research/program-007-unit-changing-action-ledger-v2.schema.json"
         or not _HEX_64.fullmatch(_string(schema_binding["sha256"], "schema SHA-256"))
     ):
         raise Program007Error("Program 007 action schema SHA-256 differs")
@@ -687,6 +692,7 @@ def validate_action_ledger(ledger: Mapping[str, Any]) -> None:
                 "fund_identity",
                 "coverage_start",
                 "coverage_end",
+                "coverage_status",
                 "conclusion",
                 "action_ids",
                 "evidence_ids",
@@ -705,12 +711,18 @@ def validate_action_ledger(ledger: Mapping[str, Any]) -> None:
             str(action["action_id"]) for action in actions_by_symbol.get(symbol, [])
         }
         linked_evidence = set(evidence_links)
-        expected_conclusion = (
-            "APPLICABLE-ACTIONS-RECORDED" if expected_actions else "NO-APPLICABLE-ACTION-FOUND"
-        )
+        if symbol in _UNRESOLVED_ACTION_SYMBOLS:
+            expected_coverage = "INCOMPLETE"
+            expected_conclusion = "COVERAGE-UNRESOLVED"
+        else:
+            expected_coverage = "COMPLETE"
+            expected_conclusion = (
+                "APPLICABLE-ACTIONS-RECORDED" if expected_actions else "NO-APPLICABLE-ACTION-FOUND"
+            )
         if (
             item["coverage_start"] != "2020-06-26"
             or item["coverage_end"] != "2026-07-31"
+            or item["coverage_status"] != expected_coverage
             or item["conclusion"] != expected_conclusion
             or linked_actions != expected_actions
             or len(linked_actions) != len(action_links)
@@ -797,6 +809,273 @@ def validate_action_ledger(ledger: Mapping[str, Any]) -> None:
         _string(item["description"], "historical context description")
         _string(item["program_effect"], "historical context program effect")
 
+    _validate_archive_coverage(ledger["archive_coverage"])
+
+
+def _validate_archive_coverage(raw: Any) -> None:
+    coverage = _mapping(raw, "archive coverage")
+    _exact_keys(
+        coverage,
+        {
+            "status",
+            "dataset_admission",
+            "resolved_symbols",
+            "unresolved_symbols",
+            "blocking_rule",
+            "completion_condition",
+            "nyse_corpax",
+            "primary_corpora",
+        },
+        "archive coverage",
+    )
+    if (
+        coverage["status"] != "INCOMPLETE"
+        or coverage["dataset_admission"] != "BLOCKED"
+        or _strings(coverage["resolved_symbols"], "resolved symbols") != _RESOLVED_ACTION_SYMBOLS
+        or _strings(coverage["unresolved_symbols"], "unresolved symbols")
+        != _UNRESOLVED_ACTION_SYMBOLS
+    ):
+        raise Program007Error("Program 007 archive coverage disposition differs")
+    _string(coverage["blocking_rule"], "archive blocking rule")
+    _string(coverage["completion_condition"], "archive completion condition")
+
+    nyse = _mapping(coverage["nyse_corpax"], "NYSE archive coverage")
+    _exact_keys(
+        nyse,
+        {
+            "archive_id",
+            "source",
+            "url",
+            "retrieved_at_utc",
+            "coverage_start",
+            "coverage_end",
+            "retrieval_method",
+            "interval_count",
+            "request_count",
+            "dated_record_count",
+            "unique_market_event_count",
+            "out_of_window_dated_count",
+            "null_dated_rows_excluded",
+            "retrieval_manifest_binding",
+            "dated_records_sha256",
+            "forward_splits_in_scope",
+            "scope_includes",
+            "scope_excludes",
+            "target_record_count",
+            "target_records_fingerprint",
+            "target_records",
+            "conclusion",
+        },
+        "NYSE archive coverage",
+    )
+    if (
+        nyse["archive_id"] != "nyse-corpax-2020-06-26-to-2026-07-31-v1"
+        or nyse["source"] != "NYSE Corporate Actions"
+        or nyse["url"] != "https://www.nyse.com/api/nyseservice/v1/corpax/"
+        or nyse["coverage_start"] != "2020-06-26"
+        or nyse["coverage_end"] != "2026-07-31"
+        or nyse["interval_count"] != 319
+        or nyse["request_count"] != 326
+        or nyse["dated_record_count"] != 11_345
+        or nyse["unique_market_event_count"] != 11_345
+        or nyse["out_of_window_dated_count"] != 0
+        or nyse["null_dated_rows_excluded"] is not True
+        or nyse["dated_records_sha256"]
+        != "a7150d3bada745e3046ddeccd64a9be27fb1b23735674accc5dba318b2b3605b"
+        or nyse["forward_splits_in_scope"] is not False
+        or nyse["target_record_count"] != 12
+        or nyse["target_records_fingerprint"]
+        != "e4d28699ea6ca7ed3a147c12a92706bb9ecbc2ef6e1313531103dd864d89dba8"
+        or nyse["conclusion"] != "COMPLETE-FOR-CORPAX-SCOPE-NOT-FOR-FORWARD-SPLITS"
+    ):
+        raise Program007Error("Program 007 NYSE archive evidence differs")
+    _parse_utc(_string(nyse["retrieved_at_utc"], "NYSE retrieval timestamp"))
+    _string(nyse["retrieval_method"], "NYSE retrieval method")
+    if not _strings(nyse["scope_includes"], "NYSE included scope") or not _strings(
+        nyse["scope_excludes"], "NYSE excluded scope"
+    ):
+        raise Program007Error("Program 007 NYSE archive scope is empty")
+
+    binding = _mapping(nyse["retrieval_manifest_binding"], "NYSE manifest binding")
+    _exact_keys(
+        binding,
+        {"path", "sha256", "fingerprint", "entries_fingerprint"},
+        "NYSE manifest binding",
+    )
+    expected_binding = {
+        "path": "config/research/program-007-nyse-corpax-retrieval-manifest-v1.json",
+        "sha256": "48b85bb63c02e59b8538eed741237d9d9a386dc36caa4c3cc1e7b5856bd735f5",
+        "fingerprint": "b0fc71436088824df6126bbfd950232e0b55da6233b34c11b40480c3495dcbeb",
+        "entries_fingerprint": "bdcea47c663440353ce3b31abdd43222d907f9b7c93f55247d79da19414cbac1",
+    }
+    if dict(binding) != expected_binding:
+        raise Program007Error("Program 007 NYSE retrieval manifest binding differs")
+
+    target_items = _sequence(nyse["target_records"], "NYSE target records")
+    expected_targets = (
+        ("XLB", "2025-12-01", "Change Product Name", "727d94c6-0065-492c-901d-19d20cdfb8ff"),
+        ("XLE", "2025-12-01", "Change Product Name", "2536ba87-e518-4aed-b20f-e82d5d717ebd"),
+        ("XLF", "2025-12-01", "Change Product Name", "236199eb-e4de-4523-aea5-dafb8ec35942"),
+        ("XLI", "2025-12-01", "Change Product Name", "330db11e-fd66-4da2-ad06-9974e0131303"),
+        ("XLK", "2025-12-01", "Change Product Name", "32d4c86b-ba68-4d86-a98b-b2a325ef27b4"),
+        ("XLP", "2025-12-01", "Change Product Name", "25319a73-7e10-4a0b-875d-274d58c318ca"),
+        ("XLRE", "2025-12-01", "Change Product Name", "3b953281-3bd8-44fe-9884-c26b8e9ad5ff"),
+        ("XLU", "2025-12-01", "Change Product Name", "12bd1f06-51df-4493-a3ab-17fb4d2ce43d"),
+        ("XLV", "2025-12-01", "Change Product Name", "24491509-c0dd-42e1-9a1e-89057cb4ad73"),
+        ("XLY", "2025-12-01", "Change Product Name", "e32db1a5-bea2-42b6-a2d7-4bfd69f61de7"),
+        ("SPY", "2026-01-26", "Change Name", "4e289aed-4467-49a5-b7c0-3cea1ad5e644"),
+        ("MDY", "2026-01-28", "Change Name", "5358a165-d737-4e29-99d7-d631d1320a61"),
+    )
+    observed_targets: list[tuple[str, str, str, str]] = []
+    for raw_item in target_items:
+        item = _mapping(raw_item, "NYSE target record")
+        _exact_keys(
+            item,
+            {
+                "market_event",
+                "action_date",
+                "action_status",
+                "action_type",
+                "symbol",
+                "issuer_name",
+                "updated_at",
+                "classification",
+                "ledger_action_id",
+            },
+            "NYSE target record",
+        )
+        observed_targets.append(
+            (
+                _string(item["symbol"], "NYSE target symbol"),
+                _string(item["action_date"], "NYSE target date"),
+                _string(item["action_type"], "NYSE target action type"),
+                _string(item["market_event"], "NYSE target event"),
+            )
+        )
+        _parse_date(_string(item["action_date"], "NYSE target date"))
+        for key in ("action_status", "issuer_name", "updated_at"):
+            _string(item[key], f"NYSE target {key}")
+        if (
+            item["classification"] != "NON-UNIT-CHANGING-IDENTITY-CONTINUITY"
+            or item["ledger_action_id"] is not None
+        ):
+            raise Program007Error("Program 007 NYSE target classification differs")
+    if (
+        tuple(observed_targets) != expected_targets
+        or fingerprint(target_items) != nyse["target_records_fingerprint"]
+    ):
+        raise Program007Error("Program 007 NYSE target records differ")
+
+    corpus_items = _sequence(coverage["primary_corpora"], "primary corpora")
+    expected_corpora = {
+        "sec-select-sector-spdr-2020-06-26-to-2026-07-31-v1": (
+            tuple(_RESOLVED_ACTION_SYMBOLS),
+            51,
+            51,
+            "https://data.sec.gov/submissions/CIK0001064641.json",
+            "c99870acd2ae8360c9c99c4e0abbc44318f787cf412096e8676324d9eda9c752",
+            "FIVE-SPLITS-FOUND-NO-OTHER-UNIT-ACTION-IN-SCREEN",
+        ),
+        "sec-ishares-trust-2020-06-26-to-2026-07-31-v1": (
+            ("IWM",),
+            1_038,
+            383,
+            "https://data.sec.gov/submissions/CIK0001100663.json",
+            "3eea92ce0d8af4be24671e6fabe49ab560c99b68b5230847666e8018233247c1",
+            "NO-APPLICABLE-ACTION-FOUND-IN-SCREEN-COVERAGE-INCOMPLETE",
+        ),
+        "sec-spy-2020-06-26-to-2026-07-31-v1": (
+            ("SPY",),
+            68,
+            68,
+            "https://data.sec.gov/submissions/CIK0000884394.json",
+            "6d5e8853788fa245b40daa3f47583da2f05b70212c68380b929a155f8ea5e16a",
+            "NO-APPLICABLE-ACTION-FOUND-IN-SCREEN-COVERAGE-INCOMPLETE",
+        ),
+        "sec-mdy-2020-06-26-to-2026-07-31-v1": (
+            ("MDY",),
+            54,
+            54,
+            "https://data.sec.gov/submissions/CIK0000936958.json",
+            "6322b7a15c642e4c376e383b3b14ee883ac101b5312302bf9bf2a9ccdc6839be",
+            "NO-APPLICABLE-ACTION-FOUND-IN-SCREEN-COVERAGE-INCOMPLETE",
+        ),
+    }
+    seen_corpora: list[str] = []
+    for raw_item in corpus_items:
+        item = _mapping(raw_item, "primary corpus")
+        _exact_keys(
+            item,
+            {
+                "corpus_id",
+                "authority",
+                "issuer",
+                "symbols",
+                "endpoint",
+                "coverage_start",
+                "coverage_end",
+                "retrieval_date",
+                "manifest_definition",
+                "candidate_document_count",
+                "screened_document_count",
+                "subject_document_count",
+                "form_counts",
+                "manifest_sha256",
+                "finding",
+                "limitations",
+            },
+            "primary corpus",
+        )
+        corpus_id = _string(item["corpus_id"], "corpus id")
+        seen_corpora.append(corpus_id)
+        expected = expected_corpora.get(corpus_id)
+        if expected is None:
+            raise Program007Error("Program 007 primary corpus differs")
+        symbols, candidate_count, subject_count, endpoint, manifest_sha256, finding = expected
+        if (
+            item["authority"] != "SEC"
+            or _strings(item["symbols"], "corpus symbols") != symbols
+            or item["endpoint"] != endpoint
+            or item["coverage_start"] != "2020-06-26"
+            or item["coverage_end"] != "2026-07-31"
+            or item["retrieval_date"] != "2026-08-28"
+            or item["candidate_document_count"] != candidate_count
+            or item["screened_document_count"] != candidate_count
+            or item["subject_document_count"] != subject_count
+            or item["manifest_sha256"] != manifest_sha256
+            or item["finding"] != finding
+        ):
+            raise Program007Error("Program 007 primary corpus evidence differs")
+        for key in ("issuer", "manifest_definition", "limitations"):
+            _string(item[key], f"corpus {key}")
+        form_items = _sequence(item["form_counts"], "corpus form counts")
+        seen_forms: set[str] = set()
+        form_total = 0
+        for raw_form in form_items:
+            form = _mapping(raw_form, "corpus form count")
+            _exact_keys(form, {"form", "count"}, "corpus form count")
+            form_name = _string(form["form"], "corpus form")
+            if form_name in seen_forms:
+                raise Program007Error("Program 007 corpus form is repeated")
+            seen_forms.add(form_name)
+            form_total += _positive_integer(form["count"], "corpus form count")
+        if form_total != candidate_count:
+            raise Program007Error("Program 007 corpus form count differs")
+    if tuple(seen_corpora) != tuple(expected_corpora):
+        raise Program007Error("Program 007 primary corpus order differs")
+
+
+def require_action_ledger_admission(ledger: Mapping[str, Any]) -> None:
+    """Reject dataset use until every symbol has complete public action coverage."""
+    validate_action_ledger(ledger)
+    coverage = _mapping(ledger["archive_coverage"], "archive coverage")
+    unresolved = _strings(coverage["unresolved_symbols"], "unresolved symbols")
+    if unresolved or coverage["dataset_admission"] != "READY":
+        raise Program007Error(
+            "Program 007 action coverage is unresolved for "
+            f"{', '.join(unresolved)}; dataset admission is blocked"
+        )
+
 
 def load_action_ledger(path: Path) -> Mapping[str, Any]:
     ledger = _load_json_object(path.read_bytes(), "action ledger")
@@ -808,7 +1087,7 @@ def share_unit_factor(
     ledger: Mapping[str, Any], symbol: str, source_session: date, basis_session: date
 ) -> Fraction:
     """Map one source-session share unit into the requested basis-session unit."""
-    validate_action_ledger(ledger)
+    require_action_ledger_admission(ledger)
     if symbol not in SYMBOLS:
         raise Program007Error("Program 007 normalization symbol is unknown")
     chronology = _mapping(ledger["chronology"], "ledger chronology")
