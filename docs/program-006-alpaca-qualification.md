@@ -23,6 +23,11 @@ activate or run Program 006 again, issue replacement authority, switch sources, 
 range, admit a dataset, or execute a strategy. Current code verifies the exact terminal artifact
 and rejects authority derivation before credential access or state creation.
 
+The finding-free independent review binds closeout commit
+`d3e7f10d33d5926074b59913143b7190b0f1bf75`. Its SHA-256/fingerprint is
+`7e79c4534ad2df67c99d70de013033f823ad650d8e35c3bdf9a8d782bba0adf9` /
+`59533d3b6c151865d304ed11aaf1a9917050625ed736b7d5edb1b38995b35359`.
+
 ## Failure lineage
 
 Program 005 failed because its required credential pair was unavailable after its immutable claim
