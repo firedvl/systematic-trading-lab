@@ -1,0 +1,356 @@
+{
+  "schema_version": "program-007-corporate-action-metadata-source-plan-v1",
+  "proposal_id": "program-007-corporate-action-metadata-source-plan-2026-08-29-v1",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "status": "PROPOSED-NOT-AUTHORIZED-FOR-PROVIDER-REQUESTS",
+  "purpose": "Prospectively qualify one structured corporate-action inventory for all thirteen Program 007 ETFs without weakening the existing action requirement or touching OHLCV and strategy evidence.",
+  "documentation": {
+    "retrieved_on": "2026-08-29",
+    "sources": [
+      "https://docs.alpaca.markets/us/reference/corporateactions-1",
+      "https://docs.alpaca.markets/us/reference/corporateactions-1.md",
+      "https://docs.alpaca.markets/us/changelog/2026-06-03-market-data-9dddd18",
+      "https://docs.alpaca.markets/us/v1.1/changelog/2026-05-22-corporate-actions-5c87d2b"
+    ],
+    "rest_contract_authority": "Current Alpaca REST OpenAPI. The older Python SDK request model and deprecated trading-client announcements method are not contract authorities.",
+    "free_access_verdict": "No retrieved official Alpaca document guarantees Basic or free-plan access to this endpoint or its full historical coverage.",
+    "date_filter_proof_gap": "The REST contract says start and end are inclusive and results are sorted by process_date. It does not state which event date the filters apply to.",
+    "processing_lag_proof_gap": "The REST contract warns that records can be delayed and gives no maximum creation or processing lag. data_quality=complete can exclude a still-incomplete historical action.",
+    "event_count_conflict": "The REST OpenAPI defines sixteen event types. A current first-party SSE page says fifteen. This plan binds the REST OpenAPI because it governs this endpoint."
+  },
+  "endpoint_contract": {
+    "provider": "Alpaca Historical Corporate Actions API",
+    "method": "GET",
+    "url": "https://data.alpaca.markets/v1/corporate-actions",
+    "host": "data.alpaca.markets",
+    "path": "/v1/corporate-actions",
+    "redirects": false,
+    "authentication_headers": [
+      "APCA-API-KEY-ID",
+      "APCA-API-SECRET-KEY"
+    ],
+    "credential_environment_variables": [
+      "PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID",
+      "PROGRAM_007_CORPORATE_ACTIONS_API_SECRET_KEY"
+    ],
+    "credential_policy": "Environment only. Never persist, log, hash, place in Git, pass on a command line, or enter in chat.",
+    "credential_presence_check_authorized_now": false,
+    "credential_load_authorized_now": false,
+    "provider_contact_authorized_now": false
+  },
+  "universe": {
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "cusips_by_symbol": {
+      "IWM": "464287655",
+      "MDY": "78467Y107",
+      "SPY": "78462F103",
+      "XLB": "81369Y100",
+      "XLE": "81369Y506",
+      "XLF": "81369Y605",
+      "XLI": "81369Y704",
+      "XLK": "81369Y803",
+      "XLP": "81369Y308",
+      "XLRE": "81369Y860",
+      "XLU": "81369Y886",
+      "XLV": "81369Y209",
+      "XLY": "81369Y407"
+    },
+    "identity_strategy": "Run one current-symbol chain and one current-CUSIP chain over all thirteen identities. Reconcile unit or identity-changing events by provider event ID and exact normalized content. Do not double-count matching events.",
+    "identity_history_status": "UNPROVEN-PRE-AUTHORITY-BLOCKER",
+    "identity_history_proof_gap": "The current REST documentation does not prove that a query by a current symbol or CUSIP returns events indexed only under predecessor symbols or CUSIPs. Two matching current-identity chains therefore cannot by themselves prove predecessor-history closure.",
+    "identity_history_completion_gate": "Before a real one-use authority can activate, bind a reviewed complete predecessor symbol/CUSIP history for every fund or current provider documentation that proves predecessor-event closure. Add every verified predecessor identity to both frozen query sets and synthetic reconciliation tests.",
+    "identity_failure": "Any unresolved identity-history gap, relevant provider-event inventory difference, content difference, or known symbol/CUSIP mismatch fails qualification."
+  },
+  "query_contract": {
+    "logical_chains": [
+      {
+        "chain_id": "symbols",
+        "identity_parameter": "symbols",
+        "identity_order": "ascending symbol"
+      },
+      {
+        "chain_id": "cusips",
+        "identity_parameter": "cusips",
+        "identity_order": "ascending CUSIP"
+      }
+    ],
+    "fixed_parameters_in_serialization_order": [
+      "identity parameter",
+      "region=us",
+      "start=1990-01-01",
+      "end=2026-08-29",
+      "limit=1000",
+      "data_quality=complete",
+      "sort=asc"
+    ],
+    "types_parameter": "OMITTED",
+    "types_omission_reason": "Request every current type and reject an unknown future response array so a filter omission cannot create a false no-action result.",
+    "pagination": "Append the exact opaque page_token only after the fixed parameters. Exhaust each chain until next_page_token is null. Reject empty, malformed, repeated, cyclic, or over-ceiling token state.",
+    "process_window": {
+      "start": "1990-01-01",
+      "end": "2026-08-29",
+      "target_effective_coverage_start": "2020-06-26",
+      "target_effective_coverage_end": "2026-07-31",
+      "interpretation": "The broad interval predates every fund in the frozen universe and extends beyond the target effective interval. It encloses the relevant dates but cannot prove which date Alpaca filters or that a late-processed action is final.",
+      "source_finality_status": "UNPROVEN-PRE-AUTHORITY-BLOCKER",
+      "source_finality_completion_gate": "Before authority, bind provider documentation for the filter field and maximum completion lag, wait until that lag has elapsed after 2026-07-31, and freeze a new exact query end. If Alpaca supplies no bounded finality contract, retain the blocker.",
+      "returned_event_gate": "Every returned process_date must be inside the broad interval. A material endpoint-semantic difference fails qualification. This gate validates returned records but does not prove omitted-record finality."
+    },
+    "data_quality": {
+      "value": "complete",
+      "provider_semantics": "Exclude records still missing required processing fields; retain already-processed actions even when some optional information is absent.",
+      "program_rule": "No result can be treated as complete unless both chains return HTTP 200, exhaust pagination, pass the frozen schema and identity gates, and retain their bounded raw evidence."
+    }
+  },
+  "event_inventory": [
+    "reverse_split",
+    "forward_split",
+    "unit_split",
+    "cash_dividend",
+    "stock_dividend",
+    "spin_off",
+    "cash_merger",
+    "stock_merger",
+    "stock_and_cash_merger",
+    "redemption",
+    "name_change",
+    "worthless_removal",
+    "rights_distribution",
+    "partial_call",
+    "reorganization",
+    "capital_gains_distribution"
+  ],
+  "normalization_contract": {
+    "preserved_fields": [
+      "provider event ID",
+      "symbol identities",
+      "CUSIP identities",
+      "ISIN identities when present",
+      "event type",
+      "subtype when present",
+      "process date",
+      "ex or effective date when documented",
+      "record date when present",
+      "payable date when present",
+      "provider rates",
+      "exact rational share factor when proved",
+      "source identity fingerprint"
+    ],
+    "deterministic_transforms": "Only forward_split and reverse_split with stable target identity and positive old_rate and new_rate. The exact factor is Fraction(new_rate) / Fraction(old_rate).",
+    "non_unit_metadata": [
+      "cash_dividend",
+      "capital_gains_distribution"
+    ],
+    "fail_closed_types": [
+      "unit_split",
+      "stock_dividend",
+      "spin_off",
+      "cash_merger",
+      "stock_merger",
+      "stock_and_cash_merger",
+      "redemption",
+      "name_change",
+      "worthless_removal",
+      "rights_distribution",
+      "partial_call",
+      "reorganization"
+    ],
+    "fail_closed_reason": "The REST contract does not establish a deterministic single-security share transform, or it does not provide an unambiguous effective date. Do not infer one from field names or another Alpaca schema.",
+    "effective_date_policy": {
+      "ex_date": [
+        "forward_split",
+        "reverse_split",
+        "cash_dividend",
+        "stock_dividend",
+        "spin_off",
+        "rights_distribution",
+        "capital_gains_distribution"
+      ],
+      "effective_date": [
+        "unit_split",
+        "cash_merger",
+        "stock_merger",
+        "stock_and_cash_merger",
+        "reorganization"
+      ],
+      "ambiguous_no_effective_field": [
+        "redemption",
+        "name_change",
+        "worthless_removal",
+        "partial_call"
+      ],
+      "qualification_rule": "Use these fields as versioned Program 007 classification policy, not as an Alpaca guarantee of universal economic timing. An applicable action with ambiguous timing fails ledger admission. process_date is never substituted."
+    },
+    "relative_volume_rule": "Preserve ledger v2. Raw contemporaneous prices stay unchanged. Apply exact split factors only to historical same-clock share counts compared across deterministic unit-changing actions.",
+    "provider_adjusted_prices_created": false
+  },
+  "controls": {
+    "positive": [
+      {
+        "symbol": "XLB",
+        "type": "forward_split",
+        "effective_date": "2025-12-05",
+        "factor": "2/1"
+      },
+      {
+        "symbol": "XLE",
+        "type": "forward_split",
+        "effective_date": "2025-12-05",
+        "factor": "2/1"
+      },
+      {
+        "symbol": "XLK",
+        "type": "forward_split",
+        "effective_date": "2025-12-05",
+        "factor": "2/1"
+      },
+      {
+        "symbol": "XLU",
+        "type": "forward_split",
+        "effective_date": "2025-12-05",
+        "factor": "2/1"
+      },
+      {
+        "symbol": "XLY",
+        "type": "forward_split",
+        "effective_date": "2025-12-05",
+        "factor": "2/1"
+      }
+    ],
+    "positive_failure": "Any missing, materially different, duplicated, or unreconciled positive control fails qualification. Public evidence cannot repair the provider result.",
+    "negative_symbols": [
+      "XLF",
+      "XLI",
+      "XLP",
+      "XLRE",
+      "XLV"
+    ],
+    "negative_rule": "Non-unit metadata is allowed. Any newly reported applicable unit or identity-changing action requires prospective investigation and blocks ledger completion; ledger v2 is not used to discard it.",
+    "unresolved_symbols": [
+      "IWM",
+      "MDY",
+      "SPY"
+    ],
+    "complete_no_action_definition": "Only after both identity-history and source-finality completion gates pass: under the newly frozen provider, version, complete identity set, query end, pagination, data-quality, and coverage contract, no applicable unit-changing or identity-breaking event was returned for that security. It does not mean the fund has never had an action.",
+    "current_synthetic_no_action_label": "PROVISIONAL-NO-APPLICABLE-ACTIONS-COVERAGE-CLOSURE-UNPROVEN"
+  },
+  "transport_budget": {
+    "logical_chain_count": 2,
+    "minimum_expected_http_requests": 2,
+    "minimum_expected_http_responses": 2,
+    "maximum_pages_per_chain": 4,
+    "maximum_http_requests": 8,
+    "maximum_http_responses": 8,
+    "maximum_response_page_bytes": 1048576,
+    "maximum_downloaded_bytes": 8388608,
+    "maximum_credential_loads": 1,
+    "automatic_transport_retries": 0
+  },
+  "raw_first_policy": {
+    "future_private_root": ".trading-lab/program-007-corporate-action-metadata-v1",
+    "git_ignored": true,
+    "request_intent_persisted_before_transport": true,
+    "bounded_raw_body_and_sha256_receipt_persisted_before_size_status_or_schema_parsing": true,
+    "oversized_response_evidence": "Retain at most the 1 MiB page ceiling plus a receipt with the observed byte count, full hash when available, retained byte count, and truncation flag; then fail before status or schema interpretation.",
+    "create_only_evidence": true,
+    "raw_provider_metadata_public": false,
+    "public_outputs": "Reviewed canonical ledger fields, counts, hashes, classifications, and non-secret provenance only when licensing and repository policy allow.",
+    "synthetic_implementation_scope": "The current adapter uses one capability-held temporary evidence file and has no credential or HTTP client. A future real one-use implementation must add the exact ignored persistent root behind active authority; it must not generalize the synthetic entry point."
+  },
+  "one_use_lifecycle": [
+    "credential presence check without loading values or contacting Alpaca",
+    "freeze the exact request plan and external private root",
+    "obtain separate explicit user authorization for this metadata qualification only",
+    "lock and revalidate clean synchronized main, proposal bytes, implementation binding, review, and empty private root",
+    "load the two credential values once and construct the GET-only client",
+    "claim the one use immediately before the first HTTP transport",
+    "execute both metadata chains with zero retries",
+    "preserve terminal evidence and stop"
+  ],
+  "preconditions_before_authority": [
+    "reviewed identity-history closure for every current and predecessor symbol/CUSIP in the universe",
+    "provider-documented date-filter semantics and maximum processing lag, elapsed after 2026-07-31, with a newly frozen exact query end; otherwise authority remains blocked",
+    "separately reviewed real GET-only transport and create-only persistent evidence store",
+    "finding-free final review of the exact proposal and implementation binding",
+    "green CI and clean synchronized main",
+    "separate explicit user authorization for this metadata qualification only"
+  ],
+  "terminal_failures": {
+    "missing_credentials_before_transport": "STOP-NOT-CONSUMED",
+    "sent_or_ambiguous_transport": "USE-CONSUMED-NO-RETRY",
+    "http_403": "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY-NO-PURCHASE",
+    "other_http_auth_rate_or_server_error": "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY",
+    "redirect": "FAIL-USE-CONSUMED-NO-RETRY",
+    "schema_identity_pagination_control_or_budget_failure": "FAIL-USE-CONSUMED-NO-RETRY",
+    "fallback_provider": "PROHIBITED",
+    "paid_upgrade": "PROHIBITED"
+  },
+  "ledger_generation": {
+    "current_authoritative_ledger": "config/research/program-007-unit-changing-action-ledger-v2.json",
+    "current_ledger_sha256": "3b815581d0da66db427243bce34f9ced5021f73719acd2b5d5e277d57065d53a",
+    "current_status": "10/13 resolved; IWM, MDY, and SPY COVERAGE-UNRESOLVED",
+    "current_ledger_changed_by_this_plan": false,
+    "synthetic_candidate_is_authoritative": false,
+    "synthetic_no_action_conclusions_complete": false,
+    "future_success_path": "Only a successful real one-use metadata qualification may create ledger v3. It must reconcile all thirteen symbols, pass the five positive controls, retain ledger v2 public evidence as corroboration, pass independent review, and rebind Program 007.",
+    "automatic_ohlcv_qualification_after_success": false
+  },
+  "unchanged_ohlcv_sample": {
+    "sessions": [
+      "2021-07-08",
+      "2022-01-25",
+      "2022-11-15",
+      "2023-05-16..2023-05-30",
+      "2025-11-28",
+      "2025-12-15"
+    ],
+    "expected_canonical_coordinates": 14742,
+    "changed": false,
+    "accessed": false
+  },
+  "state_at_proposal": {
+    "program_006": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "program_007": "PROPOSED-NOT-AUTHORIZED",
+    "program_007_provider_requests": 0,
+    "credential_values_or_presence_checks": 0,
+    "metadata_qualification_observations": 0,
+    "ohlcv_requests": 0,
+    "strategy_calculations": 0,
+    "strategy_returns": 0,
+    "controlled_or_protected_access": 0,
+    "paper_broker_or_live_actions": 0
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "exact_next_authorization": "Not currently grantable. After reviewed identity-history closure, provider-documented filter and bounded-lag semantics, elapsed finality, a newly frozen query end, and a separately reviewed real transport and persistent-store implementation: ONE-USE PROGRAM 007 CORPORATE-ACTION METADATA QUALIFICATION ONLY. It would authorize one credential-presence gate, at most one credential load, and at most eight GET responses from the exact corporate-actions endpoint with zero retries. It would not authorize OHLCV, dataset admission, strategy execution, returns, controlled or protected access, PAPER, broker writes, live execution, paid upgrade, or fallback provider.",
+  "proposal_fingerprint": "f5925f99991913f262d50f3946836ac130acbf347bc4cbe490bc950a1f5d2d3f"
+}
