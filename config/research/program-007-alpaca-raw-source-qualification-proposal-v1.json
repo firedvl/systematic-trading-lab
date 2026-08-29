@@ -63,6 +63,33 @@
     ],
     "historical_nbbo_required": false,
     "missing_session_philosophy_changed": false,
+    "missing_session_policy_binding": {
+      "path": "config/research/program-005-free-alpaca-successor-plan-v1.json",
+      "sha256": "3a71573086418aa8ff53d8359110dee1a951caa333ffd35eccedd8d38678cb11",
+      "fingerprint_field": "plan_fingerprint",
+      "fingerprint": "79a73d143700c643d67c2f862b5bfe3655df9706276a1b70e189c425d4397cb7",
+      "source_field": "missing_data_policy",
+      "retained_rules": {
+        "minimum_cross_section": "All twelve ranking ETFs plus SPY at every required regular-session five-minute bar open.",
+        "incomplete_session_action": "Exclude the whole session from every configuration, benchmark, and later context use.",
+        "symbol_drop_or_rerank_allowed": false,
+        "forward_fill_backward_fill_interpolation_or_synthesis_allowed": false,
+        "alternate_provider_timeframe_or_date_substitution_allowed": false,
+        "pre_exposed_design_quarantine_sessions": [
+          "2020-12-04",
+          "2021-02-03",
+          "2021-02-05",
+          "2021-02-10",
+          "2021-02-22"
+        ],
+        "overall_excluded_full_session_count_max": 7,
+        "unexpected_excluded_full_session_count_max": 2,
+        "required_initial_context_loss_max": 0,
+        "post_acquisition_change_or_waiver_allowed": false
+      },
+      "source_qualification_stricter_rule": "Every selected Program 007 qualification session must be canonically complete; no missing-session disposition is exercised during qualification.",
+      "superseded_rules": []
+    },
     "controlled_boundaries_changed": false,
     "strategy_expansion_allowed": false,
     "strategy_calculation_allowed_during_source_qualification": false
@@ -182,12 +209,62 @@
         "2021-02-10",
         "2021-02-22"
       ],
-      "evidence_paths": [
-        "config/research/program-002-exposed-acquisition-pagination-failure-v1.json",
-        "config/research/program-002-exposed-acquisition-completeness-failure-v1.json",
-        "config/research/program-002-exposed-acquisition-completeness-failure-v3.json",
-        "config/research/program-002-minute-reconstruction-source-failure-v1.json"
+      "evidence_bindings": [
+        {
+          "path": "config/research/program-002-exposed-acquisition-pagination-failure-v1.json",
+          "sha256": "b0656fb36c2ca5ecd97034a37e2630bf363765d5e01711a8092cd76f3235babc",
+          "fingerprint_field": "incident_fingerprint",
+          "fingerprint": "2537863a4f3f8215f573ea028949c5ef49c802ade2d3bcf2878af8bdf0607d1a"
+        },
+        {
+          "path": "config/research/program-002-exposed-acquisition-completeness-failure-v1.json",
+          "sha256": "6109b230ce66c2d1bb01d2b50e86e344eaa9c6eeff7a9287477ea066fbfe9076",
+          "fingerprint_field": "incident_fingerprint",
+          "fingerprint": "311a355aa22e917f6a343036ad2950d42a2b98479b874604dd3b712282cacd78"
+        },
+        {
+          "path": "config/research/program-002-exposed-acquisition-completeness-failure-v3.json",
+          "sha256": "ebc8f536d51fd701f9fc26f28630abff9f23a0b5edb3e794a5a3016337273618",
+          "fingerprint_field": "incident_fingerprint",
+          "fingerprint": "1f5350eb3f704c343044cd11ac328643fd1ae0939ebeaa030248ce031938b53a"
+        },
+        {
+          "path": "config/research/program-002-minute-reconstruction-source-failure-v1.json",
+          "sha256": "f95850c120603608f616f2e88d579424f4dc80301aa1251b7188fcca89fc08cf",
+          "fingerprint_field": "failure_fingerprint",
+          "fingerprint": "b15a5acbce63758fe40619db1861f6e624d454651d9977fcddbda269b92cca2e"
+        }
       ]
+    },
+    "program_outcome_evidence_bindings": {
+      "program_003": {
+        "path": "config/research/program-003-low-cost-successor-plan-v1.json",
+        "sha256": "4b1fd55774f89caf853c27cfc521c94ad1b18435a22ee07c2333ca229e9e2c91",
+        "fingerprint_field": "plan_fingerprint",
+        "fingerprint": "f5b184ff3e1604a151a82214d1cf91fbdffa6fc4fddf7d7ce0506a2e99427a42",
+        "provider_request_count": 0
+      },
+      "program_004": {
+        "path": "config/research/program-004-marketparquet-successor-plan-v1.json",
+        "sha256": "b4d00e040b80eb9323bb87475cc2ece54e60ebecc6ea6dcde1a95d87fd927237",
+        "fingerprint_field": "plan_fingerprint",
+        "fingerprint": "2b740810f1365d20c11d1cf3bb83cdd0e06e72c30a5070ff0648031f29d893fc",
+        "provider_request_count": 0
+      },
+      "program_005": {
+        "path": "config/research/program-005-source-qualification-terminal-failure-v1.json",
+        "sha256": "20ff82cf99ddd396c3b1dff73df2dfdc4a002278270d631f6de1ca1b8deed99f",
+        "fingerprint_field": "failure_fingerprint",
+        "fingerprint": "51bd01b08b99746fb2379cd3afbb6a51609f0d9dffcb643f36e73e3a6cff4841",
+        "provider_request_count": 0
+      },
+      "program_006": {
+        "path": "config/research/program-006-source-qualification-terminal-failure-v1.json",
+        "sha256": "3c693b2a31c5d5eef11388b55e41f38b9203c21e7f8ce604fc8f89c9c15e9687",
+        "fingerprint_field": "failure_fingerprint",
+        "fingerprint": "acbbbf0f28cc5d555224e05fb8d34cf4e9ae1a60fe75020ca2fee03da91180e5",
+        "provider_request_count": 23
+      }
     },
     "eligible_exposed_chronology": {
       "start_session": "2020-06-26",
@@ -226,6 +303,79 @@
     "previously_observed_session_union_fingerprint": "2b918fdc59ec60d5b7c16e73c3fccbe8ebf9de7049fc73aec3db7119403f07d6",
     "eligible_unobserved_session_count": 1346,
     "eligible_unobserved_session_fingerprint": "83e04d9ec481a3a8deae28800e1bcc46d6123d74b83fb93e949574fcddb07e79",
+    "protected_or_controlled_exclusion_inventory": {
+      "evidence_bindings": {
+        "program_005_plan": {
+          "path": "config/research/program-005-free-alpaca-successor-plan-v1.json",
+          "sha256": "3a71573086418aa8ff53d8359110dee1a951caa333ffd35eccedd8d38678cb11",
+          "fingerprint_field": "plan_fingerprint",
+          "fingerprint": "79a73d143700c643d67c2f862b5bfe3655df9706276a1b70e189c425d4397cb7"
+        },
+        "daily_independent_range": {
+          "path": "config/research/rapid-004-seed-universe-v1.json",
+          "sha256": "876ed95716a2e7010232d2790f6210c0110de42c9b10ada90202b0176238eb59",
+          "source_field": "sealed_boundaries.independent_daily_range"
+        },
+        "strategic_allocation_range": {
+          "path": "config/research/intraday-known-exposures-v1.json",
+          "sha256": "f11977e33a5ade47eeb0ad0923180eca733bc694ffef0e4e2f335936da4746aa",
+          "fingerprint_field": "inventory_fingerprint",
+          "fingerprint": "0666996faabb50abce0b8959c49980e36a655ea290618bc1463342d2ab5122f9",
+          "source_entry_id": "strategic-allocation-protected-holdout-2026"
+        },
+        "june_reservation": {
+          "path": "config/research/intraday-exposed-002-june-reservation-v1.json",
+          "sha256": "5a6e7b8e21cf5bd7aad5b7445880a7d1862b304ba5b1f9e3dab4909ab9c674db",
+          "source_field": "range.evaluation_start..range.evaluation_end"
+        },
+        "intraday_v3_selection": {
+          "path": "config/research/intraday-v3-period-selection-v2.json",
+          "sha256": "42581c019abc5c3e184b89b31e655bc5ee123bdcb79ced2c9cf894d6668e45cf",
+          "fingerprint_field": "selection_fingerprint",
+          "fingerprint": "c2718c3871bb95e22d4647e119f6bfb54cd51ec7b1b2cc472cfa1a7dfbcfc5d0"
+        }
+      },
+      "ranges": [
+        {
+          "id": "daily-independent-2018-2019",
+          "start": "2018-01-02",
+          "end": "2019-12-31"
+        },
+        {
+          "id": "strategic-allocation-protected-holdout-2026",
+          "start": "2026-01-02",
+          "end": "2026-07-31"
+        },
+        {
+          "id": "june-2026-reservation",
+          "start": "2026-06-01",
+          "end": "2026-06-30"
+        },
+        {
+          "id": "intraday-v3-validation",
+          "start": "2026-10-01",
+          "end": "2027-04-15"
+        },
+        {
+          "id": "controlled-a",
+          "start": "2027-04-16",
+          "end": "2027-10-15"
+        },
+        {
+          "id": "controlled-b",
+          "start": "2027-10-18",
+          "end": "2028-04-14"
+        }
+      ],
+      "in_eligible_chronology_session_count": 145,
+      "in_eligible_chronology_session_fingerprint": "a1bbae9a31f549f868137478f2fbcab8fc038fe24223437ca3bfb7a40b6f9bab",
+      "overlap_with_observed_session_count": 1,
+      "overlap_with_observed_session_fingerprint": "d9f66accbf84fb1684a959f6990973427a925262e671522032c66f8afc655356"
+    },
+    "observed_or_protected_exclusion_union_count": 329,
+    "observed_or_protected_exclusion_union_fingerprint": "a4038c8170bb47ee6b4c830979d2d7fa7a221936ec33253457f8960254c0d980",
+    "eligible_unobserved_unprotected_session_count": 1202,
+    "eligible_unobserved_unprotected_session_fingerprint": "52cf930e99717b6a37b23d102a750d518fbc45c6a4f3707cb55154849cc56770",
     "protected_or_controlled_overlap_allowed": false
   },
   "fresh_sample_selection": {
@@ -240,7 +390,7 @@
       "from remaining full sessions, hash seed|normal|date with SHA-256 and choose the three lowest digests",
       "sort the selected sessions chronologically and bind the list fingerprint before any provider observation"
     ],
-    "pagination_candidate_count": 1214,
+    "pagination_candidate_count": 1084,
     "selected_pagination_digest": "002153ec4625c6662700c259a6f484dd1e782577a8e013f6e8eea705ccdc804f",
     "selected_normal_digests": {
       "2021-07-08": "00493836065f58c99e778117639b4d62632c9b6e0e91a8464d770b8a816af34d",
@@ -419,5 +569,5 @@
   },
   "exact_next_step": "Complete independent review and the exhaustive public unit-changing action ledger. Do not authorize, activate, or execute Program 007 from this proposal.",
   "fingerprint_contract": "Remove the top-level proposal_fingerprint field, canonicalize with systematic_trading_lab.fingerprints.canonical_json, and take SHA-256 of those UTF-8 bytes.",
-  "proposal_fingerprint": "a9916ec5c8b954688442dfbb6999699e3ded23a0ba1567ef4e0e5822c4a0cf46"
+  "proposal_fingerprint": "d0ec31e7b6947ed6fe3e1118a6f5536daddae34ebbe9dffcc3b3f932dd9d41c0"
 }

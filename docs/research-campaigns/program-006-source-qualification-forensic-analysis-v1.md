@@ -191,8 +191,8 @@ strategy claim.
 The non-authorizing proposal is
 [`program-007-alpaca-raw-source-qualification-proposal-v1.json`](../../config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json).
 Its SHA-256 and fingerprint are
-`b324042994a105e691655e152a1a14592e99f97beb755a73fa1c6f2970edff3a` and
-`a9916ec5c8b954688442dfbb6999699e3ded23a0ba1567ef4e0e5822c4a0cf46`.
+`5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34` and
+`d0ec31e7b6947ed6fe3e1118a6f5536daddae34ebbe9dffcc3b3f932dd9d41c0`.
 
 Program 007 is `multi-hour-sector-etf-research-006`. It is `PROPOSED-NOT-AUTHORIZED`. It has no
 external authorization root, active authority, credentials, provider request, dataset, or strategy
@@ -210,8 +210,10 @@ Programs 002-006 exposed 185 distinct XNYS sessions in the eligible chronology:
 - Program 006 observed 22 sessions, six of which overlap Program 002.
 
 The full June 26, 2020 through July 31, 2026 chronology contains 1,531 XNYS sessions. Removing the
-185-session union leaves 1,346 eligible unobserved sessions. The proposal also excludes controlled
-and protected ranges.
+185-session union leaves 1,346 unobserved sessions. A hash-bound public metadata inventory excludes
+145 sessions inside the chronology for protected or controlled ranges; one is already in the
+observed union. The complete 329-session exclusion union leaves 1,202 eligible unobserved,
+unprotected sessions. No protected market data or result was read to construct the inventory.
 
 With seed `program-007-source-qualification-sample-v1`, the fixed procedure:
 
@@ -248,7 +250,16 @@ tolerance only inside the request bounds, deterministic RTH projection, exact ca
 completeness, exhausted nonrepeating pagination, a complete independently reviewed unit-changing
 action ledger, and exact synthetic share-unit controls. Those gates remain capable of failing.
 
+## Independent review
+
+The [independent review](../../config/research/program-006-source-qualification-forensic-analysis-independent-review-v1.json)
+passed all eleven required challenges with no findings. It binds the terminal failure, terminal
+review, forensic analysis, and Program 007 proposal by exact SHA-256 and fingerprint. Its own
+SHA-256/fingerprint is
+`103c58c47b0c07c768bd5b3efc577704a74f83cdd223f9945b2df00a3b6f099a` /
+`0d389c0209753a64dbe0362dba9b817f33103e3a0b7c7ed89164e2c2747d32fe`.
+
 Before any authority, Program 007 still needs the complete public action ledger, a raw-first
-implementation, focused synthetic checks, a finding-free review, full quality gates, clean
+implementation, focused synthetic checks, a finding-free implementation review, full quality gates, clean
 synchronized main, a new exact one-use authority proposal, and separate explicit user authorization.
 This report and proposal authorize none of those actions.

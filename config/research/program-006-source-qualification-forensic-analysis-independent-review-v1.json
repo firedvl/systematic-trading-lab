@@ -1,0 +1,169 @@
+{
+  "schema_version": "program-006-source-qualification-forensic-analysis-independent-review-v1",
+  "review_id": "program-006-source-qualification-forensic-analysis-independent-review-2026-08-28-v1",
+  "review_date": "2026-08-28",
+  "status": "PASS-FINDING-FREE",
+  "reviewer": {
+    "reviewer_id": "codex-independent-program-006-forensic-spec-reviewer-v1",
+    "role": "fresh read-only forensic and successor reviewer",
+    "independent_from_primary_analysis": true
+  },
+  "review_method": "Independent exact-byte review of the terminal record, offline forensic analysis, current implementation and tests, public provider-semantic citations, Program 007 proposal, freshness derivation, protected-date inventory, inherited missing-session policy, private-data firewall, and false authority state.",
+  "scope_limit": "No provider request, credential access, retained private page read, protected or controlled data/result read, strategy calculation, PAPER access, broker write, or live action was performed by this review.",
+  "reviewed_artifacts": {
+    "program_006_terminal_failure": {
+      "path": "config/research/program-006-source-qualification-terminal-failure-v1.json",
+      "sha256": "3c693b2a31c5d5eef11388b55e41f38b9203c21e7f8ce604fc8f89c9c15e9687",
+      "fingerprint_field": "failure_fingerprint",
+      "fingerprint": "acbbbf0f28cc5d555224e05fb8d34cf4e9ae1a60fe75020ca2fee03da91180e5"
+    },
+    "program_006_terminal_failure_review": {
+      "path": "config/research/program-006-source-qualification-terminal-failure-independent-review-v1.json",
+      "sha256": "7e79c4534ad2df67c99d70de013033f823ad650d8e35c3bdf9a8d782bba0adf9",
+      "fingerprint_field": "review_fingerprint",
+      "fingerprint": "59533d3b6c151865d304ed11aaf1a9917050625ed736b7d5edb1b38995b35359"
+    },
+    "forensic_analysis": {
+      "path": "config/research/program-006-source-qualification-forensic-analysis-v1.json",
+      "sha256": "490b813bd20d3c98249a9f0c88580bfad3fc4607e94b1f0e5cec134caac166f0",
+      "fingerprint_field": "analysis_fingerprint",
+      "fingerprint": "f1198d0aaaba0f17f7e806c8268bf6081aba1a1746b308be58cc53489b546d6b"
+    },
+    "program_007_proposal": {
+      "path": "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
+      "sha256": "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34",
+      "fingerprint_field": "proposal_fingerprint",
+      "fingerprint": "d0ec31e7b6947ed6fe3e1118a6f5536daddae34ebbe9dffcc3b3f932dd9d41c0"
+    }
+  },
+  "remediated_during_review": [
+    {
+      "finding": "The proposed fresh-sample exclusion was not originally reproducible from exact prior-request and protected-range evidence.",
+      "resolution": "The proposal now hash-binds every cited Program 002-006 outcome artifact and the protected-range sources. The contract test recursively derives structured and URL-encoded request ranges, the 185-session observed union, the 329-session observed-or-protected union, and the unchanged 15-session selection."
+    },
+    {
+      "finding": "The inherited missing-session policy was originally asserted without an exact artifact binding.",
+      "resolution": "The proposal now binds the exact Program 005 plan SHA-256 and fingerprint, enumerates retained rules, supersedes none, and requires zero incomplete selected sessions during Program 007 qualification."
+    },
+    {
+      "finding": "Strict typing and the repository secret scan originally failed on the new public artifacts.",
+      "resolution": "The JSON test boundary is explicitly typed, strict mypy passes, and the exact public forensic paths are allowlisted while non-allowlisted Program 006 market-observation JSON remains rejected."
+    }
+  ],
+  "challenge_results": [
+    {
+      "challenge": 1,
+      "question": "Are we rationalizing a failed source merely because we prefer it?",
+      "result": "PASS",
+      "basis": "No. Program 006 remains terminal FAIL, source suitability remains INDETERMINATE, and Program 007 is only a falsifiable proposal with no authority or qualification result."
+    },
+    {
+      "challenge": 2,
+      "question": "Is the response-23 failure actually expected extended-hours behavior?",
+      "result": "PASS",
+      "basis": "Not proved. Extended hours is the most supported inference from documented multi-day semantics, but the missing body, timestamp, and symbol keep Failure A classified INDETERMINATE."
+    },
+    {
+      "challenge": 3,
+      "question": "Was the old grid rule objectively wrong?",
+      "result": "PASS",
+      "basis": "Yes. It rejected every non-RTH row before raw storage instead of validating the inclusive raw interval and then projecting the authoritative XNYS RTH grid. The corrected contract still fails malformed, out-of-bounds, duplicate, or incomplete evidence."
+    },
+    {
+      "challenge": 4,
+      "question": "Was the adjustment factor check objectively wrong?",
+      "result": "PASS",
+      "basis": "Yes. The executed check was row-specific, not one global factor: it required the exact open-derived factor for every OHLC field and reciprocal volume, conflating documented split price-and-volume semantics with spin-off price-only semantics and an undocumented exact adjusted-price rounding contract."
+    },
+    {
+      "challenge": 5,
+      "question": "Are conclusions based on provider semantics rather than strategy performance?",
+      "result": "PASS",
+      "basis": "Yes. The analysis uses provider documentation, source code, calendar structure, exact action-ledger algebra, and nonreconstructable private-page counts. Zero strategy return was generated or read."
+    },
+    {
+      "challenge": 6,
+      "question": "Does the forensic work expose any strategy output?",
+      "result": "PASS",
+      "basis": "No. Public artifacts contain classifications, counts, hashes, contract descriptions, and nonreconstructable diagnostics only."
+    },
+    {
+      "challenge": 7,
+      "question": "Is the Program 006 sample correctly treated as exposed?",
+      "result": "PASS",
+      "basis": "Yes. All 22 sessions are labeled EXPOSED-SOURCE-ENGINEERING-EVIDENCE and are prohibited from serving as the successor's unseen qualification sample."
+    },
+    {
+      "challenge": 8,
+      "question": "Is any proposed new sample genuinely fresh?",
+      "result": "PASS",
+      "basis": "Yes within the declared repository evidence boundary. The deterministic 15-session sample has zero overlap with the hash-bound Program 002-006 request union and zero overlap with the explicit protected or controlled inventory. Universal external freshness is not claimed."
+    },
+    {
+      "challenge": 9,
+      "question": "Does a successor contain new falsifiable tests rather than weaker gates?",
+      "result": "PASS",
+      "basis": "Yes. It adds raw-bound, duplicate, OHLCV, immutable retention, extended-hours projection, exact RTH completeness, forced pagination, exhaustive action-ledger, split-share-unit, and spin-off-volume controls."
+    },
+    {
+      "challenge": 10,
+      "question": "Would the corrected source contract still be capable of failing?",
+      "result": "PASS",
+      "basis": "Yes. Any malformed or out-of-bounds row, foreign symbol, duplicate coordinate, invalid OHLCV, token error, missing RTH coordinate, incomplete action evidence, normalization ambiguity, budget breach, or unexpected missing session fails the one-use program without retry."
+    },
+    {
+      "challenge": 11,
+      "question": "Are protected and controlled boundaries preserved?",
+      "result": "PASS",
+      "basis": "Yes. Protected and controlled ranges are metadata-bound exclusions, no protected data or result was read, and all controlled, holdout, PAPER, broker-write, and live flags remain false."
+    }
+  ],
+  "review_conclusions": {
+    "program_006_terminal_state": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "failure_a_classification": "INDETERMINATE",
+    "failure_b_classification": "QUALIFICATION-SPECIFICATION-DEFECT",
+    "bad_alpaca_data_established": false,
+    "program_006_source_suitability": "INDETERMINATE",
+    "successor_scientifically_justified": true,
+    "successor_source_qualification_established": false,
+    "successor_status": "PROPOSED-NOT-AUTHORIZED",
+    "successor_contract_remains_falsifiable": true
+  },
+  "private_data_firewall": {
+    "private_pages_read_by_reviewer": false,
+    "private_market_observations_in_this_artifact": false,
+    "reconstructable_private_values_in_this_artifact": false,
+    "private_program_roots_git_ignored": true,
+    "tracked_private_file_count": 0,
+    "strategy_outputs_generated_or_read": 0
+  },
+  "authority": {
+    "provider_contact": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "dataset_admission": false,
+    "strategy_execution": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "verification": {
+    "reviewed_artifact_sha256_and_fingerprints_revalidated": true,
+    "required_challenge_count": 11,
+    "required_challenges_passed": 11,
+    "focused_tests": "26 passed",
+    "ruff": "passed",
+    "secret_scan": "passed; 540 files scanned",
+    "diff_whitespace_check": "passed",
+    "private_git_boundary": "passed"
+  },
+  "findings": [],
+  "verdict": "PASS-FINDING-FREE",
+  "exact_next_step": "Complete the public issuer/exchange unit-changing action ledger and raw-first implementation under a separate reviewed change. Do not authorize, activate, or execute Program 007 from this review.",
+  "fingerprint_contract": "Remove the top-level review_fingerprint field, canonicalize with systematic_trading_lab.fingerprints.canonical_json, and take SHA-256 of those UTF-8 bytes.",
+  "review_fingerprint": "0d389c0209753a64dbe0362dba9b817f33103e3a0b7c7ed89164e2c2747d32fe"
+}

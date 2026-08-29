@@ -47,8 +47,13 @@ exact adjusted-price contract or bad source data. Program 006 source suitability
 Program 007, `multi-hour-sector-etf-research-006`, is a non-authorizing proposal for raw SIP bars,
 raw same-session prices, RTH projection, and ledger-based split normalization only for cross-session
 relative-volume share counts. Its fresh sample excludes all Programs 002-006 observed sessions. The
-proposal does not permit credentials, provider contact, source qualification, acquisition, dataset
-admission, or strategy execution.
+sample also excludes the hash-bound controlled and protected date inventory and preserves the exact
+Program 005 whole-session missing-data policy. The proposal does not permit credentials, provider
+contact, source qualification, acquisition, dataset admission, or strategy execution.
+
+The forensic independent review passed all eleven required challenges with no findings. Its
+SHA-256/fingerprint is `103c58c47b0c07c768bd5b3efc577704a74f83cdd223f9945b2df00a3b6f099a` /
+`0d389c0209753a64dbe0362dba9b817f33103e3a0b7c7ed89164e2c2747d32fe`.
 
 ## Failure lineage
 
