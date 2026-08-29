@@ -1,0 +1,164 @@
+{
+  "schema_version": "program-007-raw-source-contract-implementation-v3",
+  "implementation_id": "program-007-raw-source-contract-implementation-2026-08-29-v3",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "status": "IMPLEMENTED-SYNTHETICALLY-LEDGER-COVERAGE-INCOMPLETE-NOT-AUTHORIZED",
+  "implementation_binding": {
+    "source_commit": "0a57a81444b7825e5c7f21bb35010245ff82d163",
+    "implementation_root": "6cd20ce0dab030d6e40a072a79c9186f6fce47bd027fe2437dab5957149d3534",
+    "source_files": [
+      {
+        "path": "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
+        "sha256": "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34"
+      },
+      {
+        "path": "config/research/program-007-nyse-corpax-retrieval-manifest-v1.json",
+        "sha256": "48b85bb63c02e59b8538eed741237d9d9a386dc36caa4c3cc1e7b5856bd735f5"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v2.schema.json",
+        "sha256": "36b74f6b8facd55176eba8d08075d6eb3276ae938bf424c3af75adaba81c8d78"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v2.json",
+        "sha256": "3b815581d0da66db427243bce34f9ced5021f73719acd2b5d5e277d57065d53a"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "dd601c1b9796671b88cd8b490477b415b94ef49083fb86bd353a9dd8e351894a"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_alpaca.py",
+        "sha256": "8e972df4858f4bbaf6bd4979b4c69bf4a1a5e9532d44836342f6ffb45c7f2f07"
+      },
+      {
+        "path": "tests/unit/test_program_007_alpaca.py",
+        "sha256": "a986b03d205e803780c8dae137619ae6853c1244db8e8f0b2ec3956c36f4e260"
+      },
+      {
+        "path": "tests/unit/test_program_007_forensic_contract.py",
+        "sha256": "a11a673ce763b724143a5ae09d58c6c36741a5fe6ae91d8cb3eb4a0b3f5c0c0d"
+      }
+    ]
+  },
+  "proposal_binding": {
+    "path": "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
+    "sha256": "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34",
+    "fingerprint": "d0ec31e7b6947ed6fe3e1118a6f5536daddae34ebbe9dffcc3b3f932dd9d41c0"
+  },
+  "action_ledger_binding": {
+    "path": "config/research/program-007-unit-changing-action-ledger-v2.json",
+    "sha256": "3b815581d0da66db427243bce34f9ced5021f73719acd2b5d5e277d57065d53a",
+    "fingerprint": "0ec39d6f38d469e099862173ff710c0e737b39b464e233e291c9e9b20c089c25"
+  },
+  "action_schema_binding": {
+    "path": "config/research/program-007-unit-changing-action-ledger-v2.schema.json",
+    "sha256": "36b74f6b8facd55176eba8d08075d6eb3276ae938bf424c3af75adaba81c8d78"
+  },
+  "nyse_retrieval_manifest_binding": {
+    "path": "config/research/program-007-nyse-corpax-retrieval-manifest-v1.json",
+    "sha256": "48b85bb63c02e59b8538eed741237d9d9a386dc36caa4c3cc1e7b5856bd735f5",
+    "fingerprint": "b0fc71436088824df6126bbfd950232e0b55da6233b34c11b40480c3495dcbeb",
+    "entries_fingerprint": "bdcea47c663440353ce3b31abdd43222d907f9b7c93f55247d79da19414cbac1"
+  },
+  "execution_boundary": {
+    "entrypoint": "execute_synthetic_qualification",
+    "finite_in_memory_responses_only": true,
+    "arbitrary_callback_accepted": false,
+    "caller_selected_storage_root_accepted": false,
+    "owned_os_temporary_workspace": true,
+    "request_intent_persisted_before_response_read": true,
+    "restart_uses_retained_page_without_source_read": true,
+    "provider_transport_present": false,
+    "future_real_transport_requirement": "Separate authority-gated implementation bound to the exact reviewed authority and ignored private root."
+  },
+  "ledger_disposition": {
+    "resolved_symbols": [
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "unresolved_symbols": [
+      "IWM",
+      "MDY",
+      "SPY"
+    ],
+    "dataset_admission": "BLOCKED",
+    "ledger_backed_normalization": "BLOCKED",
+    "one_use_authority_proposal_eligible": false,
+    "completion_condition": "Bind complete public issuer or exchange unit-action coverage for IWM, MDY, and SPY in a new reviewed ledger version."
+  },
+  "fresh_sample": {
+    "changed": false,
+    "normal_sessions": [
+      "2021-07-08",
+      "2022-01-25",
+      "2022-11-15"
+    ],
+    "pagination_range": [
+      "2023-05-16",
+      "2023-05-30"
+    ],
+    "pagination_xnys_sessions": 10,
+    "early_close_pre_split": "2025-11-28",
+    "post_split": "2025-12-15",
+    "expected_canonical_coordinates": 14742
+  },
+  "synthetic_verification": {
+    "alpaca_or_market_data_provider_requests": 0,
+    "public_nyse_research_requests": 326,
+    "credential_reads_or_presence_checks": 0,
+    "private_program_006_pages_read": 0,
+    "strategy_calculations": 0,
+    "frozen_session_count": 15,
+    "frozen_chain_count": 6,
+    "synthetic_response_count": 7,
+    "expected_canonical_coordinates": 14742,
+    "actual_canonical_coordinates": 14742,
+    "synthetic_extended_hours_rows_retained_raw_only": 1,
+    "focused_tests": "31 passed across tests/unit/test_program_007_alpaca.py and tests/unit/test_program_007_forensic_contract.py",
+    "execution_boundary_tests": "Arbitrary callback and alternate root rejected before invocation or write; restart performs no second synthetic source read.",
+    "json_schema": "Draft 2020-12 metaschema and ledger instance validation passed",
+    "ruff": "passed for changed Python files",
+    "mypy": "passed for Program 007 source and tests",
+    "secret_scan": "passed; 553 files scanned"
+  },
+  "review": null,
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "a72c8e25406dd13dc711bb46832f991e3645a706ddadb468d8fc6a91b438f925"
+}

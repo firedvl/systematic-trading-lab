@@ -1,0 +1,169 @@
+{
+  "schema_version": "program-007-raw-source-contract-implementation-v1",
+  "implementation_id": "program-007-raw-source-contract-implementation-2026-08-29-v1",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "implemented_at": "2026-08-29T04:52:04Z",
+  "status": "IMPLEMENTED-SYNTHETICALLY-NOT-AUTHORIZED",
+  "proposal_binding": {
+    "path": "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
+    "sha256": "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34",
+    "fingerprint": "d0ec31e7b6947ed6fe3e1118a6f5536daddae34ebbe9dffcc3b3f932dd9d41c0"
+  },
+  "action_ledger_binding": {
+    "path": "config/research/program-007-unit-changing-action-ledger-v1.json",
+    "sha256": "d04c1c356cd4e5d56a8be7bd7ae81d168e69a43e287f928579c90a5700e04d21",
+    "fingerprint": "eb61c7a117973977bd2f7947c965f5f0d3061beee43635bd39f893da738ea921"
+  },
+  "action_schema_binding": {
+    "path": "config/research/program-007-unit-changing-action-ledger-v1.schema.json",
+    "sha256": "183b3b0a103839efb177924ca80cab73b7335ebe582e4a17a7ba5450a40270e8"
+  },
+  "implementation_binding": {
+    "source_commit": "1788f8048773c4611de980cb0919020d1459353e",
+    "implementation_root": "4100fbe59d7b99e6782bac1d66c908787638b8fd4ff84a0bd1e48f6d784749c3",
+    "source_files": [
+      {
+        "path": "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
+        "sha256": "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v1.schema.json",
+        "sha256": "183b3b0a103839efb177924ca80cab73b7335ebe582e4a17a7ba5450a40270e8"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v1.json",
+        "sha256": "d04c1c356cd4e5d56a8be7bd7ae81d168e69a43e287f928579c90a5700e04d21"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "03e0f42f8f352743a4a79ea07e7dd6c6adeb8d0b9af0c20ae52310d44423748d"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_alpaca.py",
+        "sha256": "7af7630af90a2f31a8a090664fc1ba4103f3d4eede3990d195972189f89775ca"
+      },
+      {
+        "path": "tests/unit/test_program_007_alpaca.py",
+        "sha256": "fd085520cbce0f44fd8da0b1260024f3c5a1bc8aeac3fd6889917099453da8d8"
+      },
+      {
+        "path": "tests/unit/test_program_007_forensic_contract.py",
+        "sha256": "a11a673ce763b724143a5ae09d58c6c36741a5fe6ae91d8cb3eb4a0b3f5c0c0d"
+      }
+    ]
+  },
+  "implemented_contract": {
+    "provider_transport_present": false,
+    "credential_api_present": false,
+    "cli_activation_present": false,
+    "endpoint": "GET https://data.alpaca.markets/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "limit": 10000,
+    "asof": "2026-07-31",
+    "sort": "asc",
+    "inclusive_bounds": true,
+    "redirects": false,
+    "raw_retention_precedes_parse": true,
+    "raw_receipt_precedes_semantic_validation": true,
+    "validation_outcome_is_separate_and_immutable": true,
+    "valid_extended_hours_retained_raw": true,
+    "valid_extended_hours_excluded_from_canonical_rth": true,
+    "canonical_grid": "authoritative repository XNYS bar-open grid",
+    "canonical_completeness": "all thirteen symbols at every required RTH bar open",
+    "missing_coordinate_action": "whole-session ineligible; qualification fails",
+    "pagination_tokens_supported": true,
+    "token_cycle_or_reuse_rejected": true,
+    "ambiguous_request_retries": 0,
+    "private_manifest_present": true,
+    "public_summary_reconstructable": false
+  },
+  "transport_budget": {
+    "logical_chain_count": 6,
+    "minimum_http_requests_and_responses": 7,
+    "maximum_http_requests_and_responses": 11,
+    "maximum_downloaded_bytes": 16777216,
+    "maximum_response_page_bytes": 8388608,
+    "maximum_requests_per_minute": 120,
+    "maximum_future_credential_loads": 1,
+    "automatic_transport_retries": 0
+  },
+  "action_ledger_result": {
+    "symbol_count": 13,
+    "applicable_action_count": 5,
+    "applicable_action_symbols": ["XLB", "XLE", "XLK", "XLU", "XLY"],
+    "no_applicable_action_symbols": ["IWM", "MDY", "SPY", "XLF", "XLI", "XLP", "XLRE", "XLV"],
+    "action": "2-for-1 forward split",
+    "effective_session": "2025-12-05",
+    "pre_split_control": "2025-11-28",
+    "post_split_control": "2025-12-15",
+    "control_valid": true,
+    "normalization_scope": "prior-20-session same-clock relative-volume share counts only",
+    "raw_prices_changed": false,
+    "raw_dollar_volume_changed": false,
+    "reverse_split_orientation": "new_shares/old_shares",
+    "ambiguous_or_non_transformable_action": "FAIL-DATASET-ADMISSION-BEFORE-STRATEGY"
+  },
+  "synthetic_verification": {
+    "provider_requests": 0,
+    "credential_reads_or_presence_checks": 0,
+    "private_program_006_pages_read": 0,
+    "strategy_calculations": 0,
+    "frozen_session_count": 15,
+    "frozen_chain_count": 6,
+    "synthetic_response_count": 7,
+    "expected_canonical_coordinates": 14742,
+    "actual_canonical_coordinates": 14742,
+    "synthetic_extended_hours_rows_retained_raw_only": 1,
+    "focused_tests": "28 passed across tests/unit/test_program_007_alpaca.py and tests/unit/test_program_007_forensic_contract.py",
+    "ruff": "passed for changed Python files",
+    "mypy": "passed for Program 007 source and tests"
+  },
+  "fresh_sample": {
+    "changed": false,
+    "normal_sessions": ["2021-07-08", "2022-01-25", "2022-11-15"],
+    "pagination_range": ["2023-05-16", "2023-05-30"],
+    "pagination_xnys_sessions": 10,
+    "early_close_pre_split": "2025-11-28",
+    "post_split": "2025-12-15",
+    "expected_canonical_coordinates": 14742
+  },
+  "privacy": {
+    "real_provider_observations_in_git": false,
+    "private_program_006_observations_in_public_artifacts": false,
+    "public_action_facts_only": true,
+    "program_007_private_paths_secret_guarded": true
+  },
+  "next_gate": "A fresh independent implementation review must pass finding-free. After merge to clean synchronized main, create and review a separate exact ONE-USE PROGRAM 007 RAW ALPACA SIP STRUCTURAL SOURCE QUALIFICATION AUTHORITY PROPOSAL. Do not authorize or execute it without a new explicit user grant.",
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "56de823e10e615526789d970f0e80f4cf27577b767eb39684828918a5eb4ede0"
+}
