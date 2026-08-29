@@ -1,0 +1,878 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "program-007-unit-changing-action-ledger-v3.schema.json",
+  "title": "Program 007 unit-changing action ledger v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "ledger_id",
+    "program_id",
+    "status",
+    "schema_binding",
+    "chronology",
+    "normalization",
+    "non_transformable_policy",
+    "symbols",
+    "actions",
+    "historical_context",
+    "evidence",
+    "archive_coverage",
+    "authority",
+    "ledger_fingerprint"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "program-007-unit-changing-action-ledger-v3"
+    },
+    "ledger_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "program_id": {
+      "const": "multi-hour-sector-etf-research-006"
+    },
+    "status": {
+      "const": "PUBLIC-EVIDENCE-SUFFICIENT-FOR-FROZEN-FEATURE"
+    },
+    "schema_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "const": "config/research/program-007-unit-changing-action-ledger-v3.schema.json"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "chronology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start_session",
+        "end_session",
+        "prehistory_rule"
+      ],
+      "properties": {
+        "start_session": {
+          "const": "2020-06-26"
+        },
+        "end_session": {
+          "const": "2026-07-31"
+        },
+        "prehistory_rule": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "normalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "basis",
+        "factor_representation",
+        "effective_boundary",
+        "prior_volume_rule",
+        "same_session_price_rule",
+        "same_session_return_proof",
+        "raw_dollar_volume_proof",
+        "reverse_split_rule",
+        "multiple_action_rule"
+      ],
+      "properties": {
+        "basis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "factor_representation": {
+          "const": "exact Fraction new_shares/old_shares"
+        },
+        "effective_boundary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prior_volume_rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "same_session_price_rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "same_session_return_proof": {
+          "type": "string",
+          "minLength": 1
+        },
+        "raw_dollar_volume_proof": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reverse_split_rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "multiple_action_rule": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "non_transformable_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope",
+        "action",
+        "missingness_budget_can_override",
+        "reason"
+      ],
+      "properties": {
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action": {
+          "const": "FAIL-DATASET-ADMISSION-BEFORE-STRATEGY"
+        },
+        "missingness_budget_can_override": {
+          "const": false
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "symbols": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "items": {
+        "$ref": "#/$defs/symbolCoverage"
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/action"
+      }
+    },
+    "historical_context": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/historicalContext"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "authority": {
+      "$ref": "#/$defs/authority"
+    },
+    "ledger_fingerprint": {
+      "$ref": "#/$defs/sha256"
+    },
+    "archive_coverage": {
+      "$ref": "#/$defs/archiveCoverage"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "symbol": {
+      "enum": [
+        "IWM",
+        "MDY",
+        "SPY",
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY"
+      ]
+    },
+    "stringArray": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "symbolCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbol",
+        "cusip",
+        "sec_cik",
+        "exchange",
+        "fund_identity",
+        "known_names",
+        "coverage_start",
+        "coverage_end",
+        "identity_continuity_classification",
+        "action_coverage_classification",
+        "conclusion",
+        "coverage_status",
+        "action_ids",
+        "evidence_ids",
+        "continuity_notes"
+      ],
+      "properties": {
+        "symbol": {
+          "$ref": "#/$defs/symbol"
+        },
+        "fund_identity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "coverage_start": {
+          "const": "2020-06-26"
+        },
+        "coverage_end": {
+          "const": "2026-07-31"
+        },
+        "conclusion": {
+          "enum": [
+            "APPLICABLE-ACTIONS-RECORDED",
+            "NO-APPLICABLE-ACTION-FOUND"
+          ]
+        },
+        "action_ids": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "evidence_ids": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "continuity_notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "coverage_status": {
+          "const": "COMPLETE"
+        },
+        "cusip": {
+          "type": "string",
+          "pattern": "^[0-9A-Z]{9}$"
+        },
+        "sec_cik": {
+          "type": "string",
+          "pattern": "^[0-9]{10}$"
+        },
+        "exchange": {
+          "const": "NYSE Arca"
+        },
+        "known_names": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "identity_continuity_classification": {
+          "const": "CONTINUOUS-CANONICAL-IDENTITY"
+        },
+        "action_coverage_classification": {
+          "enum": [
+            "CONFIRMED-ACTION",
+            "SUPPORTED-NO-KNOWN-ACTION"
+          ]
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "symbol",
+        "fund_identity",
+        "action_type",
+        "announcement_date",
+        "record_date",
+        "payable_date",
+        "effective_session",
+        "effective_time_semantics",
+        "old_shares",
+        "new_shares",
+        "transformable",
+        "price_unit_effect",
+        "share_volume_unit_effect",
+        "normalization_rule",
+        "affects_program_history",
+        "evidence_ids"
+      ],
+      "properties": {
+        "action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbol": {
+          "$ref": "#/$defs/symbol"
+        },
+        "fund_identity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action_type": {
+          "enum": [
+            "forward_split",
+            "reverse_split"
+          ]
+        },
+        "announcement_date": {
+          "$ref": "#/$defs/date"
+        },
+        "record_date": {
+          "$ref": "#/$defs/date"
+        },
+        "payable_date": {
+          "$ref": "#/$defs/date"
+        },
+        "effective_session": {
+          "$ref": "#/$defs/date"
+        },
+        "effective_time_semantics": {
+          "type": "string",
+          "minLength": 1
+        },
+        "old_shares": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "new_shares": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "transformable": {
+          "const": true
+        },
+        "price_unit_effect": {
+          "type": "string",
+          "minLength": 1
+        },
+        "share_volume_unit_effect": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalization_rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "affects_program_history": {
+          "type": "boolean"
+        },
+        "evidence_ids": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    },
+    "historicalContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "context_id",
+        "symbols",
+        "effective_date",
+        "classification",
+        "description",
+        "program_effect",
+        "evidence_ids"
+      ],
+      "properties": {
+        "context_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbols": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "effective_date": {
+          "$ref": "#/$defs/date"
+        },
+        "classification": {
+          "enum": [
+            "OUTSIDE-CHRONOLOGY",
+            "NON-UNIT-CHANGING"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "program_effect": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_ids": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "classification",
+        "title",
+        "url",
+        "retrieved_date",
+        "supports"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classification": {
+          "enum": [
+            "ISSUER-PRIMARY",
+            "EXCHANGE-PRIMARY",
+            "SEC-PRIMARY",
+            "REGULATOR-PRIMARY"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "retrieved_date": {
+          "$ref": "#/$defs/date"
+        },
+        "supports": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_contact",
+        "subscription_purchase",
+        "credential_access",
+        "source_requests",
+        "source_qualification",
+        "market_data_acquisition",
+        "real_dataset_admission",
+        "strategy_implementation",
+        "strategy_execution",
+        "research_qualification",
+        "controlled_evaluation",
+        "protected_holdout",
+        "paper_execution",
+        "broker_writes",
+        "live_execution"
+      ],
+      "properties": {
+        "provider_contact": {
+          "const": false
+        },
+        "subscription_purchase": {
+          "const": false
+        },
+        "credential_access": {
+          "const": false
+        },
+        "source_requests": {
+          "const": false
+        },
+        "source_qualification": {
+          "const": false
+        },
+        "market_data_acquisition": {
+          "const": false
+        },
+        "real_dataset_admission": {
+          "const": false
+        },
+        "strategy_implementation": {
+          "const": false
+        },
+        "strategy_execution": {
+          "const": false
+        },
+        "research_qualification": {
+          "const": false
+        },
+        "controlled_evaluation": {
+          "const": false
+        },
+        "protected_holdout": {
+          "const": false
+        },
+        "paper_execution": {
+          "const": false
+        },
+        "broker_writes": {
+          "const": false
+        },
+        "live_execution": {
+          "const": false
+        }
+      }
+    },
+    "symbolArray": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/symbol"
+      }
+    },
+    "formCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "form",
+        "count"
+      ],
+      "properties": {
+        "form": {
+          "type": "string",
+          "minLength": 1
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "primaryCorpus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "corpus_id",
+        "authority",
+        "issuer",
+        "symbols",
+        "endpoint",
+        "coverage_start",
+        "coverage_end",
+        "retrieval_date",
+        "manifest_definition",
+        "candidate_document_count",
+        "screened_document_count",
+        "subject_document_count",
+        "form_counts",
+        "manifest_sha256",
+        "finding",
+        "limitations"
+      ],
+      "properties": {
+        "corpus_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authority": {
+          "const": "SEC"
+        },
+        "issuer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbols": {
+          "$ref": "#/$defs/symbolArray"
+        },
+        "endpoint": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "coverage_start": {
+          "const": "2020-06-26"
+        },
+        "coverage_end": {
+          "const": "2026-07-31"
+        },
+        "retrieval_date": {
+          "$ref": "#/$defs/date"
+        },
+        "manifest_definition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidate_document_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "screened_document_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "subject_document_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "form_counts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/formCount"
+          }
+        },
+        "manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "finding": {
+          "enum": [
+            "FIVE-SPLITS-FOUND-NO-OTHER-UNIT-ACTION-IN-SCREEN",
+            "NO-APPLICABLE-ACTION-FOUND-IN-BOUNDED-SCREEN"
+          ]
+        },
+        "limitations": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "archiveRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "market_event",
+        "action_date",
+        "action_status",
+        "action_type",
+        "symbol",
+        "issuer_name",
+        "updated_at",
+        "classification",
+        "ledger_action_id"
+      ],
+      "properties": {
+        "market_event": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action_date": {
+          "$ref": "#/$defs/date"
+        },
+        "action_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbol": {
+          "$ref": "#/$defs/symbol"
+        },
+        "issuer_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "updated_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classification": {
+          "const": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY"
+        },
+        "ledger_action_id": {
+          "type": "null"
+        }
+      }
+    },
+    "artifactBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "fingerprint",
+        "entries_fingerprint"
+      ],
+      "properties": {
+        "path": {
+          "const": "config/research/program-007-nyse-corpax-retrieval-manifest-v1.json"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "fingerprint": {
+          "$ref": "#/$defs/sha256"
+        },
+        "entries_fingerprint": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "nyseCorpax": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "archive_id",
+        "source",
+        "url",
+        "retrieved_at_utc",
+        "coverage_start",
+        "coverage_end",
+        "retrieval_method",
+        "interval_count",
+        "request_count",
+        "dated_record_count",
+        "unique_market_event_count",
+        "out_of_window_dated_count",
+        "null_dated_rows_excluded",
+        "retrieval_manifest_binding",
+        "dated_records_sha256",
+        "forward_splits_in_scope",
+        "scope_includes",
+        "scope_excludes",
+        "target_record_count",
+        "target_records_fingerprint",
+        "target_records",
+        "conclusion"
+      ],
+      "properties": {
+        "archive_id": {
+          "const": "nyse-corpax-2020-06-26-to-2026-07-31-v1"
+        },
+        "source": {
+          "const": "NYSE Corporate Actions"
+        },
+        "url": {
+          "const": "https://www.nyse.com/api/nyseservice/v1/corpax/"
+        },
+        "retrieved_at_utc": {
+          "type": "string",
+          "minLength": 1
+        },
+        "coverage_start": {
+          "const": "2020-06-26"
+        },
+        "coverage_end": {
+          "const": "2026-07-31"
+        },
+        "retrieval_method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "interval_count": {
+          "const": 319
+        },
+        "request_count": {
+          "type": "integer",
+          "minimum": 319
+        },
+        "dated_record_count": {
+          "const": 11345
+        },
+        "unique_market_event_count": {
+          "const": 11345
+        },
+        "out_of_window_dated_count": {
+          "const": 0
+        },
+        "null_dated_rows_excluded": {
+          "const": true
+        },
+        "retrieval_manifest_binding": {
+          "$ref": "#/$defs/artifactBinding"
+        },
+        "dated_records_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "forward_splits_in_scope": {
+          "const": false
+        },
+        "scope_includes": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "scope_excludes": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "target_record_count": {
+          "const": 12
+        },
+        "target_records_fingerprint": {
+          "$ref": "#/$defs/sha256"
+        },
+        "target_records": {
+          "type": "array",
+          "minItems": 12,
+          "maxItems": 12,
+          "items": {
+            "$ref": "#/$defs/archiveRecord"
+          }
+        },
+        "conclusion": {
+          "const": "COMPLETE-FOR-CORPAX-SCOPE-NOT-FOR-FORWARD-SPLITS"
+        }
+      }
+    },
+    "archiveCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "dataset_admission",
+        "resolved_symbols",
+        "unresolved_symbols",
+        "coverage_standard",
+        "limitations",
+        "nyse_corpax",
+        "primary_corpora"
+      ],
+      "properties": {
+        "status": {
+          "const": "SUFFICIENT-FOR-FROZEN-FEATURE"
+        },
+        "dataset_admission": {
+        "const": "ACTION-COVERAGE-GATE-PASS"
+        },
+        "resolved_symbols": {
+          "$ref": "#/$defs/symbolArray"
+        },
+        "unresolved_symbols": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "nyse_corpax": {
+          "$ref": "#/$defs/nyseCorpax"
+        },
+        "primary_corpora": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/primaryCorpus"
+          }
+        },
+        "coverage_standard": {
+          "type": "string",
+          "minLength": 1
+        },
+        "limitations": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

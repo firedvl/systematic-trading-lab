@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-29 - Close Program 007 public action coverage with bounded best evidence
+
+- Decision: publish immutable ledger v3 with all thirteen identities complete for the frozen prior-20-session same-clock relative-volume feature. Classify the five documented 2025 splits as `CONFIRMED-ACTION` and the other eight symbols as `SUPPORTED-NO-KNOWN-ACTION`. Treat the latter as an as-of evidence result, not proof that no action can later be found.
+- Context: issuer pages, the date-bounded SEC corpora, public exchange evidence, and specific SEC trust amendments establish continuous identity for IWM, MDY, and SPY. IWM's known 2005 split is outside chronology. The January 2026 MDY and SPY amendments changed names for marketing, preserved beneficial-owner interests, and ratified the other trust terms. Requiring an issuer-certified exhaustive archive would preserve an impossible absence-proof gate that the revised scientific standard does not need.
+- Consequences: ledger v3 records five exact 2-for-1 split transforms and eight bounded no-known-action classifications from `2020-06-26` through `2026-07-31`. Any later contradiction or newly found unit or identity event invalidates v3 and blocks qualification until reviewed. This closes only the public action-coverage gate; it grants no provider, credential, dataset, strategy, protected, PAPER, broker, or live authority.
+- Revisit when: new primary evidence contradicts an identity or action classification, or Program 007 changes its feature chronology or unit-sensitive calculation.
+
 ## 2026-08-29 - Block Program 007 metadata authority on identity history and source finality
 
 - Decision: prospectively use Alpaca's Historical Corporate Actions REST endpoint as the single structured metadata candidate for all thirteen Program 007 securities, while keeping the implementation synthetic-only and every authority flag false. Query all current symbols and CUSIPs as separate reconciled chains, omit `types` so all current event arrays are parsed, retain bounded raw bytes before parsing, and allow exact transforms only for stable-identity forward and reverse splits.

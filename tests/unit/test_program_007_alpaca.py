@@ -22,9 +22,9 @@ from systematic_trading_lab.domain import Timeframe
 from systematic_trading_lab.fingerprints import canonical_json, fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
-_LEDGER_PATH = _REPOSITORY / "config/research/program-007-unit-changing-action-ledger-v2.json"
+_LEDGER_PATH = _REPOSITORY / "config/research/program-007-unit-changing-action-ledger-v3.json"
 _SCHEMA_PATH = (
-    _REPOSITORY / "config/research/program-007-unit-changing-action-ledger-v2.schema.json"
+    _REPOSITORY / "config/research/program-007-unit-changing-action-ledger-v3.schema.json"
 )
 _NYSE_MANIFEST_PATH = (
     _REPOSITORY / "config/research/program-007-nyse-corpax-retrieval-manifest-v1.json"
@@ -196,7 +196,7 @@ def test_action_ledger_schema_hash_fingerprint_and_symbol_coverage() -> None:
     assert_strict_objects(schema)
     program_007.validate_action_ledger(ledger)
     assert ledger["ledger_fingerprint"] == (
-        "0ec39d6f38d469e099862173ff710c0e737b39b464e233e291c9e9b20c089c25"
+        "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
     )
     assert [item["symbol"] for item in ledger["symbols"]] == list(program_007.SYMBOLS)
     assert {item["symbol"] for item in ledger["actions"]} == {
@@ -210,14 +210,15 @@ def test_action_ledger_schema_hash_fingerprint_and_symbol_coverage() -> None:
         item["symbol"]
         for item in ledger["symbols"]
         if item["conclusion"] == "NO-APPLICABLE-ACTION-FOUND"
-    } == {"XLF", "XLI", "XLP", "XLRE", "XLV"}
-    assert {
-        item["symbol"] for item in ledger["symbols"] if item["conclusion"] == "COVERAGE-UNRESOLVED"
-    } == {"IWM", "MDY", "SPY"}
+    } == {"IWM", "MDY", "SPY", "XLF", "XLI", "XLP", "XLRE", "XLV"}
+    assert all(
+        item["identity_continuity_classification"] == "CONTINUOUS-CANONICAL-IDENTITY"
+        for item in ledger["symbols"]
+    )
     coverage = ledger["archive_coverage"]
-    assert coverage["status"] == "INCOMPLETE"
-    assert coverage["dataset_admission"] == "BLOCKED"
-    assert coverage["unresolved_symbols"] == ["IWM", "MDY", "SPY"]
+    assert coverage["status"] == "SUFFICIENT-FOR-FROZEN-FEATURE"
+    assert coverage["dataset_admission"] == "ACTION-COVERAGE-GATE-PASS"
+    assert coverage["unresolved_symbols"] == []
     assert coverage["nyse_corpax"]["forward_splits_in_scope"] is False
     assert coverage["nyse_corpax"]["target_record_count"] == 12
     assert all(value is False for value in ledger["authority"].values())
@@ -322,7 +323,7 @@ def test_action_ledger_mutation_unknown_action_and_inconsistent_ratio_fail_close
         program_007.validate_action_ledger(ledger)
 
     ledger = _ledger()
-    ledger["archive_coverage"]["dataset_admission"] = "READY"
+    ledger["archive_coverage"]["dataset_admission"] = "BLOCKED"
     _refingerprint(ledger)
     with pytest.raises(program_007.Program007Error, match="archive coverage disposition"):
         program_007.validate_action_ledger(ledger)
@@ -378,12 +379,9 @@ def test_ledger_normalization_uses_effective_session_boundary_and_exact_volume()
     assert program_007.share_unit_factor_for_actions(actions, "XLB", effective, post) == 1
     assert program_007.share_unit_factor_for_actions(actions, "XLB", post, pre) == Fraction(1, 2)
     assert program_007.share_unit_factor_for_actions(actions, "SPY", pre, post) == 1
-    with pytest.raises(program_007.Program007Error, match="IWM, MDY, SPY"):
-        program_007.require_action_ledger_admission(ledger)
-    with pytest.raises(program_007.Program007Error, match="dataset admission is blocked"):
-        program_007.share_unit_factor(ledger, "XLB", pre, post)
-    with pytest.raises(program_007.Program007Error, match="dataset admission is blocked"):
-        program_007.normalize_share_volume(Decimal("10.5"), ledger, "XLB", pre, post)
+    program_007.require_action_ledger_admission(ledger)
+    assert program_007.share_unit_factor(ledger, "XLB", pre, post) == 2
+    assert program_007.normalize_share_volume(Decimal("10.5"), ledger, "XLB", pre, post) == 21
 
 
 def test_ambiguous_and_inconsistent_synthetic_actions_fail_closed() -> None:

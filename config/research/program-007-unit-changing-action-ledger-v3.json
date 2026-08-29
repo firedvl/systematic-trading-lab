@@ -1,0 +1,1170 @@
+{
+  "schema_version": "program-007-unit-changing-action-ledger-v3",
+  "ledger_id": "program-007-public-unit-changing-action-ledger-2026-08-29-v3",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "status": "PUBLIC-EVIDENCE-SUFFICIENT-FOR-FROZEN-FEATURE",
+  "schema_binding": {
+    "path": "config/research/program-007-unit-changing-action-ledger-v3.schema.json",
+    "sha256": "bbc24645dab0afa8e19cfc24acb28f490c0e58a819105e87cf2cb629e9c261af"
+  },
+  "chronology": {
+    "start_session": "2020-06-26",
+    "end_session": "2026-07-31",
+    "prehistory_rule": "Coverage begins twenty XNYS sessions before the 2020-07-27 feature chronology so every prior-20-session same-clock relative-volume input is covered. No conclusion extends beyond the frozen dates."
+  },
+  "normalization": {
+    "basis": "The basis is the share unit in use on the session whose relative-volume feature is being computed.",
+    "factor_representation": "exact Fraction new_shares/old_shares",
+    "effective_boundary": "For an action effective before the market open, every bar on the effective session is already in post-action units. The preceding XNYS session remains in pre-action units.",
+    "prior_volume_rule": "Multiply each prior-session same-clock share count by every exact new_shares/old_shares ratio whose effective session is after the source session and on or before the basis session.",
+    "same_session_price_rule": "Retain raw contemporaneous prices for fills, marks, and same-session calculations. Do not create a provider-adjusted or repository-adjusted historical price view.",
+    "same_session_return_proof": "Within one session the split factor f is constant, so (f*p1)/(f*p0)-1 equals p1/p0-1.",
+    "raw_dollar_volume_proof": "For split ratio r, post-unit price times post-unit volume is (p/r)*(v*r)=p*v, so raw contemporaneous dollar volume is unit invariant.",
+    "reverse_split_rule": "Use the same new_shares/old_shares orientation. A 1-for-5 reverse split maps a pre-action share count to the post-action basis by multiplying by 1/5.",
+    "multiple_action_rule": "Multiply exact ratios in effective-session order. Crossing the same actions in reverse divides by the same cumulative factor."
+  },
+  "non_transformable_policy": {
+    "scope": "Any ambiguous action, identity break, spin-off, reorganization, or other event whose share-unit mapping is not established by authoritative evidence.",
+    "action": "FAIL-DATASET-ADMISSION-BEFORE-STRATEGY",
+    "missingness_budget_can_override": false,
+    "reason": "Program 007 does not invent reciprocal volume or price semantics for non-split actions. A new reviewed ledger version is required before affected feature windows may be admitted."
+  },
+  "symbols": [
+    {
+      "symbol": "IWM",
+      "fund_identity": "iShares Russell 2000 ETF",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "NO-APPLICABLE-ACTION-FOUND",
+      "action_ids": [],
+      "evidence_ids": [
+        "ishares-iwm-current-fund-page",
+        "sec-iwm-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec",
+        "cftc-iwm-2005-split-record",
+        "ishares-iwm-2026-fact-sheet",
+        "sec-iwm-2026-summary-prospectus"
+      ],
+      "continuity_notes": "Issuer identity, the continuous SEC series/class, 383 IWM primary documents in the 1,038-filing date-bounded Trust screen, and public exchange evidence support the same IWM fund through the frozen chronology. No applicable unit event was found. The known 2005 split is outside chronology. This is bounded best evidence, not proof of exhaustive absence; the public NYSE archive excludes forward splits and the issuer publishes no certified action archive.",
+      "coverage_status": "COMPLETE",
+      "cusip": "464287655",
+      "sec_cik": "0001100663",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "iShares Russell 2000 ETF",
+        "iShares Russell 2000 Index Fund"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "SUPPORTED-NO-KNOWN-ACTION"
+    },
+    {
+      "symbol": "MDY",
+      "fund_identity": "State Street SPDR S&P MidCap 400 ETF Trust",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "NO-APPLICABLE-ACTION-FOUND",
+      "action_ids": [],
+      "evidence_ids": [
+        "sec-mdy-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec",
+        "state-street-mdy-current-fund-page",
+        "sec-mdy-2026-name-amendment",
+        "state-street-2026-spy-mdy-name-notice"
+      ],
+      "continuity_notes": "State Street and SEC evidence retain ticker MDY, CUSIP 78467Y107, CIK 0000936958, and the same trust across the frozen chronology. The 2026 amendment changed the trust name for marketing, stated that beneficial owners were not adversely affected, and ratified all other terms. No applicable unit event was found in the bounded SEC and exchange evidence. This is supported no-known-action, not proof of exhaustive absence.",
+      "coverage_status": "COMPLETE",
+      "cusip": "78467Y107",
+      "sec_cik": "0000936958",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "State Street SPDR S&P MidCap 400 ETF Trust",
+        "SPDR S&P MidCap 400 ETF Trust",
+        "MidCap SPDR Trust Series 1"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "SUPPORTED-NO-KNOWN-ACTION"
+    },
+    {
+      "symbol": "SPY",
+      "fund_identity": "State Street SPDR S&P 500 ETF Trust",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "NO-APPLICABLE-ACTION-FOUND",
+      "action_ids": [],
+      "evidence_ids": [
+        "sec-spy-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec",
+        "state-street-spy-current-fund-page",
+        "sec-spy-2026-name-amendment",
+        "state-street-2026-spy-mdy-name-notice"
+      ],
+      "continuity_notes": "State Street and SEC evidence retain ticker SPY, CUSIP 78462F103, CIK 0000884394, and the same trust across the frozen chronology. The 2026 amendment changed the trust name for marketing, stated that beneficial owners were not adversely affected, and ratified all other terms. No applicable unit event was found in the bounded SEC and exchange evidence. This is supported no-known-action, not proof of exhaustive absence.",
+      "coverage_status": "COMPLETE",
+      "cusip": "78462F103",
+      "sec_cik": "0000884394",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "State Street SPDR S&P 500 ETF Trust",
+        "SPDR S&P 500 ETF Trust",
+        "SPDR Trust Series 1"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "SUPPORTED-NO-KNOWN-ACTION"
+    },
+    {
+      "symbol": "XLB",
+      "fund_identity": "State Street Materials Select Sector SPDR ETF",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "APPLICABLE-ACTIONS-RECORDED",
+      "action_ids": [
+        "sector-spdr-XLB-2025-12-05-2-for-1"
+      ],
+      "evidence_ids": [
+        "state-street-2025-sector-split-notice",
+        "miax-2025-sector-split-alert",
+        "sec-sector-2026-semiannual-note-13",
+        "sec-sector-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec"
+      ],
+      "continuity_notes": "The complete date-bounded Select Sector action-capable SEC corpus records the 2-for-1 split effective 2025-12-05 and no other applicable unit-changing action.",
+      "coverage_status": "COMPLETE",
+      "cusip": "81369Y100",
+      "sec_cik": "0001064641",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "State Street Materials Select Sector SPDR ETF"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "CONFIRMED-ACTION"
+    },
+    {
+      "symbol": "XLE",
+      "fund_identity": "State Street Energy Select Sector SPDR ETF",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "APPLICABLE-ACTIONS-RECORDED",
+      "action_ids": [
+        "sector-spdr-XLE-2025-12-05-2-for-1"
+      ],
+      "evidence_ids": [
+        "state-street-2025-sector-split-notice",
+        "miax-2025-sector-split-alert",
+        "sec-sector-2026-semiannual-note-13",
+        "sec-sector-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec"
+      ],
+      "continuity_notes": "The complete date-bounded Select Sector action-capable SEC corpus records the 2-for-1 split effective 2025-12-05 and no other applicable unit-changing action.",
+      "coverage_status": "COMPLETE",
+      "cusip": "81369Y506",
+      "sec_cik": "0001064641",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "State Street Energy Select Sector SPDR ETF"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "CONFIRMED-ACTION"
+    },
+    {
+      "symbol": "XLF",
+      "fund_identity": "State Street Financial Select Sector SPDR ETF",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "NO-APPLICABLE-ACTION-FOUND",
+      "action_ids": [],
+      "evidence_ids": [
+        "sec-sector-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec"
+      ],
+      "continuity_notes": "The complete date-bounded Select Sector action-capable SEC corpus, issuer split notice, and NYSE identity/reorganization archive found no applicable unit-changing action.",
+      "coverage_status": "COMPLETE",
+      "cusip": "81369Y605",
+      "sec_cik": "0001064641",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "State Street Financial Select Sector SPDR ETF"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "SUPPORTED-NO-KNOWN-ACTION"
+    },
+    {
+      "symbol": "XLI",
+      "fund_identity": "State Street Industrial Select Sector SPDR ETF",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "NO-APPLICABLE-ACTION-FOUND",
+      "action_ids": [],
+      "evidence_ids": [
+        "sec-sector-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec"
+      ],
+      "continuity_notes": "The complete date-bounded Select Sector action-capable SEC corpus, issuer split notice, and NYSE identity/reorganization archive found no applicable unit-changing action.",
+      "coverage_status": "COMPLETE",
+      "cusip": "81369Y704",
+      "sec_cik": "0001064641",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "State Street Industrial Select Sector SPDR ETF"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "SUPPORTED-NO-KNOWN-ACTION"
+    },
+    {
+      "symbol": "XLK",
+      "fund_identity": "State Street Technology Select Sector SPDR ETF",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "APPLICABLE-ACTIONS-RECORDED",
+      "action_ids": [
+        "sector-spdr-XLK-2025-12-05-2-for-1"
+      ],
+      "evidence_ids": [
+        "state-street-2025-sector-split-notice",
+        "miax-2025-sector-split-alert",
+        "sec-sector-2026-semiannual-note-13",
+        "sec-sector-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec"
+      ],
+      "continuity_notes": "The complete date-bounded Select Sector action-capable SEC corpus records the 2-for-1 split effective 2025-12-05 and no other applicable unit-changing action.",
+      "coverage_status": "COMPLETE",
+      "cusip": "81369Y803",
+      "sec_cik": "0001064641",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "State Street Technology Select Sector SPDR ETF"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "CONFIRMED-ACTION"
+    },
+    {
+      "symbol": "XLP",
+      "fund_identity": "State Street Consumer Staples Select Sector SPDR ETF",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "NO-APPLICABLE-ACTION-FOUND",
+      "action_ids": [],
+      "evidence_ids": [
+        "sec-sector-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec"
+      ],
+      "continuity_notes": "The complete date-bounded Select Sector action-capable SEC corpus, issuer split notice, and NYSE identity/reorganization archive found no applicable unit-changing action.",
+      "coverage_status": "COMPLETE",
+      "cusip": "81369Y308",
+      "sec_cik": "0001064641",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "State Street Consumer Staples Select Sector SPDR ETF"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "SUPPORTED-NO-KNOWN-ACTION"
+    },
+    {
+      "symbol": "XLRE",
+      "fund_identity": "State Street Real Estate Select Sector SPDR ETF",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "NO-APPLICABLE-ACTION-FOUND",
+      "action_ids": [],
+      "evidence_ids": [
+        "sec-sector-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec"
+      ],
+      "continuity_notes": "The complete date-bounded Select Sector action-capable SEC corpus, issuer split notice, and NYSE identity/reorganization archive found no applicable unit-changing action.",
+      "coverage_status": "COMPLETE",
+      "cusip": "81369Y860",
+      "sec_cik": "0001064641",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "State Street Real Estate Select Sector SPDR ETF"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "SUPPORTED-NO-KNOWN-ACTION"
+    },
+    {
+      "symbol": "XLU",
+      "fund_identity": "State Street Utilities Select Sector SPDR ETF",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "APPLICABLE-ACTIONS-RECORDED",
+      "action_ids": [
+        "sector-spdr-XLU-2025-12-05-2-for-1"
+      ],
+      "evidence_ids": [
+        "state-street-2025-sector-split-notice",
+        "miax-2025-sector-split-alert",
+        "sec-sector-2026-semiannual-note-13",
+        "sec-sector-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec"
+      ],
+      "continuity_notes": "The complete date-bounded Select Sector action-capable SEC corpus records the 2-for-1 split effective 2025-12-05 and no other applicable unit-changing action.",
+      "coverage_status": "COMPLETE",
+      "cusip": "81369Y886",
+      "sec_cik": "0001064641",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "State Street Utilities Select Sector SPDR ETF"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "CONFIRMED-ACTION"
+    },
+    {
+      "symbol": "XLV",
+      "fund_identity": "State Street Health Care Select Sector SPDR ETF",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "NO-APPLICABLE-ACTION-FOUND",
+      "action_ids": [],
+      "evidence_ids": [
+        "sec-sector-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec"
+      ],
+      "continuity_notes": "The complete date-bounded Select Sector action-capable SEC corpus, issuer split notice, and NYSE identity/reorganization archive found no applicable unit-changing action.",
+      "coverage_status": "COMPLETE",
+      "cusip": "81369Y209",
+      "sec_cik": "0001064641",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "State Street Health Care Select Sector SPDR ETF"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "SUPPORTED-NO-KNOWN-ACTION"
+    },
+    {
+      "symbol": "XLY",
+      "fund_identity": "State Street Consumer Discretionary Select Sector SPDR ETF",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "conclusion": "APPLICABLE-ACTIONS-RECORDED",
+      "action_ids": [
+        "sector-spdr-XLY-2025-12-05-2-for-1"
+      ],
+      "evidence_ids": [
+        "state-street-2025-sector-split-notice",
+        "miax-2025-sector-split-alert",
+        "sec-sector-2026-semiannual-note-13",
+        "sec-sector-program-007-corpus",
+        "nyse-corpax-windowed-archive",
+        "nyse-corporate-actions-client-spec"
+      ],
+      "continuity_notes": "The complete date-bounded Select Sector action-capable SEC corpus records the 2-for-1 split effective 2025-12-05 and no other applicable unit-changing action.",
+      "coverage_status": "COMPLETE",
+      "cusip": "81369Y407",
+      "sec_cik": "0001064641",
+      "exchange": "NYSE Arca",
+      "known_names": [
+        "State Street Consumer Discretionary Select Sector SPDR ETF"
+      ],
+      "identity_continuity_classification": "CONTINUOUS-CANONICAL-IDENTITY",
+      "action_coverage_classification": "CONFIRMED-ACTION"
+    }
+  ],
+  "actions": [
+    {
+      "action_id": "sector-spdr-XLB-2025-12-05-2-for-1",
+      "symbol": "XLB",
+      "fund_identity": "State Street Materials Select Sector SPDR ETF",
+      "action_type": "forward_split",
+      "announcement_date": "2025-11-20",
+      "record_date": "2025-12-02",
+      "payable_date": "2025-12-04",
+      "effective_session": "2025-12-05",
+      "effective_time_semantics": "The distribution was payable after the 2025-12-04 close and shares began trading at the split-adjusted price before the 2025-12-05 open; all 2025-12-05 bars are post-action units.",
+      "old_shares": 1,
+      "new_shares": 2,
+      "transformable": true,
+      "price_unit_effect": "One post-action share represents one-half of the pre-action price unit; raw prices remain unmodified.",
+      "share_volume_unit_effect": "One pre-action share count maps to two post-action share units.",
+      "normalization_rule": "Multiply pre-2025-12-05 same-clock volume by 2 when the feature basis is on or after 2025-12-05.",
+      "affects_program_history": true,
+      "evidence_ids": [
+        "state-street-2025-sector-split-notice",
+        "miax-2025-sector-split-alert",
+        "sec-sector-2026-semiannual-note-13"
+      ]
+    },
+    {
+      "action_id": "sector-spdr-XLE-2025-12-05-2-for-1",
+      "symbol": "XLE",
+      "fund_identity": "State Street Energy Select Sector SPDR ETF",
+      "action_type": "forward_split",
+      "announcement_date": "2025-11-20",
+      "record_date": "2025-12-02",
+      "payable_date": "2025-12-04",
+      "effective_session": "2025-12-05",
+      "effective_time_semantics": "The distribution was payable after the 2025-12-04 close and shares began trading at the split-adjusted price before the 2025-12-05 open; all 2025-12-05 bars are post-action units.",
+      "old_shares": 1,
+      "new_shares": 2,
+      "transformable": true,
+      "price_unit_effect": "One post-action share represents one-half of the pre-action price unit; raw prices remain unmodified.",
+      "share_volume_unit_effect": "One pre-action share count maps to two post-action share units.",
+      "normalization_rule": "Multiply pre-2025-12-05 same-clock volume by 2 when the feature basis is on or after 2025-12-05.",
+      "affects_program_history": true,
+      "evidence_ids": [
+        "state-street-2025-sector-split-notice",
+        "miax-2025-sector-split-alert",
+        "sec-sector-2026-semiannual-note-13"
+      ]
+    },
+    {
+      "action_id": "sector-spdr-XLK-2025-12-05-2-for-1",
+      "symbol": "XLK",
+      "fund_identity": "State Street Technology Select Sector SPDR ETF",
+      "action_type": "forward_split",
+      "announcement_date": "2025-11-20",
+      "record_date": "2025-12-02",
+      "payable_date": "2025-12-04",
+      "effective_session": "2025-12-05",
+      "effective_time_semantics": "The distribution was payable after the 2025-12-04 close and shares began trading at the split-adjusted price before the 2025-12-05 open; all 2025-12-05 bars are post-action units.",
+      "old_shares": 1,
+      "new_shares": 2,
+      "transformable": true,
+      "price_unit_effect": "One post-action share represents one-half of the pre-action price unit; raw prices remain unmodified.",
+      "share_volume_unit_effect": "One pre-action share count maps to two post-action share units.",
+      "normalization_rule": "Multiply pre-2025-12-05 same-clock volume by 2 when the feature basis is on or after 2025-12-05.",
+      "affects_program_history": true,
+      "evidence_ids": [
+        "state-street-2025-sector-split-notice",
+        "miax-2025-sector-split-alert",
+        "sec-sector-2026-semiannual-note-13"
+      ]
+    },
+    {
+      "action_id": "sector-spdr-XLU-2025-12-05-2-for-1",
+      "symbol": "XLU",
+      "fund_identity": "State Street Utilities Select Sector SPDR ETF",
+      "action_type": "forward_split",
+      "announcement_date": "2025-11-20",
+      "record_date": "2025-12-02",
+      "payable_date": "2025-12-04",
+      "effective_session": "2025-12-05",
+      "effective_time_semantics": "The distribution was payable after the 2025-12-04 close and shares began trading at the split-adjusted price before the 2025-12-05 open; all 2025-12-05 bars are post-action units.",
+      "old_shares": 1,
+      "new_shares": 2,
+      "transformable": true,
+      "price_unit_effect": "One post-action share represents one-half of the pre-action price unit; raw prices remain unmodified.",
+      "share_volume_unit_effect": "One pre-action share count maps to two post-action share units.",
+      "normalization_rule": "Multiply pre-2025-12-05 same-clock volume by 2 when the feature basis is on or after 2025-12-05.",
+      "affects_program_history": true,
+      "evidence_ids": [
+        "state-street-2025-sector-split-notice",
+        "miax-2025-sector-split-alert",
+        "sec-sector-2026-semiannual-note-13"
+      ]
+    },
+    {
+      "action_id": "sector-spdr-XLY-2025-12-05-2-for-1",
+      "symbol": "XLY",
+      "fund_identity": "State Street Consumer Discretionary Select Sector SPDR ETF",
+      "action_type": "forward_split",
+      "announcement_date": "2025-11-20",
+      "record_date": "2025-12-02",
+      "payable_date": "2025-12-04",
+      "effective_session": "2025-12-05",
+      "effective_time_semantics": "The distribution was payable after the 2025-12-04 close and shares began trading at the split-adjusted price before the 2025-12-05 open; all 2025-12-05 bars are post-action units.",
+      "old_shares": 1,
+      "new_shares": 2,
+      "transformable": true,
+      "price_unit_effect": "One post-action share represents one-half of the pre-action price unit; raw prices remain unmodified.",
+      "share_volume_unit_effect": "One pre-action share count maps to two post-action share units.",
+      "normalization_rule": "Multiply pre-2025-12-05 same-clock volume by 2 when the feature basis is on or after 2025-12-05.",
+      "affects_program_history": true,
+      "evidence_ids": [
+        "state-street-2025-sector-split-notice",
+        "miax-2025-sector-split-alert",
+        "sec-sector-2026-semiannual-note-13"
+      ]
+    }
+  ],
+  "historical_context": [
+    {
+      "context_id": "iwm-2005-06-09-2-for-1",
+      "symbols": [
+        "IWM"
+      ],
+      "effective_date": "2005-06-09",
+      "classification": "OUTSIDE-CHRONOLOGY",
+      "description": "A public regulatory record identifies a 2-for-1 IWM split effective 2005-06-09.",
+      "program_effect": "None. It precedes the 2020-06-26 ledger start and every Program 007 relative-volume source session.",
+      "evidence_ids": [
+        "cftc-iwm-2005-split-record"
+      ]
+    },
+    {
+      "context_id": "xlf-xlre-2016-distribution",
+      "symbols": [
+        "XLF",
+        "XLRE"
+      ],
+      "effective_date": "2016-09-16",
+      "classification": "NON-UNIT-CHANGING",
+      "description": "XLF distributed XLRE shares during its real-estate reconstitution without changing the number of XLF units.",
+      "program_effect": "None. The event predates the chronology and supplies no reciprocal share-volume factor.",
+      "evidence_ids": [
+        "sec-xlf-xlre-2016-distribution"
+      ]
+    },
+    {
+      "context_id": "spy-2026-01-26-fund-name-change",
+      "symbols": [
+        "SPY"
+      ],
+      "effective_date": "2026-01-26",
+      "classification": "NON-UNIT-CHANGING",
+      "description": "NYSE records a fund-name change while the SPY ticker and share units continue.",
+      "program_effect": "Identity metadata only; no share-volume factor applies.",
+      "evidence_ids": [
+        "nyse-corpax-windowed-archive"
+      ]
+    },
+    {
+      "context_id": "mdy-2026-01-28-fund-name-change",
+      "symbols": [
+        "MDY"
+      ],
+      "effective_date": "2026-01-28",
+      "classification": "NON-UNIT-CHANGING",
+      "description": "NYSE records a fund-name change while the MDY ticker and share units continue.",
+      "program_effect": "Identity metadata only; no share-volume factor applies.",
+      "evidence_ids": [
+        "nyse-corpax-windowed-archive"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "state-street-2025-sector-split-notice",
+      "classification": "ISSUER-PRIMARY",
+      "title": "State Street Investment Management Announces Share Splits for Five Select Sector SPDR ETFs",
+      "url": "https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx",
+      "retrieved_date": "2026-08-28",
+      "supports": [
+        "XLB, XLE, XLK, XLU, and XLY 2-for-1 ratios",
+        "2025-11-20 announcement",
+        "2025-12-02 record close",
+        "2025-12-04 after-close payable timing",
+        "2025-12-05 split-adjusted trading start",
+        "unchanged CUSIPs and creation-unit share counts"
+      ]
+    },
+    {
+      "evidence_id": "miax-2025-sector-split-alert",
+      "classification": "EXCHANGE-PRIMARY",
+      "title": "MIAX Exchange Group Corporate Action Alert: SPDR Stock Splits",
+      "url": "https://www.miaxglobal.com/alert/2025/12/04/miax-exchange-group-options-markets-corporate-action-alert-spdr-stock-1",
+      "retrieved_date": "2026-08-28",
+      "supports": [
+        "XLB, XLE, XLK, XLU, and XLY 2-for-1 split corroboration",
+        "2025-12-05 market-effective date"
+      ]
+    },
+    {
+      "evidence_id": "sec-sector-2026-semiannual-note-13",
+      "classification": "SEC-PRIMARY",
+      "title": "Select Sector SPDR Trust semi-annual report for March 31, 2026",
+      "url": "https://www.sec.gov/Archives/edgar/data/1064641/000119312526256847/d128483dncsrs.htm",
+      "retrieved_date": "2026-08-28",
+      "supports": [
+        "Note 13 and financial-highlight footnotes identify the five 2-for-1 splits",
+        "per-share data were retroactively adjusted for those splits"
+      ]
+    },
+    {
+      "evidence_id": "ishares-iwm-current-fund-page",
+      "classification": "ISSUER-PRIMARY",
+      "title": "iShares Russell 2000 ETF",
+      "url": "https://www.ishares.com/us/products/239710/ishares-russell-2000-etf",
+      "retrieved_date": "2026-08-29",
+      "supports": [
+        "IWM canonical fund identity and ticker",
+        "CUSIP 464287655",
+        "NYSE Arca listing",
+        "2000-05-22 inception"
+      ]
+    },
+    {
+      "evidence_id": "cftc-iwm-2005-split-record",
+      "classification": "REGULATOR-PRIMARY",
+      "title": "CFTC-hosted CME rule certification recording the IWM 2-for-1 split",
+      "url": "https://www.cftc.gov/sites/default/files/files/submissions/rules/selfcertifications/2005/rul052705cme002.pdf",
+      "retrieved_date": "2026-08-28",
+      "supports": [
+        "IWM 2-for-1 split effective 2005-06-09, outside Program 007 chronology"
+      ]
+    },
+    {
+      "evidence_id": "sec-xlf-xlre-2016-distribution",
+      "classification": "SEC-PRIMARY",
+      "title": "Select Sector SPDR Trust supplement concerning the XLRE distribution",
+      "url": "https://www.sec.gov/Archives/edgar/data/1064641/000119312516699787/d246445d497.htm",
+      "retrieved_date": "2026-08-28",
+      "supports": [
+        "2016 in-kind XLRE distribution to XLF shareholders",
+        "event predates Program 007 and did not change XLF unit count"
+      ]
+    },
+    {
+      "evidence_id": "nyse-corpax-windowed-archive",
+      "classification": "EXCHANGE-PRIMARY",
+      "title": "NYSE Corporate Actions windowed public archive",
+      "url": "https://www.nyse.com/api/nyseservice/v1/corpax/",
+      "retrieved_date": "2026-08-28",
+      "supports": [
+        "11,345 unique dated records from 2020-06-26 through 2026-07-31",
+        "twelve target-symbol name or product-name changes and no target reverse split, reorganization, liquidation, or ticker change",
+        "does not cover forward stock splits"
+      ]
+    },
+    {
+      "evidence_id": "nyse-corporate-actions-client-spec",
+      "classification": "EXCHANGE-PRIMARY",
+      "title": "NYSE Group Corporate Actions Client Specification",
+      "url": "https://www.nyse.com/publicdocs/NYSE_Group_Corporate_Actions_Client_Specification.pdf",
+      "retrieved_date": "2026-08-28",
+      "supports": [
+        "forward splits are distributed through the separate Ex-Date Corporate Actions product",
+        "the public corpax archive cannot prove forward-split absence"
+      ]
+    },
+    {
+      "evidence_id": "sec-sector-program-007-corpus",
+      "classification": "SEC-PRIMARY",
+      "title": "Select Sector SPDR Trust Program 007 action-capable filing corpus",
+      "url": "https://data.sec.gov/submissions/CIK0001064641.json",
+      "retrieved_date": "2026-08-28",
+      "supports": [
+        "51 date-bounded 497, 485-series, N-CSR, and N-CSRS primary documents screened",
+        "five recorded 2-for-1 splits and no other Select Sector unit action in the corpus"
+      ]
+    },
+    {
+      "evidence_id": "sec-iwm-program-007-corpus",
+      "classification": "SEC-PRIMARY",
+      "title": "iShares Trust Program 007 candidate filing corpus",
+      "url": "https://data.sec.gov/submissions/CIK0001100663.json",
+      "retrieved_date": "2026-08-28",
+      "supports": [
+        "1,038 date-bounded candidate filings screened",
+        "383 primary documents identify IWM",
+        "no applicable unit action found in the bounded screen"
+      ]
+    },
+    {
+      "evidence_id": "sec-spy-program-007-corpus",
+      "classification": "SEC-PRIMARY",
+      "title": "SPY Program 007 complete SEC submission corpus",
+      "url": "https://data.sec.gov/submissions/CIK0000884394.json",
+      "retrieved_date": "2026-08-28",
+      "supports": [
+        "all 68 date-bounded SEC primary documents screened",
+        "no applicable unit action found in the bounded screen",
+        "continuous CIK 0000884394 trust record"
+      ]
+    },
+    {
+      "evidence_id": "sec-mdy-program-007-corpus",
+      "classification": "SEC-PRIMARY",
+      "title": "MDY Program 007 complete SEC submission corpus",
+      "url": "https://data.sec.gov/submissions/CIK0000936958.json",
+      "retrieved_date": "2026-08-28",
+      "supports": [
+        "all 54 date-bounded SEC primary documents screened",
+        "no applicable unit action found in the bounded screen",
+        "continuous CIK 0000936958 trust record"
+      ]
+    },
+    {
+      "evidence_id": "ishares-iwm-2026-fact-sheet",
+      "classification": "ISSUER-PRIMARY",
+      "title": "iShares Russell 2000 ETF fact sheet as of December 31, 2025",
+      "url": "https://www.ishares.com/us/literature/fact-sheet/iwm-ishares-russell-2000-etf-fund-fact-sheet-en-us.pdf",
+      "retrieved_date": "2026-08-29",
+      "supports": [
+        "IWM ticker",
+        "CUSIP 464287655",
+        "NYSE Arca listing",
+        "2000-05-22 fund launch"
+      ]
+    },
+    {
+      "evidence_id": "sec-iwm-2026-summary-prospectus",
+      "classification": "SEC-PRIMARY",
+      "title": "iShares Russell 2000 ETF summary prospectus dated July 31, 2026",
+      "url": "https://www.sec.gov/Archives/edgar/data/1100663/000119312526327900/d25568d497k.htm",
+      "retrieved_date": "2026-08-29",
+      "supports": [
+        "IWM and NYSE Arca identity at the frozen chronology end",
+        "continuous iShares Russell 2000 ETF investment objective"
+      ]
+    },
+    {
+      "evidence_id": "state-street-mdy-current-fund-page",
+      "classification": "ISSUER-PRIMARY",
+      "title": "State Street SPDR S&P MidCap 400 ETF Trust",
+      "url": "https://www.ssga.com/us/en/institutional/etfs/state-street-spdr-sp-midcap-400-etf-trust-mdy",
+      "retrieved_date": "2026-08-29",
+      "supports": [
+        "MDY ticker",
+        "CUSIP 78467Y107",
+        "NYSE Arca listing",
+        "1995-05-04 inception and listing"
+      ]
+    },
+    {
+      "evidence_id": "sec-mdy-2026-name-amendment",
+      "classification": "SEC-PRIMARY",
+      "title": "MDY Amendment No. 11 effective January 28, 2026",
+      "url": "https://www.sec.gov/Archives/edgar/data/936958/000119312526026958/d77156dex99a19.htm",
+      "retrieved_date": "2026-08-29",
+      "supports": [
+        "marketing-only trust name change",
+        "no adverse effect on beneficial owners",
+        "all other trust terms ratified and confirmed"
+      ]
+    },
+    {
+      "evidence_id": "state-street-spy-current-fund-page",
+      "classification": "ISSUER-PRIMARY",
+      "title": "State Street SPDR S&P 500 ETF Trust",
+      "url": "https://www.ssga.com/us/en/individual/etfs/state-street-spdr-sp-500-etf-trust-spy",
+      "retrieved_date": "2026-08-29",
+      "supports": [
+        "SPY ticker",
+        "CUSIP 78462F103",
+        "NYSE Arca listing",
+        "1993-01-22 inception and listing"
+      ]
+    },
+    {
+      "evidence_id": "sec-spy-2026-name-amendment",
+      "classification": "SEC-PRIMARY",
+      "title": "SPY Amendment No. 7 effective January 26, 2026",
+      "url": "https://www.sec.gov/Archives/edgar/data/884394/000119312526022316/d77353dex99a18.htm",
+      "retrieved_date": "2026-08-29",
+      "supports": [
+        "marketing-only trust name change",
+        "no adverse effect on beneficial owners",
+        "all other trust terms ratified and confirmed"
+      ]
+    },
+    {
+      "evidence_id": "state-street-2026-spy-mdy-name-notice",
+      "classification": "ISSUER-PRIMARY",
+      "title": "State Street notice to authorized participants: fund name changes",
+      "url": "https://www.ssga.com/us/en/intermediary/library-content/products/fund-docs/etfs/us/information-schedules/ap-notice/notice-to-aps-fund-name-changes-01-22-26.pdf",
+      "retrieved_date": "2026-08-29",
+      "supports": [
+        "unchanged SPY ticker across 2026 fund-name change",
+        "unchanged MDY ticker across 2026 fund-name change",
+        "effective dates before market open"
+      ]
+    }
+  ],
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "archive_coverage": {
+    "status": "SUFFICIENT-FOR-FROZEN-FEATURE",
+    "dataset_admission": "ACTION-COVERAGE-GATE-PASS",
+    "resolved_symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "unresolved_symbols": [],
+    "nyse_corpax": {
+      "archive_id": "nyse-corpax-2020-06-26-to-2026-07-31-v1",
+      "source": "NYSE Corporate Actions",
+      "url": "https://www.nyse.com/api/nyseservice/v1/corpax/",
+      "retrieved_at_utc": "2026-08-29T06:26:55.603Z",
+      "coverage_start": "2020-06-26",
+      "coverage_end": "2026-07-31",
+      "retrieval_method": "319 non-overlapping inclusive seven-day intervals at page_size=100; seven oversized intervals were replaced by complete daily leaves. All 326 response hashes remain in the retrieval manifest.",
+      "interval_count": 319,
+      "request_count": 326,
+      "dated_record_count": 11345,
+      "unique_market_event_count": 11345,
+      "out_of_window_dated_count": 0,
+      "null_dated_rows_excluded": true,
+      "retrieval_manifest_binding": {
+        "path": "config/research/program-007-nyse-corpax-retrieval-manifest-v1.json",
+        "sha256": "48b85bb63c02e59b8538eed741237d9d9a386dc36caa4c3cc1e7b5856bd735f5",
+        "fingerprint": "b0fc71436088824df6126bbfd950232e0b55da6233b34c11b40480c3495dcbeb",
+        "entries_fingerprint": "bdcea47c663440353ce3b31abdd43222d907f9b7c93f55247d79da19414cbac1"
+      },
+      "dated_records_sha256": "a7150d3bada745e3046ddeccd64a9be27fb1b23735674accc5dba318b2b3605b",
+      "forward_splits_in_scope": false,
+      "scope_includes": [
+        "name and product-name changes",
+        "symbol and CUSIP changes",
+        "reverse splits",
+        "reorganizations, conversions, suspensions, and liquidations"
+      ],
+      "scope_excludes": [
+        "forward share splits distributed through the separate NYSE Ex-Date Corporate Actions product"
+      ],
+      "target_record_count": 12,
+      "target_records_fingerprint": "e4d28699ea6ca7ed3a147c12a92706bb9ecbc2ef6e1313531103dd864d89dba8",
+      "target_records": [
+        {
+          "market_event": "727d94c6-0065-492c-901d-19d20cdfb8ff",
+          "action_date": "2025-12-01",
+          "action_status": "Effective before the Open",
+          "action_type": "Change Product Name",
+          "symbol": "XLB",
+          "issuer_name": "Select Sector SPDR Trust",
+          "updated_at": "2025-11-18T14:41:24.517607-05:00",
+          "classification": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY",
+          "ledger_action_id": null
+        },
+        {
+          "market_event": "2536ba87-e518-4aed-b20f-e82d5d717ebd",
+          "action_date": "2025-12-01",
+          "action_status": "Effective before the Open",
+          "action_type": "Change Product Name",
+          "symbol": "XLE",
+          "issuer_name": "Select Sector SPDR Trust",
+          "updated_at": "2025-11-18T14:41:24.517607-05:00",
+          "classification": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY",
+          "ledger_action_id": null
+        },
+        {
+          "market_event": "236199eb-e4de-4523-aea5-dafb8ec35942",
+          "action_date": "2025-12-01",
+          "action_status": "Effective before the Open",
+          "action_type": "Change Product Name",
+          "symbol": "XLF",
+          "issuer_name": "Select Sector SPDR Trust",
+          "updated_at": "2025-11-18T14:41:24.517607-05:00",
+          "classification": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY",
+          "ledger_action_id": null
+        },
+        {
+          "market_event": "330db11e-fd66-4da2-ad06-9974e0131303",
+          "action_date": "2025-12-01",
+          "action_status": "Effective before the Open",
+          "action_type": "Change Product Name",
+          "symbol": "XLI",
+          "issuer_name": "Select Sector SPDR Trust",
+          "updated_at": "2025-11-18T14:41:24.517607-05:00",
+          "classification": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY",
+          "ledger_action_id": null
+        },
+        {
+          "market_event": "32d4c86b-ba68-4d86-a98b-b2a325ef27b4",
+          "action_date": "2025-12-01",
+          "action_status": "Effective before the Open",
+          "action_type": "Change Product Name",
+          "symbol": "XLK",
+          "issuer_name": "Select Sector SPDR Trust",
+          "updated_at": "2025-11-18T14:41:24.517607-05:00",
+          "classification": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY",
+          "ledger_action_id": null
+        },
+        {
+          "market_event": "25319a73-7e10-4a0b-875d-274d58c318ca",
+          "action_date": "2025-12-01",
+          "action_status": "Effective before the Open",
+          "action_type": "Change Product Name",
+          "symbol": "XLP",
+          "issuer_name": "Select Sector SPDR Trust",
+          "updated_at": "2025-11-18T14:41:24.517607-05:00",
+          "classification": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY",
+          "ledger_action_id": null
+        },
+        {
+          "market_event": "3b953281-3bd8-44fe-9884-c26b8e9ad5ff",
+          "action_date": "2025-12-01",
+          "action_status": "Effective before the Open",
+          "action_type": "Change Product Name",
+          "symbol": "XLRE",
+          "issuer_name": "Select Sector SPDR Trust",
+          "updated_at": "2025-11-18T14:41:24.517607-05:00",
+          "classification": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY",
+          "ledger_action_id": null
+        },
+        {
+          "market_event": "12bd1f06-51df-4493-a3ab-17fb4d2ce43d",
+          "action_date": "2025-12-01",
+          "action_status": "Effective before the Open",
+          "action_type": "Change Product Name",
+          "symbol": "XLU",
+          "issuer_name": "Select Sector SPDR Trust",
+          "updated_at": "2025-11-18T14:41:24.517607-05:00",
+          "classification": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY",
+          "ledger_action_id": null
+        },
+        {
+          "market_event": "24491509-c0dd-42e1-9a1e-89057cb4ad73",
+          "action_date": "2025-12-01",
+          "action_status": "Effective before the Open",
+          "action_type": "Change Product Name",
+          "symbol": "XLV",
+          "issuer_name": "Select Sector SPDR Trust",
+          "updated_at": "2025-11-18T14:41:24.517607-05:00",
+          "classification": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY",
+          "ledger_action_id": null
+        },
+        {
+          "market_event": "e32db1a5-bea2-42b6-a2d7-4bfd69f61de7",
+          "action_date": "2025-12-01",
+          "action_status": "Effective before the Open",
+          "action_type": "Change Product Name",
+          "symbol": "XLY",
+          "issuer_name": "Select Sector SPDR Trust",
+          "updated_at": "2025-11-18T14:41:24.517607-05:00",
+          "classification": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY",
+          "ledger_action_id": null
+        },
+        {
+          "market_event": "4e289aed-4467-49a5-b7c0-3cea1ad5e644",
+          "action_date": "2026-01-26",
+          "action_status": "Effective before the Open",
+          "action_type": "Change Name",
+          "symbol": "SPY",
+          "issuer_name": "SPDR S&P 500 ETF Trust",
+          "updated_at": "2026-01-14T10:53:45.701890-05:00",
+          "classification": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY",
+          "ledger_action_id": null
+        },
+        {
+          "market_event": "5358a165-d737-4e29-99d7-d631d1320a61",
+          "action_date": "2026-01-28",
+          "action_status": "Effective before the Open",
+          "action_type": "Change Name",
+          "symbol": "MDY",
+          "issuer_name": "SPDR S&P MidCap 400 ETF Trust",
+          "updated_at": "2026-01-14T11:05:38.409610-05:00",
+          "classification": "NON-UNIT-CHANGING-IDENTITY-CONTINUITY",
+          "ledger_action_id": null
+        }
+      ],
+      "conclusion": "COMPLETE-FOR-CORPAX-SCOPE-NOT-FOR-FORWARD-SPLITS"
+    },
+    "primary_corpora": [
+      {
+        "corpus_id": "sec-select-sector-spdr-2020-06-26-to-2026-07-31-v1",
+        "authority": "SEC",
+        "issuer": "Select Sector SPDR Trust",
+        "symbols": [
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLRE",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "endpoint": "https://data.sec.gov/submissions/CIK0001064641.json",
+        "coverage_start": "2020-06-26",
+        "coverage_end": "2026-07-31",
+        "retrieval_date": "2026-08-28",
+        "manifest_definition": "Canonical jq -cS JSON; documents sorted by filing_date, form, accession; trailing LF included.",
+        "candidate_document_count": 51,
+        "screened_document_count": 51,
+        "subject_document_count": 51,
+        "form_counts": [
+          {
+            "form": "485APOS",
+            "count": 2
+          },
+          {
+            "form": "485BPOS",
+            "count": 8
+          },
+          {
+            "form": "485BXT",
+            "count": 1
+          },
+          {
+            "form": "497",
+            "count": 27
+          },
+          {
+            "form": "N-CSR",
+            "count": 7
+          },
+          {
+            "form": "N-CSRS",
+            "count": 6
+          }
+        ],
+        "manifest_sha256": "c99870acd2ae8360c9c99c4e0abbc44318f787cf412096e8676324d9eda9c752",
+        "finding": "FIVE-SPLITS-FOUND-NO-OTHER-UNIT-ACTION-IN-SCREEN",
+        "limitations": "Date-bounded action-capable SEC corpus, not an issuer-certified lifetime action archive."
+      },
+      {
+        "corpus_id": "sec-ishares-trust-2020-06-26-to-2026-07-31-v1",
+        "authority": "SEC",
+        "issuer": "iShares Trust",
+        "symbols": [
+          "IWM"
+        ],
+        "endpoint": "https://data.sec.gov/submissions/CIK0001100663.json",
+        "coverage_start": "2020-06-26",
+        "coverage_end": "2026-07-31",
+        "retrieval_date": "2026-08-28",
+        "manifest_definition": "UTF-8 TSV with a fixed eight-column header and 1,038 rows sorted by filing_date, accession, form, primary_document; trailing LF per row.",
+        "candidate_document_count": 1038,
+        "screened_document_count": 1038,
+        "subject_document_count": 383,
+        "form_counts": [
+          {
+            "form": "485APOS",
+            "count": 129
+          },
+          {
+            "form": "485BPOS",
+            "count": 150
+          },
+          {
+            "form": "497",
+            "count": 592
+          },
+          {
+            "form": "N-CSR",
+            "count": 83
+          },
+          {
+            "form": "N-CSRS",
+            "count": 84
+          }
+        ],
+        "manifest_sha256": "3eea92ce0d8af4be24671e6fabe49ab560c99b68b5230847666e8018233247c1",
+        "finding": "NO-APPLICABLE-ACTION-FOUND-IN-BOUNDED-SCREEN",
+        "limitations": "Multi-series Trust screen; 383 primary documents identify IWM. This supports a bounded no-known-action conclusion with issuer and exchange continuity evidence, not an exhaustive archive."
+      },
+      {
+        "corpus_id": "sec-spy-2020-06-26-to-2026-07-31-v1",
+        "authority": "SEC",
+        "issuer": "State Street SPDR S&P 500 ETF Trust",
+        "symbols": [
+          "SPY"
+        ],
+        "endpoint": "https://data.sec.gov/submissions/CIK0000884394.json",
+        "coverage_start": "2020-06-26",
+        "coverage_end": "2026-07-31",
+        "retrieval_date": "2026-08-28",
+        "manifest_definition": "Canonical jq -cS JSON; documents sorted by filing_date, form, accession; trailing LF included.",
+        "candidate_document_count": 68,
+        "screened_document_count": 68,
+        "subject_document_count": 68,
+        "form_counts": [
+          {
+            "form": "24F-2NT",
+            "count": 6
+          },
+          {
+            "form": "485BPOS",
+            "count": 6
+          },
+          {
+            "form": "497",
+            "count": 14
+          },
+          {
+            "form": "N-30D",
+            "count": 12
+          },
+          {
+            "form": "N-CEN",
+            "count": 6
+          },
+          {
+            "form": "NPORT-P",
+            "count": 24
+          }
+        ],
+        "manifest_sha256": "6d5e8853788fa245b40daa3f47583da2f05b70212c68380b929a155f8ea5e16a",
+        "finding": "NO-APPLICABLE-ACTION-FOUND-IN-BOUNDED-SCREEN",
+        "limitations": "Date-bounded complete registrant screen plus issuer and executed name-amendment evidence; not an issuer-certified exhaustive action archive."
+      },
+      {
+        "corpus_id": "sec-mdy-2020-06-26-to-2026-07-31-v1",
+        "authority": "SEC",
+        "issuer": "State Street SPDR S&P MidCap 400 ETF Trust",
+        "symbols": [
+          "MDY"
+        ],
+        "endpoint": "https://data.sec.gov/submissions/CIK0000936958.json",
+        "coverage_start": "2020-06-26",
+        "coverage_end": "2026-07-31",
+        "retrieval_date": "2026-08-28",
+        "manifest_definition": "Canonical jq -cS JSON; documents sorted by filing_date, form, accession; trailing LF included.",
+        "candidate_document_count": 54,
+        "screened_document_count": 54,
+        "subject_document_count": 54,
+        "form_counts": [
+          {
+            "form": "24F-2NT",
+            "count": 6
+          },
+          {
+            "form": "485BPOS",
+            "count": 6
+          },
+          {
+            "form": "497",
+            "count": 6
+          },
+          {
+            "form": "N-30D",
+            "count": 6
+          },
+          {
+            "form": "N-CEN",
+            "count": 6
+          },
+          {
+            "form": "NPORT-P",
+            "count": 24
+          }
+        ],
+        "manifest_sha256": "6322b7a15c642e4c376e383b3b14ee883ac101b5312302bf9bf2a9ccdc6839be",
+        "finding": "NO-APPLICABLE-ACTION-FOUND-IN-BOUNDED-SCREEN",
+        "limitations": "Date-bounded complete registrant screen plus issuer and executed name-amendment evidence; not an issuer-certified exhaustive action archive."
+      }
+    ],
+    "coverage_standard": "For the frozen prior-20-session same-clock relative-volume feature, every known or reasonably discoverable share/unit-changing or identity-breaking event in the 2020-06-26 through 2026-07-31 chronology has deterministic treatment or would fail closed. CONFIRMED-ACTION requires primary action evidence. SUPPORTED-NO-KNOWN-ACTION requires continuous identity plus bounded issuer, SEC, and exchange evidence with no applicable event found.",
+    "limitations": "SUPPORTED-NO-KNOWN-ACTION is an as-of best-evidence classification, not mathematical proof or an issuer-certified exhaustive action archive. The NYSE public archive excludes forward splits. Any later contradiction or newly discovered relevant event invalidates this ledger version and blocks qualification until reviewed."
+  },
+  "ledger_fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
+}
