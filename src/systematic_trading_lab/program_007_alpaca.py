@@ -842,8 +842,7 @@ def validate_action_ledger(ledger: Mapping[str, Any]) -> None:
             or item["cusip"] != _CUSIPS_BY_SYMBOL.get(symbol)
             or item["sec_cik"] != _CIKS_BY_SYMBOL.get(symbol)
             or item["exchange"] != "NYSE Arca"
-            or item["identity_continuity_classification"]
-            != "CONTINUOUS-CANONICAL-IDENTITY"
+            or item["identity_continuity_classification"] != "CONTINUOUS-CANONICAL-IDENTITY"
             or item["action_coverage_classification"] != expected_classification
             or not known_names
             or len(known_names) != len(set(known_names))
