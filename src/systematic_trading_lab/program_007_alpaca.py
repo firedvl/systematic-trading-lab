@@ -73,6 +73,34 @@ _AUTHORITY_FIELDS = frozenset(
         "live_execution",
     }
 )
+_PROPOSAL_SHA256 = "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34"
+_PROPOSAL_FINGERPRINT = "d0ec31e7b6947ed6fe3e1118a6f5536daddae34ebbe9dffcc3b3f932dd9d41c0"
+_FROZEN_REQUEST_PLAN = (
+    ("normal-2021-07-08", "2021-07-08T13:30:00Z", "2021-07-08T19:55:00Z", 1, 1),
+    ("normal-2022-01-25", "2022-01-25T14:30:00Z", "2022-01-25T20:55:00Z", 1, 1),
+    ("normal-2022-11-15", "2022-11-15T14:30:00Z", "2022-11-15T20:55:00Z", 1, 1),
+    (
+        "pagination-2023-05-16-to-2023-05-30",
+        "2023-05-16T13:30:00Z",
+        "2023-05-30T19:55:00Z",
+        10,
+        6,
+    ),
+    (
+        "split-pre-early-close-2025-11-28",
+        "2025-11-28T14:30:00Z",
+        "2025-11-28T17:55:00Z",
+        1,
+        1,
+    ),
+    (
+        "split-post-2025-12-15",
+        "2025-12-15T14:30:00Z",
+        "2025-12-15T20:55:00Z",
+        1,
+        1,
+    ),
+)
 
 
 class Program007Error(ValueError):
@@ -278,7 +306,6 @@ class QualificationResult:
             "action_ledger_fingerprint": ledger_fingerprint,
             "private_market_observations": False,
             "reconstructable_private_values": False,
-            "provider_requests_performed": 0,
             "strategy_outputs": 0,
         }
 
@@ -310,7 +337,19 @@ class _Budget:
         self.response_bytes += len(body)
 
 
-def frozen_request_chains(proposal: Mapping[str, Any]) -> tuple[RequestChain, ...]:
+def frozen_request_chains(proposal_bytes: bytes) -> tuple[RequestChain, ...]:
+    if not isinstance(proposal_bytes, bytes):
+        raise Program007Error("Program 007 proposal must be exact bytes")
+    proposal = _load_json_object(proposal_bytes, "Program 007 proposal")
+    unsigned = dict(proposal)
+    stored_fingerprint = unsigned.pop("proposal_fingerprint", None)
+    if (
+        stored_fingerprint != _PROPOSAL_FINGERPRINT
+        or fingerprint(unsigned) != _PROPOSAL_FINGERPRINT
+    ):
+        raise Program007Error("Program 007 proposal fingerprint differs")
+    if hashlib.sha256(proposal_bytes).hexdigest() != _PROPOSAL_SHA256:
+        raise Program007Error("Program 007 proposal bytes differ")
     if proposal.get("program_id") != PROGRAM_ID or proposal.get("status") != STATUS:
         raise Program007Error("Program 007 proposal identity differs")
     authority = _mapping(proposal.get("authority"), "proposal authority")
@@ -318,17 +357,22 @@ def frozen_request_chains(proposal: Mapping[str, Any]) -> tuple[RequestChain, ..
         value is not False for value in authority.values()
     ):
         raise Program007Error("Program 007 proposal grants authority")
-    plan = _sequence(proposal.get("request_plan"), "request plan")
-    chains = tuple(
-        RequestChain(
-            chain_id=_string(item.get("range_id"), "range id"),
-            start=_parse_utc(_string(item.get("start"), "request start")),
-            end=_parse_utc(_string(item.get("end"), "request end")),
-            symbols=SYMBOLS,
-            maximum_pages=_integer(item.get("maximum_pages"), "maximum pages"),
+    plan = tuple(
+        (
+            _string(item.get("range_id"), "range id"),
+            _string(item.get("start"), "request start"),
+            _string(item.get("end"), "request end"),
+            _integer(item.get("session_count"), "session count"),
+            _integer(item.get("maximum_pages"), "maximum pages"),
         )
-        for item in (_mapping(raw, "request range") for raw in plan)
+        for item in (
+            _mapping(raw, "request range")
+            for raw in _sequence(proposal.get("request_plan"), "request plan")
+        )
     )
+    if plan != _FROZEN_REQUEST_PLAN:
+        raise Program007Error("Program 007 frozen request ranges differ")
+    chains = _frozen_request_chains()
     budget = _mapping(proposal.get("transport_budget"), "transport budget")
     frozen_budget = {
         "logical_chain_count": 6,
@@ -348,6 +392,19 @@ def frozen_request_chains(proposal: Mapping[str, Any]) -> tuple[RequestChain, ..
     if len(chains) != 6 or sum(chain.maximum_pages for chain in chains) != 11:
         raise Program007Error("Program 007 frozen request shape differs")
     return chains
+
+
+def _frozen_request_chains() -> tuple[RequestChain, ...]:
+    return tuple(
+        RequestChain(
+            chain_id=range_id,
+            start=_parse_utc(start),
+            end=_parse_utc(end),
+            symbols=SYMBOLS,
+            maximum_pages=maximum_pages,
+        )
+        for range_id, start, end, _session_count, maximum_pages in _FROZEN_REQUEST_PLAN
+    )
 
 
 def parse_raw_page(body: bytes, chain: RequestChain) -> tuple[tuple[RawBar, ...], str | None]:
@@ -418,23 +475,38 @@ def project_rth(rows: Sequence[RawBar], chain: RequestChain) -> tuple[RawBar, ..
 
 
 def execute_qualification(
-    chains: Sequence[RequestChain],
+    proposal_bytes: bytes,
     private_root: Path,
     page_source: PageSource,
     *,
     now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> QualificationResult:
-    """Run only against an injected source; this module has no provider transport."""
-    if not chains or len({chain.identity for chain in chains}) != len(chains):
-        raise Program007Error("Program 007 chains must be non-empty and unique")
+    """Run the exact frozen proposal against an injected offline source."""
+    return _execute_qualification(
+        frozen_request_chains(proposal_bytes), private_root, page_source, now=now
+    )
+
+
+def _execute_qualification(
+    chains: Sequence[RequestChain],
+    private_root: Path,
+    page_source: PageSource,
+    *,
+    now: Callable[[], datetime],
+) -> QualificationResult:
+    exact_chains = tuple(chains)
+    if any(type(chain) is not RequestChain for chain in exact_chains) or (
+        exact_chains != _frozen_request_chains()
+    ):
+        raise Program007Error("Program 007 execution requires the exact frozen request plan")
     private_root.mkdir(parents=True, exist_ok=True)
     if private_root.is_symlink():
         raise Program007Error("Program 007 private root must not be a symlink")
     with _exclusive_lock(private_root / ".program-007.lock"):
-        _validate_restart_state(private_root, chains)
+        _validate_restart_state(private_root, exact_chains)
         budget = _Budget()
         results = tuple(
-            _execute_chain(chain, private_root, page_source, budget, now) for chain in chains
+            _execute_chain(chain, private_root, page_source, budget, now) for chain in exact_chains
         )
         result = QualificationResult(results)
         _publish_record(
@@ -810,6 +882,8 @@ def _execute_chain(
     budget: _Budget,
     now: Callable[[], datetime],
 ) -> ChainResult:
+    if type(chain) is not RequestChain or chain not in _frozen_request_chains():
+        raise Program007Error("Program 007 request chain is outside the exact frozen plan")
     chain_root = private_root / "chains" / chain.identity
     requests_root = chain_root / "requests"
     pages_root = chain_root / "pages"
