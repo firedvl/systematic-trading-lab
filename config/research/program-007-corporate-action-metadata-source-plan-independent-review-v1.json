@@ -1,0 +1,174 @@
+{
+  "schema_version": "program-007-corporate-action-metadata-source-plan-independent-review-v1",
+  "review_id": "program-007-corporate-action-metadata-source-plan-independent-review-2026-08-29-v1",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "reviewed_at": "2026-08-29T21:01:01Z",
+  "status": "PASS-FINDING-FREE",
+  "verdict": "PASS-FINDING-FREE-PRE-AUTHORITY-BLOCKERS-PRESERVED",
+  "reviewer": "fresh independent read-only reviewer",
+  "review_scope": "Complete Program 007 corporate-action metadata plan, synthetic adapter, normalization, evidence boundary, controls, implementation binding, persistent state, and authority boundary",
+  "reviewed_source": {
+    "base_commit": "5af5a3b2f7eb6b3e44911be48f2fa787479b1bf7",
+    "source_commit": "97e1c94b68407271b14aee71fc089242c27efcb1",
+    "source_tree": "b2727492e763ad159231631bd7d00a38d9bc7e63",
+    "diff_sha256": "a4efdfc0fa3a7aa6fbb14462a215f4fe95d78bcb923c80e13aa8a4c3458c7dd7"
+  },
+  "reviewed_artifacts": {
+    "metadata_plan": {
+      "path": "config/research/program-007-corporate-action-metadata-source-plan-v1.json",
+      "sha256": "78a85b3f1057096bb49d5d4c83c60e3353c6a0c695f17f6db22880223d5568b4",
+      "fingerprint_field": "proposal_fingerprint",
+      "fingerprint": "f5925f99991913f262d50f3946836ac130acbf347bc4cbe490bc950a1f5d2d3f"
+    },
+    "metadata_implementation": {
+      "path": "config/research/program-007-corporate-action-metadata-source-implementation-v1.json",
+      "sha256": "5480c274027088303cb14f6ea2a8c93d7493d290eec76dde25bbc91fd4d73f48",
+      "fingerprint_field": "implementation_fingerprint",
+      "fingerprint": "6bf04f9078a9e24faf037cde51147fc9b046c96ca33dabe184d9f5041022337d",
+      "implementation_source_commit": "baf2689e62f6e778c11822232ebc6fa0e07bc652",
+      "implementation_root": "c508486d29788f562b63b21b3edd9e5dc871bd5fd82274afe9b9927774d13be9"
+    },
+    "ledger_v2": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v2.json",
+      "sha256": "3b815581d0da66db427243bce34f9ced5021f73719acd2b5d5e277d57065d53a",
+      "fingerprint_field": "ledger_fingerprint",
+      "fingerprint": "0ec39d6f38d469e099862173ff710c0e737b39b464e233e291c9e9b20c089c25",
+      "changed": false
+    },
+    "fresh_ohlcv_proposal": {
+      "path": "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
+      "sha256": "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34",
+      "fingerprint_field": "proposal_fingerprint",
+      "fingerprint": "d0ec31e7b6947ed6fe3e1118a6f5536daddae34ebbe9dffcc3b3f932dd9d41c0",
+      "changed": false,
+      "accessed": false
+    }
+  },
+  "challenge_results": [
+    {
+      "challenge": 1,
+      "question": "Is replacing impossible public negative proof with a structured metadata source scientifically legitimate?",
+      "result": "PASS",
+      "basis": "Yes, as a prospective falsifiable source contract only. Ledger v2 remains authoritative and no real metadata conclusion or authority is created."
+    },
+    {
+      "challenge": 2,
+      "question": "Does this weaken action detection?",
+      "result": "PASS",
+      "basis": "No. The contract omits the types filter, parses all sixteen REST arrays, rejects unknown arrays, reconciles both identity chains, and fails closed on ambiguous transforms."
+    },
+    {
+      "challenge": 3,
+      "question": "Is the metadata contract capable of failing?",
+      "result": "PASS",
+      "basis": "Yes. Size, status, schema, identity, pagination, date, factor, reconciliation, and positive or negative control failures are terminal."
+    },
+    {
+      "challenge": 4,
+      "question": "Are all relevant action types requested?",
+      "result": "PASS",
+      "basis": "Yes. No types filter is sent and all sixteen current REST event arrays are modeled; an unknown array fails."
+    },
+    {
+      "challenge": 5,
+      "question": "Are symbol and CUSIP identity changes handled?",
+      "result": "PASS-WITH-PRE-AUTHORITY-BLOCKER",
+      "basis": "Current symbols and CUSIPs are separate reconciled chains. Because current documentation does not prove predecessor-only event recovery, predecessor identity closure is required before authority."
+    },
+    {
+      "challenge": 6,
+      "question": "Are process-date and effective-date semantics correct?",
+      "result": "PASS-WITH-PRE-AUTHORITY-BLOCKER",
+      "basis": "Process date is retained but never substituted for economic timing. Per-type effective fields are explicit; missing or ambiguous effective semantics fail. Undocumented date-filter and processing-lag semantics block authority."
+    },
+    {
+      "challenge": 7,
+      "question": "Are the five known sector splits strong positive controls?",
+      "result": "PASS",
+      "basis": "XLB, XLE, XLK, XLU, and XLY must each reconcile to exactly one 2-for-1 forward split effective 2025-12-05; public evidence cannot repair a metadata miss."
+    },
+    {
+      "challenge": 8,
+      "question": "Could an empty result incorrectly be treated as complete?",
+      "result": "PASS",
+      "basis": "No. Both chains must terminate and an empty synthetic result remains PROVISIONAL-NO-APPLICABLE-ACTIONS-COVERAGE-CLOSURE-UNPROVEN."
+    },
+    {
+      "challenge": 9,
+      "question": "Is data_quality semantics correctly frozen?",
+      "result": "PASS-WITH-DOCUMENTED-CAVEAT",
+      "basis": "The query fixes data_quality=complete but does not claim that it proves finality; the provider's unbounded processing delay remains a blocker."
+    },
+    {
+      "challenge": 10,
+      "question": "Does HTTP 403 stop without a paid upgrade?",
+      "result": "PASS",
+      "basis": "HTTP 403 is terminal METADATA-ACCESS-FAIL with zero retries, no purchase, and no fallback. Basic access is not assumed."
+    },
+    {
+      "challenge": 11,
+      "question": "Does this introduce provider shopping?",
+      "result": "PASS",
+      "basis": "No. Alpaca is the sole candidate and the adapter has no provider transport, client, credential reader, or fallback entry point."
+    },
+    {
+      "challenge": 12,
+      "question": "Does any OHLCV or strategy result enter the task?",
+      "result": "PASS",
+      "basis": "No. The metadata adapter is isolated from bars and strategy code; provider requests, metadata observations, OHLCV requests, strategy calculations, and returns are zero."
+    },
+    {
+      "challenge": 13,
+      "question": "Does the Program 007 fresh source sample remain untouched?",
+      "result": "PASS",
+      "basis": "Yes. Its bound artifacts are unchanged, the 14,742-coordinate sample is unaccessed, and metadata qualification remains separate."
+    }
+  ],
+  "findings": [],
+  "pre_authority_blockers": {
+    "identity_history": "UNPROVEN-PRE-AUTHORITY-BLOCKER",
+    "source_finality": "UNPROVEN-PRE-AUTHORITY-BLOCKER",
+    "real_transport_and_persistent_store": "NOT-IMPLEMENTED",
+    "one_use_authority_eligible": false
+  },
+  "credential_boundary": {
+    "program_007_credential_names_present_during_review": false,
+    "program_007_credential_value_or_presence_accessed": false,
+    "inherited_program_006_credential_names_present": true,
+    "disposition": "The sanitized tests removed only the two PROGRAM_006 names. No value was printed, stored, loaded, or used, and the metadata adapter has no environment or credential reader."
+  },
+  "verification": {
+    "bound_source_hashes_recomputed": 12,
+    "implementation_root_recomputed": true,
+    "plan_fingerprint_recomputed": true,
+    "implementation_fingerprint_recomputed": true,
+    "artifact_sha256_recomputed": true,
+    "ledger_and_ohlcv_artifacts_unchanged": true,
+    "focused_metadata_tests": "35 passed",
+    "sanitized_program_006_007_regression_tests": "passed",
+    "ruff": "passed",
+    "mypy": "passed",
+    "secret_scan": "passed",
+    "diff_check": "passed",
+    "provider_request_or_strategy_execution": "not performed"
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "exact_next_step": "Before any authority, bind reviewed predecessor identity closure plus provider-documented date-filter and bounded-lag semantics, wait through that lag after 2026-07-31, freeze a new query end, and independently review a separate authority-gated real transport and ignored persistent store. Then request explicit one-use Program 007 corporate-action metadata qualification authority only.",
+  "review_fingerprint": "b2ef7fbb017fe5870406e7c478e7a400995653af4472a80568abb657939668be"
+}

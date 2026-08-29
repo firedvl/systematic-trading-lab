@@ -1,0 +1,235 @@
+{
+  "schema_version": "program-007-corporate-action-metadata-source-implementation-v1",
+  "implementation_id": "program-007-corporate-action-metadata-source-implementation-2026-08-29-v1",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "status": "IMPLEMENTED-SYNTHETICALLY-COVERAGE-CLOSURE-BLOCKED-NOT-AUTHORIZED",
+  "implementation_binding": {
+    "source_commit": "baf2689e62f6e778c11822232ebc6fa0e07bc652",
+    "implementation_root": "c508486d29788f562b63b21b3edd9e5dc871bd5fd82274afe9b9927774d13be9",
+    "source_files": [
+      {
+        "path": "config/research/program-007-corporate-action-metadata-source-plan-v1.json",
+        "sha256": "78a85b3f1057096bb49d5d4c83c60e3353c6a0c695f17f6db22880223d5568b4"
+      },
+      {
+        "path": "docs/research-campaigns/program-007-corporate-action-metadata-source-plan-v1.md",
+        "sha256": "d2580809d7f61b7a2919495b1b101fcc7c25487d847851bba3cfa15226d64a5c"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v2.schema.json",
+        "sha256": "36b74f6b8facd55176eba8d08075d6eb3276ae938bf424c3af75adaba81c8d78"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v2.json",
+        "sha256": "3b815581d0da66db427243bce34f9ced5021f73719acd2b5d5e277d57065d53a"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "ef5a2212ed424f5298e7ccd303f24b48892b98737a653b8033030c9d1a4c6789"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_alpaca.py",
+        "sha256": "935c7d6ff9607b72d902707e6ebb41ffe347360a523c59b27e6b637d97a26f06"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_corporate_actions.py",
+        "sha256": "77d9b82bf4a927b71ca063fb72dedee32338630677d9ccdb1a0553410f13b83f"
+      },
+      {
+        "path": "tests/unit/test_intraday_source_provenance.py",
+        "sha256": "cd87eb6755313b539b5ab969da20e2baf4b6d2dd636ca5fbb822f86e5f0fdd4d"
+      },
+      {
+        "path": "tests/unit/test_program_007_alpaca.py",
+        "sha256": "cc0137c1f4fa3358008aa32d049be1c91419fb5d9d09d7bf86e4b3efc6bfc87e"
+      },
+      {
+        "path": "tests/unit/test_program_007_corporate_actions.py",
+        "sha256": "1c91c790836d097c611d4ec298198d961181a0ef4cc8b5aa2888d96acb7927b8"
+      },
+      {
+        "path": "tests/unit/test_program_007_forensic_contract.py",
+        "sha256": "a11a673ce763b724143a5ae09d58c6c36741a5fe6ae91d8cb3eb4a0b3f5c0c0d"
+      }
+    ]
+  },
+  "proposal_binding": {
+    "path": "config/research/program-007-corporate-action-metadata-source-plan-v1.json",
+    "sha256": "78a85b3f1057096bb49d5d4c83c60e3353c6a0c695f17f6db22880223d5568b4",
+    "fingerprint": "f5925f99991913f262d50f3946836ac130acbf347bc4cbe490bc950a1f5d2d3f"
+  },
+  "prior_program_007_bindings": {
+    "raw_ohlcv_proposal": {
+      "path": "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
+      "sha256": "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34",
+      "changed": false
+    },
+    "raw_source_implementation_v6": {
+      "path": "config/research/program-007-raw-source-contract-implementation-v6.json",
+      "sha256": "9903d4c243e94c34879cc5edd086747b4687b33224167db549782229f259b188",
+      "changed": false
+    },
+    "raw_source_independent_review": {
+      "path": "config/research/program-007-raw-source-contract-implementation-independent-review-v1.json",
+      "sha256": "e0cb67fed583490fbea484f7067a8ffcb93f663381a6cc51b80c0db3522d8238",
+      "changed": false
+    },
+    "ledger_v2": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v2.json",
+      "sha256": "3b815581d0da66db427243bce34f9ced5021f73719acd2b5d5e277d57065d53a",
+      "fingerprint": "0ec39d6f38d469e099862173ff710c0e737b39b464e233e291c9e9b20c089c25",
+      "resolved_symbols": 10,
+      "unresolved_symbols": [
+        "IWM",
+        "MDY",
+        "SPY"
+      ],
+      "changed": false
+    }
+  },
+  "adapter_boundary": {
+    "entrypoint": "execute_synthetic_metadata",
+    "finite_exact_synthetic_responses_only": true,
+    "provider_transport_present": false,
+    "http_client_present": false,
+    "credential_reader_present": false,
+    "credential_presence_check_present": false,
+    "arbitrary_response_callback_present": false,
+    "caller_selected_storage_root_present": false,
+    "broker_path_present": false,
+    "real_execution_entrypoint_present": false,
+    "synthetic_source_normal_assignment_immutable": true,
+    "synthetic_source_close_and_context_manager_present": true,
+    "evidence_storage": "one capability-held temporary file",
+    "request_intent_persisted_before_response_read": true,
+    "bounded_raw_body_and_sha256_receipt_persisted_before_size_status_or_schema_parsing": true,
+    "oversized_response_retention": "at most 1 MiB plus receipt with observed and retained byte counts, hash, and truncation flag",
+    "future_real_transport_requirement": "Separate reviewed authority-gated GET-only client and exact ignored persistent root. Do not generalize the synthetic entrypoint."
+  },
+  "frozen_query": {
+    "endpoint": "https://data.alpaca.markets/v1/corporate-actions",
+    "method": "GET",
+    "redirects": false,
+    "logical_chains": [
+      "symbols",
+      "cusips"
+    ],
+    "region": "us",
+    "data_quality": "complete",
+    "start": "1990-01-01",
+    "end": "2026-08-29",
+    "limit": 1000,
+    "sort": "asc",
+    "types_filter": null,
+    "maximum_pages_per_chain": 4,
+    "maximum_http_requests": 8,
+    "maximum_http_responses": 8,
+    "maximum_response_page_bytes": 1048576,
+    "maximum_downloaded_bytes": 8388608,
+    "maximum_credential_loads": 1,
+    "automatic_transport_retries": 0
+  },
+  "schema_and_normalization": {
+    "rest_event_type_count": 16,
+    "rest_event_types": [
+      "reverse_split",
+      "forward_split",
+      "unit_split",
+      "cash_dividend",
+      "stock_dividend",
+      "spin_off",
+      "cash_merger",
+      "stock_merger",
+      "stock_and_cash_merger",
+      "redemption",
+      "name_change",
+      "worthless_removal",
+      "rights_distribution",
+      "partial_call",
+      "reorganization",
+      "capital_gains_distribution"
+    ],
+    "unknown_event_array_action": "FAIL",
+    "exact_transform_types": [
+      "forward_split",
+      "reverse_split"
+    ],
+    "exact_factor": "Fraction(new_rate) / Fraction(old_rate)",
+    "non_unit_types": [
+      "cash_dividend",
+      "capital_gains_distribution"
+    ],
+    "other_relevant_type_action": "NONTRANSFORMABLE-REQUIRES-SESSION-OR-WINDOW-EXCLUSION",
+    "raw_prices_changed": false,
+    "relative_volume_rule_changed": false
+  },
+  "controls": {
+    "positive": "XLB, XLE, XLK, XLU, and XLY must each have one 2-for-1 forward split effective 2025-12-05",
+    "negative": "XLF, XLI, XLP, XLRE, and XLV allow non-unit metadata; a new applicable unit or identity event blocks completion",
+    "positive_controls_can_be_repaired_from_public_evidence": false,
+    "empty_inventory_can_complete_now": false
+  },
+  "pre_authority_blockers": {
+    "identity_history": {
+      "status": "UNPROVEN-PRE-AUTHORITY-BLOCKER",
+      "reason": "Current REST documentation does not prove that current identity queries return predecessor-only events.",
+      "completion": "Bind reviewed predecessor symbol/CUSIP closure or current provider documentation that proves it, then expand and refreeze both query sets."
+    },
+    "source_finality": {
+      "status": "UNPROVEN-PRE-AUTHORITY-BLOCKER",
+      "reason": "Current REST documentation defines no filter field or maximum action-processing lag.",
+      "completion": "Bind provider-documented filter and bounded-lag semantics, wait through that lag after 2026-07-31, and freeze a new exact query end. If unavailable, remain blocked."
+    },
+    "real_transport_and_persistent_store": "NOT-IMPLEMENTED",
+    "one_use_authority_eligible": false
+  },
+  "ledger_generation": {
+    "function": "generate_successor_ledger_candidate",
+    "output_status": "SYNTHETIC-CANDIDATE-NOT-AUTHORITATIVE",
+    "no_action_label": "PROVISIONAL-NO-APPLICABLE-ACTIONS-COVERAGE-CLOSURE-UNPROVEN",
+    "writes_ledger_v2": false,
+    "writes_ledger_v3": false,
+    "future_ledger_v3_requires_real_qualification_and_review": true
+  },
+  "verification": {
+    "focused_metadata_tests": "35 passed",
+    "program_006_007_regression_tests": "92 passed",
+    "sanitized_full_suite": "1370 passed, 4 skipped",
+    "first_full_suite_disposition": "One provenance-list regression fixed. Four inherited-environment credential-guard failures passed after removing PROGRAM_006 credential names from the child process.",
+    "ruff_focused": "passed",
+    "mypy_focused": "passed",
+    "secret_scan": "passed; 565 files scanned",
+    "provider_requests": 0,
+    "metadata_observations": 0,
+    "ohlcv_requests": 0,
+    "strategy_calculations": 0,
+    "strategy_returns": 0
+  },
+  "fresh_ohlcv_sample": {
+    "changed": false,
+    "accessed": false,
+    "expected_canonical_coordinates": 14742
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "6bf04f9078a9e24faf037cde51147fc9b046c96ca33dabe184d9f5041022337d"
+}
