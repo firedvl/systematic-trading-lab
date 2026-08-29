@@ -33,8 +33,11 @@ _PROPOSAL_PATH = (
 _IMPLEMENTATION_V1_PATH = (
     _REPOSITORY / "config/research/program-007-raw-source-contract-implementation-v1.json"
 )
-_IMPLEMENTATION_PATH = (
+_IMPLEMENTATION_V2_PATH = (
     _REPOSITORY / "config/research/program-007-raw-source-contract-implementation-v2.json"
+)
+_IMPLEMENTATION_PATH = (
+    _REPOSITORY / "config/research/program-007-raw-source-contract-implementation-v3.json"
 )
 _NOW = datetime(2026, 8, 28, 20, tzinfo=UTC)
 
@@ -227,6 +230,9 @@ def test_nyse_retrieval_manifest_is_public_hash_only_evidence() -> None:
 def test_non_authorizing_implementation_artifact_binds_exact_source_commit() -> None:
     assert hashlib.sha256(_IMPLEMENTATION_V1_PATH.read_bytes()).hexdigest() == (
         "69e0e40a83d9621a8e312c9d491264f5baf6a30d32a06405ecd705d6f728c662"
+    )
+    assert hashlib.sha256(_IMPLEMENTATION_V2_PATH.read_bytes()).hexdigest() == (
+        "8f8183b8e18b6f5347e7a995924ef004b7c7d3b8c4c7a0d135368189a242bad4"
     )
     implementation = _load(_IMPLEMENTATION_PATH)
     unsigned = dict(implementation)

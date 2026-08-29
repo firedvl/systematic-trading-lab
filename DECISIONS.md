@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-29 - Confine Program 007 execution to synthetic storage
+
+- Decision: expose only `execute_synthetic_qualification`, accept finite in-memory `RawResponse` values through the concrete `SyntheticPageSource`, and write only to that source's OS-owned temporary workspace. Reject arbitrary callbacks and alternate roots before any source read or filesystem write. Add a real transport later only through a separate authority-gated implementation.
+- Context: fresh review found that the generic injected callback and caller-selected root could contact a provider despite inactive authority and could place raw observations in a tracked path. Exact frozen request checks did not close either boundary.
+- Consequences: synthetic raw-first, pagination, restart, failure-forensics, and 14,742-coordinate tests remain available. No current entry point can accept a provider transport or caller-selected storage root. Ledger v2, the frozen sample, provider contract, science, costs, delays, and budgets do not change; every authority flag remains false.
+- Revisit when: complete public action coverage and a finding-free review make a one-use authority proposal eligible. That future proposal must bind the real transport, exact ignored private root, and active one-use authority before any request.
+
 ## 2026-08-29 - Block Program 007 on incomplete action coverage
 
 - Decision: preserve Program 007 ledger v1 as an immutable historical record, supersede its eight no-action claims with ledger v2, and block the whole thirteen-symbol dataset while IWM, MDY, or SPY coverage is unresolved. Ledger-backed normalization and any one-use source-qualification authority proposal remain ineligible.
