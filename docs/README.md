@@ -6,7 +6,8 @@ Start with the research path. Open the controlled campaign and paper documents o
 
 - [Getting started](getting-started.md) — install, fixture data, first backtest, and first walk-forward run
 - [Data policy](data-policy.md) — cataloged data, local files, validation, and adjustment rules
-- [Program 006 Alpaca source qualification](program-006-alpaca-qualification.md) — credential-safe successor authority and frozen source sample
+- [Program 006 Alpaca source qualification](program-006-alpaca-qualification.md) — terminal failure, offline forensic disposition, and non-authorizing successor boundary
+- [Program 006 forensic analysis](research-campaigns/program-006-source-qualification-forensic-analysis-v1.md) — response-grid and adjustment-factor evidence, corrected contracts, and fresh Program 007 proposal
 - [Program 005 private Alpaca data](program-005-alpaca-data.md) — public recipe, private storage, credential isolation, and qualification preflight
 - [Open-source guidance](OPEN_SOURCE.md) — project scope and useful contribution areas
 

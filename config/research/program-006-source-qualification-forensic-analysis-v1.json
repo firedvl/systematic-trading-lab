@@ -1,0 +1,360 @@
+{
+  "schema_version": "program-006-source-qualification-forensic-analysis-v1",
+  "analysis_id": "program-006-source-qualification-forensic-analysis-2026-08-28-v1",
+  "program_id": "multi-hour-sector-etf-research-005",
+  "analyzed_date": "2026-08-28",
+  "status": "OFFLINE-FORENSIC-REVIEW-COMPLETE-PROGRAM-006-REMAINS-TERMINAL-FAIL",
+  "scope": {
+    "provider_contact": false,
+    "credential_access": false,
+    "new_market_data_acquired": false,
+    "retained_private_pages_read_offline": true,
+    "strategy_returns_generated_or_read": false,
+    "strategy_execution": false,
+    "controlled_or_protected_access": false,
+    "paper_broker_or_live_access": false
+  },
+  "repository_state": {
+    "known_clean_main": "f4f738ffb73dff9b2963669b4e16ad0fd49389dc",
+    "head_at_start": "f4f738ffb73dff9b2963669b4e16ad0fd49389dc",
+    "main_equal_origin_main_at_start": true,
+    "worktree_clean_at_start": true
+  },
+  "terminal_state_confirmation": {
+    "status": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "program_006_failure_artifact": {
+      "path": "config/research/program-006-source-qualification-terminal-failure-v1.json",
+      "sha256": "3c693b2a31c5d5eef11388b55e41f38b9203c21e7f8ce604fc8f89c9c15e9687",
+      "fingerprint": "acbbbf0f28cc5d555224e05fb8d34cf4e9ae1a60fe75020ca2fee03da91180e5"
+    },
+    "program_006_terminal_review": {
+      "path": "config/research/program-006-source-qualification-terminal-failure-independent-review-v1.json",
+      "sha256": "7e79c4534ad2df67c99d70de013033f823ad650d8e35c3bdf9a8d782bba0adf9",
+      "fingerprint": "59533d3b6c151865d304ed11aaf1a9917050625ed736b7d5edb1b38995b35359"
+    },
+    "authority_consumed": true,
+    "retry_allowed": false,
+    "replacement_program_006_authority_allowed": false,
+    "provider_request_count": 23,
+    "http_response_count": 23,
+    "response_bytes": 2503402,
+    "stored_private_page_count": 22,
+    "stored_private_page_bytes": 2251275,
+    "failed_response_bytes": 252127,
+    "failed_response_body_retained": false,
+    "completed_chain_count": 22,
+    "completed_pair_count": 11,
+    "qualification_receipt_created": false,
+    "source_manifest_created": false,
+    "dataset_created": false,
+    "all_current_authority_flags_false": true,
+    "terminal_records_modified_by_this_analysis": false
+  },
+  "failure_a": {
+    "name": "response-23-outside-exact-xnys-grid",
+    "classification": "INDETERMINATE",
+    "validator_assessment": "QUALIFICATION-SPECIFICATION-DEFECT",
+    "classification_reason": "The failed body and offending coordinate were not retained, so the actual row cannot be classified as extended-hours, out-of-bounds, or malformed. Independently, the validator was mis-specified because it rejected every non-RTH row instead of validating the raw interval and projecting RTH rows before completeness checks.",
+    "request_23": {
+      "chain_id": "pagination-split-2025-12-01-to-2025-12-12--raw",
+      "method": "GET",
+      "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+      "symbols": [
+        "IWM",
+        "MDY",
+        "SPY",
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "start": "2025-12-01T14:30:00Z",
+      "end": "2025-12-12T20:55:00Z",
+      "timezone": "UTC",
+      "feed": "sip",
+      "timeframe": "5Min",
+      "adjustment": "raw",
+      "sort": "asc",
+      "limit": 10000,
+      "asof": "2026-07-31",
+      "page_token": null,
+      "maximum_pages": 6
+    },
+    "exact_offending_evidence": {
+      "timestamp": null,
+      "symbol": null,
+      "row": null,
+      "recorded_error": "Alpaca bar timestamp is outside the exact XNYS grid",
+      "known_timestamp_properties": [
+        "UTC RFC-3339 parsing passed",
+        "whole-minute parsing passed",
+        "five-minute alignment passed"
+      ],
+      "known_symbol_property": "The containing response symbol key passed the expected-symbol check.",
+      "category": "INDETERMINATE",
+      "pre_market": "POSSIBLE-NOT-PROVED",
+      "after_hours": "MOST-SUPPORTED-INFERENCE-NOT-PROVED",
+      "overnight": "POSSIBLE-NOT-PROVED",
+      "weekend": "POSSIBLE-NOT-PROVED",
+      "holiday": "POSSIBLE-NOT-PROVED",
+      "outside_request_bounds": "POSSIBLE-NOT-PROVED",
+      "misaligned": false,
+      "otherwise_malformed": "NOT-ESTABLISHED",
+      "earliest_plausible_extended_hours_coordinate_if_documented_sort_was_followed": "IWM@2025-12-01T21:00:00Z",
+      "earliest_plausible_coordinate_is_fact": false
+    },
+    "old_invariant": {
+      "rule": "Every returned bar timestamp must be a member of the exact XNYS regular-session five-minute grid for the whole request range.",
+      "granularity": "each row before raw-page storage",
+      "consequence": "The rule would reject any valid in-bounds extended-hours bar. Response 23 failed on a non-grid row, but the missing body prevents classifying that row.",
+      "source_path": "src/systematic_trading_lab/program_005_alpaca.py",
+      "source_function": "parse_bars_page"
+    },
+    "provider_documentation": {
+      "historical_bars": "https://docs.alpaca.markets/us/reference/stockbars",
+      "market_data_faq": "https://docs.alpaca.markets/us/docs/market-data-faq",
+      "documented_facts": [
+        "start and end are documented as inclusive",
+        "multi-symbol results are sorted by symbol and then bar timestamp",
+        "pagination is required to reach later symbols when a page limit is reached",
+        "the page limit applies across symbols rather than per symbol",
+        "the historical-bars query has no regular-hours-only or useRTH parameter",
+        "Alpaca's stock minute-bar rules include extended-hours trade conditions"
+      ],
+      "retrieved_date": "2026-08-28"
+    },
+    "pagination_explanation": {
+      "single_session_ranges": "Their exact request bounds ran from the XNYS open through the final RTH bar open, so valid pre-market and after-hours bar opens lay outside the interval.",
+      "multi_day_range": "Its continuous interval ran from the first session open through the last session's final RTH bar open, so inter-session after-hours and pre-market bar opens lay inside the documented request interval.",
+      "documented_source_order": "symbol then timestamp",
+      "first_page_effect": "Earlier symbols can occupy pages before later symbols are reached; the parser rejected the first non-RTH row before it could retain the page or its continuation token.",
+      "synthetic_offline_result": "The repository's existing Alpaca adapter retains valid transport extras as raw evidence, projects exact RTH rows, and paginates to later symbols without provider contact."
+    },
+    "corrected_invariant": {
+      "raw_response_gates": [
+        "retain immutable response bytes and hash before semantic rejection",
+        "require HTTP and JSON response shape",
+        "require expected symbols only",
+        "require valid UTC RFC-3339 five-minute-aligned bar-open timestamps",
+        "require each timestamp to lie inside the inclusive requested interval",
+        "require no duplicate symbol/timestamp within or across pages",
+        "require finite positive OHLC, structurally valid OHLC ranges, and nonnegative volume",
+        "require valid nonrepeating pagination tokens and fixed request identity"
+      ],
+      "canonical_rth_projection": "Retain only bars whose symbol/timestamp belongs to the authoritative XNYS regular-session five-minute grid for the requested sessions.",
+      "canonical_completeness": "Require exactly one projected RTH bar for every expected symbol/timestamp coordinate, subject only to the separately frozen whole-session missing-data disposition.",
+      "extended_hours": "Keep valid in-bounds extended-hours rows in immutable private raw evidence and exclude them from the research projection. Their existence alone is not a failure.",
+      "failure_capability_preserved": "Malformed, out-of-bounds, foreign-symbol, duplicate, invalid-OHLCV, token-invalid, or canonically incomplete responses still fail."
+    }
+  },
+  "failure_b": {
+    "name": "raw-vs-split-spin-off-price-factor-nonconstant",
+    "classification": "QUALIFICATION-SPECIFICATION-DEFECT",
+    "provider_adjusted_price_behavior": "INDETERMINATE",
+    "classification_reason": "The frozen check required exact per-row OHLC scaling and reciprocal volume by the same combined split,spin-off price factor. Alpaca documents split as price-and-volume and spin-off as price-only, so reciprocal volume cannot be inferred from a combined price factor. The API also documents no exact adjusted-bar rounding or aggregation identity that supports exact Decimal scalar equality.",
+    "actual_runtime_stage": "NOT-REACHED-BECAUSE-FAILURE-A-STOPPED-ACQUISITION",
+    "offline_forensic_stage": "RETAINED-22-PAGE-STRUCTURAL-REANALYSIS",
+    "old_invariant": {
+      "coordinate_gate": "raw and adjusted coordinate sets must be identical",
+      "per_row_price_gate": "adjusted open/raw open must exactly scale adjusted high, low, and close",
+      "per_row_volume_gate": "adjusted volume multiplied by that same price factor must exactly equal raw volume",
+      "per_symbol_session_gate": "the exact open-derived factor must not change within one symbol/session",
+      "ledger_gate": "the exact symbol/session factor must match the frozen split-and-spin-off ledger",
+      "not_a_global_factor_gate": true,
+      "source_path": "src/systematic_trading_lab/program_005_alpaca.py",
+      "source_function": "validate_action_pair"
+    },
+    "retained_private_page_summary": {
+      "retained_page_count": 22,
+      "completed_pair_count": 11,
+      "retained_row_count_across_both_views": 21354,
+      "rows_per_view": 10677,
+      "coordinate_sets_equal_pairs": 11,
+      "coordinate_set_pair_count": 11,
+      "aggregate_sorted_body_digest_sha256": "48acd83903b7ec28d7fdca8a2487cb35a9cd75a6e1c696647e7b07b918c742b3",
+      "all_private_page_and_metadata_hashes_verified": true,
+      "raw_values_or_snippets_public": false
+    },
+    "factor_shape": {
+      "global_factor": "NONCONSTANT",
+      "completed_ranges_nonconstant": 11,
+      "completed_ranges": 11,
+      "symbols_with_constant_exact_open_ratio": 8,
+      "symbols_with_nonconstant_exact_open_ratio": 5,
+      "constant_symbol_sessions": 88,
+      "nonconstant_symbol_sessions": 55,
+      "nonconstant_symbol_sessions_are_exactly_five_public_2025_split_symbols": true,
+      "unaffected_symbol_sessions_use_factor_one": true,
+      "exact_open_ratio_contiguous_segments": 3491,
+      "single_bar_segments": 2958,
+      "multi_bar_segments": 533,
+      "interpretation": "Partitioning by symbol or symbol/session does not make the five split-affected series exactly constant. Per-segment acceptance would mostly reduce the check to single bars and is rejected."
+    },
+    "price_result": {
+      "ohlc_observations": 42708,
+      "exact_expected_ledger_factor_matches": 32557,
+      "matches_after_fixed_field_display_quantization": 39608,
+      "residual_mismatches_after_fixed_field_display_quantization": 3100,
+      "exact_per_row_ohlc_scaling_pass_rows": 6711,
+      "exact_per_row_ohlc_scaling_fail_rows": 3966,
+      "conclusion": "The retained combined adjusted prices are not one exact scalar transform for the five split-affected symbols, and ordinary display-precision rounding does not explain every mismatch. The retained evidence cannot prove Alpaca's internal adjustment order or rounding semantics."
+    },
+    "volume_result": {
+      "ledger_factor_observations": 10677,
+      "exact_matches_to_public_split_volume_factor": 10677,
+      "residual_mismatches": 0,
+      "old_open_ratio_reciprocal_pass": 8190,
+      "old_open_ratio_reciprocal_fail": 2487,
+      "conditional_on_exact_price_coherence_pass": 6711,
+      "conditional_on_exact_price_coherence_count": 6711,
+      "conclusion": "Volume follows the frozen public 2-for-1 split ledger exactly across every retained row. Failures against the row-specific open ratio were caused by using the varying combined price ratio as the volume factor."
+    },
+    "spin_off_result": {
+      "qualified_spin_off_events_in_frozen_ledger": 0,
+      "retained_evidence_can_decompose_split_from_spin_off": false,
+      "spin_off_contribution": "INDETERMINATE",
+      "documented_semantics": "Alpaca documents spin-off adjustment as price-only, not price-and-volume.",
+      "old_reciprocal_volume_rule_valid_for_combined_adjustment": false
+    },
+    "provider_documentation": {
+      "historical_bars": "https://docs.alpaca.markets/us/reference/stockbars",
+      "spin_off_changelog": "https://docs.alpaca.markets/us/changelog/optionally-adjust-bars-after-spin-offs",
+      "documented_facts": [
+        "raw applies no adjustment",
+        "split adjusts price and volume for forward and reverse splits",
+        "spin-off adjusts price",
+        "split,spin-off is a permitted combined adjustment"
+      ],
+      "not_documented": [
+        "one universal scalar factor across symbols",
+        "exact Decimal equality across each adjusted OHLC field",
+        "combined price-factor reciprocal volume semantics",
+        "adjustment order and rounding precision"
+      ],
+      "retrieved_date": "2026-08-28"
+    }
+  },
+  "corporate_action_forensics": {
+    "publicly_established_split": {
+      "symbols": [
+        "XLB",
+        "XLE",
+        "XLK",
+        "XLU",
+        "XLY"
+      ],
+      "ratio_new_to_old": "2",
+      "record_date": "2025-12-02",
+      "payable_after_market_close": "2025-12-04",
+      "first_post_action_session": "2025-12-05",
+      "issuer_evidence": "https://investors.statestreet.com/investor-news-events/press-releases/news-details/2025/State-Street-Investment-Management-Announces-Share-Splits-for-Five-Select-Sector-SPDR-ETFs/default.aspx"
+    },
+    "other_symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLF",
+      "XLI",
+      "XLP",
+      "XLRE",
+      "XLV"
+    ],
+    "other_symbols_retained_factor_result": "UNIT-FACTOR-IN-ALL-11-RETAINED-SESSIONS",
+    "complete_2020_to_2026_action_history_established": false,
+    "proof_gap": "No provider corporate-action data request was allowed, and public issuer material reviewed here establishes the five December 2025 splits but not an exhaustive forward/reverse split and spin-off history for all thirteen ETFs. Any successor ledger must close that gap prospectively before authority."
+  },
+  "same_session_economic_requirements": {
+    "decision_time": "11:30:00 America/New_York",
+    "price_lookback_minutes": [
+      30,
+      60
+    ],
+    "hold_minutes": [
+      120,
+      240
+    ],
+    "same_session_price_return_proof": "For one positive session factor f, (f*p_exit)/(f*p_entry)-1 equals p_exit/p_entry-1. Each symbol's factor cancels independently before SPY-relative subtraction and ranking.",
+    "same_session_execution_requirement": "Every position opens and closes within one session, so execution uses the raw same-session entry and exit prices without cross-session price normalization.",
+    "split_dollar_volume_proof": "For a new-to-old split ratio r, (p/r)*(v*r) equals p*v. Raw price times raw volume is already split-unit invariant for the prior-session capacity feature.",
+    "cross_session_price_adjustment_required": false,
+    "cross_session_share_unit_normalization_required": true,
+    "reason": "The prior-20-session same-clock relative-volume feature compares share counts across sessions. Split-spanning observations must use one share unit. Spin-offs do not document a reciprocal share-unit change.",
+    "feature_expansion_guard": "Any overnight holding, cross-session price return, total-return feature, or per-share fee requires a new prospective action contract."
+  },
+  "future_action_architecture": {
+    "option_a_raw_plus_split": {
+      "verdict": "REJECT",
+      "reason": "It retains provider adjusted-price and rounding semantics that current public documentation does not define and the retained pages do not reduce to one exact scalar transform."
+    },
+    "option_b_raw_plus_public_ledger_plus_repository_split_normalization": {
+      "verdict": "SELECT",
+      "reason": "Raw bars preserve source evidence. Issuer/exchange split ratios can normalize only the prior-session share counts used by relative volume. Same-session prices remain raw, and no provider adjusted-bar inference is needed."
+    },
+    "option_c_raw_plus_split_plus_separate_spin_off": {
+      "verdict": "REJECT",
+      "reason": "The strategy has no cross-session price return or overnight entitlement, so separate provider spin-off price adjustment adds an unneeded and underdocumented semantic surface."
+    },
+    "selected_rules": [
+      "request and retain raw bars only",
+      "bind an exhaustive issuer/exchange unit-changing action ledger before authority",
+      "normalize only split-spanning share counts used by the prior-20-session relative-volume feature",
+      "keep prices raw and do not adjust cash dividends or spin-offs",
+      "fail on an incomplete, ambiguous, or conflicting unit-changing action ledger"
+    ]
+  },
+  "source_disposition": {
+    "program_006_qualification": "FAIL-IMMUTABLE",
+    "program_006_source_suitability": "INDETERMINATE",
+    "bad_alpaca_data_established": false,
+    "alpaca_raw_source_candidate_remains_viable_for_fresh_qualification": true,
+    "successor_scientifically_justified": true,
+    "successor_reason": "The old grid rule is objectively mis-specified, the old combined adjustment rule conflicts with documented split versus spin-off volume semantics, the retained raw pages pass their recorded structural grids, and zero strategy return has been generated or read. A successor must test a new raw-only contract on an unseen sample rather than reinterpret Program 006 as passing."
+  },
+  "program_006_sample_exposure": {
+    "status": "EXPOSED-SOURCE-ENGINEERING-EVIDENCE",
+    "may_support": [
+      "offline forensics",
+      "private regression evidence",
+      "nonreconstructable structural summaries",
+      "known source-semantics design"
+    ],
+    "may_not_support": [
+      "sole successor qualification",
+      "claim of an unseen sample",
+      "strategy selection or performance inference"
+    ]
+  },
+  "private_data_firewall": {
+    "private_root": ".trading-lab/program-006-free-alpaca",
+    "git_ignored": true,
+    "tracked_private_file_count": 0,
+    "private_ohlcv_or_raw_page_committed": false,
+    "public_reconstructable_private_values": false,
+    "public_outputs_limited_to_counts_hashes_factor_shapes_and_already_public_timestamps": true
+  },
+  "effective_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "fingerprint_contract": "Remove the top-level analysis_fingerprint field, canonicalize with systematic_trading_lab.fingerprints.canonical_json, and take SHA-256 of those UTF-8 bytes.",
+  "analysis_fingerprint": "f1198d0aaaba0f17f7e806c8268bf6081aba1a1746b308be58cc53489b546d6b"
+}
