@@ -1,0 +1,147 @@
+{
+  "schema_version": "program-006-source-qualification-authority-proposal-independent-review-v2",
+  "review_id": "program-006-source-qualification-authority-proposal-independent-review-2026-08-28-v2",
+  "program_id": "multi-hour-sector-etf-research-005",
+  "reviewed_at": "2026-08-29T00:12:42Z",
+  "status": "PASSED-READY-FOR-NEW-EXACT-ONE-USE-QUALIFICATION-AUTHORIZATION",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_proposal": {
+    "path": "config/research/program-006-source-qualification-authority-proposal-v2.json",
+    "sha256": "4df295b78a76afe4ef703ec30446dcfb12ba2f0e152c7ab476c885a53e631003",
+    "fingerprint": "b52d34c4666039bdd563515cce727eb05b4a9757ee68c49e4af5509641147793",
+    "proposal_id": "program-006-source-qualification-authority-proposal-2026-08-28-v2",
+    "schema_version": "program-006-source-qualification-authority-proposal-v2",
+    "proposal_artifact_commit": "4f0ebb957a74bcc715bba7354500f6435cb9576e"
+  },
+  "reviewed_implementation": {
+    "source_commit": "d747a4c6f4de67cbaab063a812f757345a9b0aca",
+    "implementation_root": "6d0c00841f664ad26dabd846b096e4e2c02450a877f97503289d9994e652e089",
+    "source_files": [
+      {
+        "path": "pyproject.toml",
+        "sha256": "0872d76edc4c9c10b93c15ad0dbf6f3d855c9196e1799566f6790fb936b581ce"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "89cae7c3b8b303a4c2b75ad7ebfd78d83febe059adf0bf1646418b2f6ba9194e"
+      },
+      {
+        "path": "src/systematic_trading_lab/__init__.py",
+        "sha256": "500e5a33c6a1067a9ce2e3c5b074256a7d1207d18ab797830d5c704d5def0942"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/cli.py",
+        "sha256": "a259e80d9303b6788162afa0a8285905b54fdee31c39fc248f008cc2d5057df2"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "eb4ab0d1f5e2f4b2ed42a212bd7997fa1c16c461dd9ce4f0ff40847d4e97d39c"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_005_alpaca.py",
+        "sha256": "1b5f53776d7dd0021d051b9c8ce7bab4722570823b9da1405f7d9ba8a1e20393"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_006_alpaca.py",
+        "sha256": "d3054dc36f64ac527a12f07072933fdc0181e31e62a7c1c1849909530e096d15"
+      },
+      {
+        "path": "uv.lock",
+        "sha256": "d6d60aa5d93644dd3bf932ef84f6793bab6d33992659ed48e968850c6673c00d"
+      }
+    ]
+  },
+  "reviewed_implementation_review": {
+    "path": "config/research/program-006-credential-safe-qualification-implementation-independent-review-v2.json",
+    "sha256": "0eb3af2419ff1ffa0ca4155f6c9dfa4a18cbe7f26a70d690413cd9bab3d65e61",
+    "fingerprint": "53505ed9b86d6be3779509064971cb7d33dc1c1dddd0300fafa91726933d2fbe"
+  },
+  "review_scope": "final credential gate, exact frozen science, external-root bindings, one-use lifecycle, current Git lineage, protected exclusions, and public/private boundaries",
+  "verified_assertions": {
+    "credentials_are_present_without_secret_disclosure": true,
+    "provider_contact_did_not_occur": true,
+    "external_root_binds_immutable_reviewed_artifacts": true,
+    "scientific_scope_matches_frozen_program_005_and_006_scope": true,
+    "qualification_dates_are_unchanged": true,
+    "symbols_are_unchanged": true,
+    "request_response_and_byte_budgets_are_unchanged": true,
+    "credential_absence_before_transport_cannot_consume_authority": true,
+    "first_provider_transport_consumes_authority": true,
+    "second_scientific_attempt_is_impossible": true,
+    "mutable_provenance_cannot_self_authorize": true,
+    "protected_dates_remain_excluded": true,
+    "strategy_calculations_did_not_occur": true,
+    "public_private_data_boundaries_are_intact": true
+  },
+  "credential_presence_at_review": [
+    {
+      "name": "PROGRAM_006_ALPACA_API_KEY_ID",
+      "present": true
+    },
+    {
+      "name": "PROGRAM_006_ALPACA_API_SECRET_KEY",
+      "present": true
+    }
+  ],
+  "verification": {
+    "independent_reviewer": "fresh read-only reviewer",
+    "review_result": "No material findings.",
+    "credential_preflight": "PASS; the command reported presence only and did not disclose values",
+    "proposal_sha256": "4df295b78a76afe4ef703ec30446dcfb12ba2f0e152c7ab476c885a53e631003",
+    "proposal_fingerprint": "b52d34c4666039bdd563515cce727eb05b4a9757ee68c49e4af5509641147793",
+    "implementation_review_sha256": "0eb3af2419ff1ffa0ca4155f6c9dfa4a18cbe7f26a70d690413cd9bab3d65e61",
+    "implementation_review_fingerprint": "53505ed9b86d6be3779509064971cb7d33dc1c1dddd0300fafa91726933d2fbe",
+    "implementation_root": "6d0c00841f664ad26dabd846b096e4e2c02450a877f97503289d9994e652e089",
+    "request_plan_fingerprint": "5be6a24c41303d726f6afd3350b3e80ab9d26fed6457762a282e593a3dde5bfb",
+    "scientific_scope": "22 sessions, 13 symbols, 13 ranges, 26 paired chains, 28 expected and 60 maximum responses, 64 MiB, 120 requests per minute, one future successful credential load, and zero retries",
+    "authority": "Current flags are all false; a later exact packet enables only provider_contact, credential_access, source_requests, and source_qualification.",
+    "focused_tests": "Program 006 synthetic lifecycle tests passed; the committed-chain test awaits this review artifact",
+    "ruff": "passed",
+    "mypy": "passed",
+    "secret_private_data_scan": "passed",
+    "provider_requests": 0,
+    "provider_bytes": 0,
+    "strategy_returns_generated_or_read": false,
+    "controlled_protected_paper_broker_or_live_accessed": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "credential_values": false,
+    "provider_or_account_endpoint": false,
+    "market_observations": false,
+    "strategy_returns": false,
+    "controlled_protected_paper_broker_or_live": false
+  },
+  "proof_gap": "This review artifact and its add commit did not exist during review, so the final clean synchronized-main authority root and committed-chain mutation test remain pending. Final review must bind those exact bytes and commits. The review did not inspect credential values, load credentials, construct a provider client, contact Alpaca, access market observations, activate authority, run qualification or strategy code, or access controlled, protected, PAPER, broker, or live state.",
+  "required_next_user_action": "After this exact review reaches clean synchronized main with green CI and a finding-free final committed-chain review, separately authorize the exact caller-supplied one-use qualification root reported in the final handoff.",
+  "review_fingerprint": "bee7583e83c7dbbd6cf7bc0efc9a7361d9d3734f1217b24aeafa99afa3a85673"
+}

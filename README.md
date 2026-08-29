@@ -64,15 +64,15 @@ uv run trading-lab data acquire program-005 preflight --scope qualification
 See [Program 005 private Alpaca data](docs/program-005-alpaca-data.md) for the private storage,
 credential, authority, and reproduction rules. No Program 005 source request is active by default.
 
-Program 006 is the prospective credential-safe successor. Its repeatable presence check reports
-only missing environment-variable names and never contacts Alpaca:
+Program 006 is the credential-safe successor. Its repeatable presence check reports only missing
+environment-variable names and never contacts Alpaca:
 
 ```console
 uv run trading-lab data acquire program-006 credential-preflight
 ```
 
-See [Program 006 Alpaca source qualification](docs/program-006-alpaca-qualification.md). Program 006
-has no active authority while its credential preflight is blocked.
+See [Program 006 Alpaca source qualification](docs/program-006-alpaca-qualification.md). Its v2
+packet is ready for separate exact one-use authorization; no authority is active by default.
 
 ## Using historical data
 

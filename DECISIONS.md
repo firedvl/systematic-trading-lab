@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-28 — Bind Program 006 authorization to final synchronized main
+
+- Decision: advance Program 006 to a reviewed v2 READY packet after the names-only credential preflight passes. Bind the external authorization root directly to the implementation source commit, each immutable control-artifact add commit, and the final clean synchronized main commit. Keep every current authority flag false; a later exact packet may enable only provider contact, credential access, source requests, and source qualification.
+- Context: the blocked v1 proposal and review immutably record absent credentials and cannot represent the new gate result. Runtime ancestry checks alone did not make the current `HEAD` part of the caller-supplied root. Proposal v2 preserves the exact Program 005/006 scientific object and changes no provider, endpoint, parameter, session, symbol, range, chain, missingness rule, quarantine, budget, retry rule, cost, delay, or protected boundary.
+- Consequences: implementation commit/root is `d747a4c6f4de67cbaab063a812f757345a9b0aca` / `6d0c00841f664ad26dabd846b096e4e2c02450a877f97503289d9994e652e089`. Proposal v2 SHA-256/fingerprint is `4df295b78a76afe4ef703ec30446dcfb12ba2f0e152c7ab476c885a53e631003` / `b52d34c4666039bdd563515cce727eb05b4a9757ee68c49e4af5509641147793`; finding-free review v2 SHA-256/fingerprint is `467a862378b80b81c0ea337d6eda531e5f4b5af0b6967b8cae5efe222386be9e` / `bee7583e83c7dbbd6cf7bc0efc9a7361d9d3734f1217b24aeafa99afa3a85673`. Any later commit changes the root and requires new explicit user authorization. No credential value, authority, claim, provider request, response byte, qualification, dataset, strategy return, or protected action was created.
+- Revisit when: the exact reported v2 root has been separately authorized and the one qualification has reached a terminal PASS or consumed FAIL. Never reuse the root after Git or control drift.
+
 ## 2026-08-28 — Consume Program 006 authority at first provider transport
 
 - Decision: create `multi-hour-sector-etf-research-005` as a new prospective successor without changing Program 005's terminal records or scientific qualification. Require repeatable non-secret credential presence before authority activation and again under the one-use lock. Load credentials once and construct the client locally without HTTP, then publish the immutable claim immediately before the first provider transport invocation. Any attempted or uncertain transport after that boundary consumes the use; retries remain zero.
