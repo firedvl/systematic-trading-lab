@@ -11,6 +11,7 @@ import os
 import re
 import stat
 import tempfile
+from _thread import RLock
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -210,6 +211,7 @@ class SyntheticPageSource:
         "_root_identity",
         "_evidence",
         "_evidence_identity",
+        "_evidence_lock",
     )
 
     _responses: tuple[RawResponse | None, ...]
@@ -220,6 +222,7 @@ class SyntheticPageSource:
     _root_identity: tuple[int, int]
     _evidence: BinaryIO
     _evidence_identity: tuple[int, int]
+    _evidence_lock: RLock
 
     def __init__(self, responses: Sequence[RawResponse | None]) -> None:
         if type(responses) not in {list, tuple} or any(
@@ -241,6 +244,7 @@ class SyntheticPageSource:
         object.__setattr__(self, "_root_identity", (root_stat.st_dev, root_stat.st_ino))
         object.__setattr__(self, "_evidence", evidence)
         object.__setattr__(self, "_evidence_identity", (evidence_stat.st_dev, evidence_stat.st_ino))
+        object.__setattr__(self, "_evidence_lock", RLock())
 
     def __setattr__(self, name: str, value: object) -> None:
         raise AttributeError("Program 007 synthetic source is immutable")
@@ -1704,39 +1708,43 @@ def _private_root_fd(page_source: SyntheticPageSource) -> Iterator[int]:
 @contextmanager
 def _evidence_store(page_source: SyntheticPageSource) -> Iterator[_EvidenceStore]:
     _require_synthetic_source(page_source)
-    descriptor: int | None = None
-    locked = False
-    try:
-        with _private_root_fd(page_source) as root_fd:
-            if os.listdir(root_fd):
-                raise ValueError
-            stored_identity = page_source._evidence_identity
-            if (
-                type(stored_identity) is not tuple
-                or len(stored_identity) != 2
-                or any(type(value) is not int for value in stored_identity)
-            ):
-                raise ValueError
-            descriptor = page_source._evidence.fileno()
-            if type(descriptor) is not int:
-                raise ValueError
-            opened = os.fstat(descriptor)
-            if (
-                not stat.S_ISREG(opened.st_mode)
-                or opened.st_nlink != 0
-                or (opened.st_dev, opened.st_ino) != stored_identity
-            ):
-                raise ValueError
-            fcntl.flock(descriptor, fcntl.LOCK_EX)
-            locked = True
-            yield _EvidenceStore(descriptor, _load_evidence(descriptor))
-    except Program007Error:
-        raise
-    except (OSError, RuntimeError, TypeError, ValueError) as error:
-        raise Program007Error(_STORAGE_PATH_ERROR) from error
-    finally:
-        if locked and descriptor is not None:
-            fcntl.flock(descriptor, fcntl.LOCK_UN)
+    lock = page_source._evidence_lock
+    if type(lock) is not RLock:
+        raise Program007Error(_STORAGE_PATH_ERROR)
+    with lock:
+        descriptor: int | None = None
+        locked = False
+        try:
+            with _private_root_fd(page_source) as root_fd:
+                if os.listdir(root_fd):
+                    raise ValueError
+                stored_identity = page_source._evidence_identity
+                if (
+                    type(stored_identity) is not tuple
+                    or len(stored_identity) != 2
+                    or any(type(value) is not int for value in stored_identity)
+                ):
+                    raise ValueError
+                descriptor = page_source._evidence.fileno()
+                if type(descriptor) is not int:
+                    raise ValueError
+                opened = os.fstat(descriptor)
+                if (
+                    not stat.S_ISREG(opened.st_mode)
+                    or opened.st_nlink != 0
+                    or (opened.st_dev, opened.st_ino) != stored_identity
+                ):
+                    raise ValueError
+                fcntl.flock(descriptor, fcntl.LOCK_EX)
+                locked = True
+                yield _EvidenceStore(descriptor, _load_evidence(descriptor))
+        except Program007Error:
+            raise
+        except (OSError, RuntimeError, TypeError, ValueError) as error:
+            raise Program007Error(_STORAGE_PATH_ERROR) from error
+        finally:
+            if locked and descriptor is not None:
+                fcntl.flock(descriptor, fcntl.LOCK_UN)
 
 
 def _require_evidence_key(key: str) -> None:

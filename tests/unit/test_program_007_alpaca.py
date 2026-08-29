@@ -10,6 +10,7 @@ from datetime import UTC, date, datetime, timedelta, tzinfo
 from decimal import Decimal
 from fractions import Fraction
 from pathlib import Path
+from threading import Barrier, Event, Thread
 from typing import Any, cast
 from urllib.parse import parse_qs, urlparse
 
@@ -654,6 +655,51 @@ def test_evidence_log_rejects_corrupt_entries(corruption: str) -> None:
 
     with pytest.raises(program_007.Program007Error, match="evidence"):
         _evidence_entries(source)
+
+
+def test_evidence_store_serializes_callers_for_one_source() -> None:
+    source = program_007.SyntheticPageSource(())
+    first_acquired = Barrier(2, timeout=2)
+    release_first = Barrier(2, timeout=2)
+    second_started = Event()
+    second_acquired = Event()
+    errors: list[Exception] = []
+
+    def first() -> None:
+        try:
+            with program_007._evidence_store(source) as store:
+                program_007._publish_record(store, "private-manifest.json", {"status": "retained"})
+                first_acquired.wait()
+                release_first.wait()
+        except Exception as error:
+            errors.append(error)
+
+    def second() -> None:
+        try:
+            second_started.set()
+            with program_007._evidence_store(source) as store:
+                second_acquired.set()
+                assert program_007._load_record(store, "private-manifest.json")["status"] == (
+                    "retained"
+                )
+        except Exception as error:
+            errors.append(error)
+
+    first_thread = Thread(target=first)
+    second_thread = Thread(target=second)
+    first_thread.start()
+    first_acquired.wait()
+    second_thread.start()
+    assert second_started.wait(timeout=1)
+    assert not second_acquired.wait(timeout=0.1)
+    release_first.wait()
+    first_thread.join(timeout=1)
+    second_thread.join(timeout=1)
+
+    assert not first_thread.is_alive()
+    assert not second_thread.is_alive()
+    assert second_acquired.is_set()
+    assert not errors
 
 
 def test_incomplete_retained_page_blocks_restart_before_source_use() -> None:
