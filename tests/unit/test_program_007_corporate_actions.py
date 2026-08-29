@@ -24,8 +24,15 @@ from systematic_trading_lab.fingerprints import fingerprint
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _LEDGER_PATH = _REPOSITORY / "config/research/program-007-unit-changing-action-ledger-v3.json"
 _LEDGER_SHA256 = "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1"
-_PLAN_PATH = (
+_EVIDENCE_PATH = (
+    _REPOSITORY
+    / "config/research/program-007-alpaca-corporate-actions-public-contract-evidence-v1.json"
+)
+_PLAN_V2_PATH = (
     _REPOSITORY / "config/research/program-007-corporate-action-metadata-source-plan-v2.json"
+)
+_PLAN_PATH = (
+    _REPOSITORY / "config/research/program-007-corporate-action-metadata-source-plan-v3.json"
 )
 
 
@@ -259,8 +266,28 @@ def test_prospective_plan_binds_the_offline_contract_and_grants_no_authority() -
     plan = cast(dict[str, Any], json.loads(_PLAN_PATH.read_text(encoding="utf-8")))
     unsigned = dict(plan)
     stored_fingerprint = unsigned.pop("proposal_fingerprint")
+    evidence = cast(dict[str, Any], json.loads(_EVIDENCE_PATH.read_text(encoding="utf-8")))
+    unsigned_evidence = dict(evidence)
+    evidence_fingerprint = unsigned_evidence.pop("evidence_fingerprint")
 
     assert stored_fingerprint == fingerprint(unsigned)
+    assert evidence_fingerprint == fingerprint(unsigned_evidence)
+    assert hashlib.sha256(_PLAN_V2_PATH.read_bytes()).hexdigest() == plan["supersedes"]["sha256"]
+    assert plan["supersedes"]["fingerprint"] == (
+        "add9b3bf1cfe3b81cae4d1e856fb99b6e27bf16133173e76e725303a9e054ead"
+    )
+    evidence_binding = plan["documentation"]["evidence_binding"]
+    assert hashlib.sha256(_EVIDENCE_PATH.read_bytes()).hexdigest() == evidence_binding["sha256"]
+    assert evidence_fingerprint == evidence_binding["fingerprint"]
+    assert evidence["source"]["sha256"] == evidence_binding["provider_response_sha256"]
+    assert evidence["source"]["byte_count"] == evidence_binding["provider_response_bytes"]
+    excerpt = evidence["contract_claims"]["creation_lag"]["minimal_exact_excerpt"]
+    assert (
+        hashlib.sha256(excerpt.encode()).hexdigest()
+        == (evidence["contract_claims"]["creation_lag"]["excerpt_sha256"])
+    )
+    assert evidence["retrieval_boundary"]["data_endpoint_requests"] == 0
+    assert all(value is False for value in evidence["authority"].values())
     assert plan["status"] == "PROPOSED-NOT-AUTHORIZED-FOR-PROVIDER-REQUESTS"
     assert plan["endpoint_contract"]["url"] == metadata.ENDPOINT
     assert plan["universe"]["cusips_by_symbol"] == metadata.IDENTITIES

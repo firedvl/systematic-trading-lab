@@ -82,6 +82,7 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-007-unit-changing-action-ledger-v2.schema.json",
         "config/research/program-007-unit-changing-action-ledger-v3.json",
         "config/research/program-007-unit-changing-action-ledger-v3.schema.json",
+        "config/research/program-007-alpaca-corporate-actions-public-contract-evidence-v1.json",
         "config/research/program-007-nyse-corpax-retrieval-manifest-v1.json",
         "config/research/program-007-raw-source-contract-implementation-v1.json",
         "config/research/program-007-raw-source-contract-implementation-v2.json",
@@ -95,10 +96,12 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-007-corporate-action-metadata-source-implementation-v1.json",
         "config/research/program-007-corporate-action-metadata-source-plan-independent-review-v1.json",
         "config/research/program-007-corporate-action-metadata-source-plan-v2.json",
+        "config/research/program-007-corporate-action-metadata-source-plan-v3.json",
         "config/research/program-007-corporate-action-metadata-source-implementation-v2.json",
         "config/research/program-007-corporate-action-metadata-source-implementation-v3.json",
         "config/research/program-007-corporate-action-metadata-source-implementation-v4.json",
         "config/research/program-007-corporate-action-metadata-source-implementation-v5.json",
+        "config/research/program-007-corporate-action-metadata-source-implementation-v6.json",
         "config/research/program-007-corporate-action-metadata-source-independent-review-v2.json",
     }
 )

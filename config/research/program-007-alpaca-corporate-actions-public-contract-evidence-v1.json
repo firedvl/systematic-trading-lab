@@ -1,0 +1,149 @@
+{
+  "schema_version": "program-007-alpaca-corporate-actions-public-contract-evidence-v1",
+  "evidence_id": "program-007-alpaca-corporate-actions-public-contract-evidence-2026-08-29-v1",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "status": "PUBLIC-DOCUMENTATION-EVIDENCE-NON-AUTHORIZING",
+  "provider": "Alpaca Market Data API",
+  "retrieved_at_utc": "2026-08-29T23:48:16Z",
+  "preservation": "The repository retains this claim map, retrieval metadata, byte count, SHA-256 values, and one minimal excerpt. It does not commit the third-party response body.",
+  "source": {
+    "title": "Corporate actions",
+    "url": "https://docs.alpaca.markets/us/reference/corporateactions-1.md",
+    "canonical_url": "https://docs.alpaca.markets/us/reference/corporateactions-1",
+    "representation": "official provider Markdown with embedded OpenAPI",
+    "http_status": 200,
+    "content_type": "text/markdown; charset=utf-8",
+    "byte_count": 47697,
+    "sha256": "2a91681f4bd7f6a59d0dda311066249c51f77caa097343f0580ab262934028c1",
+    "etag": "W/\"c63dc2a0babcfef1b255ff440d6662d481a2414a-c20e5a1228ba6ba70d022bb3343257ba1c2beda1-r1-o1787938686844:expanded|f6af7c30\"",
+    "upstream_updated_at": "2026-05-27T17:58:03.000Z",
+    "openapi_version": "3.1.2",
+    "market_data_api_version": "1.1",
+    "operation_id": "CorporateActions",
+    "method": "GET",
+    "path": "/v1/corporate-actions",
+    "server": "https://data.alpaca.markets"
+  },
+  "derived_bindings": {
+    "algorithm": "SHA-256 over repository canonical JSON except where a field says canonical-json-sha256",
+    "operation_fingerprint": "34bdd96801dd1558417037da43977a14d5f27d8be0ca49b038bfa8eaa5602a6c",
+    "request_parameter_subset_fingerprint": "012c327cca560638deea96dd8201878e404ef6496c39173d4f7f9a105d0d4219",
+    "data_quality_schema_fingerprint": "5178580349e507dd3b98797d1104c515864d8543b42ba9e581d16ba90b0f50c2",
+    "event_schema_subset_canonical_json_sha256": "36016754480721cd3a44cf4e7027ebb05114b10c31c7d80704aae1ad2f17f047",
+    "response_schema_canonical_json_sha256": "31f093e19ca8b651f4fe563d1465fede6cd52ed6afdc9b63fb0dcc1e3b3ace82"
+  },
+  "contract_claims": {
+    "creation_lag": {
+      "minimal_exact_excerpt": "Currently Alpaca has no guarantees on the creation time of corporate actions.",
+      "excerpt_sha256": "b20f1963964b07a2abffd5919dc32ab1dfbd73094580ad8f57e7e5d1d4228660",
+      "source_section": "Corporate actions warning before the embedded OpenAPI",
+      "verdict": "UNBOUNDED-NO-PROVIDER-GUARANTEE",
+      "negative_event_completeness_proved": false
+    },
+    "interval_and_sort": {
+      "start_inclusive": true,
+      "end_inclusive": true,
+      "documented_sort_field": "process_date",
+      "filter_field_explicitly_identified": false,
+      "program_interpretation": "Request the inclusive interval and require returned process_date values inside it without claiming which field start and end filter."
+    },
+    "pagination": {
+      "limit_minimum": 1,
+      "limit_maximum": 1000,
+      "request_token": "page_token",
+      "response_token": "next_page_token"
+    },
+    "region": {
+      "default": "us",
+      "supported": [
+        "us",
+        "non_us",
+        "all"
+      ]
+    },
+    "data_quality": {
+      "default": "complete",
+      "supported": [
+        "complete",
+        "all"
+      ],
+      "complete_is_provider_filter_not_global_finality": true
+    },
+    "types_parameter": {
+      "omission_searches_all_types": true,
+      "supported": [
+        "reverse_split",
+        "forward_split",
+        "unit_split",
+        "cash_dividend",
+        "stock_dividend",
+        "spin_off",
+        "cash_merger",
+        "stock_merger",
+        "stock_and_cash_merger",
+        "redemption",
+        "name_change",
+        "worthless_removal",
+        "rights_distribution",
+        "partial_call",
+        "reorganization",
+        "capital_gains_distribution"
+      ],
+      "capital_gains_distribution_supported": true
+    },
+    "economic_date_schema": {
+      "ex_date_required": [
+        "reverse_split",
+        "forward_split",
+        "cash_dividend",
+        "stock_dividend",
+        "spin_off",
+        "rights_distribution",
+        "capital_gains_distribution"
+      ],
+      "effective_date_required": [
+        "unit_split",
+        "cash_merger",
+        "stock_merger",
+        "stock_and_cash_merger",
+        "reorganization"
+      ],
+      "no_single_required_economic_date": [
+        "redemption",
+        "name_change",
+        "worthless_removal",
+        "partial_call"
+      ]
+    }
+  },
+  "access_limit": "This source does not guarantee Basic-plan entitlement. A future separately authorized bounded qualification may observe access; HTTP 403 remains terminal without purchase or fallback.",
+  "mutable_source_warning": "The provider-controlled representation may change. Re-fetch and compare its SHA-256, ETag, upstream update time, and derived bindings before relying on a changed contract.",
+  "retrieval_boundary": {
+    "public_documentation_only": true,
+    "authentication_used": false,
+    "data_endpoint_requests": 0,
+    "credential_presence_checks": 0,
+    "credential_value_loads": 0,
+    "metadata_observations": 0,
+    "ohlcv_requests": 0,
+    "strategy_returns": 0
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "evidence_fingerprint": "31068af25bdd130f9ba543da4c2496d5942884ff28667de174f04c2da99e8064"
+}
