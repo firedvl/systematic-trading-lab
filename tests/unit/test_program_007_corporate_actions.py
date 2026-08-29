@@ -593,25 +593,7 @@ def test_cash_dividend_only_is_non_unit_negative_control_metadata() -> None:
     assert all(action["action_type"] != "cash_dividend" for action in candidate["actions"])
 
 
-def test_unexpected_unit_event_for_negative_control_requires_investigation() -> None:
-    events: list[dict[str, Any]] = []
-    for index, symbol in enumerate(sorted(metadata.POSITIVE_CONTROLS), start=1):
-        event = _event("forward_splits", index)
-        event["symbol"] = symbol
-        event["cusip"] = metadata.IDENTITIES[symbol]
-        events.append(event)
-    unexpected = _event("forward_splits", 100)
-    unexpected["symbol"] = "XLF"
-    unexpected["cusip"] = metadata.IDENTITIES["XLF"]
-    result = _execute_same({"forward_splits": [*events, unexpected]})
-
-    with pytest.raises(
-        metadata.Program007MetadataError, match="discrepancies require investigation"
-    ):
-        metadata.generate_successor_ledger_candidate(result, _ledger())
-
-
-@pytest.mark.parametrize("symbol", ["IWM", "MDY", "SPY"])
+@pytest.mark.parametrize("symbol", ["IWM", "MDY", "SPY", "XLF", "XLI", "XLP", "XLRE", "XLV"])
 def test_unexpected_unit_event_for_closed_no_known_action_symbol_fails(symbol: str) -> None:
     events: list[dict[str, Any]] = []
     for index, control in enumerate(sorted(metadata.POSITIVE_CONTROLS), start=1):
