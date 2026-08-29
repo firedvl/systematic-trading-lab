@@ -96,6 +96,8 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-007-corporate-action-metadata-source-plan-independent-review-v1.json",
         "config/research/program-007-corporate-action-metadata-source-plan-v2.json",
         "config/research/program-007-corporate-action-metadata-source-implementation-v2.json",
+        "config/research/program-007-corporate-action-metadata-source-implementation-v3.json",
+        "config/research/program-007-corporate-action-metadata-source-implementation-v4.json",
         "config/research/program-007-corporate-action-metadata-source-independent-review-v2.json",
     }
 )

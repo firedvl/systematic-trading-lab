@@ -52,6 +52,7 @@ IDENTITY_HISTORY_STATUS = "PUBLIC-LEDGER-V3-CONTINUITY-CLOSED"
 SOURCE_FINALITY_STATUS = "UNBOUNDED-CREATION-LAG-AS-OF-CORROBORATION-ONLY"
 
 _EVIDENCE_KEY = re.compile(r"[a-z0-9][a-z0-9.-]*")
+_REAL_TRANSPORT_AUTHORIZED = False
 _DIRECTORY_FLAGS = (
     os.O_RDONLY
     | getattr(os, "O_CLOEXEC", 0)
@@ -386,6 +387,8 @@ class _NoRedirect(HTTPRedirectHandler):
 def _urlopen_response(request: Request) -> RawResponse:
     """Dormant bounded transport for a later, separately authorized integration."""
     _validate_http_request(request)
+    if not _REAL_TRANSPORT_AUTHORIZED:
+        raise Program007MetadataError("Program 007 real metadata transport is not authorized")
     try:
         with build_opener(_NoRedirect()).open(request, timeout=30) as response:
             return RawResponse(int(response.status), response.read(MAXIMUM_RESPONSE_PAGE_BYTES + 1))
@@ -1109,9 +1112,13 @@ def _execute_chain(
                 "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY-NO-PURCHASE: "
                 "Alpaca entitlement returned HTTP 403"
             )
+        if response.status == 429:
+            raise MetadataAccessError(
+                "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY: Alpaca returned HTTP 429"
+            )
         if 300 <= response.status < 400:
             raise Program007MetadataError("Program 007 metadata redirect attempt rejected")
-        if response.status in {400, 429, 500}:
+        if response.status in {400, 500}:
             raise MetadataAccessError(
                 f"METADATA-ACCESS-FAIL: Alpaca returned HTTP {response.status}"
             )

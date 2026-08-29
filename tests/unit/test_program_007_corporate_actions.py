@@ -658,7 +658,7 @@ def test_nontransformable_action_and_missing_effective_semantics_block_candidate
         (
             metadata.RawResponse(429, b'{"error":"rate limit"}'),
             metadata.MetadataAccessError,
-            "METADATA-ACCESS-FAIL",
+            "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY",
         ),
         (
             metadata.RawResponse(302, b"redirect"),
@@ -861,6 +861,7 @@ def test_dormant_http_transport_is_get_only_no_redirect_and_bounded(
         assert isinstance(handler, metadata._NoRedirect)
         return Opener()
 
+    monkeypatch.setattr(metadata, "_REAL_TRANSPORT_AUTHORIZED", True)
     monkeypatch.setattr(metadata, "build_opener", opener)
     request = Request(metadata.frozen_request_chains()[0].url(), method="GET")
 
@@ -882,11 +883,27 @@ def test_dormant_http_transport_closes_http_error_response(
             assert timeout == 30
             raise error
 
+    monkeypatch.setattr(metadata, "_REAL_TRANSPORT_AUTHORIZED", True)
     monkeypatch.setattr(metadata, "build_opener", lambda _handler: Opener())
     request = Request(metadata.frozen_request_chains()[0].url(), method="GET")
 
     assert metadata._urlopen_response(request) == metadata.RawResponse(401, b"denied")
     assert body.closed
+
+
+def test_dormant_http_transport_is_source_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    opener_called = False
+
+    def opener(_handler: Any) -> None:
+        nonlocal opener_called
+        opener_called = True
+
+    monkeypatch.setattr(metadata, "build_opener", opener)
+    request = Request(metadata.frozen_request_chains()[0].url(), method="GET")
+
+    with pytest.raises(metadata.Program007MetadataError, match="transport is not authorized"):
+        metadata._urlopen_response(request)
+    assert not opener_called
 
 
 def test_source_is_immutable_and_real_transport_has_no_execution_entrypoint(tmp_path: Path) -> None:
@@ -929,6 +946,11 @@ def test_secret_guard_covers_metadata_credential_names() -> None:
     assert spec is not None and spec.loader is not None
     guard = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(guard)
+    public_program_artifacts = {
+        path.relative_to(_REPOSITORY).as_posix()
+        for path in (_REPOSITORY / "config/research").glob("program-007*.json")
+    }
+    assert public_program_artifacts <= guard.PUBLIC_PROGRAM_JSON
     for suffix in ("KEY_ID", "SECRET_KEY"):
         name = "PROGRAM_007_CORPORATE_ACTIONS_API_" + suffix
         assert any(pattern.search(f"{name}=example") for pattern in guard.PATTERNS)
