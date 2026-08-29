@@ -31,6 +31,11 @@ _PROPOSAL_PATH = Path("config/research/program-006-source-qualification-authorit
 _REVIEW_PATH = Path(
     "config/research/program-006-source-qualification-authority-proposal-independent-review-v2.json"
 )
+_TERMINAL_FAILURE = {
+    "path": "config/research/program-006-source-qualification-terminal-failure-v1.json",
+    "sha256": "3c693b2a31c5d5eef11388b55e41f38b9203c21e7f8ce604fc8f89c9c15e9687",
+    "fingerprint": "acbbbf0f28cc5d555224e05fb8d34cf4e9ae1a60fe75020ca2fee03da91180e5",
+}
 _PROGRAM_005_PROPOSAL = {
     "path": "config/research/program-005-source-qualification-authority-proposal-v2.json",
     "sha256": "c3ebe6c5ca36cba26468fe75af952b0f8019188660840b287e7503e945335b00",
@@ -209,6 +214,7 @@ def scientific_preflight(repository: Path) -> Mapping[str, Any]:
 
 def derive_active_authority(repository: Path) -> Mapping[str, Any]:
     repository = repository.resolve()
+    _reject_terminal_failure(repository)
     preflight = scientific_preflight(repository)
     proposal, proposal_binding = frozen._load_control_artifact(
         repository, _PROPOSAL_PATH, "proposal_fingerprint", "Program 006 authority proposal"
@@ -507,6 +513,24 @@ def _load_static_artifact(
     ):
         raise Program006Error(f"Program 006 static binding differs: {path.name}")
     return payload
+
+
+def _reject_terminal_failure(repository: Path) -> None:
+    path = repository / _TERMINAL_FAILURE["path"]
+    if not path.exists():
+        return
+    failure = _load_static_artifact(repository, _TERMINAL_FAILURE, "failure_fingerprint")
+    structural = frozen._mapping(failure.get("structural_results"), "terminal results")
+    disposition = frozen._mapping(failure.get("disposition"), "terminal disposition")
+    if (
+        failure.get("program_id") != PROGRAM_ID
+        or failure.get("status") != "TERMINAL-FAIL-CONSUMED-NO-RETRY"
+        or structural.get("source_qualification") != "FAIL"
+        or disposition.get("retry_allowed") is not False
+        or disposition.get("replacement_authority_allowed") is not False
+    ):
+        raise Program006Error("Program 006 terminal failure semantics differ")
+    raise Program006Error("Program 006 is terminally revoked")
 
 
 def _validate_proposal(

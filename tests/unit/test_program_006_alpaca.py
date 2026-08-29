@@ -259,6 +259,7 @@ def test_credential_preflight_cli_prints_only_pass_or_missing_names(
 
 def test_exact_committed_chain_loads_and_self_rehashed_control_mutations_fail(
     tmp_path: Path,
+    monkeypatch: MonkeyPatch,
 ) -> None:
     required = (
         program_006._IMPLEMENTATION_REVIEW_PATH,
@@ -274,12 +275,79 @@ def test_exact_committed_chain_loads_and_self_rehashed_control_mutations_fail(
         capture_output=True,
         text=True,
     )
-    head = subprocess.run(
-        ("git", "-C", str(_REPOSITORY), "rev-parse", "HEAD"),
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
+    terminal = (
+        _REPOSITORY / "config/research/program-006-source-qualification-terminal-failure-v1.json"
+    )
+    terminal_record = (
+        json.loads(terminal.read_text(encoding="utf-8")) if terminal.exists() else None
+    )
+    head = (
+        str(terminal_record["execution_main"])
+        if terminal_record is not None
+        else subprocess.run(
+            ("git", "-C", str(_REPOSITORY), "rev-parse", "HEAD"),
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    )
+    if terminal_record is not None:
+        subprocess.run(
+            ("git", "-C", str(repository), "checkout", "-B", "main", head),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        terminal_path = repository / terminal.relative_to(_REPOSITORY)
+        terminal_path.parent.mkdir(parents=True, exist_ok=True)
+        terminal_path.write_bytes(terminal.read_bytes())
+        subprocess.run(
+            ("git", "-C", str(repository), "add", "--", terminal_path.relative_to(repository)),
+            check=True,
+        )
+        subprocess.run(
+            (
+                "git",
+                "-C",
+                str(repository),
+                "-c",
+                "user.name=Program 006 Test",
+                "-c",
+                "user.email=program-006-test@example.invalid",
+                "commit",
+                "--no-gpg-sign",
+                "-m",
+                "test: add terminal failure",
+                terminal_path.relative_to(repository).as_posix(),
+            ),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        terminal_head = subprocess.run(
+            ("git", "-C", str(repository), "rev-parse", "HEAD"),
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        subprocess.run(
+            ("git", "-C", str(repository), "update-ref", "refs/remotes/origin/main", terminal_head),
+            check=True,
+        )
+        credential_reads: list[bool] = []
+        monkeypatch.setattr(
+            program_006,
+            "_require_credentials_present",
+            lambda _: credential_reads.append(True),
+        )
+        with pytest.raises(program_006.Program006Error, match="terminally revoked"):
+            program_006.activate_authority(
+                repository,
+                str(terminal_record["authorization"]["external_authorization_root"]),
+                environ={},
+            )
+        assert credential_reads == []
+        assert not program_006._active_authority_path(repository).parent.exists()
     subprocess.run(
         ("git", "-C", str(repository), "checkout", "-B", "main", head),
         check=True,

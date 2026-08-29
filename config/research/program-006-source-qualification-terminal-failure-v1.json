@@ -1,0 +1,285 @@
+{
+  "schema_version": "program-006-source-qualification-terminal-failure-v1",
+  "failure_id": "program-006-source-qualification-terminal-failure-2026-08-28-v1",
+  "program_id": "multi-hour-sector-etf-research-005",
+  "recorded_at": "2026-08-29T01:07:29Z",
+  "status": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+  "execution_main": "8ed3bc3f700bbf2b014527c12dc45e0e8cb26def",
+  "authorization": {
+    "external_authorization_root": "56125cd74d917c938b1076160f3a6e7c408149d4048d8b0f55f693262fec47c2",
+    "authority_id": "program-006-source-qualification-authority-2026-08-28-v2",
+    "authority_sha256": "3c94e89bb8798931c11db7014590ea66dc886eef9ffa0754343745a22c4f3cf4",
+    "authority_fingerprint": "56125cd74d917c938b1076160f3a6e7c408149d4048d8b0f55f693262fec47c2",
+    "activation_succeeded": true,
+    "one_use_claim_schema_version": "program-006-private-authority-claim-v1",
+    "one_use_claim_sha256": "b91bd85bd900d0d4b86095c1b8613dd9b14b35f6f69262cbadb7d22dc2eb8ee3",
+    "one_use_claim_fingerprint": "00aa50ffb367c764526cd6a893b86768bf68fdda84d34fd440f8d5028cc0e99d",
+    "one_use_consumed": true
+  },
+  "bindings": {
+    "authority_proposal": {
+      "path": "config/research/program-006-source-qualification-authority-proposal-v2.json",
+      "sha256": "4df295b78a76afe4ef703ec30446dcfb12ba2f0e152c7ab476c885a53e631003",
+      "fingerprint": "b52d34c4666039bdd563515cce727eb05b4a9757ee68c49e4af5509641147793"
+    },
+    "authority_proposal_review": {
+      "path": "config/research/program-006-source-qualification-authority-proposal-independent-review-v2.json",
+      "sha256": "467a862378b80b81c0ea337d6eda531e5f4b5af0b6967b8cae5efe222386be9e",
+      "fingerprint": "bee7583e83c7dbbd6cf7bc0efc9a7361d9d3734f1217b24aeafa99afa3a85673"
+    },
+    "implementation_review": {
+      "path": "config/research/program-006-credential-safe-qualification-implementation-independent-review-v2.json",
+      "sha256": "0eb3af2419ff1ffa0ca4155f6c9dfa4a18cbe7f26a70d690413cd9bab3d65e61",
+      "fingerprint": "53505ed9b86d6be3779509064971cb7d33dc1c1dddd0300fafa91726933d2fbe"
+    },
+    "reviewed_source_commit": "d747a4c6f4de67cbaab063a812f757345a9b0aca",
+    "implementation_root": "6d0c00841f664ad26dabd846b096e4e2c02450a877f97503289d9994e652e089",
+    "request_plan_fingerprint": "5be6a24c41303d726f6afd3350b3e80ab9d26fed6457762a282e593a3dde5bfb"
+  },
+  "qualification_contract": {
+    "provider": "Alpaca Basic historical equities",
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustments": [
+      "raw",
+      "split,spin-off"
+    ],
+    "sort": "asc",
+    "limit": 10000,
+    "asof": "2026-07-31",
+    "boundaries": "inclusive",
+    "redirects": false,
+    "sessions": [
+      "2020-07-27",
+      "2020-12-04",
+      "2021-02-03",
+      "2021-02-05",
+      "2021-02-10",
+      "2021-02-22",
+      "2022-11-25",
+      "2023-07-17",
+      "2024-06-10",
+      "2024-06-11",
+      "2024-06-12",
+      "2025-12-01",
+      "2025-12-02",
+      "2025-12-03",
+      "2025-12-04",
+      "2025-12-05",
+      "2025-12-08",
+      "2025-12-09",
+      "2025-12-10",
+      "2025-12-11",
+      "2025-12-12",
+      "2026-07-15"
+    ],
+    "range_ids": [
+      "normal-2020-07-27",
+      "quarantine-2020-12-04",
+      "quarantine-2021-02-03",
+      "quarantine-2021-02-05",
+      "quarantine-2021-02-10",
+      "quarantine-2021-02-22",
+      "early-close-2022-11-25",
+      "normal-2023-07-17",
+      "distribution-2024-06-10",
+      "distribution-2024-06-11",
+      "distribution-2024-06-12",
+      "pagination-split-2025-12-01-to-2025-12-12",
+      "normal-2026-07-15"
+    ],
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "logical_chain_ids": [
+      "normal-2020-07-27--raw",
+      "normal-2020-07-27--split-spin-off",
+      "quarantine-2020-12-04--raw",
+      "quarantine-2020-12-04--split-spin-off",
+      "quarantine-2021-02-03--raw",
+      "quarantine-2021-02-03--split-spin-off",
+      "quarantine-2021-02-05--raw",
+      "quarantine-2021-02-05--split-spin-off",
+      "quarantine-2021-02-10--raw",
+      "quarantine-2021-02-10--split-spin-off",
+      "quarantine-2021-02-22--raw",
+      "quarantine-2021-02-22--split-spin-off",
+      "early-close-2022-11-25--raw",
+      "early-close-2022-11-25--split-spin-off",
+      "normal-2023-07-17--raw",
+      "normal-2023-07-17--split-spin-off",
+      "distribution-2024-06-10--raw",
+      "distribution-2024-06-10--split-spin-off",
+      "distribution-2024-06-11--raw",
+      "distribution-2024-06-11--split-spin-off",
+      "distribution-2024-06-12--raw",
+      "distribution-2024-06-12--split-spin-off",
+      "pagination-split-2025-12-01-to-2025-12-12--raw",
+      "pagination-split-2025-12-01-to-2025-12-12--split-spin-off",
+      "normal-2026-07-15--raw",
+      "normal-2026-07-15--split-spin-off"
+    ],
+    "session_count": 22,
+    "range_count": 13,
+    "symbol_count": 13,
+    "paired_chain_count": 26,
+    "expected_http_responses": 28,
+    "maximum_http_responses": 60,
+    "maximum_downloaded_bytes": 67108864,
+    "maximum_requests_per_minute": 120,
+    "maximum_credential_loads": 1,
+    "automatic_transport_retries": 0
+  },
+  "runtime_outcome": {
+    "failure_stage": "first page of the raw pagination-split chain during exact XNYS timestamp-grid parsing",
+    "error": "Alpaca bar timestamp is outside the exact XNYS grid",
+    "credential_presence_preflight": "PASS",
+    "credential_presence_recheck_under_lock": "PASS",
+    "credential_access_attempt_count": 1,
+    "credential_load_count": 1,
+    "authenticated_client_constructed": true,
+    "provider_request_count": 23,
+    "http_response_count": 23,
+    "response_bytes": 2503402,
+    "stored_response_page_count": 22,
+    "stored_response_bytes": 2251275,
+    "failed_response_body_retained": false,
+    "failed_response_bytes": 252127,
+    "completed_chain_count": 22,
+    "completed_pair_count": 11,
+    "applied_request_interval_seconds": "0.5",
+    "applied_maximum_requests_per_minute": 120,
+    "automatic_transport_retries": 0,
+    "private_terminal_failure_sha256": "0e63995ef68a8129c017e835355779807a5f7082ce42edad404267d688888f83",
+    "private_terminal_failure_fingerprint": "052a1ba5dfaefc760b136a1d6b6b689fa3d5221ed85d3e1df2b04f944268499d",
+    "qualification_receipt_created": false,
+    "private_dataset_count": 0
+  },
+  "structural_results": {
+    "raw_chain": "FAIL-RESPONSE-23-OUTSIDE-EXACT-XNYS-GRID",
+    "split_spin_off_chain": "FAIL-PAIRED-PRICE-FACTOR-NOT-CONSTANT-IN-11-OF-11-COMPLETED-PAIRS",
+    "completed_raw_rows": 10677,
+    "completed_split_spin_off_rows": 10677,
+    "completed_chain_symbol_coverage": "13-OF-13",
+    "completed_chain_unexpected_missing_coordinate_count": 0,
+    "known_mdy_coordinate_outcomes": [
+      {
+        "coordinate": "MDY@2020-12-04T18:10:00Z",
+        "raw": "ABSENT",
+        "split_spin_off": "ABSENT"
+      },
+      {
+        "coordinate": "MDY@2020-12-04T18:25:00Z",
+        "raw": "ABSENT",
+        "split_spin_off": "ABSENT"
+      },
+      {
+        "coordinate": "MDY@2021-02-03T16:40:00Z",
+        "raw": "ABSENT",
+        "split_spin_off": "ABSENT"
+      },
+      {
+        "coordinate": "MDY@2021-02-05T16:45:00Z",
+        "raw": "ABSENT",
+        "split_spin_off": "ABSENT"
+      },
+      {
+        "coordinate": "MDY@2021-02-05T16:50:00Z",
+        "raw": "ABSENT",
+        "split_spin_off": "ABSENT"
+      },
+      {
+        "coordinate": "MDY@2021-02-10T20:20:00Z",
+        "raw": "ABSENT",
+        "split_spin_off": "ABSENT"
+      },
+      {
+        "coordinate": "MDY@2021-02-22T18:25:00Z",
+        "raw": "ABSENT",
+        "split_spin_off": "ABSENT"
+      },
+      {
+        "coordinate": "MDY@2021-02-22T19:05:00Z",
+        "raw": "ABSENT",
+        "split_spin_off": "ABSENT"
+      },
+      {
+        "coordinate": "MDY@2021-02-22T19:20:00Z",
+        "raw": "ABSENT",
+        "split_spin_off": "ABSENT"
+      }
+    ],
+    "fixed_quarantine_treatment": "PRESERVED-FIVE-SESSIONS-NINE-COORDINATES-ABSENT-IN-BOTH-VIEWS",
+    "unexpected_missingness": "ZERO-IN-22-COMPLETED-CHAINS-FULL-DISPOSITION-NOT-REACHED",
+    "early_close_grid": "PASS-546-OF-546-ROWS-IN-EACH-COMPLETED-VIEW",
+    "timestamp_session_grid": "FAIL-RESPONSE-23-CONTAINED-AN-OUT-OF-GRID-TIMESTAMP",
+    "corporate_action_consistency": "FAIL-PRICE-FACTOR-NOT-CONSTANT-IN-ALL-11-COMPLETED-PAIRS",
+    "corporate_action_reciprocal_volume_and_ledger_reconciliation": "NOT-REACHED-AFTER-PRICE-FACTOR-FAILURE",
+    "pagination": "FAIL-FIRST-RAW-PAGE-NOT-STORED-AFTER-TIMESTAMP-GRID-FAILURE",
+    "private_source_manifest_identity": null,
+    "private_source_manifest_sha256": null,
+    "source_qualification": "FAIL",
+    "exact_failure_reason": "Response 23 failed the exact XNYS timestamp grid in the raw pagination-split chain; offline checks also found non-constant paired adjustment price factors in every completed range."
+  },
+  "private_data_boundary": {
+    "private_root_git_ignored": true,
+    "private_response_pages_retained": 22,
+    "failed_response_body_retained": false,
+    "raw_or_reconstructable_observations_entered_git": false,
+    "credentials_stored_printed_hashed_or_persisted": false,
+    "public_evidence_contains_only_non_reconstructable_structure": true
+  },
+  "protected_state": {
+    "strategy_returns_generated_or_read": false,
+    "controlled_a_or_b_accessed": false,
+    "v3_protected_ranges_accessed": false,
+    "june_frozen_disposition_accessed": false,
+    "daily_2018_2019_seal_accessed": false,
+    "strategic_allocation_21_accessed": false,
+    "paper_state_accessed": false,
+    "broker_write_performed": false,
+    "live_state_accessed": false
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "disposition": {
+    "reason": "The frozen timestamp-grid and paired corporate-action gates failed after the one-use boundary.",
+    "retry_allowed": false,
+    "replacement_authority_allowed": false,
+    "source_switch_allowed": false,
+    "full_acquisition_allowed": false,
+    "dataset_admission_allowed": false,
+    "strategy_execution_allowed": false,
+    "next_action": "Stop Program 006 without retry, replacement authority, source switch, full acquisition, dataset admission, or strategy execution."
+  },
+  "failure_fingerprint": "acbbbf0f28cc5d555224e05fb8d34cf4e9ae1a60fe75020ca2fee03da91180e5"
+}
