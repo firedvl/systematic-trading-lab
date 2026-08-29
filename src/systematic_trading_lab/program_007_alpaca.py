@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import fcntl
 import hashlib
 import json
@@ -17,7 +19,7 @@ from decimal import Decimal, InvalidOperation
 from fractions import Fraction
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import Any, BinaryIO
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
@@ -197,7 +199,7 @@ class RawResponse:
 
 
 class SyntheticPageSource:
-    """Finite in-memory responses stored in an owned temporary workspace."""
+    """Finite in-memory responses retained in a capability-held evidence log."""
 
     __slots__ = (
         "_responses",
@@ -206,6 +208,8 @@ class SyntheticPageSource:
         "_workspace",
         "_private_root",
         "_root_identity",
+        "_evidence",
+        "_evidence_identity",
     )
 
     _responses: tuple[RawResponse | None, ...]
@@ -214,6 +218,8 @@ class SyntheticPageSource:
     _workspace: tempfile.TemporaryDirectory[str]
     _private_root: Path
     _root_identity: tuple[int, int]
+    _evidence: BinaryIO
+    _evidence_identity: tuple[int, int]
 
     def __init__(self, responses: Sequence[RawResponse | None]) -> None:
         if type(responses) not in {list, tuple} or any(
@@ -227,8 +233,14 @@ class SyntheticPageSource:
         object.__setattr__(self, "_workspace", workspace)
         private_root = Path(workspace.name)
         root_stat = os.lstat(private_root)
+        evidence = tempfile.TemporaryFile(  # noqa: SIM115 - held for source lifetime
+            mode="w+b", buffering=0, dir=private_root
+        )
+        evidence_stat = os.fstat(evidence.fileno())
         object.__setattr__(self, "_private_root", private_root)
         object.__setattr__(self, "_root_identity", (root_stat.st_dev, root_stat.st_ino))
+        object.__setattr__(self, "_evidence", evidence)
+        object.__setattr__(self, "_evidence_identity", (evidence_stat.st_dev, evidence_stat.st_ino))
 
     def __setattr__(self, name: str, value: object) -> None:
         raise AttributeError("Program 007 synthetic source is immutable")
@@ -244,6 +256,32 @@ class SyntheticPageSource:
     @property
     def intent_files_present(self) -> tuple[bool, ...]:
         return tuple(self._intent_files_present)
+
+
+@dataclass
+class _EvidenceStore:
+    descriptor: int
+    entries: dict[str, bytes]
+
+    def exists(self, key: str) -> bool:
+        return key in self.entries
+
+    def read(self, key: str) -> bytes:
+        try:
+            return self.entries[key]
+        except KeyError as error:
+            raise Program007Error(f"Program 007 evidence entry is missing: {key}") from error
+
+    def publish(self, key: str, payload: bytes, *, allow_identical: bool = False) -> None:
+        existing = self.entries.get(key)
+        if existing is not None:
+            if allow_identical and existing == payload:
+                return
+            raise Program007Error(
+                f"Program 007 create-only artifact exists: {key.rsplit('/', 1)[-1]}"
+            )
+        _append_evidence(self.descriptor, key, payload)
+        self.entries[key] = payload
 
 
 @dataclass(frozen=True, order=True)
@@ -555,16 +593,16 @@ def _execute_qualification(
     ):
         raise Program007Error("Program 007 execution requires the exact frozen request plan")
     _require_synthetic_source(page_source)
-    with _private_root_fd(page_source) as root_fd, _exclusive_lock(root_fd):
-        _validate_restart_state(root_fd, exact_chains)
+    with _evidence_store(page_source) as store:
+        _validate_restart_state(store, exact_chains)
         budget = _Budget()
         results = tuple(
-            _execute_chain_fd(chain, page_source, budget, observed_at, root_fd)
+            _execute_chain_store(chain, page_source, budget, observed_at, store)
             for chain in exact_chains
         )
         result = QualificationResult(results)
         _publish_record(
-            root_fd,
+            store,
             "private-manifest.json",
             result.private_manifest(),
             allow_identical=True,
@@ -1215,43 +1253,17 @@ def _execute_chain(
     if type(chain) is not RequestChain or chain not in _frozen_request_chains():
         raise Program007Error("Program 007 request chain is outside the exact frozen plan")
     _require_synthetic_source(page_source)
-    with _private_root_fd(page_source) as root_fd, _exclusive_lock(root_fd):
-        _validate_restart_state(root_fd, (chain,))
-        return _execute_chain_fd(chain, page_source, budget, observed_at, root_fd)
+    with _evidence_store(page_source) as store:
+        _validate_restart_state(store, (chain,))
+        return _execute_chain_store(chain, page_source, budget, observed_at, store)
 
 
-def _execute_chain_fd(
+def _execute_chain_store(
     chain: RequestChain,
     page_source: SyntheticPageSource,
     budget: _Budget,
     observed_at: datetime,
-    root_fd: int,
-) -> ChainResult:
-    with (
-        _directory_fd(root_fd, "chains", create=True) as chains_fd,
-        _directory_fd(chains_fd, chain.identity, create=True) as chain_fd,
-        _directory_fd(chain_fd, "requests", create=True) as requests_fd,
-        _directory_fd(chain_fd, "pages", create=True) as pages_fd,
-    ):
-        return _execute_chain_storage(
-            chain,
-            page_source,
-            budget,
-            observed_at,
-            chain_fd,
-            requests_fd,
-            pages_fd,
-        )
-
-
-def _execute_chain_storage(
-    chain: RequestChain,
-    page_source: SyntheticPageSource,
-    budget: _Budget,
-    observed_at: datetime,
-    chain_fd: int,
-    requests_fd: int,
-    pages_fd: int,
+    store: _EvidenceStore,
 ) -> ChainResult:
     rows: list[RawBar] = []
     pages: list[PageEvidence] = []
@@ -1259,6 +1271,7 @@ def _execute_chain_storage(
     seen_tokens: set[str] = set()
     seen_hashes: set[str] = set()
     incoming_token: str | None = None
+    chain_prefix = f"chains/{chain.identity}"
 
     for page_index in range(1, chain.maximum_pages + 1):
         intent = RequestIntent(
@@ -1268,21 +1281,26 @@ def _execute_chain_storage(
             chain.url(incoming_token),
             incoming_token,
         )
-        intent_name = f"{page_index:05d}.json"
         page_name = f"{page_index:05d}"
+        intent_key = f"{chain_prefix}/requests/{page_name}.json"
+        page_prefix = f"{chain_prefix}/pages/{page_name}"
+        outcome_key = f"{page_prefix}/validation.json"
         budget.reserve_request()
-        retained_response = _regular_file_exists(requests_fd, intent_name)
+        retained_response = store.exists(intent_key)
         if retained_response:
-            intent_record = _load_record(requests_fd, intent_name)
+            intent_record = _load_record(store, intent_key)
             _validate_intent(intent_record, intent)
-            if not _directory_exists(pages_fd, page_name):
+            if not (
+                store.exists(f"{page_prefix}/body.json")
+                and store.exists(f"{page_prefix}/receipt.json")
+            ):
                 raise Program007Error(
                     "Program 007 request outcome is ambiguous; zero-retry policy blocks replay"
                 )
         else:
             _publish_record(
-                requests_fd,
-                intent_name,
+                store,
+                intent_key,
                 {
                     "schema_version": "program-007-private-request-intent-v1",
                     **_intent_record(intent),
@@ -1302,83 +1320,71 @@ def _execute_chain_storage(
                     "Program 007 request outcome is ambiguous; zero-retry policy blocks replay"
                 )
             budget.accept_response(response.body)
-            _retain_response(pages_fd, page_name, intent, response, observed_at)
+            _retain_response(store, page_prefix, intent, response, observed_at)
 
-        with _directory_fd(pages_fd, page_name) as page_fd:
-            response = _load_response(page_fd, intent)
-            if retained_response:
-                budget.accept_response(response.body)
+        response = _load_response(store, page_prefix, intent)
+        if retained_response:
+            budget.accept_response(response.body)
 
-            existing_outcome = (
-                _load_record(page_fd, "validation.json")
-                if _regular_file_exists(page_fd, "validation.json")
-                else None
-            )
-            if (
-                existing_outcome is not None
-                and existing_outcome.get("raw_structural_status") == "FAIL"
-            ):
-                raise Program007Error(_string(existing_outcome.get("failure"), "stored failure"))
-            try:
-                if response.status != 200:
-                    raise Program007Error("Program 007 response status is not 200")
-                page_rows, outgoing_token = parse_raw_page(response.body, chain)
-                response_sha256 = hashlib.sha256(response.body).hexdigest()
-                if response_sha256 in seen_hashes:
-                    raise Program007Error("Program 007 response page is repeated")
-                duplicates = seen_coordinates & {row.coordinate for row in page_rows}
-                if duplicates:
-                    raise Program007Error("Program 007 coordinate repeats across pages")
-                if outgoing_token is not None:
-                    if outgoing_token in seen_tokens or outgoing_token == incoming_token:
-                        raise Program007Error("Program 007 pagination token is repeated")
-                    if not page_rows:
-                        raise Program007Error("Program 007 nonterminal page is empty")
-                    if page_index == chain.maximum_pages:
-                        raise Program007Error("Program 007 chain page ceiling exceeded")
-                canonical = project_rth(page_rows, chain)
-                page_identity = fingerprint(
-                    {
-                        "chain_identity": chain.identity,
-                        "page_index": page_index,
-                        "incoming_page_token": incoming_token,
-                        "outgoing_page_token": outgoing_token,
-                        "response_sha256": response_sha256,
-                    }
-                )
-                outcome = {
-                    "schema_version": "program-007-private-page-validation-v1",
+        existing_outcome = _load_record(store, outcome_key) if store.exists(outcome_key) else None
+        if existing_outcome is not None and existing_outcome.get("raw_structural_status") == "FAIL":
+            raise Program007Error(_string(existing_outcome.get("failure"), "stored failure"))
+        try:
+            if response.status != 200:
+                raise Program007Error("Program 007 response status is not 200")
+            page_rows, outgoing_token = parse_raw_page(response.body, chain)
+            response_sha256 = hashlib.sha256(response.body).hexdigest()
+            if response_sha256 in seen_hashes:
+                raise Program007Error("Program 007 response page is repeated")
+            duplicates = seen_coordinates & {row.coordinate for row in page_rows}
+            if duplicates:
+                raise Program007Error("Program 007 coordinate repeats across pages")
+            if outgoing_token is not None:
+                if outgoing_token in seen_tokens or outgoing_token == incoming_token:
+                    raise Program007Error("Program 007 pagination token is repeated")
+                if not page_rows:
+                    raise Program007Error("Program 007 nonterminal page is empty")
+                if page_index == chain.maximum_pages:
+                    raise Program007Error("Program 007 chain page ceiling exceeded")
+            canonical = project_rth(page_rows, chain)
+            page_identity = fingerprint(
+                {
                     "chain_identity": chain.identity,
                     "page_index": page_index,
-                    "page_identity": page_identity,
                     "incoming_page_token": incoming_token,
                     "outgoing_page_token": outgoing_token,
                     "response_sha256": response_sha256,
-                    "parse_status": "PASS",
-                    "raw_structural_status": "PASS",
-                    "rth_projection_status": "PASS",
-                    "raw_row_count": len(page_rows),
-                    "canonical_row_count": len(canonical),
-                    "extended_hours_row_count": len(page_rows) - len(canonical),
                 }
-                _publish_validation(
-                    page_fd, "validation.json", outcome, observed_at, existing_outcome
-                )
-            except Program007Error as error:
-                failure = {
-                    "schema_version": "program-007-private-page-validation-v1",
-                    "chain_identity": chain.identity,
-                    "page_index": page_index,
-                    "response_sha256": hashlib.sha256(response.body).hexdigest(),
-                    "parse_status": "FAIL",
-                    "raw_structural_status": "FAIL",
-                    "rth_projection_status": "NOT-RUN",
-                    "failure": str(error),
-                }
-                _publish_validation(
-                    page_fd, "validation.json", failure, observed_at, existing_outcome
-                )
-                raise
+            )
+            outcome = {
+                "schema_version": "program-007-private-page-validation-v1",
+                "chain_identity": chain.identity,
+                "page_index": page_index,
+                "page_identity": page_identity,
+                "incoming_page_token": incoming_token,
+                "outgoing_page_token": outgoing_token,
+                "response_sha256": response_sha256,
+                "parse_status": "PASS",
+                "raw_structural_status": "PASS",
+                "rth_projection_status": "PASS",
+                "raw_row_count": len(page_rows),
+                "canonical_row_count": len(canonical),
+                "extended_hours_row_count": len(page_rows) - len(canonical),
+            }
+            _publish_validation(store, outcome_key, outcome, observed_at, existing_outcome)
+        except Program007Error as error:
+            failure = {
+                "schema_version": "program-007-private-page-validation-v1",
+                "chain_identity": chain.identity,
+                "page_index": page_index,
+                "response_sha256": hashlib.sha256(response.body).hexdigest(),
+                "parse_status": "FAIL",
+                "raw_structural_status": "FAIL",
+                "rth_projection_status": "NOT-RUN",
+                "failure": str(error),
+            }
+            _publish_validation(store, outcome_key, failure, observed_at, existing_outcome)
+            raise
 
         seen_hashes.add(response_sha256)
         seen_coordinates.update(row.coordinate for row in page_rows)
@@ -1430,13 +1436,12 @@ def _execute_chain_storage(
         "incomplete_sessions": sorted({timestamp.date().isoformat() for _, timestamp in missing}),
         "status": "PASS" if not missing and not extra else "FAIL",
     }
+    chain_outcome_key = f"{chain_prefix}/validation.json"
     existing_chain_outcome = (
-        _load_record(chain_fd, "validation.json")
-        if _regular_file_exists(chain_fd, "validation.json")
-        else None
+        _load_record(store, chain_outcome_key) if store.exists(chain_outcome_key) else None
     )
     _publish_validation(
-        chain_fd, "validation.json", chain_outcome, observed_at, existing_chain_outcome
+        store, chain_outcome_key, chain_outcome, observed_at, existing_chain_outcome
     )
     if missing or extra:
         raise Program007Error(
@@ -1474,79 +1479,43 @@ def _next_synthetic_response(
     return response
 
 
-def _validate_restart_state(root_fd: int, chains: Sequence[RequestChain]) -> None:
-    if not _directory_exists(root_fd, "chains"):
-        return
+def _validate_restart_state(store: _EvidenceStore, chains: Sequence[RequestChain]) -> None:
     chain_by_identity = {chain.identity: chain for chain in chains}
-    with _directory_fd(root_fd, "chains") as chains_fd:
-        for chain_name in _list_directory(chains_fd):
-            chain = chain_by_identity.get(chain_name)
-            if chain is None:
-                raise Program007Error("Program 007 private root contains a foreign chain")
-            with _directory_fd(chains_fd, chain_name) as chain_fd:
-                chain_entries = set(_list_directory(chain_fd))
-                if not chain_entries <= {"requests", "pages", "validation.json"}:
-                    raise Program007Error("Program 007 private root contains a foreign chain entry")
-                if "validation.json" in chain_entries:
-                    _require_regular_file(chain_fd, "validation.json")
+    requests: dict[str, set[int]] = {identity: set() for identity in chain_by_identity}
+    page_entries: dict[str, dict[int, set[str]]] = {identity: {} for identity in chain_by_identity}
+    for key in store.entries:
+        if key == "private-manifest.json":
+            continue
+        parts = key.split("/")
+        chain = chain_by_identity.get(parts[1])
+        if chain is None:
+            raise Program007Error("Program 007 private evidence contains a foreign chain")
+        if len(parts) == 3:
+            continue
+        page_index = int(parts[3].removesuffix(".json"))
+        if not 1 <= page_index <= chain.maximum_pages:
+            raise Program007Error("Program 007 private evidence contains a foreign page")
+        if parts[2] == "requests":
+            requests[chain.identity].add(page_index)
+        else:
+            page_entries[chain.identity].setdefault(page_index, set()).add(parts[4])
 
-                request_names: tuple[str, ...] = ()
-                if _directory_exists(chain_fd, "requests"):
-                    with _directory_fd(chain_fd, "requests") as requests_fd:
-                        request_names = _list_directory(requests_fd)
-                        for name in request_names:
-                            if (
-                                re.fullmatch(r"[0-9]{5}\.json", name) is None
-                                or not 1 <= int(name[:5]) <= chain.maximum_pages
-                            ):
-                                raise Program007Error(
-                                    "Program 007 private root contains a foreign request"
-                                )
-                            _require_regular_file(requests_fd, name)
-
-                page_names: tuple[str, ...] = ()
-                if _directory_exists(chain_fd, "pages"):
-                    with _directory_fd(chain_fd, "pages") as pages_fd:
-                        page_names = _list_directory(pages_fd)
-                        for name in page_names:
-                            if (
-                                re.fullmatch(r"[0-9]{5}", name) is None
-                                or not 1 <= int(name) <= chain.maximum_pages
-                            ):
-                                raise Program007Error(
-                                    "Program 007 private root contains a foreign page"
-                                )
-                            with _directory_fd(pages_fd, name) as page_fd:
-                                entries = set(_list_directory(page_fd))
-                                if not entries <= {
-                                    "body.json",
-                                    "receipt.json",
-                                    "validation.json",
-                                }:
-                                    raise Program007Error(
-                                        "Program 007 private root contains a foreign page entry"
-                                    )
-                                complete = _regular_file_exists(
-                                    page_fd, "body.json"
-                                ) and _regular_file_exists(page_fd, "receipt.json")
-                                if "validation.json" in entries:
-                                    _require_regular_file(page_fd, "validation.json")
-                                if not complete:
-                                    raise Program007Error(
-                                        "Program 007 request outcome is ambiguous; "
-                                        "zero-retry policy blocks replay"
-                                    )
-
-                expected_pages = {name.removesuffix(".json") for name in request_names}
-                if set(page_names) != expected_pages:
-                    raise Program007Error(
-                        "Program 007 request outcome is ambiguous; zero-retry policy blocks replay"
-                    )
+    for identity in chain_by_identity:
+        request_indexes = requests[identity]
+        pages = page_entries[identity]
+        if request_indexes and request_indexes != set(range(1, max(request_indexes) + 1)):
+            raise Program007Error("Program 007 private evidence contains a foreign request")
+        if set(pages) != request_indexes or any(
+            not {"body.json", "receipt.json"} <= entries for entries in pages.values()
+        ):
+            raise Program007Error(
+                "Program 007 request outcome is ambiguous; zero-retry policy blocks replay"
+            )
 
 
 def _retain_response(
-    pages_fd: int,
-    page_name: str,
+    store: _EvidenceStore,
+    page_prefix: str,
     intent: RequestIntent,
     response: RawResponse,
     observed_at: datetime,
@@ -1568,25 +1537,13 @@ def _retain_response(
         "adjustment": "raw",
         "credentials_stored": False,
     }
-    try:
-        with _directory_fd(pages_fd, page_name, create=True, exclusive=True) as page_fd:
-            _write_fsynced(page_fd, "body.json", response.body)
-            receipt_with_fingerprint = dict(receipt)
-            receipt_with_fingerprint["record_fingerprint"] = fingerprint(receipt)
-            _write_fsynced(
-                page_fd,
-                "receipt.json",
-                (canonical_json(receipt_with_fingerprint) + "\n").encode(),
-            )
-            os.fsync(page_fd)
-        os.fsync(pages_fd)
-    except FileExistsError as error:
-        raise Program007Error(f"Program 007 create-only artifact exists: {page_name}") from error
+    store.publish(f"{page_prefix}/body.json", response.body)
+    _publish_record(store, f"{page_prefix}/receipt.json", receipt)
 
 
-def _load_response(page_fd: int, intent: RequestIntent) -> RawResponse:
-    receipt = _load_record(page_fd, "receipt.json")
-    body = _read_file(page_fd, "body.json")
+def _load_response(store: _EvidenceStore, page_prefix: str, intent: RequestIntent) -> RawResponse:
+    receipt = _load_record(store, f"{page_prefix}/receipt.json")
+    body = store.read(f"{page_prefix}/body.json")
     sha256 = hashlib.sha256(body).hexdigest()
     if (
         receipt.get("schema_version") != "program-007-private-raw-page-receipt-v1"
@@ -1630,8 +1587,8 @@ def _validate_intent(record: Mapping[str, Any], intent: RequestIntent) -> None:
 
 
 def _publish_validation(
-    parent_fd: int,
-    name: str,
+    store: _EvidenceStore,
+    key: str,
     record: Mapping[str, Any],
     observed_at: datetime,
     existing: Mapping[str, Any] | None,
@@ -1643,12 +1600,12 @@ def _publish_validation(
         if comparable != dict(record):
             raise Program007Error("Program 007 immutable validation outcome differs")
         return
-    _publish_record(parent_fd, name, {**record, "validated_at_utc": _iso_utc(observed_at)})
+    _publish_record(store, key, {**record, "validated_at_utc": _iso_utc(observed_at)})
 
 
 def _publish_record(
-    parent_fd: int,
-    name: str,
+    store: _EvidenceStore,
+    key: str,
     record: Mapping[str, Any],
     *,
     allow_identical: bool = False,
@@ -1656,22 +1613,16 @@ def _publish_record(
     payload = dict(record)
     payload["record_fingerprint"] = fingerprint(payload)
     contents = (canonical_json(payload) + "\n").encode()
-    try:
-        _write_fsynced(parent_fd, name, contents)
-    except FileExistsError:
-        if allow_identical and _read_file(parent_fd, name) == contents:
-            return
-        raise Program007Error(f"Program 007 create-only artifact exists: {name}") from None
-    os.fsync(parent_fd)
+    store.publish(key, contents, allow_identical=allow_identical)
 
 
-def _load_record(parent_fd: int, name: str) -> Mapping[str, Any]:
-    raw = _read_file(parent_fd, name)
-    record = _load_json_object(raw, name)
+def _load_record(store: _EvidenceStore, key: str) -> Mapping[str, Any]:
+    raw = store.read(key)
+    record = _load_json_object(raw, key)
     unsigned = dict(record)
     stored = unsigned.pop("record_fingerprint", None)
     if raw != (canonical_json(record) + "\n").encode() or stored != fingerprint(unsigned):
-        raise Program007Error(f"Program 007 record differs: {name}")
+        raise Program007Error(f"Program 007 record differs: {key}")
     return record
 
 
@@ -1706,7 +1657,7 @@ def _load_json_object(raw: bytes, label: str) -> dict[str, Any]:
 
 
 _STORAGE_PATH_ERROR = (
-    "Program 007 private storage path is outside its owned root or contains a symlink"
+    "Program 007 private storage is outside its owned root or contains a foreign entry"
 )
 _DIRECTORY_FLAGS = (
     os.O_RDONLY
@@ -1750,146 +1701,158 @@ def _private_root_fd(page_source: SyntheticPageSource) -> Iterator[int]:
         os.close(descriptor)
 
 
-def _require_component(name: str) -> None:
-    if type(name) is not str or not name or name in {".", ".."} or "/" in name:
-        raise Program007Error(_STORAGE_PATH_ERROR)
-
-
 @contextmanager
-def _directory_fd(
-    parent_fd: int,
-    name: str,
-    *,
-    create: bool = False,
-    exclusive: bool = False,
-) -> Iterator[int]:
-    _require_component(name)
-    if create:
-        try:
-            os.mkdir(name, mode=0o700, dir_fd=parent_fd)
-            os.fsync(parent_fd)
-        except FileExistsError:
-            if exclusive:
-                raise
-        except OSError as error:
-            raise Program007Error(_STORAGE_PATH_ERROR) from error
-    try:
-        descriptor = os.open(name, _DIRECTORY_FLAGS, dir_fd=parent_fd)
-        if not stat.S_ISDIR(os.fstat(descriptor).st_mode):
-            raise OSError("private storage component is not a directory")
-    except OSError as error:
-        if "descriptor" in locals():
-            os.close(descriptor)
-        raise Program007Error(_STORAGE_PATH_ERROR) from error
-    try:
-        yield descriptor
-    finally:
-        os.close(descriptor)
-
-
-def _entry_stat(parent_fd: int, name: str) -> os.stat_result | None:
-    _require_component(name)
-    try:
-        result = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
-    except FileNotFoundError:
-        return None
-    except OSError as error:
-        raise Program007Error(_STORAGE_PATH_ERROR) from error
-    if stat.S_ISLNK(result.st_mode):
-        raise Program007Error(_STORAGE_PATH_ERROR)
-    return result
-
-
-def _directory_exists(parent_fd: int, name: str) -> bool:
-    result = _entry_stat(parent_fd, name)
-    if result is None:
-        return False
-    if not stat.S_ISDIR(result.st_mode):
-        raise Program007Error(_STORAGE_PATH_ERROR)
-    return True
-
-
-def _regular_file_exists(parent_fd: int, name: str) -> bool:
-    result = _entry_stat(parent_fd, name)
-    if result is None:
-        return False
-    if not stat.S_ISREG(result.st_mode):
-        raise Program007Error(_STORAGE_PATH_ERROR)
-    return True
-
-
-def _require_regular_file(parent_fd: int, name: str) -> None:
-    if not _regular_file_exists(parent_fd, name):
-        raise Program007Error(_STORAGE_PATH_ERROR)
-
-
-def _list_directory(descriptor: int) -> tuple[str, ...]:
-    try:
-        return tuple(sorted(os.listdir(descriptor)))
-    except OSError as error:
-        raise Program007Error(_STORAGE_PATH_ERROR) from error
-
-
-def _read_file(parent_fd: int, name: str) -> bytes:
-    _require_component(name)
+def _evidence_store(page_source: SyntheticPageSource) -> Iterator[_EvidenceStore]:
+    _require_synthetic_source(page_source)
     descriptor: int | None = None
+    locked = False
     try:
-        flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
-        descriptor = os.open(name, flags, dir_fd=parent_fd)
-        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-            raise OSError("private storage component is not a regular file")
-        with os.fdopen(descriptor, "rb") as handle:
-            descriptor = None
-            return handle.read()
-    except OSError as error:
-        raise Program007Error(_STORAGE_PATH_ERROR) from error
-    finally:
-        if descriptor is not None:
-            os.close(descriptor)
-
-
-def _write_fsynced(parent_fd: int, name: str, contents: bytes) -> None:
-    _require_component(name)
-    descriptor: int | None = None
-    try:
-        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-        flags |= getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
-        descriptor = os.open(name, flags, 0o600, dir_fd=parent_fd)
-        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-            raise OSError("private storage component is not a regular file")
-        with os.fdopen(descriptor, "wb") as handle:
-            descriptor = None
-            handle.write(contents)
-            handle.flush()
-            os.fsync(handle.fileno())
-    except FileExistsError:
+        with _private_root_fd(page_source) as root_fd:
+            if os.listdir(root_fd):
+                raise ValueError
+            stored_identity = page_source._evidence_identity
+            if (
+                type(stored_identity) is not tuple
+                or len(stored_identity) != 2
+                or any(type(value) is not int for value in stored_identity)
+            ):
+                raise ValueError
+            descriptor = page_source._evidence.fileno()
+            if type(descriptor) is not int:
+                raise ValueError
+            opened = os.fstat(descriptor)
+            if (
+                not stat.S_ISREG(opened.st_mode)
+                or opened.st_nlink != 0
+                or (opened.st_dev, opened.st_ino) != stored_identity
+            ):
+                raise ValueError
+            fcntl.flock(descriptor, fcntl.LOCK_EX)
+            locked = True
+            yield _EvidenceStore(descriptor, _load_evidence(descriptor))
+    except Program007Error:
         raise
-    except OSError as error:
+    except (OSError, RuntimeError, TypeError, ValueError) as error:
         raise Program007Error(_STORAGE_PATH_ERROR) from error
     finally:
-        if descriptor is not None:
-            os.close(descriptor)
+        if locked and descriptor is not None:
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
 
 
-@contextmanager
-def _exclusive_lock(root_fd: int) -> Iterator[None]:
-    descriptor: int | None = None
+def _require_evidence_key(key: str) -> None:
+    if type(key) is not str:
+        raise Program007Error("Program 007 evidence key is invalid")
+    if key == "private-manifest.json":
+        return
+    parts = key.split("/")
+    valid_chain = (
+        len(parts) >= 3 and parts[0] == "chains" and _HEX_64.fullmatch(parts[1]) is not None
+    )
+    if valid_chain and len(parts) == 3 and parts[2] == "validation.json":
+        return
+    if (
+        valid_chain
+        and len(parts) == 4
+        and parts[2] == "requests"
+        and re.fullmatch(r"[0-9]{5}\.json", parts[3]) is not None
+        and int(parts[3][:5]) > 0
+    ):
+        return
+    if (
+        valid_chain
+        and len(parts) == 5
+        and parts[2] == "pages"
+        and re.fullmatch(r"[0-9]{5}", parts[3]) is not None
+        and int(parts[3]) > 0
+        and parts[4] in {"body.json", "receipt.json", "validation.json"}
+    ):
+        return
+    raise Program007Error("Program 007 evidence key is invalid")
+
+
+def _load_evidence(descriptor: int) -> dict[str, bytes]:
     try:
-        flags = os.O_CREAT | os.O_RDWR
-        flags |= getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
-        descriptor = os.open(".program-007.lock", flags, 0o600, dir_fd=root_fd)
-        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-            raise OSError("private storage lock is not a regular file")
-        fcntl.flock(descriptor, fcntl.LOCK_EX)
-        yield
+        os.lseek(descriptor, 0, os.SEEK_SET)
+        chunks: list[bytes] = []
+        while chunk := os.read(descriptor, 1024 * 1024):
+            chunks.append(chunk)
     except OSError as error:
-        raise Program007Error(_STORAGE_PATH_ERROR) from error
-    finally:
-        if descriptor is not None:
-            try:
-                fcntl.flock(descriptor, fcntl.LOCK_UN)
-            finally:
-                os.close(descriptor)
+        raise Program007Error("Program 007 evidence log cannot be read") from error
+    raw = b"".join(chunks)
+    if not raw:
+        return {}
+    if not raw.endswith(b"\n"):
+        raise Program007Error("Program 007 evidence log is incomplete")
+
+    entries: dict[str, bytes] = {}
+    for line_number, line in enumerate(raw[:-1].split(b"\n"), start=1):
+        record = _load_json_object(line, f"evidence log line {line_number}")
+        _exact_keys(
+            record,
+            {
+                "schema_version",
+                "key",
+                "payload_base64",
+                "payload_bytes",
+                "payload_sha256",
+                "entry_fingerprint",
+            },
+            "evidence log entry",
+        )
+        unsigned = dict(record)
+        stored_fingerprint = unsigned.pop("entry_fingerprint")
+        key = record["key"]
+        encoded = record["payload_base64"]
+        payload_bytes = record["payload_bytes"]
+        payload_sha256 = record["payload_sha256"]
+        try:
+            payload = base64.b64decode(encoded.encode("ascii"), validate=True)
+        except (AttributeError, UnicodeEncodeError, binascii.Error) as error:
+            raise Program007Error("Program 007 evidence payload is not strict Base64") from error
+        if (
+            record["schema_version"] != "program-007-private-evidence-log-entry-v1"
+            or type(encoded) is not str
+            or base64.b64encode(payload).decode("ascii") != encoded
+            or type(payload_bytes) is not int
+            or payload_bytes != len(payload)
+            or type(payload_sha256) is not str
+            or _HEX_64.fullmatch(payload_sha256) is None
+            or payload_sha256 != hashlib.sha256(payload).hexdigest()
+            or type(stored_fingerprint) is not str
+            or stored_fingerprint != fingerprint(unsigned)
+            or line != canonical_json(record).encode()
+        ):
+            raise Program007Error("Program 007 evidence log entry differs")
+        _require_evidence_key(key)
+        if key in entries:
+            raise Program007Error("Program 007 evidence key is repeated")
+        entries[key] = payload
+    return entries
+
+
+def _append_evidence(descriptor: int, key: str, payload: bytes) -> None:
+    _require_evidence_key(key)
+    if type(payload) is not bytes:
+        raise Program007Error("Program 007 evidence payload must be exact bytes")
+    unsigned = {
+        "schema_version": "program-007-private-evidence-log-entry-v1",
+        "key": key,
+        "payload_base64": base64.b64encode(payload).decode("ascii"),
+        "payload_bytes": len(payload),
+        "payload_sha256": hashlib.sha256(payload).hexdigest(),
+    }
+    record = {**unsigned, "entry_fingerprint": fingerprint(unsigned)}
+    remaining = memoryview((canonical_json(record) + "\n").encode())
+    try:
+        os.lseek(descriptor, 0, os.SEEK_END)
+        while remaining:
+            written = os.write(descriptor, remaining)
+            if written <= 0:
+                raise OSError("evidence append made no progress")
+            remaining = remaining[written:]
+        os.fsync(descriptor)
+    except OSError as error:
+        raise Program007Error("Program 007 evidence log cannot be appended") from error
 
 
 def _parse_bar_timestamp(value: Any) -> datetime:

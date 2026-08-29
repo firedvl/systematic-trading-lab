@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 import subprocess
 from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta, tzinfo
@@ -17,7 +18,7 @@ import pytest
 import systematic_trading_lab.program_007_alpaca as program_007
 from systematic_trading_lab.calendar import expected_bar_timestamps
 from systematic_trading_lab.domain import Timeframe
-from systematic_trading_lab.fingerprints import fingerprint
+from systematic_trading_lab.fingerprints import canonical_json, fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _LEDGER_PATH = _REPOSITORY / "config/research/program-007-unit-changing-action-ledger-v2.json"
@@ -50,6 +51,15 @@ _NOW = datetime(2026, 8, 28, 20, tzinfo=UTC)
 
 def _load(path: Path) -> dict[str, Any]:
     return cast(dict[str, Any], json.loads(path.read_text(encoding="utf-8")))
+
+
+def _evidence_entries(source: program_007.SyntheticPageSource) -> dict[str, bytes]:
+    with program_007._evidence_store(source) as store:
+        return dict(store.entries)
+
+
+def _evidence_record(source: program_007.SyntheticPageSource, key: str) -> dict[str, Any]:
+    return cast(dict[str, Any], json.loads(_evidence_entries(source)[key]))
 
 
 def _ledger() -> dict[str, Any]:
@@ -530,7 +540,7 @@ def test_synthetic_storage_rejects_internal_symlinks(placement: str, tmp_path: P
         (chain_root / "pages/00001").symlink_to(outside, target_is_directory=True)
 
     before = {path.name: path.read_bytes() for path in outside.iterdir()}
-    with pytest.raises(program_007.Program007Error, match="contains a symlink"):
+    with pytest.raises(program_007.Program007Error, match="foreign entry"):
         program_007.execute_synthetic_qualification(
             _PROPOSAL_PATH.read_bytes(), source, observed_at=_NOW
         )
@@ -577,48 +587,73 @@ def test_synthetic_storage_rejects_replaced_root_inode() -> None:
     assert not source.intents
 
 
-def test_open_directory_descriptor_blocks_ancestor_swap(tmp_path: Path) -> None:
+def test_evidence_descriptor_ignores_injected_external_directory(tmp_path: Path) -> None:
     source = program_007.SyntheticPageSource(())
-    root = source.private_root
-    chains = root / "chains"
-    owned = root / "chains-owned"
     outside = tmp_path / "outside"
-    chains.mkdir()
     outside.mkdir()
-    (outside / "record.json").write_bytes(b"outside")
+    sentinel = outside / "sentinel"
+    sentinel.write_bytes(b"unchanged")
+    injected = source.private_root / "chains"
 
-    with (
-        program_007._private_root_fd(source) as root_fd,
-        program_007._directory_fd(root_fd, "chains") as chains_fd,
-    ):
-        program_007._publish_record(chains_fd, "record.json", {"location": "owned"})
-        chains.rename(owned)
-        chains.symlink_to(outside, target_is_directory=True)
+    with program_007._evidence_store(source) as store:
+        outside.rename(injected)
         try:
-            assert program_007._load_record(chains_fd, "record.json")["location"] == "owned"
-            program_007._publish_record(chains_fd, "new.json", {"location": "owned"})
+            program_007._publish_record(store, "private-manifest.json", {"location": "evidence"})
+            assert program_007._load_record(store, "private-manifest.json")["location"] == (
+                "evidence"
+            )
         finally:
-            chains.unlink()
-            owned.rename(chains)
+            injected.rename(outside)
 
-    assert (outside / "record.json").read_bytes() == b"outside"
-    assert not (outside / "new.json").exists()
-    assert (chains / "new.json").is_file()
+    assert sentinel.read_bytes() == b"unchanged"
+    assert _evidence_record(source, "private-manifest.json")["location"] == "evidence"
 
 
-def test_create_only_file_rejects_leaf_symlink(tmp_path: Path) -> None:
+def test_evidence_descriptor_never_reads_or_writes_injected_hard_link(tmp_path: Path) -> None:
     source = program_007.SyntheticPageSource(())
     outside = tmp_path / "outside.json"
     outside.write_bytes(b"unchanged")
-    (source.private_root / "record.json").symlink_to(outside)
+    injected = source.private_root / "private-manifest.json"
 
-    with (
-        program_007._private_root_fd(source) as root_fd,
-        pytest.raises(program_007.Program007Error, match="create-only artifact exists"),
-    ):
-        program_007._publish_record(root_fd, "record.json", {"location": "owned"})
+    with program_007._evidence_store(source) as store:
+        injected.hardlink_to(outside)
+        try:
+            program_007._publish_record(store, "private-manifest.json", {"location": "evidence"})
+            assert program_007._load_record(store, "private-manifest.json")["location"] == (
+                "evidence"
+            )
+        finally:
+            injected.unlink()
 
     assert outside.read_bytes() == b"unchanged"
+    assert _evidence_record(source, "private-manifest.json")["location"] == "evidence"
+
+
+@pytest.mark.parametrize("corruption", ["noncanonical", "invalid-base64"])
+def test_evidence_log_rejects_corrupt_entries(corruption: str) -> None:
+    source = program_007.SyntheticPageSource(())
+    with program_007._evidence_store(source) as store:
+        program_007._publish_record(store, "private-manifest.json", {"status": "retained"})
+
+    descriptor = source._evidence.fileno()
+    os.lseek(descriptor, 0, os.SEEK_SET)
+    raw = os.read(descriptor, 1024 * 1024)
+    if corruption == "noncanonical":
+        corrupted = b" " + raw
+    else:
+        entry = cast(dict[str, Any], json.loads(raw))
+        entry["payload_base64"] = "!"
+        unsigned = dict(entry)
+        unsigned.pop("entry_fingerprint")
+        entry["entry_fingerprint"] = fingerprint(unsigned)
+        corrupted = (canonical_json(entry) + "\n").encode()
+    os.lseek(descriptor, 0, os.SEEK_SET)
+    os.ftruncate(descriptor, 0)
+    assert os.write(descriptor, corrupted) == len(corrupted)
+    os.fsync(descriptor)
+
+    with pytest.raises(program_007.Program007Error, match="evidence"):
+        _evidence_entries(source)
 
 
 def test_incomplete_retained_page_blocks_restart_before_source_use() -> None:
@@ -626,17 +661,17 @@ def test_incomplete_retained_page_blocks_restart_before_source_use() -> None:
     source = program_007.SyntheticPageSource(
         (program_007.RawResponse(200, _body(_complete_rows(chain))),)
     )
-    chain_root = source.private_root / "chains" / chain.identity
-    (chain_root / "requests").mkdir(parents=True)
-    (chain_root / "requests/00001.json").write_bytes(b"{}")
-    (chain_root / "pages/00001").mkdir(parents=True)
-    (chain_root / "pages/00001/body.json").write_bytes(b"retained")
+    chain_prefix = f"chains/{chain.identity}"
+    body_key = f"{chain_prefix}/pages/00001/body.json"
+    with program_007._evidence_store(source) as store:
+        program_007._publish_record(store, f"{chain_prefix}/requests/00001.json", {})
+        store.publish(body_key, b"retained")
 
     with pytest.raises(program_007.Program007Error, match="zero-retry"):
         _execute_frozen_chain(chain, source)
 
     assert not source.intents
-    assert (chain_root / "pages/00001/body.json").read_bytes() == b"retained"
+    assert _evidence_entries(source)[body_key] == b"retained"
 
 
 def test_frozen_raw_contract_and_full_14742_coordinate_shape() -> None:
@@ -716,7 +751,8 @@ def test_frozen_raw_contract_and_full_14742_coordinate_shape() -> None:
     assert not forbidden & _recursive_keys(summary)
     assert summary["canonical_row_count"] == 14_742
     assert summary["extended_hours_row_count"] == 1
-    assert (source.private_root / "private-manifest.json").is_file()
+    assert "private-manifest.json" in _evidence_entries(source)
+    assert not any(source.private_root.iterdir())
 
 
 def test_valid_extended_hours_are_retained_and_restart_never_rereads_source() -> None:
@@ -743,8 +779,8 @@ def test_valid_extended_hours_are_retained_and_restart_never_rereads_source() ->
     restarted = _execute_frozen_chain(chain, source)
     assert restarted == result
     assert len(source.intents) == 2
-    raw_path = source.private_root / "chains" / chain.identity / "pages/00001/body.json"
-    assert raw_path.read_bytes() == bodies[None]
+    entries = _evidence_entries(source)
+    assert entries[f"chains/{chain.identity}/pages/00001/body.json"] == bodies[None]
 
 
 @pytest.mark.parametrize(
@@ -799,9 +835,9 @@ def test_invalid_raw_pages_fail_after_exact_bytes_are_retained(case: str) -> Non
     source = program_007.SyntheticPageSource((program_007.RawResponse(200, body),))
     with pytest.raises(program_007.Program007Error):
         _execute_frozen_chain(chain, source)
-    page_root = source.private_root / "chains" / chain.identity / "pages/00001"
-    assert (page_root / "body.json").read_bytes() == body
-    validation = _load(page_root / "validation.json")
+    page_prefix = f"chains/{chain.identity}/pages/00001"
+    assert _evidence_entries(source)[f"{page_prefix}/body.json"] == body
+    validation = _evidence_record(source, f"{page_prefix}/validation.json")
     assert validation["raw_structural_status"] == "FAIL"
 
 
@@ -811,7 +847,7 @@ def test_missing_canonical_row_excludes_the_whole_session() -> None:
     source = program_007.SyntheticPageSource((program_007.RawResponse(200, body),))
     with pytest.raises(program_007.Program007Error, match="whole session is ineligible"):
         _execute_frozen_chain(chain, source)
-    outcome = _load(source.private_root / "chains" / chain.identity / "validation.json")
+    outcome = _evidence_record(source, f"chains/{chain.identity}/validation.json")
     assert outcome["status"] == "FAIL"
     assert outcome["missing_coordinate_count"] == 1
     assert outcome["incomplete_sessions"] == ["2021-07-08"]
@@ -849,9 +885,7 @@ def test_forced_pagination_progression_and_token_cycle_rejection() -> None:
     )
     with pytest.raises(program_007.Program007Error, match="token is repeated"):
         _execute_frozen_chain(chain, cycle_source)
-    assert (
-        cycle_source.private_root / "chains" / chain.identity / "pages/00002/body.json"
-    ).is_file()
+    assert f"chains/{chain.identity}/pages/00002/body.json" in _evidence_entries(cycle_source)
 
 
 def test_page_response_and_total_byte_ceilings_fail_closed(
@@ -864,9 +898,9 @@ def test_page_response_and_total_byte_ceilings_fail_closed(
     page_source = program_007.SyntheticPageSource((program_007.RawResponse(200, oversized),))
     with pytest.raises(program_007.Program007Error, match="8 MiB page ceiling"):
         _execute_frozen_chain(chain, page_source)
-    page_root = page_source.private_root
-    assert not (page_root / "chains" / chain.identity / "pages/00001/body.json").exists()
-    assert (page_root / "chains" / chain.identity / "requests/00001.json").is_file()
+    entries = _evidence_entries(page_source)
+    assert f"chains/{chain.identity}/pages/00001/body.json" not in entries
+    assert f"chains/{chain.identity}/requests/00001.json" in entries
 
     monkeypatch.setattr(program_007, "MAXIMUM_RESPONSE_PAGE_BYTES", 8 * 1024 * 1024)
     first = _body(rows[:1], "page-2")
@@ -877,9 +911,9 @@ def test_page_response_and_total_byte_ceilings_fail_closed(
     )
     with pytest.raises(program_007.Program007Error, match="downloaded-byte ceiling"):
         _execute_frozen_chain(chain, total_source)
-    total_root = total_source.private_root
-    assert (total_root / "chains" / chain.identity / "pages/00001/body.json").is_file()
-    assert not (total_root / "chains" / chain.identity / "pages/00002/body.json").exists()
+    entries = _evidence_entries(total_source)
+    assert f"chains/{chain.identity}/pages/00001/body.json" in entries
+    assert f"chains/{chain.identity}/pages/00002/body.json" not in entries
 
 
 def test_page_and_response_count_ceilings_are_exact(
@@ -915,8 +949,9 @@ def test_ambiguous_send_is_never_retried() -> None:
     with pytest.raises(program_007.Program007Error, match="zero-retry"):
         _execute_frozen_chain(chain, source)
     assert len(source.intents) == 1
-    assert (source.private_root / "chains" / chain.identity / "requests/00001.json").is_file()
-    assert not (source.private_root / "chains" / chain.identity / "pages/00001").exists()
+    entries = _evidence_entries(source)
+    assert f"chains/{chain.identity}/requests/00001.json" in entries
+    assert not any(key.startswith(f"chains/{chain.identity}/pages/00001/") for key in entries)
 
     with pytest.raises(program_007.Program007Error, match="zero-retry"):
         _execute_frozen_chain(chain, source)
