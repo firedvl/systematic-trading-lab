@@ -539,6 +539,106 @@ def test_synthetic_storage_rejects_internal_symlinks(placement: str, tmp_path: P
     assert {path.name: path.read_bytes() for path in outside.iterdir()} == before
 
 
+def test_synthetic_storage_rejects_reflective_root_mutation(tmp_path: Path) -> None:
+    source = program_007.SyntheticPageSource(())
+    original = source.private_root
+    alternate = tmp_path / "alternate"
+    alternate.mkdir()
+    object.__setattr__(source, "_private_root", alternate)
+
+    try:
+        with pytest.raises(program_007.Program007Error, match="owned root"):
+            program_007.execute_synthetic_qualification(
+                _PROPOSAL_PATH.read_bytes(), source, observed_at=_NOW
+            )
+    finally:
+        object.__setattr__(source, "_private_root", original)
+
+    assert not source.intents
+    assert not any(alternate.iterdir())
+
+
+def test_synthetic_storage_rejects_replaced_root_inode() -> None:
+    source = program_007.SyntheticPageSource(())
+    root = source.private_root
+    original = root.with_name(f"{root.name}-original")
+    root.rename(original)
+    root.mkdir()
+
+    try:
+        with pytest.raises(program_007.Program007Error, match="owned root"):
+            program_007.execute_synthetic_qualification(
+                _PROPOSAL_PATH.read_bytes(), source, observed_at=_NOW
+            )
+    finally:
+        root.rmdir()
+        original.rename(root)
+
+    assert not source.intents
+
+
+def test_open_directory_descriptor_blocks_ancestor_swap(tmp_path: Path) -> None:
+    source = program_007.SyntheticPageSource(())
+    root = source.private_root
+    chains = root / "chains"
+    owned = root / "chains-owned"
+    outside = tmp_path / "outside"
+    chains.mkdir()
+    outside.mkdir()
+    (outside / "record.json").write_bytes(b"outside")
+
+    with (
+        program_007._private_root_fd(source) as root_fd,
+        program_007._directory_fd(root_fd, "chains") as chains_fd,
+    ):
+        program_007._publish_record(chains_fd, "record.json", {"location": "owned"})
+        chains.rename(owned)
+        chains.symlink_to(outside, target_is_directory=True)
+        try:
+            assert program_007._load_record(chains_fd, "record.json")["location"] == "owned"
+            program_007._publish_record(chains_fd, "new.json", {"location": "owned"})
+        finally:
+            chains.unlink()
+            owned.rename(chains)
+
+    assert (outside / "record.json").read_bytes() == b"outside"
+    assert not (outside / "new.json").exists()
+    assert (chains / "new.json").is_file()
+
+
+def test_create_only_file_rejects_leaf_symlink(tmp_path: Path) -> None:
+    source = program_007.SyntheticPageSource(())
+    outside = tmp_path / "outside.json"
+    outside.write_bytes(b"unchanged")
+    (source.private_root / "record.json").symlink_to(outside)
+
+    with (
+        program_007._private_root_fd(source) as root_fd,
+        pytest.raises(program_007.Program007Error, match="create-only artifact exists"),
+    ):
+        program_007._publish_record(root_fd, "record.json", {"location": "owned"})
+
+    assert outside.read_bytes() == b"unchanged"
+
+
+def test_incomplete_retained_page_blocks_restart_before_source_use() -> None:
+    chain = _frozen_chain("normal-2021-07-08")
+    source = program_007.SyntheticPageSource(
+        (program_007.RawResponse(200, _body(_complete_rows(chain))),)
+    )
+    chain_root = source.private_root / "chains" / chain.identity
+    (chain_root / "requests").mkdir(parents=True)
+    (chain_root / "requests/00001.json").write_bytes(b"{}")
+    (chain_root / "pages/00001").mkdir(parents=True)
+    (chain_root / "pages/00001/body.json").write_bytes(b"retained")
+
+    with pytest.raises(program_007.Program007Error, match="zero-retry"):
+        _execute_frozen_chain(chain, source)
+
+    assert not source.intents
+    assert (chain_root / "pages/00001/body.json").read_bytes() == b"retained"
+
+
 def test_frozen_raw_contract_and_full_14742_coordinate_shape() -> None:
     proposal_bytes = _PROPOSAL_PATH.read_bytes()
     chains = program_007.frozen_request_chains(proposal_bytes)
