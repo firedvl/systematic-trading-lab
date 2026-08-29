@@ -9,7 +9,7 @@ import os
 import re
 import shutil
 import tempfile
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
@@ -199,16 +199,34 @@ class RawResponse:
 class SyntheticPageSource:
     """Finite in-memory responses stored in an owned temporary workspace."""
 
+    __slots__ = (
+        "_responses",
+        "_intents",
+        "_intent_files_present",
+        "_workspace",
+        "_private_root",
+    )
+
+    _responses: tuple[RawResponse | None, ...]
+    _intents: list[RequestIntent]
+    _intent_files_present: list[bool]
+    _workspace: tempfile.TemporaryDirectory[str]
+    _private_root: Path
+
     def __init__(self, responses: Sequence[RawResponse | None]) -> None:
         if type(responses) not in {list, tuple} or any(
             response is not None and type(response) is not RawResponse for response in responses
         ):
             raise Program007Error("Program 007 synthetic responses are invalid")
-        self._responses = tuple(responses)
-        self._intents: list[RequestIntent] = []
-        self._intent_files_present: list[bool] = []
-        self._workspace = tempfile.TemporaryDirectory(prefix="program-007-synthetic-")
-        self._private_root = Path(self._workspace.name)
+        workspace = tempfile.TemporaryDirectory(prefix="program-007-synthetic-")
+        object.__setattr__(self, "_responses", tuple(responses))
+        object.__setattr__(self, "_intents", [])
+        object.__setattr__(self, "_intent_files_present", [])
+        object.__setattr__(self, "_workspace", workspace)
+        object.__setattr__(self, "_private_root", Path(workspace.name))
+
+    def __setattr__(self, name: str, value: object) -> None:
+        raise AttributeError("Program 007 synthetic source is immutable")
 
     @property
     def private_root(self) -> Path:
@@ -221,27 +239,6 @@ class SyntheticPageSource:
     @property
     def intent_files_present(self) -> tuple[bool, ...]:
         return tuple(self._intent_files_present)
-
-    def next_response(self, intent: RequestIntent) -> RawResponse:
-        if type(intent) is not RequestIntent:
-            raise Program007Error("Program 007 synthetic request intent is invalid")
-        response_index = len(self._intents)
-        self._intents.append(intent)
-        self._intent_files_present.append(
-            (
-                self.private_root
-                / "chains"
-                / intent.chain_identity
-                / "requests"
-                / f"{intent.page_index:05d}.json"
-            ).is_file()
-        )
-        if response_index >= len(self._responses):
-            raise Program007Error("Program 007 synthetic response is missing")
-        response = self._responses[response_index]
-        if response is None:
-            raise Program007Error("Program 007 synthetic response is ambiguous")
-        return response
 
 
 @dataclass(frozen=True, order=True)
@@ -527,28 +524,31 @@ def execute_synthetic_qualification(
     proposal_bytes: bytes,
     page_source: SyntheticPageSource,
     *,
-    now: Callable[[], datetime] = lambda: datetime.now(UTC),
+    observed_at: datetime | None = None,
 ) -> QualificationResult:
     """Run the exact frozen proposal against finite in-memory responses."""
-    chains = frozen_request_chains(proposal_bytes)
-    if type(page_source) is not SyntheticPageSource:
-        raise Program007Error("Program 007 execution accepts synthetic responses only")
-    return _execute_qualification(chains, page_source.private_root, page_source, now=now)
+    _require_synthetic_source(page_source)
+    exact_observed_at = datetime.now(UTC) if observed_at is None else observed_at
+    _require_synthetic_observed_at(exact_observed_at)
+    return _execute_qualification(
+        frozen_request_chains(proposal_bytes), page_source, observed_at=exact_observed_at
+    )
 
 
 def _execute_qualification(
     chains: Sequence[RequestChain],
-    private_root: Path,
     page_source: SyntheticPageSource,
     *,
-    now: Callable[[], datetime],
+    observed_at: datetime,
 ) -> QualificationResult:
+    _require_synthetic_observed_at(observed_at)
     exact_chains = tuple(chains)
     if any(type(chain) is not RequestChain for chain in exact_chains) or (
         exact_chains != _frozen_request_chains()
     ):
         raise Program007Error("Program 007 execution requires the exact frozen request plan")
-    _require_synthetic_source(private_root, page_source)
+    _require_synthetic_source(page_source)
+    private_root = page_source._private_root
     private_root.mkdir(parents=True, exist_ok=True)
     if private_root.is_symlink():
         raise Program007Error("Program 007 private root must not be a symlink")
@@ -556,7 +556,7 @@ def _execute_qualification(
         _validate_restart_state(private_root, exact_chains)
         budget = _Budget()
         results = tuple(
-            _execute_chain(chain, private_root, page_source, budget, now) for chain in exact_chains
+            _execute_chain(chain, page_source, budget, observed_at) for chain in exact_chains
         )
         result = QualificationResult(results)
         _publish_record(
@@ -1202,14 +1202,15 @@ def normalize_share_volume(
 
 def _execute_chain(
     chain: RequestChain,
-    private_root: Path,
     page_source: SyntheticPageSource,
     budget: _Budget,
-    now: Callable[[], datetime],
+    observed_at: datetime,
 ) -> ChainResult:
+    _require_synthetic_observed_at(observed_at)
     if type(chain) is not RequestChain or chain not in _frozen_request_chains():
         raise Program007Error("Program 007 request chain is outside the exact frozen plan")
-    _require_synthetic_source(private_root, page_source)
+    _require_synthetic_source(page_source)
+    private_root = page_source._private_root
     chain_root = private_root / "chains" / chain.identity
     requests_root = chain_root / "requests"
     pages_root = chain_root / "pages"
@@ -1248,13 +1249,13 @@ def _execute_chain(
                 {
                     "schema_version": "program-007-private-request-intent-v1",
                     **_intent_record(intent),
-                    "created_at_utc": _iso_utc(now()),
+                    "created_at_utc": _iso_utc(observed_at),
                     "automatic_transport_retries": AUTOMATIC_TRANSPORT_RETRIES,
                     "credentials_stored": False,
                 },
             )
             try:
-                response = page_source.next_response(intent)
+                response = _next_synthetic_response(page_source, intent)
             except Exception:
                 raise Program007Error(
                     "Program 007 request outcome is ambiguous; zero-retry policy blocks replay"
@@ -1264,7 +1265,7 @@ def _execute_chain(
                     "Program 007 request outcome is ambiguous; zero-retry policy blocks replay"
                 )
             budget.accept_response(response.body)
-            _retain_response(page_root, intent, response, now)
+            _retain_response(page_root, intent, response, observed_at)
 
         response = _load_response(page_root, intent)
         if retained_response:
@@ -1315,7 +1316,7 @@ def _execute_chain(
                 "canonical_row_count": len(canonical),
                 "extended_hours_row_count": len(page_rows) - len(canonical),
             }
-            _publish_validation(outcome_path, outcome, now, existing_outcome)
+            _publish_validation(outcome_path, outcome, observed_at, existing_outcome)
         except Program007Error as error:
             failure = {
                 "schema_version": "program-007-private-page-validation-v1",
@@ -1327,7 +1328,7 @@ def _execute_chain(
                 "rth_projection_status": "NOT-RUN",
                 "failure": str(error),
             }
-            _publish_validation(outcome_path, failure, now, existing_outcome)
+            _publish_validation(outcome_path, failure, observed_at, existing_outcome)
             raise
 
         seen_hashes.add(response_sha256)
@@ -1384,7 +1385,7 @@ def _execute_chain(
     existing_chain_outcome = (
         _load_record(chain_outcome_path) if chain_outcome_path.exists() else None
     )
-    _publish_validation(chain_outcome_path, chain_outcome, now, existing_chain_outcome)
+    _publish_validation(chain_outcome_path, chain_outcome, observed_at, existing_chain_outcome)
     if missing or extra:
         raise Program007Error(
             "Program 007 canonical RTH completeness failed; the whole session is ineligible"
@@ -1392,13 +1393,41 @@ def _execute_chain(
     return ChainResult(chain, raw_rows, canonical_rows, tuple(pages))
 
 
-def _require_synthetic_source(private_root: Path, page_source: SyntheticPageSource) -> None:
-    if (
-        type(page_source) is not SyntheticPageSource
-        or not isinstance(private_root, Path)
-        or private_root != page_source.private_root
-    ):
-        raise Program007Error("Program 007 execution requires its owned synthetic workspace")
+def _require_synthetic_source(page_source: SyntheticPageSource) -> None:
+    if type(page_source) is not SyntheticPageSource:
+        raise Program007Error("Program 007 execution accepts synthetic responses only")
+
+
+def _require_synthetic_observed_at(observed_at: datetime) -> None:
+    if type(observed_at) is not datetime or observed_at.tzinfo is not UTC:
+        raise Program007Error(
+            "Program 007 synthetic observation time must be a concrete UTC datetime"
+        )
+
+
+def _next_synthetic_response(
+    page_source: SyntheticPageSource, intent: RequestIntent
+) -> RawResponse:
+    _require_synthetic_source(page_source)
+    if type(intent) is not RequestIntent:
+        raise Program007Error("Program 007 synthetic request intent is invalid")
+    response_index = len(page_source._intents)
+    page_source._intents.append(intent)
+    page_source._intent_files_present.append(
+        (
+            page_source._private_root
+            / "chains"
+            / intent.chain_identity
+            / "requests"
+            / f"{intent.page_index:05d}.json"
+        ).is_file()
+    )
+    if response_index >= len(page_source._responses):
+        raise Program007Error("Program 007 synthetic response is missing")
+    response = page_source._responses[response_index]
+    if response is None:
+        raise Program007Error("Program 007 synthetic response is ambiguous")
+    return response
 
 
 def _validate_restart_state(private_root: Path, chains: Sequence[RequestChain]) -> None:
@@ -1423,7 +1452,7 @@ def _retain_response(
     target: Path,
     intent: RequestIntent,
     response: RawResponse,
-    now: Callable[[], datetime],
+    observed_at: datetime,
 ) -> None:
     sha256 = hashlib.sha256(response.body).hexdigest()
     receipt = {
@@ -1435,7 +1464,7 @@ def _retain_response(
         "response_status": response.status,
         "response_sha256": sha256,
         "response_bytes": len(response.body),
-        "received_at_utc": _iso_utc(now()),
+        "received_at_utc": _iso_utc(observed_at),
         "provider": "Alpaca",
         "feed": "sip",
         "timeframe": "5Min",
@@ -1508,7 +1537,7 @@ def _validate_intent(record: Mapping[str, Any], intent: RequestIntent) -> None:
 def _publish_validation(
     path: Path,
     record: Mapping[str, Any],
-    now: Callable[[], datetime],
+    observed_at: datetime,
     existing: Mapping[str, Any] | None,
 ) -> None:
     if existing is not None:
@@ -1518,7 +1547,7 @@ def _publish_validation(
         if comparable != dict(record):
             raise Program007Error("Program 007 immutable validation outcome differs")
         return
-    _publish_record(path, {**record, "validated_at_utc": _iso_utc(now())})
+    _publish_record(path, {**record, "validated_at_utc": _iso_utc(observed_at)})
 
 
 def _publish_record(

@@ -5,7 +5,7 @@ import importlib.util
 import json
 import subprocess
 from collections import defaultdict
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta, tzinfo
 from decimal import Decimal
 from fractions import Fraction
 from pathlib import Path
@@ -111,10 +111,9 @@ def _execute_frozen_chain(
 ) -> program_007.QualificationResult:
     result = program_007._execute_chain(
         chain,
-        page_source.private_root,
         page_source,
         program_007._Budget(),
-        lambda: _NOW,
+        _NOW,
     )
     return program_007.QualificationResult((result,))
 
@@ -379,14 +378,10 @@ def test_frozen_proposal_and_range_substitution_fail_before_source(tmp_path: Pat
         program_007.execute_synthetic_qualification(cast(Any, (_chain(),)), source)
 
     with pytest.raises(program_007.Program007Error, match="exact frozen request plan"):
-        program_007._execute_qualification(
-            (_chain(),), tmp_path / "internal-substitution", source, now=lambda: _NOW
-        )
+        program_007._execute_qualification((_chain(),), source, observed_at=_NOW)
 
     with pytest.raises(program_007.Program007Error, match="outside the exact frozen plan"):
-        program_007._execute_chain(
-            _chain(), tmp_path / "chain-substitution", source, program_007._Budget(), lambda: _NOW
-        )
+        program_007._execute_chain(_chain(), source, program_007._Budget(), _NOW)
 
     transport_calls = 0
 
@@ -400,14 +395,57 @@ def test_frozen_proposal_and_range_substitution_fail_before_source(tmp_path: Pat
             _PROPOSAL_PATH.read_bytes(), cast(Any, transport_capable_source)
         )
 
-    exact_chains = program_007.frozen_request_chains(_PROPOSAL_PATH.read_bytes())
-    with pytest.raises(program_007.Program007Error, match="owned synthetic workspace"):
-        program_007._execute_qualification(
-            exact_chains, tmp_path / "alternate-root", source, now=lambda: _NOW
+    clock_calls = 0
+
+    def transport_capable_clock() -> datetime:
+        nonlocal clock_calls
+        clock_calls += 1
+        raise AssertionError("unexpected clock callback")
+
+    timezone_calls = 0
+
+    class TransportCapableTimezone(tzinfo):
+        def utcoffset(self, value: datetime | None) -> timedelta:
+            nonlocal timezone_calls
+            timezone_calls += 1
+            raise AssertionError(f"unexpected timezone callback: {value!r}")
+
+        def dst(self, value: datetime | None) -> timedelta:
+            nonlocal timezone_calls
+            timezone_calls += 1
+            raise AssertionError(f"unexpected timezone callback: {value!r}")
+
+        def tzname(self, value: datetime | None) -> str:
+            nonlocal timezone_calls
+            timezone_calls += 1
+            raise AssertionError(f"unexpected timezone callback: {value!r}")
+
+    with pytest.raises(program_007.Program007Error, match="concrete UTC datetime"):
+        program_007.execute_synthetic_qualification(
+            _PROPOSAL_PATH.read_bytes(),
+            source,
+            observed_at=cast(Any, transport_capable_clock),
         )
+    with pytest.raises(program_007.Program007Error, match="concrete UTC datetime"):
+        program_007.execute_synthetic_qualification(
+            _PROPOSAL_PATH.read_bytes(),
+            source,
+            observed_at=datetime(2026, 8, 28, 20, tzinfo=TransportCapableTimezone()),
+        )
+
+    mutations = (
+        ("next_response", transport_capable_source),
+        ("_private_root", tmp_path / "alternate-root"),
+    )
+    for name, value in mutations:
+        with pytest.raises(AttributeError, match="immutable"):
+            setattr(source, name, value)
 
     assert not source.intents
     assert transport_calls == 0
+    assert clock_calls == 0
+    assert timezone_calls == 0
+    assert not any(source.private_root.iterdir())
     assert not any(tmp_path.iterdir())
 
 
@@ -441,7 +479,7 @@ def test_frozen_raw_contract_and_full_14742_coordinate_shape() -> None:
         if chain.chain_id == "pagination-2023-05-16-to-2023-05-30":
             responses.append(program_007.RawResponse(200, pages[(chain.chain_id, "page-2")]))
     source = program_007.SyntheticPageSource(responses)
-    result = program_007.execute_synthetic_qualification(proposal_bytes, source, now=lambda: _NOW)
+    result = program_007.execute_synthetic_qualification(proposal_bytes, source, observed_at=_NOW)
     intents = source.intents
     assert result.response_count == len(intents) == 7
     assert all(source.intent_files_present)
