@@ -39,8 +39,11 @@ _IMPLEMENTATION_V2_PATH = (
 _IMPLEMENTATION_V3_PATH = (
     _REPOSITORY / "config/research/program-007-raw-source-contract-implementation-v3.json"
 )
-_IMPLEMENTATION_PATH = (
+_IMPLEMENTATION_V4_PATH = (
     _REPOSITORY / "config/research/program-007-raw-source-contract-implementation-v4.json"
+)
+_IMPLEMENTATION_PATH = (
+    _REPOSITORY / "config/research/program-007-raw-source-contract-implementation-v5.json"
 )
 _NOW = datetime(2026, 8, 28, 20, tzinfo=UTC)
 
@@ -238,6 +241,9 @@ def test_non_authorizing_implementation_artifact_binds_exact_source_commit() -> 
     )
     assert hashlib.sha256(_IMPLEMENTATION_V3_PATH.read_bytes()).hexdigest() == (
         "32a5fa3f18127cc95e98b9da1382590a855ed30d76e4de908c312cd6cea3774e"
+    )
+    assert hashlib.sha256(_IMPLEMENTATION_V4_PATH.read_bytes()).hexdigest() == (
+        "4cec636042b8213d7ec15b5d6f72a702dffc36e7721e56486227f3931976e765"
     )
     implementation = _load(_IMPLEMENTATION_PATH)
     unsigned = dict(implementation)

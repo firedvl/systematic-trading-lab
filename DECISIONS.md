@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-29 - Require inert Program 007 inputs and contained storage
+
+- Decision: accept only exact built-in proposal bytes, response bytes, and response status integers. Reject every symbolic link in a used path below the source-owned temporary root, verify resolved containment before each read or write, and use no-follow final file opens.
+- Context: V4 review showed that `bytes` subclasses could execute overridden `decode` or `__len__` methods and that a caller-created `chains` symbolic link redirected request, raw-body, receipt, and validation writes outside the owned workspace. Both paths operated while every authority flag was false.
+- Consequences: callback-capable scalar subclasses fail before invocation, response consumption, or filesystem activity. Symbolic links at chain, request, page, record, lock, and manifest boundaries fail before a redirected read or write. The synthetic source, frozen sample, ledger v2, provider contract, science, costs, delays, and budgets do not change; every authority flag remains false.
+- Revisit when: a separate reviewed one-use authority design introduces real transport and its fixed ignored private root. Do not reuse the synthetic temporary-store implementation as that production storage boundary.
+
 ## 2026-08-29 - Remove all Program 007 execution callbacks
 
 - Decision: make synthetic responses immutable under normal assignment, consume them only through a module function, derive the execution root inside the source, and replace the injected clock with an exact built-in UTC `datetime`. Public and internal qualification paths accept neither a callable nor a storage root.

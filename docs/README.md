@@ -8,7 +8,7 @@ Start with the research path. Open the controlled campaign and paper documents o
 - [Data policy](data-policy.md) — cataloged data, local files, validation, and adjustment rules
 - [Program 006 Alpaca source qualification](program-006-alpaca-qualification.md) — terminal failure, offline forensic disposition, and non-authorizing successor boundary
 - [Program 006 forensic analysis](research-campaigns/program-006-source-qualification-forensic-analysis-v1.md) — response-grid and adjustment-factor evidence, corrected contracts, and fresh Program 007 proposal
-- [Program 007 raw source contract](research-campaigns/program-007-raw-source-contract-implementation-v4.md) — callback-free synthetic execution, raw-first retention, RTH projection, pagination, and the incomplete-ledger admission block
+- [Program 007 raw source contract](research-campaigns/program-007-raw-source-contract-implementation-v5.md) — inert synthetic inputs, contained raw-first retention, RTH projection, pagination, and the incomplete-ledger admission block
 - [Program 005 private Alpaca data](program-005-alpaca-data.md) — public recipe, private storage, credential isolation, and qualification preflight
 - [Open-source guidance](OPEN_SOURCE.md) — project scope and useful contribution areas
 
