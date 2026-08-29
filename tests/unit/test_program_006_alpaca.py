@@ -259,6 +259,7 @@ def test_credential_preflight_cli_prints_only_pass_or_missing_names(
 
 def test_exact_committed_chain_loads_and_self_rehashed_control_mutations_fail(
     tmp_path: Path,
+    monkeypatch: MonkeyPatch,
 ) -> None:
     required = (
         program_006._IMPLEMENTATION_REVIEW_PATH,
@@ -277,9 +278,12 @@ def test_exact_committed_chain_loads_and_self_rehashed_control_mutations_fail(
     terminal = (
         _REPOSITORY / "config/research/program-006-source-qualification-terminal-failure-v1.json"
     )
+    terminal_record = (
+        json.loads(terminal.read_text(encoding="utf-8")) if terminal.exists() else None
+    )
     head = (
-        str(json.loads(terminal.read_text(encoding="utf-8"))["execution_main"])
-        if terminal.exists()
+        str(terminal_record["execution_main"])
+        if terminal_record is not None
         else subprocess.run(
             ("git", "-C", str(_REPOSITORY), "rev-parse", "HEAD"),
             check=True,
@@ -287,6 +291,37 @@ def test_exact_committed_chain_loads_and_self_rehashed_control_mutations_fail(
             text=True,
         ).stdout.strip()
     )
+    if terminal_record is not None:
+        closeout_head = subprocess.run(
+            ("git", "-C", str(_REPOSITORY), "rev-parse", "HEAD"),
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        subprocess.run(
+            ("git", "-C", str(repository), "checkout", "-B", "main", closeout_head),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        subprocess.run(
+            ("git", "-C", str(repository), "update-ref", "refs/remotes/origin/main", closeout_head),
+            check=True,
+        )
+        credential_reads: list[bool] = []
+        monkeypatch.setattr(
+            program_006,
+            "_require_credentials_present",
+            lambda _: credential_reads.append(True),
+        )
+        with pytest.raises(program_006.Program006Error):
+            program_006.activate_authority(
+                repository,
+                str(terminal_record["authorization"]["external_authorization_root"]),
+                environ={},
+            )
+        assert credential_reads == []
+        assert not program_006._active_authority_path(repository).exists()
     subprocess.run(
         ("git", "-C", str(repository), "checkout", "-B", "main", head),
         check=True,
