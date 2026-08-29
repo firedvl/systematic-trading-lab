@@ -25,11 +25,11 @@ _CREDENTIAL_NAMES = (
 )
 _IMPLEMENTATION_REVIEW_PATH = Path(
     "config/research/program-006-credential-safe-qualification-implementation-"
-    "independent-review-v1.json"
+    "independent-review-v2.json"
 )
-_PROPOSAL_PATH = Path("config/research/program-006-source-qualification-authority-proposal-v1.json")
+_PROPOSAL_PATH = Path("config/research/program-006-source-qualification-authority-proposal-v2.json")
 _REVIEW_PATH = Path(
-    "config/research/program-006-source-qualification-authority-proposal-independent-review-v1.json"
+    "config/research/program-006-source-qualification-authority-proposal-independent-review-v2.json"
 )
 _PROGRAM_005_PROPOSAL = {
     "path": "config/research/program-005-source-qualification-authority-proposal-v2.json",
@@ -81,6 +81,7 @@ _IMPLEMENTATION_REVIEW_ASSERTIONS = frozenset(
         "second_run_is_rejected",
         "external_authorization_root_is_required",
         "repository_and_bindings_are_revalidated_under_lock",
+        "control_lineage_is_bound_in_external_root",
         "program_005_scientific_contract_is_unchanged",
         "program_005_terminal_lineage_is_immutable",
         "provider_and_strategy_execution_were_not_used_in_review",
@@ -107,18 +108,20 @@ _IMPLEMENTATION_REVIEW_KEYS = frozenset(
 )
 _PROPOSAL_REVIEW_ASSERTIONS = frozenset(
     {
-        "successor_is_legitimate_after_zero_provider_requests",
-        "change_is_control_plane_repair_not_provider_shopping",
-        "exact_twenty_two_session_sample_is_preserved",
-        "credential_presence_reveals_no_secret_information",
-        "missing_credentials_cannot_activate_or_consume_authority",
-        "consumption_boundary_tracks_first_provider_transport_attempt",
-        "multiple_provider_looks_are_not_permitted",
-        "toctou_controls_are_preserved",
+        "credentials_are_present_without_secret_disclosure",
+        "provider_contact_did_not_occur",
+        "external_root_binds_immutable_reviewed_artifacts",
+        "scientific_scope_matches_frozen_program_005_and_006_scope",
+        "qualification_dates_are_unchanged",
+        "symbols_are_unchanged",
+        "request_response_and_byte_budgets_are_unchanged",
+        "credential_absence_before_transport_cannot_consume_authority",
+        "first_provider_transport_consumes_authority",
+        "second_scientific_attempt_is_impossible",
         "mutable_provenance_cannot_self_authorize",
-        "program_005_terminal_records_are_immutable",
-        "scientific_controls_are_unchanged",
-        "controlled_and_protected_boundaries_are_untouched",
+        "protected_dates_remain_excluded",
+        "strategy_calculations_did_not_occur",
+        "public_private_data_boundaries_are_intact",
     }
 )
 _PROPOSAL_REVIEW_KEYS = frozenset(
@@ -233,7 +236,7 @@ def derive_active_authority(repository: Path) -> Mapping[str, Any]:
         implementation,
         implementation_review_binding,
     )
-    _repository_preflight(
+    control_lineage = _repository_preflight(
         repository,
         implementation,
         implementation_review,
@@ -242,7 +245,7 @@ def derive_active_authority(repository: Path) -> Mapping[str, Any]:
     )
     activation = frozen._mapping(proposal.get("activation_contract"), "activation contract")
     unsigned: dict[str, Any] = {
-        "schema_version": "program-006-source-authority-v1",
+        "schema_version": "program-006-source-authority-v2",
         "status": "ACTIVE-ONE-USE",
         "authority_id": activation.get("future_authority_id"),
         "program_id": PROGRAM_ID,
@@ -253,9 +256,12 @@ def derive_active_authority(repository: Path) -> Mapping[str, Any]:
         "bindings": {
             "authority_proposal": proposal_binding,
             "independent_review": review_binding,
+            "implementation_review": implementation_review_binding,
             "program_005_terminal_failure": _PROGRAM_005_FAILURE,
+            "program_005_terminal_failure_review": _PROGRAM_005_FAILURE_REVIEW,
         },
         "implementation_binding": implementation,
+        "control_lineage": control_lineage,
     }
     return {**unsigned, "authority_fingerprint": fingerprint(unsigned)}
 
@@ -533,12 +539,12 @@ def _validate_proposal(
     if (
         set(proposal) != expected_keys
         or proposal.get("schema_version")
-        != "program-006-source-qualification-authority-proposal-v1"
+        != "program-006-source-qualification-authority-proposal-v2"
         or proposal.get("proposal_id")
-        != "program-006-source-qualification-authority-proposal-2026-08-28-v1"
+        != "program-006-source-qualification-authority-proposal-2026-08-28-v2"
         or proposal.get("program_id") != PROGRAM_ID
         or not isinstance(proposal.get("created_at"), str)
-        or proposal.get("status") != "BLOCKED-CREDENTIALS-NOT-VISIBLE-TO-RUNTIME"
+        or proposal.get("status") != "READY FOR NEW EXACT ONE-USE QUALIFICATION AUTHORIZATION"
         or proposal.get("purpose")
         != "one-use free Alpaca Basic historical SIP structural source qualification only"
         or proposal.get("scope") != "qualification"
@@ -604,7 +610,7 @@ def _validate_proposal(
         raise Program006Error("Program 006 credential lifecycle differs")
     activation = frozen._mapping(proposal.get("activation_contract"), "activation contract")
     if activation != {
-        "future_authority_id": "program-006-source-qualification-authority-2026-08-28-v1",
+        "future_authority_id": "program-006-source-qualification-authority-2026-08-28-v2",
         "authorization_root_is_external": True,
         "mutable_child_hashes_cannot_self_authorize": True,
         "clean_head_main_origin_required": True,
@@ -638,10 +644,10 @@ def _validate_implementation_review(
     if (
         set(review) != _IMPLEMENTATION_REVIEW_KEYS
         or review.get("schema_version")
-        != "program-006-credential-safe-qualification-implementation-independent-review-v1"
+        != "program-006-credential-safe-qualification-implementation-independent-review-v2"
         or review.get("review_id")
         != "program-006-credential-safe-qualification-implementation-independent-review-"
-        "2026-08-28-v1"
+        "2026-08-28-v2"
         or review.get("program_id") != PROGRAM_ID
         or review.get("status") != "PASS"
         or review.get("verdict") != "PASS"
@@ -667,11 +673,11 @@ def _validate_review(
     if (
         set(review) != _PROPOSAL_REVIEW_KEYS
         or review.get("schema_version")
-        != "program-006-source-qualification-authority-proposal-independent-review-v1"
+        != "program-006-source-qualification-authority-proposal-independent-review-v2"
         or review.get("review_id")
-        != "program-006-source-qualification-authority-proposal-independent-review-2026-08-28-v1"
+        != "program-006-source-qualification-authority-proposal-independent-review-2026-08-28-v2"
         or review.get("program_id") != PROGRAM_ID
-        or review.get("status") != "PASS-CONTROL-DESIGN-BLOCKED-CREDENTIALS"
+        or review.get("status") != "PASSED-READY-FOR-NEW-EXACT-ONE-USE-QUALIFICATION-AUTHORIZATION"
         or review.get("verdict") != "PASS"
         or review.get("findings") != []
         or reviewed_proposal
@@ -687,7 +693,7 @@ def _validate_review(
         or set(assertions) != _PROPOSAL_REVIEW_ASSERTIONS
         or any(value is not True for value in assertions.values())
         or review.get("credential_presence_at_review")
-        != [{"name": name, "present": False} for name in _CREDENTIAL_NAMES]
+        != [{"name": name, "present": True} for name in _CREDENTIAL_NAMES]
         or review.get("authority") != _authority_flags(active=False)
         or any(frozen._mapping(review.get("protected_access"), "protected access").values())
     ):
@@ -720,7 +726,7 @@ def _repository_preflight(
     implementation_review: Mapping[str, Any],
     proposal_binding: Mapping[str, Any],
     review: Mapping[str, Any],
-) -> None:
+) -> Mapping[str, str]:
     source_commit = str(implementation.get("source_commit"))
     environment = non_broker_subprocess_environment()
     environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
@@ -814,6 +820,13 @@ def _repository_preflight(
             or frozen._git_file_sha256(repository, source_commit, path) != expected_sha256
         ):
             raise Program006Error("Program 006 reviewed implementation bytes differ")
+    return {
+        "implementation_source_commit": source_commit,
+        "implementation_review_artifact_commit": implementation_review_added,
+        "proposal_artifact_commit": proposal_added,
+        "proposal_review_artifact_commit": review_added,
+        "synchronized_main_commit": head,
+    }
 
 
 def _static_bindings() -> Mapping[str, Mapping[str, str]]:

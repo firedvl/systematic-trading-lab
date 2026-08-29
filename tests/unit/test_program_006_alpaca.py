@@ -292,6 +292,12 @@ def test_exact_committed_chain_loads_and_self_rehashed_control_mutations_fail(
     )
     authority = program_006.derive_active_authority(repository)
     assert authority["program_id"] == program_006.PROGRAM_ID
+    assert authority["schema_version"] == "program-006-source-authority-v2"
+    assert authority["control_lineage"]["synchronized_main_commit"] == head
+    assert (
+        authority["control_lineage"]["proposal_artifact_commit"]
+        != authority["control_lineage"]["proposal_review_artifact_commit"]
+    )
 
     proposal_path = repository / program_006._PROPOSAL_PATH
     original_proposal = proposal_path.read_bytes()
