@@ -30,8 +30,11 @@ _NYSE_MANIFEST_PATH = (
 _PROPOSAL_PATH = (
     _REPOSITORY / "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json"
 )
-_IMPLEMENTATION_PATH = (
+_IMPLEMENTATION_V1_PATH = (
     _REPOSITORY / "config/research/program-007-raw-source-contract-implementation-v1.json"
+)
+_IMPLEMENTATION_PATH = (
+    _REPOSITORY / "config/research/program-007-raw-source-contract-implementation-v2.json"
 )
 _NOW = datetime(2026, 8, 28, 20, tzinfo=UTC)
 
@@ -219,6 +222,9 @@ def test_nyse_retrieval_manifest_is_public_hash_only_evidence() -> None:
 
 
 def test_non_authorizing_implementation_artifact_binds_exact_source_commit() -> None:
+    assert hashlib.sha256(_IMPLEMENTATION_V1_PATH.read_bytes()).hexdigest() == (
+        "69e0e40a83d9621a8e312c9d491264f5baf6a30d32a06405ecd705d6f728c662"
+    )
     implementation = _load(_IMPLEMENTATION_PATH)
     unsigned = dict(implementation)
     stored_fingerprint = unsigned.pop("implementation_fingerprint")
@@ -233,14 +239,22 @@ def test_non_authorizing_implementation_artifact_binds_exact_source_commit() -> 
             capture_output=True,
         ).stdout
         assert hashlib.sha256(contents).hexdigest() == source["sha256"]
-    for name in ("proposal_binding", "action_ledger_binding", "action_schema_binding"):
+    for name in (
+        "proposal_binding",
+        "action_ledger_binding",
+        "action_schema_binding",
+        "nyse_retrieval_manifest_binding",
+    ):
         artifact = implementation[name]
         assert (
             hashlib.sha256((_REPOSITORY / artifact["path"]).read_bytes()).hexdigest()
             == (artifact["sha256"])
         )
     assert implementation["fresh_sample"]["expected_canonical_coordinates"] == 14_742
-    assert implementation["synthetic_verification"]["provider_requests"] == 0
+    assert implementation["ledger_disposition"]["dataset_admission"] == "BLOCKED"
+    assert implementation["ledger_disposition"]["unresolved_symbols"] == ["IWM", "MDY", "SPY"]
+    assert implementation["ledger_disposition"]["one_use_authority_proposal_eligible"] is False
+    assert implementation["synthetic_verification"]["alpaca_or_market_data_provider_requests"] == 0
     assert implementation["synthetic_verification"]["strategy_calculations"] == 0
     assert all(value is False for value in implementation["authority"].values())
 

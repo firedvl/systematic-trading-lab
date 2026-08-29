@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-29 - Block Program 007 on incomplete action coverage
+
+- Decision: preserve Program 007 ledger v1 as an immutable historical record, supersede its eight no-action claims with ledger v2, and block the whole thirteen-symbol dataset while IWM, MDY, or SPY coverage is unresolved. Ledger-backed normalization and any one-use source-qualification authority proposal remain ineligible.
+- Context: a date-bounded public NYSE `corpax` crawl covered 319 non-overlapping intervals, 326 exchange queries, and 11,345 unique dated events, but the official scope excludes forward splits. It found twelve target name or product-name records that support identity continuity, not share-unit conclusions. Date-bounded SEC screens resolve the ten Select Sector SPDR symbols and confirm five 2-for-1 splits, but the IWM, MDY, and SPY corpora do not establish complete issuer or exchange forward-split coverage.
+- Consequences: XLB, XLE, XLK, XLU, and XLY retain their 2-for-1 actions effective `2025-12-05`; XLF, XLI, XLP, XLRE, and XLV retain bounded no-applicable-action conclusions; IWM, MDY, and SPY become `COVERAGE-UNRESOLVED`. The raw-first implementation, frozen sample, provider contract, science, costs, delays, and budgets do not change. Every authority flag remains false.
+- Revisit when: complete public issuer or exchange unit-changing-action coverage exists for IWM, MDY, and SPY. Bind that evidence in a new ledger version and pass independent review before creating any separate one-use authority proposal.
+
 ## 2026-08-29 - Bind Program 007 to raw evidence and a public unit ledger
 
 - Decision: implement Program 007 in a separate offline-only module. Persist a create-only request intent before an injected page source and exact bounded response bytes plus a SHA-256 receipt before parsing. Validate raw structure separately from the authoritative XNYS RTH projection, require exact 13/13 canonical completeness, and prohibit replay after an ambiguous send. Use one strict, fingerprinted public ledger for all 13 symbols and exact `new_shares / old_shares` factors only for prior-20-session same-clock relative-volume share counts.
