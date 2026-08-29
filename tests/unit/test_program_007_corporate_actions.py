@@ -10,6 +10,7 @@ from fractions import Fraction
 from pathlib import Path
 from typing import Any, cast
 from urllib.parse import parse_qs, urlparse
+from urllib.request import Request
 from uuid import UUID
 
 import pytest
@@ -18,10 +19,10 @@ import systematic_trading_lab.program_007_corporate_actions as metadata
 from systematic_trading_lab.fingerprints import fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
-_LEDGER_PATH = _REPOSITORY / "config/research/program-007-unit-changing-action-ledger-v2.json"
-_LEDGER_SHA256 = "3b815581d0da66db427243bce34f9ced5021f73719acd2b5d5e277d57065d53a"
+_LEDGER_PATH = _REPOSITORY / "config/research/program-007-unit-changing-action-ledger-v3.json"
+_LEDGER_SHA256 = "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1"
 _PLAN_PATH = (
-    _REPOSITORY / "config/research/program-007-corporate-action-metadata-source-plan-v1.json"
+    _REPOSITORY / "config/research/program-007-corporate-action-metadata-source-plan-v2.json"
 )
 
 
@@ -274,12 +275,12 @@ def test_prospective_plan_binds_the_offline_contract_and_grants_no_authority() -
         "automatic_transport_retries": metadata.AUTOMATIC_TRANSPORT_RETRIES,
     }
     assert all(value is False for value in plan["authority"].values())
-    assert plan["universe"]["identity_history_status"] == "UNPROVEN-PRE-AUTHORITY-BLOCKER"
+    assert plan["universe"]["identity_history_status"] == metadata.IDENTITY_HISTORY_STATUS
     assert (
         plan["query_contract"]["process_window"]["source_finality_status"]
-        == "UNPROVEN-PRE-AUTHORITY-BLOCKER"
+        == metadata.SOURCE_FINALITY_STATUS
     )
-    assert plan["exact_next_authorization"].startswith("Not currently grantable.")
+    assert plan["exact_next_authorization"].startswith("Not authorized.")
     assert plan["state_at_proposal"]["program_007_provider_requests"] == 0
     assert plan["state_at_proposal"]["strategy_returns"] == 0
     assert plan["unchanged_ohlcv_sample"] == {
@@ -435,12 +436,52 @@ def test_forward_and_reverse_split_factors_are_exact_rationals() -> None:
     assert by_type["reverse_split"].exact_factor == Fraction(1, 5)
 
 
+def test_delayed_processing_does_not_replace_the_economic_date() -> None:
+    delayed = _event("forward_splits")
+    delayed["process_date"] = "2026-08-29"
+    delayed["ex_date"] = "2025-12-05"
+
+    (action,), _ = metadata.parse_metadata_page(_body({"forward_splits": [delayed]}))
+
+    assert action.process_date.isoformat() == "2026-08-29"
+    assert action.effective_date is not None
+    assert action.effective_date.isoformat() == "2025-12-05"
+
+
+def test_same_identity_name_change_is_nonbreaking_metadata() -> None:
+    name_change = _event("name_changes")
+    name_change["new_symbol"] = name_change["old_symbol"]
+    name_change["new_cusip"] = name_change["old_cusip"]
+
+    (action,), _ = metadata.parse_metadata_page(_body({"name_changes": [name_change]}))
+
+    assert action.classification == "IDENTITY-METADATA-NO-BREAK"
+
+
 def test_reverse_split_cusip_transition_fails_identity_validation() -> None:
     reverse = _event("reverse_splits")
     reverse["new_cusip"] = metadata.IDENTITIES["IWM"]
 
     with pytest.raises(metadata.Program007MetadataError, match="identity is inconsistent"):
         metadata.parse_metadata_page(_body({"reverse_splits": [reverse]}))
+
+
+def test_predecessor_content_mismatch_between_identity_chains_fails() -> None:
+    symbol_event = _event("name_changes")
+    symbol_event["old_symbol"] = "SPY.OLD"
+    symbol_event["old_cusip"] = "000000008"
+    symbol_event["new_symbol"] = "SPY"
+    symbol_event["new_cusip"] = metadata.IDENTITIES["SPY"]
+    cusip_event = deepcopy(symbol_event)
+    cusip_event["old_symbol"] = "SPY.PREV"
+
+    source = _source(
+        _body({"name_changes": [symbol_event]}),
+        _body({"name_changes": [cusip_event]}),
+    )
+
+    with pytest.raises(metadata.Program007MetadataError, match="content differs"):
+        metadata.execute_synthetic_metadata(source)
 
 
 def test_pagination_is_exhausted_and_reconciled_by_provider_event_id() -> None:
@@ -500,9 +541,9 @@ def test_known_five_sector_positive_controls_generate_only_a_synthetic_candidate
 
     candidate = metadata.generate_successor_ledger_candidate(result, _ledger())
 
-    assert candidate["status"] == "SYNTHETIC-CANDIDATE-NOT-AUTHORITATIVE"
-    assert candidate["identity_history_status"] == "UNPROVEN-PRE-AUTHORITY-BLOCKER"
-    assert candidate["source_finality_status"] == "UNPROVEN-PRE-AUTHORITY-BLOCKER"
+    assert candidate["status"] == "SYNTHETIC-CORROBORATION-CANDIDATE-NOT-AUTHORITATIVE"
+    assert candidate["identity_history_status"] == metadata.IDENTITY_HISTORY_STATUS
+    assert candidate["source_finality_status"] == metadata.SOURCE_FINALITY_STATUS
     assert len(candidate["actions"]) == 5
     assert all(
         action["exact_factor"] == {"numerator": 2, "denominator": 1}
@@ -510,6 +551,26 @@ def test_known_five_sector_positive_controls_generate_only_a_synthetic_candidate
     )
     assert all(value is False for value in candidate["authority"].values())
     assert hashlib.sha256(_LEDGER_PATH.read_bytes()).hexdigest() == _LEDGER_SHA256
+
+
+def test_old_economic_event_is_retained_but_outside_feature_relevance() -> None:
+    events: list[dict[str, Any]] = []
+    for index, symbol in enumerate(sorted(metadata.POSITIVE_CONTROLS), start=1):
+        event = _event("forward_splits", index)
+        event["symbol"] = symbol
+        event["cusip"] = metadata.IDENTITIES[symbol]
+        events.append(event)
+    old = _event("forward_splits", 100)
+    old["symbol"] = "IWM"
+    old["cusip"] = metadata.IDENTITIES["IWM"]
+    old["ex_date"] = "2005-06-09"
+    old["process_date"] = "2026-08-29"
+    result = _execute_same({"forward_splits": [*events, old]})
+
+    candidate = metadata.generate_successor_ledger_candidate(result, _ledger())
+
+    assert len(result.events) == 6
+    assert len(candidate["actions"]) == 5
 
 
 def test_cash_dividend_only_is_non_unit_negative_control_metadata() -> None:
@@ -525,8 +586,24 @@ def test_cash_dividend_only_is_non_unit_negative_control_metadata() -> None:
     candidate = metadata.generate_successor_ledger_candidate(result, _ledger())
 
     xlf = next(item for item in candidate["symbols"] if item["symbol"] == "XLF")
-    assert xlf["conclusion"] == ("PROVISIONAL-NO-APPLICABLE-ACTIONS-COVERAGE-CLOSURE-UNPROVEN")
+    assert xlf["conclusion"] == "NO-ADDITIONAL-APPLICABLE-ACTION-OBSERVED-AS-OF-QUERY"
     assert all(action["action_type"] != "cash_dividend" for action in candidate["actions"])
+
+
+def test_unexpected_unit_event_for_negative_control_requires_investigation() -> None:
+    events: list[dict[str, Any]] = []
+    for index, symbol in enumerate(sorted(metadata.POSITIVE_CONTROLS), start=1):
+        event = _event("forward_splits", index)
+        event["symbol"] = symbol
+        event["cusip"] = metadata.IDENTITIES[symbol]
+        events.append(event)
+    unexpected = _event("forward_splits", 100)
+    unexpected["symbol"] = "XLF"
+    unexpected["cusip"] = metadata.IDENTITIES["XLF"]
+    result = _execute_same({"forward_splits": [*events, unexpected]})
+
+    with pytest.raises(metadata.Program007MetadataError, match="require investigation"):
+        metadata.generate_successor_ledger_candidate(result, _ledger())
 
 
 def test_nontransformable_action_and_missing_effective_semantics_block_candidate() -> None:
@@ -544,7 +621,9 @@ def test_nontransformable_action_and_missing_effective_semantics_block_candidate
 @pytest.mark.parametrize(
     ("response", "error"),
     [
+        (metadata.RawResponse(401, b'{"error":"authentication"}'), metadata.MetadataAccessError),
         (metadata.RawResponse(403, b'{"error":"entitlement"}'), metadata.MetadataAccessError),
+        (metadata.RawResponse(429, b'{"error":"rate limit"}'), metadata.MetadataAccessError),
         (metadata.RawResponse(302, b"redirect"), metadata.Program007MetadataError),
         (metadata.RawResponse(200, b"not-json"), metadata.Program007MetadataError),
     ],
@@ -566,7 +645,7 @@ def test_bounded_raw_response_and_receipt_precede_status_or_schema_failure(
     assert source.intent_records_present == (True,)
 
 
-def test_oversized_response_fails_before_raw_retention() -> None:
+def test_oversized_response_is_retained_before_size_failure() -> None:
     body = b"x" * (metadata.MAXIMUM_RESPONSE_PAGE_BYTES + 1)
     source = metadata.SyntheticMetadataSource([metadata.RawResponse(200, body)])
 
@@ -574,12 +653,19 @@ def test_oversized_response_fails_before_raw_retention() -> None:
         metadata.execute_synthetic_metadata(source)
 
     payloads = _evidence_payloads(source)
-    assert payloads["symbols-01.body"] == body[: metadata.MAXIMUM_RESPONSE_PAGE_BYTES]
+    assert payloads["symbols-01.body"] == body
     receipt = json.loads(payloads["symbols-01.receipt.json"])
     assert receipt["response_bytes"] == len(body)
-    assert receipt["retained_response_bytes"] == metadata.MAXIMUM_RESPONSE_PAGE_BYTES
-    assert receipt["response_truncated"] is True
     assert receipt["response_sha256"] == hashlib.sha256(body).hexdigest()
+
+
+def test_total_response_byte_budget_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(metadata, "MAXIMUM_DOWNLOADED_BYTES", 3)
+    budget = metadata._Budget()
+
+    budget.accept_response(b"12")
+    with pytest.raises(metadata.Program007MetadataError, match="byte ceiling exceeded"):
+        budget.accept_response(b"34")
 
 
 def test_pagination_token_cycle_and_page_ceiling_fail() -> None:
@@ -593,14 +679,144 @@ def test_pagination_token_cycle_and_page_ceiling_fail() -> None:
         metadata.execute_synthetic_metadata(ceiling)
 
 
-def test_source_is_concrete_immutable_and_has_no_transport_or_credential_entrypoint() -> None:
+def test_mock_persistent_transport_writes_private_create_only_evidence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    responses = [metadata.RawResponse(200, _body()), metadata.RawResponse(200, _body())]
+    requests: list[Any] = []
+    loads = 0
+    original_loader = metadata._load_explicit_credentials
+    private_root = tmp_path / metadata.PRIVATE_ROOT
+
+    def counted_loader(environ: dict[str, str]) -> tuple[str, str]:
+        nonlocal loads
+        loads += 1
+        return original_loader(environ)
+
+    def transport(request: Any) -> metadata.RawResponse:
+        prefix = "symbols-01" if not requests else "cusips-01"
+        assert (private_root / f"{prefix}.intent.json").is_file()
+        requests.append(request)
+        return responses[len(requests) - 1]
+
+    monkeypatch.setattr(metadata, "_load_explicit_credentials", counted_loader)
+    result = metadata.execute_mock_persistent_metadata(
+        tmp_path,
+        environ={
+            metadata.CREDENTIAL_NAMES[0]: "synthetic-key-id",
+            metadata.CREDENTIAL_NAMES[1]: "synthetic-secret-key",
+        },
+        transport=transport,
+    )
+
+    assert result.response_count == 2
+    assert loads == 1
+    assert all(request.get_method() == "GET" for request in requests)
+    assert all(
+        (
+            urlparse(request.full_url).scheme,
+            urlparse(request.full_url).netloc,
+            urlparse(request.full_url).path,
+        )
+        == ("https", "data.alpaca.markets", "/v1/corporate-actions")
+        for request in requests
+    )
+    assert all(request.get_header("Apca-api-key-id") == "synthetic-key-id" for request in requests)
+    assert all(
+        request.get_header("Apca-api-secret-key") == "synthetic-secret-key" for request in requests
+    )
+    assert {path.name for path in private_root.iterdir()} == {
+        "run.lock",
+        "symbols-01.intent.json",
+        "symbols-01.body",
+        "symbols-01.receipt.json",
+        "cusips-01.intent.json",
+        "cusips-01.body",
+        "cusips-01.receipt.json",
+        "private-manifest.json",
+    }
+    assert private_root.stat().st_mode & 0o777 == 0o700
+    assert all(path.stat().st_mode & 0o777 == 0o600 for path in private_root.iterdir())
+    manifest = json.loads((private_root / "private-manifest.json").read_bytes())
+    assert manifest["status"] == "MOCK-TRANSPORT-PERSISTENT-CONTRACT-PASS"
+    assert manifest["metadata_query_end"] == "2026-08-29"
+    assert manifest["metadata_observation_as_of"].endswith("Z")
+    assert manifest["synthetic_credential_loads"] == 1
+    assert manifest["provider_requests"] == 0
+    private_bytes = b"".join(path.read_bytes() for path in private_root.iterdir() if path.is_file())
+    assert b"synthetic-key-id" not in private_bytes
+    assert b"synthetic-secret-key" not in private_bytes
+
+    with pytest.raises(metadata.Program007MetadataError, match="evidence already exists"):
+        metadata.execute_mock_persistent_metadata(
+            tmp_path,
+            environ={
+                metadata.CREDENTIAL_NAMES[0]: "synthetic-key-id",
+                metadata.CREDENTIAL_NAMES[1]: "synthetic-secret-key",
+            },
+            transport=transport,
+        )
+    assert loads == 1
+
+
+def test_dormant_http_transport_is_get_only_no_redirect_and_bounded(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Response:
+        status = 200
+
+        def __enter__(self) -> Response:
+            return self
+
+        def __exit__(self, *_args: Any) -> None:
+            return None
+
+        def read(self, size: int) -> bytes:
+            assert size == metadata.MAXIMUM_RESPONSE_PAGE_BYTES + 1
+            return b"bounded"
+
+    class Opener:
+        def open(self, request: Any, *, timeout: int) -> Response:
+            assert request.get_method() == "GET"
+            assert timeout == 30
+            return Response()
+
+    def opener(handler: Any) -> Opener:
+        assert isinstance(handler, metadata._NoRedirect)
+        return Opener()
+
+    monkeypatch.setattr(metadata, "build_opener", opener)
+    request = Request(metadata.frozen_request_chains()[0].url(), method="GET")
+
+    assert metadata._urlopen_response(request) == metadata.RawResponse(200, b"bounded")
+    with pytest.raises(metadata.Program007MetadataError, match="endpoint differs"):
+        metadata._urlopen_response(
+            Request("https://paper-api.alpaca.markets/v2/orders", method="GET")
+        )
+
+
+def test_source_is_immutable_and_real_transport_has_no_execution_entrypoint(tmp_path: Path) -> None:
     source = _source(_body(), _body())
 
     with pytest.raises(AttributeError, match="immutable"):
         source._responses = ()
 
     assert tuple(inspect.signature(metadata.execute_synthetic_metadata).parameters) == ("source",)
+    mock_signature = inspect.signature(metadata.execute_mock_persistent_metadata)
+    assert mock_signature.parameters["transport"].default is inspect.Signature.empty
+    with pytest.raises(metadata.Program007MetadataError, match="separate one-use authority"):
+        metadata.execute_mock_persistent_metadata(
+            tmp_path,
+            environ={},
+            transport=metadata._urlopen_response,
+        )
+    assert not (tmp_path / metadata.PRIVATE_ROOT).exists()
     assert not any(name.startswith("APCA") for name in vars(metadata))
+    assert metadata.CREDENTIAL_NAMES == (
+        "PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID",
+        "PROGRAM_007_CORPORATE_ACTIONS_API_SECRET_KEY",
+    )
     assert all(value is False for value in metadata._AUTHORITY.values())
     assert metadata.AUTOMATIC_TRANSPORT_RETRIES == 0
 

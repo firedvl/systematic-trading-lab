@@ -1,0 +1,290 @@
+{
+  "schema_version": "program-007-corporate-action-metadata-source-plan-v2",
+  "proposal_id": "program-007-corporate-action-metadata-source-plan-2026-08-29-v2",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "status": "PROPOSED-NOT-AUTHORIZED-FOR-PROVIDER-REQUESTS",
+  "purpose": "Use one future Alpaca corporate-action query as bounded as-of corroboration and discrepancy detection against the complete public ledger. Alpaca does not establish negative-event completeness.",
+  "supersedes": {
+    "path": "config/research/program-007-corporate-action-metadata-source-plan-v1.json",
+    "sha256": "78a85b3f1057096bb49d5d4c83c60e3353c6a0c695f17f6db22880223d5568b4",
+    "fingerprint": "f5925f99991913f262d50f3946836ac130acbf347bc4cbe490bc950a1f5d2d3f",
+    "reason": "Current Alpaca documentation gives no maximum corporate-action creation lag. Public issuer, exchange, and SEC evidence now closes all thirteen identities independently."
+  },
+  "documentation": {
+    "retrieved_on": "2026-08-29",
+    "sources": [
+      "https://docs.alpaca.markets/us/reference/corporateactions-1.md",
+      "https://docs.alpaca.markets/us/changelog/2026-06-03-market-data-9dddd18",
+      "https://docs.alpaca.markets/us/v1.1/changelog/2026-05-22-corporate-actions-5c87d2b",
+      "https://docs.alpaca.markets/us/v1.1/changelog/deprecate-the-old-announcements-endpoint"
+    ],
+    "contract_authority": "Current Alpaca REST OpenAPI for GET /v1/corporate-actions.",
+    "start_end_interpretation": "start and end are documented as inclusive corporate-action interval bounds. Results are documented as sorted by process_date. The documentation does not literally identify the field filtered by start and end.",
+    "creation_lag_verdict": "UNBOUNDED. Alpaca gives no guarantee on corporate-action creation time because upstream-provider and Alpaca-processing delays can delay availability.",
+    "data_quality_caveat": "data_quality=complete is Alpaca's processed-record filter. It is not a statement that all applicable records are present or final.",
+    "basic_access_verdict": "No retrieved official document guarantees Basic access. A future bounded one-use qualification may test access; HTTP 403 is terminal with no purchase or fallback.",
+    "type_contract": "The current REST OpenAPI lists sixteen types, including capital_gains_distribution."
+  },
+  "endpoint_contract": {
+    "provider": "Alpaca Historical Corporate Actions API",
+    "method": "GET",
+    "url": "https://data.alpaca.markets/v1/corporate-actions",
+    "host": "data.alpaca.markets",
+    "path": "/v1/corporate-actions",
+    "redirects": false,
+    "authentication_headers": [
+      "APCA-API-KEY-ID",
+      "APCA-API-SECRET-KEY"
+    ],
+    "credential_environment_variables": [
+      "PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID",
+      "PROGRAM_007_CORPORATE_ACTIONS_API_SECRET_KEY"
+    ],
+    "credential_policy": "Environment only. Never persist, log, hash, place in Git, pass on a command line, or enter in chat.",
+    "credential_presence_check_authorized_now": false,
+    "credential_load_authorized_now": false,
+    "provider_contact_authorized_now": false
+  },
+  "universe": {
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "cusips_by_symbol": {
+      "IWM": "464287655",
+      "MDY": "78467Y107",
+      "SPY": "78462F103",
+      "XLB": "81369Y100",
+      "XLE": "81369Y506",
+      "XLF": "81369Y605",
+      "XLI": "81369Y704",
+      "XLK": "81369Y803",
+      "XLP": "81369Y308",
+      "XLRE": "81369Y860",
+      "XLU": "81369Y886",
+      "XLV": "81369Y209",
+      "XLY": "81369Y407"
+    },
+    "identity_strategy": "Run one current-symbol chain and one current-CUSIP chain over all thirteen identities. Reconcile relevant events by provider event ID and exact normalized content.",
+    "identity_history_status": "PUBLIC-LEDGER-V3-CONTINUITY-CLOSED",
+    "identity_history_basis": "Ledger v3 establishes continuous feature-relevant identity through issuer, exchange, and SEC evidence. IWM's 2005 split is outside chronology. MDY and SPY retain their tickers, CUSIPs, CIKs, and trust terms across their January 2026 marketing-name changes.",
+    "provider_identity_limit": "The current endpoint documentation does not prove that current identities retrieve predecessor-only events. The public ledger, not the Alpaca query, closes predecessor continuity.",
+    "identity_failure": "Any relevant symbol/CUSIP inventory difference, canonical-content difference, known identity mismatch, or newly discovered predecessor event fails qualification and requires public reconciliation."
+  },
+  "query_contract": {
+    "logical_chains": [
+      {
+        "chain_id": "symbols",
+        "identity_parameter": "symbols",
+        "identity_order": "ascending symbol"
+      },
+      {
+        "chain_id": "cusips",
+        "identity_parameter": "cusips",
+        "identity_order": "ascending CUSIP"
+      }
+    ],
+    "fixed_parameters_in_serialization_order": [
+      "identity parameter",
+      "region=us",
+      "start=1990-01-01",
+      "end=2026-08-29",
+      "limit=1000",
+      "data_quality=complete",
+      "sort=asc"
+    ],
+    "types_parameter": "OMITTED",
+    "types_omission_reason": "Observe every provider-supported type and reject an unknown response array instead of silently filtering a new type.",
+    "pagination": "Append the exact opaque page_token only after the fixed parameters. Exhaust each chain until next_page_token is null. Reject empty, malformed, repeated, cyclic, or over-ceiling token state.",
+    "process_window": {
+      "start": "1990-01-01",
+      "end": "2026-08-29",
+      "metadata_query_end": "2026-08-29",
+      "metadata_observation_as_of": "Record the actual UTC observation time after a future bounded query completes. It is not the query end and cannot establish finality.",
+      "target_effective_coverage_start": "2020-06-26",
+      "target_effective_coverage_end": "2026-07-31",
+      "interpretation": "Treat start and end only as the documented inclusive requested interval. Require every returned process_date inside that interval. Call the result process-date-bounded corroboration without claiming that Alpaca explicitly filters process_date.",
+      "source_finality_status": "UNBOUNDED-CREATION-LAG-AS-OF-CORROBORATION-ONLY",
+      "negative_event_completeness": false,
+      "returned_event_gate": "Every returned process_date must be inside the requested interval. An old economic date with a later process_date remains valid and must be assessed by its action-specific economic date."
+    },
+    "data_quality": {
+      "value": "complete",
+      "provider_semantics": "Use Alpaca's processed-record filter.",
+      "program_rule": "Both chains must return HTTP 200, exhaust pagination, pass schema and identity checks, preserve raw evidence, and pass public-ledger discrepancy controls. No empty or matching response proves that delayed records cannot appear later."
+    }
+  },
+  "event_inventory": [
+    "reverse_split",
+    "forward_split",
+    "unit_split",
+    "cash_dividend",
+    "stock_dividend",
+    "spin_off",
+    "cash_merger",
+    "stock_merger",
+    "stock_and_cash_merger",
+    "redemption",
+    "name_change",
+    "worthless_removal",
+    "rights_distribution",
+    "partial_call",
+    "reorganization",
+    "capital_gains_distribution"
+  ],
+  "normalization_contract": {
+    "process_date_policy": "Retain process_date as provider provenance and require it inside the requested interval. Never substitute it for economic timing and never assume it is near the economic date.",
+    "economic_date_policy": {
+      "ex_date": [
+        "forward_split",
+        "reverse_split",
+        "cash_dividend",
+        "stock_dividend",
+        "spin_off",
+        "rights_distribution",
+        "capital_gains_distribution"
+      ],
+      "effective_date": [
+        "unit_split",
+        "cash_merger",
+        "stock_merger",
+        "stock_and_cash_merger",
+        "reorganization"
+      ],
+      "no_documented_single_economic_field": [
+        "redemption",
+        "name_change",
+        "worthless_removal",
+        "partial_call"
+      ],
+      "rule": "Use only an action-specific documented field. A feature-relevant event without usable economic timing fails closed."
+    },
+    "deterministic_transforms": "Only stable-identity forward_split and reverse_split events with positive old_rate and new_rate. The exact factor is Fraction(new_rate) / Fraction(old_rate).",
+    "non_unit_metadata": [
+      "cash_dividend",
+      "capital_gains_distribution"
+    ],
+    "other_relevant_type_action": "FAIL-CLOSED-INVESTIGATION-OR-SESSION-WINDOW-EXCLUSION",
+    "relative_volume_rule": "Ledger v3 is authoritative. Raw contemporaneous prices stay unchanged. Apply exact split factors only to historical same-clock share counts compared across deterministic unit-changing actions.",
+    "provider_adjusted_prices_created": false
+  },
+  "controls": {
+    "positive_symbols": [
+      "XLB",
+      "XLE",
+      "XLK",
+      "XLU",
+      "XLY"
+    ],
+    "positive_rule": "Each must reconcile to one 2-for-1 forward split with ex_date 2025-12-05. A missing, different, duplicated, or unreconciled control fails; public evidence cannot repair the metadata response.",
+    "supported_no_known_action_symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLF",
+      "XLI",
+      "XLP",
+      "XLRE",
+      "XLV"
+    ],
+    "negative_rule": "Non-unit metadata is allowed. Any new applicable unit or identity event requires public reconciliation and blocks qualification while unresolved.",
+    "empty_result_rule": "An empty result can say only that Alpaca exposed no additional applicable event as of observation. It cannot establish absence or finality."
+  },
+  "transport_budget": {
+    "logical_chain_count": 2,
+    "minimum_expected_http_requests": 2,
+    "minimum_expected_http_responses": 2,
+    "maximum_pages_per_chain": 4,
+    "maximum_http_requests": 8,
+    "maximum_http_responses": 8,
+    "maximum_response_page_bytes": 1048576,
+    "maximum_downloaded_bytes": 8388608,
+    "maximum_credential_loads": 1,
+    "automatic_transport_retries": 0
+  },
+  "raw_first_policy": {
+    "future_private_root": ".trading-lab/program-007-corporate-action-metadata-v2",
+    "git_ignored": true,
+    "request_intent_persisted_before_transport": true,
+    "bounded_read_bytes": 1048577,
+    "raw_body_and_sha256_receipt_persisted_before_size_status_or_schema_parsing": true,
+    "create_only_mode": "0600 files under a 0700 root with process flock and file and directory fsync",
+    "raw_provider_metadata_public": false,
+    "implemented_scope": "The module contains the fixed GET-only client, disabled-redirect bounded transport, and persistent store. Its only persistent executor requires an explicit mock transport and rejects the real transport. No CLI or authority path exists."
+  },
+  "terminal_failures": {
+    "missing_credentials_before_transport": "STOP-NOT-CONSUMED",
+    "sent_or_ambiguous_transport": "USE-CONSUMED-NO-RETRY",
+    "http_401": "METADATA-AUTHENTICATION-FAIL-USE-CONSUMED-NO-RETRY",
+    "http_403": "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY-NO-PURCHASE",
+    "http_429": "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY",
+    "redirect": "FAIL-USE-CONSUMED-NO-RETRY",
+    "schema_identity_pagination_control_or_budget_failure": "FAIL-USE-CONSUMED-NO-RETRY",
+    "fallback_provider": "PROHIBITED",
+    "paid_upgrade": "PROHIBITED"
+  },
+  "ledger_binding": {
+    "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+    "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+    "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f",
+    "schema_path": "config/research/program-007-unit-changing-action-ledger-v3.schema.json",
+    "schema_sha256": "bbc24645dab0afa8e19cfc24acb28f490c0e58a819105e87cf2cb629e9c261af",
+    "coverage": "13/13 public identities closed for the frozen feature chronology",
+    "role": "Authoritative public foundation. Alpaca may corroborate it or expose a discrepancy but cannot replace its negative-event evidence."
+  },
+  "unchanged_ohlcv_sample": {
+    "sessions": [
+      "2021-07-08",
+      "2022-01-25",
+      "2022-11-15",
+      "2023-05-16..2023-05-30",
+      "2025-11-28",
+      "2025-12-15"
+    ],
+    "expected_canonical_coordinates": 14742,
+    "changed": false,
+    "accessed": false
+  },
+  "state_at_proposal": {
+    "program_006": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "program_007": "PROPOSED-NOT-AUTHORIZED",
+    "program_007_provider_requests": 0,
+    "credential_values_or_presence_checks": 0,
+    "metadata_qualification_observations": 0,
+    "ohlcv_requests": 0,
+    "strategy_calculations": 0,
+    "strategy_returns": 0,
+    "controlled_or_protected_access": 0,
+    "paper_broker_or_live_actions": 0
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "exact_next_authorization": "Not authorized. After this plan, implementation, immutable binding, finding-free review, green CI, and clean synchronized main merge, the next separate step is a reviewed ONE-USE PROGRAM 007 CORPORATE-ACTION METADATA QUALIFICATION AUTHORITY PROPOSAL and a new explicit user grant. That proposal may authorize one credential-presence gate, at most one credential load, and at most eight GET responses from the exact endpoint with zero retries. It must not authorize OHLCV, dataset admission, strategy execution, returns, controlled or protected access, PAPER, broker writes, live execution, paid upgrade, or fallback.",
+  "proposal_fingerprint": "add9b3bf1cfe3b81cae4d1e856fb99b6e27bf16133173e76e725303a9e054ead"
+}

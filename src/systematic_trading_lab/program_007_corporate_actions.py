@@ -1,20 +1,27 @@
-"""Offline Program 007 corporate-action metadata contract."""
+"""Program 007 corporate-action metadata contract."""
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
+import re
+import stat
 import tempfile
 from _thread import RLock
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
 from fractions import Fraction
+from http.client import HTTPException
+from pathlib import Path
 from types import TracebackType
 from typing import Any, BinaryIO
-from urllib.parse import urlencode
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode, urlsplit
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 from uuid import UUID
 
 from .fingerprints import canonical_json, fingerprint
@@ -28,14 +35,22 @@ COVERAGE_START = date(2020, 6, 26)
 COVERAGE_END = date(2026, 7, 31)
 PROCESS_START = date(1990, 1, 1)
 PROCESS_END = DOCUMENTATION_RETRIEVED
+METADATA_QUERY_END = PROCESS_END
+PRIVATE_ROOT = Path(".trading-lab/program-007-corporate-action-metadata-v2")
+CREDENTIAL_NAMES = (
+    "PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID",
+    "PROGRAM_007_CORPORATE_ACTIONS_API_SECRET_KEY",
+)
 MAXIMUM_PAGES_PER_CHAIN = 4
 MAXIMUM_HTTP_REQUESTS = 8
 MAXIMUM_HTTP_RESPONSES = 8
 MAXIMUM_RESPONSE_PAGE_BYTES = 1024 * 1024
 MAXIMUM_DOWNLOADED_BYTES = 8 * 1024 * 1024
 AUTOMATIC_TRANSPORT_RETRIES = 0
-IDENTITY_HISTORY_STATUS = "UNPROVEN-PRE-AUTHORITY-BLOCKER"
-SOURCE_FINALITY_STATUS = "UNPROVEN-PRE-AUTHORITY-BLOCKER"
+IDENTITY_HISTORY_STATUS = "PUBLIC-LEDGER-V3-CONTINUITY-CLOSED"
+SOURCE_FINALITY_STATUS = "UNBOUNDED-CREATION-LAG-AS-OF-CORROBORATION-ONLY"
+
+_EVIDENCE_KEY = re.compile(r"[a-z0-9][a-z0-9.-]*")
 
 IDENTITIES = {
     "IWM": "464287655",
@@ -344,6 +359,63 @@ class RawResponse:
             raise Program007MetadataError("Program 007 metadata response is invalid")
 
 
+class _NoRedirect(HTTPRedirectHandler):
+    def redirect_request(  # type: ignore[override]
+        self,
+        req: Request,
+        fp: BinaryIO,
+        code: int,
+        msg: str,
+        headers: Mapping[str, str],
+        newurl: str,
+    ) -> None:
+        return None
+
+
+def _urlopen_response(request: Request) -> RawResponse:
+    """Dormant bounded transport for a later, separately authorized integration."""
+    _validate_http_request(request)
+    try:
+        with build_opener(_NoRedirect()).open(request, timeout=30) as response:
+            return RawResponse(int(response.status), response.read(MAXIMUM_RESPONSE_PAGE_BYTES + 1))
+    except HTTPError as error:
+        return RawResponse(error.code, error.read(MAXIMUM_RESPONSE_PAGE_BYTES + 1))
+
+
+class _AlpacaMetadataClient:
+    __slots__ = ("_headers", "_transport")
+
+    def __init__(
+        self,
+        key_id: str,
+        secret_key: str,
+        transport: Callable[[Request], RawResponse],
+    ) -> None:
+        if any(not value or "\r" in value or "\n" in value for value in (key_id, secret_key)):
+            raise Program007MetadataError("Program 007 metadata credentials are invalid")
+        if not callable(transport):
+            raise Program007MetadataError("Program 007 metadata transport is invalid")
+        self._headers = {
+            "Accept": "application/json",
+            "APCA-API-KEY-ID": key_id,
+            "APCA-API-SECRET-KEY": secret_key,
+        }
+        self._transport = transport
+
+    def get(self, intent: RequestIntent) -> RawResponse:
+        request = Request(intent.url, headers=self._headers, method="GET")
+        _validate_http_request(request)
+        try:
+            response = self._transport(request)
+        except (HTTPException, TimeoutError, ConnectionError, URLError, OSError) as error:
+            raise Program007MetadataError(
+                "Program 007 metadata transport is ambiguous; zero-retry use is consumed"
+            ) from error
+        if type(response) is not RawResponse:
+            raise Program007MetadataError("Program 007 metadata transport response is invalid")
+        return response
+
+
 class SyntheticMetadataSource:
     """Finite responses retained in a capability-held temporary evidence log."""
 
@@ -496,11 +568,19 @@ class MetadataQualificationResult:
     def response_bytes(self) -> int:
         return sum(page.response_bytes for chain in self.chains for page in chain.pages)
 
-    def private_manifest(self) -> Mapping[str, Any]:
+    def private_manifest(
+        self,
+        *,
+        status: str = "SYNTHETIC-CONTRACT-PASS",
+        metadata_observation_as_of: str | None = None,
+        synthetic_credential_loads: int = 0,
+    ) -> Mapping[str, Any]:
         return {
             "schema_version": "program-007-private-corporate-action-metadata-manifest-v1",
             "program_id": PROGRAM_ID,
-            "status": "SYNTHETIC-CONTRACT-PASS",
+            "status": status,
+            "metadata_query_end": METADATA_QUERY_END.isoformat(),
+            "metadata_observation_as_of": metadata_observation_as_of,
             "query_chains": [chain.chain.chain_id for chain in self.chains],
             "pages": [
                 {
@@ -521,6 +601,7 @@ class MetadataQualificationResult:
             "response_bytes": self.response_bytes,
             "canonical_event_count": len(self.events),
             "credentials_stored": False,
+            "synthetic_credential_loads": synthetic_credential_loads,
             "provider_requests": 0,
             "strategy_outputs": 0,
         }
@@ -558,7 +639,15 @@ def execute_synthetic_metadata(source: SyntheticMetadataSource) -> MetadataQuali
         raise Program007MetadataError("Program 007 metadata evidence lock is invalid")
     with source._evidence_lock:
         budget = _Budget()
-        chains = tuple(_execute_chain(chain, source, budget) for chain in frozen_request_chains())
+        chains = tuple(
+            _execute_chain(
+                chain,
+                budget,
+                lambda intent, intent_key: _next_synthetic_response(source, intent, intent_key),
+                lambda key, payload: _append_evidence(source, key, payload),
+            )
+            for chain in frozen_request_chains()
+        )
         _require_synthetic_responses_exhausted(source)
         events = _reconcile_chains(chains)
         result = MetadataQualificationResult(chains, events)
@@ -566,6 +655,60 @@ def execute_synthetic_metadata(source: SyntheticMetadataSource) -> MetadataQuali
             source,
             "private-manifest.json",
             canonical_json(result.private_manifest()).encode(),
+        )
+        return result
+
+
+def execute_mock_persistent_metadata(
+    repository: Path,
+    *,
+    environ: Mapping[str, str],
+    transport: Callable[[Request], RawResponse],
+) -> MetadataQualificationResult:
+    """Exercise the future persistent boundary with an explicit mock transport only."""
+    if transport is _urlopen_response:
+        raise Program007MetadataError(
+            "Program 007 real HTTP transport requires a separate one-use authority"
+        )
+    private_root = _prepare_private_root(repository)
+    lock_descriptor = os.open(
+        private_root / "run.lock",
+        os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW,
+        0o600,
+    )
+    with os.fdopen(lock_descriptor, "a+b", buffering=0) as lock:
+        if stat.S_IMODE(os.fstat(lock.fileno()).st_mode) & 0o077:
+            raise Program007MetadataError("Program 007 evidence lock is not private")
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        if {path.name for path in private_root.iterdir()} != {"run.lock"}:
+            raise Program007MetadataError("Program 007 persistent evidence already exists")
+        key_id, secret_key = _load_explicit_credentials(environ)
+        client = _AlpacaMetadataClient(key_id, secret_key, transport)
+        budget = _Budget()
+
+        def writer(key: str, payload: bytes) -> None:
+            _append_persistent_evidence(private_root, key, payload)
+
+        chains = tuple(
+            _execute_chain(
+                chain,
+                budget,
+                lambda intent, _intent_key: client.get(intent),
+                writer,
+            )
+            for chain in frozen_request_chains()
+        )
+        result = MetadataQualificationResult(chains, _reconcile_chains(chains))
+        observed_at = datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+        writer(
+            "private-manifest.json",
+            canonical_json(
+                result.private_manifest(
+                    status="MOCK-TRANSPORT-PERSISTENT-CONTRACT-PASS",
+                    metadata_observation_as_of=observed_at,
+                    synthetic_credential_loads=1,
+                )
+            ).encode(),
         )
         return result
 
@@ -697,7 +840,7 @@ def generate_successor_ledger_candidate(
     result: MetadataQualificationResult,
     public_ledger: Mapping[str, Any],
 ) -> Mapping[str, Any]:
-    """Build an in-memory candidate; real ledger v3 still requires qualification and review."""
+    """Build an in-memory discrepancy report against the authoritative public ledger."""
     if type(result) is not MetadataQualificationResult:
         raise Program007MetadataError("Program 007 metadata result is invalid")
     validate_action_ledger(public_ledger)
@@ -745,7 +888,7 @@ def generate_successor_ledger_candidate(
             "conclusion": (
                 "APPLICABLE-ACTIONS-RECORDED"
                 if by_symbol[symbol]
-                else "PROVISIONAL-NO-APPLICABLE-ACTIONS-COVERAGE-CLOSURE-UNPROVEN"
+                else "NO-ADDITIONAL-APPLICABLE-ACTION-OBSERVED-AS-OF-QUERY"
             ),
             "provider_event_ids": [action.provider_event_id for action in by_symbol[symbol]],
         }
@@ -754,7 +897,7 @@ def generate_successor_ledger_candidate(
     candidate: dict[str, Any] = {
         "schema_version": "program-007-structured-action-ledger-candidate-v1",
         "program_id": PROGRAM_ID,
-        "status": "SYNTHETIC-CANDIDATE-NOT-AUTHORITATIVE",
+        "status": "SYNTHETIC-CORROBORATION-CANDIDATE-NOT-AUTHORITATIVE",
         "identity_history_status": IDENTITY_HISTORY_STATUS,
         "source_finality_status": SOURCE_FINALITY_STATUS,
         "coverage": {
@@ -770,6 +913,8 @@ def generate_successor_ledger_candidate(
             ),
             "data_quality": "complete",
             "region": "us",
+            "query_end": METADATA_QUERY_END.isoformat(),
+            "negative_event_completeness_proved": False,
         },
         "public_corroboration": {
             "ledger_id": public_ledger["ledger_id"],
@@ -785,10 +930,81 @@ def generate_successor_ledger_candidate(
     return candidate
 
 
+def _prepare_private_root(repository: Path) -> Path:
+    if not isinstance(repository, Path):
+        raise Program007MetadataError("Program 007 repository root is invalid")
+    repository = repository.resolve()
+    if not repository.is_dir():
+        raise Program007MetadataError("Program 007 repository root is absent")
+    private_root = repository / PRIVATE_ROOT
+    private_root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if private_root.resolve() != private_root.absolute():
+        raise Program007MetadataError("Program 007 private evidence root must not use symlinks")
+    if stat.S_IMODE(private_root.stat().st_mode) & 0o077:
+        raise Program007MetadataError("Program 007 private evidence root is not private")
+    return private_root
+
+
+def _load_explicit_credentials(environ: Mapping[str, str]) -> tuple[str, str]:
+    if not isinstance(environ, Mapping) or environ is os.environ:
+        raise Program007MetadataError(
+            "Program 007 mock execution requires an explicit synthetic environment"
+        )
+    values = tuple(environ.get(name) for name in CREDENTIAL_NAMES)
+    if any(not isinstance(value, str) or not value for value in values):
+        raise Program007MetadataError(
+            "Program 007 synthetic environment lacks the frozen credential names"
+        )
+    key_id, secret_key = values
+    assert isinstance(key_id, str) and isinstance(secret_key, str)
+    return key_id, secret_key
+
+
+def _append_persistent_evidence(root: Path, key: str, payload: bytes) -> None:
+    if type(key) is not str or _EVIDENCE_KEY.fullmatch(key) is None or type(payload) is not bytes:
+        raise Program007MetadataError("Program 007 persistent evidence entry is invalid")
+    path = root / key
+    try:
+        descriptor = os.open(
+            path,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+            0o600,
+        )
+    except FileExistsError:
+        raise Program007MetadataError(
+            f"Program 007 persistent evidence already exists: {key}"
+        ) from None
+    with os.fdopen(descriptor, "wb") as handle:
+        handle.write(payload)
+        handle.flush()
+        os.fsync(handle.fileno())
+    directory = os.open(root, os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+def _validate_http_request(request: Request) -> None:
+    parsed = urlsplit(request.full_url)
+    if (
+        request.get_method() != "GET"
+        or parsed.scheme != "https"
+        or parsed.hostname != "data.alpaca.markets"
+        or parsed.port is not None
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path != "/v1/corporate-actions"
+        or parsed.fragment
+    ):
+        raise Program007MetadataError("Program 007 metadata request endpoint differs")
+
+
 def _execute_chain(
     chain: RequestChain,
-    source: SyntheticMetadataSource,
     budget: _Budget,
+    response_for: Callable[[RequestIntent, str], RawResponse | None],
+    append_evidence: Callable[[str, bytes], None],
 ) -> ChainResult:
     events: list[CanonicalAction] = []
     pages: list[PageEvidence] = []
@@ -806,18 +1022,17 @@ def _execute_chain(
         )
         prefix = f"{chain.chain_id}-{page_index:02d}"
         intent_key = f"{prefix}.intent.json"
-        _append_evidence(source, intent_key, canonical_json(intent).encode())
-        response = _next_synthetic_response(source, intent, intent_key)
+        append_evidence(intent_key, canonical_json(intent).encode())
+        response = response_for(intent, intent_key)
         if response is None:
             raise Program007MetadataError(
                 "Program 007 metadata transport is ambiguous; zero-retry use is consumed"
             )
         body_key = f"{prefix}.body"
-        retained_body = response.body[:MAXIMUM_RESPONSE_PAGE_BYTES]
-        _append_evidence(source, body_key, retained_body)
+        retained_body = response.body[: MAXIMUM_RESPONSE_PAGE_BYTES + 1]
+        append_evidence(body_key, retained_body)
         response_sha256 = hashlib.sha256(response.body).hexdigest()
-        _append_evidence(
-            source,
+        append_evidence(
             f"{prefix}.receipt.json",
             canonical_json(
                 {
