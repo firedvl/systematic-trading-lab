@@ -11,6 +11,7 @@ import stat
 import tempfile
 from _thread import RLock
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
@@ -51,6 +52,12 @@ IDENTITY_HISTORY_STATUS = "PUBLIC-LEDGER-V3-CONTINUITY-CLOSED"
 SOURCE_FINALITY_STATUS = "UNBOUNDED-CREATION-LAG-AS-OF-CORROBORATION-ONLY"
 
 _EVIDENCE_KEY = re.compile(r"[a-z0-9][a-z0-9.-]*")
+_DIRECTORY_FLAGS = (
+    os.O_RDONLY
+    | getattr(os, "O_CLOEXEC", 0)
+    | getattr(os, "O_DIRECTORY", 0)
+    | getattr(os, "O_NOFOLLOW", 0)
+)
 
 IDENTITIES = {
     "IWM": "464287655",
@@ -97,6 +104,10 @@ class Program007MetadataError(ValueError):
 
 class MetadataAccessError(Program007MetadataError):
     """Terminal authentication or entitlement failure."""
+
+
+class MetadataAuthenticationError(MetadataAccessError):
+    """Terminal authentication failure distinct from entitlement failure."""
 
 
 @dataclass(frozen=True)
@@ -379,7 +390,10 @@ def _urlopen_response(request: Request) -> RawResponse:
         with build_opener(_NoRedirect()).open(request, timeout=30) as response:
             return RawResponse(int(response.status), response.read(MAXIMUM_RESPONSE_PAGE_BYTES + 1))
     except HTTPError as error:
-        return RawResponse(error.code, error.read(MAXIMUM_RESPONSE_PAGE_BYTES + 1))
+        try:
+            return RawResponse(error.code, error.read(MAXIMUM_RESPONSE_PAGE_BYTES + 1))
+        finally:
+            error.close()
 
 
 class _AlpacaMetadataClient:
@@ -697,48 +711,54 @@ def execute_mock_persistent_metadata(
     """Exercise the future persistent boundary with an explicit mock transport only."""
     if type(transport) is not MockMetadataTransport:
         raise Program007MetadataError("Program 007 persistent execution requires a finite mock")
-    private_root = _prepare_private_root(repository)
-    lock_descriptor = os.open(
-        private_root / "run.lock",
-        os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW,
-        0o600,
-    )
-    with os.fdopen(lock_descriptor, "a+b", buffering=0) as lock:
-        if stat.S_IMODE(os.fstat(lock.fileno()).st_mode) & 0o077:
-            raise Program007MetadataError("Program 007 evidence lock is not private")
-        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-        if {path.name for path in private_root.iterdir()} != {"run.lock"}:
-            raise Program007MetadataError("Program 007 persistent evidence already exists")
-        key_id, secret_key = _load_explicit_credentials(environ)
-        client = _AlpacaMetadataClient(key_id, secret_key, transport)
-        budget = _Budget()
-
-        def writer(key: str, payload: bytes) -> None:
-            _append_persistent_evidence(private_root, key, payload)
-
-        chains = tuple(
-            _execute_chain(
-                chain,
-                budget,
-                lambda intent, _intent_key: client.get(intent),
-                writer,
-            )
-            for chain in frozen_request_chains()
+    root_descriptor = _open_private_root(repository)
+    try:
+        lock_descriptor = os.open(
+            "run.lock",
+            os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW,
+            0o600,
+            dir_fd=root_descriptor,
         )
-        transport.require_exhausted()
-        result = MetadataQualificationResult(chains, _reconcile_chains(chains))
-        observed_at = datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-        writer(
-            "private-manifest.json",
-            canonical_json(
-                result.private_manifest(
-                    status="MOCK-TRANSPORT-PERSISTENT-CONTRACT-PASS",
-                    metadata_observation_as_of=observed_at,
-                    synthetic_credential_loads=1,
+        with os.fdopen(lock_descriptor, "a+b", buffering=0) as lock:
+            if stat.S_IMODE(os.fstat(lock.fileno()).st_mode) & 0o077:
+                raise Program007MetadataError("Program 007 evidence lock is not private")
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            if set(os.listdir(root_descriptor)) != {"run.lock"}:
+                raise Program007MetadataError("Program 007 persistent evidence already exists")
+            key_id, secret_key = _load_explicit_credentials(environ)
+            client = _AlpacaMetadataClient(key_id, secret_key, transport)
+            budget = _Budget()
+
+            def writer(key: str, payload: bytes) -> None:
+                _append_persistent_evidence(root_descriptor, key, payload)
+
+            chains = tuple(
+                _execute_chain(
+                    chain,
+                    budget,
+                    lambda intent, _intent_key: client.get(intent),
+                    writer,
                 )
-            ).encode(),
-        )
-        return result
+                for chain in frozen_request_chains()
+            )
+            transport.require_exhausted()
+            result = MetadataQualificationResult(chains, _reconcile_chains(chains))
+            observed_at = (
+                datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+            )
+            writer(
+                "private-manifest.json",
+                canonical_json(
+                    result.private_manifest(
+                        status="MOCK-TRANSPORT-PERSISTENT-CONTRACT-PASS",
+                        metadata_observation_as_of=observed_at,
+                        synthetic_credential_loads=1,
+                    )
+                ).encode(),
+            )
+            return result
+    finally:
+        os.close(root_descriptor)
 
 
 def parse_metadata_page(body: bytes) -> tuple[tuple[CanonicalAction, ...], str | None]:
@@ -901,10 +921,13 @@ def generate_successor_ledger_candidate(
             or controls[0].exact_factor != Fraction(2, 1)
         ):
             raise Program007MetadataError(f"Program 007 positive control failed for {symbol}")
-    unexpected = sorted(symbol for symbol in NEGATIVE_CONTROLS if by_symbol[symbol])
+    public_action_symbols = {str(action["symbol"]) for action in public_ledger["actions"]}
+    unexpected = sorted(
+        symbol for symbol in SYMBOLS if symbol not in public_action_symbols and by_symbol[symbol]
+    )
     if unexpected:
         raise Program007MetadataError(
-            f"Program 007 negative controls require investigation: {unexpected}"
+            f"Program 007 public-ledger discrepancies require investigation: {unexpected}"
         )
 
     symbols = [
@@ -958,19 +981,27 @@ def generate_successor_ledger_candidate(
     return candidate
 
 
-def _prepare_private_root(repository: Path) -> Path:
+def _open_private_root(repository: Path) -> int:
     if not isinstance(repository, Path):
         raise Program007MetadataError("Program 007 repository root is invalid")
     repository = repository.resolve()
     if not repository.is_dir():
         raise Program007MetadataError("Program 007 repository root is absent")
-    private_root = repository / PRIVATE_ROOT
-    private_root.mkdir(mode=0o700, parents=True, exist_ok=True)
-    if private_root.resolve() != private_root.absolute():
-        raise Program007MetadataError("Program 007 private evidence root must not use symlinks")
-    if stat.S_IMODE(private_root.stat().st_mode) & 0o077:
-        raise Program007MetadataError("Program 007 private evidence root is not private")
-    return private_root
+    descriptor = os.open(repository, _DIRECTORY_FLAGS)
+    try:
+        for part in PRIVATE_ROOT.parts:
+            with suppress(FileExistsError):
+                os.mkdir(part, mode=0o700, dir_fd=descriptor)
+            child = os.open(part, _DIRECTORY_FLAGS, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+        opened = os.fstat(descriptor)
+        if not stat.S_ISDIR(opened.st_mode) or stat.S_IMODE(opened.st_mode) & 0o077:
+            raise Program007MetadataError("Program 007 private evidence root is not private")
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
 
 
 def _load_explicit_credentials(environ: Mapping[str, str]) -> tuple[str, str]:
@@ -988,15 +1019,15 @@ def _load_explicit_credentials(environ: Mapping[str, str]) -> tuple[str, str]:
     return key_id, secret_key
 
 
-def _append_persistent_evidence(root: Path, key: str, payload: bytes) -> None:
+def _append_persistent_evidence(root_descriptor: int, key: str, payload: bytes) -> None:
     if type(key) is not str or _EVIDENCE_KEY.fullmatch(key) is None or type(payload) is not bytes:
         raise Program007MetadataError("Program 007 persistent evidence entry is invalid")
-    path = root / key
     try:
         descriptor = os.open(
-            path,
+            key,
             os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
             0o600,
+            dir_fd=root_descriptor,
         )
     except FileExistsError:
         raise Program007MetadataError(
@@ -1006,11 +1037,7 @@ def _append_persistent_evidence(root: Path, key: str, payload: bytes) -> None:
         handle.write(payload)
         handle.flush()
         os.fsync(handle.fileno())
-    directory = os.open(root, os.O_RDONLY)
-    try:
-        os.fsync(directory)
-    finally:
-        os.close(directory)
+    os.fsync(root_descriptor)
 
 
 def _validate_http_request(request: Request) -> None:
@@ -1073,11 +1100,18 @@ def _execute_chain(
             ).encode(),
         )
         budget.accept_response(response.body)
+        if response.status == 401:
+            raise MetadataAuthenticationError(
+                "METADATA-AUTHENTICATION-FAIL-USE-CONSUMED-NO-RETRY: Alpaca returned HTTP 401"
+            )
         if response.status == 403:
-            raise MetadataAccessError("METADATA-ACCESS-FAIL: Alpaca entitlement returned HTTP 403")
+            raise MetadataAccessError(
+                "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY-NO-PURCHASE: "
+                "Alpaca entitlement returned HTTP 403"
+            )
         if 300 <= response.status < 400:
             raise Program007MetadataError("Program 007 metadata redirect attempt rejected")
-        if response.status in {400, 401, 429, 500}:
+        if response.status in {400, 429, 500}:
             raise MetadataAccessError(
                 f"METADATA-ACCESS-FAIL: Alpaca returned HTTP {response.status}"
             )

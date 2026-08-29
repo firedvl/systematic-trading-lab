@@ -3,12 +3,14 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import inspect
+import io
 import json
 import os
 from copy import deepcopy
 from fractions import Fraction
 from pathlib import Path
 from typing import Any, cast
+from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlparse
 from urllib.request import Request
 from uuid import UUID
@@ -602,7 +604,28 @@ def test_unexpected_unit_event_for_negative_control_requires_investigation() -> 
     unexpected["cusip"] = metadata.IDENTITIES["XLF"]
     result = _execute_same({"forward_splits": [*events, unexpected]})
 
-    with pytest.raises(metadata.Program007MetadataError, match="require investigation"):
+    with pytest.raises(
+        metadata.Program007MetadataError, match="discrepancies require investigation"
+    ):
+        metadata.generate_successor_ledger_candidate(result, _ledger())
+
+
+@pytest.mark.parametrize("symbol", ["IWM", "MDY", "SPY"])
+def test_unexpected_unit_event_for_closed_no_known_action_symbol_fails(symbol: str) -> None:
+    events: list[dict[str, Any]] = []
+    for index, control in enumerate(sorted(metadata.POSITIVE_CONTROLS), start=1):
+        event = _event("forward_splits", index)
+        event["symbol"] = control
+        event["cusip"] = metadata.IDENTITIES[control]
+        events.append(event)
+    unexpected = _event("forward_splits", 100)
+    unexpected["symbol"] = symbol
+    unexpected["cusip"] = metadata.IDENTITIES[symbol]
+    result = _execute_same({"forward_splits": [*events, unexpected]})
+
+    with pytest.raises(
+        metadata.Program007MetadataError, match="discrepancies require investigation"
+    ):
         metadata.generate_successor_ledger_candidate(result, _ledger())
 
 
@@ -619,22 +642,43 @@ def test_nontransformable_action_and_missing_effective_semantics_block_candidate
 
 
 @pytest.mark.parametrize(
-    ("response", "error"),
+    ("response", "error", "message"),
     [
-        (metadata.RawResponse(401, b'{"error":"authentication"}'), metadata.MetadataAccessError),
-        (metadata.RawResponse(403, b'{"error":"entitlement"}'), metadata.MetadataAccessError),
-        (metadata.RawResponse(429, b'{"error":"rate limit"}'), metadata.MetadataAccessError),
-        (metadata.RawResponse(302, b"redirect"), metadata.Program007MetadataError),
-        (metadata.RawResponse(200, b"not-json"), metadata.Program007MetadataError),
+        (
+            metadata.RawResponse(401, b'{"error":"authentication"}'),
+            metadata.MetadataAuthenticationError,
+            "METADATA-AUTHENTICATION-FAIL-USE-CONSUMED-NO-RETRY",
+        ),
+        (
+            metadata.RawResponse(403, b'{"error":"entitlement"}'),
+            metadata.MetadataAccessError,
+            "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY-NO-PURCHASE",
+        ),
+        (
+            metadata.RawResponse(429, b'{"error":"rate limit"}'),
+            metadata.MetadataAccessError,
+            "METADATA-ACCESS-FAIL",
+        ),
+        (
+            metadata.RawResponse(302, b"redirect"),
+            metadata.Program007MetadataError,
+            "redirect attempt rejected",
+        ),
+        (
+            metadata.RawResponse(200, b"not-json"),
+            metadata.Program007MetadataError,
+            "is not valid JSON",
+        ),
     ],
 )
 def test_bounded_raw_response_and_receipt_precede_status_or_schema_failure(
     response: metadata.RawResponse,
     error: type[Exception],
+    message: str,
 ) -> None:
     source = metadata.SyntheticMetadataSource([response])
 
-    with pytest.raises(error):
+    with pytest.raises(error, match=message):
         metadata.execute_synthetic_metadata(source)
 
     payloads = _evidence_payloads(source)
@@ -758,6 +802,38 @@ def test_mock_persistent_transport_writes_private_create_only_evidence(
     assert loads == 1
 
 
+def test_persistent_writes_remain_anchored_after_private_root_swap(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    private_root = tmp_path / metadata.PRIVATE_ROOT
+    relocated_root = private_root.with_name(private_root.name + "-relocated")
+    external_root = tmp_path / "external"
+    original_loader = metadata._load_explicit_credentials
+
+    def swapping_loader(environ: dict[str, str]) -> tuple[str, str]:
+        external_root.mkdir()
+        private_root.rename(relocated_root)
+        private_root.symlink_to(external_root, target_is_directory=True)
+        return original_loader(environ)
+
+    monkeypatch.setattr(metadata, "_load_explicit_credentials", swapping_loader)
+    metadata.execute_mock_persistent_metadata(
+        tmp_path,
+        environ={
+            metadata.CREDENTIAL_NAMES[0]: "synthetic-key-id",
+            metadata.CREDENTIAL_NAMES[1]: "synthetic-secret-key",
+        },
+        transport=metadata.MockMetadataTransport(
+            [metadata.RawResponse(200, _body()), metadata.RawResponse(200, _body())]
+        ),
+    )
+
+    assert private_root.is_symlink()
+    assert not any(external_root.iterdir())
+    assert (relocated_root / "private-manifest.json").is_file()
+
+
 def test_dormant_http_transport_is_get_only_no_redirect_and_bounded(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -792,6 +868,24 @@ def test_dormant_http_transport_is_get_only_no_redirect_and_bounded(
         metadata._urlopen_response(
             Request("https://paper-api.alpaca.markets/v2/orders", method="GET")
         )
+
+
+def test_dormant_http_transport_closes_http_error_response(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    body = io.BytesIO(b"denied")
+    error = HTTPError(metadata.ENDPOINT, 401, "unauthorized", {}, body)
+
+    class Opener:
+        def open(self, _request: Any, *, timeout: int) -> None:
+            assert timeout == 30
+            raise error
+
+    monkeypatch.setattr(metadata, "build_opener", lambda _handler: Opener())
+    request = Request(metadata.frozen_request_chains()[0].url(), method="GET")
+
+    assert metadata._urlopen_response(request) == metadata.RawResponse(401, b"denied")
+    assert body.closed
 
 
 def test_source_is_immutable_and_real_transport_has_no_execution_entrypoint(tmp_path: Path) -> None:
