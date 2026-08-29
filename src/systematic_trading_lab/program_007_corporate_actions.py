@@ -416,6 +416,35 @@ class _AlpacaMetadataClient:
         return response
 
 
+class MockMetadataTransport:
+    """Finite in-memory responses for persistent-boundary tests."""
+
+    __slots__ = ("_requests", "_responses")
+
+    def __init__(self, responses: Sequence[RawResponse]) -> None:
+        if type(responses) not in {list, tuple} or any(
+            type(response) is not RawResponse for response in responses
+        ):
+            raise Program007MetadataError("Program 007 mock metadata responses are invalid")
+        self._responses = tuple(responses)
+        self._requests: list[Request] = []
+
+    @property
+    def requests(self) -> tuple[Request, ...]:
+        return tuple(self._requests)
+
+    def __call__(self, request: Request) -> RawResponse:
+        index = len(self._requests)
+        self._requests.append(request)
+        if index >= len(self._responses):
+            raise Program007MetadataError("Program 007 mock metadata response is missing")
+        return self._responses[index]
+
+    def require_exhausted(self) -> None:
+        if len(self._requests) != len(self._responses):
+            raise Program007MetadataError("Program 007 mock metadata responses remain unused")
+
+
 class SyntheticMetadataSource:
     """Finite responses retained in a capability-held temporary evidence log."""
 
@@ -663,13 +692,11 @@ def execute_mock_persistent_metadata(
     repository: Path,
     *,
     environ: Mapping[str, str],
-    transport: Callable[[Request], RawResponse],
+    transport: MockMetadataTransport,
 ) -> MetadataQualificationResult:
     """Exercise the future persistent boundary with an explicit mock transport only."""
-    if transport is _urlopen_response:
-        raise Program007MetadataError(
-            "Program 007 real HTTP transport requires a separate one-use authority"
-        )
+    if type(transport) is not MockMetadataTransport:
+        raise Program007MetadataError("Program 007 persistent execution requires a finite mock")
     private_root = _prepare_private_root(repository)
     lock_descriptor = os.open(
         private_root / "run.lock",
@@ -698,6 +725,7 @@ def execute_mock_persistent_metadata(
             )
             for chain in frozen_request_chains()
         )
+        transport.require_exhausted()
         result = MetadataQualificationResult(chains, _reconcile_chains(chains))
         observed_at = datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
         writer(

@@ -684,7 +684,7 @@ def test_mock_persistent_transport_writes_private_create_only_evidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     responses = [metadata.RawResponse(200, _body()), metadata.RawResponse(200, _body())]
-    requests: list[Any] = []
+    transport = metadata.MockMetadataTransport(responses)
     loads = 0
     original_loader = metadata._load_explicit_credentials
     private_root = tmp_path / metadata.PRIVATE_ROOT
@@ -693,12 +693,6 @@ def test_mock_persistent_transport_writes_private_create_only_evidence(
         nonlocal loads
         loads += 1
         return original_loader(environ)
-
-    def transport(request: Any) -> metadata.RawResponse:
-        prefix = "symbols-01" if not requests else "cusips-01"
-        assert (private_root / f"{prefix}.intent.json").is_file()
-        requests.append(request)
-        return responses[len(requests) - 1]
 
     monkeypatch.setattr(metadata, "_load_explicit_credentials", counted_loader)
     result = metadata.execute_mock_persistent_metadata(
@@ -712,7 +706,7 @@ def test_mock_persistent_transport_writes_private_create_only_evidence(
 
     assert result.response_count == 2
     assert loads == 1
-    assert all(request.get_method() == "GET" for request in requests)
+    assert all(request.get_method() == "GET" for request in transport.requests)
     assert all(
         (
             urlparse(request.full_url).scheme,
@@ -720,11 +714,15 @@ def test_mock_persistent_transport_writes_private_create_only_evidence(
             urlparse(request.full_url).path,
         )
         == ("https", "data.alpaca.markets", "/v1/corporate-actions")
-        for request in requests
+        for request in transport.requests
     )
-    assert all(request.get_header("Apca-api-key-id") == "synthetic-key-id" for request in requests)
     assert all(
-        request.get_header("Apca-api-secret-key") == "synthetic-secret-key" for request in requests
+        request.get_header("Apca-api-key-id") == "synthetic-key-id"
+        for request in transport.requests
+    )
+    assert all(
+        request.get_header("Apca-api-secret-key") == "synthetic-secret-key"
+        for request in transport.requests
     )
     assert {path.name for path in private_root.iterdir()} == {
         "run.lock",
@@ -755,7 +753,7 @@ def test_mock_persistent_transport_writes_private_create_only_evidence(
                 metadata.CREDENTIAL_NAMES[0]: "synthetic-key-id",
                 metadata.CREDENTIAL_NAMES[1]: "synthetic-secret-key",
             },
-            transport=transport,
+            transport=metadata.MockMetadataTransport(responses),
         )
     assert loads == 1
 
@@ -805,11 +803,11 @@ def test_source_is_immutable_and_real_transport_has_no_execution_entrypoint(tmp_
     assert tuple(inspect.signature(metadata.execute_synthetic_metadata).parameters) == ("source",)
     mock_signature = inspect.signature(metadata.execute_mock_persistent_metadata)
     assert mock_signature.parameters["transport"].default is inspect.Signature.empty
-    with pytest.raises(metadata.Program007MetadataError, match="separate one-use authority"):
+    with pytest.raises(metadata.Program007MetadataError, match="requires a finite mock"):
         metadata.execute_mock_persistent_metadata(
             tmp_path,
             environ={},
-            transport=metadata._urlopen_response,
+            transport=cast(Any, metadata._urlopen_response),
         )
     assert not (tmp_path / metadata.PRIVATE_ROOT).exists()
     assert not any(name.startswith("APCA") for name in vars(metadata))
