@@ -1,0 +1,573 @@
+{
+  "schema_version": "program-007-alpaca-raw-source-qualification-proposal-v1",
+  "proposal_id": "program-007-alpaca-raw-source-qualification-proposal-2026-08-28-v1",
+  "program_ordinal": 7,
+  "program_id": "multi-hour-sector-etf-research-006",
+  "created_date": "2026-08-28",
+  "status": "PROPOSED-NOT-AUTHORIZED",
+  "purpose": "Prospectively test Alpaca raw SIP five-minute bars under corrected raw-evidence, RTH-projection, pagination, and repository-owned split-consistent relative-volume semantics without reopening Program 006.",
+  "lineage": {
+    "predecessor_program_id": "multi-hour-sector-etf-research-005",
+    "predecessor_program_ordinal": 6,
+    "predecessor_disposition": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "predecessor_remains_terminal": true,
+    "predecessor_retry_or_replacement_authority_allowed": false,
+    "predecessor_strategy_returns_generated_or_read": 0,
+    "predecessor_sample_status": "EXPOSED-SOURCE-ENGINEERING-EVIDENCE",
+    "program_006_terminal_records_mutable_by_this_proposal": false,
+    "forensic_analysis": {
+      "path": "config/research/program-006-source-qualification-forensic-analysis-v1.json",
+      "sha256": "490b813bd20d3c98249a9f0c88580bfad3fc4607e94b1f0e5cec134caac166f0",
+      "fingerprint": "f1198d0aaaba0f17f7e806c8268bf6081aba1a1746b308be58cc53489b546d6b"
+    },
+    "successor_legitimacy": "The proposal responds to independently documented source-contract defects, not strategy performance. It changes no strategy hypothesis and uses a fresh source-qualification sample."
+  },
+  "preserved_economic_contract": {
+    "ranking_and_trading_symbols": [
+      "IWM",
+      "MDY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "context_symbol": "SPY",
+    "families": [
+      "sector-relative-continuation-v1",
+      "sector-relative-reversal-v1"
+    ],
+    "lookback_minutes": [
+      30,
+      60
+    ],
+    "hold_minutes": [
+      120,
+      240
+    ],
+    "decision_time": "11:30:00 America/New_York",
+    "cost_bps_per_side": [
+      6,
+      12,
+      25
+    ],
+    "fill_delay_minutes": [
+      5,
+      10,
+      15
+    ],
+    "historical_nbbo_required": false,
+    "missing_session_philosophy_changed": false,
+    "missing_session_policy_binding": {
+      "path": "config/research/program-005-free-alpaca-successor-plan-v1.json",
+      "sha256": "3a71573086418aa8ff53d8359110dee1a951caa333ffd35eccedd8d38678cb11",
+      "fingerprint_field": "plan_fingerprint",
+      "fingerprint": "79a73d143700c643d67c2f862b5bfe3655df9706276a1b70e189c425d4397cb7",
+      "source_field": "missing_data_policy",
+      "retained_rules": {
+        "minimum_cross_section": "All twelve ranking ETFs plus SPY at every required regular-session five-minute bar open.",
+        "incomplete_session_action": "Exclude the whole session from every configuration, benchmark, and later context use.",
+        "symbol_drop_or_rerank_allowed": false,
+        "forward_fill_backward_fill_interpolation_or_synthesis_allowed": false,
+        "alternate_provider_timeframe_or_date_substitution_allowed": false,
+        "pre_exposed_design_quarantine_sessions": [
+          "2020-12-04",
+          "2021-02-03",
+          "2021-02-05",
+          "2021-02-10",
+          "2021-02-22"
+        ],
+        "overall_excluded_full_session_count_max": 7,
+        "unexpected_excluded_full_session_count_max": 2,
+        "required_initial_context_loss_max": 0,
+        "post_acquisition_change_or_waiver_allowed": false
+      },
+      "source_qualification_stricter_rule": "Every selected Program 007 qualification session must be canonically complete; no missing-session disposition is exercised during qualification.",
+      "superseded_rules": []
+    },
+    "controlled_boundaries_changed": false,
+    "strategy_expansion_allowed": false,
+    "strategy_calculation_allowed_during_source_qualification": false
+  },
+  "provider_contract": {
+    "provider": "Alpaca Basic historical equities",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "method": "GET",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "combined_adjustment_requested": false,
+    "provider_adjusted_view_requested": false,
+    "sort": "asc",
+    "limit": 10000,
+    "asof": "2026-07-31",
+    "start_boundary": "inclusive",
+    "end_boundary": "inclusive",
+    "redirects": false,
+    "automatic_transport_retries": 0,
+    "fallback_provider": null
+  },
+  "raw_and_canonical_contract": {
+    "raw_page_order": [
+      "receive one bounded response",
+      "atomically retain immutable private response bytes and metadata",
+      "verify the retained hash",
+      "validate raw row and pagination structure",
+      "project canonical RTH bars",
+      "continue only with the returned fixed-chain page token"
+    ],
+    "raw_response_gates": [
+      "status 200 and valid JSON object with bars object and next_page_token field",
+      "expected symbols only",
+      "valid UTC RFC-3339 five-minute-aligned bar-open timestamps",
+      "timestamps inside the inclusive request bounds",
+      "no duplicate symbol/timestamp within or across pages",
+      "finite positive OHLC prices with a valid OHLC range",
+      "nonnegative volume and structurally valid optional fields",
+      "nonempty nonrepeating page tokens and fixed request identity",
+      "page, response-count, byte, and rate ceilings"
+    ],
+    "canonical_rth_projection": "Filter raw rows to the exact authoritative XNYS regular-session five-minute bar-open grid for each requested session, then sort by timestamp and symbol.",
+    "canonical_completeness": "Require one and only one projected bar for every expected symbol/timestamp coordinate, subject only to the unchanged predeclared whole-session missing-data policy.",
+    "extended_hours_policy": "Valid in-bounds extended-hours rows remain in immutable private raw evidence and are absent from the canonical research projection. Their existence alone cannot fail qualification.",
+    "out_of_bounds_policy": "A row outside the requested start/end interval fails even if it is a valid extended-hours timestamp.",
+    "raw_failure_evidence_policy": "A structurally failing 200 response remains private immutable evidence; it is not discarded and cannot be retried."
+  },
+  "corporate_action_contract": {
+    "selected_architecture": "raw-bars-plus-public-action-ledger-plus-repository-owned-relative-volume-unit-normalization",
+    "provider_split_view_used": false,
+    "provider_spin_off_view_used": false,
+    "ledger_scope": {
+      "symbols": [
+        "IWM",
+        "MDY",
+        "SPY",
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "start_session": "2020-06-26",
+      "end_session": "2026-07-31",
+      "required_unit_changing_actions": [
+        "forward split",
+        "reverse split",
+        "unit split",
+        "stock distribution that changes share units"
+      ],
+      "evidence": "issuer or exchange primary evidence",
+      "must_be_complete_before_any_authority": true
+    },
+    "normalization": {
+      "factor_representation": "exact positive rational",
+      "canonical_prices": "retain raw provider prices without cross-session adjustment",
+      "pre_action_relative_volume_input": "multiply share counts by the cumulative new-to-old share ratio",
+      "volume_rounding": "none; a nonintegral normalized share count remains exact Decimal data",
+      "capacity_dollar_volume": "use raw price times raw volume; reciprocal split units cancel exactly",
+      "cash_dividend_adjustment": false,
+      "spin_off_price_adjustment": false,
+      "spin_off_volume_adjustment": false
+    },
+    "reason": "Same-session price returns and positions do not need cross-session price adjustment. The prior-20-session same-clock relative-volume feature needs one split-consistent share unit. A spin-off is documented as price-only and does not justify reciprocal volume scaling.",
+    "failure_conditions": [
+      "missing or conflicting action evidence",
+      "ambiguous effective session or ratio",
+      "unhandled unit-changing action",
+      "nonpositive factor",
+      "nondeterministic normalization",
+      "future feature expansion into cross-session prices without a new reviewed contract"
+    ]
+  },
+  "prior_provider_observation_audit": {
+    "scope": "Programs 002 through 006",
+    "program_002": "REAL-ALPACA-MARKET-DATA-REQUESTS-169-DISTINCT-SESSIONS-OBSERVED",
+    "program_003": "ZERO-PROVIDER-REQUESTS-PROPOSED-BLOCKED",
+    "program_004": "ZERO-PROVIDER-REQUESTS-PROPOSED-NOT-PURCHASED",
+    "program_005": "ZERO-PROVIDER-REQUESTS-CREDENTIAL-FAILURE",
+    "program_006": "23-PROVIDER-REQUESTS-22-SESSIONS-OBSERVED",
+    "program_002_observed_market_data": {
+      "xnys_session_range": {
+        "start_session": "2020-06-26",
+        "end_session": "2021-02-26",
+        "distinct_session_count": 169,
+        "session_list_fingerprint": "a107d4a991a40c00b6d0a4fec411245adfe68d0112b84e89d043f195b4c31e66"
+      },
+      "minute_reconstruction_sessions_already_inside_range": [
+        "2021-02-03",
+        "2021-02-05",
+        "2021-02-10",
+        "2021-02-22"
+      ],
+      "evidence_bindings": [
+        {
+          "path": "config/research/program-002-exposed-acquisition-pagination-failure-v1.json",
+          "sha256": "b0656fb36c2ca5ecd97034a37e2630bf363765d5e01711a8092cd76f3235babc",
+          "fingerprint_field": "incident_fingerprint",
+          "fingerprint": "2537863a4f3f8215f573ea028949c5ef49c802ade2d3bcf2878af8bdf0607d1a"
+        },
+        {
+          "path": "config/research/program-002-exposed-acquisition-completeness-failure-v1.json",
+          "sha256": "6109b230ce66c2d1bb01d2b50e86e344eaa9c6eeff7a9287477ea066fbfe9076",
+          "fingerprint_field": "incident_fingerprint",
+          "fingerprint": "311a355aa22e917f6a343036ad2950d42a2b98479b874604dd3b712282cacd78"
+        },
+        {
+          "path": "config/research/program-002-exposed-acquisition-completeness-failure-v3.json",
+          "sha256": "ebc8f536d51fd701f9fc26f28630abff9f23a0b5edb3e794a5a3016337273618",
+          "fingerprint_field": "incident_fingerprint",
+          "fingerprint": "1f5350eb3f704c343044cd11ac328643fd1ae0939ebeaa030248ce031938b53a"
+        },
+        {
+          "path": "config/research/program-002-minute-reconstruction-source-failure-v1.json",
+          "sha256": "f95850c120603608f616f2e88d579424f4dc80301aa1251b7188fcca89fc08cf",
+          "fingerprint_field": "failure_fingerprint",
+          "fingerprint": "b15a5acbce63758fe40619db1861f6e624d454651d9977fcddbda269b92cca2e"
+        }
+      ]
+    },
+    "program_outcome_evidence_bindings": {
+      "program_003": {
+        "path": "config/research/program-003-low-cost-successor-plan-v1.json",
+        "sha256": "4b1fd55774f89caf853c27cfc521c94ad1b18435a22ee07c2333ca229e9e2c91",
+        "fingerprint_field": "plan_fingerprint",
+        "fingerprint": "f5b184ff3e1604a151a82214d1cf91fbdffa6fc4fddf7d7ce0506a2e99427a42",
+        "provider_request_count": 0
+      },
+      "program_004": {
+        "path": "config/research/program-004-marketparquet-successor-plan-v1.json",
+        "sha256": "b4d00e040b80eb9323bb87475cc2ece54e60ebecc6ea6dcde1a95d87fd927237",
+        "fingerprint_field": "plan_fingerprint",
+        "fingerprint": "2b740810f1365d20c11d1cf3bb83cdd0e06e72c30a5070ff0648031f29d893fc",
+        "provider_request_count": 0
+      },
+      "program_005": {
+        "path": "config/research/program-005-source-qualification-terminal-failure-v1.json",
+        "sha256": "20ff82cf99ddd396c3b1dff73df2dfdc4a002278270d631f6de1ca1b8deed99f",
+        "fingerprint_field": "failure_fingerprint",
+        "fingerprint": "51bd01b08b99746fb2379cd3afbb6a51609f0d9dffcb643f36e73e3a6cff4841",
+        "provider_request_count": 0
+      },
+      "program_006": {
+        "path": "config/research/program-006-source-qualification-terminal-failure-v1.json",
+        "sha256": "3c693b2a31c5d5eef11388b55e41f38b9203c21e7f8ce604fc8f89c9c15e9687",
+        "fingerprint_field": "failure_fingerprint",
+        "fingerprint": "acbbbf0f28cc5d555224e05fb8d34cf4e9ae1a60fe75020ca2fee03da91180e5",
+        "provider_request_count": 23
+      }
+    },
+    "eligible_exposed_chronology": {
+      "start_session": "2020-06-26",
+      "end_session": "2026-07-31",
+      "xnys_session_count": 1531,
+      "session_list_fingerprint": "cb6ed4b9e53c13a2efeadaf889e083c02ebda9351c34be2c72b805b060bb4b6e"
+    },
+    "program_006_observed_sessions": [
+      "2020-07-27",
+      "2020-12-04",
+      "2021-02-03",
+      "2021-02-05",
+      "2021-02-10",
+      "2021-02-22",
+      "2022-11-25",
+      "2023-07-17",
+      "2024-06-10",
+      "2024-06-11",
+      "2024-06-12",
+      "2025-12-01",
+      "2025-12-02",
+      "2025-12-03",
+      "2025-12-04",
+      "2025-12-05",
+      "2025-12-08",
+      "2025-12-09",
+      "2025-12-10",
+      "2025-12-11",
+      "2025-12-12",
+      "2026-07-15"
+    ],
+    "program_006_observed_session_count": 22,
+    "program_006_observed_session_fingerprint": "1bc7498a8ed6b37d1c0824c8f4838198cfafedc83a8634a3a9282f9f515766e6",
+    "program_002_program_006_observed_overlap_count": 6,
+    "previously_observed_session_union_count": 185,
+    "previously_observed_session_union_fingerprint": "2b918fdc59ec60d5b7c16e73c3fccbe8ebf9de7049fc73aec3db7119403f07d6",
+    "eligible_unobserved_session_count": 1346,
+    "eligible_unobserved_session_fingerprint": "83e04d9ec481a3a8deae28800e1bcc46d6123d74b83fb93e949574fcddb07e79",
+    "protected_or_controlled_exclusion_inventory": {
+      "evidence_bindings": {
+        "program_005_plan": {
+          "path": "config/research/program-005-free-alpaca-successor-plan-v1.json",
+          "sha256": "3a71573086418aa8ff53d8359110dee1a951caa333ffd35eccedd8d38678cb11",
+          "fingerprint_field": "plan_fingerprint",
+          "fingerprint": "79a73d143700c643d67c2f862b5bfe3655df9706276a1b70e189c425d4397cb7"
+        },
+        "daily_independent_range": {
+          "path": "config/research/rapid-004-seed-universe-v1.json",
+          "sha256": "876ed95716a2e7010232d2790f6210c0110de42c9b10ada90202b0176238eb59",
+          "source_field": "sealed_boundaries.independent_daily_range"
+        },
+        "strategic_allocation_range": {
+          "path": "config/research/intraday-known-exposures-v1.json",
+          "sha256": "f11977e33a5ade47eeb0ad0923180eca733bc694ffef0e4e2f335936da4746aa",
+          "fingerprint_field": "inventory_fingerprint",
+          "fingerprint": "0666996faabb50abce0b8959c49980e36a655ea290618bc1463342d2ab5122f9",
+          "source_entry_id": "strategic-allocation-protected-holdout-2026"
+        },
+        "june_reservation": {
+          "path": "config/research/intraday-exposed-002-june-reservation-v1.json",
+          "sha256": "5a6e7b8e21cf5bd7aad5b7445880a7d1862b304ba5b1f9e3dab4909ab9c674db",
+          "source_field": "range.evaluation_start..range.evaluation_end"
+        },
+        "intraday_v3_selection": {
+          "path": "config/research/intraday-v3-period-selection-v2.json",
+          "sha256": "42581c019abc5c3e184b89b31e655bc5ee123bdcb79ced2c9cf894d6668e45cf",
+          "fingerprint_field": "selection_fingerprint",
+          "fingerprint": "c2718c3871bb95e22d4647e119f6bfb54cd51ec7b1b2cc472cfa1a7dfbcfc5d0"
+        }
+      },
+      "ranges": [
+        {
+          "id": "daily-independent-2018-2019",
+          "start": "2018-01-02",
+          "end": "2019-12-31"
+        },
+        {
+          "id": "strategic-allocation-protected-holdout-2026",
+          "start": "2026-01-02",
+          "end": "2026-07-31"
+        },
+        {
+          "id": "june-2026-reservation",
+          "start": "2026-06-01",
+          "end": "2026-06-30"
+        },
+        {
+          "id": "intraday-v3-validation",
+          "start": "2026-10-01",
+          "end": "2027-04-15"
+        },
+        {
+          "id": "controlled-a",
+          "start": "2027-04-16",
+          "end": "2027-10-15"
+        },
+        {
+          "id": "controlled-b",
+          "start": "2027-10-18",
+          "end": "2028-04-14"
+        }
+      ],
+      "in_eligible_chronology_session_count": 145,
+      "in_eligible_chronology_session_fingerprint": "a1bbae9a31f549f868137478f2fbcab8fc038fe24223437ca3bfb7a40b6f9bab",
+      "overlap_with_observed_session_count": 1,
+      "overlap_with_observed_session_fingerprint": "d9f66accbf84fb1684a959f6990973427a925262e671522032c66f8afc655356"
+    },
+    "observed_or_protected_exclusion_union_count": 329,
+    "observed_or_protected_exclusion_union_fingerprint": "a4038c8170bb47ee6b4c830979d2d7fa7a221936ec33253457f8960254c0d980",
+    "eligible_unobserved_unprotected_session_count": 1202,
+    "eligible_unobserved_unprotected_session_fingerprint": "52cf930e99717b6a37b23d102a750d518fbc45c6a4f3707cb55154849cc56770",
+    "protected_or_controlled_overlap_allowed": false
+  },
+  "fresh_sample_selection": {
+    "status": "FROZEN-PROSPECTIVELY-NOT-QUERIED",
+    "seed": "program-007-source-qualification-sample-v1",
+    "algorithm": [
+      "enumerate XNYS sessions from 2020-06-26 through 2026-07-31",
+      "exclude every session observed by real Program 002-006 provider requests",
+      "exclude every controlled or protected range",
+      "from the public 2025-12-05 five-ETF split, choose the nearest unobserved XNYS session before and after the effective session; the prior session is also the fresh early-close control",
+      "enumerate every remaining ten-consecutive-full-session window, hash seed|pagination|first|last with SHA-256, and choose the lowest digest",
+      "from remaining full sessions, hash seed|normal|date with SHA-256 and choose the three lowest digests",
+      "sort the selected sessions chronologically and bind the list fingerprint before any provider observation"
+    ],
+    "pagination_candidate_count": 1084,
+    "selected_pagination_digest": "002153ec4625c6662700c259a6f484dd1e782577a8e013f6e8eea705ccdc804f",
+    "selected_normal_digests": {
+      "2021-07-08": "00493836065f58c99e778117639b4d62632c9b6e0e91a8464d770b8a816af34d",
+      "2022-01-25": "006046be4791a56411903a47b250b583d88010401d7949b94d01c765cd02ec4b",
+      "2022-11-15": "002553b478a106594b483fbcd1c69ccee797076549f731dcb12814f4c7e6888d"
+    },
+    "categories": {
+      "normal_controls": [
+        "2021-07-08",
+        "2022-01-25",
+        "2022-11-15"
+      ],
+      "pagination_full_sessions": [
+        "2023-05-16",
+        "2023-05-17",
+        "2023-05-18",
+        "2023-05-19",
+        "2023-05-22",
+        "2023-05-23",
+        "2023-05-24",
+        "2023-05-25",
+        "2023-05-26",
+        "2023-05-30"
+      ],
+      "fresh_early_close_and_pre_split_control": [
+        "2025-11-28"
+      ],
+      "fresh_post_split_control": [
+        "2025-12-15"
+      ],
+      "spin_off_control": []
+    },
+    "spin_off_control_reason": "The selected raw-only architecture performs no spin-off price or volume adjustment. A future unit-changing action ledger must still fail closed on any action whose share-unit effect is unresolved.",
+    "selected_session_count": 15,
+    "selected_session_fingerprint": "6ef4f2ae14416050e198df2394dec4c20aca01d3bcb985bdeb4a8d1c718c00ed",
+    "selected_session_overlap_with_prior_observations": 0,
+    "selected_session_overlap_with_controlled_or_protected_ranges": 0,
+    "expected_full_sessions": 14,
+    "expected_early_close_sessions": 1,
+    "expected_regular_session_rows": 14742
+  },
+  "request_plan": [
+    {
+      "range_id": "normal-2021-07-08",
+      "start": "2021-07-08T13:30:00Z",
+      "end": "2021-07-08T19:55:00Z",
+      "session_count": 1,
+      "maximum_pages": 1
+    },
+    {
+      "range_id": "normal-2022-01-25",
+      "start": "2022-01-25T14:30:00Z",
+      "end": "2022-01-25T20:55:00Z",
+      "session_count": 1,
+      "maximum_pages": 1
+    },
+    {
+      "range_id": "normal-2022-11-15",
+      "start": "2022-11-15T14:30:00Z",
+      "end": "2022-11-15T20:55:00Z",
+      "session_count": 1,
+      "maximum_pages": 1
+    },
+    {
+      "range_id": "pagination-2023-05-16-to-2023-05-30",
+      "start": "2023-05-16T13:30:00Z",
+      "end": "2023-05-30T19:55:00Z",
+      "session_count": 10,
+      "maximum_pages": 6
+    },
+    {
+      "range_id": "split-pre-early-close-2025-11-28",
+      "start": "2025-11-28T14:30:00Z",
+      "end": "2025-11-28T17:55:00Z",
+      "session_count": 1,
+      "maximum_pages": 1
+    },
+    {
+      "range_id": "split-post-2025-12-15",
+      "start": "2025-12-15T14:30:00Z",
+      "end": "2025-12-15T20:55:00Z",
+      "session_count": 1,
+      "maximum_pages": 1
+    }
+  ],
+  "transport_budget": {
+    "logical_chain_count": 6,
+    "minimum_expected_http_requests": 7,
+    "minimum_expected_http_responses": 7,
+    "maximum_http_requests": 11,
+    "maximum_http_responses": 11,
+    "maximum_downloaded_bytes": 16777216,
+    "maximum_response_page_bytes": 8388608,
+    "maximum_requests_per_minute": 120,
+    "maximum_credential_loads": 1,
+    "automatic_transport_retries": 0,
+    "minimum_pagination_pages": 2,
+    "pagination_reason": "The ten-session canonical RTH grid alone contains 10,140 rows, which exceeds Alpaca's documented 10,000-row page limit before any extended-hours rows."
+  },
+  "qualification_gates": {
+    "raw_response": [
+      "all raw response gates pass across every page",
+      "every response body and metadata record is immutable and hash-verified",
+      "all continuation tokens are exhausted without repetition",
+      "the pagination range uses at least two pages and reaches all thirteen symbols"
+    ],
+    "rth_projection": [
+      "extended-hours rows are accepted only when structurally valid and within request bounds",
+      "extended-hours rows remain raw-only",
+      "the RTH projection is deterministic",
+      "the projected grid contains exactly 14,742 expected coordinates before any predeclared missing-session disposition"
+    ],
+    "corporate_actions": [
+      "the exhaustive issuer/exchange unit-changing action ledger passes independent review before authority",
+      "unaffected symbol/session factors are exactly one in the repository normalizer",
+      "the five public 2-for-1 split symbols receive the exact rational share-unit factor around the fresh controls",
+      "synthetic same-session price-ratio cancellation and split-invariant dollar volume are tested separately from share-count normalization",
+      "spin-off price changes never imply a volume factor",
+      "synthetic split-spanning same-clock relative volume uses one share unit"
+    ],
+    "failure_action": "Fail Program 007 once, preserve all private evidence, and stop without retry, source switch, full acquisition, dataset admission, or strategy execution."
+  },
+  "private_data": {
+    "proposed_root": ".trading-lab/program-007-free-alpaca",
+    "git_ignored": true,
+    "raw_provider_pages_public": false,
+    "reconstructable_observations_public": false,
+    "credentials_stored_logged_hashed_or_persisted": false,
+    "public_outputs": "counts, hashes, classifications, and nonreconstructable diagnostics only"
+  },
+  "preconditions_before_any_authority": [
+    "finding-free independent forensic and successor review",
+    "complete issuer/exchange unit-changing action ledger for all thirteen symbols through 2026-07-31",
+    "raw-first persistence and corrected projection implementation",
+    "focused synthetic raw-bound, RTH, extended-hours, pagination, split, and spin-off-volume tests",
+    "full quality gates and clean synchronized main",
+    "new exact one-use authority proposal and separate explicit user authorization"
+  ],
+  "state_at_proposal": {
+    "external_authorization_root_exists": false,
+    "active_authority_exists": false,
+    "credential_access_occurred": false,
+    "provider_request_occurred": false,
+    "fresh_sample_observed": false,
+    "source_qualification_occurred": false,
+    "dataset_exists": false,
+    "strategy_return_generated_or_read": false,
+    "controlled_or_protected_access_occurred": false,
+    "paper_broker_or_live_access_occurred": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "controlled_a": false,
+    "controlled_b": false,
+    "intraday_v3": false,
+    "june": false,
+    "daily_independent_2018_2019": false,
+    "strategic_allocation_21": false,
+    "paper_broker_or_live_state": false
+  },
+  "exact_next_step": "Complete independent review and the exhaustive public unit-changing action ledger. Do not authorize, activate, or execute Program 007 from this proposal.",
+  "fingerprint_contract": "Remove the top-level proposal_fingerprint field, canonicalize with systematic_trading_lab.fingerprints.canonical_json, and take SHA-256 of those UTF-8 bytes.",
+  "proposal_fingerprint": "d0ec31e7b6947ed6fe3e1118a6f5536daddae34ebbe9dffcc3b3f932dd9d41c0"
+}

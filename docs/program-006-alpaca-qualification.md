@@ -28,6 +28,33 @@ The finding-free independent review binds closeout commit
 `7e79c4534ad2df67c99d70de013033f823ad650d8e35c3bdf9a8d782bba0adf9` /
 `59533d3b6c151865d304ed11aaf1a9917050625ed736b7d5edb1b38995b35359`.
 
+## Offline forensic disposition
+
+The [offline forensic analysis](research-campaigns/program-006-source-qualification-forensic-analysis-v1.md)
+does not change the terminal result. Response 23 remains `INDETERMINATE` because its body and exact
+coordinate were not retained. Independently, the old parser's requirement that every returned row
+belong to the RTH grid is a qualification-specification defect: a multi-day request can contain
+valid in-bounds extended-hours rows, which should stay in raw evidence and be excluded only from the
+canonical RTH projection.
+
+The paired adjustment failure is also a qualification-specification defect. The old validator used
+an exact row-specific open ratio for every OHLC field and reciprocal volume, while Alpaca documents
+split as price-and-volume adjustment and spin-off as price-only adjustment. Offline retained-page
+analysis found exact public split-ledger volume behavior in all 10,677 rows but did not establish an
+exact adjusted-price contract or bad source data. Program 006 source suitability remains
+`INDETERMINATE`.
+
+Program 007, `multi-hour-sector-etf-research-006`, is a non-authorizing proposal for raw SIP bars,
+raw same-session prices, RTH projection, and ledger-based split normalization only for cross-session
+relative-volume share counts. Its fresh sample excludes all Programs 002-006 observed sessions. The
+sample also excludes the hash-bound controlled and protected date inventory and preserves the exact
+Program 005 whole-session missing-data policy. The proposal does not permit credentials, provider
+contact, source qualification, acquisition, dataset admission, or strategy execution.
+
+The forensic independent review passed all eleven required challenges with no findings. Its
+SHA-256/fingerprint is `103c58c47b0c07c768bd5b3efc577704a74f83cdd223f9945b2df00a3b6f099a` /
+`0d389c0209753a64dbe0362dba9b817f33103e3a0b7c7ed89164e2c2747d32fe`.
+
 ## Failure lineage
 
 Program 005 failed because its required credential pair was unavailable after its immutable claim

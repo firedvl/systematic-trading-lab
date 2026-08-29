@@ -1372,6 +1372,8 @@ def test_cli_preflight_and_repository_safety_guard(
         + "\n",
         encoding="utf-8",
     )
+    program_006_data = Path("config/research/program-006-private-bars.json")
+    program_006_data.write_text(raw_path.read_text(encoding="utf-8"), encoding="utf-8")
     escaped_csv = Path("notes/snapshot.csv")
     escaped_csv.parent.mkdir(parents=True)
     escaped_csv.write_text(
@@ -1402,6 +1404,11 @@ def test_cli_preflight_and_repository_safety_guard(
             "config/research/"
             "program-005-source-qualification-authority-proposal-independent-review-v2.json"
         ),
+        Path(
+            "config/research/"
+            "program-006-source-qualification-forensic-analysis-independent-review-v1.json"
+        ),
+        Path("config/research/program-006-source-qualification-forensic-analysis-v1.json"),
     ]
     for path in new_public_paths:
         path.write_text("{}\n", encoding="utf-8")
@@ -1412,6 +1419,7 @@ def test_cli_preflight_and_repository_safety_guard(
             private_path,
             raw_path,
             config_data,
+            program_006_data,
             escaped_csv,
             escaped_parquet,
             secret_path,
@@ -1426,6 +1434,7 @@ def test_cli_preflight_and_repository_safety_guard(
     assert "private-market-data-path" in errors
     assert "leaks/body.json:private-market-data-content" in errors
     assert "config/research/program-005-bars.jsonl:private-market-data-path" in errors
+    assert "config/research/program-006-private-bars.json:private-market-data-path" in errors
     assert "notes/snapshot.csv:private-market-data-content" in errors
     assert "notes/snapshot.parquet:private-market-data-path" in errors
     assert "credential.env:1" in errors
