@@ -292,20 +292,46 @@ def test_exact_committed_chain_loads_and_self_rehashed_control_mutations_fail(
         ).stdout.strip()
     )
     if terminal_record is not None:
-        closeout_head = subprocess.run(
-            ("git", "-C", str(_REPOSITORY), "rev-parse", "HEAD"),
+        subprocess.run(
+            ("git", "-C", str(repository), "checkout", "-B", "main", head),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        terminal_path = repository / terminal.relative_to(_REPOSITORY)
+        terminal_path.parent.mkdir(parents=True, exist_ok=True)
+        terminal_path.write_bytes(terminal.read_bytes())
+        subprocess.run(
+            ("git", "-C", str(repository), "add", "--", terminal_path.relative_to(repository)),
+            check=True,
+        )
+        subprocess.run(
+            (
+                "git",
+                "-C",
+                str(repository),
+                "-c",
+                "user.name=Program 006 Test",
+                "-c",
+                "user.email=program-006-test@example.invalid",
+                "commit",
+                "--no-gpg-sign",
+                "-m",
+                "test: add terminal failure",
+                terminal_path.relative_to(repository).as_posix(),
+            ),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        terminal_head = subprocess.run(
+            ("git", "-C", str(repository), "rev-parse", "HEAD"),
             check=True,
             capture_output=True,
             text=True,
         ).stdout.strip()
         subprocess.run(
-            ("git", "-C", str(repository), "checkout", "-B", "main", closeout_head),
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        subprocess.run(
-            ("git", "-C", str(repository), "update-ref", "refs/remotes/origin/main", closeout_head),
+            ("git", "-C", str(repository), "update-ref", "refs/remotes/origin/main", terminal_head),
             check=True,
         )
         credential_reads: list[bool] = []
@@ -314,14 +340,14 @@ def test_exact_committed_chain_loads_and_self_rehashed_control_mutations_fail(
             "_require_credentials_present",
             lambda _: credential_reads.append(True),
         )
-        with pytest.raises(program_006.Program006Error):
+        with pytest.raises(program_006.Program006Error, match="terminally revoked"):
             program_006.activate_authority(
                 repository,
                 str(terminal_record["authorization"]["external_authorization_root"]),
                 environ={},
             )
         assert credential_reads == []
-        assert not program_006._active_authority_path(repository).exists()
+        assert not program_006._active_authority_path(repository).parent.exists()
     subprocess.run(
         ("git", "-C", str(repository), "checkout", "-B", "main", head),
         check=True,

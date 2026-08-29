@@ -20,7 +20,8 @@ adjustment price factors in all 11 completed pairs. No receipt, source manifest,
 
 The source-qualification result is `FAIL`. Preserve the ignored private records and pages. Do not
 activate or run Program 006 again, issue replacement authority, switch sources, acquire the full
-range, admit a dataset, or execute a strategy.
+range, admit a dataset, or execute a strategy. Current code verifies the exact terminal artifact
+and rejects authority derivation before credential access or state creation.
 
 ## Failure lineage
 
