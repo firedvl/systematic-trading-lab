@@ -1,0 +1,388 @@
+{
+  "schema_version": "program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-independent-review-v1",
+  "review_id": "program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-independent-review-2026-08-30-v1",
+  "program_id": "multi-hour-sector-etf-research-008",
+  "reviewed_at": "2026-08-30T11:07:54Z",
+  "status": "PASS-TERMINAL-FAILURE-VERIFIED",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_execution_main": "56278b8f2dc8714f58b026b0a13d523072bb64ba",
+  "reviewed_closeout_commits": [
+    {
+      "commit": "11e12d7dd39c9f8c7abef60086cd87bbd14ff603",
+      "tree": "375550c623e8590b5dd65be287c0055f2ded5920",
+      "purpose": "terminal FAIL artifact and public closeout"
+    },
+    {
+      "commit": "11601a8d6ff98a79020780afab40c64f6f6c9e2b",
+      "tree": "ee98dc1344c6112521acc2af17d0e8e861884c77",
+      "purpose": "consumed-authority revocation guard"
+    }
+  ],
+  "reviewed_failure": {
+    "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
+    "sha256": "c4778d1600c564f34da80ff7052c39e7a4bd599685342795ccb4401a4318ea4a",
+    "fingerprint": "a8ac4102f096204f27b648519cd7b5f3796743102a3a2e49203ff47a13686f96"
+  },
+  "reviewed_private_records": {
+    "active_authority": {
+      "sha256": "8f20b8a3b212f71154eede5054b9b1df4b7ac8c723bea2ac31a90ef06feecd1d",
+      "fingerprint": "a21491c95307ec9a2d86837c7827fccf6d32d165a069e97cf92ec050247e98c6"
+    },
+    "one_use_claim": {
+      "schema_version": "program-009-private-ohlcv-claim-v1",
+      "sha256": "967173e28c79b1fed594401a50cff0eb09d639c89d27a3514c5dcf59b6eaad55",
+      "fingerprint": "967173e28c79b1fed594401a50cff0eb09d639c89d27a3514c5dcf59b6eaad55"
+    },
+    "terminal_failure": {
+      "sha256": "1aef6ff43a1389ae662b74d1f3d686eac04a260a7ee04a0ae41b39244b8cd452",
+      "fingerprint": "1aef6ff43a1389ae662b74d1f3d686eac04a260a7ee04a0ae41b39244b8cd452"
+    },
+    "response_manifest": {
+      "manifest_id": "program-009-raw-alpaca-sip-ohlcv-response-manifest-2026-08-30-v1",
+      "sha256": "dc8fb8bb94bd4720a5dc6bbab791045584e4718b1086ca25f2e7be05c8909cf4",
+      "fingerprint": "8c0f6de100faf7fcafb97447e9ae35a70ded710557c9e3cc5d144e36e945b37f",
+      "page_count": 9,
+      "bytes": 1806300
+    }
+  },
+  "reviewed_authority": {
+    "user_authorization_packet_sha256": "44b9f83bce10ca5372af45924c7e69f7ef668be2ad24d741e6eaf284a736e9ab",
+    "external_authorization_root": "a21491c95307ec9a2d86837c7827fccf6d32d165a069e97cf92ec050247e98c6",
+    "authority_id": "program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-2026-08-30-v1",
+    "activation_succeeded": true,
+    "one_use_consumed": true,
+    "active_flags_during_consumed_run": [
+      "credential_access",
+      "provider_contact",
+      "source_qualification",
+      "source_requests"
+    ]
+  },
+  "reviewed_contract": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "asof": "2026-07-31",
+    "sort": "asc",
+    "limit": 10000,
+    "inclusive_bounds": true,
+    "universe": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "range_ids": [
+      "normal-2021-07-08",
+      "normal-2022-01-25",
+      "normal-2022-11-15",
+      "pagination-2023-05-16-to-2023-05-30",
+      "split-pre-early-close-2025-11-28",
+      "split-post-2025-12-15"
+    ],
+    "expected_canonical_coordinates": 14742
+  },
+  "reviewed_runtime_outcome": {
+    "terminal_execution": "CONFIRMED-FAIL-CONSUMED-NO-RETRY",
+    "failure_stage": "sixth page of pagination-2023-05-16-to-2023-05-30 after raw persistence and validation",
+    "failure_reason": "Program 009 OHLCV page ceiling exceeded",
+    "credential_presence_preflight": "PASS",
+    "credential_presence_recheck_under_lock": "PASS",
+    "credential_load_count": 1,
+    "claim_written_immediately_before_first_transport": true,
+    "provider_request_count": 9,
+    "http_response_count": 9,
+    "page_count": 9,
+    "all_http_statuses": 200,
+    "pages_per_chain": {
+      "normal-2021-07-08": 1,
+      "normal-2022-01-25": 1,
+      "normal-2022-11-15": 1,
+      "pagination-2023-05-16-to-2023-05-30": 6,
+      "split-pre-early-close-2025-11-28": 0,
+      "split-post-2025-12-15": 0
+    },
+    "response_bytes": 1806300,
+    "maximum_observed_page_bytes": 259557,
+    "maximum_allowed_page_bytes": 8388608,
+    "maximum_allowed_total_bytes": 16777216,
+    "minimum_request_interval_seconds": "0.5",
+    "maximum_requests_per_minute": 120,
+    "automatic_retries": 0,
+    "redirects_followed": 0,
+    "raw_body_retained_before_parse": true,
+    "qualification_receipt_created": false,
+    "private_dataset_count": 0
+  },
+  "reviewed_structural_outcome": {
+    "raw_rows_received_per_chain": {
+      "normal-2021-07-08": 1014,
+      "normal-2022-01-25": 1014,
+      "normal-2022-11-15": 1014,
+      "pagination-2023-05-16-to-2023-05-30": 14239,
+      "split-pre-early-close-2025-11-28": 0,
+      "split-post-2025-12-15": 0
+    },
+    "valid_extended_hours_rows_per_chain": {
+      "normal-2021-07-08": 0,
+      "normal-2022-01-25": 0,
+      "normal-2022-11-15": 0,
+      "pagination-2023-05-16-to-2023-05-30": 4344,
+      "split-pre-early-close-2025-11-28": 0,
+      "split-post-2025-12-15": 0
+    },
+    "canonical_rth_rows_per_chain": {
+      "normal-2021-07-08": 1014,
+      "normal-2022-01-25": 1014,
+      "normal-2022-11-15": 1014,
+      "pagination-2023-05-16-to-2023-05-30": 9895,
+      "split-pre-early-close-2025-11-28": 0,
+      "split-post-2025-12-15": 0
+    },
+    "total_raw_rows_received": 17281,
+    "total_valid_extended_hours_rows": 4344,
+    "expected_canonical_coordinates": 14742,
+    "retained_canonical_rth_coordinates": 12937,
+    "missing_required_canonical_coordinates": 1805,
+    "unexpected_symbol_count": 0,
+    "unexpected_coordinate_count": 0,
+    "duplicate_coordinate_verdict": "PASS-NONE-IN-RETAINED-PAGES",
+    "timestamp_alignment_verdict": "PASS-RETAINED-PAGES",
+    "ohlc_structural_verdict": "PASS-RETAINED-PAGES",
+    "volume_structural_verdict": "PASS-RETAINED-PAGES",
+    "normal_2021_07_08_verdict": "PASS-EXACT-1014-CANONICAL-COORDINATES",
+    "normal_2022_01_25_verdict": "PASS-EXACT-1014-CANONICAL-COORDINATES",
+    "normal_2022_11_15_verdict": "PASS-EXACT-1014-CANONICAL-COORDINATES",
+    "pagination_range_verdict": "FAIL-SIXTH-ALLOWED-PAGE-HAD-NONTERMINAL-TOKEN",
+    "pagination_page_token_verdict": "PASS-PROGRESSION-THROUGH-SIX-PAGES-THEN-FAIL-CLOSED-AT-CEILING",
+    "early_close_2025_11_28_verdict": "NOT-REQUESTED-AFTER-TERMINAL-PAGINATION-FAILURE",
+    "post_split_2025_12_15_verdict": "NOT-REQUESTED-AFTER-TERMINAL-PAGINATION-FAILURE",
+    "split_volume_structural_verdict": "NOT-REACHED-CONTROL-CHAINS-NOT-REQUESTED",
+    "raw_contemporaneous_price_verdict": "PASS-NO-ADJUSTMENT-OR-DERIVED-PRICE-SURFACE",
+    "qualification": "FAIL"
+  },
+  "terminal_revocation": {
+    "guard_path": "src/systematic_trading_lab/program_009_ohlcv_authority.py",
+    "guard_sha256": "869d827ca3df09910df626d1b4f32b0af02fe667564c5534425356027ef4b043",
+    "root_derivation_rejects_before_credentials_or_private_root": true,
+    "activation_entry_rejects_before_credentials_or_private_root": true,
+    "execution_entry_rejects_before_credentials_or_private_root": true,
+    "exact_terminal_sha256_and_fingerprint_bound": true,
+    "terminal_semantics_validated": true,
+    "historical_execution_main_authority_derivation_verified": true,
+    "regression_test_path": "tests/unit/test_program_009_ohlcv_authority.py",
+    "regression_test_sha256": "e906f5237cc9f2567b2beb50d652ced9eb20018b67d1ad695d293b8c07ac580b"
+  },
+  "challenge_results": [
+    {
+      "number": 1,
+      "challenge": "Was only the exact fresh sample queried?",
+      "answer": "YES; execution stopped before the two remaining frozen chains",
+      "verdict": "PASS"
+    },
+    {
+      "number": 2,
+      "challenge": "Was adjustment exactly raw?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 3,
+      "challenge": "Was feed exactly SIP?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 4,
+      "challenge": "Were retries zero?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 5,
+      "challenge": "Were redirects zero?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 6,
+      "challenge": "Did claim publication occur immediately before first transport?",
+      "answer": "YES; immutable records and reviewed source ordering agree",
+      "verdict": "PASS"
+    },
+    {
+      "number": 7,
+      "challenge": "Was credential load count at most one?",
+      "answer": "YES; one load",
+      "verdict": "PASS"
+    },
+    {
+      "number": 8,
+      "challenge": "Were every successfully received page's raw bytes persisted before semantic validation or pagination continuation?",
+      "answer": "YES; all nine page, receipt, and manifest hashes reconcile",
+      "verdict": "PASS"
+    },
+    {
+      "number": 9,
+      "challenge": "Were extended-hours rows tolerated only as raw evidence?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 10,
+      "challenge": "Was canonical completeness checked only after XNYS projection?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 11,
+      "challenge": "Was early-close 2025-11-28 calendar-derived?",
+      "answer": "YES in the frozen implementation; the chain was not requested after the terminal pagination failure",
+      "verdict": "PASS"
+    },
+    {
+      "number": 12,
+      "challenge": "Did pagination genuinely occur on the frozen pagination chain?",
+      "answer": "YES; six distinct linked pages were retained and page six remained nonterminal",
+      "verdict": "PASS"
+    },
+    {
+      "number": 13,
+      "challenge": "Were page, request, and byte ceilings respected?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 14,
+      "challenge": "Were all 13 symbols required?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 15,
+      "challenge": "Was no missing required canonical coordinate repaired?",
+      "answer": "YES; no repair or substitution occurred",
+      "verdict": "PASS"
+    },
+    {
+      "number": 16,
+      "challenge": "Was split handling bound to public ledger v3?",
+      "answer": "YES in the frozen implementation; the split control chains were not reached",
+      "verdict": "PASS"
+    },
+    {
+      "number": 17,
+      "challenge": "Were raw contemporaneous prices preserved?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 18,
+      "challenge": "Did any provider-adjusted OHLCV request occur?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 19,
+      "challenge": "Did any full exposed acquisition occur?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 20,
+      "challenge": "Did dataset admission occur?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 21,
+      "challenge": "Did any strategy calculation or return occur?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 22,
+      "challenge": "Were controlled, protected, PAPER, broker, and live boundaries untouched?",
+      "answer": "YES",
+      "verdict": "PASS"
+    }
+  ],
+  "verified_assertions": {
+    "external_root_equals_active_authority_fingerprint": true,
+    "active_authority_bytes_are_canonical": true,
+    "claim_matches_authority_and_request_plan": true,
+    "claim_precedes_first_provider_transport_in_reviewed_path": true,
+    "one_use_authority_is_consumed": true,
+    "credential_load_count_is_one": true,
+    "exact_request_response_page_and_byte_counts_reconcile": true,
+    "all_private_page_body_receipt_and_manifest_hashes_reconcile": true,
+    "pagination_tokens_form_five_successor_links_without_reuse": true,
+    "automatic_transport_retries_are_zero": true,
+    "redirects_are_zero": true,
+    "raw_first_persistence_completed": true,
+    "terminal_ohlcv_qualification_is_fail": true,
+    "exact_terminal_artifact_blocks_current_authority_paths": true,
+    "no_raw_or_reconstructable_ohlcv_entered_git": true,
+    "no_provider_adjusted_ohlcv_request_occurred": true,
+    "no_corporate_action_metadata_request_occurred": true,
+    "no_full_acquisition_or_dataset_admission_occurred": true,
+    "no_strategy_calculation_or_return_occurred": true,
+    "controlled_protected_paper_broker_and_live_state_stayed_untouched": true,
+    "replay_replacement_authority_purchase_fallback_dataset_and_strategy_are_prohibited": true
+  },
+  "verification": {
+    "independent_reviewer": "fresh read-only reviewer",
+    "private_record_cross_hash_audit": "PASS",
+    "independent_private_response_reparse": "PASS; retained totals and structural verdicts reconciled",
+    "required_review_challenges": "22 passed",
+    "independent_focused_program_009_tests": "19 passed",
+    "focused_program_009_and_raw_source_tests": "60 passed",
+    "sanitized_full_test_suite": "1470 passed, 4 skipped",
+    "initial_full_test_suite_with_authorized_credentials_present": "1466 passed, 4 failed, 4 skipped; the four unrelated research-runtime tests rejected the credential-bearing environment as designed",
+    "ruff": "PASS",
+    "mypy": "PASS; 266 source files",
+    "secret_and_private_data_scan": "PASS; 612 files scanned",
+    "shell_syntax_build_manifest_and_diff_checks": "PASS",
+    "sdist_and_wheel_build": "PASS",
+    "git_reachable_and_unreachable_object_scan": "PASS; 32 private files checked and 0 matching Git objects found",
+    "reviewed_working_tree": "clean before this review artifact",
+    "tracked_program_009_private_files": 0
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "Retained-file hashes and the reviewed source ordering establish present-state integrity; exact historical wall-clock ordering cannot be independently re-observed after transport.",
+    "The early-close and post-split chains were not requested after the terminal pagination failure, so those source controls were not observed.",
+    "Remote CI, merge, post-merge CI, and final clean synchronized-main checks remain delivery steps after this review."
+  ],
+  "scope_limit": "The review made no provider request, credential access, execution action, repository edit, response-body disclosure, strategy calculation, protected-state access, PAPER action, broker write, or live action.",
+  "required_next_action": "None for Program 009. Preserve its private evidence and terminal public record. Do not replay Program 009 or create a replacement Program 009 authority.",
+  "review_fingerprint": "6aaa8f1f0a210ae4c49449030800b5e5735ba6dade388f41fecf5304d5ef1bac"
+}

@@ -124,6 +124,7 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-proposal-v1.json",
         "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-proposal-independent-review-v1.json",
         "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
+        "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-independent-review-v1.json",
     }
 )
 _PROVIDER_BAR_KEYS = frozenset({"t", "o", "h", "l", "c", "v"})

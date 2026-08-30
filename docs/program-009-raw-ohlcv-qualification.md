@@ -18,6 +18,14 @@ Private evidence contains 17,281 raw rows, including 4,344 valid raw-only extend
 failed. The private response-manifest SHA-256/fingerprint is
 `dc8fb8bb94bd4720a5dc6bbab791045584e4718b1086ca25f2e7be05c8909cf4` /
 `8c0f6de100faf7fcafb97447e9ae35a70ded710557c9e3cc5d144e36e945b37f`.
+The public terminal-failure SHA-256/fingerprint is
+`c4778d1600c564f34da80ff7052c39e7a4bd599685342795ccb4401a4318ea4a` /
+`a8ac4102f096204f27b648519cd7b5f3796743102a3a2e49203ff47a13686f96`. The finding-free independent
+review binds closeout commits `11e12d7dd39c9f8c7abef60086cd87bbd14ff603` and
+`11601a8d6ff98a79020780afab40c64f6f6c9e2b`; review SHA-256/fingerprint is
+`2f96ed2d40740a1f24b9ba14583478fa99cc6700735b0cecf7fbe7ec3d3cf59c` /
+`6aaa8f1f0a210ae4c49449030800b5e5735ba6dade388f41fecf5304d5ef1bac`. Sixty focused tests and
+1,470 full-suite tests passed with four skips.
 Raw pages remain under the Git-ignored private root. No full acquisition, dataset admission, strategy
 calculation, protected access, PAPER action, broker write, or live action occurred.
 
