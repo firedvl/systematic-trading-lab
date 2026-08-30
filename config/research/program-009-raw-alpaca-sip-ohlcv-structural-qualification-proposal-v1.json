@@ -1,0 +1,131 @@
+{
+  "schema_version": "program-009-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v1",
+  "proposal_id": "program-009-raw-alpaca-sip-ohlcv-structural-qualification-proposal-2026-08-30-v1",
+  "program_ordinal": 9,
+  "program_id": "multi-hour-sector-etf-research-008",
+  "status": "FROZEN-PROSPECTIVE-NOT-AUTHORIZED",
+  "purpose": "Fresh raw Alpaca SIP five-minute OHLCV structural source qualification only.",
+  "lineage": {
+    "program_007_metadata": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "program_008_metadata": "TERMINAL-PASS-CONSUMED-NO-REPLAY",
+    "program_008_authority_reused": false,
+    "program_008_metadata_pass_required": true
+  },
+  "bindings": {
+    "program_007_terminal_failure": {
+      "path": "config/research/program-007-corporate-action-metadata-qualification-terminal-failure-v1.json",
+      "sha256": "99bc4397909f364efac2f189351bff9ebaae9b886833fc7e0555b3fa5751119f",
+      "fingerprint": "991bd9892ee32f4badc08350160a03c3514e0ae1a33dfa623406b534c73bd352"
+    },
+    "program_008_terminal_success": {
+      "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-v1.json",
+      "sha256": "23bf0e29b4f8b4b4655d7eeb470e4ceb1bc319717c854ec3d82790ef52c1762b",
+      "fingerprint": "151091ac4d863d73561afc24dc0138e5326dd237183dfb7da178cb5584871fcd"
+    },
+    "program_008_terminal_success_review": {
+      "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-independent-review-v1.json",
+      "sha256": "65eda8a7e6bc6d262b382227db7ca82ecd42dc38caa97d637d6dd1b207a4e6c9",
+      "fingerprint": "143f8e5023b96bc950f9ec86d37e966fca42ceefd1c07c691d6d3c2af7c66dad"
+    },
+    "program_007_raw_source_proposal": {
+      "path": "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
+      "sha256": "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34",
+      "fingerprint": "d0ec31e7b6947ed6fe3e1118a6f5536daddae34ebbe9dffcc3b3f932dd9d41c0"
+    },
+    "program_007_raw_source_implementation": {
+      "path": "config/research/program-007-raw-source-contract-implementation-v6.json",
+      "sha256": "9903d4c243e94c34879cc5edd086747b4687b33224167db549782229f259b188",
+      "fingerprint": "4e611bd85f4f59f045c1cf981ac77cc5359fce7205bedf698bd3f84050c57456"
+    },
+    "program_007_raw_source_implementation_review": {
+      "path": "config/research/program-007-raw-source-contract-implementation-independent-review-v1.json",
+      "sha256": "e0cb67fed583490fbea484f7067a8ffcb93f663381a6cc51b80c0db3522d8238",
+      "fingerprint": "7c6517671aa9a8e0fa9f13e3f1adf94343639c45b49a602b4efd8cc62b3b6841"
+    },
+    "public_unit_changing_action_ledger": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+      "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+      "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
+    }
+  },
+  "source_contract": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "sort": "asc",
+    "limit": 10000,
+    "asof": "2026-07-31",
+    "inclusive_bounds": true,
+    "redirects": false,
+    "provider_adjusted_view_allowed": false
+  },
+  "freshness": {
+    "programs_002_through_006_audit": "BOUND-BY-PROGRAM-007-RAW-PROPOSAL",
+    "program_007_ohlcv_requests": 0,
+    "program_008_ohlcv_requests": 0,
+    "selected_session_overlap_with_prior_ohlcv": 0,
+    "metadata_queries_count_as_ohlcv_exposure": false,
+    "selected_session_count": 15,
+    "expected_canonical_coordinates": 14742
+  },
+  "scientific_contract": {
+    "raw_first_private_retention": true,
+    "raw_structural_validation_before_rth_projection": true,
+    "extended_hours_retained_raw_only": true,
+    "canonical_calendar": "XNYS",
+    "canonical_completeness": "13/13 symbols on every required RTH bar-open coordinate",
+    "early_close_session": "2025-11-28",
+    "post_split_session": "2025-12-15",
+    "forced_pagination_range": "2023-05-16 through 2023-05-30",
+    "split_symbols": [
+      "XLB",
+      "XLE",
+      "XLK",
+      "XLU",
+      "XLY"
+    ],
+    "split_effective_session": "2025-12-05",
+    "split_ratio": "2-for-1",
+    "share_volume_rule": "Multiply only split-spanning prior-session same-clock share counts by the exact new-to-old ratio.",
+    "historical_price_adjustment_allowed": false,
+    "qualification_strategy_calculations": 0
+  },
+  "later_missingness_policy": {
+    "binding_path": "config/research/program-005-free-alpaca-successor-plan-v1.json",
+    "whole_session_exclusion": true,
+    "symbol_drop_rerank_fill_or_substitution_allowed": false,
+    "qualification_sample_must_be_complete": true,
+    "program_006_quarantine_sessions_reused_as_fresh_sample": false
+  },
+  "protected_firewall": {
+    "controlled_a": false,
+    "controlled_b": false,
+    "intraday_v3": false,
+    "june": false,
+    "daily_2018_2019": false,
+    "strategic_allocation_21": false,
+    "paper": false,
+    "broker": false,
+    "live": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proposal_fingerprint": "64b3e380d1bdf7861afb65ff95882cb72ccf96a645bda382244731311548150f"
+}

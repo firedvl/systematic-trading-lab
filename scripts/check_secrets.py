@@ -49,6 +49,7 @@ PUBLIC_MARKET_DATA_ROOTS = (
     "program-005-free-alpaca/",
     "program-006-free-alpaca/",
     "program-007-free-alpaca/",
+    "program-009-raw-alpaca-sip-ohlcv/",
     "raw-data/",
 )
 PUBLIC_PROGRAM_JSON = frozenset(
@@ -118,6 +119,10 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-008-corporate-action-metadata-qualification-authority-proposal-independent-review-v1.json",
         "config/research/program-008-corporate-action-metadata-qualification-terminal-success-v1.json",
         "config/research/program-008-corporate-action-metadata-qualification-terminal-success-independent-review-v1.json",
+        "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v1.json",
+        "config/research/program-009-raw-alpaca-sip-ohlcv-structural-request-plan-v1.json",
+        "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-proposal-v1.json",
+        "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-proposal-independent-review-v1.json",
     }
 )
 _PROVIDER_BAR_KEYS = frozenset({"t", "o", "h", "l", "c", "v"})
@@ -179,7 +184,13 @@ def main() -> int:
             or (
                 any(
                     program in normalized
-                    for program in ("program-005", "program-006", "program-007", "program-008")
+                    for program in (
+                        "program-005",
+                        "program-006",
+                        "program-007",
+                        "program-008",
+                        "program-009",
+                    )
                 )
                 and suffix in PRIVATE_MARKET_DATA_SUFFIXES
                 and normalized not in PUBLIC_PROGRAM_JSON
