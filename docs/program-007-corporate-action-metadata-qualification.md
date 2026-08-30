@@ -6,6 +6,11 @@ clean synchronized main `a624acbe86177323e88042c5dbfe6ef00862e1c8`. The run load
 credential pair once, wrote its immutable claim immediately before transport, made one request,
 and received one HTTP 200 response of 115,628 bytes with zero retries.
 
+Later [offline forensics](research-campaigns/program-007-corporate-action-metadata-offline-forensics-v1.md)
+classified the universal non-empty-CUSIP gate as a qualification-specification defect and proposed
+an inert Program 008 successor. That conclusion does not change this terminal Program 007 result or
+permit a retry.
+
 The retained first symbol-chain page contains 538 cash-dividend records and five forward-split
 records. Frozen normalization stopped on the first cash-dividend record whose required `cusip` was
 empty. In total, 189 cash-dividend records across all thirteen requested symbols have an empty

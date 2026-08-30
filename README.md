@@ -86,6 +86,11 @@ uv run trading-lab data acquire program-007-metadata credential-preflight
 See [Program 007 corporate-action metadata qualification](docs/program-007-corporate-action-metadata-qualification.md).
 Do not activate or run Program 007 metadata again. Do not proceed to its OHLCV qualification.
 
+Offline analysis found that Alpaca's current `data_quality=complete` contract permits processed
+records with missing CUSIP or ISIN. The retained response contains all five expected split controls
+and no deeper source incompatibility. [Program 008](docs/research-campaigns/program-007-corporate-action-metadata-offline-forensics-v1.md)
+is proposed with a CUSIP-only future qualification, but it has no authority and must not be run.
+
 ## Using historical data
 
 Alpaca imports are read-only and require research mode plus credentials:

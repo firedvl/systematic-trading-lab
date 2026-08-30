@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-29 - Preserve Program 007 failure and propose a CUSIP-only Program 008
+
+- Decision: keep Program 007 `TERMINAL-FAIL-CONSUMED-NO-RETRY`, classify its universal non-empty-CUSIP rule as `QUALIFICATION-SPECIFICATION-DEFECT`, and propose Program 008 as a non-authorizing CUSIP-only metadata qualification. Do not replay the exposed Program 007 symbol query.
+- Context: current Alpaca documentation says `data_quality=complete` still returns processed actions that are incomplete, including missing CUSIP or ISIN. Offline parsing of the retained 115,628-byte page found 538 cash dividends and five forward splits. The 189 empty CUSIPs are a legacy-date-associated cash-dividend subset; all five public split controls are present and consistent. No other terminal source incompatibility was found.
+- Consequences: public-ledger identity remains primary. Empty CUSIP is allowed only with one unambiguous ledger mapping; a matching CUSIP corroborates; a conflicting non-empty CUSIP fails. ISIN is optional and not an identity source, though conflicting non-empty values for one event ID fail. Program 008 may later request only the unexecuted thirteen-CUSIP chain under a separate reviewed one-use authority and explicit user grant. It currently has no authority, credentials, external root, provider request, OHLCV access, dataset, strategy result, protected access, PAPER action, broker write, or live action.
+- Revisit after clean merge, then only if the user separately asks to create a Program 008 execution authority.
+
 ## 2026-08-29 - Stop Program 007 metadata after frozen schema failure
 
 - Decision: record Program 007 corporate-action metadata qualification as `TERMINAL-FAIL-CONSUMED-NO-RETRY`, preserve its ignored private evidence, and prohibit replay, replacement authority, purchase, fallback, OHLCV qualification, dataset admission, and strategy execution.

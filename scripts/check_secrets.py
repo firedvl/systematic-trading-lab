@@ -110,6 +110,9 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-007-corporate-action-metadata-qualification-authority-proposal-independent-review-v2.json",
         "config/research/program-007-corporate-action-metadata-qualification-terminal-failure-v1.json",
         "config/research/program-007-corporate-action-metadata-qualification-terminal-failure-independent-review-v1.json",
+        "config/research/program-007-corporate-action-metadata-offline-forensic-analysis-v1.json",
+        "config/research/program-008-corporate-action-metadata-qualification-proposal-v1.json",
+        "config/research/program-008-corporate-action-metadata-forensic-independent-review-v1.json",
     }
 )
 _PROVIDER_BAR_KEYS = frozenset({"t", "o", "h", "l", "c", "v"})
@@ -171,7 +174,7 @@ def main() -> int:
             or (
                 any(
                     program in normalized
-                    for program in ("program-005", "program-006", "program-007")
+                    for program in ("program-005", "program-006", "program-007", "program-008")
                 )
                 and suffix in PRIVATE_MARKET_DATA_SUFFIXES
                 and normalized not in PUBLIC_PROGRAM_JSON

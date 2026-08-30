@@ -1,0 +1,248 @@
+{
+  "schema_version": "program-008-corporate-action-metadata-qualification-proposal-v1",
+  "proposal_id": "program-008-corporate-action-metadata-qualification-proposal-2026-08-29-v1",
+  "program_number": 8,
+  "program_id": "multi-hour-sector-etf-research-007",
+  "proposal_date": "2026-08-29",
+  "status": "PROGRAM-008-PROPOSED-NOT-AUTHORIZED",
+  "predecessor": {
+    "program_number": 7,
+    "program_id": "multi-hour-sector-etf-research-006",
+    "status": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "authority_reused": false,
+    "proposal_reused": false,
+    "external_root_reused": false,
+    "symbol_query_replay_allowed": false
+  },
+  "bindings": {
+    "offline_forensic_analysis": {
+      "path": "config/research/program-007-corporate-action-metadata-offline-forensic-analysis-v1.json",
+      "sha256": "1fdf65cf3d846dc67b3d29565f7e1283e95185fcc500f6a3b0d7670aa3b2ed8d",
+      "fingerprint": "531148e65d1b45c8985b8ffe29bf7d4c150dd69888432a8188080322fd455c80"
+    },
+    "terminal_program_007_failure": {
+      "path": "config/research/program-007-corporate-action-metadata-qualification-terminal-failure-v1.json",
+      "sha256": "99bc4397909f364efac2f189351bff9ebaae9b886833fc7e0555b3fa5751119f",
+      "fingerprint": "991bd9892ee32f4badc08350160a03c3514e0ae1a33dfa623406b534c73bd352"
+    },
+    "public_identity_ledger": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+      "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+      "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
+    },
+    "provider_documentation_evidence": {
+      "path": "config/research/program-007-alpaca-corporate-actions-public-contract-evidence-v1.json",
+      "sha256": "f674122b0e9349dfde972a587adb49eb07bfe3bdb384a3955ecfec97d7035eb7",
+      "fingerprint": "31068af25bdd130f9ba543da4c2496d5942884ff28667de174f04c2da99e8064",
+      "refetched_unchanged_on": "2026-08-29"
+    },
+    "offline_parser": {
+      "path": "src/systematic_trading_lab/program_008_corporate_actions.py",
+      "sha256": "30261eeff1de06b18ca5f40c237b3e2666072fe346ae888ef81c021be08d1b59"
+    },
+    "focused_tests": {
+      "path": "tests/unit/test_program_008_corporate_actions.py",
+      "sha256": "0083a07498cb1a0dc34347286e9ca48cb0a4ae537f44dad03a1c60b5baf669b9"
+    },
+    "exposed_symbol_response": {
+      "private_path": ".trading-lab/program-007-corporate-action-metadata-v2/symbols-01.body",
+      "byte_count": 115628,
+      "sha256": "52e77eb497e07af20f605103bb4a75187d600ab2b9d1d1c641f21ecf3a834ab0",
+      "canonical_core_inventory_fingerprint": "a1fc338678830332f529dc48790156fa570f38795f310ad010c1a8b6e18f11e2",
+      "scientific_role": "EXPOSED-SOURCE-ENGINEERING-REGRESSION-AND-CROSS-FILTER-BASELINE",
+      "fresh_qualification_evidence": false
+    }
+  },
+  "scientific_justification": {
+    "frozen_program_007_rule": "Every returned corporate action must have a non-empty CUSIP.",
+    "rule_classification": "QUALIFICATION-SPECIFICATION-DEFECT",
+    "provider_contract": "Processed actions may be returned by data_quality=complete even when CUSIP, ISIN, ex-date, or another completeness field is missing.",
+    "retained_evidence": "The response maps all rows to public-ledger identities, contains all five exact split controls, and has no deeper source incompatibility beyond optional metadata and non-global response order.",
+    "successor_needed": true,
+    "source_qualification_established": false
+  },
+  "fresh_request": {
+    "purpose": "Test the never-executed CUSIP filter, endpoint access, positive-control recovery, stable cross-filter event identity, public-ledger reconciliation, discrepancy detection, and corrected optional-identifier handling.",
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v1/corporate-actions",
+    "identity_parameter": "cusips",
+    "identities": [
+      "464287655",
+      "78462F103",
+      "78467Y107",
+      "81369Y100",
+      "81369Y209",
+      "81369Y308",
+      "81369Y407",
+      "81369Y506",
+      "81369Y605",
+      "81369Y704",
+      "81369Y803",
+      "81369Y860",
+      "81369Y886"
+    ],
+    "identity_count": 13,
+    "request_identity_fingerprint": "2214e9dd726b8ce69c056e548501a4d157bd474dbfc59a44cb47b32b93894329",
+    "parameters": {
+      "region": "us",
+      "start": "1990-01-01",
+      "end": "2026-08-29",
+      "limit": 1000,
+      "data_quality": "complete",
+      "sort": "asc",
+      "types": "OMITTED"
+    },
+    "program_007_symbol_query_replayed": false,
+    "additional_fresh_request_shapes": 0,
+    "why_one_chain_is_sufficient": "It is the only frozen identity-filter behavior Program 007 did not execute. The exposed symbol response supplies the regression and cross-filter baseline; a second symbol request would repeat observed source behavior without adding a distinct falsifiable question."
+  },
+  "request_budget": {
+    "minimum_requests": 1,
+    "maximum_requests": 4,
+    "minimum_responses": 1,
+    "maximum_responses": 4,
+    "maximum_pages": 4,
+    "maximum_accepted_bytes_per_response": 1048576,
+    "maximum_read_bytes_per_response_for_oversize_detection": 1048577,
+    "maximum_accepted_response_bytes_total": 4194304,
+    "maximum_credential_loads": 1,
+    "automatic_retries": 0,
+    "redirects": false,
+    "ambiguous_send_retry_allowed": false,
+    "provider_hosts": [
+      "data.alpaca.markets"
+    ],
+    "allowed_paths": [
+      "/v1/corporate-actions"
+    ],
+    "ohlcv_paths": []
+  },
+  "corrected_metadata_contract": {
+    "request_identity": "The immutable CUSIP intent proves which thirteen public-ledger identities were queried; a response row need not echo CUSIP when its symbol maps unambiguously.",
+    "response_identity": "Every event must map to exactly one canonical public-ledger security through a known symbol, a matching CUSIP, or both.",
+    "public_ledger_priority": "The public ledger remains canonical. Alpaca cannot override symbol, CUSIP, issuer, continuity, or action terms silently.",
+    "cusip": {
+      "empty_or_absent": "Allowed only with an unambiguous public-ledger symbol mapping.",
+      "equal_to_public_ledger": "Corroborating metadata.",
+      "nonempty_and_different": "HARD-FAIL-IDENTITY-DISCREPANCY"
+    },
+    "isin": {
+      "empty_or_absent": "Allowed.",
+      "identity_role": "NOT-RELIED-UPON-BECAUSE-THE-PUBLIC-LEDGER-DOES-NOT-BIND-ISIN",
+      "same_event_conflicting_nonempty_values": "HARD-FAIL-PROVIDER-SELF-DISCREPANCY"
+    },
+    "provider_event_id": {
+      "required": true,
+      "format": "canonical UUID",
+      "identical_duplicate_content": "DEDUPLICATE-AND-COUNT",
+      "conflicting_duplicate_content": "HARD-FAIL",
+      "cross_filter_role": "All overlapping IDs must have the same core content; all five positive controls must retain the exposed symbol-response IDs."
+    },
+    "economic_dates": {
+      "cash_dividend": "ex_date when present, but a non-unit cash dividend cannot fail share-unit continuity solely for missing optional identity metadata",
+      "forward_split": "ex_date required for qualification",
+      "reverse_split": "ex_date required for qualification",
+      "unit_split_merger_reorganization": "effective_date required for qualification",
+      "name_change": "No provider economic-date field is invented; same-symbol same-CUSIP or missing-CUSIP metadata may be classified as an identity no-break, while any change or ambiguity fails for review."
+    },
+    "ordering": "Validate every process_date against the request interval and sort canonical events after complete pagination; do not require global provider order.",
+    "source_finality": "No negative-event completeness claim; creation lag remains unbounded."
+  },
+  "positive_controls": {
+    "symbols": [
+      "XLB",
+      "XLE",
+      "XLK",
+      "XLU",
+      "XLY"
+    ],
+    "required_event_type": "forward_split",
+    "required_economic_date": "2025-12-05",
+    "required_ratio": "2-for-1",
+    "required_count_per_symbol": 1,
+    "required_cross_filter_event_id_stability": true,
+    "missing_or_wrong_control": "FAIL"
+  },
+  "qualification_gates": [
+    "exact reviewed request identity and limits",
+    "HTTP 200 and bounded raw-first create-only persistence",
+    "known response arrays and fields only",
+    "valid nonrepeating pagination ending in null next_page_token",
+    "every event maps to exactly one public-ledger security",
+    "no conflicting non-empty CUSIP",
+    "no conflicting non-empty ISIN for one provider event ID",
+    "all process dates inside 1990-01-01 through 2026-08-29",
+    "all in-scope relevant events have usable documented economic dates and terms",
+    "all five exact positive controls are present",
+    "all five control event IDs and core content reconcile with exposed Program 007 evidence",
+    "all other overlapping provider event IDs have matching core content",
+    "no unsupported in-scope unit or identity event",
+    "no byte, request, response, page, host, path, redirect, or retry breach"
+  ],
+  "allowed_inventory_differences": {
+    "exposed_only_non_unit_events": "Allowed because a CUSIP filter need not recover rows whose provider CUSIP metadata is absent.",
+    "fresh_only_events": "Allowed only after full corrected-contract validation because provider creation lag is unbounded.",
+    "relevant_exposed_events": "All five controls must appear and reconcile; no exposed relevant control may disappear."
+  },
+  "research_contract_unchanged": {
+    "tradeable_etf_count": 12,
+    "context_symbol": "SPY",
+    "strategy_directions": [
+      "continuation",
+      "reversal"
+    ],
+    "lookback_minutes": [
+      30,
+      60
+    ],
+    "hold_minutes": [
+      120,
+      240
+    ],
+    "decision_time": "11:30 America/New_York",
+    "cost_bps": [
+      6,
+      12,
+      25
+    ],
+    "delay_minutes": [
+      5,
+      10,
+      15
+    ],
+    "missing_session_policy_changed": false,
+    "controlled_or_protected_boundaries_changed": false,
+    "raw_only_ohlcv_architecture_changed": false,
+    "public_action_ledger_v3_changed": false,
+    "strategy_outputs_allowed": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "execution_state": {
+    "authority_id": null,
+    "active_packet": null,
+    "external_root": null,
+    "credential_names": [],
+    "private_runtime_root": null,
+    "provider_requests": 0,
+    "responses": 0,
+    "response_bytes": 0
+  },
+  "exact_next_step": "Obtain a finding-free review and merge this non-authorizing proposal. Any future execution requires a separate exact Program 008 one-use authority proposal, another review, and a new explicit user authorization. Do not execute from this artifact.",
+  "proposal_fingerprint": "3d2192495cae2fe9c8db67873819df727a9bb13eb5b9a911d51e89a8e4aa884f"
+}
