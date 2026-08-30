@@ -120,7 +120,7 @@ validates process and economic dates, and reports zero discrepancies. Its canoni
 inventory fingerprint is `a1fc338678830332f529dc48790156fa570f38795f310ad010c1a8b6e18f11e2`.
 This result is exposed source-engineering evidence only.
 
-## Program 008 proposal
+## Program 008 authority readiness
 
 The non-authorizing proposal is
 [`program-008-corporate-action-metadata-qualification-proposal-v1.json`](../../config/research/program-008-corporate-action-metadata-qualification-proposal-v1.json).
@@ -132,17 +132,37 @@ It keeps `region=us`, `start=1990-01-01`, `end=2026-08-29`, `limit=1000`,
 responses, four pages, 1 MiB per accepted page, 4 MiB total, one credential load, and zero retries.
 It will not replay the Program 007 symbol query.
 
-The future CUSIP evidence must recover and reconcile the five controls, preserve their provider IDs
-and core content across filters, map every row to the public ledger, and fail every non-empty identity
+The future CUSIP evidence must recover and reconcile the five controls, preserve provider IDs and
+core content across pages, map every row to the public ledger, and fail every non-empty identity
 conflict or unsupported relevant event. New events may appear because provider creation lag is
 unbounded; they must pass the full corrected contract. Non-unit events present only in the exposed
 symbol response do not have to appear through the CUSIP filter.
 
-Program 008 has no authority, active packet, credential names, private runtime root, provider request,
-response, or external root. A future run requires a separate reviewed one-use authority proposal and
-new explicit user authorization.
+The names-only preflight passed for `PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID` and
+`PROGRAM_007_CORPORATE_ACTIONS_API_SECRET_KEY` without reading either value. Authority proposal
+`program-008-corporate-action-metadata-qualification-authority-proposal-2026-08-29-v1` is
+`READY FOR USER AUTHORIZATION`. It binds implementation commit/root
+`f0ed2534e768d26cc5969d574d16f0ef951e28ac` /
+`186168ba7fd738e2fa54e9a785808df726a97928a32a9f3e6969f8ff77adc507`, request-plan
+SHA-256/fingerprint `882682b16bbf9f5fa81742a75577546f364d7c76bb04e6e15abf2d9a64043465` /
+`18ae8ef4152f827fe70261c76f20baf026b44e1a091ae98f1537dcacda818fe7`, and the separate ignored
+private root `.trading-lab/program-008-corporate-action-metadata-v1`.
 
-The finding-free independent review binds implementation commit
+Production execution owns its redirect-disabled fixed-host transport. Its public entry point accepts
+no transport callback. The finite test transport takes only canned responses and credential-free
+request intents. Authority-proposal SHA-256/fingerprint is
+`2f7ca46c70fb1aeef298728c780fca28c16c9121bedba1ec1ea5d99954268da5` /
+`6173cb00ab3119ad17846c0251d253c4448e017e344b882b104ef966c7bc3f78`; fresh authority-review
+SHA-256/fingerprint is `c80decf235f7447740b895f400c3faa9386f8f5db10322bdfeb64a66219a7f66` /
+`ec2b111145b20d59f92dd7b3cdbab8a04572d1889db388732690709a3d73f66f`.
+
+The proposal and review created no active authority, external root, private root, claim, credential
+value load, provider request, response, byte, OHLCV access, strategy result, protected action, PAPER
+action, broker write, or live action. Derive the one external root only from final clean synchronized
+`main`. That derivation does not activate authority. A future run still requires the exact separate
+user authorization.
+
+The earlier finding-free forensic review binds implementation commit
 `02b2ed61f6a9e1a7affd8a49162437d89fdcb751`. Its SHA-256/fingerprint is
 `0ff5fe1f2c3db02c468ce3f87b553acbdd94b290189eb9f03c843e071c18475d` /
 `e987474a6af543a0e7097db67ee87475d0042b2ceae7b3c7e1b49d07e67b4064`.
