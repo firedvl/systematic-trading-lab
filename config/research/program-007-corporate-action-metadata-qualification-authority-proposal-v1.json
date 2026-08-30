@@ -1,0 +1,261 @@
+{
+  "schema_version": "program-007-corporate-action-metadata-qualification-authority-proposal-v1",
+  "proposal_id": "program-007-corporate-action-metadata-qualification-authority-proposal-2026-08-29-v1",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "created_at": "2026-08-30T00:59:39Z",
+  "status": "BLOCKED-CREDENTIALS-NOT-VISIBLE-TO-RUNTIME",
+  "purpose": "exact one-use Alpaca corporate-action metadata qualification only",
+  "source_role": "CORROBORATION + DISCREPANCY DETECTION",
+  "active_authority": false,
+  "bindings": {
+    "ledger_v3": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+      "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+      "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
+    },
+    "source_plan_v3": {
+      "path": "config/research/program-007-corporate-action-metadata-source-plan-v3.json",
+      "sha256": "b61758a35ca896890946dfbef1b315d0827b8821a32c2399a7440350d620e0c2",
+      "fingerprint": "6ac30c18035161414cd410ba83715b74c55cb14322f421eda517ea4af375adef"
+    },
+    "source_implementation_v6": {
+      "path": "config/research/program-007-corporate-action-metadata-source-implementation-v6.json",
+      "sha256": "14ccfd69d54d9035cc36ccc7915c044c2596c06836e400da0016d5c74e9e84eb",
+      "fingerprint": "0d87ce202517fdd1c41275c6d81f9d937189dbb81f33ac7735df3c428791a289"
+    },
+    "source_implementation_review_v2": {
+      "path": "config/research/program-007-corporate-action-metadata-source-independent-review-v2.json",
+      "sha256": "2a1199e223d036723040420e4e75abb9cbdfc503a35a88277164f9660c20a80b",
+      "fingerprint": "d3aac3e4774096311339814277ed575df6d1744ca032702c0e50c4e36222b2e5"
+    },
+    "request_plan_v1": {
+      "path": "config/research/program-007-corporate-action-metadata-request-plan-v1.json",
+      "sha256": "2420a53edafad2c3760ad4868d4fe9892959f1b0bf011ea45cdc79617f4fcf56",
+      "fingerprint": "f145a69e399af73b52a760b6457234f337fbdacf0330a61eef58856b9ab25f14"
+    }
+  },
+  "authority_implementation_binding": {
+    "base_commit": "6d53a6216d833f08411d6eb21bdecbb052e63014",
+    "source_commit": "6c055cd5d61c4980551d2e650bdb0234e01ee88e",
+    "source_tree": "b702cfa1b83526bb1564fa5819ca963e349c6b12",
+    "source_files": [
+      {
+        "path": "config/research/program-007-corporate-action-metadata-request-plan-v1.json",
+        "sha256": "2420a53edafad2c3760ad4868d4fe9892959f1b0bf011ea45cdc79617f4fcf56"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "cd1d30af7dee3d19c0206238661bf6bcf5526fb944339790331c95f6816b7d08"
+      },
+      {
+        "path": "src/systematic_trading_lab/cli.py",
+        "sha256": "449b8bd324fd422b73efaece557a9cf1becaaf0fd7910d42cc6eba5c29b48421"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "eb4ab0d1f5e2f4b2ed42a212bd7997fa1c16c461dd9ce4f0ff40847d4e97d39c"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_005_alpaca.py",
+        "sha256": "1b5f53776d7dd0021d051b9c8ce7bab4722570823b9da1405f7d9ba8a1e20393"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_corporate_actions.py",
+        "sha256": "d7f20865d3b0cff8751b33fcc56d1e7304d04446c16e63998e1db79549e264d6"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_corporate_action_authority.py",
+        "sha256": "e18b01a715812766d9f870a58f5f747c7c08767cb33f5719bf0c00799482e722"
+      },
+      {
+        "path": "tests/unit/test_intraday_source_provenance.py",
+        "sha256": "4c22aec7fc5be703fa7b17352a67c8f068ccd584bef96fa79cd129a6d37275ab"
+      },
+      {
+        "path": "tests/unit/test_program_007_corporate_action_authority.py",
+        "sha256": "1d78b7b22773042669c4f9e93a26ee42b32a35c6a96b8ae90e65dcabc6d4f051"
+      }
+    ],
+    "implementation_root": "73cf58c625033542f136c6aaabd1634d5218f63eb81f277939b40daaeb117bae"
+  },
+  "scientific_contract": {
+    "public_ledger_is_authoritative_foundation": true,
+    "alpaca_replaces_public_ledger": false,
+    "global_completeness_claimed": false,
+    "delayed_record_finality_claimed": false,
+    "provider_derived_unplanned_transforms_allowed": false,
+    "economic_date_fields": {
+      "ex_date": [
+        "forward_split",
+        "reverse_split",
+        "cash_dividend",
+        "stock_dividend",
+        "spin_off",
+        "rights_distribution",
+        "capital_gains_distribution"
+      ],
+      "effective_date": [
+        "unit_split",
+        "cash_merger",
+        "stock_merger",
+        "stock_and_cash_merger",
+        "reorganization"
+      ],
+      "no_documented_usable_economic_date": [
+        "redemption",
+        "name_change",
+        "worthless_removal",
+        "partial_call"
+      ]
+    },
+    "feature_relevant_event_without_usable_economic_date": "FAIL-CLOSED-PENDING-RECONCILIATION"
+  },
+  "qualification": {
+    "request_plan_path": "config/research/program-007-corporate-action-metadata-request-plan-v1.json",
+    "endpoint_allowlist": [
+      "https://data.alpaca.markets/v1/corporate-actions"
+    ],
+    "provider_role": "CORROBORATION + DISCREPANCY DETECTION",
+    "negative_event_completeness_proved": false,
+    "positive_controls": [
+      "XLB",
+      "XLE",
+      "XLK",
+      "XLU",
+      "XLY"
+    ],
+    "positive_control_rule": "exactly one 2-for-1 forward_split on 2025-12-05 each",
+    "unexpected_relevant_action": "FAIL-PENDING-PUBLIC-LEDGER-RECONCILIATION",
+    "symbol_cusip_disagreement": "FAIL",
+    "recognized_event_types": [
+      "forward_split",
+      "reverse_split",
+      "unit_split",
+      "cash_dividend",
+      "stock_dividend",
+      "spin_off",
+      "cash_merger",
+      "stock_merger",
+      "stock_and_cash_merger",
+      "redemption",
+      "name_change",
+      "worthless_removal",
+      "rights_distribution",
+      "partial_call",
+      "reorganization",
+      "capital_gains_distribution"
+    ],
+    "types_parameter": "OMITTED",
+    "process_date": "retrieval/provider provenance only; returned value inside interval",
+    "creation_lag": "UNBOUNDED-NO-PROVIDER-GUARANTEE",
+    "raw_first_private_root": ".trading-lab/program-007-corporate-action-metadata-v2",
+    "transport_budget": {
+      "minimum_http_requests": 2,
+      "maximum_http_requests": 8,
+      "minimum_http_responses": 2,
+      "maximum_http_responses": 8,
+      "maximum_pages_per_chain": 4,
+      "page_limit": 1000,
+      "maximum_response_bytes": 1048576,
+      "bounded_read_bytes": 1048577,
+      "maximum_total_bytes": 8388608,
+      "maximum_credential_loads": 1,
+      "automatic_retries": 0
+    },
+    "strategy_calculations": 0,
+    "ohlcv_authority": false
+  },
+  "credential_lifecycle": {
+    "environment_variables": [
+      "PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID",
+      "PROGRAM_007_CORPORATE_ACTIONS_API_SECRET_KEY"
+    ],
+    "authentication_header_names": [
+      "APCA-API-KEY-ID",
+      "APCA-API-SECRET-KEY"
+    ],
+    "presence_preflight": "MISSING",
+    "missing_at_proposal": [
+      "PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID",
+      "PROGRAM_007_CORPORATE_ACTIONS_API_SECRET_KEY"
+    ],
+    "values_exposed": false,
+    "values_stored_hashed_or_logged": false,
+    "presence_required_before_root": true,
+    "presence_rechecked_under_lock": true,
+    "maximum_successful_loads": 1,
+    "missing_before_transport_consumes_use": false
+  },
+  "activation_contract": {
+    "future_authority_id": "program-007-corporate-action-metadata-qualification-authority-2026-08-29-v1",
+    "external_authorization_root_required": true,
+    "external_authorization_root_generated": false,
+    "caller_supplied_root_required": true,
+    "recomputed_alternate_root_self_authorizes": false,
+    "under_lock_full_revalidation": true,
+    "consumption_boundary": "immediately before first provider transport invocation",
+    "sent_or_ambiguous_transport_consumes_use": true,
+    "automatic_retries": 0,
+    "second_execution_allowed": false
+  },
+  "raw_first_storage": {
+    "root": ".trading-lab/program-007-corporate-action-metadata-v2",
+    "request_intent_before_transport": true,
+    "bounded_body_before_parse": true,
+    "sha256_receipt_before_parse": true,
+    "create_only": true,
+    "file_and_directory_fsync": true,
+    "credentials_stored": false
+  },
+  "terminal_failures": {
+    "http_401": "METADATA-AUTHENTICATION-FAIL-USE-CONSUMED-NO-RETRY",
+    "http_403": "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY-NO-PURCHASE",
+    "http_429": "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY",
+    "sent_or_ambiguous_transport": "USE-CONSUMED-NO-RETRY",
+    "pagination_loop": "FAIL-USE-CONSUMED-NO-RETRY",
+    "response_oversize": "FAIL-USE-CONSUMED-NO-RETRY",
+    "paid_upgrade": "PROHIBITED",
+    "fallback": "PROHIBITED"
+  },
+  "state_at_proposal": {
+    "credential_value_loads": 0,
+    "external_authorization_root_generated": false,
+    "authority_created": false,
+    "claim_created": false,
+    "provider_requests": 0,
+    "provider_responses": 0,
+    "provider_bytes": 0,
+    "metadata_observations": 0,
+    "ohlcv_requests": 0,
+    "strategy_calculations": 0,
+    "strategy_returns": 0,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Expose both named credentials to the runtime, rerun the names-only preflight, and create a new immutable READY proposal and finding-free review. This blocked proposal cannot be activated or reused.",
+  "proposal_fingerprint": "b7c1aac63c8bb6fd3df612d515e62aa05d03b97a41f977fb36b385a9cb19303e"
+}

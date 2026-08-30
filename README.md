@@ -74,6 +74,16 @@ uv run trading-lab data acquire program-006 credential-preflight
 See [Program 006 Alpaca source qualification](docs/program-006-alpaca-qualification.md). Its exact
 one-use qualification is consumed and failed. Do not activate or run it again.
 
+Program 007 has a names-only corporate-action metadata credential preflight:
+
+```console
+uv run trading-lab data acquire program-007-metadata credential-preflight
+```
+
+See [Program 007 corporate-action metadata qualification](docs/program-007-corporate-action-metadata-qualification.md).
+The current proposal is blocked because neither required variable is visible to the runtime. No
+authorization root or provider request exists.
+
 ## Using historical data
 
 Alpaca imports are read-only and require research mode plus credentials:
