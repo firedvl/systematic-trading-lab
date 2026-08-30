@@ -1,0 +1,1427 @@
+SYSTEMATIC TRADING LAB — STANDING AUTONOMOUS RESEARCH MANDATE
+AND CONTINUE PROGRAM 010 UNTIL HUMAN ATTENTION IS ACTUALLY REQUIRED
+
+Repository:
+https://github.com/firedvl/systematic-trading-lab
+
+Local repository:
+/Users/ryanlb/Documents/GitHub/systematic-trading-lab
+
+Known clean synchronized main at delegation:
+4e13b582a33070c311c9aec57a1ea604c61288ac
+
+Current successor:
+Program 010
+multi-hour-sector-etf-research-009
+
+Current Program 010 status:
+PROPOSED-NOT-AUTHORIZED
+
+==================================================
+PRIMARY CHANGE IN OPERATING MODEL
+=================================
+
+The project has become excessively dependent on repeated user
+authorization handoffs for routine scientific and engineering decisions.
+
+That must end.
+
+From this message forward, operate under a STANDING AUTONOMOUS RESEARCH
+MANDATE.
+
+The user is delegating routine scientific, engineering, Git, source,
+qualification, exposed-data acquisition, and EXPOSED research decisions
+to the agent.
+
+Do not repeatedly return to the user for:
+
+* authority proposals;
+* external roots;
+* successor-program permission;
+* source-qualification permission;
+* exposed-data acquisition permission;
+* dataset-admission permission;
+* exposed strategy execution permission;
+* research iteration permission;
+* PR merge permission;
+* branch cleanup permission;
+* prospective specification corrections;
+* ordinary provider requests within the allowed scope.
+
+Instead:
+
+decide
+→ prospectively freeze
+→ independently review
+→ execute
+→ preserve evidence
+→ continue.
+
+STOP ONLY when one of the explicit HUMAN-ATTENTION BOUNDARIES in this
+mandate is reached.
+
+==================================================
+EXACT STANDING USER AUTHORIZATION
+=================================
+
+I AUTHORIZE SYSTEMATIC TRADING LAB TO OPERATE AUTONOMOUSLY ON ALL
+NON-PROTECTED, NON-CONTROLLED, NON-BROKER EXPOSED RESEARCH WORK UNDER THE
+SCOPE BELOW.
+
+Within that scope, the agent may independently:
+
+* create successor programs;
+* close failed programs;
+* perform offline forensic reviews;
+* correct prospective specification defects;
+* create and review source contracts;
+* create and activate bounded child authorities;
+* derive internal child authorization identities;
+* access already-configured credentials;
+* contact authorized market-data providers;
+* perform source qualifications;
+* download and privately retain EXPOSED market data;
+* perform full EXPOSED acquisitions;
+* structurally admit/freeze EXPOSED datasets;
+* implement strategies;
+* execute strategies on EXPOSED data;
+* calculate EXPOSED strategy returns and research statistics;
+* reject strategies;
+* generate new hypotheses;
+* pivot to new strategy families;
+* perform walk-forward/stress/robustness work on EXPOSED chronology;
+* create and run successor research programs;
+* use public web documentation and public research;
+* use free data sources when scientifically justified;
+* create branches;
+* commit;
+* push;
+* open PRs;
+* review PRs;
+* merge finding-free PRs;
+* delete merged branches;
+* maintain local worktrees;
+* clean safe caches/build output;
+* update project documentation/state automatically.
+
+This is a standing authorization.
+
+Do NOT require a new user message for each child operation.
+
+==================================================
+
+1. STANDING AUTHORITY MUST BE TRACEABLE
+   ==================================================
+
+Replace the repeated external-user-root ritual with a traceable standing
+delegation architecture.
+
+Create an immutable repository artifact representing THIS exact standing
+user mandate.
+
+Use repository naming conventions.
+
+Conceptually:
+
+standing-autonomous-research-mandate-v1
+
+Bind it to:
+
+* this exact user grant;
+* the project;
+* permitted capabilities;
+* forbidden capabilities;
+* protected chronology;
+* controlled chronology;
+* credential rules;
+* purchase rules;
+* PAPER/broker/live restrictions;
+* prospective scientific-integrity requirements.
+
+Do not embed secrets.
+
+Once independently reviewed and merged, child authorities may reference
+the standing mandate rather than requiring another user-provided external
+root.
+
+==================================================
+2. CHILD AUTHORITIES MAY BE GENERATED AUTONOMOUSLY
+==================================================
+
+For auditability, retain scoped child authorities where useful.
+
+But child authorities are now INTERNAL CONTROL ARTIFACTS, not reasons to
+stop for the user.
+
+A child authority may be created autonomously when:
+
+* its scope fits entirely within this standing mandate;
+* its inputs/specification were frozen before new evidence;
+* an independent review passes;
+* its exact source/data/operation scope is bounded;
+* no HUMAN-ATTENTION BOUNDARY is crossed.
+
+Lifecycle:
+
+prospective plan
+→ independent review
+→ child authority
+→ automated activation under standing mandate
+→ execution
+→ immutable terminal evidence
+→ independent terminal review
+→ continue.
+
+No user handoff between those steps.
+
+==================================================
+3. REMOVE USER-ROOT BOTTLENECKS
+===============================
+
+Audit the current authority implementation.
+
+Where code currently requires:
+
+"external authorization root from a later user message"
+
+for an operation that is now inside the standing mandate:
+
+replace that requirement prospectively with:
+
+standing mandate binding
++
+scoped child-authority binding
++
+independent review
++
+runtime/TOCTOU validation.
+
+Do not mutate old historical authority artifacts.
+
+Programs 005-009 retain their historical external-root semantics
+immutably.
+
+Only future programs use the new standing model.
+
+==================================================
+4. PRESERVE SCIENTIFIC INTEGRITY
+================================
+
+Autonomy does NOT mean retrospective rule changing.
+
+Before observing new evidence that could affect a decision:
+
+freeze the relevant:
+
+* hypothesis;
+* sample;
+* source contract;
+* request plan;
+* gates;
+* thresholds;
+* budgets;
+* missingness semantics;
+* evaluation procedure.
+
+Once evidence is observed:
+
+do not change those rules merely to obtain PASS.
+
+If a specification defect is discovered:
+
+1. terminally close the affected program where required;
+2. perform offline forensic analysis;
+3. identify the defect independently of desired performance;
+4. create a NEW successor;
+5. select genuinely fresh evidence;
+6. freeze corrected semantics prospectively;
+7. continue autonomously.
+
+Do NOT ask the user for routine approval.
+
+==================================================
+5. INDEPENDENT REVIEW REMAINS REQUIRED
+======================================
+
+Retain independent review as an internal safeguard.
+
+Use fresh reviewer/subagent contexts where practical.
+
+Independent review should challenge:
+
+* data leakage;
+* chronology;
+* freshness;
+* specification changes;
+* request budgets;
+* missingness rules;
+* source assumptions;
+* statistical validity;
+* overfitting;
+* authority boundaries;
+* private-data leakage;
+* Git/provenance integrity.
+
+A finding must be resolved before execution.
+
+But a finding itself is NOT normally a reason to contact the user.
+
+Repair it autonomously if possible.
+
+==================================================
+6. CURRENT PROGRAM HISTORY REMAINS IMMUTABLE
+============================================
+
+Preserve:
+
+Program 006 terminal state.
+
+Program 007 terminal state.
+
+Program 008 terminal PASS.
+
+Program 009:
+
+TERMINAL-FAIL-CONSUMED-NO-RETRY.
+
+Program 009 must never replay.
+
+Program 009's pagination failure was subsequently classified as:
+
+QUALIFICATION-SPECIFICATION-DEFECT.
+
+Do not rewrite history.
+
+==================================================
+7. CURRENT PROGRAM 010 STATE
+============================
+
+Program 010:
+
+multi-hour-sector-etf-research-009
+
+is the active successor.
+
+Known current clean main:
+
+4e13b582a33070c311c9aec57a1ea604c61288ac
+
+Known architecture:
+
+one raw SIP multi-symbol chain per exact XNYS RTH session.
+
+Endpoint:
+
+GET https://data.alpaca.markets/v2/stocks/bars
+
+feed=sip
+
+timeframe=5Min
+
+adjustment=raw
+
+limit=1000
+
+exact calendar-derived session RTH bounds
+
+13 symbols:
+
+IWM
+MDY
+SPY
+XLB
+XLE
+XLF
+XLI
+XLK
+XLP
+XLRE
+XLU
+XLV
+XLY
+
+pagination continues until:
+
+next_page_token == null
+
+subject to operational safety rules.
+
+==================================================
+8. PROGRAM 010 PAGINATION CONTRACT
+==================================
+
+Preserve the corrected prospective model.
+
+Do NOT infer expected page termination from:
+
+expected_rows / limit.
+
+The provider may return underfilled nonterminal pages.
+
+Require:
+
+* opaque token progression;
+* no cycle;
+* no token reuse;
+* no repeated page;
+* no order regression;
+* no duplicate coordinate;
+* nonterminal page must make new-coordinate progress;
+* raw bytes persisted before continuation.
+
+Operational safety cap:
+
+16 pages/session
+
+Classification if exceeded:
+
+CHAIN-INCOMPLETE-RESOURCE-CAP
+
+Do not call coordinates after an incomplete-chain frontier:
+
+SOURCE-MISSING.
+
+They are:
+
+UNOBSERVED-BECAUSE-CHAIN-INCOMPLETE.
+
+==================================================
+9. SOURCE QUALIFICATION VS DATASET ADMISSION
+============================================
+
+Preserve the Program 010 separation.
+
+SOURCE QUALIFICATION determines whether:
+
+* transport works;
+* pagination works;
+* raw retention works;
+* rows are structurally valid;
+* canonical RTH projection is deterministic;
+* identity is valid;
+* source coverage is meaningful.
+
+DATASET ADMISSION later determines whether:
+
+* full chronology missingness;
+* whole-session exclusions;
+* concentration;
+* adjacency;
+* block/year/month/clock;
+* context;
+* SPY/MDY;
+* corporate-action gates
+
+are acceptable.
+
+A small number of real missing bars does NOT automatically make the
+source structurally unusable.
+
+No imputation.
+
+==================================================
+10. PROGRAM 010 QUALIFICATION SAMPLE
+====================================
+
+Current fresh sessions:
+
+2021-05-25
+
+2021-07-02
+
+2024-01-11
+
+2025-11-28
+
+2025-12-15
+
+All were selected prospectively with zero overlap against the observed
+OHLCV union and protected chronology.
+
+Expected total canonical coordinates:
+
+4,602
+
+Preserve sample unless repository truth shows a literal mistake.
+
+==================================================
+11. PROGRAM 010 QUALIFICATION RULES
+===================================
+
+Use current implementation/specification truth.
+
+Key coverage floor:
+
+each required symbol must retain a strict majority of expected RTH
+coordinates.
+
+Normal session:
+
+at least 40 / 78
+
+Early close:
+
+at least 22 / 42
+
+Record all exact missing coordinates privately/non-reconstructably as
+appropriate.
+
+No imputation.
+
+No alternate-source repair during qualification.
+
+==================================================
+12. PROGRAM 010 PREREQUISITES
+=============================
+
+Bind:
+
+Program 008 metadata terminal PASS
+
+and:
+
+program-007-public-unit-changing-action-ledger-2026-08-29-v3
+
+Known split controls:
+
+XLB
+XLE
+XLK
+XLU
+XLY
+
+2-for-1
+
+2025-12-05.
+
+Do not contact corporate-actions again merely to re-prove the same
+prerequisite.
+
+==================================================
+13. PROGRAM 010 SOURCE IMPLEMENTATION
+=====================================
+
+Current known implementation:
+
+program-010-raw-source-implementation-2026-08-30-v5
+
+Implementation root:
+
+cd943691...
+
+Use exact repository truth.
+
+Current proposal:
+
+program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-2026-08-30-v5
+
+Independent review:
+
+finding-free PASS.
+
+Do not restart the design from scratch.
+
+==================================================
+14. FIRST TASK: IMPLEMENT STANDING AUTONOMY
+===========================================
+
+Before contacting Alpaca:
+
+A. implement the standing-mandate control model;
+
+B. independently review it;
+
+C. update authority lifecycle tests;
+
+D. preserve old historical external-root artifacts;
+
+E. make future within-scope child authorities automatically activatable
+from the standing mandate;
+
+F. merge the autonomy-control PR;
+
+G. synchronize main;
+
+H. continue immediately.
+
+DO NOT STOP AFTER MERGING THIS PR.
+
+==================================================
+15. THEN CONTINUE PROGRAM 010 AUTOMATICALLY
+===========================================
+
+Without asking the user again:
+
+1. reconstruct Program 010;
+
+2. create the exact one-use Program 010 structural qualification child
+   authority;
+
+3. independently review it;
+
+4. safely verify credential presence;
+
+5. if credentials are present:
+   activate it automatically under the standing mandate;
+
+6. execute the fresh Program 010 raw SIP structural qualification;
+
+7. retain raw evidence privately;
+
+8. create terminal PASS/FAIL evidence;
+
+9. independently review;
+
+10. merge;
+
+11. continue according to outcome.
+
+No user authorization handoff.
+
+==================================================
+16. CREDENTIAL POLICY
+=====================
+
+Existing project credentials may be accessed when needed for an operation
+inside the standing mandate.
+
+Never:
+
+* expose values;
+* print values;
+* commit values;
+* log values;
+* place values in CLI args;
+* hash values into public artifacts.
+
+Reuse the existing Alpaca credentials according to repository truth.
+
+If expected credentials are present:
+
+use them autonomously.
+
+If they are absent from the runtime:
+
+that IS a HUMAN-ATTENTION BOUNDARY because only the user can safely make
+the secret available.
+
+==================================================
+17. IF PROGRAM 010 PASSES
+=========================
+
+DO NOT STOP.
+
+Continue autonomously to the next phase.
+
+Create and independently review the scoped authority for:
+
+FULL EXPOSED RAW ALPACA SIP ACQUISITION
+
+*
+
+STRUCTURAL DATASET ADMISSION / FREEZE
+
+for the already-exposed research chronology only.
+
+Then execute it autonomously.
+
+No user handoff.
+
+==================================================
+18. FULL EXPOSED ACQUISITION
+============================
+
+Use the frozen exposed chronology only.
+
+Never access controlled/protected chronology.
+
+Use the Program 010 production transport architecture:
+
+one exact XNYS RTH session per multi-symbol chain.
+
+Continue pagination until terminal null token or fail-closed resource
+condition.
+
+Raw-first private persistence.
+
+Zero automatic retries unless future source architecture prospectively
+and independently establishes a retry class strictly for infrastructure
+errors; scientific missingness must never be retried away.
+
+Prefer current zero-retry semantics unless evidence independently
+requires otherwise.
+
+==================================================
+19. DATASET ADMISSION
+=====================
+
+After complete exposed acquisition:
+
+build the entire missingness inventory.
+
+Apply the frozen dataset policy prospectively.
+
+Current known design includes:
+
+maximum total excluded sessions:
+7 / 1499
+
+five historically known quarantine sessions
+
+maximum:
+2 isolated unexpected exclusions
+
+plus existing:
+
+block
+year
+month
+clock
+rolling
+adjacency
+context
+SPY
+MDY
+
+gates.
+
+Use exact repository truth.
+
+No strategy calculations before structural dataset admission is
+complete.
+
+==================================================
+20. IF DATASET ADMISSION PASSES
+===============================
+
+DO NOT STOP.
+
+Freeze the admitted exposed dataset and provenance.
+
+Then proceed automatically into strategy research.
+
+No controlled/protected access.
+
+==================================================
+21. EXPOSED STRATEGY RESEARCH IS AUTHORIZED
+===========================================
+
+Within exposed chronology, Codex may autonomously:
+
+* implement frozen Program 010 strategy families;
+* execute exposed backtests;
+* calculate returns;
+* perform walk-forward analysis;
+* perform stress analysis;
+* reject configurations;
+* generate new successor hypotheses;
+* create new strategy families;
+* conduct robustness tests;
+* perform parameter-neighbor checks;
+* test chronology stability;
+* test concentration;
+* revise engineering;
+* create successor programs.
+
+The agent should optimize for:
+
+SCIENTIFIC VALIDITY
+
+not:
+
+finding a winning strategy at all costs.
+
+No user approval required for normal exposed-data research.
+
+==================================================
+22. CURRENT STRATEGY CONTRACT MAY BE EXECUTED
+=============================================
+
+Current frozen Program 010 lineage includes:
+
+families:
+
+continuation
+reversal
+
+lookbacks:
+
+30m
+60m
+
+holds:
+
+120m
+240m
+
+decision:
+
+11:30 America/New_York
+
+entries:
+
+11:35
+11:40
+11:45
+
+2h exits:
+
+13:35
+13:40
+13:45
+
+4h exits:
+
+15:35
+15:40
+15:45
+
+long/flat
+
+maximum 3 positions
+
+equal fee-safe slots
+
+no leverage
+
+no shorting
+
+no resizing
+
+no re-entry.
+
+Execute exact repository truth.
+
+==================================================
+23. COST / STRESS CONTRACT
+==========================
+
+Use existing frozen prospective costs.
+
+Known lineage:
+
+normal:
+6 bps/side + 5m
+
+stress A:
+12 bps/side + 10m
+
+stress B:
+25 bps/side + 15m
+
+normal isolated delays:
+10m
+15m
+
+Use exact current repository definitions.
+
+==================================================
+24. AUTONOMOUS HYPOTHESIS PIVOTS
+================================
+
+If the frozen sector continuation/reversal family fails:
+
+DO NOT STOP JUST TO ASK WHAT TO TRY NEXT.
+
+Perform an autonomous strategic review of exposed results.
+
+Identify what failed:
+
+* no gross edge;
+* cost sensitivity;
+* sparse activation;
+* concentration;
+* instability;
+* parameter fragility;
+* regime dependence;
+* timing failure;
+* signal redundancy;
+* universe mismatch.
+
+Then prospectively select the next scientifically justified direction.
+
+Create a new successor program.
+
+Freeze its hypothesis before observing fresh evidence.
+
+Continue.
+
+==================================================
+25. AUTONOMOUS SOURCE PIVOTS
+============================
+
+If Alpaca is structurally unsuitable:
+
+do not repeatedly ask the user what source to use.
+
+Research alternative FREE sources autonomously.
+
+You may:
+
+* research public/free providers;
+* implement adapters;
+* create fresh qualifications;
+* use freely accessible public data;
+* use already-connected/free-account providers where credentials already
+  exist.
+
+Do NOT spend money.
+
+If only a paid source can plausibly unblock the program:
+
+HUMAN-ATTENTION BOUNDARY.
+
+Report options/costs and stop.
+
+==================================================
+26. SUCCESSOR PROGRAMS DO NOT REQUIRE USER PERMISSION
+=====================================================
+
+A terminal failure does not mean the entire autonomous run stops.
+
+If a program fails:
+
+terminally close it.
+
+Perform offline forensics.
+
+If a prospective correction is scientifically justified:
+
+create Program N+1 automatically.
+
+Select fresh evidence deterministically.
+
+Review.
+
+Execute.
+
+Continue.
+
+Only stop if the broader problem itself cannot progress without a
+HUMAN-ATTENTION BOUNDARY.
+
+==================================================
+27. DO NOT OVER-PROTECT EXPOSED DATA
+====================================
+
+Previously observed exposed data may be used freely for:
+
+* engineering;
+* forensics;
+* hypothesis generation;
+* debugging;
+* diagnostics;
+* regression tests.
+
+Fresh evidence is still required when making a new prospective
+qualification claim that would otherwise be biased by the exposed
+observations.
+
+Maintain the distinction between:
+
+EXPOSED
+
+FRESH PROSPECTIVE
+
+CONTROLLED
+
+PROTECTED.
+
+==================================================
+28. CONTROLLED / PROTECTED DATA REMAINS HUMAN-GATED
+===================================================
+
+These ranges remain ABSOLUTELY outside autonomous authority.
+
+Known controlled chronology:
+
+Controlled A:
+2027-04-16 through 2027-10-15
+
+Controlled B:
+2027-10-18 through 2028-04-14
+
+Existing protected/sealed ranges also remain prohibited, including all
+repository-defined:
+
+V3 holdouts
+
+daily independent evaluation
+
+June protected disposition
+
+and any newer sealed range.
+
+DO NOT access them autonomously.
+
+When the research program reaches the point where a genuinely qualified
+candidate is ready for controlled evaluation:
+
+STOP.
+
+That is a HUMAN-ATTENTION BOUNDARY.
+
+==================================================
+29. PAPER EXECUTION REMAINS HUMAN-GATED
+=======================================
+
+Do not autonomously start:
+
+Alpaca PAPER
+
+or any other paper broker execution.
+
+The research platform may continue implementing/testing paper-execution
+code using mocks/synthetic paths if useful.
+
+But the first actual PAPER broker action requires user attention.
+
+STOP there.
+
+==================================================
+30. BROKER / LIVE EXECUTION REMAINS HUMAN-GATED
+===============================================
+
+Absolutely no:
+
+broker order creation
+broker cancellation
+broker modification
+live position changes
+live trading
+real-money order flow.
+
+Do not activate these autonomously.
+
+STOP before the first such action.
+
+==================================================
+31. PURCHASES / PAID SERVICES REMAIN HUMAN-GATED
+================================================
+
+Do not autonomously:
+
+* subscribe;
+* purchase data;
+* upgrade Alpaca;
+* buy API access;
+* create paid cloud resources;
+* accept a paid trial that auto-renews;
+* spend user funds.
+
+If a purchase is materially useful:
+
+STOP and report:
+
+cost
+benefit
+free alternatives
+exact reason needed.
+
+==================================================
+32. ACCOUNT / MFA / LEGAL ACTIONS REMAIN HUMAN-GATED
+====================================================
+
+STOP if progress requires:
+
+* entering a password not already safely available;
+* MFA/2FA;
+* CAPTCHA;
+* creating a new external account;
+* accepting new legal terms;
+* identity verification;
+* payment authorization;
+* changing financial/account ownership settings.
+
+Do not attempt to bypass these.
+
+==================================================
+33. SECURITY / SECRET INCIDENTS ARE HUMAN-GATED
+===============================================
+
+If you discover:
+
+* secret committed to Git;
+* credential leak;
+* suspicious account activity;
+* provider credential compromise;
+* destructive corruption affecting scientific evidence;
+
+STOP immediately after safely containing what can be contained without
+destroying evidence.
+
+Report exact issue.
+
+==================================================
+34. DESTRUCTIVE EVIDENCE ACTIONS ARE HUMAN-GATED
+================================================
+
+Do not autonomously permanently delete:
+
+* unique scientific observations;
+* consumed authority evidence;
+* protected data;
+* private raw provider evidence needed for provenance;
+* unique Git history.
+
+Routine cache/build cleanup is allowed.
+
+If destructive cleanup of unique evidence is genuinely necessary:
+
+STOP.
+
+==================================================
+35. REPOSITORY OPERATIONS ARE AUTONOMOUS
+========================================
+
+Within the allowed scope:
+
+create branches automatically.
+
+Commit automatically.
+
+Push automatically.
+
+Open PRs automatically.
+
+Run independent review.
+
+Fix findings.
+
+Wait for CI.
+
+Merge finding-free PRs.
+
+Delete merged feature branches.
+
+Prune stale branches/worktrees when safely proven merged.
+
+Do not ask the user for merge approval.
+
+==================================================
+36. DO NOT STOP FOR CI FAILURES
+===============================
+
+A normal CI failure is NOT a human-attention event.
+
+Investigate.
+
+Repair.
+
+Push.
+
+Repeat.
+
+Stop only if CI is blocked by something requiring user action, such as:
+
+* account billing;
+* unavailable credentials;
+* GitHub permission;
+* external service configuration only the user controls.
+
+==================================================
+37. DO NOT STOP FOR SPECIFICATION DEFECTS
+=========================================
+
+A specification defect is NOT a user-attention event.
+
+Close the affected program appropriately.
+
+Perform offline forensics.
+
+Create a prospective successor.
+
+Continue.
+
+This includes cases analogous to:
+
+Program 006 adjusted-view factor defect
+
+Program 007 CUSIP requirement defect
+
+Program 009 six-page pagination defect.
+
+==================================================
+38. DO NOT STOP FOR STRATEGY FAILURE
+====================================
+
+A strategy losing money is NOT a human-attention event.
+
+Reject it scientifically.
+
+Learn from the exposed failure modes.
+
+Create the next hypothesis.
+
+Continue.
+
+Do not lower standards merely to produce a winner.
+
+==================================================
+39. DO NOT STOP FOR ROUTINE MILESTONES
+======================================
+
+Do NOT pause execution merely because:
+
+* source qualification passed;
+* acquisition completed;
+* dataset admission passed;
+* a backtest completed;
+* a program failed;
+* a PR merged;
+* a successor was created.
+
+Record the milestone in repository state and KEEP GOING.
+
+==================================================
+40. CHECKPOINT CONTINUOUSLY
+===========================
+
+Because this may run for a long time:
+
+make the project restart-safe.
+
+After every material transition, update durable state describing:
+
+* current program;
+* terminal programs;
+* current hypothesis;
+* current source;
+* current data state;
+* current authority;
+* last completed action;
+* next autonomous action;
+* hard-stop state if any.
+
+Commit meaningful state changes.
+
+If the Codex process itself is interrupted by:
+
+* model usage;
+* app restart;
+* machine restart;
+* network interruption;
+* upstream model failure;
+
+leave enough durable state for the next Codex run to resume automatically
+without reconstructing the entire campaign manually.
+
+==================================================
+41. RESOURCE / TIME AUTONOMY
+============================
+
+You may run long tasks.
+
+Do not stop merely because a process will take hours.
+
+Use the existing bounded parallel executor where appropriate.
+
+Maintain reasonable CPU/memory/network limits.
+
+Do not intentionally create uncontrolled resource consumption.
+
+==================================================
+42. AUTONOMOUS RESEARCH LOOP
+============================
+
+Use this general loop:
+
+WHILE no HUMAN-ATTENTION BOUNDARY exists:
+
+1. reconstruct durable state;
+
+2. identify current highest-value scientific blocker;
+
+3. gather public/offline evidence;
+
+4. design prospective solution;
+
+5. independently review;
+
+6. implement;
+
+7. test;
+
+8. merge;
+
+9. create scoped child authority if needed;
+
+10. execute authorized exposed operation;
+
+11. preserve evidence;
+
+12. independently review result;
+
+13. update scientific state;
+
+14. decide next action;
+
+15. continue.
+
+Do not wait for user confirmation between iterations.
+
+==================================================
+43. HUMAN-ATTENTION BOUNDARIES — EXHAUSTIVE DEFAULT LIST
+========================================================
+
+STOP and return to the user ONLY if at least one of these occurs:
+
+A. CONTROLLED / PROTECTED DATA
+
+The next scientifically justified operation requires accessing a
+controlled or protected/sealed holdout.
+
+B. PAPER / BROKER / LIVE
+
+The next operation would make an actual PAPER, broker, or live API
+state-changing action.
+
+C. MONEY
+
+Progress materially requires a purchase, subscription, paid upgrade, or
+new paid resource.
+
+D. USER-ONLY SECRET / ACCOUNT ACTION
+
+A required credential is missing/revoked and cannot be resolved without
+the user supplying/reconfiguring it, or MFA/CAPTCHA/account creation/legal
+acceptance is required.
+
+E. SECURITY INCIDENT
+
+A credential leak, repository compromise, or serious evidence-integrity
+problem needs user judgment.
+
+F. IRREVERSIBLE DESTRUCTION
+
+Progress requires destroying unique evidence/history.
+
+G. SCIENTIFIC DEAD END
+
+After substantial autonomous exploration, there is no scientifically
+defensible next step using allowed exposed/free resources.
+
+This means genuine exhaustion, not merely one failed program.
+
+H. OBJECTIVE CHANGE
+
+The best next step requires materially changing the user's high-level
+goal from systematic trading research into a different project.
+
+Otherwise:
+
+DO NOT STOP.
+
+==================================================
+44. WHEN A HUMAN-ATTENTION BOUNDARY OCCURS
+==========================================
+
+Only then produce a final handoff.
+
+Keep it concise.
+
+Report:
+
+1. current main hash;
+2. current program;
+3. what completed autonomously;
+4. current scientific state;
+5. exact reason human attention is required;
+6. what decision/action only the user can perform;
+7. recommended option;
+8. alternatives;
+9. exact copy/paste command or authorization if appropriate;
+10. confirmation no forbidden boundary was crossed.
+
+Do not dump dozens of routine fields unless needed to make the decision.
+
+==================================================
+45. PERIODIC INTERNAL SUMMARIES
+===============================
+
+Maintain detailed machine-readable/project summaries in the repository.
+
+The user does NOT need a giant handoff after every program.
+
+Prefer durable internal records.
+
+Only the eventual hard-stop handoff should be user-facing.
+
+==================================================
+46. FIRST AUTONOMOUS CONTINUATION
+=================================
+
+Begin now from Program 010.
+
+Immediate sequence:
+
+1. implement and merge the standing-autonomy mandate/control changes;
+
+2. reconstruct Program 010 proposal v5 and implementation v5;
+
+3. create/review the Program 010 child qualification authority;
+
+4. verify credential presence;
+
+5. execute the fresh Program 010 raw SIP qualification;
+
+6. terminally review it;
+
+7. if PASS:
+   proceed to full exposed acquisition and structural dataset admission;
+
+8. if FAIL:
+   perform forensics, create a scientifically justified successor, and
+   continue;
+
+9. once a structurally admitted exposed dataset exists:
+   execute exposed systematic research autonomously;
+
+10. continue research/successor loops until a HUMAN-ATTENTION BOUNDARY is
+    reached.
+
+DO NOT stop after step 1, 3, 5, 7, or 9 merely to report progress.
+
+==================================================
+47. ABSOLUTE PROHIBITIONS
+=========================
+
+Despite this broad autonomous delegation, NEVER autonomously:
+
+* access controlled/protected holdouts;
+* start PAPER execution;
+* write broker state;
+* execute live trades;
+* spend money;
+* purchase data;
+* expose secrets;
+* bypass account security;
+* falsify scientific evidence;
+* alter observed-result gates retrospectively to create a PASS.
+
+==================================================
+48. FINAL INSTRUCTION
+=====================
+
+Operate as the autonomous research engineer for this project.
+
+Make decisions.
+
+Use independent review.
+
+Preserve scientific rigor.
+
+Prefer simple architectures.
+
+Learn from failures.
+
+Create successor programs without asking.
+
+Merge your own finding-free work.
+
+Keep going.
+
+Only return to me when you genuinely need something that ONLY I can
+provide or authorize under the HUMAN-ATTENTION BOUNDARIES above.
+
+BEGIN NOW AND CONTINUE AUTONOMOUSLY.

@@ -7,6 +7,21 @@ Research has two tracks:
 
 Research iteration is cheap; promotion and execution remain strict. A Rapid candidate export is a zero-authority review input, not controlled evidence. Promotion requires a separate human-reviewed controlled plan and untouched evaluation boundary.
 
+## Standing exposed-research authority
+
+The exact standing user mandate recorded in
+[`standing-autonomous-research-mandate-v1.txt`](research-campaigns/standing-autonomous-research-mandate-v1.txt)
+authorizes routine public and exposed research for Program 010 and later without another external
+root per operation. It does not authorize controlled or protected data, paper execution, broker
+writes, live execution, purchases, or account actions. Programs 005 through 009 keep their existing
+external-root and terminal-state semantics.
+
+Each operation that needs authority must bind a prospectively frozen scoped child, a finding-free
+independent review, exact source and policy artifacts, and the current protected-range controls.
+Runtime checks must revalidate those bytes and the exact chronology before data access. Independent
+review is an error-detection control; it does not create authority. See
+[Standing autonomous research mandate](standing-autonomous-research-mandate.md).
+
 Official research records every candidate, parameter set, failure, code revision, dataset fingerprint, universe ID and fingerprint, cost and execution model, random seed, data split, and artifact hash. Compare results with cash, SPY, relevant buy-and-hold instruments, a fixed-weight ETF portfolio, and approved baselines after costs and risk.
 
 Create the experiment record before execution, claim it before work begins, heartbeat long runs, and complete or fail it explicitly. Campaign budgets count every created candidate. Closed and legacy campaigns keep their frozen stale-run behavior.

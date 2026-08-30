@@ -1,0 +1,130 @@
+{
+  "schema_version": "standing-autonomous-research-mandate-v1",
+  "mandate_id": "standing-autonomous-research-mandate-2026-08-30-v1",
+  "project": "firedvl/systematic-trading-lab",
+  "status": "ACTIVE-STANDING-AUTONOMOUS-EXPOSED-RESEARCH-MANDATE",
+  "effective_date": "2026-08-30",
+  "source_grant": {
+    "path": "docs/research-campaigns/standing-autonomous-research-mandate-v1.txt",
+    "sha256": "b41cee4f7248fdb4f0f850faff9a7bf882007f8416aa5e7f5c0db931622d868a",
+    "byte_count": 30763,
+    "line_count": 1427,
+    "exact_user_bytes_committed": true,
+    "contains_secrets": false
+  },
+  "starting_state": {
+    "main_commit": "4e13b582a33070c311c9aec57a1ea604c61288ac",
+    "program_ordinal": 10,
+    "program_id": "multi-hour-sector-etf-research-009",
+    "program_status": "PROPOSED-NOT-AUTHORIZED"
+  },
+  "activation_contract": {
+    "minimum_program_ordinal": 10,
+    "scoped_child_authority_required": true,
+    "prospective_inputs_required": true,
+    "finding_free_independent_review_required": true,
+    "runtime_revalidation_required": true,
+    "internal_child_identity_derivation": true,
+    "later_external_user_root_required": false,
+    "programs_005_through_009_external_root_semantics_unchanged": true,
+    "child_scope_must_be_subset_of_mandate": true,
+    "review_is_error_detection_not_authorization": true
+  },
+  "data_scope": {
+    "permitted_classes": [
+      "PUBLIC",
+      "EXPOSED",
+      "FRESH-PROSPECTIVE-EXPOSED"
+    ],
+    "controlled_allowed": false,
+    "protected_allowed": false,
+    "no_imputation": true,
+    "fresh_evidence_required_for_new_prospective_claims": true,
+    "previously_exposed_evidence_reusable_for_engineering_forensics_and_hypotheses": true
+  },
+  "controlled_chronology": [
+    {
+      "id": "controlled-a",
+      "start": "2027-04-16",
+      "end": "2027-10-15"
+    },
+    {
+      "id": "controlled-b",
+      "start": "2027-10-18",
+      "end": "2028-04-14"
+    }
+  ],
+  "protected_scope": {
+    "all_repository_registered_or_reserved_protected_ranges": true,
+    "named_boundaries": [
+      "intraday-v3",
+      "daily-independent-evaluation",
+      "june-protected-disposition",
+      "strategic-allocation-21",
+      "any-newer-sealed-range"
+    ]
+  },
+  "credential_policy": {
+    "already_configured_credentials_may_be_used": true,
+    "values_may_be_printed_logged_committed_hashed_or_passed_in_cli_args": false,
+    "missing_or_revoked_required_credential_requires_human_attention": true,
+    "credential_access_must_remain_inside_fixed_scoped_runtime": true
+  },
+  "purchase_policy": {
+    "spending_allowed": false,
+    "paid_trials_allowed": false,
+    "new_paid_resources_allowed": false,
+    "free_sources_allowed_when_scientifically_justified": true
+  },
+  "scientific_integrity": {
+    "freeze_before_new_evidence": [
+      "hypothesis",
+      "sample",
+      "source-contract",
+      "request-plan",
+      "gates",
+      "thresholds",
+      "budgets",
+      "missingness-semantics",
+      "evaluation-procedure"
+    ],
+    "retrospective_gate_weakening_allowed": false,
+    "failed_program_history_mutation_allowed": false,
+    "specification_defect_requires_terminal_close_forensics_and_fresh_successor": true,
+    "strategy_failure_requires_scientific_rejection_not_gate_weakening": true
+  },
+  "repository_operations": {
+    "branch_commit_push_pr_review_merge_and_merged_branch_cleanup_allowed": true,
+    "safe_cache_and_build_cleanup_allowed": true,
+    "unique_evidence_or_git_history_destruction_allowed": false,
+    "state_documentation_updates_required": true
+  },
+  "human_attention_boundaries": [
+    "CONTROLLED-OR-PROTECTED-DATA",
+    "ACTUAL-PAPER-BROKER-OR-LIVE-MUTATION",
+    "MONEY-OR-PAID-SERVICE",
+    "USER-ONLY-SECRET-ACCOUNT-MFA-CAPTCHA-LEGAL-OR-IDENTITY-ACTION",
+    "SECURITY-OR-SECRET-INCIDENT",
+    "IRREVERSIBLE-UNIQUE-EVIDENCE-OR-HISTORY-DESTRUCTION",
+    "SCIENTIFIC-DEAD-END",
+    "MATERIAL-OBJECTIVE-CHANGE"
+  ],
+  "authority": {
+    "provider_contact": true,
+    "subscription_purchase": false,
+    "credential_access": true,
+    "source_requests": true,
+    "source_qualification": true,
+    "market_data_acquisition": true,
+    "real_dataset_admission": true,
+    "strategy_implementation": true,
+    "strategy_execution": true,
+    "research_qualification": true,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "mandate_fingerprint": "3465648952ccc094697c8edc24860658c6098235989a868610c1e1b12746d502"
+}
