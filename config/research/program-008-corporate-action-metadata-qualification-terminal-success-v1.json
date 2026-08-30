@@ -1,0 +1,216 @@
+{
+  "schema_version": "program-008-corporate-action-metadata-qualification-terminal-success-v1",
+  "success_id": "program-008-corporate-action-metadata-qualification-terminal-success-2026-08-30-v1",
+  "program_id": "multi-hour-sector-etf-research-007",
+  "recorded_at": "2026-08-30T07:50:31Z",
+  "status": "TERMINAL-PASS-CONSUMED-NO-REPLAY",
+  "execution_main": "37af39a2213ac8bb29b2877d452bf480a33b096a",
+  "authorization": {
+    "user_authorization_packet_sha256": "73eaa6e320e7f0bab34fd1e96b3c96ba018e2c71a7f3a9add27c55003ea40ff4",
+    "external_authorization_root": "90b60b95caef446d84e8242ae9aa3e0086d2655c7f55da9dc28c7d252153ad9e",
+    "authority_id": "program-008-corporate-action-metadata-qualification-authority-2026-08-29-v1",
+    "authority_sha256": "9829d98ffe1f963c0614b8f165d0d95db8a2b8f5c962f228ba568240d5966b05",
+    "authority_fingerprint": "90b60b95caef446d84e8242ae9aa3e0086d2655c7f55da9dc28c7d252153ad9e",
+    "activation_succeeded": true,
+    "one_use_claim_schema_version": "program-008-private-corporate-action-metadata-claim-v1",
+    "one_use_claim_sha256": "65849ea9764f829d14a3642b99fb577cbabc5f97b15c51acbb2c1e843aa8f12b",
+    "one_use_claim_fingerprint": "65849ea9764f829d14a3642b99fb577cbabc5f97b15c51acbb2c1e843aa8f12b",
+    "one_use_consumed": true
+  },
+  "bindings": {
+    "qualification_proposal": {
+      "path": "config/research/program-008-corporate-action-metadata-qualification-proposal-v1.json",
+      "sha256": "19cc83e7531ac32c60ca2899cfb8a38e27cd21aed00b524b929fe068555fc7e5",
+      "fingerprint": "3d2192495cae2fe9c8db67873819df727a9bb13eb5b9a911d51e89a8e4aa884f"
+    },
+    "request_plan": {
+      "path": "config/research/program-008-corporate-action-metadata-request-plan-v1.json",
+      "sha256": "882682b16bbf9f5fa81742a75577546f364d7c76bb04e6e15abf2d9a64043465",
+      "fingerprint": "18ae8ef4152f827fe70261c76f20baf026b44e1a091ae98f1537dcacda818fe7"
+    },
+    "authority_proposal": {
+      "path": "config/research/program-008-corporate-action-metadata-qualification-authority-proposal-v1.json",
+      "sha256": "2f7ca46c70fb1aeef298728c780fca28c16c9121bedba1ec1ea5d99954268da5",
+      "fingerprint": "6173cb00ab3119ad17846c0251d253c4448e017e344b882b104ef966c7bc3f78"
+    },
+    "authority_proposal_review": {
+      "path": "config/research/program-008-corporate-action-metadata-qualification-authority-proposal-independent-review-v1.json",
+      "sha256": "c80decf235f7447740b895f400c3faa9386f8f5db10322bdfeb64a66219a7f66",
+      "fingerprint": "ec2b111145b20d59f92dd7b3cdbab8a04572d1889db388732690709a3d73f66f"
+    },
+    "offline_forensic_analysis": {
+      "path": "config/research/program-007-corporate-action-metadata-offline-forensic-analysis-v1.json",
+      "sha256": "1fdf65cf3d846dc67b3d29565f7e1283e95185fcc500f6a3b0d7670aa3b2ed8d",
+      "fingerprint": "531148e65d1b45c8985b8ffe29bf7d4c150dd69888432a8188080322fd455c80"
+    },
+    "public_ledger": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+      "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+      "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
+    },
+    "authority_implementation_commit": "f0ed2534e768d26cc5969d574d16f0ef951e28ac",
+    "authority_implementation_tree": "5e551a8213326a3fa83d3401533b3de0b1c1bd68",
+    "authority_implementation_root": "186168ba7fd738e2fa54e9a785808df726a97928a32a9f3e6969f8ff77adc507"
+  },
+  "qualification_contract": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v1/corporate-actions",
+    "redirects": false,
+    "cusips": [
+      "464287655",
+      "78462F103",
+      "78467Y107",
+      "81369Y100",
+      "81369Y209",
+      "81369Y308",
+      "81369Y407",
+      "81369Y506",
+      "81369Y605",
+      "81369Y704",
+      "81369Y803",
+      "81369Y860",
+      "81369Y886"
+    ],
+    "symbols_parameter": "OMITTED",
+    "region": "us",
+    "start": "1990-01-01",
+    "end": "2026-08-29",
+    "limit": 1000,
+    "data_quality": "complete",
+    "sort": "asc",
+    "types": "OMITTED",
+    "chain_fingerprint": "2214e9dd726b8ce69c056e548501a4d157bd474dbfc59a44cb47b32b93894329",
+    "minimum_http_requests": 1,
+    "maximum_http_requests": 4,
+    "minimum_http_responses": 1,
+    "maximum_http_responses": 4,
+    "maximum_pages": 4,
+    "maximum_response_bytes_per_page": 1048576,
+    "bounded_read_bytes": 1048577,
+    "maximum_total_bytes": 4194304,
+    "maximum_credential_loads": 1,
+    "automatic_retries": 0
+  },
+  "runtime_outcome": {
+    "credential_presence_preflight": "PASS",
+    "credential_presence_recheck_under_lock": "PASS",
+    "credential_load_count": 1,
+    "authenticated_client_constructed_without_http": true,
+    "claim_written_immediately_before_first_transport": true,
+    "provider_request_count": 1,
+    "http_response_count": 1,
+    "page_count": 1,
+    "http_statuses": [
+      200
+    ],
+    "response_bytes": 83338,
+    "maximum_allowed_page_bytes": 1048576,
+    "maximum_allowed_total_bytes": 4194304,
+    "automatic_retries": 0,
+    "redirects_followed": 0,
+    "request_intent_sha256": "0fad2cda95e198ba3aa9ce5d74b55880326020855b2677e93e8089de46a98ca0",
+    "response_sha256": "0887a7d626541df228d9ef4512c7d942685f86146fcdbb0a7391b208cf665ece",
+    "response_receipt_sha256": "ebf139ddf2f9fedb39e1f695c12cb66ed5f7326560dbe263e4084437b77f7084",
+    "qualification_receipt_sha256": "29740f8bcf45078868ec77717fab83e9d6ba5ee4646f4918eaa541683d2a7151",
+    "private_response_manifest_id": "program-008-corporate-action-metadata-response-manifest-2026-08-30-v1",
+    "private_response_manifest_sha256": "53f4b5ff0012e03e228c1f8b5be07b1a9aaa04566554cd3b536ce7a0d24780c2",
+    "private_response_manifest_fingerprint": "52f2104c1d4add2ea07ba6c99869cbaadf3996dd23b2b2af953ebc50292c8bee",
+    "stored_response_page_count": 1,
+    "stored_response_bytes": 83338,
+    "raw_body_retained_before_parse": true,
+    "qualification_receipt_created": true,
+    "dataset_admitted": false
+  },
+  "structural_results": {
+    "returned_collections": {
+      "cash_dividends": 349,
+      "forward_splits": 5
+    },
+    "normalized_event_types": {
+      "cash_dividend": 349,
+      "forward_split": 5
+    },
+    "total_record_count": 354,
+    "unique_event_count": 354,
+    "duplicate_event_id_count": 0,
+    "event_id_verdict": "PASS-354-UNIQUE-CANONICAL-UUIDS",
+    "empty_cusip_count": 0,
+    "empty_cusip_percentage": "0.000000%",
+    "conflicting_nonempty_cusip_count": 0,
+    "cusip_verdict": "PASS-ALL-354-RECORDS-CORROBORATE-ONE-LEDGER-IDENTITY",
+    "empty_isin_count": 354,
+    "empty_isin_percentage": "100.000000%",
+    "conflicting_nonempty_isin_count": 0,
+    "isin_verdict": "PASS-EMPTY-ISIN-ALLOWED-NONCANONICAL",
+    "identity_mapping_verdict": "PASS-354-OF-354-ONE-PUBLIC-LEDGER-IDENTITY",
+    "process_date_verdict": "PASS-ALL-VALUES-IN-FROZEN-INTERVAL",
+    "economic_date_verdict": "PASS-REVIEWED-EVENT-SPECIFIC-FIELD-RULES",
+    "positive_controls": {
+      "XLB": "PASS-ONE-2-FOR-1-FORWARD-SPLIT-2025-12-05",
+      "XLE": "PASS-ONE-2-FOR-1-FORWARD-SPLIT-2025-12-05",
+      "XLK": "PASS-ONE-2-FOR-1-FORWARD-SPLIT-2025-12-05",
+      "XLU": "PASS-ONE-2-FOR-1-FORWARD-SPLIT-2025-12-05",
+      "XLY": "PASS-ONE-2-FOR-1-FORWARD-SPLIT-2025-12-05"
+    },
+    "unexpected_relevant_action_count": 0,
+    "unexpected_relevant_action_disposition": "PASS-NONE",
+    "pagination_verdict": "PASS-ONE-PAGE-TERMINAL-NULL-TOKEN",
+    "source_role_verdict": "PASS-BOUNDED-AS-OF-CORROBORATION-ONLY",
+    "global_negative_event_completeness_proved": false,
+    "bounded_creation_lag_proved": false,
+    "metadata_qualification": "PASS",
+    "exact_pass_reason": "The exact one-use CUSIP chain returned one HTTP 200 page within every budget. All 354 records parsed under the reviewed identity, date, and event-ID rules; all five required 2025-12-05 2-for-1 forward-split controls passed; no relevant ledger discrepancy appeared; and pagination terminated with a null token."
+  },
+  "private_data_boundary": {
+    "private_root": ".trading-lab/program-008-corporate-action-metadata-v1",
+    "private_root_git_ignored": true,
+    "raw_response_pages_retained": 1,
+    "raw_response_bytes_retained": 83338,
+    "raw_or_reconstructable_metadata_entered_git": false,
+    "credentials_stored_printed_hashed_or_persisted": false,
+    "public_evidence_contains_only_non_reconstructable_structure": true
+  },
+  "protected_state": {
+    "program_007_replayed": false,
+    "symbols_filter_used": false,
+    "ohlcv_requests": 0,
+    "strategy_calculations": 0,
+    "strategy_returns_generated_or_read": false,
+    "controlled_a_or_b_accessed": false,
+    "v3_holdouts_accessed": false,
+    "daily_seals_accessed": false,
+    "june_disposition_accessed": false,
+    "strategic_allocation_21_accessed": false,
+    "paper_state_accessed": false,
+    "broker_write_performed": false,
+    "live_state_accessed": false
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "disposition": {
+    "metadata_authority_active": false,
+    "metadata_replay_allowed": false,
+    "replacement_metadata_authority_allowed": false,
+    "ohlcv_qualification_allowed": false,
+    "dataset_admission_allowed": false,
+    "strategy_execution_allowed": false,
+    "successor_ohlcv_authority_proposal_allowed_without_new_user_authorization": false,
+    "required_next_action": "Obtain a new explicit user authorization limited to creating and independently reviewing an exact one-use Program 008 successor raw Alpaca SIP OHLCV structural qualification authority proposal. That planning task must bind this terminal metadata PASS and must not execute OHLCV, admit a dataset, calculate a strategy result, access controlled or protected data, or touch PAPER, broker, or live state."
+  },
+  "success_fingerprint": "151091ac4d863d73561afc24dc0138e5326dd237183dfb7da178cb5584871fcd"
+}

@@ -43,6 +43,14 @@ REVIEW_PATH = Path(
     "config/research/program-008-corporate-action-metadata-qualification-authority-"
     "proposal-independent-review-v1.json"
 )
+_TERMINAL_SUCCESS = {
+    "path": (
+        "config/research/program-008-corporate-action-metadata-qualification-"
+        "terminal-success-v1.json"
+    ),
+    "sha256": "23bf0e29b4f8b4b4655d7eeb470e4ceb1bc319717c854ec3d82790ef52c1762b",
+    "fingerprint": "151091ac4d863d73561afc24dc0138e5326dd237183dfb7da178cb5584871fcd",
+}
 
 _PROGRAM_007_TERMINAL = {
     "path": (
@@ -320,6 +328,7 @@ def derive_authorization_root(
     environ: Mapping[str, str] | None = None,
 ) -> Mapping[str, Any]:
     repository = repository.resolve()
+    _reject_terminal_success(repository)
     controls = validate_proposal_chain(repository)
     proposal = _mapping(controls["proposal"], "authority proposal")
     if proposal.get("status") != READY_STATUS:
@@ -411,6 +420,8 @@ def execute_qualification(
     environ: Mapping[str, str] | None = None,
 ) -> metadata.ParsedChain:
     """Run one reviewed qualification after separate exact-root authorization."""
+    repository = repository.resolve()
+    _reject_terminal_success(repository)
     return _execute_qualification(
         repository,
         authorization_root,
@@ -890,6 +901,27 @@ def _load_static_artifact(
     ):
         raise Program008AuthorityError(f"Program 008 binding differs: {path.name}")
     return payload
+
+
+def _reject_terminal_success(repository: Path) -> None:
+    path = repository / _TERMINAL_SUCCESS["path"]
+    if not path.exists():
+        return
+    success = _load_static_artifact(repository, _TERMINAL_SUCCESS, "success_fingerprint")
+    authorization = _mapping(success.get("authorization"), "terminal authorization")
+    structural = _mapping(success.get("structural_results"), "terminal results")
+    disposition = _mapping(success.get("disposition"), "terminal disposition")
+    if (
+        success.get("program_id") != PROGRAM_ID
+        or success.get("status") != "TERMINAL-PASS-CONSUMED-NO-REPLAY"
+        or authorization.get("one_use_consumed") is not True
+        or structural.get("metadata_qualification") != "PASS"
+        or disposition.get("metadata_authority_active") is not False
+        or disposition.get("metadata_replay_allowed") is not False
+        or disposition.get("replacement_metadata_authority_allowed") is not False
+    ):
+        raise Program008AuthorityError("Program 008 terminal success semantics differ")
+    raise Program008AuthorityError("Program 008 metadata authority is terminally revoked")
 
 
 def _load_control_artifact(

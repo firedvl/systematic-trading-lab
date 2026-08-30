@@ -162,6 +162,36 @@ action, broker write, or live action. Derive the one external root only from fin
 `main`. That derivation does not activate authority. A future run still requires the exact separate
 user authorization.
 
+## Program 008 terminal qualification
+
+The exact user authorization activated root
+`90b60b95caef446d84e8242ae9aa3e0086d2655c7f55da9dc28c7d252153ad9e` on clean synchronized main
+`37af39a2213ac8bb29b2877d452bf480a33b096a`. The one-use claim was written immediately before the
+first transport. One credential load and one zero-retry, redirect-disabled CUSIP request returned one
+HTTP 200 page with 83,338 bytes and no continuation token.
+
+The reviewed parser accepted 354 unique canonical events: 349 cash dividends and five forward
+splits. All 354 records corroborated exactly one public-ledger identity, none had an empty or
+conflicting CUSIP, all 354 had an allowed empty ISIN, and no event-ID, process-date, economic-date,
+pagination, or budget gate failed. XLB, XLE, XLK, XLU, and XLY each supplied exactly one 2-for-1
+forward split dated `2025-12-05`. No unexpected relevant action appeared.
+
+Program 008 metadata is `TERMINAL-PASS-CONSUMED-NO-REPLAY`. Public terminal-success
+SHA-256/fingerprint is `23bf0e29b4f8b4b4655d7eeb470e4ceb1bc319717c854ec3d82790ef52c1762b` /
+`151091ac4d863d73561afc24dc0138e5326dd237183dfb7da178cb5584871fcd`. The exact response remains
+under the ignored private root; Git contains only counts, hashes, fingerprints, and validation
+summaries. Program 007 was not replayed. No OHLCV request, dataset admission, strategy calculation,
+controlled/protected access, PAPER action, broker write, or live action occurred. A successor OHLCV
+authority-proposal task requires a new explicit user authorization and must not execute OHLCV.
+
+The finding-free
+[`program-008-corporate-action-metadata-qualification-terminal-success-independent-review-v1.json`](../../config/research/program-008-corporate-action-metadata-qualification-terminal-success-independent-review-v1.json)
+binds both closeout commits and passes all 17 required challenges. The reviewer independently
+rehashed the public and private evidence, reparsed all 354 events inside the ignored private boundary,
+and found the response body absent from reachable and unreachable Git objects. Review
+SHA-256/fingerprint is `65eda8a7e6bc6d262b382227db7ca82ecd42dc38caa97d637d6dd1b207a4e6c9` /
+`143f8e5023b96bc950f9ec86d37e966fca42ceefd1c07c691d6d3c2af7c66dad`.
+
 The earlier finding-free forensic review binds implementation commit
 `02b2ed61f6a9e1a7affd8a49162437d89fdcb751`. Its SHA-256/fingerprint is
 `0ff5fe1f2c3db02c468ce3f87b553acbdd94b290189eb9f03c843e071c18475d` /

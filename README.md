@@ -87,17 +87,13 @@ See [Program 007 corporate-action metadata qualification](docs/program-007-corpo
 Do not activate or run Program 007 metadata again. Do not proceed to its OHLCV qualification.
 
 Offline analysis found that Alpaca's current `data_quality=complete` contract permits processed
-records with missing CUSIP or ISIN. The retained response contains all five expected split controls
-and no deeper source incompatibility. [Program 008](docs/research-campaigns/program-007-corporate-action-metadata-offline-forensics-v1.md)
-now has a reviewed exact one-use authority proposal for its never-executed CUSIP-only qualification.
-Its names-only credential preflight is safe to repeat:
+records with missing CUSIP or ISIN. [Program 008](docs/research-campaigns/program-007-corporate-action-metadata-offline-forensics-v1.md)
+then completed its exact one-use CUSIP-only qualification with a terminal PASS. The consumed run
+made one request, retained one 83,338-byte HTTP 200 page privately, parsed 354 unique events, and
+recovered all five required split controls without a relevant ledger discrepancy.
 
-```console
-uv run trading-lab data acquire program-008-metadata credential-preflight
-```
-
-The proposal grants no active authority. Do not activate or run Program 008 without the separately
-reported root and exact future user authorization.
+Do not activate or run Program 008 metadata again. Its consumed authority grants no OHLCV,
+dataset, strategy, controlled/protected, PAPER, broker, or live authority.
 
 ## Using historical data
 
