@@ -184,6 +184,14 @@ summaries. Program 007 was not replayed. No OHLCV request, dataset admission, st
 controlled/protected access, PAPER action, broker write, or live action occurred. A successor OHLCV
 authority-proposal task requires a new explicit user authorization and must not execute OHLCV.
 
+The finding-free
+[`program-008-corporate-action-metadata-qualification-terminal-success-independent-review-v1.json`](../../config/research/program-008-corporate-action-metadata-qualification-terminal-success-independent-review-v1.json)
+binds both closeout commits and passes all 17 required challenges. The reviewer independently
+rehashed the public and private evidence, reparsed all 354 events inside the ignored private boundary,
+and found the response body absent from reachable and unreachable Git objects. Review
+SHA-256/fingerprint is `65eda8a7e6bc6d262b382227db7ca82ecd42dc38caa97d637d6dd1b207a4e6c9` /
+`143f8e5023b96bc950f9ec86d37e966fca42ceefd1c07c691d6d3c2af7c66dad`.
+
 The earlier finding-free forensic review binds implementation commit
 `02b2ed61f6a9e1a7affd8a49162437d89fdcb751`. Its SHA-256/fingerprint is
 `0ff5fe1f2c3db02c468ce3f87b553acbdd94b290189eb9f03c843e071c18475d` /

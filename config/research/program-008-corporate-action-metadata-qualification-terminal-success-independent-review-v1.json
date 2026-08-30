@@ -1,0 +1,294 @@
+{
+  "schema_version": "program-008-corporate-action-metadata-qualification-terminal-success-independent-review-v1",
+  "review_id": "program-008-corporate-action-metadata-qualification-terminal-success-independent-review-2026-08-30-v1",
+  "program_id": "multi-hour-sector-etf-research-007",
+  "reviewed_at": "2026-08-30T08:12:35Z",
+  "status": "PASS-TERMINAL-SUCCESS-VERIFIED",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_execution_main": "37af39a2213ac8bb29b2877d452bf480a33b096a",
+  "reviewed_closeout_commits": [
+    {
+      "commit": "9c034c62404e8166c1d9192f761493cbd477437f",
+      "tree": "77540dcfb7d72a836f943ca890f41819f495f0ce",
+      "purpose": "terminal PASS artifact and public closeout"
+    },
+    {
+      "commit": "dbc393c9f357d32ec3a663a657eb4418c0cd1391",
+      "tree": "0d439a791031f7f2ef261b6a05b8eaf74035fa5e",
+      "purpose": "consumed-authority revocation guard"
+    }
+  ],
+  "reviewed_success": {
+    "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-v1.json",
+    "sha256": "23bf0e29b4f8b4b4655d7eeb470e4ceb1bc319717c854ec3d82790ef52c1762b",
+    "fingerprint": "151091ac4d863d73561afc24dc0138e5326dd237183dfb7da178cb5584871fcd"
+  },
+  "reviewed_private_records": {
+    "active_authority": {
+      "sha256": "9829d98ffe1f963c0614b8f165d0d95db8a2b8f5c962f228ba568240d5966b05",
+      "fingerprint": "90b60b95caef446d84e8242ae9aa3e0086d2655c7f55da9dc28c7d252153ad9e"
+    },
+    "one_use_claim": {
+      "schema_version": "program-008-private-corporate-action-metadata-claim-v1",
+      "sha256": "65849ea9764f829d14a3642b99fb577cbabc5f97b15c51acbb2c1e843aa8f12b",
+      "fingerprint": "65849ea9764f829d14a3642b99fb577cbabc5f97b15c51acbb2c1e843aa8f12b"
+    },
+    "request_intent": {
+      "sha256": "0fad2cda95e198ba3aa9ce5d74b55880326020855b2677e93e8089de46a98ca0"
+    },
+    "response_body": {
+      "sha256": "0887a7d626541df228d9ef4512c7d942685f86146fcdbb0a7391b208cf665ece",
+      "bytes": 83338
+    },
+    "response_receipt": {
+      "sha256": "ebf139ddf2f9fedb39e1f695c12cb66ed5f7326560dbe263e4084437b77f7084"
+    },
+    "qualification_receipt": {
+      "sha256": "29740f8bcf45078868ec77717fab83e9d6ba5ee4646f4918eaa541683d2a7151"
+    },
+    "response_manifest": {
+      "manifest_id": "program-008-corporate-action-metadata-response-manifest-2026-08-30-v1",
+      "sha256": "53f4b5ff0012e03e228c1f8b5be07b1a9aaa04566554cd3b536ce7a0d24780c2",
+      "fingerprint": "52f2104c1d4add2ea07ba6c99869cbaadf3996dd23b2b2af953ebc50292c8bee",
+      "page_count": 1,
+      "bytes": 83338
+    }
+  },
+  "reviewed_authority": {
+    "user_authorization_packet_sha256": "73eaa6e320e7f0bab34fd1e96b3c96ba018e2c71a7f3a9add27c55003ea40ff4",
+    "external_authorization_root": "90b60b95caef446d84e8242ae9aa3e0086d2655c7f55da9dc28c7d252153ad9e",
+    "authority_id": "program-008-corporate-action-metadata-qualification-authority-2026-08-29-v1",
+    "activation_succeeded": true,
+    "one_use_consumed": true,
+    "active_flags_during_consumed_run": [
+      "credential_access",
+      "provider_contact",
+      "source_qualification",
+      "source_requests"
+    ]
+  },
+  "reviewed_runtime_outcome": {
+    "terminal_execution": "CONFIRMED-PASS-CONSUMED-NO-REPLAY",
+    "credential_presence_preflight": "PASS",
+    "credential_presence_recheck_under_lock": "PASS",
+    "credential_load_count": 1,
+    "endpoint": "https://data.alpaca.markets/v1/corporate-actions",
+    "cusip_chain_request_count": 1,
+    "provider_request_count": 1,
+    "http_response_count": 1,
+    "page_count": 1,
+    "http_status": 200,
+    "response_bytes": 83338,
+    "maximum_allowed_page_bytes": 1048576,
+    "maximum_allowed_total_bytes": 4194304,
+    "automatic_retries": 0,
+    "redirects_followed": 0,
+    "raw_body_retained_before_parse": true,
+    "qualification_receipt_created": true,
+    "private_manifest_created": true,
+    "private_dataset_count": 0
+  },
+  "reviewed_structural_outcome": {
+    "returned_collection_inventory": {
+      "cash_dividends": 349,
+      "forward_splits": 5
+    },
+    "total_record_count": 354,
+    "unique_event_count": 354,
+    "duplicate_event_id_count": 0,
+    "empty_cusip_count": 0,
+    "conflicting_nonempty_cusip_count": 0,
+    "empty_isin_count": 354,
+    "conflicting_nonempty_isin_count": 0,
+    "identity_mapping": "PASS-354-OF-354-ONE-PUBLIC-LEDGER-IDENTITY",
+    "process_date_validation": "PASS-ALL-VALUES-IN-FROZEN-INTERVAL",
+    "economic_date_validation": "PASS-REVIEWED-EVENT-SPECIFIC-FIELD-RULES",
+    "positive_controls": {
+      "XLB": "PASS-ONE-2-FOR-1-FORWARD-SPLIT-2025-12-05",
+      "XLE": "PASS-ONE-2-FOR-1-FORWARD-SPLIT-2025-12-05",
+      "XLK": "PASS-ONE-2-FOR-1-FORWARD-SPLIT-2025-12-05",
+      "XLU": "PASS-ONE-2-FOR-1-FORWARD-SPLIT-2025-12-05",
+      "XLY": "PASS-ONE-2-FOR-1-FORWARD-SPLIT-2025-12-05"
+    },
+    "unexpected_relevant_action_count": 0,
+    "pagination": "PASS-ONE-PAGE-TERMINAL-NULL-TOKEN",
+    "metadata_qualification": "PASS"
+  },
+  "terminal_revocation": {
+    "guard_path": "src/systematic_trading_lab/program_008_corporate_action_authority.py",
+    "guard_sha256": "807e716451b8bb23d8012976efafb9b1775f7872d6f3cd145d75b31ff3b1fbbe",
+    "root_derivation_rejects_before_credentials_or_private_root": true,
+    "activation_entry_rejects_before_credentials_or_private_root": true,
+    "execution_entry_rejects_before_credentials_or_private_root": true,
+    "exact_terminal_sha256_and_fingerprint_bound": true,
+    "terminal_semantics_validated": true,
+    "historical_execution_main_authority_derivation_verified": true,
+    "regression_test_path": "tests/unit/test_program_008_corporate_action_authority.py",
+    "regression_test_sha256": "4abc42a65f0f1db4a4a48f20cffeb93cf50596582306fe180fae5df972cc0690"
+  },
+  "challenge_results": [
+    {
+      "number": 1,
+      "challenge": "Was Program 007 replay avoided?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 2,
+      "challenge": "Was only the exact CUSIP query used?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 3,
+      "challenge": "Was the claim created immediately before first transport?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 4,
+      "challenge": "Was exactly one credential load used?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 5,
+      "challenge": "Were retries zero?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 6,
+      "challenge": "Were redirects zero?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 7,
+      "challenge": "Did raw-first persistence occur before parsing?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 8,
+      "challenge": "Were all provider bytes private?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 9,
+      "challenge": "Were empty CUSIPs handled only through exact ledger mapping?",
+      "answer": "YES; no empty CUSIP occurred in this response and the reviewed rule remained exact",
+      "verdict": "PASS"
+    },
+    {
+      "number": 10,
+      "challenge": "Did conflicting CUSIP remain fatal?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 11,
+      "challenge": "Was empty ISIN allowed correctly?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 12,
+      "challenge": "Were all five controls present if PASS?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 13,
+      "challenge": "Were discrepancies handled fail-closed?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 14,
+      "challenge": "Were budgets respected?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 15,
+      "challenge": "Did any OHLCV request occur?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 16,
+      "challenge": "Did any strategy calculation occur?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 17,
+      "challenge": "Were controlled, protected, PAPER, broker, and live boundaries preserved?",
+      "answer": "YES",
+      "verdict": "PASS"
+    }
+  ],
+  "verified_assertions": {
+    "external_root_equals_active_authority_fingerprint": true,
+    "active_authority_bytes_are_canonical": true,
+    "claim_matches_authority_and_request_plan": true,
+    "claim_precedes_first_provider_transport": true,
+    "one_use_authority_is_consumed": true,
+    "credential_load_count_is_one": true,
+    "exact_request_response_page_and_byte_counts_reconcile": true,
+    "automatic_transport_retries_are_zero": true,
+    "redirects_are_zero": true,
+    "raw_first_persistence_completed": true,
+    "terminal_metadata_qualification_is_pass": true,
+    "exact_terminal_artifact_blocks_current_authority_paths": true,
+    "no_raw_or_reconstructable_metadata_entered_git": true,
+    "raw_response_body_is_absent_from_reachable_and_unreachable_git_objects": true,
+    "no_ohlcv_request_occurred": true,
+    "no_strategy_calculation_or_return_occurred": true,
+    "controlled_protected_paper_broker_and_live_state_stayed_untouched": true,
+    "replay_replacement_metadata_authority_ohlcv_dataset_and_strategy_are_prohibited": true
+  },
+  "verification": {
+    "independent_reviewer": "fresh read-only reviewer",
+    "private_record_cross_hash_audit": "PASS",
+    "independent_private_response_reparse": "PASS; 354 unique events",
+    "required_review_challenges": "17 passed",
+    "focused_program_008_tests": "41 passed",
+    "sanitized_full_test_suite": "1451 passed, 4 skipped",
+    "ruff": "PASS",
+    "mypy": "PASS; 264 files",
+    "secret_and_private_data_scan": "PASS; 602 files scanned",
+    "shell_syntax_and_diff_checks": "PASS",
+    "git_reachable_and_unreachable_object_scan": "PASS",
+    "reviewed_working_tree": "clean",
+    "tracked_program_008_private_files": 0
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "Historical claim timing and the credential-load count rely on immutable private receipts plus the reviewed execution path; neither can be re-observed after the completed transport.",
+    "The reviewer reparsed the retained response inside the ignored private boundary but did not disclose provider rows, credentials, or reconstructable metadata.",
+    "Remote CI, merge, post-merge CI, and final clean synchronized-main checks remain delivery steps after this review."
+  ],
+  "scope_limit": "The review made no provider request, credential access, OHLCV request, strategy calculation, protected-state access, PAPER action, broker write, live action, or repository edit.",
+  "required_next_action": "Obtain a new explicit user authorization limited to creating and independently reviewing an exact one-use Program 008 successor raw Alpaca SIP OHLCV structural qualification authority proposal. Do not execute that proposal task under this authorization, and do not request OHLCV, admit a dataset, calculate a strategy result, access controlled or protected data, or touch PAPER, broker, or live state.",
+  "review_fingerprint": "143f8e5023b96bc950f9ec86d37e966fca42ceefd1c07c691d6d3c2af7c66dad"
+}
