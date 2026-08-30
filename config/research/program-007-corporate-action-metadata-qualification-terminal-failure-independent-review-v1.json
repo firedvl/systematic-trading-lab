@@ -1,0 +1,161 @@
+{
+  "schema_version": "program-007-corporate-action-metadata-qualification-terminal-failure-independent-review-v1",
+  "review_id": "program-007-corporate-action-metadata-qualification-terminal-failure-independent-review-2026-08-29-v1",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "reviewed_at": "2026-08-30T03:53:50Z",
+  "status": "PASS-TERMINAL-FAILURE-VERIFIED",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_execution_main": "a624acbe86177323e88042c5dbfe6ef00862e1c8",
+  "reviewed_closeout_commit": "e3de52b3b375d1128bfe27453ae9be48420092fc",
+  "reviewed_failure": {
+    "path": "config/research/program-007-corporate-action-metadata-qualification-terminal-failure-v1.json",
+    "sha256": "99bc4397909f364efac2f189351bff9ebaae9b886833fc7e0555b3fa5751119f",
+    "fingerprint": "991bd9892ee32f4badc08350160a03c3514e0ae1a33dfa623406b534c73bd352"
+  },
+  "reviewed_private_records": {
+    "active_authority": {
+      "sha256": "67f93f9da7d5d722cfecfd5c35ae097f12c8873f039cc1e11a921d39dd54ceeb",
+      "fingerprint": "a3e65f85bcc9adaedcfe3842d3b148ed1fb6230ac303ff2cdedadfe33c0bfbbd"
+    },
+    "one_use_claim": {
+      "schema_version": "program-007-private-corporate-action-metadata-claim-v1",
+      "sha256": "32d15f417c69d4463bbf30462dbd93a0f004584785947460d65d72e2e6b9e5f9",
+      "fingerprint": "32d15f417c69d4463bbf30462dbd93a0f004584785947460d65d72e2e6b9e5f9"
+    },
+    "symbol_chain_request_intent": {
+      "sha256": "1db05691598bd39aa8fbc28de164c8476d2f256072030cf0d4e0a20312b7010f",
+      "fingerprint": "1db05691598bd39aa8fbc28de164c8476d2f256072030cf0d4e0a20312b7010f"
+    },
+    "symbol_chain_response": {
+      "sha256": "52e77eb497e07af20f605103bb4a75187d600ab2b9d1d1c641f21ecf3a834ab0",
+      "bytes": 115628
+    },
+    "symbol_chain_response_receipt": {
+      "sha256": "baac33cdedbc441fe3c4d30a8ec213bc67c389a43e371ba5e1b4757a3ec79481",
+      "fingerprint": "baac33cdedbc441fe3c4d30a8ec213bc67c389a43e371ba5e1b4757a3ec79481"
+    },
+    "terminal_qualification_failure": {
+      "sha256": "1cf30f752812396751913be0af08efbfc52a2b18ea7ba681e67c82234331219f",
+      "fingerprint": "1cf30f752812396751913be0af08efbfc52a2b18ea7ba681e67c82234331219f"
+    }
+  },
+  "reviewed_authority": {
+    "external_authorization_root": "a3e65f85bcc9adaedcfe3842d3b148ed1fb6230ac303ff2cdedadfe33c0bfbbd",
+    "authority_id": "program-007-corporate-action-metadata-qualification-authority-2026-08-29-v2",
+    "request_plan_fingerprint": "f145a69e399af73b52a760b6457234f337fbdacf0330a61eef58856b9ab25f14",
+    "activation_succeeded": true,
+    "one_use_consumed": true,
+    "active_flags_during_consumed_run": [
+      "credential_access",
+      "provider_contact",
+      "source_qualification",
+      "source_requests"
+    ]
+  },
+  "reviewed_runtime_outcome": {
+    "terminal_execution": "CONFIRMED-FAIL-CONSUMED-NO-REPLAY",
+    "failure_stage": "first symbol-chain page during cash-dividend schema validation",
+    "failure_reason": "Program 007 required cusip is empty",
+    "credential_presence_preflight": "PASS",
+    "credential_presence_recheck_under_lock": "PASS",
+    "credential_load_count": 1,
+    "endpoint": "https://data.alpaca.markets/v1/corporate-actions",
+    "symbol_chain_request_count": 1,
+    "symbol_chain_response_count": 1,
+    "cusip_chain_request_count": 0,
+    "cusip_chain_response_count": 0,
+    "provider_request_count": 1,
+    "http_response_count": 1,
+    "http_status": 200,
+    "response_bytes": 115628,
+    "maximum_allowed_bytes": 8388608,
+    "automatic_retries": 0,
+    "raw_body_retained_before_parse": true,
+    "qualification_receipt_created": false,
+    "private_manifest_created": false,
+    "private_dataset_count": 0
+  },
+  "reviewed_structural_outcome": {
+    "endpoint_access": "ALLOWED-HTTP-200",
+    "symbol_chain": "FAIL-FIRST-PAGE-EMPTY-REQUIRED-CUSIP",
+    "cusip_chain": "NOT-REQUESTED-AFTER-TERMINAL-SYMBOL-CHAIN-FAILURE",
+    "retained_page_event_count": 543,
+    "retained_page_cash_dividend_count": 538,
+    "retained_page_forward_split_count": 5,
+    "retained_page_empty_required_cusip_count": 189,
+    "retained_page_empty_required_cusip_symbol_count": 13,
+    "positive_controls": "NOT-QUALIFIED-SCHEMA-FAILURE-BEFORE-RECONCILIATION",
+    "symbol_cusip_reconciliation": "NOT-REACHED",
+    "unexpected_relevant_actions": "NOT-EVALUATED",
+    "process_date_validation": "NOT-COMPLETED",
+    "economic_date_validation": "NOT-COMPLETED",
+    "pagination": "NOT-COMPLETED-AFTER-SCHEMA-FAILURE",
+    "metadata_qualification": "FAIL"
+  },
+  "terminal_revocation": {
+    "guard_path": "src/systematic_trading_lab/program_007_corporate_action_authority.py",
+    "guard_sha256": "fee7fd6ae7853e08ec77046d29255116f4a7bec2118d5850d819e700a4d4f50c",
+    "activation_entry_rejects_before_credentials_or_private_root": true,
+    "execution_entry_rejects_before_credentials_or_private_root": true,
+    "exact_terminal_sha256_and_fingerprint_bound": true,
+    "terminal_semantics_validated": true,
+    "historical_execution_main_authority_derivation_verified": true,
+    "regression_test_path": "tests/unit/test_program_007_corporate_action_authority.py",
+    "regression_test_sha256": "4ebaa05e176435172b2e77ac7f7509c74feec15665c90da7d36e860eca6e6e0b"
+  },
+  "verified_assertions": {
+    "external_root_equals_active_authority_fingerprint": true,
+    "active_authority_bytes_are_canonical": true,
+    "claim_matches_authority_and_request_plan": true,
+    "claim_precedes_first_provider_transport": true,
+    "one_use_authority_is_consumed": true,
+    "credential_load_count_is_one": true,
+    "request_response_and_byte_counts_reconcile": true,
+    "automatic_transport_retries_are_zero": true,
+    "raw_first_persistence_completed": true,
+    "terminal_metadata_qualification_is_fail": true,
+    "exact_terminal_artifact_blocks_current_authority_paths": true,
+    "no_qualification_receipt_private_manifest_or_dataset_exists": true,
+    "no_raw_or_reconstructable_metadata_entered_git": true,
+    "no_ohlcv_request_occurred": true,
+    "no_strategy_calculation_or_return_occurred": true,
+    "controlled_protected_paper_broker_and_live_state_stayed_untouched": true,
+    "retry_replacement_authority_purchase_fallback_ohlcv_dataset_and_strategy_are_prohibited": true
+  },
+  "verification": {
+    "independent_reviewer": "fresh read-only reviewer",
+    "private_record_cross_hash_audit": "PASS",
+    "focused_program_007_tests": "152 passed",
+    "secret_and_private_data_scan": "PASS; 589 files scanned",
+    "git_diff_and_show_checks": "PASS",
+    "reviewed_working_tree": "clean",
+    "tracked_program_007_private_files": 0
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "The cash-dividend schema failure prevented CUSIP-chain, positive-control, reconciliation, complete process/economic-date, and pagination qualification.",
+    "The immutable private failure record lacks the exact error, request count, and credential-load count; the public terminal artifact reconciles those details from the retained records and single reviewed code path.",
+    "The review did not contact Alpaca, load credentials, replay transport, request OHLCV, calculate a strategy result, or access controlled, protected, PAPER, broker, or live state.",
+    "Full repository gates, remote CI, merge, post-merge CI, and final clean synchronized-main checks remain delivery steps after this review."
+  ],
+  "scope_limit": "This review was read-only and made no provider request, credential access, response-body disclosure, OHLCV request, strategy calculation, protected-state access, or repository edit.",
+  "required_next_action": "None for the consumed Program 007 metadata path. Preserve its private evidence and stop without replay, replacement authority, purchase, fallback, OHLCV qualification, dataset admission, or strategy execution.",
+  "review_fingerprint": "26b09a8c40ca69a73a000d9d95d76b1487e0c269fec88cca9d54d8058a0baca9"
+}

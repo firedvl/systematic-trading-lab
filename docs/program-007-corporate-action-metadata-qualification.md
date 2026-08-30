@@ -21,6 +21,11 @@ strategy. Public terminal artifact SHA-256/fingerprint is
 Current code verifies that exact artifact and rejects authority derivation before credential access
 or private-state creation.
 
+The finding-free independent review binds closeout commit
+`e3de52b3b375d1128bfe27453ae9be48420092fc`. Its SHA-256/fingerprint is
+`e2c003595f074eaba749df60787d234f7e04d007927c2dd14213522c0be71fcb` /
+`26b09a8c40ca69a73a000d9d95d76b1487e0c269fec88cca9d54d8058a0baca9`.
+
 The historical names-only preflight checks these required names:
 
 - `PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID`
