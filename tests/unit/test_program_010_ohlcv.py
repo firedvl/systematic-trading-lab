@@ -356,14 +356,18 @@ def test_private_program_009_pages_classify_mdy_and_xly_without_values() -> None
     chains = raw_contract._frozen_request_chains()
     pagination = next(chain for chain in chains if chain.chain_id.startswith("pagination-"))
     observed: set[program_010.Coordinate] = set()
-    raw_rows: list[raw_contract.RawBar] = []
     page_counts: list[tuple[int, int]] = []
+    frontier: program_010.Coordinate | None = None
     for index in range(1, 7):
         body = (_PRIVATE_009 / f"{pagination.chain_id}-{index:02d}.body").read_bytes()
-        rows, token = raw_contract.parse_raw_page(body, pagination)
+        rows, token = raw_contract.parse_raw_page(body, pagination, preserve_received_order=True)
+        coordinates = tuple(row.coordinate for row in rows)
+        assert coordinates == tuple(sorted(coordinates))
+        if frontier is not None:
+            assert coordinates[0] > frontier
+        frontier = coordinates[-1]
         canonical = raw_contract.project_rth(rows, pagination)
         assert token is not None
-        raw_rows.extend(rows)
         observed.update(row.coordinate for row in canonical)
         page_counts.append((len(rows), len(canonical)))
 
@@ -374,8 +378,9 @@ def test_private_program_009_pages_classify_mdy_and_xly_without_values() -> None
             pagination.start, pagination.end, Timeframe.FIVE_MINUTES
         )
     )
+    assert frontier is not None
     missingness = program_010.classify_missingness(
-        expected, observed, terminal=False, frontier=max(row.coordinate for row in raw_rows)
+        expected, observed, terminal=False, frontier=frontier
     )
 
     assert page_counts == [
