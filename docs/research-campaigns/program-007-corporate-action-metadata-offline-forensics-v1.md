@@ -141,3 +141,8 @@ symbol response do not have to appear through the CUSIP filter.
 Program 008 has no authority, active packet, credential names, private runtime root, provider request,
 response, or external root. A future run requires a separate reviewed one-use authority proposal and
 new explicit user authorization.
+
+The finding-free independent review binds implementation commit
+`02b2ed61f6a9e1a7affd8a49162437d89fdcb751`. Its SHA-256/fingerprint is
+`0ff5fe1f2c3db02c468ce3f87b553acbdd94b290189eb9f03c843e071c18475d` /
+`e987474a6af543a0e7097db67ee87475d0042b2ceae7b3c7e1b49d07e67b4064`.

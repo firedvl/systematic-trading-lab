@@ -1,0 +1,143 @@
+{
+  "schema_version": "program-008-corporate-action-metadata-forensic-independent-review-v1",
+  "review_id": "program-008-corporate-action-metadata-forensic-independent-review-2026-08-30-v1",
+  "program_id": "multi-hour-sector-etf-research-007",
+  "reviewed_at": "2026-08-30T05:42:05Z",
+  "status": "PASS-FINDING-FREE-OFFLINE-FORENSIC-AND-PROPOSAL-REVIEW",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_main": "b10397ea649b066bc2d7cadde4276166c55476c2",
+  "reviewed_commit": "02b2ed61f6a9e1a7affd8a49162437d89fdcb751",
+  "reviewed_change_commits": [
+    "12878d7588a7894bb25e29a186e6ea99fcb9a33b",
+    "02b2ed61f6a9e1a7affd8a49162437d89fdcb751"
+  ],
+  "reviewed_analysis": {
+    "path": "config/research/program-007-corporate-action-metadata-offline-forensic-analysis-v1.json",
+    "sha256": "1fdf65cf3d846dc67b3d29565f7e1283e95185fcc500f6a3b0d7670aa3b2ed8d",
+    "fingerprint": "531148e65d1b45c8985b8ffe29bf7d4c150dd69888432a8188080322fd455c80"
+  },
+  "reviewed_proposal": {
+    "path": "config/research/program-008-corporate-action-metadata-qualification-proposal-v1.json",
+    "sha256": "19cc83e7531ac32c60ca2899cfb8a38e27cd21aed00b524b929fe068555fc7e5",
+    "fingerprint": "3d2192495cae2fe9c8db67873819df727a9bb13eb5b9a911d51e89a8e4aa884f",
+    "proposal_id": "program-008-corporate-action-metadata-qualification-proposal-2026-08-29-v1",
+    "status": "PROGRAM-008-PROPOSED-NOT-AUTHORIZED"
+  },
+  "reviewed_implementation": {
+    "parser_path": "src/systematic_trading_lab/program_008_corporate_actions.py",
+    "parser_sha256": "30261eeff1de06b18ca5f40c237b3e2666072fe346ae888ef81c021be08d1b59",
+    "test_path": "tests/unit/test_program_008_corporate_actions.py",
+    "test_sha256": "0083a07498cb1a0dc34347286e9ca48cb0a4ae537f44dad03a1c60b5baf669b9"
+  },
+  "reviewed_private_evidence": {
+    "retained_response": {
+      "path": ".trading-lab/program-007-corporate-action-metadata-v2/symbols-01.body",
+      "bytes": 115628,
+      "sha256": "52e77eb497e07af20f605103bb4a75187d600ab2b9d1d1c641f21ecf3a834ab0",
+      "git_ignored": true,
+      "mode": "0600"
+    },
+    "private_inventory": {
+      "path": ".trading-lab/program-007-corporate-action-metadata-offline-forensics-v1/private-inventory-v1.json",
+      "sha256": "7eccdf64ddbbb585a3668a3324c725f7db4e8a5f5b9fce1759ceb7692bdf3073",
+      "fingerprint": "1ab8d6b2a11e782e4c16c8e9ae82645d2de6cd16bba17ccfa0e58e58f8ae5da1",
+      "git_ignored": true,
+      "mode": "0600"
+    }
+  },
+  "review_history": {
+    "checkpoint_commit": "12878d7588a7894bb25e29a186e6ea99fcb9a33b",
+    "standards_review": {
+      "reviewer": "fresh read-only standards and correctness reviewer",
+      "verdict": "PASS",
+      "findings": []
+    },
+    "first_specification_review": {
+      "reviewer": "fresh read-only forensic and specification reviewer",
+      "verdict": "CHANGES-REQUIRED",
+      "findings": [
+        "Multiple non-empty ISIN values inside one event were not rejected.",
+        "Complete-chain pagination, aggregate-byte, and cross-page duplicate gates were not implemented."
+      ]
+    },
+    "remediation_commit": "02b2ed61f6a9e1a7affd8a49162437d89fdcb751",
+    "remediations": [
+      "Reject more than one non-empty ISIN value inside one event.",
+      "Enforce one-to-four pages, nonrepeating continuation tokens, terminal null pagination, 4 MiB total bytes, and cross-page duplicate consistency."
+    ],
+    "final_review": {
+      "reviewer": "fresh read-only final reviewer",
+      "verdict": "PASS",
+      "findings": []
+    }
+  },
+  "required_challenges": {
+    "processed_incomplete_rows_permitted": "PASS-CURRENT-FIRST-PARTY-EVIDENCE-ALLOWS-MISSING-CUSIP-OR-ISIN",
+    "universal_cusip_rule_incompatible": "PASS-QUALIFICATION-SPECIFICATION-DEFECT",
+    "failure_not_rationalized": "PASS-STRICT-INDEPENDENT-FAILURE-GATES-REMAIN",
+    "all_additional_anomalies_examined": "PASS-INVENTORY-DATES-ORDER-IDS-IDENTITIES-FIELDS-AND-PAGINATION-CHECKED",
+    "five_positive_controls": "PASS-ALL-PRESENT-AND-STRUCTURALLY-CONSISTENT",
+    "deeper_source_disqualification": "PASS-NONE-FOUND-IN-RETAINED-EVIDENCE",
+    "public_ledger_primary": "PASS",
+    "conflicting_nonempty_cusip_fails": "PASS",
+    "corrected_parser_strict": "PASS",
+    "old_symbol_response_exposed": "PASS-REGRESSION-AND-CROSS-FILTER-BASELINE-ONLY",
+    "exact_symbol_query_not_replayed": "PASS",
+    "future_cusip_chain_unexecuted": "PASS",
+    "credential_or_provider_data_activity": "PASS-ZERO",
+    "strategy_returns_generated_or_read": "PASS-ZERO"
+  },
+  "verification": {
+    "retained_chain_parse": "PASS-ONE-PAGE-543-EVENTS-115628-BYTES-ZERO-DUPLICATES-TERMINAL-NULL-TOKEN",
+    "retained_type_inventory": "PASS-538-CASH-DIVIDENDS-5-FORWARD-SPLITS",
+    "empty_cusip_inventory": "PASS-189-CASH-DIVIDENDS-0-FORWARD-SPLITS",
+    "positive_controls": "PASS-XLB-XLE-XLK-XLU-XLY",
+    "same_event_isin_conflict_test": "PASS-HARD-FAIL",
+    "pagination_failure_tests": "PASS-REPEATED-EARLY-TERMINAL-NONTERMINAL-OVER-PAGE-OVER-BYTE",
+    "cross_page_duplicate_tests": "PASS-IDENTICAL-DEDUPLICATED-CONFLICTING-HARD-FAIL",
+    "focused_tests": "12 passed during final independent review; 48 passed during root remediation verification",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "secret_and_private_data_scan": "PASS-595-FILES",
+    "fingerprints_and_bindings": "PASS",
+    "git_diff_check": "PASS",
+    "reviewed_working_tree": "CLEAN"
+  },
+  "activity": {
+    "provider_data_requests": 0,
+    "credential_presence_checks": 0,
+    "credential_value_accesses": 0,
+    "ohlcv_requests": 0,
+    "strategy_calculations": 0,
+    "strategy_returns_generated_or_read": false,
+    "controlled_or_protected_access": false,
+    "paper_broker_or_live_access": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "Cross-filter event-ID stability and CUSIP-filter provider behavior remain prospective because the CUSIP chain has never executed.",
+    "The final review used the committed first-party documentation evidence offline and did not re-fetch documentation or contact a provider.",
+    "Program 008 has no transport, credential path, one-use authority, active packet, private runtime root, or external authorization root.",
+    "The review artifact add commit, full repository gates, remote CI, merge, and post-merge synchronization remain delivery steps."
+  ],
+  "scope_limit": "Read-only offline review of repository code, public artifacts, and the retained private Program 007 response. No provider-data request, credential check or value access, response disclosure, OHLCV request, strategy calculation or return read, controlled or protected access, PAPER action, broker write, live action, or repository edit occurred in any reviewer.",
+  "required_next_action": "Merge this non-authorizing forensic closure through green CI. Any future Program 008 execution requires a separate exact one-use authority proposal, another finding-free review, and new explicit user authorization. Do not execute from this artifact.",
+  "review_fingerprint": "e987474a6af543a0e7097db67ee87475d0042b2ceae7b3c7e1b49d07e67b4064"
+}
