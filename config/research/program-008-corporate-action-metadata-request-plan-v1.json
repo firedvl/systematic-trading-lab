@@ -1,0 +1,193 @@
+{
+  "schema_version": "program-008-corporate-action-metadata-request-plan-v1",
+  "request_plan_id": "program-008-corporate-action-metadata-request-plan-2026-08-29-v1",
+  "program_id": "multi-hour-sector-etf-research-007",
+  "status": "FROZEN-CREDENTIAL-FREE-NOT-AUTHORIZED",
+  "source_role": "BOUNDED AS-OF CORROBORATION + DISCREPANCY DETECTION",
+  "request": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v1/corporate-actions",
+    "redirects": false,
+    "types": "OMITTED",
+    "pagination_token": "opaque page_token appended after fixed parameters"
+  },
+  "chain": {
+    "chain_id": "cusips",
+    "identity_parameter": "cusips",
+    "identities": [
+      "464287655",
+      "78462F103",
+      "78467Y107",
+      "81369Y100",
+      "81369Y209",
+      "81369Y308",
+      "81369Y407",
+      "81369Y506",
+      "81369Y605",
+      "81369Y704",
+      "81369Y803",
+      "81369Y860",
+      "81369Y886"
+    ],
+    "fixed_parameters": [
+      [
+        "cusips",
+        "464287655,78462F103,78467Y107,81369Y100,81369Y209,81369Y308,81369Y407,81369Y506,81369Y605,81369Y704,81369Y803,81369Y860,81369Y886"
+      ],
+      [
+        "region",
+        "us"
+      ],
+      [
+        "start",
+        "1990-01-01"
+      ],
+      [
+        "end",
+        "2026-08-29"
+      ],
+      [
+        "limit",
+        "1000"
+      ],
+      [
+        "data_quality",
+        "complete"
+      ],
+      [
+        "sort",
+        "asc"
+      ]
+    ],
+    "chain_fingerprint": "2214e9dd726b8ce69c056e548501a4d157bd474dbfc59a44cb47b32b93894329",
+    "maximum_pages": 4,
+    "symbol_parameter_allowed": false,
+    "secondary_identity_query_allowed": false
+  },
+  "transport_budget": {
+    "minimum_http_requests": 1,
+    "maximum_http_requests": 4,
+    "minimum_http_responses": 1,
+    "maximum_http_responses": 4,
+    "maximum_pages": 4,
+    "page_limit": 1000,
+    "maximum_response_bytes": 1048576,
+    "bounded_read_bytes": 1048577,
+    "maximum_total_bytes": 4194304,
+    "maximum_credential_loads": 1,
+    "automatic_retries": 0
+  },
+  "identity_semantics": {
+    "empty_cusip": "ALLOW ONLY WITH ONE UNAMBIGUOUS PUBLIC-LEDGER IDENTITY",
+    "matching_nonempty_cusip": "CORROBORATING",
+    "conflicting_nonempty_cusip": "HARD FAIL",
+    "empty_isin": "ALLOWED",
+    "isin_canonical": false,
+    "conflicting_nonempty_isin_for_same_event": "HARD FAIL"
+  },
+  "event_id_semantics": {
+    "format": "canonical UUID",
+    "identical_duplicate": "DEDUPLICATE AND COUNT",
+    "conflicting_duplicate": "HARD FAIL",
+    "canonical_core_consistent_across_pages": true,
+    "cross_filter_stability_claimed": false
+  },
+  "economic_date_semantics": {
+    "ex_date": [
+      "forward_split",
+      "reverse_split",
+      "cash_dividend",
+      "stock_dividend",
+      "spin_off",
+      "rights_distribution",
+      "capital_gains_distribution"
+    ],
+    "effective_date": [
+      "unit_split",
+      "cash_merger",
+      "stock_merger",
+      "stock_and_cash_merger",
+      "reorganization"
+    ],
+    "feature_relevant_event_without_usable_date": "FAIL CLOSED",
+    "inferred_transformation_date_allowed": false
+  },
+  "positive_controls": {
+    "symbols": [
+      "XLB",
+      "XLE",
+      "XLK",
+      "XLU",
+      "XLY"
+    ],
+    "event_type": "forward_split",
+    "economic_date": "2025-12-05",
+    "ratio": "2-for-1",
+    "required_count_per_symbol": 1
+  },
+  "discrepancy_policy": "FAIL-PENDING-PUBLIC-LEDGER-RECONCILIATION",
+  "process_date": {
+    "requested_interval_inclusive": true,
+    "returned_value_required_inside_interval": true,
+    "equals_economic_date": false,
+    "creation_lag": "UNBOUNDED-NO-PROVIDER-GUARANTEE"
+  },
+  "pagination": {
+    "exact_page_sequence": true,
+    "token_reuse_allowed": false,
+    "token_cycle_allowed": false,
+    "page_omission_allowed": false,
+    "terminal_token": null
+  },
+  "http_outcomes": {
+    "200": "VALIDATE RETAINED METADATA",
+    "401": "TERMINAL AUTHENTICATION FAIL; USE CONSUMED",
+    "403": "TERMINAL ENTITLEMENT FAIL; USE CONSUMED; NO PURCHASE",
+    "429": "TERMINAL FAIL; USE CONSUMED; NO RETRY",
+    "5xx": "TERMINAL FAIL; USE CONSUMED; NO RETRY",
+    "ambiguous_transport": "TERMINAL FAIL; USE CONSUMED; NO RETRY",
+    "oversized_or_malformed": "RETAIN BOUNDED BYTES THEN TERMINAL FAIL"
+  },
+  "exposed_program_007_response_firewall": {
+    "fresh_qualification_evidence": false,
+    "read_during_program_008_qualification": false,
+    "merged_into_program_008_receipts": false,
+    "symbol_query_replay_allowed": false
+  },
+  "raw_first_storage": {
+    "private_root": ".trading-lab/program-008-corporate-action-metadata-v1",
+    "order": [
+      "bounded response bytes",
+      "create-only persistence",
+      "fsync",
+      "SHA-256 receipt",
+      "parse and validate"
+    ]
+  },
+  "credential_names": [
+    "PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID",
+    "PROGRAM_007_CORPORATE_ACTIONS_API_SECRET_KEY"
+  ],
+  "authentication_header_names": [
+    "APCA-API-KEY-ID",
+    "APCA-API-SECRET-KEY"
+  ],
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "request_plan_fingerprint": "18ae8ef4152f827fe70261c76f20baf026b44e1a091ae98f1537dcacda818fe7"
+}

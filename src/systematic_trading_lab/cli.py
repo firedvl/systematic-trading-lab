@@ -270,6 +270,12 @@ def parser() -> argparse.ArgumentParser:
     )
     program_007_metadata.add_argument("action", choices=("credential-preflight", "activate", "run"))
     program_007_metadata.add_argument("--authorization-root")
+    program_008_metadata = acquire_program.add_parser(
+        "program-008-metadata",
+        help="control the one-use Program 008 corporate-action metadata qualification",
+    )
+    program_008_metadata.add_argument("action", choices=("credential-preflight", "activate", "run"))
+    program_008_metadata.add_argument("--authorization-root")
     for name in ("validate", "describe"):
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
@@ -1272,6 +1278,53 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         )
         return 0
     if arguments.data_command == "acquire":
+        if arguments.acquire_program == "program-008-metadata":
+            from .program_008_corporate_action_authority import (
+                activate_authority as activate_program_008_metadata_authority,
+            )
+            from .program_008_corporate_action_authority import (
+                credential_presence_preflight as program_008_metadata_credential_preflight,
+            )
+            from .program_008_corporate_action_authority import (
+                execute_qualification as execute_program_008_metadata,
+            )
+
+            repository = Path(__file__).resolve().parents[2]
+            if arguments.action == "credential-preflight":
+                if arguments.authorization_root is not None:
+                    raise ValueError(
+                        "Program 008 metadata credential preflight does not accept an "
+                        "authorization root"
+                    )
+                missing = program_008_metadata_credential_preflight()
+                print("PASS" if not missing else "\n".join(f"MISSING: {name}" for name in missing))
+                return 0 if not missing else 1
+            if settings.mode is not TradingMode.RESEARCH:
+                raise ValueError(
+                    "Program 008 metadata qualification requires TRADING_LAB_MODE=research"
+                )
+            if arguments.authorization_root is None:
+                raise ValueError(
+                    "Program 008 metadata activate and run require --authorization-root"
+                )
+            if arguments.action == "activate":
+                _print(
+                    activate_program_008_metadata_authority(
+                        repository, arguments.authorization_root
+                    )
+                )
+                return 0
+            program_008_metadata_result = execute_program_008_metadata(
+                repository, arguments.authorization_root
+            )
+            _print(
+                {
+                    "response_count": program_008_metadata_result.page_count,
+                    "response_bytes": program_008_metadata_result.response_bytes,
+                    "event_count": len(program_008_metadata_result.events),
+                }
+            )
+            return 0
         if arguments.acquire_program == "program-007-metadata":
             from .program_007_corporate_action_authority import (
                 activate_authority as activate_program_007_metadata_authority,
