@@ -1,8 +1,8 @@
 # Program 007 corporate-action metadata qualification
 
 Program 007, `multi-hour-sector-etf-research-006`, has an exact one-use corporate-action metadata
-qualification proposal. It is `BLOCKED-CREDENTIALS-NOT-VISIBLE-TO-RUNTIME` because the names-only
-preflight could not see either required credential:
+qualification proposal. The names-only preflight passed for both required credential names, and
+immutable proposal v2 has a finding-free review with status `READY FOR USER AUTHORIZATION`:
 
 - `PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID`
 - `PROGRAM_007_CORPORATE_ACTIONS_API_SECRET_KEY`
@@ -44,6 +44,8 @@ the private run lock, loads the credential pair once, and writes the irreversibl
 before the first provider transport invocation. A sent or ambiguous transport consumes the use and
 gets no retry. Raw bounded bytes and their SHA-256 receipt are stored and fsynced before parsing.
 
-This blocked proposal has no external authorization root and cannot activate. After both variables
-are visible, create and independently review a new immutable `READY FOR USER AUTHORIZATION`
-proposal. Do not reuse or rewrite this artifact.
+Blocked proposal v1 and its review remain immutable historical evidence and cannot activate. The
+v2 external authorization root is derived only from the exact proposal, review, implementation
+lineage, and final clean synchronized `main`; it is not stored in Git. Reporting that root does not
+activate authority or create a claim. Activation and qualification execution require a later exact
+user authorization.

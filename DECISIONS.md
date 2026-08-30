@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-29 - Advance Program 007 metadata authority to reviewed READY
+
+- Decision: preserve blocked proposal v1 and its review as immutable history, then create reviewed proposal v2 after the names-only credential preflight passes. Bind v2 to the unchanged request plan, ledger v3, source plan v3, source implementation v6 and review, and the exact authority lifecycle implementation commit. Derive the external authorization root only from final clean synchronized `main`; do not store it in Git or activate it in this phase.
+- Context: proposal v1 correctly recorded that the runtime could not see either required name. Both names are now present, but no value was exposed, loaded, hashed, logged, or stored. The scientific request, positive controls, discrepancy rules, budgets, raw-first order, and first-transport consumption boundary do not change.
+- Consequences: proposal v2 SHA-256/fingerprint is `9e6cbbc1b83803c2b482876495fc16a86cb18498fc02ad8a33752db11f065b28` / `b7b3a36a54b0e01e3e4944a51ee742101f11afe3bcacacea9c58a76ee399a546`; its finding-free review SHA-256/fingerprint is `2b2cb25cae892d7c6efa8e6b7ad4d916c69175becc8c29a95dbc4e12658590a5` / `f34f5a9e168f4c78c851990c045e03f5bde3cce74b41daa7c458e4ccdbdd23b1`. Every authority flag remains false. No claim, provider request, provider byte, metadata observation, OHLCV access, dataset, strategy result, protected action, PAPER action, broker write, or live action exists.
+- Revisit when: the final exact root is separately authorized and the one metadata qualification reaches a terminal PASS or consumed FAIL. Any changed implementation, proposal, review, or synchronized-main commit requires a different explicit user authorization.
+
 ## 2026-08-29 - Close Program 007 public action coverage with bounded best evidence
 
 - Decision: publish immutable ledger v3 with all thirteen identities complete for the frozen prior-20-session same-clock relative-volume feature. Classify the five documented 2025 splits as `CONFIRMED-ACTION` and the other eight symbols as `SUPPORTED-NO-KNOWN-ACTION`. Treat the latter as an as-of evidence result, not proof that no action can later be found.

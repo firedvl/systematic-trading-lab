@@ -81,8 +81,9 @@ uv run trading-lab data acquire program-007-metadata credential-preflight
 ```
 
 See [Program 007 corporate-action metadata qualification](docs/program-007-corporate-action-metadata-qualification.md).
-The current proposal is blocked because neither required variable is visible to the runtime. No
-authorization root or provider request exists.
+The names-only preflight passed and the immutable v2 proposal has a finding-free review. It is
+ready for a separate exact one-use authorization after its final clean-main root is reported. No
+authority is active and no provider request exists.
 
 ## Using historical data
 
