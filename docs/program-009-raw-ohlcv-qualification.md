@@ -1,0 +1,100 @@
+# Program 009 raw OHLCV structural qualification
+
+Program 009, `multi-hour-sector-etf-research-008`, has a finding-free reviewed proposal for one
+future fresh raw Alpaca SIP five-minute OHLCV structural qualification. This proposal does not
+activate authority, create a claim, contact Alpaca, admit a dataset, or run a strategy.
+
+## Credential preflight
+
+Program 009 retains the existing reviewed credential namespace:
+
+```text
+PROGRAM_006_ALPACA_API_KEY_ID
+PROGRAM_006_ALPACA_API_SECRET_KEY
+```
+
+Check presence without loading or printing values:
+
+```console
+uv run trading-lab data acquire program-009-ohlcv credential-preflight
+```
+
+The command prints only `PASS` or one `MISSING: <name>` line per absent name. It does not construct
+HTTP, activate authority, consume the one use, or write private state.
+
+## Frozen source contract
+
+- `GET https://data.alpaca.markets/v2/stocks/bars`
+- `feed=sip`, `timeframe=5Min`, `adjustment=raw`
+- `sort=asc`, `limit=10000`, `asof=2026-07-31`
+- inclusive request bounds, opaque token pagination, redirects disabled, zero retries
+- IWM, MDY, SPY, XLB, XLE, XLF, XLI, XLK, XLP, XLRE, XLU, XLV, and XLY
+
+The six immutable chains are:
+
+| Range ID | Inclusive UTC bounds | Sessions | Coordinates | Maximum pages |
+| --- | --- | ---: | ---: | ---: |
+| `normal-2021-07-08` | `2021-07-08T13:30:00Z` to `2021-07-08T19:55:00Z` | 1 | 1,014 | 1 |
+| `normal-2022-01-25` | `2022-01-25T14:30:00Z` to `2022-01-25T20:55:00Z` | 1 | 1,014 | 1 |
+| `normal-2022-11-15` | `2022-11-15T14:30:00Z` to `2022-11-15T20:55:00Z` | 1 | 1,014 | 1 |
+| `pagination-2023-05-16-to-2023-05-30` | `2023-05-16T13:30:00Z` to `2023-05-30T19:55:00Z` | 10 | 10,140 | 6 |
+| `split-pre-early-close-2025-11-28` | `2025-11-28T14:30:00Z` to `2025-11-28T17:55:00Z` | 1 | 546 | 1 |
+| `split-post-2025-12-15` | `2025-12-15T14:30:00Z` to `2025-12-15T20:55:00Z` | 1 | 1,014 | 1 |
+
+The ten pagination sessions are May 16-19, May 22-26, and May 30, 2023. The complete sample has 15
+sessions and 14,742 required canonical XNYS symbol/bar-open coordinates. The reviewed freshness audit
+binds zero overlap with Programs 002-008 OHLCV exposure; corporate-action metadata does not count as
+OHLCV exposure.
+
+The transport budget is seven to 11 requests and responses, 8,388,608 bytes per page, 16,777,216
+bytes total, 120 requests per minute, one credential load, and zero automatic retries. The pagination
+chain must produce at least two pages.
+
+## Structural boundary
+
+A bounded response is persisted create-only under
+`.trading-lab/program-009-raw-alpaca-sip-ohlcv-v1/`, fsynced, and SHA-256 receipted before parsing.
+Raw validation checks JSON shape, symbols, UTC five-minute timestamps, bounds, finite coherent OHLC,
+nonnegative volume and optional fields, duplicates, pagination, and transport budgets. Valid
+extended-hours rows stay in raw evidence and are excluded from the authoritative XNYS RTH projection.
+Only then must all 14,742 canonical coordinates be complete.
+
+The 2025-11-28 grid is calendar-derived and has 42 five-minute bar opens per symbol. Public ledger
+v3 binds 2-for-1 splits for XLB, XLE, XLK, XLU, and XLY effective 2025-12-05. Raw contemporaneous
+prices remain canonical. Exact rational normalization applies only to split-spanning prior-session
+same-clock share volume; no adjusted historical price surface is created.
+
+Any missing required RTH bar fails this qualification. Later dataset policy uses whole-session
+exclusion and the existing frozen loss and concentration gates. It does not interpolate, forward
+fill, substitute extended hours or another feed, drop a symbol, rerank, or reuse the Program 006
+quarantine as fresh evidence.
+
+## One-use lifecycle
+
+The lifecycle requires clean synchronized `main`, exact immutable bindings, a names-only credential
+preflight, finding-free review, and the exact caller-supplied external root. Activation creates the
+private root and active packet but not the claim. Execution repeats authority, Git, ledger, and
+credential checks under the lock, then loads credentials once and constructs the fixed client without
+HTTP. The irreversible claim is fsynced immediately before the first provider transport invocation.
+
+A sent or ambiguous transport consumes the use permanently. The claim defaults any run without a
+valid PASS receipt to `FAIL-CONSUMED-NO-RETRY`; a more detailed terminal failure record is best
+available evidence, not the replay barrier. HTTP 401, 403, 429, 5xx, redirect, oversize, malformed,
+pagination, structural, and persistence failures get no retry or provider fallback.
+
+Only `provider_contact`, `credential_access`, `source_requests`, and `source_qualification` may be
+true in the future active packet. `market_data_acquisition`, `real_dataset_admission`, every strategy,
+research, controlled/protected, PAPER, broker-write, live, subscription, and fallback capability
+stays false.
+
+## Immutable proposal evidence
+
+- Source commit/root: `842b9db6a973c074f57dc6f1746afc9e02b1c619` / `00839ab4108b336270809a1444bb0077e6045c8f5688c8354c0f5aec6246ab20`
+- Request-plan SHA-256/fingerprint: `b7ff3f3339f0a896e08e86ca381eba3ce3fd0db21fa94474d9c3842051ffca64` / `cc8152fdf2eb4cd78cf52c302509a622a5b71b9c9c72cfabe18d7cd5510a7783`
+- Authority-proposal SHA-256/fingerprint: `853cd2868704a047a62abcd543e628f5853e768c401aa1cad4a72194ee136d88` / `8594d1872a7c5d3a7db9c695483581251dfb11dea2840bf0ca2b6103aa61b429`
+- Review SHA-256/fingerprint: `348f14735a258f8db17bb9af20bf54f20798b1c150638fd67fb4abc7375ebfbd` / `355690a1ec9e9fe23fea32852019e4690a39677394e668bc7b2ab1b42d111773`
+
+The future authority ID is
+`program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-2026-08-30-v1`.
+The external authorization root is derived exactly once from final clean synchronized `main` and is
+not stored in Git. Do not run `activate` or `run` without the later exact user authorization.
