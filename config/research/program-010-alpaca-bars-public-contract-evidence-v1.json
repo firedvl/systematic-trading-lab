@@ -1,0 +1,90 @@
+{
+  "schema_version": "program-010-alpaca-bars-public-contract-evidence-v1",
+  "evidence_id": "program-010-alpaca-bars-public-contract-evidence-2026-08-30-v1",
+  "program_id": "multi-hour-sector-etf-research-009",
+  "status": "PUBLIC-DOCUMENTATION-EVIDENCE-NON-AUTHORIZING",
+  "provider": "Alpaca Market Data API",
+  "retrieved_at_utc": "2026-08-30T20:33:10Z",
+  "preservation": "The repository retains retrieval metadata, claim mappings, byte counts, SHA-256 values, ETags, and a short pagination excerpt. Third-party source bodies are not committed.",
+  "sources": [
+    {
+      "source_id": "alpaca-historical-multi-stock-bars",
+      "title": "Historical bars",
+      "url": "https://docs.alpaca.markets/us/reference/stockbars.md",
+      "canonical_url": "https://docs.alpaca.markets/us/reference/stockbars",
+      "representation": "official provider Markdown with embedded OpenAPI",
+      "http_status": 200,
+      "content_type": "text/markdown; charset=utf-8",
+      "byte_count": 17662,
+      "sha256": "c69f35cfc4d20fb0c79a6a80876a562e2260a062ce8e1dd901e09ca140bff233",
+      "etag": "W/\"3bde057a0939c5c2e03475306e65da2ea0dd9bde-c20e5a1228ba6ba70d022bb3343257ba1c2beda1-r1-o1787938686931:expanded|f6af7c30\"",
+      "operation_id": "StockBars",
+      "method": "GET",
+      "path": "/v2/stocks/bars",
+      "server": "https://data.alpaca.markets",
+      "mapped_claims": [
+        "limit is an integer from 1 through 10,000 and is a maximum total page size, not a promised page fill",
+        "a page may contain fewer points while more points remain in the requested interval",
+        "clients must inspect next_page_token and continue with page_token",
+        "multi-symbol results are ordered by symbol and then bar timestamp",
+        "following continuation tokens eventually advances to later symbols"
+      ]
+    },
+    {
+      "source_id": "alpaca-historical-single-stock-bars",
+      "title": "Historical bars (single symbol)",
+      "url": "https://docs.alpaca.markets/us/reference/stockbarsingle-1.md",
+      "canonical_url": "https://docs.alpaca.markets/us/reference/stockbarsingle-1",
+      "representation": "official provider Markdown with embedded OpenAPI",
+      "http_status": 200,
+      "content_type": "text/markdown; charset=utf-8",
+      "byte_count": 16817,
+      "sha256": "e66203e8b3a29f2b9e43d543e98742324967de29896ebec0ccca63da17787bff",
+      "etag": "W/\"89fba471d00ee7380316433059fdd735de12bb53-c20e5a1228ba6ba70d022bb3343257ba1c2beda1-r1-o1787938686862:expanded|f6af7c30\"",
+      "operation_id": "StockBarSingle",
+      "method": "GET",
+      "path": "/v2/stocks/{symbol}/bars",
+      "server": "https://data.alpaca.markets",
+      "mapped_claims": [
+        "limit is an integer from 1 through 10,000 and is a maximum page size",
+        "underfilled nonterminal pages are permitted",
+        "pagination uses page_token and next_page_token"
+      ]
+    }
+  ],
+  "minimal_exact_pagination_excerpt": "The API may return less, even if there are more available data points in the requested interval. Always check the `next_page_token` for more pages.",
+  "contract_conclusion": {
+    "limit_is_minimum_fill_guarantee": false,
+    "terminal_pagination_requires_null_next_page_token": true,
+    "program_009_six_page_limit_supported_as_expected_scientific_page_count": false,
+    "program_009_provider_incompatibility_proved": false
+  },
+  "retrieval_boundary": {
+    "public_documentation_only": true,
+    "authentication_used": false,
+    "data_endpoint_requests": 0,
+    "credential_presence_checks": 0,
+    "credential_value_loads": 0,
+    "metadata_observations": 0,
+    "ohlcv_requests": 0,
+    "strategy_calculations_or_returns": 0
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "evidence_fingerprint": "d645ff34c78de25b4a79a1f9317e99d9456c957f8d07adf78742ba22542d1319"
+}
