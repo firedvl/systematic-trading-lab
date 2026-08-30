@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-30 - Propose Program 010 with session-scoped token pagination
+
+- Decision: preserve Program 009 as `TERMINAL-FAIL-CONSUMED-NO-RETRY` and propose Program 010, `multi-hour-sector-etf-research-009`, without authority. Use one exact XNYS session per thirteen-symbol raw SIP chain, `limit=1000`, and null `next_page_token` as the only successful terminal condition. Treat 16 pages as a resource and abnormal-provider-behavior cap, never as an expected scientific page count.
+- Context: current Alpaca documentation permits underfilled nonterminal pages. All six retained Program 009 pagination pages made ordered progress, so the frozen six-page ceiling was unsupported. The retained ordered domain proves one MDY source gap and leaves 244 later XLY coordinates unobserved. The old zero-missing sample gate also duplicated the later whole-session dataset-admission policy.
+- Consequences: Program 010 records a terminal or passed-frontier absence as `SOURCE-MISSING` and a later incomplete-chain absence as `UNOBSERVED-BECAUSE-CHAIN-INCOMPLETE`. One isolated source gap does not alone fail source qualification; catastrophic symbol/session absence and structural, pagination, persistence, action, or resource defects do. The deterministic fresh sample contains five sessions and 4,602 coordinates. The implementation is synthetic-only and the proposal is `PROPOSED-NOT-AUTHORIZED`; independent review is pending. No external root, credentials, provider request, dataset, strategy result, or protected/execution action exists.
+- Revisit after a finding-free independent review and clean merge. The next phase, if separately requested, is a new reviewed exact one-use Program 010 authority proposal with fixed real transport and ignored persistent storage. Do not derive its root or execute it here.
+
 ## 2026-08-30 - Stop Program 009 at the pagination page ceiling
 
 - Decision: record Program 009 as `TERMINAL-FAIL-CONSUMED-NO-RETRY`. Preserve all nine private HTTP 200 pages and the private response manifest. Do not request the seventh pagination page, either remaining chain, a substitute page, another source, or a replacement Program 009 authority.
