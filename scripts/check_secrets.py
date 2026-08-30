@@ -113,6 +113,9 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-007-corporate-action-metadata-offline-forensic-analysis-v1.json",
         "config/research/program-008-corporate-action-metadata-qualification-proposal-v1.json",
         "config/research/program-008-corporate-action-metadata-forensic-independent-review-v1.json",
+        "config/research/program-008-corporate-action-metadata-request-plan-v1.json",
+        "config/research/program-008-corporate-action-metadata-qualification-authority-proposal-v1.json",
+        "config/research/program-008-corporate-action-metadata-qualification-authority-proposal-independent-review-v1.json",
     }
 )
 _PROVIDER_BAR_KEYS = frozenset({"t", "o", "h", "l", "c", "v"})

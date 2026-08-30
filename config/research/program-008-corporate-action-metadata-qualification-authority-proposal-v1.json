@@ -1,0 +1,325 @@
+{
+  "schema_version": "program-008-corporate-action-metadata-qualification-authority-proposal-v1",
+  "proposal_id": "program-008-corporate-action-metadata-qualification-authority-proposal-2026-08-29-v1",
+  "program_id": "multi-hour-sector-etf-research-007",
+  "created_at": "2026-08-30T06:43:00Z",
+  "status": "READY FOR USER AUTHORIZATION",
+  "purpose": "exact one-use Program 008 Alpaca corporate-action metadata qualification only",
+  "source_role": "BOUNDED AS-OF CORROBORATION + DISCREPANCY DETECTION",
+  "future_authority_id": "program-008-corporate-action-metadata-qualification-authority-2026-08-29-v1",
+  "active_authority": false,
+  "scientific_lineage": {
+    "starting_main": "f8332e6fcab2bbf97dc18dc465aa716d94526526",
+    "program_007_status": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "program_007_retry_allowed": false,
+    "program_007_symbol_query_replay_allowed": false,
+    "program_007_cusip_chain_executed": false,
+    "program_008_cusip_chain_executed": false,
+    "program_008_provider_requests": 0,
+    "program_008_provider_responses": 0,
+    "program_008_provider_bytes": 0,
+    "program_008_strategy_returns": 0
+  },
+  "bindings": {
+    "program_007_terminal_failure": {
+      "path": "config/research/program-007-corporate-action-metadata-qualification-terminal-failure-v1.json",
+      "sha256": "99bc4397909f364efac2f189351bff9ebaae9b886833fc7e0555b3fa5751119f",
+      "fingerprint": "991bd9892ee32f4badc08350160a03c3514e0ae1a33dfa623406b534c73bd352"
+    },
+    "offline_forensic_analysis": {
+      "path": "config/research/program-007-corporate-action-metadata-offline-forensic-analysis-v1.json",
+      "sha256": "1fdf65cf3d846dc67b3d29565f7e1283e95185fcc500f6a3b0d7670aa3b2ed8d",
+      "fingerprint": "531148e65d1b45c8985b8ffe29bf7d4c150dd69888432a8188080322fd455c80"
+    },
+    "program_008_qualification_proposal": {
+      "path": "config/research/program-008-corporate-action-metadata-qualification-proposal-v1.json",
+      "sha256": "19cc83e7531ac32c60ca2899cfb8a38e27cd21aed00b524b929fe068555fc7e5",
+      "fingerprint": "3d2192495cae2fe9c8db67873819df727a9bb13eb5b9a911d51e89a8e4aa884f"
+    },
+    "program_008_forensic_review": {
+      "path": "config/research/program-008-corporate-action-metadata-forensic-independent-review-v1.json",
+      "sha256": "0ff5fe1f2c3db02c468ce3f87b553acbdd94b290189eb9f03c843e071c18475d",
+      "fingerprint": "e987474a6af543a0e7097db67ee87475d0042b2ceae7b3c7e1b49d07e67b4064"
+    },
+    "public_identity_ledger": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+      "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+      "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
+    },
+    "request_plan": {
+      "path": "config/research/program-008-corporate-action-metadata-request-plan-v1.json",
+      "sha256": "882682b16bbf9f5fa81742a75577546f364d7c76bb04e6e15abf2d9a64043465",
+      "fingerprint": "18ae8ef4152f827fe70261c76f20baf026b44e1a091ae98f1537dcacda818fe7"
+    }
+  },
+  "authority_implementation_binding": {
+    "base_commit": "f8332e6fcab2bbf97dc18dc465aa716d94526526",
+    "source_commit": "f0ed2534e768d26cc5969d574d16f0ef951e28ac",
+    "source_tree": "5e551a8213326a3fa83d3401533b3de0b1c1bd68",
+    "source_files": [
+      {
+        "path": "config/research/program-008-corporate-action-metadata-request-plan-v1.json",
+        "sha256": "882682b16bbf9f5fa81742a75577546f364d7c76bb04e6e15abf2d9a64043465"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "990d9732769a829fc55932bcb2cbc0e1fcc54261870264396beb0da3c638265a"
+      },
+      {
+        "path": "src/systematic_trading_lab/cli.py",
+        "sha256": "490b7cb45dc05f2a944de0711298a9cfa307c426d87342d0d213cf4dc701d42f"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "eb4ab0d1f5e2f4b2ed42a212bd7997fa1c16c461dd9ce4f0ff40847d4e97d39c"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_005_alpaca.py",
+        "sha256": "1b5f53776d7dd0021d051b9c8ce7bab4722570823b9da1405f7d9ba8a1e20393"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_alpaca.py",
+        "sha256": "3e830b6c004a2d6528d53aa3dcdd3d3d5252fff703cd9e7b5674bf5261c4e05f"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_corporate_actions.py",
+        "sha256": "d7f20865d3b0cff8751b33fcc56d1e7304d04446c16e63998e1db79549e264d6"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_008_corporate_actions.py",
+        "sha256": "30261eeff1de06b18ca5f40c237b3e2666072fe346ae888ef81c021be08d1b59"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_008_corporate_action_authority.py",
+        "sha256": "bab30902e9ba87740965dc23049dbffdfaae7f25fa40df5490e73ec065f8d8d5"
+      },
+      {
+        "path": "tests/unit/test_intraday_source_provenance.py",
+        "sha256": "3c1549db03baba4e7303b0567eec1884681486d5a31092e7787812cefd35e792"
+      },
+      {
+        "path": "tests/unit/test_program_008_corporate_action_authority.py",
+        "sha256": "ab6c876f883aa698347242748a96cf34b27fa61981bab68d9a708ed4d0ab3652"
+      }
+    ],
+    "implementation_root": "186168ba7fd738e2fa54e9a785808df726a97928a32a9f3e6969f8ff77adc507"
+  },
+  "qualification": {
+    "request_plan_path": "config/research/program-008-corporate-action-metadata-request-plan-v1.json",
+    "endpoint_allowlist": [
+      "https://data.alpaca.markets/v1/corporate-actions"
+    ],
+    "only_identity_parameter": "cusips",
+    "exact_cusips": [
+      "464287655",
+      "78462F103",
+      "78467Y107",
+      "81369Y100",
+      "81369Y209",
+      "81369Y308",
+      "81369Y407",
+      "81369Y506",
+      "81369Y605",
+      "81369Y704",
+      "81369Y803",
+      "81369Y860",
+      "81369Y886"
+    ],
+    "symbol_filter_allowed": false,
+    "secondary_query_allowed": false,
+    "provider_role": "BOUNDED AS-OF CORROBORATION + DISCREPANCY DETECTION",
+    "negative_event_completeness_proved": false,
+    "positive_controls": [
+      "XLB",
+      "XLE",
+      "XLK",
+      "XLU",
+      "XLY"
+    ],
+    "positive_control_rule": "exactly one 2-for-1 forward_split on 2025-12-05 each",
+    "unexpected_relevant_action": "FAIL-PENDING-PUBLIC-LEDGER-RECONCILIATION",
+    "empty_cusip": "ALLOW ONLY WITH ONE UNAMBIGUOUS PUBLIC-LEDGER IDENTITY",
+    "matching_nonempty_cusip": "CORROBORATING",
+    "conflicting_nonempty_cusip": "HARD FAIL",
+    "empty_isin": "ALLOWED",
+    "isin_canonical": false,
+    "conflicting_nonempty_isin_for_same_event": "HARD FAIL",
+    "event_id_semantics": {
+      "format": "canonical UUID",
+      "identical_duplicate": "DEDUPLICATE AND COUNT",
+      "conflicting_duplicate": "HARD FAIL",
+      "canonical_core_consistent_across_pages": true,
+      "cross_filter_stability_claimed": false
+    },
+    "economic_date_semantics": {
+      "ex_date": [
+        "forward_split",
+        "reverse_split",
+        "cash_dividend",
+        "stock_dividend",
+        "spin_off",
+        "rights_distribution",
+        "capital_gains_distribution"
+      ],
+      "effective_date": [
+        "unit_split",
+        "cash_merger",
+        "stock_merger",
+        "stock_and_cash_merger",
+        "reorganization"
+      ],
+      "feature_relevant_event_without_usable_date": "FAIL CLOSED",
+      "inferred_transformation_date_allowed": false
+    },
+    "program_007_response_used_for_pass_fail": false,
+    "recognized_event_types": [
+      "forward_split",
+      "reverse_split",
+      "unit_split",
+      "cash_dividend",
+      "stock_dividend",
+      "spin_off",
+      "cash_merger",
+      "stock_merger",
+      "stock_and_cash_merger",
+      "redemption",
+      "name_change",
+      "worthless_removal",
+      "rights_distribution",
+      "partial_call",
+      "reorganization",
+      "capital_gains_distribution"
+    ],
+    "types_parameter": "OMITTED",
+    "process_date": "retrieval/provider provenance only; returned value inside interval",
+    "creation_lag": "UNBOUNDED-NO-PROVIDER-GUARANTEE",
+    "raw_first_private_root": ".trading-lab/program-008-corporate-action-metadata-v1",
+    "transport_budget": {
+      "minimum_http_requests": 1,
+      "maximum_http_requests": 4,
+      "minimum_http_responses": 1,
+      "maximum_http_responses": 4,
+      "maximum_pages": 4,
+      "page_limit": 1000,
+      "maximum_response_bytes": 1048576,
+      "bounded_read_bytes": 1048577,
+      "maximum_total_bytes": 4194304,
+      "maximum_credential_loads": 1,
+      "automatic_retries": 0
+    },
+    "strategy_calculations": 0,
+    "ohlcv_authority": false
+  },
+  "credential_lifecycle": {
+    "environment_variables": [
+      "PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID",
+      "PROGRAM_007_CORPORATE_ACTIONS_API_SECRET_KEY"
+    ],
+    "authentication_header_names": [
+      "APCA-API-KEY-ID",
+      "APCA-API-SECRET-KEY"
+    ],
+    "presence_preflight": "PASS",
+    "missing_at_proposal": [],
+    "values_exposed": false,
+    "values_stored_hashed_or_logged": false,
+    "presence_required_before_root": true,
+    "presence_rechecked_under_lock": true,
+    "maximum_successful_loads": 1,
+    "missing_before_transport_consumes_use": false
+  },
+  "activation_contract": {
+    "future_authority_id": "program-008-corporate-action-metadata-qualification-authority-2026-08-29-v1",
+    "external_authorization_root_required": true,
+    "external_authorization_root_generated": false,
+    "caller_supplied_root_required": true,
+    "recomputed_alternate_root_self_authorizes": false,
+    "under_lock_full_revalidation": true,
+    "consumption_boundary": "immediately before first provider transport invocation",
+    "sent_or_ambiguous_transport_consumes_use": true,
+    "automatic_retries": 0,
+    "second_execution_allowed": false
+  },
+  "raw_first_storage": {
+    "root": ".trading-lab/program-008-corporate-action-metadata-v1",
+    "separate_from_program_007": true,
+    "git_ignored": true,
+    "absent_until_activation": true,
+    "request_intent_before_transport": true,
+    "bounded_body_before_parse": true,
+    "sha256_receipt_before_parse": true,
+    "create_only": true,
+    "file_and_directory_fsync": true,
+    "credentials_stored": false
+  },
+  "terminal_failures": {
+    "http_401": "TERMINAL-AUTHENTICATION-FAIL-USE-CONSUMED-NO-RETRY",
+    "http_403": "TERMINAL-ENTITLEMENT-FAIL-USE-CONSUMED-NO-RETRY-NO-PURCHASE",
+    "http_429": "TERMINAL-FAIL-USE-CONSUMED-NO-RETRY",
+    "http_5xx": "TERMINAL-FAIL-USE-CONSUMED-NO-RETRY",
+    "ambiguous_transport": "TERMINAL-FAIL-USE-CONSUMED-NO-RETRY",
+    "oversized_page": "TERMINAL-FAIL-USE-CONSUMED-NO-RETRY",
+    "malformed_body": "RETAIN-BYTES-THEN-TERMINAL-FAIL-USE-CONSUMED-NO-RETRY",
+    "pagination_violation": "TERMINAL-FAIL-USE-CONSUMED-NO-RETRY",
+    "paid_upgrade": "PROHIBITED",
+    "fallback": "PROHIBITED"
+  },
+  "state_at_proposal": {
+    "credential_value_loads": 0,
+    "external_authorization_root_generated": false,
+    "authority_activated": false,
+    "claim_created": false,
+    "provider_requests": 0,
+    "provider_responses": 0,
+    "provider_bytes": 0,
+    "metadata_observations": 0,
+    "ohlcv_requests": 0,
+    "strategy_calculations": 0,
+    "strategy_returns": 0,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "future_active_authority": {
+    "provider_contact": true,
+    "subscription_purchase": false,
+    "credential_access": true,
+    "source_requests": true,
+    "source_qualification": true,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Obtain a fresh finding-free independent review, merge through green CI, and generate exactly one external authorization root from clean synchronized main. Do not activate or execute Program 008 in this task.",
+  "proposal_fingerprint": "6173cb00ab3119ad17846c0251d253c4448e017e344b882b104ef966c7bc3f78"
+}
