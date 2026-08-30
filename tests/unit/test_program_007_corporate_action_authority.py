@@ -304,6 +304,8 @@ def test_terminal_failure_revokes_before_credentials_or_private_state(
 
     with pytest.raises(authority.Program007AuthorityError, match="terminally revoked"):
         authority.activate_authority(_REPOSITORY, "a" * 64, environ={})
+    with pytest.raises(authority.Program007AuthorityError, match="terminally revoked"):
+        authority.execute_qualification(_REPOSITORY, "a" * 64, environ={})
 
     assert credential_reads == []
     assert private_root_opens == []

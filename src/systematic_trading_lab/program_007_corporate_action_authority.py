@@ -326,6 +326,7 @@ def execute_qualification(
 ) -> metadata.MetadataQualificationResult:
     """Run one reviewed qualification after separate exact-root authorization."""
     repository = repository.resolve()
+    _reject_terminal_failure(repository)
     root_descriptor = metadata._open_private_root(repository)
     claim_written = False
     budget = metadata._Budget()
