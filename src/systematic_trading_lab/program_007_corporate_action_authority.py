@@ -36,6 +36,14 @@ REVIEW_PATH = Path(
     "config/research/program-007-corporate-action-metadata-qualification-authority-"
     "proposal-independent-review-v2.json"
 )
+_TERMINAL_FAILURE = {
+    "path": (
+        "config/research/program-007-corporate-action-metadata-qualification-"
+        "terminal-failure-v1.json"
+    ),
+    "sha256": "99bc4397909f364efac2f189351bff9ebaae9b886833fc7e0555b3fa5751119f",
+    "fingerprint": "991bd9892ee32f4badc08350160a03c3514e0ae1a33dfa623406b534c73bd352",
+}
 
 _BLOCKED_PROPOSAL = {
     "path": (
@@ -222,6 +230,8 @@ def derive_authorization_root(
     *,
     environ: Mapping[str, str] | None = None,
 ) -> Mapping[str, Any]:
+    repository = repository.resolve()
+    _reject_terminal_failure(repository)
     controls = validate_proposal_chain(repository)
     proposal = _mapping(controls["proposal"], "authority proposal")
     if proposal.get("status") != READY_STATUS:
@@ -510,6 +520,26 @@ def _load_static_artifact(
     ):
         raise Program007AuthorityError(f"Program 007 binding differs: {path.name}")
     return payload
+
+
+def _reject_terminal_failure(repository: Path) -> None:
+    path = repository / _TERMINAL_FAILURE["path"]
+    if not path.exists():
+        return
+    failure = _load_static_artifact(repository, _TERMINAL_FAILURE, "failure_fingerprint")
+    authorization = _mapping(failure.get("authorization"), "terminal authorization")
+    structural = _mapping(failure.get("structural_results"), "terminal results")
+    disposition = _mapping(failure.get("disposition"), "terminal disposition")
+    if (
+        failure.get("program_id") != PROGRAM_ID
+        or failure.get("status") != "TERMINAL-FAIL-CONSUMED-NO-RETRY"
+        or authorization.get("one_use_consumed") is not True
+        or structural.get("metadata_qualification") != "FAIL"
+        or disposition.get("retry_allowed") is not False
+        or disposition.get("replacement_authority_allowed") is not False
+    ):
+        raise Program007AuthorityError("Program 007 terminal failure semantics differ")
+    raise Program007AuthorityError("Program 007 metadata authority is terminally revoked")
 
 
 def _load_control_artifact(

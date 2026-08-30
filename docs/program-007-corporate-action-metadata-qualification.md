@@ -18,6 +18,8 @@ upgrade, use a fallback, start Program 007 OHLCV qualification, admit a dataset,
 strategy. Public terminal artifact SHA-256/fingerprint is
 `99bc4397909f364efac2f189351bff9ebaae9b886833fc7e0555b3fa5751119f` /
 `991bd9892ee32f4badc08350160a03c3514e0ae1a33dfa623406b534c73bd352`.
+Current code verifies that exact artifact and rejects authority derivation before credential access
+or private-state creation.
 
 The historical names-only preflight checks these required names:
 
