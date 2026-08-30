@@ -104,6 +104,7 @@ def test_complete_normal_session_naturally_paginates() -> None:
     assert len(result.rows) == 1_014
     assert result.missingness == program_010.Missingness((), ())
     assert parse_qs(urlparse(source.intents[1].url).query)["page_token"] == ["page-2"]
+    assert source.closed is True
 
 
 def test_underfilled_first_page_and_three_page_completion_are_valid() -> None:
@@ -149,6 +150,7 @@ def test_nonterminal_zero_progress_page_fails_after_raw_retention() -> None:
         program_010.execute_synthetic_session(request, source)
 
     assert source.retained_pages[0].sha256 == hashlib.sha256(body).hexdigest()
+    assert source.closed is True
 
 
 def test_duplicate_coordinate_across_pages_fails() -> None:
@@ -185,7 +187,23 @@ def test_entire_symbol_absence_is_catastrophic() -> None:
     with pytest.raises(program_010.CatastrophicCoverageError) as failure:
         program_010.execute_synthetic_session(request, source)
 
-    assert failure.value.missing_symbols == ("MDY",)
+    assert failure.value.insufficient_symbols == ("MDY",)
+
+
+@pytest.mark.parametrize(
+    ("session", "minimum_coordinates"),
+    [("2024-01-11", 40), ("2025-11-28", 22)],
+)
+def test_one_bar_per_symbol_is_catastrophic(session: str, minimum_coordinates: int) -> None:
+    request = _request(session)
+    rows = [(symbol, _bar(request.grid[0])) for symbol in program_010.SYMBOLS]
+    source = program_010.SyntheticSessionSource(_responses([(rows, None)]))
+
+    with pytest.raises(program_010.CatastrophicCoverageError) as failure:
+        program_010.execute_synthetic_session(request, source)
+
+    assert failure.value.insufficient_symbols == program_010.SYMBOLS
+    assert failure.value.minimum_coordinates_per_symbol == minimum_coordinates
 
 
 def test_early_close_is_one_546_coordinate_page() -> None:
@@ -282,6 +300,18 @@ def test_full_synthetic_qualification_has_five_sessions_and_no_public_ohlcv() ->
     assert len(source.intents) == 9
     assert summary["expected_canonical_coordinate_count"] == 4_602
     assert not {"bars", "open", "high", "low", "close", "volume"} & _recursive_keys(summary)
+    assert source.closed is True
+
+
+def test_failed_synthetic_qualification_closes_source() -> None:
+    source = program_010.SyntheticSessionSource(
+        (raw_contract.RawResponse(200, _body([], "still-more")),)
+    )
+
+    with pytest.raises(program_010.Program010Error, match="zero progress"):
+        program_010.execute_synthetic_qualification(source)
+
+    assert source.closed is True
 
 
 @pytest.mark.skipif(not _PRIVATE_009.exists(), reason="private Program 009 evidence unavailable")

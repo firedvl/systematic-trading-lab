@@ -66,12 +66,17 @@ class ChainIncompleteError(Program010Error):
 
 
 class CatastrophicCoverageError(Program010Error):
-    """A terminal session lacks an entire required symbol or all observations."""
+    """A terminal session lacks meaningful per-symbol canonical coverage."""
 
-    def __init__(self, missing_symbols: tuple[str, ...]) -> None:
-        label = ",".join(missing_symbols) if missing_symbols else "entire session"
-        super().__init__(f"Program 010 catastrophic canonical coverage failure: {label}")
-        self.missing_symbols = missing_symbols
+    def __init__(
+        self, insufficient_symbols: tuple[str, ...], minimum_coordinates_per_symbol: int
+    ) -> None:
+        super().__init__(
+            "Program 010 catastrophic canonical coverage failure: "
+            f"{','.join(insufficient_symbols)} below {minimum_coordinates_per_symbol} coordinates"
+        )
+        self.insufficient_symbols = insufficient_symbols
+        self.minimum_coordinates_per_symbol = minimum_coordinates_per_symbol
 
 
 @dataclass(frozen=True)
@@ -253,6 +258,10 @@ class SyntheticSessionSource:
     def retained_pages(self) -> tuple[RetainedPage, ...]:
         return tuple(self._retained)
 
+    @property
+    def closed(self) -> bool:
+        return self._closed
+
     def response(self, intent: PageIntent) -> raw_contract.RawResponse:
         if self._closed:
             raise Program010Error("Program 010 synthetic source is closed")
@@ -314,7 +323,15 @@ def execute_synthetic_session(
 ) -> SessionResult:
     if type(request) is not SessionRequest or type(source) is not SyntheticSessionSource:
         raise Program010Error("Program 010 accepts exact synthetic session inputs only")
+    try:
+        return _execute_synthetic_session(request, source)
+    finally:
+        source.close()
 
+
+def _execute_synthetic_session(
+    request: SessionRequest, source: SyntheticSessionSource
+) -> SessionResult:
     rows: list[raw_contract.RawBar] = []
     pages: list[PageEvidence] = []
     seen_coordinates: set[Coordinate] = set()
@@ -383,9 +400,12 @@ def execute_synthetic_session(
                 request.expected_coordinates, seen_coordinates, terminal=True
             )
             counts = Counter(symbol for symbol, _ in seen_coordinates)
-            missing_symbols = tuple(symbol for symbol in SYMBOLS if counts[symbol] == 0)
-            if not seen_coordinates or missing_symbols:
-                raise CatastrophicCoverageError(missing_symbols)
+            minimum_coordinates = len(request.grid) // 2 + 1
+            insufficient_symbols = tuple(
+                symbol for symbol in SYMBOLS if counts[symbol] < minimum_coordinates
+            )
+            if insufficient_symbols:
+                raise CatastrophicCoverageError(insufficient_symbols, minimum_coordinates)
             return SessionResult(request, tuple(rows), tuple(pages), missingness)
 
         seen_tokens.add(outgoing_token)
@@ -405,16 +425,19 @@ def execute_synthetic_session(
 def execute_synthetic_qualification(source: SyntheticSessionSource) -> QualificationResult:
     if type(source) is not SyntheticSessionSource:
         raise Program010Error("Program 010 accepts an exact synthetic source only")
-    results: list[SessionResult] = []
-    for request in qualification_requests():
-        results.append(execute_synthetic_session(request, source))
-        if len(source.intents) > MAXIMUM_QUALIFICATION_REQUESTS:
-            raise Program010Error("Program 010 qualification request ceiling exceeded")
-        if sum(page.byte_count for page in source.retained_pages) > (
-            MAXIMUM_QUALIFICATION_RESPONSE_BYTES
-        ):
-            raise Program010Error("Program 010 qualification byte ceiling exceeded")
-    return QualificationResult(tuple(results))
+    try:
+        results: list[SessionResult] = []
+        for request in qualification_requests():
+            results.append(_execute_synthetic_session(request, source))
+            if len(source.intents) > MAXIMUM_QUALIFICATION_REQUESTS:
+                raise Program010Error("Program 010 qualification request ceiling exceeded")
+            if sum(page.byte_count for page in source.retained_pages) > (
+                MAXIMUM_QUALIFICATION_RESPONSE_BYTES
+            ):
+                raise Program010Error("Program 010 qualification byte ceiling exceeded")
+        return QualificationResult(tuple(results))
+    finally:
+        source.close()
 
 
 def _iso_utc(value: datetime) -> str:
