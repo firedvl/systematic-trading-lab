@@ -321,9 +321,11 @@ def classify_missingness(
 def execute_synthetic_session(
     request: SessionRequest, source: SyntheticSessionSource
 ) -> SessionResult:
-    if type(request) is not SessionRequest or type(source) is not SyntheticSessionSource:
+    if type(source) is not SyntheticSessionSource:
         raise Program010Error("Program 010 accepts exact synthetic session inputs only")
     try:
+        if type(request) is not SessionRequest:
+            raise Program010Error("Program 010 accepts exact synthetic session inputs only")
         return _execute_synthetic_session(request, source)
     finally:
         source.close()

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
@@ -104,6 +105,15 @@ def test_complete_normal_session_naturally_paginates() -> None:
     assert len(result.rows) == 1_014
     assert result.missingness == program_010.Missingness((), ())
     assert parse_qs(urlparse(source.intents[1].url).query)["page_token"] == ["page-2"]
+    assert source.closed is True
+
+
+def test_invalid_request_closes_source() -> None:
+    source = program_010.SyntheticSessionSource(())
+
+    with pytest.raises(program_010.Program010Error, match="exact synthetic session inputs"):
+        program_010.execute_synthetic_session(object(), source)  # type: ignore[arg-type]
+
     assert source.closed is True
 
 
@@ -312,6 +322,21 @@ def test_failed_synthetic_qualification_closes_source() -> None:
         program_010.execute_synthetic_qualification(source)
 
     assert source.closed is True
+
+
+def test_secret_guard_allows_every_public_program_010_json_artifact() -> None:
+    spec = importlib.util.spec_from_file_location(
+        "program_010_check_secrets", _REPOSITORY / "scripts/check_secrets.py"
+    )
+    assert spec is not None and spec.loader is not None
+    guard = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(guard)
+    public_program_artifacts = {
+        path.relative_to(_REPOSITORY).as_posix()
+        for path in (_REPOSITORY / "config/research").glob("program-010*.json")
+    }
+
+    assert public_program_artifacts <= guard.PUBLIC_PROGRAM_JSON
 
 
 @pytest.mark.skipif(not _PRIVATE_009.exists(), reason="private Program 009 evidence unavailable")
