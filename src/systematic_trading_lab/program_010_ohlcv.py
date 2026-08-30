@@ -359,12 +359,14 @@ def _execute_synthetic_session(
 
         try:
             page_rows, outgoing_token = raw_contract.parse_raw_page(
-                response.body, request.parser_chain
+                response.body, request.parser_chain, preserve_received_order=True
             )
         except raw_contract.Program007Error as error:
             raise Program010Error(str(error).replace("Program 007", "Program 010")) from None
         if len(page_rows) > PAGE_ROW_LIMIT:
             raise Program010Error("Program 010 response exceeds the 1,000-row page limit")
+        if tuple(page_rows) != tuple(sorted(page_rows)):
+            raise Program010Error("Program 010 response rows are not in ascending received order")
         if retained.sha256 in seen_hashes:
             raise Program010Error("Program 010 response page is repeated")
 

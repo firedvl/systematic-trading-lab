@@ -172,6 +172,18 @@ def test_duplicate_coordinate_across_pages_fails() -> None:
         program_010.execute_synthetic_session(request, source)
 
 
+def test_reversed_rows_fail_received_order_contract() -> None:
+    request = _request("2024-01-11")
+    body = _body(list(reversed(_complete_rows(request)[:1000])))
+    source = program_010.SyntheticSessionSource((raw_contract.RawResponse(200, body),))
+
+    with pytest.raises(program_010.Program010Error, match="ascending received order"):
+        program_010.execute_synthetic_session(request, source)
+
+    assert source.retained_pages[0].sha256 == hashlib.sha256(body).hexdigest()
+    assert source.closed is True
+
+
 def test_missing_one_mdy_coordinate_is_source_quality_not_transport_failure() -> None:
     request = _request("2024-01-11")
     missing = ("MDY", request.grid[32])

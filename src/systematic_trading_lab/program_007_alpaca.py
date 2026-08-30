@@ -519,7 +519,9 @@ def _frozen_request_chains() -> tuple[RequestChain, ...]:
     )
 
 
-def parse_raw_page(body: bytes, chain: RequestChain) -> tuple[tuple[RawBar, ...], str | None]:
+def parse_raw_page(
+    body: bytes, chain: RequestChain, *, preserve_received_order: bool = False
+) -> tuple[tuple[RawBar, ...], str | None]:
     payload = _load_json_object(body, "Program 007 response")
     if set(payload) != {"bars", "next_page_token"}:
         raise Program007Error("Program 007 response schema differs")
@@ -578,7 +580,7 @@ def parse_raw_page(body: bytes, chain: RequestChain) -> tuple[tuple[RawBar, ...]
             bars.append(bar)
             if len(bars) > 10_000:
                 raise Program007Error("Program 007 response exceeds the 10,000-row page limit")
-    return tuple(sorted(bars)), next_token
+    return tuple(bars if preserve_received_order else sorted(bars)), next_token
 
 
 def project_rth(rows: Sequence[RawBar], chain: RequestChain) -> tuple[RawBar, ...]:

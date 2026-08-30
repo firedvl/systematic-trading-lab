@@ -134,9 +134,11 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-010-raw-source-implementation-v1.json",
         "config/research/program-010-raw-source-implementation-v2.json",
         "config/research/program-010-raw-source-implementation-v3.json",
+        "config/research/program-010-raw-source-implementation-v4.json",
         "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v1.json",
         "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v2.json",
         "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v3.json",
+        "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v4.json",
         "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-independent-review-v1.json",
     }
 )
