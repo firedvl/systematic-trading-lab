@@ -1,0 +1,182 @@
+{
+  "authentication_header_names": [
+    "APCA-API-KEY-ID",
+    "APCA-API-SECRET-KEY"
+  ],
+  "authority": {
+    "broker_writes": false,
+    "controlled_evaluation": false,
+    "credential_access": false,
+    "live_execution": false,
+    "market_data_acquisition": false,
+    "paper_execution": false,
+    "protected_holdout": false,
+    "provider_contact": false,
+    "real_dataset_admission": false,
+    "research_qualification": false,
+    "source_qualification": false,
+    "source_requests": false,
+    "strategy_execution": false,
+    "strategy_implementation": false,
+    "subscription_purchase": false
+  },
+  "chains": [
+    {
+      "chain_fingerprint": "1567efa79819fc999bce18713549fcaf9aa35dba79523b221ec37725c8744e15",
+      "chain_id": "symbols",
+      "fixed_parameters": [
+        [
+          "symbols",
+          "IWM,MDY,SPY,XLB,XLE,XLF,XLI,XLK,XLP,XLRE,XLU,XLV,XLY"
+        ],
+        [
+          "region",
+          "us"
+        ],
+        [
+          "start",
+          "1990-01-01"
+        ],
+        [
+          "end",
+          "2026-08-29"
+        ],
+        [
+          "limit",
+          "1000"
+        ],
+        [
+          "data_quality",
+          "complete"
+        ],
+        [
+          "sort",
+          "asc"
+        ]
+      ],
+      "identities": [
+        "IWM",
+        "MDY",
+        "SPY",
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "identity_parameter": "symbols",
+      "maximum_pages": 4
+    },
+    {
+      "chain_fingerprint": "2214e9dd726b8ce69c056e548501a4d157bd474dbfc59a44cb47b32b93894329",
+      "chain_id": "cusips",
+      "fixed_parameters": [
+        [
+          "cusips",
+          "464287655,78462F103,78467Y107,81369Y100,81369Y209,81369Y308,81369Y407,81369Y506,81369Y605,81369Y704,81369Y803,81369Y860,81369Y886"
+        ],
+        [
+          "region",
+          "us"
+        ],
+        [
+          "start",
+          "1990-01-01"
+        ],
+        [
+          "end",
+          "2026-08-29"
+        ],
+        [
+          "limit",
+          "1000"
+        ],
+        [
+          "data_quality",
+          "complete"
+        ],
+        [
+          "sort",
+          "asc"
+        ]
+      ],
+      "identities": [
+        "464287655",
+        "78462F103",
+        "78467Y107",
+        "81369Y100",
+        "81369Y209",
+        "81369Y308",
+        "81369Y407",
+        "81369Y506",
+        "81369Y605",
+        "81369Y704",
+        "81369Y803",
+        "81369Y860",
+        "81369Y886"
+      ],
+      "identity_parameter": "cusips",
+      "maximum_pages": 4
+    }
+  ],
+  "credential_names": [
+    "PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID",
+    "PROGRAM_007_CORPORATE_ACTIONS_API_SECRET_KEY"
+  ],
+  "process_date_semantics": {
+    "creation_lag": "UNBOUNDED-NO-PROVIDER-GUARANTEE",
+    "process_date_is_economic_date": false,
+    "requested_interval_inclusive": true,
+    "returned_process_date_required_inside_interval": true,
+    "start_end_literal_process_date_filter_claimed": false
+  },
+  "program_id": "multi-hour-sector-etf-research-006",
+  "recognized_event_types": [
+    "forward_split",
+    "reverse_split",
+    "unit_split",
+    "cash_dividend",
+    "stock_dividend",
+    "spin_off",
+    "cash_merger",
+    "stock_merger",
+    "stock_and_cash_merger",
+    "redemption",
+    "name_change",
+    "worthless_removal",
+    "rights_distribution",
+    "partial_call",
+    "reorganization",
+    "capital_gains_distribution"
+  ],
+  "request": {
+    "endpoint": "https://data.alpaca.markets/v1/corporate-actions",
+    "method": "GET",
+    "pagination_token": "opaque page_token appended after fixed parameters",
+    "redirects": false,
+    "types": "OMITTED"
+  },
+  "request_plan_fingerprint": "f145a69e399af73b52a760b6457234f337fbdacf0330a61eef58856b9ab25f14",
+  "request_plan_id": "program-007-corporate-action-metadata-request-plan-2026-08-29-v1",
+  "role": "CORROBORATION + DISCREPANCY DETECTION",
+  "schema_version": "program-007-corporate-action-metadata-request-plan-v1",
+  "status": "FROZEN-CREDENTIAL-FREE-NOT-AUTHORIZED",
+  "transport_budget": {
+    "automatic_retries": 0,
+    "bounded_read_bytes": 1048577,
+    "maximum_credential_loads": 1,
+    "maximum_http_requests": 8,
+    "maximum_http_responses": 8,
+    "maximum_pages_per_chain": 4,
+    "maximum_response_bytes": 1048576,
+    "maximum_total_bytes": 8388608,
+    "minimum_http_requests": 2,
+    "minimum_http_responses": 2,
+    "page_limit": 1000
+  }
+}
