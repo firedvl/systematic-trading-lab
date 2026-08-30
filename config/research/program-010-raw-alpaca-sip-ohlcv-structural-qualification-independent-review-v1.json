@@ -1,0 +1,232 @@
+{
+  "schema_version": "program-010-raw-alpaca-sip-ohlcv-structural-qualification-independent-review-v1",
+  "review_id": "program-010-raw-alpaca-sip-ohlcv-structural-qualification-independent-review-2026-08-30-v1",
+  "program_id": "multi-hour-sector-etf-research-009",
+  "reviewed_at": "2026-08-30T21:52:54Z",
+  "status": "PASS-FINDING-FREE-OFFLINE-FORENSIC-DESIGN-AND-PROPOSAL-REVIEW",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_source": {
+    "base_commit": "af238e1d8cb7ba44fcef3bbc36f5d641990be601",
+    "source_commit": "17c017921818e55b7a7656e512334c25d5b31dbb",
+    "source_tree": "d18294246e373f04e0e6e0f93989a59e07ac30e7",
+    "diff_sha256": "8170dd6ee63ba80ed3811e8878e541fe090a9ee93685d15dbfee82ac3b83d2bc",
+    "change_commits": [
+      "a32f14c3aea7eb2448b47073934ae003413d222d",
+      "761863314e2991586ad78b5e33618f463f0f5e32",
+      "974e223f0b07e5662adc2342fd5c0ed4289b1b46",
+      "cf22872921691b48a3f2cceebc766c385e286a30",
+      "b97d726b082ac5057871b1d4da926e49fbac8ffe",
+      "bb1f4a83d4ba74f63ac3db42a0a638f4372be50b",
+      "313615f5b2786965f7db1854a4f72b95758969a9",
+      "29234ab0669eca5329b0084480993d05e0aa8a0b",
+      "c461600b19e986470e0bbc3f4b70749df42518c0",
+      "7830eb036e73cea2e9d5914420841b37e85b5b7b",
+      "17c017921818e55b7a7656e512334c25d5b31dbb"
+    ]
+  },
+  "reviewed_artifacts": {
+    "program_009_offline_forensics": {
+      "path": "config/research/program-009-raw-sip-ohlcv-offline-forensic-analysis-v1.json",
+      "sha256": "cc77d9a9f767d66262547704892f98584dad38a5771324025f1828b9048bed17",
+      "fingerprint": "27803619aa67637c9e6d4fe656976f4269de23c7d2312765bbabec9640ceaba8"
+    },
+    "alpaca_public_contract": {
+      "path": "config/research/program-010-alpaca-bars-public-contract-evidence-v1.json",
+      "sha256": "ad925b6aaf12ab654090cb7acad0bf7418fdb2a5d2b8f50225488515f9e56e69",
+      "fingerprint": "d645ff34c78de25b4a79a1f9317e99d9456c957f8d07adf78742ba22542d1319"
+    },
+    "program_010_implementation": {
+      "path": "config/research/program-010-raw-source-implementation-v5.json",
+      "sha256": "f8e77aac3cb34630ca80bd58cce6b617892505f50221b537533f38a47b296f3c",
+      "fingerprint": "7acb8478be94212c760e257d0d3fbc42d4232db90d5f1175d52da03e3a45b6e5"
+    },
+    "program_010_proposal": {
+      "path": "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v5.json",
+      "sha256": "449327a5843902f4a93603ff0f3fd7f01665baf33561ba3d019fde4612acc1f5",
+      "fingerprint": "fe24131e1dcd504615a314221d3aec664a0f2c3810127ba69fbceb50f81727a7"
+    }
+  },
+  "review_axes": {
+    "standards": {
+      "reviewer": "fresh independent read-only standards reviewer",
+      "verdict": "PASS",
+      "findings": []
+    },
+    "specification": {
+      "reviewer": "fresh independent read-only specification reviewer",
+      "verdict": "PASS",
+      "findings": []
+    }
+  },
+  "review_history": {
+    "remediated_findings": [
+      "top-level synthetic evidence sources were not closed on every success and failure path",
+      "one coordinate per symbol could pass the catastrophic coverage gate",
+      "versioned public Program 010 artifacts were absent from the private-data guard inventory",
+      "invalid request validation occurred before the source closure guard",
+      "received rows were sorted before Program 010 could enforce provider order",
+      "the private Program 009 regression sorted retained rows before proving the MDY/XLY frontier"
+    ],
+    "final_remediation_commit": "7830eb036e73cea2e9d5914420841b37e85b5b7b",
+    "immutable_prior_versions": [
+      "v1",
+      "v2",
+      "v3",
+      "v4"
+    ]
+  },
+  "forensic_verdicts": {
+    "program_009_status": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "six_page_ceiling": "QUALIFICATION-SPECIFICATION-DEFECT",
+    "mdy_2023_05_19_17_10_utc": "CONFIRMED-SOURCE-MISSING",
+    "xly_tail": "NOT-OBSERVED-DUE-TO-PAGINATION-STOP",
+    "pagination_range_confirmed_source_missing": 1,
+    "pagination_range_unobserved": 244,
+    "whole_program_unobserved_or_not_requested": 1804,
+    "retained_pages_strictly_ordered": true,
+    "private_prices_or_volumes_published": false
+  },
+  "challenge_results": [
+    {
+      "number": 1,
+      "challenge": "Is Program 009 still immutable terminal FAIL?",
+      "answer": "YES; TERMINAL-FAIL-CONSUMED-NO-RETRY with no replay or replacement Program 009 authority",
+      "verdict": "PASS"
+    },
+    {
+      "number": 2,
+      "challenge": "Does Alpaca documentation objectively invalidate the assumption that limit=10000 implies near-10000-row pages?",
+      "answer": "YES; the archived first-party contract calls limit a maximum, permits underfilled nonterminal pages, and requires next_page_token inspection",
+      "verdict": "PASS"
+    },
+    {
+      "number": 3,
+      "challenge": "Was the six-page ceiling actually unsupported?",
+      "answer": "YES; it was not derived from a documented minimum page fill and all six retained pages made forward progress",
+      "verdict": "PASS"
+    },
+    {
+      "number": 4,
+      "challenge": "Are truncated XLY coordinates distinguished from true missingness?",
+      "answer": "YES; 244 coordinates after the final received frontier are NOT-OBSERVED-DUE-TO-PAGINATION-STOP",
+      "verdict": "PASS"
+    },
+    {
+      "number": 5,
+      "challenge": "Is the MDY missing coordinate classification supported?",
+      "answer": "YES; strict retained order completes MDY and advances through later symbols while only MDY@2023-05-19T17:10:00Z is absent",
+      "verdict": "PASS"
+    },
+    {
+      "number": 6,
+      "challenge": "Are source qualification and dataset admission separated for a scientific reason rather than to make Alpaca pass?",
+      "answer": "YES; structural source determinism and completed-chronology admission answer distinct questions, while strict failure gates remain",
+      "verdict": "PASS"
+    },
+    {
+      "number": 7,
+      "challenge": "Does the successor remain capable of failing?",
+      "answer": "YES; schema, coordinate, OHLCV, identity, persistence, pagination, resource, action, and strict-majority coverage defects fail",
+      "verdict": "PASS"
+    },
+    {
+      "number": 8,
+      "challenge": "Is session-scoped transport simpler and better matched to the whole-session missingness policy?",
+      "answer": "YES; one finite XNYS session is one restart, evidence, and later admission unit",
+      "verdict": "PASS"
+    },
+    {
+      "number": 9,
+      "challenge": "Is the new page safety cap honestly classified?",
+      "answer": "YES; 16 pages is a resource and abnormal-provider-behavior safety cap, not a scientific page expectation",
+      "verdict": "PASS"
+    },
+    {
+      "number": 10,
+      "challenge": "Is the successor sample genuinely OHLCV-fresh?",
+      "answer": "YES; the deterministic selection excludes the 198-session Programs 002-009 observed union and 145 protected sessions",
+      "verdict": "PASS"
+    },
+    {
+      "number": 11,
+      "challenge": "Are 2025-11-28 and 2025-12-15 still unobserved?",
+      "answer": "YES; the request inventory records zero OHLCV pages for both sessions",
+      "verdict": "PASS"
+    },
+    {
+      "number": 12,
+      "challenge": "Does the fresh pagination design test actual production behavior?",
+      "answer": "YES; each normal session uses the production 13-symbol session chain and its 1,014-coordinate complete domain exceeds limit=1000",
+      "verdict": "PASS"
+    },
+    {
+      "number": 13,
+      "challenge": "Is provider-adjusted OHLCV still prohibited?",
+      "answer": "YES; adjustment is raw and provider-adjusted views are false",
+      "verdict": "PASS"
+    },
+    {
+      "number": 14,
+      "challenge": "Is Program 008 metadata PASS correctly bound?",
+      "answer": "YES; the terminal PASS and its finding-free review are immutable proposal bindings",
+      "verdict": "PASS"
+    },
+    {
+      "number": 15,
+      "challenge": "Are private Program 009 observations excluded from new scientific qualification evidence?",
+      "answer": "YES; they serve only as exposed offline engineering regression evidence",
+      "verdict": "PASS"
+    },
+    {
+      "number": 16,
+      "challenge": "Did any new provider request occur?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 17,
+      "challenge": "Did any strategy calculation occur?",
+      "answer": "NO",
+      "verdict": "PASS"
+    }
+  ],
+  "verification": {
+    "standards_review_focused_program_007_and_010_tests": "69 passed",
+    "specification_review_program_010_tests": "28 passed",
+    "private_program_009_regression": "PASS; six pages strictly ordered within and across pages, one MDY source-missing, 244 XLY unobserved",
+    "v5_sha256_fingerprint_tree_and_root_bindings": "PASS",
+    "ruff": "PASS",
+    "focused_strict_mypy": "PASS",
+    "secret_and_private_data_scan": "PASS; 630 files scanned",
+    "diff_check": "PASS",
+    "full_repository_gates": "PENDING-REVIEW-ARTIFACT-BINDING",
+    "remote_ci_merge_and_post_merge_provenance": "PENDING"
+  },
+  "proof_gaps": [
+    "The private regression proves only the integrity and order of the retained local Program 009 pages; it makes no new provider observation.",
+    "The final reviewers used the archived first-party documentation evidence and did not re-fetch provider documentation.",
+    "Real transport and persistent private evidence storage remain unimplemented and require a separate reviewed one-use authority proposal.",
+    "Full repository gates, remote CI, merge, post-merge CI, and final clean synchronized-main checks remain delivery steps."
+  ],
+  "scope_limit": "The review made no provider request, credential check or value access, corporate-action request, new OHLCV observation, external authorization root, active authority, full acquisition, dataset admission, strategy calculation or return, controlled or protected access, PAPER action, broker write, or live action.",
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "After full gates, green CI, merge, post-merge provenance, and clean synchronized main, a separately authorized task may create and independently review an exact one-use Program 010 raw SIP structural qualification authority proposal binding a fixed GET-only client and ignored persistent evidence root. Do not derive its external authorization root or execute it in this phase.",
+  "review_fingerprint": "5b39c5b6107f3d63292da184a55b32d837e6f513c42d2253a3b38fbda70e4b04"
+}

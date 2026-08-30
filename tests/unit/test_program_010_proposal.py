@@ -1,0 +1,125 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+from typing import Any, cast
+
+import systematic_trading_lab.program_010_ohlcv as program_010
+from systematic_trading_lab.fingerprints import fingerprint
+
+_REPOSITORY = Path(__file__).resolve().parents[2]
+_IMPLEMENTATION_PATH = Path("config/research/program-010-raw-source-implementation-v5.json")
+_PROPOSAL_PATH = Path(
+    "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v5.json"
+)
+_REVIEW_PATH = Path(
+    "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-independent-review-v1.json"
+)
+
+
+def _load(path: Path) -> dict[str, Any]:
+    return cast(dict[str, Any], json.loads((_REPOSITORY / path).read_text(encoding="utf-8")))
+
+
+def _assert_fingerprint(path: Path, field: str) -> dict[str, Any]:
+    value = _load(path)
+    stored = value.pop(field)
+    assert stored == fingerprint(value)
+    return {**value, field: stored}
+
+
+def _assert_binding(binding: dict[str, str]) -> dict[str, Any]:
+    path = Path(binding["path"])
+    assert hashlib.sha256((_REPOSITORY / path).read_bytes()).hexdigest() == binding["sha256"]
+    value = _load(path)
+    assert binding["fingerprint"] in {value[key] for key in value if key.endswith("_fingerprint")}
+    return value
+
+
+def test_program_010_implementation_and_proposal_are_bound_and_non_authorizing() -> None:
+    implementation = _assert_fingerprint(_IMPLEMENTATION_PATH, "implementation_fingerprint")
+    implementation_binding = implementation["implementation_binding"]
+    assert implementation_binding["source_commit"] == ("7830eb036e73cea2e9d5914420841b37e85b5b7b")
+    assert implementation_binding["implementation_root"] == fingerprint(
+        implementation_binding["source_files"]
+    )
+    for source in implementation_binding["source_files"]:
+        assert (
+            hashlib.sha256((_REPOSITORY / source["path"]).read_bytes()).hexdigest()
+            == source["sha256"]
+        )
+    _assert_binding(implementation["supersedes"]["implementation"])
+
+    proposal = _assert_fingerprint(_PROPOSAL_PATH, "proposal_fingerprint")
+    for binding in proposal["bindings"].values():
+        _assert_binding(binding)
+    _assert_binding(proposal["supersedes"]["proposal"])
+    _assert_binding(proposal["supersedes"]["implementation"])
+
+    proposal_implementation = proposal["bindings"]["program_010_implementation"]
+    assert proposal_implementation["fingerprint"] == implementation["implementation_fingerprint"]
+    assert proposal_implementation["source_commit"] == implementation_binding["source_commit"]
+    assert (
+        proposal_implementation["implementation_root"]
+        == implementation_binding["implementation_root"]
+    )
+    assert proposal_implementation["source_tree"] == "d84b3b26bd75e699e355fbce0a70efa03630cdc3"
+    assert proposal["supersedes"]["review_status"] == "SPEC-FINDING-REMEDIATED-STANDARDS-PASS"
+    assert proposal["supersedes"]["remediation_commit"] == (implementation_binding["source_commit"])
+    assert proposal["status"] == program_010.STATUS == "PROPOSED-NOT-AUTHORIZED"
+    assert proposal["lineage"]["program_009"] == "TERMINAL-FAIL-CONSUMED-NO-RETRY"
+    assert proposal["forensic_conclusions"]["six_page_ceiling"] == (
+        "QUALIFICATION-SPECIFICATION-DEFECT"
+    )
+    assert proposal["forensic_conclusions"]["mdy_2023_05_19_17_10_utc"] == (
+        "CONFIRMED-SOURCE-MISSING"
+    )
+    assert proposal["forensic_conclusions"]["xly_tail"] == ("NOT-OBSERVED-DUE-TO-PAGINATION-STOP")
+    assert proposal["pagination_contract"]["terminal_condition"] == ("next_page_token is null")
+    assert proposal["pagination_contract"]["received_order_checked_before_normalization"] is True
+    assert proposal["pagination_contract"]["maximum_pages_per_session"] == (
+        program_010.MAXIMUM_PAGES_PER_SESSION
+    )
+    assert proposal["fresh_sample"]["expected_canonical_coordinates"] == 4_602
+    assert proposal["budgets"]["qualification_maximum_requests_and_responses"] == (
+        program_010.MAXIMUM_QUALIFICATION_REQUESTS
+    )
+    qualification = proposal["qualification_contract"]
+    assert qualification["normal_session_minimum_coordinates_per_symbol"] == 40
+    assert qualification["early_close_minimum_coordinates_per_symbol"] == 22
+    assert qualification["below_meaningful_coverage"] == "FAIL-CATASTROPHIC-COVERAGE"
+    assert (
+        proposal["implementation_boundary"][
+            "top_level_synthetic_source_closed_on_success_or_failure"
+        ]
+        is True
+    )
+    assert (
+        proposal["implementation_boundary"]["public_program_010_artifact_allowlist_invariant"]
+        is True
+    )
+    assert proposal["implementation_boundary"]["private_program_009_received_order_proved"] is True
+    assert proposal["external_authorization_root"] is None
+    assert all(value is False for value in proposal["authority"].values())
+
+
+def test_program_010_independent_review_is_bound_and_finding_free() -> None:
+    review = _assert_fingerprint(_REVIEW_PATH, "review_fingerprint")
+    for binding in review["reviewed_artifacts"].values():
+        _assert_binding(binding)
+
+    reviewed_source = review["reviewed_source"]
+    assert reviewed_source["base_commit"] == "af238e1d8cb7ba44fcef3bbc36f5d641990be601"
+    assert reviewed_source["source_commit"] == "17c017921818e55b7a7656e512334c25d5b31dbb"
+    assert reviewed_source["source_tree"] == "d18294246e373f04e0e6e0f93989a59e07ac30e7"
+    assert reviewed_source["diff_sha256"] == (
+        "8170dd6ee63ba80ed3811e8878e541fe090a9ee93685d15dbfee82ac3b83d2bc"
+    )
+    assert len(reviewed_source["change_commits"]) == 11
+    assert review["verdict"] == "PASS"
+    assert review["findings"] == []
+    assert {result["number"] for result in review["challenge_results"]} == set(range(1, 18))
+    assert all(result["verdict"] == "PASS" for result in review["challenge_results"])
+    assert [result["answer"] for result in review["challenge_results"][-2:]] == ["NO", "NO"]
+    assert all(value is False for value in review["authority"].values())

@@ -15,7 +15,10 @@ from typing import Any
 PATTERNS = (
     re.compile(r"(?i)(?:secret|token|password|api[_-]?key)\s*=\s*['\"][^'\"]+['\"]"),
     re.compile(r"(?m)^\s*(?:APCA_API_KEY_ID|APCA_API_SECRET_KEY)\s*=\s*\S+"),
-    re.compile(r"(?m)^\s*(?:export\s+)?PROGRAM_00[567]_ALPACA_API_(?:KEY_ID|SECRET_KEY)\s*=\s*\S+"),
+    re.compile(
+        r"(?m)^\s*(?:export\s+)?PROGRAM_(?:00[567]|010)_ALPACA_API_"
+        r"(?:KEY_ID|SECRET_KEY)\s*=\s*\S+"
+    ),
     re.compile(
         r"(?m)^\s*(?:export\s+)?PROGRAM_007_CORPORATE_ACTIONS_API_(?:KEY_ID|SECRET_KEY)\s*=\s*\S+"
     ),
@@ -23,7 +26,7 @@ PATTERNS = (
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
 )
 PROGRAM_JSON_CREDENTIAL = re.compile(
-    r"""["'](?:PROGRAM_00[567]_ALPACA|PROGRAM_007_CORPORATE_ACTIONS)_API_(?:KEY_ID|SECRET_KEY)["']\s*:\s*\S+"""
+    r"""["'](?:PROGRAM_(?:00[567]|010)_ALPACA|PROGRAM_007_CORPORATE_ACTIONS)_API_(?:KEY_ID|SECRET_KEY)["']\s*:\s*\S+"""
 )
 
 PRIVATE_MARKET_DATA_SUFFIXES = frozenset(
@@ -50,6 +53,7 @@ PUBLIC_MARKET_DATA_ROOTS = (
     "program-006-free-alpaca/",
     "program-007-free-alpaca/",
     "program-009-raw-alpaca-sip-ohlcv/",
+    "program-010-raw-alpaca-sip-ohlcv/",
     "raw-data/",
 )
 PUBLIC_PROGRAM_JSON = frozenset(
@@ -125,6 +129,19 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-proposal-independent-review-v1.json",
         "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
         "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-independent-review-v1.json",
+        "config/research/program-009-raw-sip-ohlcv-offline-forensic-analysis-v1.json",
+        "config/research/program-010-alpaca-bars-public-contract-evidence-v1.json",
+        "config/research/program-010-raw-source-implementation-v1.json",
+        "config/research/program-010-raw-source-implementation-v2.json",
+        "config/research/program-010-raw-source-implementation-v3.json",
+        "config/research/program-010-raw-source-implementation-v4.json",
+        "config/research/program-010-raw-source-implementation-v5.json",
+        "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v1.json",
+        "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v2.json",
+        "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v3.json",
+        "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v4.json",
+        "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v5.json",
+        "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-independent-review-v1.json",
     }
 )
 _PROVIDER_BAR_KEYS = frozenset({"t", "o", "h", "l", "c", "v"})
@@ -192,6 +209,7 @@ def main() -> int:
                         "program-007",
                         "program-008",
                         "program-009",
+                        "program-010",
                     )
                 )
                 and suffix in PRIVATE_MARKET_DATA_SUFFIXES

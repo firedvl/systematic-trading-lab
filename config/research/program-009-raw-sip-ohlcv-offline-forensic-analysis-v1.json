@@ -1,0 +1,370 @@
+{
+  "schema_version": "program-009-raw-sip-ohlcv-offline-forensic-analysis-v1",
+  "analysis_id": "program-009-raw-sip-ohlcv-offline-forensic-analysis-2026-08-30-v1",
+  "program_id": "multi-hour-sector-etf-research-008",
+  "status": "OFFLINE-FORENSICS-COMPLETE-TERMINAL-FAIL-PRESERVED",
+  "recorded_at_utc": "2026-08-30T20:33:10Z",
+  "terminal_state": {
+    "status": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "replay_allowed": false,
+    "replacement_program_009_authority_allowed": false,
+    "terminal_failure": {
+      "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
+      "sha256": "c4778d1600c564f34da80ff7052c39e7a4bd599685342795ccb4401a4318ea4a",
+      "fingerprint": "a8ac4102f096204f27b648519cd7b5f3796743102a3a2e49203ff47a13686f96"
+    },
+    "terminal_review": {
+      "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-independent-review-v1.json",
+      "sha256": "2f96ed2d40740a1f24b9ba14583478fa99cc6700735b0cecf7fbe7ec3d3cf59c",
+      "fingerprint": "6aaa8f1f0a210ae4c49449030800b5e5735ba6dade388f41fecf5304d5ef1bac"
+    }
+  },
+  "evidence": {
+    "private_response_manifest": {
+      "path": ".trading-lab/program-009-raw-alpaca-sip-ohlcv-v1/response-manifest.json",
+      "git_ignored": true,
+      "sha256": "dc8fb8bb94bd4720a5dc6bbab791045584e4718b1086ca25f2e7be05c8909cf4",
+      "fingerprint": "8c0f6de100faf7fcafb97447e9ae35a70ded710557c9e3cc5d144e36e945b37f"
+    },
+    "current_provider_contract": {
+      "path": "config/research/program-010-alpaca-bars-public-contract-evidence-v1.json",
+      "sha256": "ad925b6aaf12ab654090cb7acad0bf7418fdb2a5d2b8f50225488515f9e56e69",
+      "fingerprint": "d645ff34c78de25b4a79a1f9317e99d9456c957f8d07adf78742ba22542d1319"
+    },
+    "private_pages_read": 9,
+    "private_prices_or_volumes_published": false
+  },
+  "exact_execution": {
+    "requests": 9,
+    "responses": 9,
+    "http_statuses": {
+      "200": 9
+    },
+    "provider_bytes": 1806300,
+    "automatic_retries": 0,
+    "chains": {
+      "normal-2021-07-08": {
+        "pages": 1,
+        "raw_rows": 1014,
+        "canonical_rows": 1014,
+        "terminal_token": null
+      },
+      "normal-2022-01-25": {
+        "pages": 1,
+        "raw_rows": 1014,
+        "canonical_rows": 1014,
+        "terminal_token": null
+      },
+      "normal-2022-11-15": {
+        "pages": 1,
+        "raw_rows": 1014,
+        "canonical_rows": 1014,
+        "terminal_token": null
+      },
+      "pagination-2023-05-16-to-2023-05-30": {
+        "pages": 6,
+        "raw_rows": 14239,
+        "canonical_rows": 9895,
+        "extended_hours_rows": 4344,
+        "terminal_token_reached": false,
+        "final_token_present": true
+      },
+      "split-pre-early-close-2025-11-28": {
+        "pages": 0,
+        "status": "NOT-REQUESTED"
+      },
+      "split-post-2025-12-15": {
+        "pages": 0,
+        "status": "NOT-REQUESTED"
+      }
+    }
+  },
+  "pagination_pages": [
+    {
+      "page": 1,
+      "raw_rows": 2428,
+      "response_bytes": 257274,
+      "first_symbol": "IWM",
+      "first_timestamp": "2023-05-16T13:30:00Z",
+      "first_timestamp_class": "RTH",
+      "last_symbol": "MDY",
+      "last_timestamp": "2023-05-30T18:55:00Z",
+      "last_timestamp_class": "RTH",
+      "continuation_token_present": true,
+      "cumulative_raw_rows": 2428,
+      "cumulative_canonical_rows": 1547
+    },
+    {
+      "page": 2,
+      "raw_rows": 2235,
+      "response_bytes": 237184,
+      "first_symbol": "MDY",
+      "first_timestamp": "2023-05-30T19:00:00Z",
+      "first_timestamp_class": "RTH",
+      "last_symbol": "XLB",
+      "last_timestamp": "2023-05-23T15:45:00Z",
+      "last_timestamp_class": "RTH",
+      "continuation_token_present": true,
+      "cumulative_raw_rows": 4663,
+      "cumulative_canonical_rows": 2757
+    },
+    {
+      "page": 3,
+      "raw_rows": 2557,
+      "response_bytes": 259557,
+      "first_symbol": "XLB",
+      "first_timestamp": "2023-05-23T15:50:00Z",
+      "first_timestamp_class": "RTH",
+      "last_symbol": "XLF",
+      "last_timestamp": "2023-05-24T13:35:00Z",
+      "last_timestamp_class": "RTH",
+      "continuation_token_present": true,
+      "cumulative_raw_rows": 7220,
+      "cumulative_canonical_rows": 4369
+    },
+    {
+      "page": 4,
+      "raw_rows": 2443,
+      "response_bytes": 253110,
+      "first_symbol": "XLF",
+      "first_timestamp": "2023-05-24T13:40:00Z",
+      "first_timestamp_class": "RTH",
+      "last_symbol": "XLK",
+      "last_timestamp": "2023-05-26T18:40:00Z",
+      "last_timestamp_class": "RTH",
+      "continuation_token_present": true,
+      "cumulative_raw_rows": 9663,
+      "cumulative_canonical_rows": 6146
+    },
+    {
+      "page": 5,
+      "raw_rows": 2311,
+      "response_bytes": 237103,
+      "first_symbol": "XLK",
+      "first_timestamp": "2023-05-26T18:45:00Z",
+      "first_timestamp_class": "RTH",
+      "last_symbol": "XLU",
+      "last_timestamp": "2023-05-18T18:10:00Z",
+      "last_timestamp_class": "RTH",
+      "continuation_token_present": true,
+      "cumulative_raw_rows": 11974,
+      "cumulative_canonical_rows": 8012
+    },
+    {
+      "page": 6,
+      "raw_rows": 2265,
+      "response_bytes": 238982,
+      "first_symbol": "XLU",
+      "first_timestamp": "2023-05-18T18:15:00Z",
+      "first_timestamp_class": "RTH",
+      "last_symbol": "XLY",
+      "last_timestamp": "2023-05-24T19:05:00Z",
+      "last_timestamp_class": "RTH",
+      "continuation_token_present": true,
+      "cumulative_raw_rows": 14239,
+      "cumulative_canonical_rows": 9895
+    }
+  ],
+  "questions": {
+    "a_pagination_transport_failure": {
+      "classification": "QUALIFICATION-SPECIFICATION-DEFECT",
+      "evidence": [
+        "the proposal documented only that 10,140 canonical rows exceed the 10,000-point page maximum",
+        "the value six appeared as an unexplained additional allowance and was not derived from a documented minimum page fill",
+        "current first-party documentation says a page may be underfilled while more data remains and requires inspection of next_page_token",
+        "all six retained pages made unique forward progress and page six remained nonterminal"
+      ],
+      "provider_incompatibility_proved": false,
+      "program_009_failure_rescinded": false
+    },
+    "b_retained_pagination_missingness": {
+      "classification": "VALID-DATASET-QUALITY-FINDING",
+      "completed_ordered_domains": [
+        "IWM",
+        "MDY",
+        "SPY",
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV"
+      ],
+      "confirmed_source_missing": [
+        "MDY@2023-05-19T17:10:00Z"
+      ],
+      "confirmed_source_missing_count": 1,
+      "evidence": "The retained sequence completed MDY, continued through SPY and ten later symbols, and contains every other one of MDY's 780 expected canonical coordinates."
+    },
+    "c_qualification_dataset_responsibility": {
+      "classification": "QUALIFICATION-SPECIFICATION-DEFECT",
+      "evidence": "Requiring zero missing coordinates in a small source sample duplicated the separately frozen full-chronology whole-session admission policy and could reject a structurally deterministic source for one bounded data-quality observation.",
+      "change_is_provider_specific_rescue": false
+    }
+  },
+  "missingness_refinement": {
+    "pagination_range_publicly_grouped_as_missing": 245,
+    "confirmed_source_missing": 1,
+    "unobserved_because_chain_stopped": 244,
+    "unobserved_ranges": [
+      {
+        "symbol": "XLY",
+        "session": "2023-05-24",
+        "first": "2023-05-24T19:10:00Z",
+        "last": "2023-05-24T19:55:00Z",
+        "count": 10
+      },
+      {
+        "symbol": "XLY",
+        "session": "2023-05-25",
+        "count": 78
+      },
+      {
+        "symbol": "XLY",
+        "session": "2023-05-26",
+        "count": 78
+      },
+      {
+        "symbol": "XLY",
+        "session": "2023-05-30",
+        "count": 78
+      }
+    ],
+    "whole_program_unobserved_or_not_requested": 1804,
+    "whole_program_breakdown": {
+      "pagination_chain_after_frontier": 244,
+      "unrequested_early_close": 546,
+      "unrequested_post_split": 1014
+    },
+    "xly_classification": "NOT-OBSERVED-DUE-TO-PAGINATION-STOP",
+    "mdy_classification": "CONFIRMED-SOURCE-MISSING"
+  },
+  "source_qualification_and_dataset_admission": {
+    "source_qualification_question": "Can the source and transport be acquired deterministically, retained, parsed, projected to canonical RTH coordinates, and audited without semantic ambiguity?",
+    "dataset_admission_question": "Does the complete acquired chronology satisfy the frozen missingness, coverage, concentration, corporate-action, and quality thresholds required for research?",
+    "qualification_missingness_semantics": {
+      "terminal_chain_absent_coordinate": "record SOURCE-MISSING without imputation",
+      "nonterminal_chain_coordinate_after_ordered_frontier": "record UNOBSERVED-BECAUSE-CHAIN-INCOMPLETE",
+      "nonterminal_chain_absent_coordinate_before_ordered_frontier": "record SOURCE-MISSING because documented ordering has passed it",
+      "isolated_source_missing_coordinate": "quality observation; does not alone fail structural source qualification",
+      "entire_required_symbol_absent": "catastrophic structural qualification failure",
+      "entire_required_session_absent": "catastrophic structural qualification failure"
+    },
+    "mandatory_structural_failure_classes": [
+      "SIP inaccessible",
+      "unsupported or malformed schema",
+      "malformed or out-of-bounds coordinates",
+      "duplicate coordinates",
+      "invalid OHLC or volume",
+      "symbol contamination",
+      "pagination cycle, reuse, regression, or zero progress",
+      "request identity drift",
+      "raw persistence failure",
+      "calendar projection ambiguity",
+      "catastrophic symbol or session absence",
+      "corporate-action interpretation mismatch",
+      "resource budget failure"
+    ],
+    "later_dataset_policy_preserved": true,
+    "later_dataset_policy": "Apply the frozen 7/1499 whole-session ceiling, five pre-exposed quarantine sessions, at most two isolated unexpected exclusions, and every concentration, adjacency, context, and recurrence control only after complete terminal acquisition."
+  },
+  "prospective_architecture": {
+    "selection": "SESSION-SCOPED-MULTI-SYMBOL",
+    "endpoint": "GET https://data.alpaca.markets/v2/stocks/bars",
+    "chain_scope": "one exact XNYS session from regular-session open through final regular-session five-minute bar open, inclusive",
+    "symbols_per_chain": 13,
+    "limit": 1000,
+    "termination": "next_page_token is null",
+    "pagination_controls": [
+      "opaque token continuation",
+      "token cycle and reuse rejection",
+      "strict symbol-then-timestamp progress",
+      "nonterminal zero-progress rejection",
+      "cross-page duplicate rejection",
+      "immutable request identity",
+      "bounded raw persistence before parsing or continuation"
+    ],
+    "resource_safety_cap": {
+      "pages_per_session": 16,
+      "classification": "RESOURCE-AND-ABNORMAL-PROVIDER-BEHAVIOR-SAFETY-CAP",
+      "not_a_scientific_expected_page_count": true,
+      "mathematical_domain_bound_pages": 1014,
+      "rationale": "A normal session has only 1,014 valid coordinates. Sixteen pages allow an eightfold margin over the two-page complete-session lower bound while bounding a 1,499-session run to 23,984 requests and about 200 minutes at 120 requests per minute. Exceeding the cap is an operational source-contract failure, never missing data."
+    },
+    "extended_hours": "Exact single-session RTH bounds leave no valid extended-hours coordinate inside the request. An out-of-bounds provider row fails structural validation; raw-first retention remains required.",
+    "multi_symbol_vs_single_symbol": {
+      "multi_symbol_typical_requests_for_1499_sessions": 2998,
+      "single_symbol_typical_requests_for_1499_sessions": 19487,
+      "multi_symbol_typical_runtime_minutes_at_120_per_minute": "24.98",
+      "single_symbol_typical_runtime_minutes_at_120_per_minute": "162.39",
+      "decision": "Multi-symbol session chains use fewer requests, directly match whole-session admission, and keep one restart unit per session. Single-symbol chains improve symbol-level isolation but multiply request, receipt, and mapping state without a correctness benefit for this policy."
+    },
+    "full_scale_projection": {
+      "typical_requests": 2998,
+      "safety_case_requests": 23984,
+      "typical_runtime_minutes_at_120_per_minute": "24.98",
+      "safety_case_runtime_minutes_at_120_per_minute": "199.87",
+      "typical_raw_body_bytes_estimate": 158876842,
+      "typical_private_storage_estimate": "approximately 160-200 MiB including receipts and manifests",
+      "safety_case_private_body_cap": "11.71 GiB at 8 MiB per session"
+    }
+  },
+  "prospective_freshness": {
+    "seed": "program-010-raw-sip-qualification-sample-v1",
+    "eligible_chronology_sessions": 1531,
+    "observed_program_002_through_009_union_sessions": 198,
+    "observed_union_fingerprint": "bee6418e6124c1b9332e09c00928d56289e036435e05a5a854d8037d287bbd25",
+    "in_chronology_protected_sessions": 145,
+    "eligible_unobserved_unprotected_sessions": 1189,
+    "eligible_fingerprint": "9d850b9f72aa8178401105a26d4f48e8539c7a64042aac06d3678bd50c05ac50",
+    "normal_selection_algorithm": "For each eligible full XNYS session excluding the two semantic controls, hash seed|normal|date with SHA-256 and select the three lowest digests.",
+    "selected_normal_digests": {
+      "2024-01-11": "00232f598a2b15abbfc944492574b8e9160757381f2ad230b148891d1afb05c4",
+      "2021-07-02": "004055e8434d4f5889fe323236f769a49eeb251df664040207d8bbaca3d4a99f",
+      "2021-05-25": "0085b9ec9e386f35226a09f100dd5997c17f54a392823c701734840f81a3dedb"
+    },
+    "selected_sessions": [
+      "2021-05-25",
+      "2021-07-02",
+      "2024-01-11",
+      "2025-11-28",
+      "2025-12-15"
+    ],
+    "selected_session_fingerprint": "01cab95d1a854744a31b0bc2e37ffea1c2371732a2fd9f543709cf6a1aa8aa21",
+    "selected_session_overlap_with_prior_ohlcv": 0,
+    "early_close_2025_11_28": "FRESH-UNQUERIED",
+    "post_split_2025_12_15": "FRESH-UNQUERIED",
+    "expected_canonical_coordinates": 4602
+  },
+  "prerequisites": {
+    "program_008_metadata": {
+      "status": "TERMINAL-PASS-CONSUMED-NO-REPLAY",
+      "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-v1.json",
+      "sha256": "23bf0e29b4f8b4b4655d7eeb470e4ceb1bc319717c854ec3d82790ef52c1762b",
+      "fingerprint": "151091ac4d863d73561afc24dc0138e5326dd237183dfb7da178cb5584871fcd"
+    },
+    "public_ledger_v3": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+      "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+      "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
+    },
+    "provider_adjusted_ohlcv_allowed": false,
+    "split_spanning_share_count_transform": "exact rational ledger factor only"
+  },
+  "scope_boundary": {
+    "provider_requests": 0,
+    "credential_presence_checks": 0,
+    "credential_value_accesses": 0,
+    "corporate_action_requests": 0,
+    "new_ohlcv_observations": 0,
+    "strategy_calculations_or_returns": 0,
+    "controlled_or_protected_access": 0,
+    "paper_actions": 0,
+    "broker_writes": 0,
+    "live_actions": 0
+  },
+  "analysis_fingerprint": "27803619aa67637c9e6d4fe656976f4269de23c7d2312765bbabec9640ceaba8"
+}

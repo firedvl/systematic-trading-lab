@@ -1,0 +1,305 @@
+{
+  "schema_version": "program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v5",
+  "proposal_id": "program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-2026-08-30-v5",
+  "program_ordinal": 10,
+  "program_id": "multi-hour-sector-etf-research-009",
+  "status": "PROPOSED-NOT-AUTHORIZED",
+  "purpose": "Fresh raw Alpaca SIP five-minute OHLCV structural source qualification through exact session-scoped pagination.",
+  "lineage": {
+    "program_009": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "program_009_replay_allowed": false,
+    "program_009_replacement_authority_allowed": false,
+    "program_008_metadata": "TERMINAL-PASS-CONSUMED-NO-REPLAY",
+    "program_008_metadata_pass_required": true,
+    "program_008_authority_reused": false
+  },
+  "supersedes": {
+    "proposal": {
+      "path": "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v4.json",
+      "sha256": "271298e6db9a008b8e7d69fd7c4840a14364f89bcbddd9565c4dec305b63977a",
+      "fingerprint": "3cf6791e7927fce224d0ce1184f45b4ee7186916d95b21a1c104506af2677b39"
+    },
+    "implementation": {
+      "path": "config/research/program-010-raw-source-implementation-v4.json",
+      "sha256": "7aa6abb1b5a8bae20e5b9605a73cbf70a5afd5ae0d61b918dcee816bfc29773a",
+      "fingerprint": "5d7bb667d31f34146fb9dae6118e494e9f86b0ee0fea4cabe01fb0fcc68c3e4b"
+    },
+    "review_status": "SPEC-FINDING-REMEDIATED-STANDARDS-PASS",
+    "findings": [
+      "The private Program 009 regression sorted retained rows before proving the received symbol-then-timestamp order required by the MDY and XLY frontier classifications."
+    ],
+    "remediations": [
+      "Parse retained Program 009 pages in received order, require strict ascending order within every page and across each page boundary, and derive the missingness frontier from the last received coordinate.",
+      "Reserve the exact v5 public artifact paths in the private-data guard before binding them."
+    ],
+    "remediation_commit": "7830eb036e73cea2e9d5914420841b37e85b5b7b"
+  },
+  "bindings": {
+    "program_009_terminal_failure": {
+      "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
+      "sha256": "c4778d1600c564f34da80ff7052c39e7a4bd599685342795ccb4401a4318ea4a",
+      "fingerprint": "a8ac4102f096204f27b648519cd7b5f3796743102a3a2e49203ff47a13686f96"
+    },
+    "program_009_terminal_review": {
+      "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-independent-review-v1.json",
+      "sha256": "2f96ed2d40740a1f24b9ba14583478fa99cc6700735b0cecf7fbe7ec3d3cf59c",
+      "fingerprint": "6aaa8f1f0a210ae4c49449030800b5e5735ba6dade388f41fecf5304d5ef1bac"
+    },
+    "program_009_offline_forensics": {
+      "path": "config/research/program-009-raw-sip-ohlcv-offline-forensic-analysis-v1.json",
+      "sha256": "cc77d9a9f767d66262547704892f98584dad38a5771324025f1828b9048bed17",
+      "fingerprint": "27803619aa67637c9e6d4fe656976f4269de23c7d2312765bbabec9640ceaba8"
+    },
+    "alpaca_public_contract": {
+      "path": "config/research/program-010-alpaca-bars-public-contract-evidence-v1.json",
+      "sha256": "ad925b6aaf12ab654090cb7acad0bf7418fdb2a5d2b8f50225488515f9e56e69",
+      "fingerprint": "d645ff34c78de25b4a79a1f9317e99d9456c957f8d07adf78742ba22542d1319"
+    },
+    "program_008_terminal_success": {
+      "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-v1.json",
+      "sha256": "23bf0e29b4f8b4b4655d7eeb470e4ceb1bc319717c854ec3d82790ef52c1762b",
+      "fingerprint": "151091ac4d863d73561afc24dc0138e5326dd237183dfb7da178cb5584871fcd"
+    },
+    "program_008_terminal_success_review": {
+      "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-independent-review-v1.json",
+      "sha256": "65eda8a7e6bc6d262b382227db7ca82ecd42dc38caa97d637d6dd1b207a4e6c9",
+      "fingerprint": "143f8e5023b96bc950f9ec86d37e966fca42ceefd1c07c691d6d3c2af7c66dad"
+    },
+    "public_unit_changing_action_ledger": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+      "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+      "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
+    },
+    "later_dataset_policy": {
+      "path": "config/research/program-005-free-alpaca-successor-plan-v1.json",
+      "sha256": "3a71573086418aa8ff53d8359110dee1a951caa333ffd35eccedd8d38678cb11",
+      "fingerprint": "79a73d143700c643d67c2f862b5bfe3655df9706276a1b70e189c425d4397cb7"
+    },
+    "program_010_implementation": {
+      "path": "config/research/program-010-raw-source-implementation-v5.json",
+      "sha256": "f8e77aac3cb34630ca80bd58cce6b617892505f50221b537533f38a47b296f3c",
+      "fingerprint": "7acb8478be94212c760e257d0d3fbc42d4232db90d5f1175d52da03e3a45b6e5",
+      "source_commit": "7830eb036e73cea2e9d5914420841b37e85b5b7b",
+      "source_tree": "d84b3b26bd75e699e355fbce0a70efa03630cdc3",
+      "implementation_root": "cd9436913fb2f2e83ba43ac3e52bfd7708890c24433c912a06f157d2a342ba0b"
+    }
+  },
+  "forensic_conclusions": {
+    "six_page_ceiling": "QUALIFICATION-SPECIFICATION-DEFECT",
+    "mdy_2023_05_19_17_10_utc": "CONFIRMED-SOURCE-MISSING",
+    "xly_tail": "NOT-OBSERVED-DUE-TO-PAGINATION-STOP",
+    "pagination_range_confirmed_source_missing_coordinates": 1,
+    "pagination_range_unobserved_coordinates": 244,
+    "whole_program_unobserved_or_not_requested_coordinates": 1804,
+    "program_009_status_changed": false
+  },
+  "source_contract": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "sort": "asc",
+    "limit": 1000,
+    "asof": "2026-07-31",
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "chain_scope": "one exact XNYS regular session for all thirteen symbols",
+    "start": "calendar-derived regular-session open bar timestamp, inclusive",
+    "end": "calendar-derived final regular-session five-minute bar-open timestamp, inclusive",
+    "provider_adjusted_view_allowed": false,
+    "out_of_bounds_rows": "FAIL-AFTER-RAW-RETENTION",
+    "automatic_retries": 0
+  },
+  "pagination_contract": {
+    "terminal_condition": "next_page_token is null",
+    "limit_is_a_maximum_not_a_minimum_fill": true,
+    "opaque_token_continuation": true,
+    "token_cycle_or_reuse": "FAIL",
+    "nonterminal_zero_progress": "FAIL",
+    "symbol_then_timestamp_regression": "FAIL",
+    "cross_page_duplicate_coordinate": "FAIL",
+    "request_identity_drift": "FAIL",
+    "raw_body_fsynced_before_parse_or_continuation": true,
+    "maximum_pages_per_session": 16,
+    "ceiling_classification": "RESOURCE-AND-ABNORMAL-PROVIDER-BEHAVIOR-SAFETY-CAP",
+    "ceiling_is_expected_scientific_page_count": false,
+    "ceiling_rationale": "A normal session has 1,014 valid coordinates and needs at least two pages at limit 1000. Sixteen pages allow eight times that lower bound while capping a 1,499-session run at 23,984 requests and about 200 minutes at 120 requests per minute.",
+    "nonterminal_ceiling_result": "CHAIN-INCOMPLETE-RESOURCE-CAP",
+    "nonterminal_ceiling_absences_are_source_missing": false,
+    "received_order_checked_before_normalization": true
+  },
+  "qualification_contract": {
+    "source_question": "Can the source and transport be acquired deterministically, retained, parsed, projected to canonical RTH coordinates, and audited without semantic ambiguity?",
+    "terminal_absent_coordinate": "SOURCE-MISSING",
+    "nonterminal_absent_coordinate_before_ordered_frontier": "SOURCE-MISSING",
+    "nonterminal_absent_coordinate_after_ordered_frontier": "UNOBSERVED-BECAUSE-CHAIN-INCOMPLETE",
+    "isolated_source_missing_coordinate": "RECORD-WITHOUT-IMPUTATION-DOES-NOT-ALONE-FAIL",
+    "entire_required_symbol_absent": "FAIL-CATASTROPHIC-COVERAGE",
+    "entire_required_session_absent": "FAIL-CATASTROPHIC-COVERAGE",
+    "mandatory_failure_classes": [
+      "SIP inaccessible",
+      "unsupported or malformed schema",
+      "malformed or out-of-bounds coordinates",
+      "duplicate coordinates",
+      "invalid OHLC or volume",
+      "symbol contamination",
+      "pagination cycle, reuse, regression, or zero progress",
+      "request identity drift",
+      "raw persistence failure",
+      "calendar projection ambiguity",
+      "catastrophic below-majority symbol or session coverage",
+      "corporate-action interpretation mismatch",
+      "resource budget failure"
+    ],
+    "imputation_allowed": false,
+    "qualification_is_automatic_pass": false,
+    "meaningful_coverage_rule": "Every required symbol must contain a strict majority of the calendar-derived session coordinates.",
+    "normal_session_minimum_coordinates_per_symbol": 40,
+    "early_close_minimum_coordinates_per_symbol": 22,
+    "below_meaningful_coverage": "FAIL-CATASTROPHIC-COVERAGE",
+    "meaningful_coverage_rationale": "A strict majority is the smallest session-scaled floor that requires more observed than absent coordinates for every identity while leaving isolated missingness to later dataset admission."
+  },
+  "dataset_admission_contract": {
+    "question": "Does the complete acquired chronology satisfy the frozen missingness, coverage, concentration, corporate-action, and quality thresholds required for research?",
+    "requires_complete_terminal_acquisition": true,
+    "whole_session_exclusion_only": true,
+    "maximum_total_excluded_sessions": 7,
+    "chronology_sessions": 1499,
+    "known_pre_exposed_quarantine_sessions": 5,
+    "maximum_isolated_unexpected_exclusions": 2,
+    "concentration_adjacency_context_and_recurrence_controls_preserved": true,
+    "strategy_runs_before_admission": false
+  },
+  "fresh_sample": {
+    "selection_seed": "program-010-raw-sip-qualification-sample-v1",
+    "selection_rule": "Exclude every Programs 002-009 OHLCV-observed session and every protected or controlled session, then select the three lowest SHA-256 seed|normal|date digests and add the two unqueried semantic controls.",
+    "observed_program_002_through_009_union_sessions": 198,
+    "observed_union_fingerprint": "bee6418e6124c1b9332e09c00928d56289e036435e05a5a854d8037d287bbd25",
+    "protected_sessions_in_chronology": 145,
+    "eligible_unobserved_unprotected_sessions": 1189,
+    "eligible_fingerprint": "9d850b9f72aa8178401105a26d4f48e8539c7a64042aac06d3678bd50c05ac50",
+    "sessions": [
+      {
+        "date": "2021-05-25",
+        "role": "fresh-normal",
+        "prior_ohlcv_request_count": 0,
+        "expected_coordinates": 1014
+      },
+      {
+        "date": "2021-07-02",
+        "role": "fresh-normal",
+        "prior_ohlcv_request_count": 0,
+        "expected_coordinates": 1014
+      },
+      {
+        "date": "2024-01-11",
+        "role": "fresh-normal",
+        "prior_ohlcv_request_count": 0,
+        "expected_coordinates": 1014
+      },
+      {
+        "date": "2025-11-28",
+        "role": "fresh-early-close-pre-split-control",
+        "prior_ohlcv_request_count": 0,
+        "expected_coordinates": 546
+      },
+      {
+        "date": "2025-12-15",
+        "role": "fresh-post-split-control",
+        "prior_ohlcv_request_count": 0,
+        "expected_coordinates": 1014
+      }
+    ],
+    "selected_session_fingerprint": "01cab95d1a854744a31b0bc2e37ffea1c2371732a2fd9f543709cf6a1aa8aa21",
+    "selected_session_overlap_with_prior_ohlcv": 0,
+    "expected_canonical_coordinates": 4602,
+    "program_009_2025_11_28_pages": 0,
+    "program_009_2025_12_15_pages": 0,
+    "program_009_observations_used_as_successor_qualification_evidence": false
+  },
+  "corporate_action_contract": {
+    "program_008_metadata_pass_bound": true,
+    "ledger_v3_bound": true,
+    "split_symbols": [
+      "XLB",
+      "XLE",
+      "XLK",
+      "XLU",
+      "XLY"
+    ],
+    "split_effective_session": "2025-12-05",
+    "split_ratio": "2-for-1",
+    "raw_contemporaneous_prices_are_canonical": true,
+    "provider_adjusted_ohlcv_allowed": false,
+    "split_spanning_share_count_transform": "exact rational ledger factor only"
+  },
+  "budgets": {
+    "qualification_typical_requests_and_responses": 9,
+    "qualification_maximum_requests_and_responses": 80,
+    "maximum_response_page_bytes": 8388608,
+    "maximum_session_response_bytes": 8388608,
+    "maximum_qualification_response_bytes": 41943040,
+    "automatic_retries": 0,
+    "full_acquisition_typical_requests": 2998,
+    "full_acquisition_safety_case_requests": 23984,
+    "full_acquisition_typical_runtime_minutes_at_120_per_minute": "24.98",
+    "full_acquisition_safety_case_runtime_minutes_at_120_per_minute": "199.87",
+    "full_acquisition_typical_raw_body_bytes_estimate": 158876842,
+    "full_acquisition_typical_private_storage_estimate": "approximately 160-200 MiB including receipts and manifests",
+    "full_acquisition_safety_case_private_body_cap": "11.71 GiB at 8 MiB per session",
+    "full_acquisition_authorized": false
+  },
+  "implementation_boundary": {
+    "synthetic_responses_only": true,
+    "provider_transport_present": false,
+    "credential_reader_or_presence_check_present": false,
+    "authority_activation_present": false,
+    "persistent_real_evidence_store_present": false,
+    "future_real_transport_requirement": "Create and independently review a separate exact one-use authority proposal that binds a fixed GET-only client and ignored persistent evidence root before any credential or provider access.",
+    "top_level_synthetic_source_closed_on_success_or_failure": true,
+    "public_program_010_artifact_allowlist_invariant": true,
+    "private_program_009_received_order_proved": true
+  },
+  "protected_firewall": {
+    "strategy_calculations_or_returns": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper": false,
+    "broker": false,
+    "live": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "external_authorization_root": null,
+  "required_next_action": "Create and independently review a separate exact one-use Program 010 raw SIP structural qualification authority proposal. Do not derive an external authorization root, access credentials, or contact Alpaca in this phase.",
+  "proposal_fingerprint": "fe24131e1dcd504615a314221d3aec664a0f2c3810127ba69fbceb50f81727a7"
+}

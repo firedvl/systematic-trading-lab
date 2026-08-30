@@ -108,6 +108,18 @@ uv run trading-lab data acquire program-009-ohlcv credential-preflight
 See [Program 009 raw OHLCV structural qualification](docs/program-009-raw-ohlcv-qualification.md).
 Do not activate or run Program 009 again. It admitted no dataset and ran no strategy.
 
+Offline forensics classify Program 009's six-page ceiling as a qualification-specification defect,
+confirm one completed-domain MDY source gap, and classify the truncated XLY tail as unobserved.
+Program 010, `multi-hour-sector-etf-research-009`, is a synthetic-only, non-authorizing successor
+proposal with one exact XNYS session per chain and token-driven pagination. See
+[Program 010 raw OHLCV structural qualification](docs/program-010-raw-ohlcv-qualification.md).
+Review found source-closure, catastrophic-coverage, public-artifact guard, received-order, and
+retained-order proof defects. Proposal v5 closes every valid source, requires strict-majority
+per-symbol coverage, keeps every public artifact in the guard inventory, rejects disordered wire
+rows, and proves the retained Program 009 frontier from received order. The independent v1 review
+is finding-free, binds all 17 required challenges, and leaves every
+provider, credential, acquisition, dataset, strategy, PAPER, broker, and live authority false.
+
 ## Using historical data
 
 Alpaca imports are read-only and require research mode plus credentials:
