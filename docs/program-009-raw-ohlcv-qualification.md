@@ -1,8 +1,33 @@
 # Program 009 raw OHLCV structural qualification
 
-Program 009, `multi-hour-sector-etf-research-008`, has a finding-free reviewed proposal for one
-future fresh raw Alpaca SIP five-minute OHLCV structural qualification. This proposal does not
-activate authority, create a claim, contact Alpaca, admit a dataset, or run a strategy.
+Program 009, `multi-hour-sector-etf-research-008`, is `TERMINAL-FAIL-CONSUMED-NO-RETRY`. Exact root
+`a21491c95307ec9a2d86837c7827fccf6d32d165a069e97cf92ec050247e98c6` activated the reviewed
+authority on clean synchronized main `56278b8f2dc8714f58b026b0a13d523072bb64ba`. Do not activate or
+run Program 009 again.
+
+## Terminal result
+
+The run loaded credentials once and made nine zero-retry, redirect-disabled requests. All responses
+were HTTP 200 and totaled 1,806,300 bytes. The three normal chains completed. The forced-pagination
+chain retained six valid raw pages, but page six still had a continuation token. The frozen maximum
+was six pages, so execution stopped without page seven, the early-close chain, or the post-split
+chain.
+
+Private evidence contains 17,281 raw rows, including 4,344 valid raw-only extended-hours rows and
+12,937 canonical RTH coordinates. The qualification required 14,742 coordinates and therefore
+failed. The private response-manifest SHA-256/fingerprint is
+`dc8fb8bb94bd4720a5dc6bbab791045584e4718b1086ca25f2e7be05c8909cf4` /
+`8c0f6de100faf7fcafb97447e9ae35a70ded710557c9e3cc5d144e36e945b37f`.
+The public terminal-failure SHA-256/fingerprint is
+`c4778d1600c564f34da80ff7052c39e7a4bd599685342795ccb4401a4318ea4a` /
+`a8ac4102f096204f27b648519cd7b5f3796743102a3a2e49203ff47a13686f96`. The finding-free independent
+review binds closeout commits `11e12d7dd39c9f8c7abef60086cd87bbd14ff603` and
+`11601a8d6ff98a79020780afab40c64f6f6c9e2b`; review SHA-256/fingerprint is
+`2f96ed2d40740a1f24b9ba14583478fa99cc6700735b0cecf7fbe7ec3d3cf59c` /
+`6aaa8f1f0a210ae4c49449030800b5e5735ba6dade388f41fecf5304d5ef1bac`. Sixty focused tests and
+1,470 full-suite tests passed with four skips.
+Raw pages remain under the Git-ignored private root. No full acquisition, dataset admission, strategy
+calculation, protected access, PAPER action, broker write, or live action occurred.
 
 ## Credential preflight
 
@@ -94,7 +119,8 @@ stays false.
 - Authority-proposal SHA-256/fingerprint: `853cd2868704a047a62abcd543e628f5853e768c401aa1cad4a72194ee136d88` / `8594d1872a7c5d3a7db9c695483581251dfb11dea2840bf0ca2b6103aa61b429`
 - Review SHA-256/fingerprint: `348f14735a258f8db17bb9af20bf54f20798b1c150638fd67fb4abc7375ebfbd` / `355690a1ec9e9fe23fea32852019e4690a39677394e668bc7b2ab1b42d111773`
 
-The future authority ID is
+The consumed authority ID is
 `program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-2026-08-30-v1`.
-The external authorization root is derived exactly once from final clean synchronized `main` and is
-not stored in Git. Do not run `activate` or `run` without the later exact user authorization.
+The terminal public artifact is
+`config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json`.
+Program 009 permits no replay or replacement authority.
