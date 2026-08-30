@@ -429,3 +429,31 @@ def test_authority_proposal_and_review_validate_when_committed() -> None:
     assert controls["proposal"]["status"] == authority.READY_STATUS
     assert controls["review"]["verdict"] == "PASS"
     assert controls["review"]["findings"] == []
+
+
+def test_terminal_failure_revokes_before_credentials_or_private_state(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    credential_reads: list[bool] = []
+    private_root_opens: list[bool] = []
+    monkeypatch.setattr(
+        authority,
+        "_require_credentials_present",
+        lambda _environ: credential_reads.append(True),
+    )
+    monkeypatch.setattr(
+        authority,
+        "_open_private_root",
+        lambda _repository: private_root_opens.append(True),
+    )
+
+    for operation in (
+        lambda: authority.derive_authorization_root(_REPOSITORY, environ={}),
+        lambda: authority.activate_authority(_REPOSITORY, "a" * 64, environ={}),
+        lambda: authority.execute_qualification(_REPOSITORY, "a" * 64, environ={}),
+    ):
+        with pytest.raises(authority.Program009AuthorityError, match="terminally revoked"):
+            operation()
+
+    assert credential_reads == []
+    assert private_root_opens == []

@@ -55,6 +55,14 @@ REVIEW_PATH = Path(
     "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-"
     "authority-proposal-independent-review-v1.json"
 )
+_TERMINAL_FAILURE = {
+    "path": (
+        "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-"
+        "terminal-failure-v1.json"
+    ),
+    "sha256": "c4778d1600c564f34da80ff7052c39e7a4bd599685342795ccb4401a4318ea4a",
+    "fingerprint": "a8ac4102f096204f27b648519cd7b5f3796743102a3a2e49203ff47a13686f96",
+}
 
 _PROGRAM_007_TERMINAL = {
     "path": (
@@ -1473,11 +1481,24 @@ def _load_control_artifact(
 
 
 def _reject_terminal_state(repository: Path) -> None:
+    path = repository / _TERMINAL_FAILURE["path"]
+    if not path.exists():
+        return
+    failure = _load_static_artifact(repository, _TERMINAL_FAILURE, "failure_fingerprint")
+    authorization = _mapping(failure.get("authorization"), "terminal authorization")
+    structural = _mapping(failure.get("structural_results"), "terminal results")
+    disposition = _mapping(failure.get("disposition"), "terminal disposition")
     if (
-        repository
-        / "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal.json"
-    ).exists():
-        raise Program009AuthorityError("Program 009 OHLCV authority is terminally revoked")
+        failure.get("program_id") != PROGRAM_ID
+        or failure.get("status") != "TERMINAL-FAIL-CONSUMED-NO-RETRY"
+        or authorization.get("one_use_consumed") is not True
+        or structural.get("qualification") != "FAIL"
+        or disposition.get("retry_allowed") is not False
+        or disposition.get("program_009_replay_allowed") is not False
+        or disposition.get("replacement_program_009_authority_allowed") is not False
+    ):
+        raise Program009AuthorityError("Program 009 terminal failure semantics differ")
+    raise Program009AuthorityError("Program 009 OHLCV authority is terminally revoked")
 
 
 def _json_object(raw: bytes, label: str) -> dict[str, Any]:
