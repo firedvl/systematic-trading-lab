@@ -1,0 +1,292 @@
+{
+  "schema_version": "program-007-corporate-action-metadata-offline-forensic-analysis-v1",
+  "analysis_id": "program-007-corporate-action-metadata-offline-forensic-analysis-2026-08-29-v1",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "analyzed_date": "2026-08-29",
+  "status": "OFFLINE-FORENSICS-COMPLETE-PROGRAM-007-REMAINS-TERMINAL-FAIL",
+  "scope": {
+    "provider_data_requests": 0,
+    "credential_presence_checks": 0,
+    "credential_value_accesses": 0,
+    "retained_private_response_reads": 1,
+    "ohlcv_requests": 0,
+    "strategy_calculations": 0,
+    "strategy_returns_generated_or_read": false,
+    "controlled_or_protected_access": false,
+    "paper_broker_or_live_access": false
+  },
+  "repository_state_at_start": {
+    "branch": "main",
+    "head": "b10397ea649b066bc2d7cadde4276166c55476c2",
+    "main": "b10397ea649b066bc2d7cadde4276166c55476c2",
+    "origin_main": "b10397ea649b066bc2d7cadde4276166c55476c2",
+    "clean_synchronized_main": true
+  },
+  "terminal_state_confirmation": {
+    "status": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "terminal_artifacts_modified": false,
+    "authority_consumed": true,
+    "retry_allowed": false,
+    "replacement_program_007_authority_allowed": false,
+    "provider_request_count": 1,
+    "http_response_count": 1,
+    "received_response_bytes": 115628,
+    "symbol_chain_executed": true,
+    "cusip_chain_executed": false,
+    "ohlcv_requests": 0,
+    "strategy_calculations": 0,
+    "all_current_authority_flags_false": true,
+    "terminal_failure_binding": {
+      "path": "config/research/program-007-corporate-action-metadata-qualification-terminal-failure-v1.json",
+      "sha256": "99bc4397909f364efac2f189351bff9ebaae9b886833fc7e0555b3fa5751119f",
+      "fingerprint": "991bd9892ee32f4badc08350160a03c3514e0ae1a33dfa623406b534c73bd352"
+    },
+    "terminal_review_binding": {
+      "path": "config/research/program-007-corporate-action-metadata-qualification-terminal-failure-independent-review-v1.json",
+      "sha256": "e2c003595f074eaba749df60787d234f7e04d007927c2dd14213522c0be71fcb",
+      "fingerprint": "26b09a8c40ca69a73a000d9d95d76b1487e0c269fec88cca9d54d8058a0baca9"
+    }
+  },
+  "retained_response": {
+    "private_path": ".trading-lab/program-007-corporate-action-metadata-v2/symbols-01.body",
+    "byte_count": 115628,
+    "sha256": "52e77eb497e07af20f605103bb4a75187d600ab2b9d1d1c641f21ecf3a834ab0",
+    "request_intent_sha256": "1db05691598bd39aa8fbc28de164c8476d2f256072030cf0d4e0a20312b7010f",
+    "response_receipt_sha256": "baac33cdedbc441fe3c4d30a8ec213bc67c389a43e371ba5e1b4757a3ec79481",
+    "request_chain": "symbols",
+    "request_identity_count": 13,
+    "response_page_index": 1,
+    "http_status": 200,
+    "response_truncated": false,
+    "headers_retained": false,
+    "create_only_provenance": "PASS-INTENT-BODY-RECEIPT-PREEXIST-FORENSIC-ANALYSIS",
+    "top_level_shape": {
+      "keys": [
+        "corporate_actions",
+        "next_page_token"
+      ],
+      "corporate_actions_type": "object",
+      "present_collections": [
+        "cash_dividends",
+        "forward_splits"
+      ],
+      "next_page_token": null
+    },
+    "total_event_count": 543,
+    "private_inventory": {
+      "path": ".trading-lab/program-007-corporate-action-metadata-offline-forensics-v1/private-inventory-v1.json",
+      "git_ignored": true,
+      "mode": "0600",
+      "sha256": "7eccdf64ddbbb585a3668a3324c725f7db4e8a5f5b9fce1759ceb7692bdf3073",
+      "fingerprint": "1ab8d6b2a11e782e4c16c8e9ae82645d2de6cd16bba17ccfa0e58e58f8ae5da1"
+    }
+  },
+  "type_inventory": {
+    "cash_dividend": {
+      "record_count": 538,
+      "distinct_symbol_count": 13,
+      "cusip_nonempty_count": 349,
+      "cusip_empty_count": 189,
+      "cusip_empty_percent": "35.13",
+      "isin_nonempty_count": 0,
+      "isin_empty_count": 538,
+      "isin_empty_percent": "100.00",
+      "usable_process_date_count": 538,
+      "usable_documented_economic_date_count": 538,
+      "unique_event_id_count": 538,
+      "duplicate_id_count": 0
+    },
+    "forward_split": {
+      "record_count": 5,
+      "distinct_symbol_count": 5,
+      "cusip_nonempty_count": 5,
+      "cusip_empty_count": 0,
+      "cusip_empty_percent": "0.00",
+      "isin_nonempty_count": 0,
+      "isin_empty_count": 5,
+      "isin_empty_percent": "100.00",
+      "usable_process_date_count": 5,
+      "usable_documented_economic_date_count": 5,
+      "unique_event_id_count": 5,
+      "duplicate_id_count": 0
+    },
+    "absent_event_types": [
+      "capital_gains_distribution",
+      "cash_merger",
+      "name_change",
+      "partial_call",
+      "redemption",
+      "reorganization",
+      "reverse_split",
+      "rights_distribution",
+      "spin_off",
+      "stock_and_cash_merger",
+      "stock_dividend",
+      "stock_merger",
+      "unit_split",
+      "worthless_removal"
+    ],
+    "unknown_provider_collections": [],
+    "unknown_provider_fields": [],
+    "missing_declared_fields": []
+  },
+  "identifier_forensics": {
+    "cusip_absence_classification": "CASH-DIVIDEND-AND-LEGACY-DATE-ASSOCIATED-NOT-SYMBOL-SPECIFIC",
+    "cusip_evidence": [
+      "Empty CUSIP occurs on 189 of 538 cash-dividend rows and on none of the five forward-split rows.",
+      "All thirteen symbols have empty-CUSIP cash-dividend rows, with 13 to 16 such rows per symbol.",
+      "Empty-CUSIP dividends have process and economic dates from 2016-03-18 through 2019-12-30.",
+      "Non-empty-CUSIP dividends span 2016-03-29 through 2026-07-31 by process date.",
+      "No non-empty returned CUSIP conflicts with the public ledger."
+    ],
+    "isin_role": "OPTIONAL-PROVIDER-METADATA-NOT-RELIED-UPON-FOR-PUBLIC-IDENTITY",
+    "isin_evidence": "All 543 rows have empty ISIN; the retained response therefore supplies no ISIN corroboration.",
+    "identity_mapping": "PASS-543-OF-543-MAP-UNAMBIGUOUSLY-TO-ONE-PUBLIC-LEDGER-SYMBOL",
+    "unexpected_symbols": 0,
+    "conflicting_nonempty_cusips": 0,
+    "ambiguous_identity_mappings": 0
+  },
+  "positive_controls": {
+    "XLB": "PRESENT-AND-STRUCTURALLY-CONSISTENT",
+    "XLE": "PRESENT-AND-STRUCTURALLY-CONSISTENT",
+    "XLK": "PRESENT-AND-STRUCTURALLY-CONSISTENT",
+    "XLU": "PRESENT-AND-STRUCTURALLY-CONSISTENT",
+    "XLY": "PRESENT-AND-STRUCTURALLY-CONSISTENT",
+    "common_economic_date": "2025-12-05",
+    "common_ratio": "2-for-1",
+    "all_event_ids_usable": true,
+    "all_process_dates_usable": true,
+    "all_cusips_nonempty_and_ledger_consistent": true,
+    "all_isins_empty": true
+  },
+  "date_and_order_forensics": {
+    "process_date_min": "2016-03-18",
+    "process_date_max": "2026-07-31",
+    "all_process_dates_inside_1990-01-01_through_2026-08-29": true,
+    "cash_dividend_process_dates_globally_ascending": false,
+    "cash_dividend_process_date_inversions": 12,
+    "cash_dividend_order": "THIRTEEN-CONTIGUOUS-SYMBOL-BLOCKS-EACH-PROCESS-DATE-ASCENDING",
+    "forward_split_process_dates_globally_ascending": true,
+    "successor_ordering_rule": "DO-NOT-RELY-ON-GLOBAL-PROVIDER-ORDER-SORT-CANONICALLY-AFTER-PAGINATION",
+    "economic_date_fields": {
+      "cash_dividend": "ex_date",
+      "forward_split": "ex_date"
+    },
+    "all_documented_economic_dates_usable": true,
+    "economic_date_min": "2016-03-18",
+    "economic_date_max": "2026-06-22",
+    "observable_process_minus_economic_lag_days_min": 0,
+    "observable_process_minus_economic_lag_days_max": 47
+  },
+  "event_id_forensics": {
+    "record_count": 543,
+    "usable_canonical_uuid_count": 543,
+    "unique_event_id_count": 543,
+    "duplicate_id_count": 0,
+    "conflicting_duplicate_id_count": 0,
+    "cross_filter_stability_proved": false,
+    "cross_filter_stability_reason": "The CUSIP chain was never executed; stability remains a prospective Program 008 gate."
+  },
+  "provider_documentation": {
+    "source_url": "https://docs.alpaca.markets/us/reference/corporateactions-1",
+    "markdown_url": "https://docs.alpaca.markets/us/reference/corporateactions-1.md",
+    "refetched_date": "2026-08-29",
+    "http_status": 200,
+    "byte_count": 47697,
+    "sha256": "2a91681f4bd7f6a59d0dda311066249c51f77caa097343f0580ab262934028c1",
+    "etag": "W/\"c63dc2a0babcfef1b255ff440d6662d481a2414a-c20e5a1228ba6ba70d022bb3343257ba1c2beda1-r1-o1787938686844:expanded|f6af7c30\"",
+    "matches_existing_public_evidence": true,
+    "existing_evidence_binding": {
+      "path": "config/research/program-007-alpaca-corporate-actions-public-contract-evidence-v1.json",
+      "sha256": "f674122b0e9349dfde972a587adb49eb07bfe3bdb384a3955ecfec97d7035eb7",
+      "fingerprint": "31068af25bdd130f9ba543da4c2496d5942884ff28667de174f04c2da99e8064"
+    },
+    "data_quality_complete_semantics": "Unprocessed incomplete actions are normally excluded, but processed actions remain eligible even when fields such as ex-date, CUSIP, or ISIN are incomplete.",
+    "universal_nonempty_cusip_guaranteed": false,
+    "universal_nonempty_isin_guaranteed": false,
+    "creation_time_guaranteed": false,
+    "frozen_universal_cusip_rule_classification": "QUALIFICATION-SPECIFICATION-DEFECT"
+  },
+  "frozen_contract_assessment": {
+    "program_007_result": "FAIL-UNDER-FROZEN-CONTRACT",
+    "forensic_conclusion": "FAILURE-DOES-NOT-ESTABLISH-SOURCE-UNSUITABILITY",
+    "exact_defect": "Program 007 treated every schema-listed CUSIP as a required non-empty response value before public-ledger identity resolution, but the current provider contract explicitly allows processed incomplete records under data_quality=complete.",
+    "cash_dividend_relevance": "Cash dividends remain identity-checked but cannot block share-unit continuity solely because optional CUSIP metadata is absent.",
+    "public_ledger_role": "PRIMARY-CANONICAL-IDENTITY-AND-UNIT-ACTION-SOURCE",
+    "alpaca_role": "CORROBORATION-AND-DISCREPANCY-DETECTION-ONLY"
+  },
+  "additional_source_checks": {
+    "positive_controls_missing": false,
+    "malformed_split_ratios": 0,
+    "impossible_or_unusable_dates": 0,
+    "duplicate_conflicting_ids": 0,
+    "symbols_outside_request": 0,
+    "unknown_action_types": 0,
+    "process_dates_outside_query_interval": 0,
+    "identity_mapping_failures": 0,
+    "missing_fields_needed_for_retained_unit_normalization": 0,
+    "pagination_incomplete": false,
+    "global_process_date_sort_deviation": "OBSERVED-NOT-DISQUALIFYING",
+    "deeper_terminal_source_incompatibility": "NONE-FOUND"
+  },
+  "corrected_field_roles": {
+    "required_for_all_events": [
+      "provider event ID",
+      "process_date",
+      "enough symbol/CUSIP information to map to exactly one public-ledger identity",
+      "event-type terms required to classify the action"
+    ],
+    "required_for_relevant_event_types": [
+      "documented economic date when the event can affect units or identity",
+      "positive finite old/new rates for forward and reverse splits"
+    ],
+    "optional_provider_metadata": [
+      "CUSIP",
+      "ISIN"
+    ],
+    "identity_corroboration_only": [
+      "a non-empty CUSIP equal to the public-ledger CUSIP"
+    ],
+    "not_relied_upon": [
+      "ISIN for canonical identity",
+      "global response order",
+      "negative-event completeness"
+    ],
+    "hard_failures": [
+      "unknown or ambiguous public-ledger identity",
+      "non-empty CUSIP conflicting with the public ledger",
+      "two non-empty ISIN representations conflicting for the same provider event ID",
+      "conflicting content for one provider event ID",
+      "missing or wrong positive control",
+      "unsupported in-scope relevant action",
+      "malformed fields, dates, ratios, pagination, or response size"
+    ]
+  },
+  "corrected_parser_regression": {
+    "source_path": "src/systematic_trading_lab/program_008_corporate_actions.py",
+    "source_sha256": "f7516e37e59954ce35e9d0182ef84aeb90fffdb3676688c96d1db7c8aec2689c",
+    "test_path": "tests/unit/test_program_008_corporate_actions.py",
+    "test_sha256": "e6ceb8db7674c84e2e4f8938a0c8a8ba0cf9c546acdd102e2bef994421220516",
+    "retained_response_parse": "PASS",
+    "retained_response_identity_map": "PASS",
+    "retained_response_positive_controls": "PASS",
+    "retained_response_process_dates": "PASS",
+    "retained_response_discrepancy_count": 0,
+    "canonical_core_inventory_fingerprint": "a1fc338678830332f529dc48790156fa570f38795f310ad010c1a8b6e18f11e2",
+    "qualification_result_created": false,
+    "interpretation": "EXPOSED-SOURCE-ENGINEERING-REGRESSION-EVIDENCE-ONLY"
+  },
+  "successor_assessment": {
+    "scientifically_justified": true,
+    "successor_program_number": 8,
+    "successor_program_id": "multi-hour-sector-etf-research-007",
+    "successor_status": "PROGRAM-008-PROPOSED-NOT-AUTHORIZED",
+    "alpaca_corporate_action_metadata_viability": "VIABLE-PENDING-FRESH-PROSPECTIVE-QUALIFICATION",
+    "fresh_evidence": "One never-executed CUSIP-filter chain for the same thirteen public-ledger CUSIPs.",
+    "exact_program_007_symbol_query_replayed": false,
+    "program_007_symbol_response_role": "EXPOSED-REGRESSION-AND-CROSS-FILTER-BASELINE",
+    "new_authority_created": false,
+    "external_execution_root_created": false
+  },
+  "analysis_fingerprint": "2b3cfe2f3f226efae9f74cbfededfb04c586e659ec4cb8820b7297b1234c6318"
+}
