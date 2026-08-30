@@ -457,6 +457,34 @@ def test_authority_proposal_and_review_validate_when_committed() -> None:
     assert controls["proposal"]["authority"] == authority._authority_flags(active=False)
 
 
+def test_terminal_success_revokes_before_credentials_or_private_state(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    credential_reads: list[bool] = []
+    private_root_opens: list[bool] = []
+    monkeypatch.setattr(
+        authority,
+        "_require_credentials_present",
+        lambda _environ: credential_reads.append(True),
+    )
+    monkeypatch.setattr(
+        authority,
+        "_open_private_root",
+        lambda _repository: private_root_opens.append(True),
+    )
+
+    for operation in (
+        lambda: authority.derive_authorization_root(_REPOSITORY, environ={}),
+        lambda: authority.activate_authority(_REPOSITORY, "a" * 64, environ={}),
+        lambda: authority.execute_qualification(_REPOSITORY, "a" * 64, environ={}),
+    ):
+        with pytest.raises(authority.Program008AuthorityError, match="terminally revoked"):
+            operation()
+
+    assert credential_reads == []
+    assert private_root_opens == []
+
+
 def _copy_controls(destination: Path) -> None:
     paths = (
         Path(authority._PROGRAM_007_TERMINAL["path"]),
@@ -548,23 +576,19 @@ def test_git_mutation_fails_reviewed_lineage(tmp_path: Path) -> None:
         capture_output=True,
         text=True,
     )
-    head = subprocess.run(
-        ("git", "-C", str(_REPOSITORY), "rev-parse", "HEAD"),
+    terminal = json.loads((_REPOSITORY / authority._TERMINAL_SUCCESS["path"]).read_bytes())
+    head = str(terminal["execution_main"])
+    subprocess.run(
+        ("git", "-C", str(repository), "checkout", "-B", "main", head),
         check=True,
         capture_output=True,
         text=True,
-    ).stdout.strip()
+    )
     for ref in ("refs/heads/main", "refs/remotes/origin/main"):
         subprocess.run(
             ("git", "-C", str(repository), "update-ref", ref, head),
             check=True,
         )
-    subprocess.run(
-        ("git", "-C", str(repository), "checkout", "--detach", head),
-        check=True,
-        capture_output=True,
-        text=True,
-    )
     controls = authority.validate_proposal_chain(repository)
     proposal = cast(dict[str, Any], controls["proposal"])
     lineage = authority._repository_preflight(repository, proposal, controls)
