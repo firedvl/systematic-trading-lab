@@ -74,16 +74,17 @@ uv run trading-lab data acquire program-006 credential-preflight
 See [Program 006 Alpaca source qualification](docs/program-006-alpaca-qualification.md). Its exact
 one-use qualification is consumed and failed. Do not activate or run it again.
 
-Program 007 has a names-only corporate-action metadata credential preflight:
+Program 007's exact one-use corporate-action metadata qualification is consumed and failed. The
+endpoint returned HTTP 200, but the first symbol-chain page contained cash-dividend records with
+empty required `cusip` values. Frozen schema validation stopped before the CUSIP chain or
+reconciliation.
 
 ```console
 uv run trading-lab data acquire program-007-metadata credential-preflight
 ```
 
 See [Program 007 corporate-action metadata qualification](docs/program-007-corporate-action-metadata-qualification.md).
-The names-only preflight passed and the immutable v2 proposal has a finding-free review. It is
-ready for a separate exact one-use authorization after its final clean-main root is reported. No
-authority is active and no provider request exists.
+Do not activate or run Program 007 metadata again. Do not proceed to its OHLCV qualification.
 
 ## Using historical data
 

@@ -253,7 +253,7 @@ def test_no_standalone_provider_transport_exists() -> None:
     assert not hasattr(authority, "_authorized_urlopen_response")
 
 
-def test_blocked_v1_is_preserved_without_authority_or_claim() -> None:
+def test_blocked_v1_is_preserved() -> None:
     blocked_proposal = _REPOSITORY / authority._BLOCKED_PROPOSAL["path"]
     blocked_review = _REPOSITORY / authority._BLOCKED_REVIEW["path"]
 
@@ -271,12 +271,9 @@ def test_blocked_v1_is_preserved_without_authority_or_claim() -> None:
     )
     assert blocked_proposal.is_file()
     assert blocked_review.is_file()
-    private_root = _REPOSITORY / metadata.PRIVATE_ROOT
-    assert not (private_root / "active-authority.json").exists()
-    assert not (private_root / "claim.json").exists()
 
 
-def test_ready_proposal_creates_no_authority_or_claim() -> None:
+def test_ready_proposal_remains_valid_historical_evidence() -> None:
     if (
         not (_REPOSITORY / authority.PROPOSAL_PATH).exists()
         or not (_REPOSITORY / authority.REVIEW_PATH).exists()
@@ -287,10 +284,31 @@ def test_ready_proposal_creates_no_authority_or_claim() -> None:
     assert controls["proposal"]["status"] == authority.READY_STATUS
     assert controls["proposal"]["credential_lifecycle"]["presence_preflight"] == "PASS"
     assert controls["proposal"]["authority"] == authority._authority_flags(active=False)
-    private_root = _REPOSITORY / metadata.PRIVATE_ROOT
-    assert not (private_root / "active-authority.json").exists()
-    assert not (private_root / "claim.json").exists()
-    assert not private_root.exists()
+
+
+def test_terminal_failure_revokes_before_credentials_or_private_state(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    credential_reads: list[bool] = []
+    private_root_opens: list[bool] = []
+    monkeypatch.setattr(
+        authority,
+        "_require_credentials_present",
+        lambda _environ: credential_reads.append(True),
+    )
+    monkeypatch.setattr(
+        metadata,
+        "_open_private_root",
+        lambda _repository: private_root_opens.append(True),
+    )
+
+    with pytest.raises(authority.Program007AuthorityError, match="terminally revoked"):
+        authority.activate_authority(_REPOSITORY, "a" * 64, environ={})
+    with pytest.raises(authority.Program007AuthorityError, match="terminally revoked"):
+        authority.execute_qualification(_REPOSITORY, "a" * 64, environ={})
+
+    assert credential_reads == []
+    assert private_root_opens == []
 
 
 def _copy_controls(destination: Path) -> None:
@@ -358,12 +376,19 @@ def test_git_mutation_fails_reviewed_lineage(tmp_path: Path) -> None:
         capture_output=True,
         text=True,
     )
-    head = subprocess.run(
-        ("git", "-C", str(_REPOSITORY), "rev-parse", "HEAD"),
+    terminal = json.loads(
+        (
+            _REPOSITORY / "config/research/program-007-corporate-action-metadata-qualification-"
+            "terminal-failure-v1.json"
+        ).read_bytes()
+    )
+    head = str(terminal["execution_main"])
+    subprocess.run(
+        ("git", "-C", str(repository), "checkout", "-B", "main", head),
         check=True,
         capture_output=True,
         text=True,
-    ).stdout.strip()
+    )
     for ref in ("refs/heads/main", "refs/remotes/origin/main"):
         subprocess.run(
             ("git", "-C", str(repository), "update-ref", ref, head),
