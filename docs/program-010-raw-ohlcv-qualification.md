@@ -138,17 +138,17 @@ These estimates authorize no full acquisition.
 
 ## Immutable proposal evidence
 
-- Implementation ID: `program-010-raw-source-implementation-2026-08-30-v4`
-- Implementation commit/root: `313615f5b2786965f7db1854a4f72b95758969a9` /
-  `c7d923dc68499156f7e00d90a236fe2183f24c64da3099249e77bf6ea9cd8457`
+- Implementation ID: `program-010-raw-source-implementation-2026-08-30-v5`
+- Implementation commit/root: `7830eb036e73cea2e9d5914420841b37e85b5b7b` /
+  `cd9436913fb2f2e83ba43ac3e52bfd7708890c24433c912a06f157d2a342ba0b`
 - Implementation artifact SHA-256/fingerprint:
-  `7aa6abb1b5a8bae20e5b9605a73cbf70a5afd5ae0d61b918dcee816bfc29773a` /
-  `5d7bb667d31f34146fb9dae6118e494e9f86b0ee0fea4cabe01fb0fcc68c3e4b`
+  `f8e77aac3cb34630ca80bd58cce6b617892505f50221b537533f38a47b296f3c` /
+  `7acb8478be94212c760e257d0d3fbc42d4232db90d5f1175d52da03e3a45b6e5`
 - Proposal ID:
-  `program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-2026-08-30-v4`
+  `program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-2026-08-30-v5`
 - Proposal SHA-256/fingerprint:
-  `271298e6db9a008b8e7d69fd7c4840a14364f89bcbddd9565c4dec305b63977a` /
-  `3cf6791e7927fce224d0ce1184f45b4ee7186916d95b21a1c104506af2677b39`
+  `449327a5843902f4a93603ff0f3fd7f01665baf33561ba3d019fde4612acc1f5` /
+  `fe24131e1dcd504615a314221d3aec664a0f2c3810127ba69fbceb50f81727a7`
 - Fresh closure review: pending
 
 Initial review found that top-level execution did not always close its unnamed evidence file and that
@@ -159,7 +159,10 @@ Root verification also found that an invalid request was rejected before the sou
 V3 allowlists and tests every public Program 010 artifact path and moves request validation inside the
 closure guard. Closure review then found that the inherited parser sorted rows before Program 010
 could enforce received order. V4 preserves received order only for Program 010 and rejects any page
-that is not already in ascending symbol-then-timestamp order. V1-V3 remain immutable review history.
+that is not already in ascending symbol-then-timestamp order. The next specification review found
+that the private Program 009 regression still sorted retained rows before proving the MDY/XLY
+frontier. V5 preserves retained received order, requires strict within-page and cross-page progress,
+and derives the frontier from the final received coordinate. V1-V4 remain immutable review history.
 
 The implementation accepts only finite synthetic responses and holds raw evidence in an unnamed
 temporary file. It has no provider client, credential reader or presence check, activation path, or

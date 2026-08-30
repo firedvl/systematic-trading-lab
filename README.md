@@ -113,10 +113,10 @@ confirm one completed-domain MDY source gap, and classify the truncated XLY tail
 Program 010, `multi-hour-sector-etf-research-009`, is a synthetic-only, non-authorizing successor
 proposal with one exact XNYS session per chain and token-driven pagination. See
 [Program 010 raw OHLCV structural qualification](docs/program-010-raw-ohlcv-qualification.md).
-Review found source-closure, catastrophic-coverage, public-artifact guard, and received-order defects.
-Proposal v4 closes every valid source, requires strict-majority per-symbol coverage, keeps every
-public artifact in the guard inventory, and rejects wire rows that violate symbol-then-timestamp
-order. Fresh closure review is pending.
+Review found source-closure, catastrophic-coverage, public-artifact guard, received-order, and
+retained-order proof defects. Proposal v5 closes every valid source, requires strict-majority
+per-symbol coverage, keeps every public artifact in the guard inventory, rejects disordered wire
+rows, and proves the retained Program 009 frontier from received order. Fresh closure review is pending.
 It grants no credential, provider, acquisition, dataset, strategy, PAPER, broker, or live authority.
 
 ## Using historical data

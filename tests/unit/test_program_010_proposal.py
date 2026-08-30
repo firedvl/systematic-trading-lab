@@ -9,9 +9,9 @@ import systematic_trading_lab.program_010_ohlcv as program_010
 from systematic_trading_lab.fingerprints import fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
-_IMPLEMENTATION_PATH = Path("config/research/program-010-raw-source-implementation-v4.json")
+_IMPLEMENTATION_PATH = Path("config/research/program-010-raw-source-implementation-v5.json")
 _PROPOSAL_PATH = Path(
-    "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v4.json"
+    "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v5.json"
 )
 
 
@@ -37,7 +37,7 @@ def _assert_binding(binding: dict[str, str]) -> dict[str, Any]:
 def test_program_010_implementation_and_proposal_are_bound_and_non_authorizing() -> None:
     implementation = _assert_fingerprint(_IMPLEMENTATION_PATH, "implementation_fingerprint")
     implementation_binding = implementation["implementation_binding"]
-    assert implementation_binding["source_commit"] == ("313615f5b2786965f7db1854a4f72b95758969a9")
+    assert implementation_binding["source_commit"] == ("7830eb036e73cea2e9d5914420841b37e85b5b7b")
     assert implementation_binding["implementation_root"] == fingerprint(
         implementation_binding["source_files"]
     )
@@ -61,8 +61,8 @@ def test_program_010_implementation_and_proposal_are_bound_and_non_authorizing()
         proposal_implementation["implementation_root"]
         == implementation_binding["implementation_root"]
     )
-    assert proposal_implementation["source_tree"] == "9f5bda267828e94627f664dca69f04716876c15c"
-    assert proposal["supersedes"]["review_status"] == "STANDARDS-FINDING-REMEDIATED-SPEC-PASS"
+    assert proposal_implementation["source_tree"] == "d84b3b26bd75e699e355fbce0a70efa03630cdc3"
+    assert proposal["supersedes"]["review_status"] == "SPEC-FINDING-REMEDIATED-STANDARDS-PASS"
     assert proposal["supersedes"]["remediation_commit"] == (implementation_binding["source_commit"])
     assert proposal["status"] == program_010.STATUS == "PROPOSED-NOT-AUTHORIZED"
     assert proposal["lineage"]["program_009"] == "TERMINAL-FAIL-CONSUMED-NO-RETRY"
@@ -96,5 +96,6 @@ def test_program_010_implementation_and_proposal_are_bound_and_non_authorizing()
         proposal["implementation_boundary"]["public_program_010_artifact_allowlist_invariant"]
         is True
     )
+    assert proposal["implementation_boundary"]["private_program_009_received_order_proved"] is True
     assert proposal["external_authorization_root"] is None
     assert all(value is False for value in proposal["authority"].values())
