@@ -17,8 +17,8 @@
   "bindings": {
     "offline_forensic_analysis": {
       "path": "config/research/program-007-corporate-action-metadata-offline-forensic-analysis-v1.json",
-      "sha256": "b2570db0fedb7259c13201c1b681d5ba7216cd21f9c89e4c2859c104e6a2b7d1",
-      "fingerprint": "2b3cfe2f3f226efae9f74cbfededfb04c586e659ec4cb8820b7297b1234c6318"
+      "sha256": "1fdf65cf3d846dc67b3d29565f7e1283e95185fcc500f6a3b0d7670aa3b2ed8d",
+      "fingerprint": "531148e65d1b45c8985b8ffe29bf7d4c150dd69888432a8188080322fd455c80"
     },
     "terminal_program_007_failure": {
       "path": "config/research/program-007-corporate-action-metadata-qualification-terminal-failure-v1.json",
@@ -38,11 +38,11 @@
     },
     "offline_parser": {
       "path": "src/systematic_trading_lab/program_008_corporate_actions.py",
-      "sha256": "f7516e37e59954ce35e9d0182ef84aeb90fffdb3676688c96d1db7c8aec2689c"
+      "sha256": "30261eeff1de06b18ca5f40c237b3e2666072fe346ae888ef81c021be08d1b59"
     },
     "focused_tests": {
       "path": "tests/unit/test_program_008_corporate_actions.py",
-      "sha256": "e6ceb8db7674c84e2e4f8938a0c8a8ba0cf9c546acdd102e2bef994421220516"
+      "sha256": "0083a07498cb1a0dc34347286e9ca48cb0a4ae537f44dad03a1c60b5baf669b9"
     },
     "exposed_symbol_response": {
       "private_path": ".trading-lab/program-007-corporate-action-metadata-v2/symbols-01.body",
@@ -244,5 +244,5 @@
     "response_bytes": 0
   },
   "exact_next_step": "Obtain a finding-free review and merge this non-authorizing proposal. Any future execution requires a separate exact Program 008 one-use authority proposal, another review, and a new explicit user authorization. Do not execute from this artifact.",
-  "proposal_fingerprint": "f8ef63b4fd61c33a25c56d410e60ade4aeafa194fce4b52921609a493c42c79a"
+  "proposal_fingerprint": "3d2192495cae2fe9c8db67873819df727a9bb13eb5b9a911d51e89a8e4aa884f"
 }

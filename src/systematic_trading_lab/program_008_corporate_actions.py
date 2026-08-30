@@ -78,6 +78,14 @@ class ParsedPage:
 
 
 @dataclass(frozen=True)
+class ParsedChain:
+    events: tuple[SuccessorAction, ...]
+    page_count: int
+    response_bytes: int
+    duplicate_id_count: int
+
+
+@dataclass(frozen=True)
 class ReconciliationResult:
     overlapping_event_ids: int
     stable_positive_controls: tuple[str, ...]
@@ -140,6 +148,51 @@ def parse_metadata_page(body: bytes) -> ParsedPage:
         next_token,
         duplicate_count,
         tuple(sorted(ordering)),
+    )
+
+
+def parse_metadata_chain(bodies: Sequence[bytes]) -> ParsedChain:
+    """Parse a complete offline response chain and enforce its pagination budget."""
+    if not isinstance(bodies, list | tuple) or not bodies:
+        raise Program008MetadataError("Program 008 metadata chain must contain response pages")
+    if len(bodies) > MAXIMUM_PAGES:
+        raise Program008MetadataError("Program 008 metadata chain exceeds the page ceiling")
+
+    response_bytes = 0
+    duplicate_count = 0
+    seen_tokens: set[str] = set()
+    by_id: dict[str, SuccessorAction] = {}
+    for index, body in enumerate(bodies):
+        if type(body) is not bytes:
+            raise Program008MetadataError("Program 008 metadata response must be bytes")
+        response_bytes += len(body)
+        if response_bytes > MAXIMUM_RESPONSE_BYTES:
+            raise Program008MetadataError("Program 008 metadata chain exceeds the byte ceiling")
+        page = parse_metadata_page(body)
+        duplicate_count += page.duplicate_id_count
+        token = page.next_page_token
+        if token is not None:
+            if token in seen_tokens:
+                raise Program008MetadataError("Program 008 metadata pagination token repeated")
+            seen_tokens.add(token)
+        if index < len(bodies) - 1 and token is None:
+            raise Program008MetadataError(
+                "Program 008 metadata pagination ended before the last page"
+            )
+        if index == len(bodies) - 1 and token is not None:
+            raise Program008MetadataError("Program 008 metadata pagination did not end")
+        for action in page.events:
+            existing = by_id.get(action.provider_event_id)
+            if existing is None:
+                by_id[action.provider_event_id] = action
+                continue
+            _require_compatible_duplicate(existing, action)
+            duplicate_count += 1
+    return ParsedChain(
+        events=tuple(sorted(by_id.values(), key=lambda action: action.sort_key)),
+        page_count=len(bodies),
+        response_bytes=response_bytes,
+        duplicate_id_count=duplicate_count,
     )
 
 
@@ -332,6 +385,9 @@ def _canonical_identity(
                 cusips.add(movement["cusip"])
             if isinstance(movement.get("isin"), str) and movement["isin"]:
                 isins.add(movement["isin"])
+
+    if len(isins) > 1:
+        raise Program008MetadataError("Program 008 event has conflicting non-empty ISIN values")
 
     by_cusip = {cusip: symbol for symbol, cusip in IDENTITIES.items()}
     targets = {symbol for symbol in symbols if symbol in IDENTITIES}

@@ -114,8 +114,9 @@ Cash dividends remain subject to identity and schema checks, but an empty CUSIP 
 dividend cannot by itself block share-unit continuity. Relevant unit or identity events remain strict:
 missing economic dates, wrong ratios, unsupported transformations, and ledger discrepancies fail.
 
-The offline Program 008 parser accepts the retained page, maps all 543 events, recovers all five
-controls, validates process and economic dates, and reports zero discrepancies. Its canonical core
+The offline Program 008 parser accepts the retained one-page chain, enforces terminal and
+nonrepeating pagination plus page and byte ceilings, maps all 543 events, recovers all five controls,
+validates process and economic dates, and reports zero discrepancies. Its canonical core
 inventory fingerprint is `a1fc338678830332f529dc48790156fa570f38795f310ad010c1a8b6e18f11e2`.
 This result is exposed source-engineering evidence only.
 

@@ -136,6 +136,19 @@ def test_nonempty_isin_conflict_fails_even_though_isin_is_not_identity() -> None
     with pytest.raises(metadata.Program008MetadataError, match="ISIN metadata conflicts"):
         metadata.parse_metadata_page(_page({"cash_dividends": [first, second]}))
 
+    name_change = {
+        "id": _event_id(50),
+        "old_symbol": "SPY",
+        "old_cusip": "",
+        "old_isin": "US0000000001",
+        "new_symbol": "SPY",
+        "new_cusip": "",
+        "new_isin": "US0000000002",
+        "process_date": "2026-01-26",
+    }
+    with pytest.raises(metadata.Program008MetadataError, match="conflicting non-empty ISIN"):
+        metadata.parse_metadata_page(_page({"name_changes": [name_change]}))
+
 
 def test_relevant_events_need_dates_terms_and_exact_positive_controls() -> None:
     valid = metadata.parse_metadata_page(_page({"forward_splits": _controls()})).events
@@ -219,6 +232,44 @@ def test_process_date_pagination_schema_and_size_fail_closed() -> None:
         metadata.parse_metadata_page(_page({"new_provider_type": []}))
     with pytest.raises(metadata.Program008MetadataError, match="byte ceiling"):
         metadata.parse_metadata_page(b" " * (metadata.MAXIMUM_RESPONSE_PAGE_BYTES + 1))
+
+
+def test_complete_chain_enforces_pagination_and_aggregate_limits(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    first = _page({"cash_dividends": [_cash_dividend(event_id=1)]}, "page-2")
+    last = _page({"cash_dividends": [_cash_dividend(event_id=2)]})
+    chain = metadata.parse_metadata_chain([first, last])
+    assert len(chain.events) == 2
+    assert chain.page_count == 2
+    assert chain.response_bytes == len(first) + len(last)
+
+    with pytest.raises(metadata.Program008MetadataError, match="token repeated"):
+        metadata.parse_metadata_chain([first, first, last])
+    with pytest.raises(metadata.Program008MetadataError, match="ended before the last page"):
+        metadata.parse_metadata_chain([last, last])
+    with pytest.raises(metadata.Program008MetadataError, match="did not end"):
+        metadata.parse_metadata_chain([first])
+    with pytest.raises(metadata.Program008MetadataError, match="page ceiling"):
+        metadata.parse_metadata_chain([last] * (metadata.MAXIMUM_PAGES + 1))
+
+    monkeypatch.setattr(metadata, "MAXIMUM_RESPONSE_BYTES", len(last) - 1)
+    with pytest.raises(metadata.Program008MetadataError, match="chain exceeds the byte ceiling"):
+        metadata.parse_metadata_chain([last])
+
+
+def test_complete_chain_deduplicates_equal_ids_and_rejects_cross_page_conflicts() -> None:
+    event = _cash_dividend(event_id=1)
+    first = _page({"cash_dividends": [event]}, "page-2")
+    last = _page({"cash_dividends": [deepcopy(event)]})
+    chain = metadata.parse_metadata_chain([first, last])
+    assert len(chain.events) == 1
+    assert chain.duplicate_id_count == 1
+
+    conflicting = deepcopy(event)
+    conflicting["rate"] = 2
+    with pytest.raises(metadata.Program008MetadataError, match="content conflicts"):
+        metadata.parse_metadata_chain([first, _page({"cash_dividends": [conflicting]})])
 
 
 def test_parser_records_provider_order_but_sorts_canonical_events() -> None:

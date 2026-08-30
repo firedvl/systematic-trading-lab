@@ -264,10 +264,11 @@
   },
   "corrected_parser_regression": {
     "source_path": "src/systematic_trading_lab/program_008_corporate_actions.py",
-    "source_sha256": "f7516e37e59954ce35e9d0182ef84aeb90fffdb3676688c96d1db7c8aec2689c",
+    "source_sha256": "30261eeff1de06b18ca5f40c237b3e2666072fe346ae888ef81c021be08d1b59",
     "test_path": "tests/unit/test_program_008_corporate_actions.py",
-    "test_sha256": "e6ceb8db7674c84e2e4f8938a0c8a8ba0cf9c546acdd102e2bef994421220516",
+    "test_sha256": "0083a07498cb1a0dc34347286e9ca48cb0a4ae537f44dad03a1c60b5baf669b9",
     "retained_response_parse": "PASS",
+    "retained_response_complete_chain": "PASS-ONE-PAGE-115628-BYTES-TERMINAL-NULL-TOKEN",
     "retained_response_identity_map": "PASS",
     "retained_response_positive_controls": "PASS",
     "retained_response_process_dates": "PASS",
@@ -288,5 +289,5 @@
     "new_authority_created": false,
     "external_execution_root_created": false
   },
-  "analysis_fingerprint": "2b3cfe2f3f226efae9f74cbfededfb04c586e659ec4cb8820b7297b1234c6318"
+  "analysis_fingerprint": "531148e65d1b45c8985b8ffe29bf7d4c150dd69888432a8188080322fd455c80"
 }
