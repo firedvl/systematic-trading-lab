@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-29 - Stop Program 007 metadata after frozen schema failure
+
+- Decision: record Program 007 corporate-action metadata qualification as `TERMINAL-FAIL-CONSUMED-NO-RETRY`, preserve its ignored private evidence, and prohibit replay, replacement authority, purchase, fallback, OHLCV qualification, dataset admission, and strategy execution.
+- Context: exact root `a3e65f85bcc9adaedcfe3842d3b148ed1fb6230ac303ff2cdedadfe33c0bfbbd` activated on clean synchronized main `a624acbe86177323e88042c5dbfe6ef00862e1c8`. One credential load preceded the immutable claim and one symbol-chain request. Alpaca returned HTTP 200 with 115,628 bytes. Frozen parsing stopped because a cash-dividend record had an empty required `cusip`; the CUSIP chain and reconciliation were not reached.
+- Consequences: endpoint access was observed, but the five positive controls were not qualified. The public ledger remains unchanged. Raw metadata stays outside Git. No OHLCV request, dataset, strategy calculation or return, protected-state access, PAPER action, broker write, or live action occurred. Public failure SHA-256/fingerprint is `99bc4397909f364efac2f189351bff9ebaae9b886833fc7e0555b3fa5751119f` / `991bd9892ee32f4badc08350160a03c3514e0ae1a33dfa623406b534c73bd352`.
+- Revisit when: never for this one-use authority. Any different metadata or raw-data path is a new program requiring new prospective policy, implementation review, and explicit authority; this task authorizes none.
+
 ## 2026-08-29 - Advance Program 007 metadata authority to reviewed READY
 
 - Decision: preserve blocked proposal v1 and its review as immutable history, then create reviewed proposal v2 after the names-only credential preflight passes. Bind v2 to the unchanged request plan, ledger v3, source plan v3, source implementation v6 and review, and the exact authority lifecycle implementation commit. Derive the external authorization root only from final clean synchronized `main`; do not store it in Git or activate it in this phase.
