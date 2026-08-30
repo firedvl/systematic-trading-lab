@@ -82,8 +82,9 @@ Each chain requests all thirteen symbols for one exact XNYS regular session:
 - zero automatic retries
 
 A chain ends only when `next_page_token` is null. Tokens are opaque. A cycle, reuse, repeated page,
-order regression, cross-page duplicate, or nonterminal zero-progress page fails. Each bounded body is
-fsynced before parsing or continuation.
+received symbol-then-timestamp order regression, cross-page duplicate, or nonterminal zero-progress
+page fails. Received order is checked before normalization. Each bounded body is fsynced before
+parsing or continuation.
 
 The 16-page session ceiling is a resource and abnormal-provider-behavior cap, not an expected page
 count. A normal session has at most 1,014 canonical coordinates and needs at least two pages at
@@ -137,17 +138,17 @@ These estimates authorize no full acquisition.
 
 ## Immutable proposal evidence
 
-- Implementation ID: `program-010-raw-source-implementation-2026-08-30-v3`
-- Implementation commit/root: `b97d726b082ac5057871b1d4da926e49fbac8ffe` /
-  `34795a3607bfe06166878988452775bb43e75fce1a2bce65b6b9b7a2b486e231`
+- Implementation ID: `program-010-raw-source-implementation-2026-08-30-v4`
+- Implementation commit/root: `313615f5b2786965f7db1854a4f72b95758969a9` /
+  `c7d923dc68499156f7e00d90a236fe2183f24c64da3099249e77bf6ea9cd8457`
 - Implementation artifact SHA-256/fingerprint:
-  `9657e46150d82b07694921c70a7045fbf37b45441fb3d173ea2b8bc2ce55b908` /
-  `c48847eee55eb451eb6763ab462e80eee76f9ee86636ebbd24966fc93d020818`
+  `7aa6abb1b5a8bae20e5b9605a73cbf70a5afd5ae0d61b918dcee816bfc29773a` /
+  `5d7bb667d31f34146fb9dae6118e494e9f86b0ee0fea4cabe01fb0fcc68c3e4b`
 - Proposal ID:
-  `program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-2026-08-30-v3`
+  `program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-2026-08-30-v4`
 - Proposal SHA-256/fingerprint:
-  `5c3c7a0d04ddd7f082aa849e7988ea23943e60d9098c665d322612bb8ada9553` /
-  `e1726faaa8bae300e5ee55fd2f3005393f11a14d839dc9ce2a08f9d758ae8734`
+  `271298e6db9a008b8e7d69fd7c4840a14364f89bcbddd9565c4dec305b63977a` /
+  `3cf6791e7927fce224d0ce1184f45b4ee7186916d95b21a1c104506af2677b39`
 - Fresh closure review: pending
 
 Initial review found that top-level execution did not always close its unnamed evidence file and that
@@ -156,7 +157,9 @@ every top-level success or failure and applies the strict-majority rule above. V
 review history. Closure review then found that the private-data guard rejected both v2 artifact paths.
 Root verification also found that an invalid request was rejected before the source closure guard.
 V3 allowlists and tests every public Program 010 artifact path and moves request validation inside the
-closure guard. V2 remains immutable review history.
+closure guard. Closure review then found that the inherited parser sorted rows before Program 010
+could enforce received order. V4 preserves received order only for Program 010 and rejects any page
+that is not already in ascending symbol-then-timestamp order. V1-V3 remain immutable review history.
 
 The implementation accepts only finite synthetic responses and holds raw evidence in an unnamed
 temporary file. It has no provider client, credential reader or presence check, activation path, or

@@ -1,0 +1,210 @@
+{
+  "schema_version": "program-010-raw-source-implementation-v4",
+  "implementation_id": "program-010-raw-source-implementation-2026-08-30-v4",
+  "program_id": "multi-hour-sector-etf-research-009",
+  "status": "IMPLEMENTED-SYNTHETICALLY-PROPOSED-NOT-AUTHORIZED",
+  "implementation_binding": {
+    "source_commit": "313615f5b2786965f7db1854a4f72b95758969a9",
+    "implementation_root": "c7d923dc68499156f7e00d90a236fe2183f24c64da3099249e77bf6ea9cd8457",
+    "source_files": [
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+        "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1"
+      },
+      {
+        "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-v1.json",
+        "sha256": "23bf0e29b4f8b4b4655d7eeb470e4ceb1bc319717c854ec3d82790ef52c1762b"
+      },
+      {
+        "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
+        "sha256": "c4778d1600c564f34da80ff7052c39e7a4bd599685342795ccb4401a4318ea4a"
+      },
+      {
+        "path": "config/research/program-009-raw-sip-ohlcv-offline-forensic-analysis-v1.json",
+        "sha256": "cc77d9a9f767d66262547704892f98584dad38a5771324025f1828b9048bed17"
+      },
+      {
+        "path": "config/research/program-010-alpaca-bars-public-contract-evidence-v1.json",
+        "sha256": "ad925b6aaf12ab654090cb7acad0bf7418fdb2a5d2b8f50225488515f9e56e69"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "457fb525cb5511a4e70d90d411fe2c2c313050fbd11688d21ccd685eb931cb91"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_alpaca.py",
+        "sha256": "cc60139d1f1f8a9f00cd6dbb10100e831b0dd369d62780451e6d1b78e50aae87"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_010_ohlcv.py",
+        "sha256": "87ba1741b06f29d8018679fda8e4d016f4a033ff48e7dfb85f503c55d2d7324c"
+      },
+      {
+        "path": "tests/unit/test_program_010_forensic_contract.py",
+        "sha256": "307958afaa25f3de35ebe2ce12c861f86f3db52f22fba8e5d293267fc7d49328"
+      },
+      {
+        "path": "tests/unit/test_program_010_ohlcv.py",
+        "sha256": "c3cf2b5a60f3895b7a9653ee1e89373037048c59c62e6edbb617e4799fa45fdd"
+      }
+    ]
+  },
+  "supersedes": {
+    "implementation": {
+      "path": "config/research/program-010-raw-source-implementation-v3.json",
+      "sha256": "9657e46150d82b07694921c70a7045fbf37b45441fb3d173ea2b8bc2ce55b908",
+      "fingerprint": "c48847eee55eb451eb6763ab462e80eee76f9ee86636ebbd24966fc93d020818"
+    },
+    "review_findings": [
+      "The inherited raw-page parser sorted validated bars before Program 010 inspected them, so a response that violated the frozen symbol-then-timestamp received order could pass."
+    ],
+    "remediations": [
+      "Preserve received order only for the Program 010 parser call, reject any page whose validated rows are not already in strict ascending symbol-then-timestamp order, and retain the historical sorted default for every other caller."
+    ],
+    "remediation_commit": "313615f5b2786965f7db1854a4f72b95758969a9"
+  },
+  "execution_boundary": {
+    "entrypoints": [
+      "execute_synthetic_session",
+      "execute_synthetic_qualification"
+    ],
+    "synthetic_responses_only": true,
+    "provider_transport_present": false,
+    "credential_names_or_values_present": false,
+    "authority_activation_present": false,
+    "request_intent_is_immutable": true,
+    "raw_evidence_storage": "capability-held unnamed temporary file",
+    "bounded_raw_body_fsynced_before_parse_or_continuation": true,
+    "top_level_source_closed_on_success_or_failure": true,
+    "automatic_retries": 0,
+    "future_real_transport_requirement": "A separate reviewed one-use authority proposal and persistent ignored evidence store must bind this contract before any provider request."
+  },
+  "transport_contract": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "chain_scope": "one exact XNYS regular session",
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "sort": "asc",
+    "limit": 1000,
+    "asof": "2026-07-31",
+    "inclusive_exact_rth_bounds": true,
+    "terminal_condition": "next_page_token is null",
+    "maximum_pages_per_session": 16,
+    "maximum_response_page_bytes": 8388608,
+    "maximum_session_response_bytes": 8388608,
+    "maximum_qualification_response_bytes": 41943040,
+    "maximum_qualification_requests": 80
+  },
+  "pagination_controls": {
+    "opaque_tokens": true,
+    "token_cycle_rejected": true,
+    "token_reuse_rejected": true,
+    "nonterminal_zero_progress_rejected": true,
+    "cross_page_duplicate_rejected": true,
+    "symbol_then_timestamp_regression_rejected": true,
+    "repeated_response_rejected": true,
+    "page_row_limit_enforced": true,
+    "resource_cap_nonterminal_result": "CHAIN-INCOMPLETE-RESOURCE-CAP",
+    "received_symbol_then_timestamp_order_enforced_before_normalization": true
+  },
+  "missingness_contract": {
+    "terminal_absence": "SOURCE-MISSING",
+    "incomplete_absence_before_ordered_frontier": "SOURCE-MISSING",
+    "incomplete_absence_after_ordered_frontier": "UNOBSERVED-BECAUSE-CHAIN-INCOMPLETE",
+    "isolated_source_missing_fails_structural_qualification": false,
+    "meaningful_coverage_rule": "strict majority of calendar-derived coordinates for every required symbol",
+    "normal_session_minimum_coordinates_per_symbol": 40,
+    "early_close_minimum_coordinates_per_symbol": 22,
+    "meaningful_coverage_rationale": "A strict majority is the smallest session-scaled floor that requires more observed than absent coordinates for every identity while leaving isolated missingness to later dataset admission.",
+    "below_meaningful_coverage_fails_structural_qualification": true,
+    "entire_symbol_absence_fails_structural_qualification": true,
+    "entire_session_absence_fails_structural_qualification": true,
+    "imputation_allowed": false
+  },
+  "fresh_sample": {
+    "sessions": [
+      "2021-05-25",
+      "2021-07-02",
+      "2024-01-11",
+      "2025-11-28",
+      "2025-12-15"
+    ],
+    "expected_canonical_coordinates": 4602,
+    "typical_response_count": 9,
+    "maximum_response_count": 80
+  },
+  "synthetic_verification": {
+    "focused_program_010_behavior_and_forensic_tests": "27 passed",
+    "complete_normal_1014": "PASS",
+    "underfilled_and_three_page_completion": "PASS",
+    "opaque_token_continuation": "PASS",
+    "token_cycle_and_reuse": "PASS",
+    "zero_progress": "PASS",
+    "duplicate_coordinate": "PASS",
+    "isolated_mdy_missingness": "PASS-WITH-SOURCE-MISSING",
+    "one_bar_per_symbol_normal_and_early_close": "FAIL-CATASTROPHIC-BELOW-STRICT-MAJORITY",
+    "entire_symbol_absence": "FAIL-CATASTROPHIC",
+    "early_close_546": "PASS",
+    "post_split_and_exact_share_factor": "PASS",
+    "out_of_bounds_and_malformed_rows": "FAIL-AFTER-RAW-RETENTION",
+    "oversized_page": "FAIL",
+    "resource_safety_cap": "CHAIN-INCOMPLETE-NOT-SOURCE-MISSING",
+    "top_level_source_closure": "PASS-SUCCESS-AND-FAILURE",
+    "private_program_009_regression": "PASS-ONE-MDY-SOURCE-MISSING-244-XLY-UNOBSERVED",
+    "provider_requests": 0,
+    "credential_accesses": 0,
+    "strategy_calculations_or_returns": 0,
+    "invalid_request_source_closure": "PASS",
+    "public_artifact_secret_guard": "PASS",
+    "secret_scan": "PASS-626-FILES",
+    "focused_program_007_and_010_tests": "68 passed",
+    "reversed_received_page_order": "FAIL-AFTER-RAW-RETENTION"
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "5d7bb667d31f34146fb9dae6118e494e9f86b0ee0fea4cabe01fb0fcc68c3e4b"
+}
