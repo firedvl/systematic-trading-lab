@@ -56,7 +56,9 @@ Program 009's zero-missing sample rule conflated those decisions. Program 010 us
 - An absent coordinate after that frontier is `UNOBSERVED-BECAUSE-CHAIN-INCOMPLETE`.
 - An isolated source-missing coordinate is recorded without imputation and does not alone fail
   structural source qualification.
-- An entire required symbol or session absence fails as catastrophic coverage loss.
+- Every required symbol must contain a strict majority of its calendar-derived session coordinates:
+  40 of 78 on a normal session or 22 of 42 on an early close. Lower coverage fails as
+  catastrophic coverage loss.
 
 Qualification also fails on inaccessible SIP, malformed schema or coordinates, duplicates, invalid
 OHLC or volume, symbol contamination, pagination cycle, token reuse, order regression, zero progress,
@@ -135,19 +137,28 @@ These estimates authorize no full acquisition.
 
 ## Immutable proposal evidence
 
-- Implementation commit/root: `a32f14c3aea7eb2448b47073934ae003413d222d` /
-  `4875e410db995e4af14c065f58e8d11e07150bb12bfae86cef0ba6ee719dbee0`
+- Implementation ID: `program-010-raw-source-implementation-2026-08-30-v2`
+- Implementation commit/root: `974e223f0b07e5662adc2342fd5c0ed4289b1b46` /
+  `fef66005316009c2da835111772437294c3e3077e946d45bdd81e8eaa2b138da`
 - Implementation artifact SHA-256/fingerprint:
-  `6f0400caabc6a8cfeb2c62290c120343c7fb0a758c92f32ab2c8043e8acad9aa` /
-  `e4df45ae3434f76a431c3f628ad0251960a823d91356a5f1a4ba78144c03d786`
+  `049cbc08764ed6867042cf53ede2045bca339acc3216c9daf54b0cfe49d8c080` /
+  `8d3f6cd635524baaa2c71b38d5eb02bab290d56ef4afad771150370683c84a60`
+- Proposal ID:
+  `program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-2026-08-30-v2`
 - Proposal SHA-256/fingerprint:
-  `0bb7fbae4f4d30914d9a1fcd95ad9385ae7dbe5ba4301c9ddd2e402add299205` /
-  `2effa38299120052939802fcdcb229f0801d8ac5999aae5b49b04fb9d3c38440`
-- Independent review: pending
+  `6b9ddc99dae6e5ce51559feda41f86eaa7ef98cdb120689bdbc33b3a721c21b7` /
+  `00f71af4e1016d708e2e6c62867593554879065da50e99e5f412adad427ab0d4`
+- Fresh closure review: pending
+
+Initial review found that top-level execution did not always close its unnamed evidence file and that
+one coordinate per symbol could pass catastrophic coverage. V2 closes the source in `finally` on
+every top-level success or failure and applies the strict-majority rule above. V1 remains immutable
+review history.
 
 The implementation accepts only finite synthetic responses and holds raw evidence in an unnamed
 temporary file. It has no provider client, credential reader or presence check, activation path, or
-persistent real evidence root.
+persistent real evidence root. Every top-level synthetic execution closes the evidence source on
+success or failure.
 
 The exact next step is to create and independently review a separate one-use Program 010 raw SIP
 structural qualification authority proposal that binds a fixed GET-only client and ignored persistent

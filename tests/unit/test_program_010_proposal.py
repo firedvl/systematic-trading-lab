@@ -9,9 +9,9 @@ import systematic_trading_lab.program_010_ohlcv as program_010
 from systematic_trading_lab.fingerprints import fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
-_IMPLEMENTATION_PATH = Path("config/research/program-010-raw-source-implementation-v1.json")
+_IMPLEMENTATION_PATH = Path("config/research/program-010-raw-source-implementation-v2.json")
 _PROPOSAL_PATH = Path(
-    "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v1.json"
+    "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v2.json"
 )
 
 
@@ -37,7 +37,7 @@ def _assert_binding(binding: dict[str, str]) -> dict[str, Any]:
 def test_program_010_implementation_and_proposal_are_bound_and_non_authorizing() -> None:
     implementation = _assert_fingerprint(_IMPLEMENTATION_PATH, "implementation_fingerprint")
     implementation_binding = implementation["implementation_binding"]
-    assert implementation_binding["source_commit"] == ("a32f14c3aea7eb2448b47073934ae003413d222d")
+    assert implementation_binding["source_commit"] == ("974e223f0b07e5662adc2342fd5c0ed4289b1b46")
     assert implementation_binding["implementation_root"] == fingerprint(
         implementation_binding["source_files"]
     )
@@ -46,10 +46,13 @@ def test_program_010_implementation_and_proposal_are_bound_and_non_authorizing()
             hashlib.sha256((_REPOSITORY / source["path"]).read_bytes()).hexdigest()
             == source["sha256"]
         )
+    _assert_binding(implementation["supersedes"]["implementation"])
 
     proposal = _assert_fingerprint(_PROPOSAL_PATH, "proposal_fingerprint")
     for binding in proposal["bindings"].values():
         _assert_binding(binding)
+    _assert_binding(proposal["supersedes"]["proposal"])
+    _assert_binding(proposal["supersedes"]["implementation"])
 
     proposal_implementation = proposal["bindings"]["program_010_implementation"]
     assert proposal_implementation["fingerprint"] == implementation["implementation_fingerprint"]
@@ -58,6 +61,9 @@ def test_program_010_implementation_and_proposal_are_bound_and_non_authorizing()
         proposal_implementation["implementation_root"]
         == implementation_binding["implementation_root"]
     )
+    assert proposal_implementation["source_tree"] == "ef0cf2a1ebf2c789c615601094a66f60b5411f8d"
+    assert proposal["supersedes"]["review_status"] == "FINDINGS-REMEDIATED"
+    assert proposal["supersedes"]["remediation_commit"] == (implementation_binding["source_commit"])
     assert proposal["status"] == program_010.STATUS == "PROPOSED-NOT-AUTHORIZED"
     assert proposal["lineage"]["program_009"] == "TERMINAL-FAIL-CONSUMED-NO-RETRY"
     assert proposal["forensic_conclusions"]["six_page_ceiling"] == (
@@ -74,6 +80,16 @@ def test_program_010_implementation_and_proposal_are_bound_and_non_authorizing()
     assert proposal["fresh_sample"]["expected_canonical_coordinates"] == 4_602
     assert proposal["budgets"]["qualification_maximum_requests_and_responses"] == (
         program_010.MAXIMUM_QUALIFICATION_REQUESTS
+    )
+    qualification = proposal["qualification_contract"]
+    assert qualification["normal_session_minimum_coordinates_per_symbol"] == 40
+    assert qualification["early_close_minimum_coordinates_per_symbol"] == 22
+    assert qualification["below_meaningful_coverage"] == "FAIL-CATASTROPHIC-COVERAGE"
+    assert (
+        proposal["implementation_boundary"][
+            "top_level_synthetic_source_closed_on_success_or_failure"
+        ]
+        is True
     )
     assert proposal["external_authorization_root"] is None
     assert all(value is False for value in proposal["authority"].values())

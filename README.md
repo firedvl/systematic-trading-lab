@@ -113,6 +113,9 @@ confirm one completed-domain MDY source gap, and classify the truncated XLY tail
 Program 010, `multi-hour-sector-etf-research-009`, is a synthetic-only, non-authorizing successor
 proposal with one exact XNYS session per chain and token-driven pagination. See
 [Program 010 raw OHLCV structural qualification](docs/program-010-raw-ohlcv-qualification.md).
+Review v1 found source-closure and catastrophic-coverage defects. Proposal v2 closes the synthetic
+source on every top-level exit and requires strict-majority per-symbol session coverage; fresh
+closure review is pending.
 It grants no credential, provider, acquisition, dataset, strategy, PAPER, broker, or live authority.
 
 ## Using historical data
