@@ -1,0 +1,209 @@
+{
+  "schema_version": "program-010-raw-source-implementation-v3",
+  "implementation_id": "program-010-raw-source-implementation-2026-08-30-v3",
+  "program_id": "multi-hour-sector-etf-research-009",
+  "status": "IMPLEMENTED-SYNTHETICALLY-PROPOSED-NOT-AUTHORIZED",
+  "implementation_binding": {
+    "source_commit": "b97d726b082ac5057871b1d4da926e49fbac8ffe",
+    "implementation_root": "34795a3607bfe06166878988452775bb43e75fce1a2bce65b6b9b7a2b486e231",
+    "source_files": [
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+        "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1"
+      },
+      {
+        "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-v1.json",
+        "sha256": "23bf0e29b4f8b4b4655d7eeb470e4ceb1bc319717c854ec3d82790ef52c1762b"
+      },
+      {
+        "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
+        "sha256": "c4778d1600c564f34da80ff7052c39e7a4bd599685342795ccb4401a4318ea4a"
+      },
+      {
+        "path": "config/research/program-009-raw-sip-ohlcv-offline-forensic-analysis-v1.json",
+        "sha256": "cc77d9a9f767d66262547704892f98584dad38a5771324025f1828b9048bed17"
+      },
+      {
+        "path": "config/research/program-010-alpaca-bars-public-contract-evidence-v1.json",
+        "sha256": "ad925b6aaf12ab654090cb7acad0bf7418fdb2a5d2b8f50225488515f9e56e69"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "532168d69e073c73d94330954668a9f91424e8fb22bfdff8ecbc78287186c5d4"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_alpaca.py",
+        "sha256": "3e830b6c004a2d6528d53aa3dcdd3d3d5252fff703cd9e7b5674bf5261c4e05f"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_010_ohlcv.py",
+        "sha256": "654ef6d8fe1ee55ef6d41be97b19d7b81b4c904ad9548da7ed281225ec298027"
+      },
+      {
+        "path": "tests/unit/test_program_010_forensic_contract.py",
+        "sha256": "307958afaa25f3de35ebe2ce12c861f86f3db52f22fba8e5d293267fc7d49328"
+      },
+      {
+        "path": "tests/unit/test_program_010_ohlcv.py",
+        "sha256": "641a011afc9b032a23f1930b666c2b1045ee19a06c369b977af44c544a615a16"
+      }
+    ]
+  },
+  "supersedes": {
+    "implementation": {
+      "path": "config/research/program-010-raw-source-implementation-v2.json",
+      "sha256": "049cbc08764ed6867042cf53ede2045bca339acc3216c9daf54b0cfe49d8c080",
+      "fingerprint": "8d3f6cd635524baaa2c71b38d5eb02bab290d56ef4afad771150370683c84a60"
+    },
+    "review_findings": [
+      "The repository secret and private-data guard rejected both public Program 010 v2 JSON artifacts because its exact allowlist contained only v1 paths.",
+      "A valid synthetic source remained open when public session execution rejected an invalid request before entering its closure guard."
+    ],
+    "remediations": [
+      "Allowlist the immutable Program 010 v2 and v3 implementation and proposal paths and test that every public Program 010 JSON artifact remains allowlisted.",
+      "Validate a valid synthetic source before the closure guard, then validate the request inside try so every exit with an owned source closes it."
+    ],
+    "remediation_commit": "b97d726b082ac5057871b1d4da926e49fbac8ffe"
+  },
+  "execution_boundary": {
+    "entrypoints": [
+      "execute_synthetic_session",
+      "execute_synthetic_qualification"
+    ],
+    "synthetic_responses_only": true,
+    "provider_transport_present": false,
+    "credential_names_or_values_present": false,
+    "authority_activation_present": false,
+    "request_intent_is_immutable": true,
+    "raw_evidence_storage": "capability-held unnamed temporary file",
+    "bounded_raw_body_fsynced_before_parse_or_continuation": true,
+    "top_level_source_closed_on_success_or_failure": true,
+    "automatic_retries": 0,
+    "future_real_transport_requirement": "A separate reviewed one-use authority proposal and persistent ignored evidence store must bind this contract before any provider request."
+  },
+  "transport_contract": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "chain_scope": "one exact XNYS regular session",
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "sort": "asc",
+    "limit": 1000,
+    "asof": "2026-07-31",
+    "inclusive_exact_rth_bounds": true,
+    "terminal_condition": "next_page_token is null",
+    "maximum_pages_per_session": 16,
+    "maximum_response_page_bytes": 8388608,
+    "maximum_session_response_bytes": 8388608,
+    "maximum_qualification_response_bytes": 41943040,
+    "maximum_qualification_requests": 80
+  },
+  "pagination_controls": {
+    "opaque_tokens": true,
+    "token_cycle_rejected": true,
+    "token_reuse_rejected": true,
+    "nonterminal_zero_progress_rejected": true,
+    "cross_page_duplicate_rejected": true,
+    "symbol_then_timestamp_regression_rejected": true,
+    "repeated_response_rejected": true,
+    "page_row_limit_enforced": true,
+    "resource_cap_nonterminal_result": "CHAIN-INCOMPLETE-RESOURCE-CAP"
+  },
+  "missingness_contract": {
+    "terminal_absence": "SOURCE-MISSING",
+    "incomplete_absence_before_ordered_frontier": "SOURCE-MISSING",
+    "incomplete_absence_after_ordered_frontier": "UNOBSERVED-BECAUSE-CHAIN-INCOMPLETE",
+    "isolated_source_missing_fails_structural_qualification": false,
+    "meaningful_coverage_rule": "strict majority of calendar-derived coordinates for every required symbol",
+    "normal_session_minimum_coordinates_per_symbol": 40,
+    "early_close_minimum_coordinates_per_symbol": 22,
+    "meaningful_coverage_rationale": "A strict majority is the smallest session-scaled floor that requires more observed than absent coordinates for every identity while leaving isolated missingness to later dataset admission.",
+    "below_meaningful_coverage_fails_structural_qualification": true,
+    "entire_symbol_absence_fails_structural_qualification": true,
+    "entire_session_absence_fails_structural_qualification": true,
+    "imputation_allowed": false
+  },
+  "fresh_sample": {
+    "sessions": [
+      "2021-05-25",
+      "2021-07-02",
+      "2024-01-11",
+      "2025-11-28",
+      "2025-12-15"
+    ],
+    "expected_canonical_coordinates": 4602,
+    "typical_response_count": 9,
+    "maximum_response_count": 80
+  },
+  "synthetic_verification": {
+    "focused_program_010_behavior_and_forensic_tests": "26 passed",
+    "complete_normal_1014": "PASS",
+    "underfilled_and_three_page_completion": "PASS",
+    "opaque_token_continuation": "PASS",
+    "token_cycle_and_reuse": "PASS",
+    "zero_progress": "PASS",
+    "duplicate_coordinate": "PASS",
+    "isolated_mdy_missingness": "PASS-WITH-SOURCE-MISSING",
+    "one_bar_per_symbol_normal_and_early_close": "FAIL-CATASTROPHIC-BELOW-STRICT-MAJORITY",
+    "entire_symbol_absence": "FAIL-CATASTROPHIC",
+    "early_close_546": "PASS",
+    "post_split_and_exact_share_factor": "PASS",
+    "out_of_bounds_and_malformed_rows": "FAIL-AFTER-RAW-RETENTION",
+    "oversized_page": "FAIL",
+    "resource_safety_cap": "CHAIN-INCOMPLETE-NOT-SOURCE-MISSING",
+    "top_level_source_closure": "PASS-SUCCESS-AND-FAILURE",
+    "private_program_009_regression": "PASS-ONE-MDY-SOURCE-MISSING-244-XLY-UNOBSERVED",
+    "provider_requests": 0,
+    "credential_accesses": 0,
+    "strategy_calculations_or_returns": 0,
+    "invalid_request_source_closure": "PASS",
+    "public_artifact_secret_guard": "PASS",
+    "secret_scan": "PASS-624-FILES"
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "c48847eee55eb451eb6763ab462e80eee76f9ee86636ebbd24966fc93d020818"
+}

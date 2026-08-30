@@ -137,23 +137,26 @@ These estimates authorize no full acquisition.
 
 ## Immutable proposal evidence
 
-- Implementation ID: `program-010-raw-source-implementation-2026-08-30-v2`
-- Implementation commit/root: `974e223f0b07e5662adc2342fd5c0ed4289b1b46` /
-  `fef66005316009c2da835111772437294c3e3077e946d45bdd81e8eaa2b138da`
+- Implementation ID: `program-010-raw-source-implementation-2026-08-30-v3`
+- Implementation commit/root: `b97d726b082ac5057871b1d4da926e49fbac8ffe` /
+  `34795a3607bfe06166878988452775bb43e75fce1a2bce65b6b9b7a2b486e231`
 - Implementation artifact SHA-256/fingerprint:
-  `049cbc08764ed6867042cf53ede2045bca339acc3216c9daf54b0cfe49d8c080` /
-  `8d3f6cd635524baaa2c71b38d5eb02bab290d56ef4afad771150370683c84a60`
+  `9657e46150d82b07694921c70a7045fbf37b45441fb3d173ea2b8bc2ce55b908` /
+  `c48847eee55eb451eb6763ab462e80eee76f9ee86636ebbd24966fc93d020818`
 - Proposal ID:
-  `program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-2026-08-30-v2`
+  `program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-2026-08-30-v3`
 - Proposal SHA-256/fingerprint:
-  `6b9ddc99dae6e5ce51559feda41f86eaa7ef98cdb120689bdbc33b3a721c21b7` /
-  `00f71af4e1016d708e2e6c62867593554879065da50e99e5f412adad427ab0d4`
+  `5c3c7a0d04ddd7f082aa849e7988ea23943e60d9098c665d322612bb8ada9553` /
+  `e1726faaa8bae300e5ee55fd2f3005393f11a14d839dc9ce2a08f9d758ae8734`
 - Fresh closure review: pending
 
 Initial review found that top-level execution did not always close its unnamed evidence file and that
 one coordinate per symbol could pass catastrophic coverage. V2 closes the source in `finally` on
 every top-level success or failure and applies the strict-majority rule above. V1 remains immutable
-review history.
+review history. Closure review then found that the private-data guard rejected both v2 artifact paths.
+Root verification also found that an invalid request was rejected before the source closure guard.
+V3 allowlists and tests every public Program 010 artifact path and moves request validation inside the
+closure guard. V2 remains immutable review history.
 
 The implementation accepts only finite synthetic responses and holds raw evidence in an unnamed
 temporary file. It has no provider client, credential reader or presence check, activation path, or
