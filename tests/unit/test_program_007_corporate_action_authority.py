@@ -253,22 +253,43 @@ def test_no_standalone_provider_transport_exists() -> None:
     assert not hasattr(authority, "_authorized_urlopen_response")
 
 
-def test_blocked_proposal_creates_no_root_authority_or_claim() -> None:
+def test_blocked_v1_is_preserved_without_authority_or_claim() -> None:
+    blocked_proposal = _REPOSITORY / authority._BLOCKED_PROPOSAL["path"]
+    blocked_review = _REPOSITORY / authority._BLOCKED_REVIEW["path"]
+
+    assert (
+        authority._load_static_artifact(
+            _REPOSITORY, authority._BLOCKED_PROPOSAL, "proposal_fingerprint"
+        )["status"]
+        == "BLOCKED-CREDENTIALS-NOT-VISIBLE-TO-RUNTIME"
+    )
+    assert (
+        authority._load_static_artifact(
+            _REPOSITORY, authority._BLOCKED_REVIEW, "review_fingerprint"
+        )["status"]
+        == "PASS-BLOCKED-CREDENTIALS-NOT-VISIBLE-TO-RUNTIME"
+    )
+    assert blocked_proposal.is_file()
+    assert blocked_review.is_file()
+    private_root = _REPOSITORY / metadata.PRIVATE_ROOT
+    assert not (private_root / "active-authority.json").exists()
+    assert not (private_root / "claim.json").exists()
+
+
+def test_ready_proposal_creates_no_authority_or_claim() -> None:
     if (
         not (_REPOSITORY / authority.PROPOSAL_PATH).exists()
         or not (_REPOSITORY / authority.REVIEW_PATH).exists()
     ):
-        pytest.skip("blocked proposal and review are committed after implementation")
+        pytest.skip("ready proposal and review are committed after implementation")
 
     controls = authority.validate_proposal_chain(_REPOSITORY)
-    assert controls["proposal"]["status"] == authority.BLOCKED_STATUS
-    with pytest.raises(authority.Program007AuthorityError, match="no authorization root exists"):
-        authority.derive_authorization_root(_REPOSITORY, environ=_credentials())
+    assert controls["proposal"]["status"] == authority.READY_STATUS
+    assert controls["proposal"]["credential_lifecycle"]["presence_preflight"] == "PASS"
+    assert controls["proposal"]["authority"] == authority._authority_flags(active=False)
     private_root = _REPOSITORY / metadata.PRIVATE_ROOT
     assert not (private_root / "active-authority.json").exists()
     assert not (private_root / "claim.json").exists()
-    with pytest.raises(authority.Program007AuthorityError, match="no authorization root exists"):
-        authority.activate_authority(_REPOSITORY, "f" * 64, environ=_credentials())
     assert not private_root.exists()
 
 
@@ -278,6 +299,8 @@ def _copy_controls(destination: Path) -> None:
         Path(authority._PLAN["path"]),
         Path(authority._IMPLEMENTATION["path"]),
         Path(authority._IMPLEMENTATION_REVIEW["path"]),
+        Path(authority._BLOCKED_PROPOSAL["path"]),
+        Path(authority._BLOCKED_REVIEW["path"]),
         authority.REQUEST_PLAN_PATH,
         authority.PROPOSAL_PATH,
         authority.REVIEW_PATH,
@@ -295,6 +318,8 @@ def _copy_controls(destination: Path) -> None:
         Path(authority._PLAN["path"]),
         Path(authority._IMPLEMENTATION["path"]),
         Path(authority._IMPLEMENTATION_REVIEW["path"]),
+        Path(authority._BLOCKED_PROPOSAL["path"]),
+        Path(authority._BLOCKED_REVIEW["path"]),
     ],
 )
 def test_bound_source_artifact_mutation_fails(relative: Path, tmp_path: Path) -> None:
@@ -354,6 +379,13 @@ def test_git_mutation_fails_reviewed_lineage(tmp_path: Path) -> None:
     proposal = cast(dict[str, Any], controls["proposal"])
     lineage = authority._repository_preflight(repository, proposal, controls)
     assert lineage["synchronized_main_commit"] == head
+    active = authority.derive_authorization_root(repository, environ=_credentials())
+    assert {key for key, value in active["authority"].items() if value} == {
+        "provider_contact",
+        "credential_access",
+        "source_requests",
+        "source_qualification",
+    }
 
     source = repository / "src/systematic_trading_lab/program_007_corporate_action_authority.py"
     source.write_bytes(source.read_bytes() + b"\n")

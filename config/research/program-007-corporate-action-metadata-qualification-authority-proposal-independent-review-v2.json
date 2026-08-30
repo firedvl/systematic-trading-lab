@@ -1,0 +1,100 @@
+{
+  "schema_version": "program-007-corporate-action-metadata-qualification-authority-proposal-independent-review-v2",
+  "review_id": "program-007-corporate-action-metadata-qualification-authority-proposal-independent-review-2026-08-29-v2",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "reviewed_at": "2026-08-30T02:14:52Z",
+  "status": "PASS-READY-FOR-EXACT-ONE-USE-AUTHORIZATION",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_proposal": {
+    "path": "config/research/program-007-corporate-action-metadata-qualification-authority-proposal-v2.json",
+    "sha256": "9e6cbbc1b83803c2b482876495fc16a86cb18498fc02ad8a33752db11f065b28",
+    "fingerprint": "b7b3a36a54b0e01e3e4944a51ee742101f11afe3bcacacea9c58a76ee399a546",
+    "proposal_id": "program-007-corporate-action-metadata-qualification-authority-proposal-2026-08-29-v2",
+    "proposal_artifact_commit": "81feeaa3bc047997fb4f978cd3c477ddb98e3daf"
+  },
+  "reviewed_authority_implementation": {
+    "source_commit": "894960f39ab34006501f03cbe77fa1e2318896ca",
+    "source_tree": "b209d5e47a025b2b80742bd432b35e3120d434e3",
+    "implementation_root": "5e5ce880994f9c61e0064c7a6ca6cb0a3553b3cc6dab7b5509f7e719b9cf3627"
+  },
+  "review_scope": "Exact-byte review of the READY proposal, blocked v1 preservation, request-plan identity, bound implementation, authority lifecycle, endpoint isolation, one-use claim boundary, credential handling, metadata qualification gates, and prohibited authority.",
+  "required_challenges": {
+    "credential_presence_passed": "PASS",
+    "secret_values_never_exposed": "PASS",
+    "blocked_v1_preserved_immutable": "PASS",
+    "scientific_request_plan_identical": "PASS",
+    "ledger_v3_and_positive_controls_unchanged": "PASS",
+    "alpaca_only_corroboration_and_discrepancy": "PASS",
+    "creation_lag_unbounded": "PASS",
+    "missing_positive_controls_can_fail": "PASS",
+    "unexpected_relevant_events_can_fail": "PASS",
+    "metadata_endpoint_only": "PASS",
+    "ohlcv_authorized": "NO",
+    "credential_disappearance_before_transport_consumes": "NO",
+    "first_transport_consumes_irreversibly": "PASS",
+    "second_execution_allowed": "NO",
+    "changed_artifacts_self_authorize": "NO",
+    "broader_boundaries_preserved": "PASS"
+  },
+  "credential_presence_at_review": [
+    {
+      "name": "PROGRAM_007_CORPORATE_ACTIONS_API_KEY_ID",
+      "present": true
+    },
+    {
+      "name": "PROGRAM_007_CORPORATE_ACTIONS_API_SECRET_KEY",
+      "present": true
+    }
+  ],
+  "verification": {
+    "independent_reviewer": "fresh read-only reviewer",
+    "review_result": "No material findings in the READY proposal or bound implementation.",
+    "credential_preflight": "PASS",
+    "proposal_sha256": "9e6cbbc1b83803c2b482876495fc16a86cb18498fc02ad8a33752db11f065b28",
+    "proposal_fingerprint": "b7b3a36a54b0e01e3e4944a51ee742101f11afe3bcacacea9c58a76ee399a546",
+    "request_plan_sha256": "2420a53edafad2c3760ad4868d4fe9892959f1b0bf011ea45cdc79617f4fcf56",
+    "request_plan_fingerprint": "f145a69e399af73b52a760b6457234f337fbdacf0330a61eef58856b9ab25f14",
+    "implementation_root": "5e5ce880994f9c61e0064c7a6ca6cb0a3553b3cc6dab7b5509f7e719b9cf3627",
+    "external_authorization_root": null,
+    "active_authority": false,
+    "claim_created": false,
+    "credential_value_loads": 0,
+    "provider_requests": 0,
+    "provider_responses": 0,
+    "provider_bytes": 0,
+    "metadata_observations": 0,
+    "ohlcv_requests": 0,
+    "strategy_calculations": 0,
+    "strategy_returns": 0,
+    "controlled_protected_paper_broker_or_live_accessed": false
+  },
+  "protected_access": {
+    "credential_values": false,
+    "provider_or_account_endpoint": false,
+    "market_observations": false,
+    "strategy_returns": false,
+    "controlled_protected_paper_broker_or_live": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "external_authorization_root_generated": false,
+  "proof_gap": "This review artifact and its add commit did not exist during review, so final committed-chain validation and the clean synchronized-main authorization root remain pending. The review did not inspect credential values, load credentials, construct a provider client, contact Alpaca, observe provider bytes or metadata, activate authority, create a claim, request OHLCV, execute strategy code, or access controlled, protected, PAPER, broker, or live state.",
+  "required_next_action": "Commit this exact review, run the full reviewed-chain validation, merge through green CI, and derive the external authorization root from final clean synchronized main without activating authority.",
+  "review_fingerprint": "f34f5a9e168f4c78c851990c045e03f5bde3cce74b41daa7c458e4ccdbdd23b1"
+}

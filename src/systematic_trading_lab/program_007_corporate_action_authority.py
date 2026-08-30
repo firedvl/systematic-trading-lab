@@ -22,8 +22,7 @@ from .config import non_broker_subprocess_environment
 from .fingerprints import canonical_json, fingerprint
 
 PROGRAM_ID = metadata.PROGRAM_ID
-FUTURE_AUTHORITY_ID = "program-007-corporate-action-metadata-qualification-authority-2026-08-29-v1"
-BLOCKED_STATUS = "BLOCKED-CREDENTIALS-NOT-VISIBLE-TO-RUNTIME"
+FUTURE_AUTHORITY_ID = "program-007-corporate-action-metadata-qualification-authority-2026-08-29-v2"
 READY_STATUS = "READY FOR USER AUTHORIZATION"
 CONSUMPTION_BOUNDARY = "immediately before first provider transport invocation"
 
@@ -31,12 +30,29 @@ REQUEST_PLAN_PATH = Path(
     "config/research/program-007-corporate-action-metadata-request-plan-v1.json"
 )
 PROPOSAL_PATH = Path(
-    "config/research/program-007-corporate-action-metadata-qualification-authority-proposal-v1.json"
+    "config/research/program-007-corporate-action-metadata-qualification-authority-proposal-v2.json"
 )
 REVIEW_PATH = Path(
     "config/research/program-007-corporate-action-metadata-qualification-authority-"
-    "proposal-independent-review-v1.json"
+    "proposal-independent-review-v2.json"
 )
+
+_BLOCKED_PROPOSAL = {
+    "path": (
+        "config/research/program-007-corporate-action-metadata-qualification-"
+        "authority-proposal-v1.json"
+    ),
+    "sha256": "52aa8c448715217e37c90126d2d5e2c83f3b41b6336ad7c28eccb8df614ca29d",
+    "fingerprint": "b7c1aac63c8bb6fd3df612d515e62aa05d03b97a41f977fb36b385a9cb19303e",
+}
+_BLOCKED_REVIEW = {
+    "path": (
+        "config/research/program-007-corporate-action-metadata-qualification-"
+        "authority-proposal-independent-review-v1.json"
+    ),
+    "sha256": "3c6653d074e0f1c319719d5401104a571ec77ab416327f5402b718c348c157c8",
+    "fingerprint": "7d2af27f27c55ad55520f2171c837994be06f5c6987dd918f29dc8d75b7bd24c",
+}
 
 _LEDGER = {
     "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
@@ -161,6 +177,8 @@ def expected_request_plan() -> Mapping[str, Any]:
 def validate_proposal_chain(repository: Path) -> Mapping[str, Any]:
     """Validate immutable proposal inputs without loading credentials."""
     repository = repository.resolve()
+    _load_static_artifact(repository, _BLOCKED_PROPOSAL, "proposal_fingerprint")
+    _load_static_artifact(repository, _BLOCKED_REVIEW, "review_fingerprint")
     ledger = _load_static_artifact(repository, _LEDGER, "ledger_fingerprint")
     program_007.validate_action_ledger(ledger)
     plan = _load_static_artifact(repository, _PLAN, "proposal_fingerprint")
@@ -208,12 +226,12 @@ def derive_authorization_root(
     proposal = _mapping(controls["proposal"], "authority proposal")
     if proposal.get("status") != READY_STATUS:
         raise Program007AuthorityError(
-            "Program 007 authority proposal is blocked; no authorization root exists"
+            "Program 007 authority proposal is not ready; no authorization root exists"
         )
     _require_credentials_present(environ)
     lineage = _repository_preflight(repository.resolve(), proposal, controls)
     unsigned: dict[str, Any] = {
-        "schema_version": "program-007-corporate-action-metadata-authority-v1",
+        "schema_version": "program-007-corporate-action-metadata-authority-v2",
         "status": "ACTIVE-ONE-USE",
         "authority_id": FUTURE_AUTHORITY_ID,
         "program_id": PROGRAM_ID,
@@ -228,6 +246,8 @@ def derive_authorization_root(
             "source_plan": _PLAN,
             "source_implementation": _IMPLEMENTATION,
             "source_implementation_review": _IMPLEMENTATION_REVIEW,
+            "blocked_proposal_v1": _BLOCKED_PROPOSAL,
+            "blocked_review_v1": _BLOCKED_REVIEW,
         },
         "implementation_binding": proposal["authority_implementation_binding"],
         "control_lineage": lineage,
@@ -294,7 +314,7 @@ def execute_qualification(
     environ: Mapping[str, str] | None = None,
     transport: Callable[[Request], metadata.RawResponse] | None = None,
 ) -> metadata.MetadataQualificationResult:
-    """Run one reviewed qualification; the committed blocked proposal cannot reach transport."""
+    """Run one reviewed qualification after separate exact-root authorization."""
     repository = repository.resolve()
     root_descriptor = metadata._open_private_root(repository)
     claim_written = False
@@ -532,17 +552,19 @@ def _validate_proposal(
     source_files = _sequence(source_binding.get("source_files"), "authority source files")
     if (
         proposal.get("schema_version")
-        != "program-007-corporate-action-metadata-qualification-authority-proposal-v1"
+        != "program-007-corporate-action-metadata-qualification-authority-proposal-v2"
         or proposal.get("proposal_id")
-        != "program-007-corporate-action-metadata-qualification-authority-proposal-2026-08-29-v1"
+        != "program-007-corporate-action-metadata-qualification-authority-proposal-2026-08-29-v2"
         or proposal.get("program_id") != PROGRAM_ID
-        or proposal.get("status") != BLOCKED_STATUS
+        or proposal.get("status") != READY_STATUS
         or proposal.get("active_authority") is not False
         or proposal.get("source_role") != "CORROBORATION + DISCREPANCY DETECTION"
         or proposal.get("authority") != _authority_flags(active=False)
         or any(state.values())
         or bindings
         != {
+            "blocked_proposal_v1": _BLOCKED_PROPOSAL,
+            "blocked_review_v1": _BLOCKED_REVIEW,
             "ledger_v3": _LEDGER,
             "source_plan_v3": _PLAN,
             "source_implementation_v6": _IMPLEMENTATION,
@@ -556,8 +578,8 @@ def _validate_proposal(
         != {
             "environment_variables": list(metadata.CREDENTIAL_NAMES),
             "authentication_header_names": ["APCA-API-KEY-ID", "APCA-API-SECRET-KEY"],
-            "presence_preflight": "MISSING",
-            "missing_at_proposal": list(metadata.CREDENTIAL_NAMES),
+            "presence_preflight": "PASS",
+            "missing_at_proposal": [],
             "values_exposed": False,
             "values_stored_hashed_or_logged": False,
             "presence_required_before_root": True,
@@ -583,32 +605,39 @@ def _validate_review(
 ) -> None:
     reviewed = _mapping(review.get("reviewed_proposal"), "reviewed proposal")
     challenges = _mapping(review.get("required_challenges"), "review challenges")
+    verification = _mapping(review.get("verification"), "review verification")
+    protected = _mapping(review.get("protected_access"), "protected access")
     expected_challenges = {
-        "correct_ledger_v3": "PASS",
+        "credential_presence_passed": "PASS",
+        "secret_values_never_exposed": "PASS",
+        "blocked_v1_preserved_immutable": "PASS",
+        "scientific_request_plan_identical": "PASS",
+        "ledger_v3_and_positive_controls_unchanged": "PASS",
         "alpaca_only_corroboration_and_discrepancy": "PASS",
         "creation_lag_unbounded": "PASS",
-        "missing_positive_controls_fail": "PASS",
-        "unexpected_relevant_actions_fail": "PASS",
-        "symbol_cusip_disagreement_fatal": "PASS",
-        "transport_ceilings_exact": "PASS",
+        "missing_positive_controls_can_fail": "PASS",
+        "unexpected_relevant_events_can_fail": "PASS",
         "metadata_endpoint_only": "PASS",
-        "credentials_checked_before_consumption": "PASS",
-        "consumption_immediately_before_transport": "PASS",
-        "credential_failure_can_burn_use": "NO",
-        "ambiguous_transport_gets_free_retry": "NO",
-        "mutable_artifacts_self_authorize": "NO",
         "ohlcv_authorized": "NO",
-        "strategy_calculation_authorized": "NO",
+        "credential_disappearance_before_transport_consumes": "NO",
+        "first_transport_consumes_irreversibly": "PASS",
+        "second_execution_allowed": "NO",
+        "changed_artifacts_self_authorize": "NO",
         "broader_boundaries_preserved": "PASS",
     }
     if (
         review.get("schema_version")
         != (
             "program-007-corporate-action-metadata-qualification-authority-proposal-"
-            "independent-review-v1"
+            "independent-review-v2"
+        )
+        or review.get("review_id")
+        != (
+            "program-007-corporate-action-metadata-qualification-authority-proposal-"
+            "independent-review-2026-08-29-v2"
         )
         or review.get("program_id") != PROGRAM_ID
-        or review.get("status") != "PASS-BLOCKED-CREDENTIALS-NOT-VISIBLE-TO-RUNTIME"
+        or review.get("status") != "PASS-READY-FOR-EXACT-ONE-USE-AUTHORIZATION"
         or review.get("verdict") != "PASS"
         or review.get("findings") != []
         or reviewed
@@ -619,8 +648,24 @@ def _validate_review(
         }
         or not frozen._is_lower_hex(reviewed.get("proposal_artifact_commit"), 40)
         or challenges != expected_challenges
+        or review.get("credential_presence_at_review")
+        != [{"name": name, "present": True} for name in metadata.CREDENTIAL_NAMES]
         or review.get("authority") != _authority_flags(active=False)
         or review.get("external_authorization_root_generated") is not False
+        or any(protected.values())
+        or verification.get("credential_preflight") != "PASS"
+        or verification.get("external_authorization_root") is not None
+        or verification.get("active_authority") is not False
+        or verification.get("claim_created") is not False
+        or verification.get("credential_value_loads") != 0
+        or verification.get("provider_requests") != 0
+        or verification.get("provider_responses") != 0
+        or verification.get("provider_bytes") != 0
+        or verification.get("metadata_observations") != 0
+        or verification.get("ohlcv_requests") != 0
+        or verification.get("strategy_calculations") != 0
+        or verification.get("strategy_returns") != 0
+        or verification.get("controlled_protected_paper_broker_or_live_accessed") is not False
     ):
         raise Program007AuthorityError("Program 007 authority proposal review differs")
 
@@ -705,9 +750,16 @@ def _repository_preflight(
             return commits[0]
 
         request_plan_added = added(REQUEST_PLAN_PATH)
+        blocked_proposal_added = added(Path(_BLOCKED_PROPOSAL["path"]))
+        blocked_review_added = added(Path(_BLOCKED_REVIEW["path"]))
         proposal_added = added(PROPOSAL_PATH)
         review_added = added(REVIEW_PATH)
+        source_parent = git("rev-parse", f"{source_commit}^").stdout.strip()
+        source_tree = git("rev-parse", f"{source_commit}^{{tree}}").stdout.strip()
         lineage = (
+            (request_plan_added, blocked_proposal_added),
+            (blocked_proposal_added, blocked_review_added),
+            (blocked_review_added, source_commit),
             (source_commit, proposal_added),
             (proposal_added, review_added),
             (review_added, head),
@@ -732,8 +784,19 @@ def _repository_preflight(
         dirty
         or head != main
         or head != origin_main
-        or request_plan_added != source_commit
-        or len({source_commit, proposal_added, review_added}) != 3
+        or source.get("base_commit") != source_parent
+        or source.get("source_tree") != source_tree
+        or len(
+            {
+                request_plan_added,
+                blocked_proposal_added,
+                blocked_review_added,
+                source_commit,
+                proposal_added,
+                review_added,
+            }
+        )
+        != 6
         or any(
             git("merge-base", "--is-ancestor", earlier, later, check=False).returncode
             for earlier, later in lineage
@@ -756,6 +819,8 @@ def _repository_preflight(
     return {
         "authority_implementation_commit": source_commit,
         "request_plan_artifact_commit": request_plan_added,
+        "blocked_proposal_artifact_commit": blocked_proposal_added,
+        "blocked_review_artifact_commit": blocked_review_added,
         "proposal_artifact_commit": proposal_added,
         "proposal_review_artifact_commit": review_added,
         "synchronized_main_commit": head,
