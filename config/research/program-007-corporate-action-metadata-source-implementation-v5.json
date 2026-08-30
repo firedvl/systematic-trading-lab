@@ -1,0 +1,185 @@
+{
+  "schema_version": "program-007-corporate-action-metadata-source-implementation-v5",
+  "implementation_id": "program-007-corporate-action-metadata-source-implementation-2026-08-29-v5",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "status": "IMPLEMENTED-MOCK-ONLY-NOT-AUTHORIZED",
+  "implementation_binding": {
+    "base_commit": "66b4c083ac49fb7c6769248bbf47c3e3e47f1612",
+    "source_commit": "9fc0444e6cf1a58a2be7cbc888ce575f4330739e",
+    "source_tree": "c8558c8539813019048ac31218ac201ffffa2611",
+    "diff_sha256": "73b1aaa53b77a9f0e9b4cd35e706479acbd1f85a71c504db6da63887ece420de",
+    "source_files": [
+      {
+        "path": "config/research/program-007-corporate-action-metadata-source-plan-v2.json",
+        "sha256": "794ebe3be9e2483980043b498f52772f590f4e6b1629217a6c8a2cd5bf7db93a"
+      },
+      {
+        "path": "docs/research-campaigns/program-007-corporate-action-metadata-source-plan-v2.md",
+        "sha256": "f03c0eab5064d37bf0ab813401f203dcbd78e5da2e12f7d3759e338e7e7d8fa4"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+        "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v3.schema.json",
+        "sha256": "bbc24645dab0afa8e19cfc24acb28f490c0e58a819105e87cf2cb629e9c261af"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "9bf1e196014d5e891cd0f1bbb266dbaaaf9b967d501fd56f024e1a4a3560bf4a"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_alpaca.py",
+        "sha256": "3e830b6c004a2d6528d53aa3dcdd3d3d5252fff703cd9e7b5674bf5261c4e05f"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_corporate_actions.py",
+        "sha256": "d7f20865d3b0cff8751b33fcc56d1e7304d04446c16e63998e1db79549e264d6"
+      },
+      {
+        "path": "tests/unit/test_program_007_alpaca.py",
+        "sha256": "802415a8c9f99f848cac4b5f817ae9ade31b543901097dc588928684f362635c"
+      },
+      {
+        "path": "tests/unit/test_program_007_corporate_actions.py",
+        "sha256": "018c0dd98b42f3b0105a7de42013292095b491407eae6aa4180264d96275d2e6"
+      },
+      {
+        "path": "tests/unit/test_program_007_forensic_contract.py",
+        "sha256": "a11a673ce763b724143a5ae09d58c6c36741a5fe6ae91d8cb3eb4a0b3f5c0c0d"
+      }
+    ],
+    "implementation_root": "3c8cdc4f025520e049d8919df6d0484e2a6eebe129d080878a277b57d2221f76"
+  },
+  "plan_binding": {
+    "path": "config/research/program-007-corporate-action-metadata-source-plan-v2.json",
+    "sha256": "794ebe3be9e2483980043b498f52772f590f4e6b1629217a6c8a2cd5bf7db93a",
+    "fingerprint": "add9b3bf1cfe3b81cae4d1e856fb99b6e27bf16133173e76e725303a9e054ead"
+  },
+  "ledger_binding": {
+    "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+    "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+    "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f",
+    "schema_path": "config/research/program-007-unit-changing-action-ledger-v3.schema.json",
+    "schema_sha256": "bbc24645dab0afa8e19cfc24acb28f490c0e58a819105e87cf2cb629e9c261af",
+    "resolved_symbols": 13,
+    "unresolved_symbols": []
+  },
+  "runtime_manifest": {
+    "verified_python": "3.12.13",
+    "verified_platform": "Darwin 25.6.0 arm64",
+    "runtime_dependencies_added": [],
+    "implementation_basis": "Python standard library plus existing repository fingerprint helpers",
+    "network_stack": "urllib.request with a no-redirect handler, bounded reads, closed HTTP error responses, and a 30-second timeout behind a source-fixed false authorization guard",
+    "storage_stack": "descriptor-relative directory traversal and writes, O_EXCL and O_NOFOLLOW, mode 0600 files, mode 0700 root, flock, file fsync, and directory fsync",
+    "public_execution_entrypoints": [
+      "execute_synthetic_metadata",
+      "execute_mock_persistent_metadata"
+    ],
+    "real_http_execution_entrypoint_present": false,
+    "real_http_source_guard": "false until replaced by a later reviewed authority implementation",
+    "cli_entrypoint_present": false,
+    "authority_entrypoint_present": false,
+    "broker_path_present": false,
+    "persistent_executor_transport": "Exact MockMetadataTransport with finite RawResponse values; arbitrary callbacks and _urlopen_response are rejected before storage or credential handling.",
+    "dormant_transport": "_urlopen_response validates the fixed endpoint and then rejects before opener construction unless a later reviewed source change replaces its false guard. Its bounded dial code is tested only with fake success and HTTP-error openers."
+  },
+  "provider_contract": {
+    "endpoint": "https://data.alpaca.markets/v1/corporate-actions",
+    "method": "GET",
+    "redirects": false,
+    "region": "us",
+    "data_quality": "complete",
+    "start": "1990-01-01",
+    "end": "2026-08-29",
+    "limit": 1000,
+    "sort": "asc",
+    "types_filter": null,
+    "supported_event_type_count": 16,
+    "capital_gains_distribution_supported": true,
+    "creation_lag": "UNBOUNDED-NO-PROVIDER-GUARANTEE",
+    "negative_event_completeness_proved": false
+  },
+  "transport_budget": {
+    "logical_chains": [
+      "symbols",
+      "cusips"
+    ],
+    "maximum_pages_per_chain": 4,
+    "maximum_http_requests": 8,
+    "maximum_http_responses": 8,
+    "maximum_response_page_bytes": 1048576,
+    "bounded_read_bytes": 1048577,
+    "maximum_downloaded_bytes": 8388608,
+    "maximum_credential_loads": 1,
+    "automatic_transport_retries": 0
+  },
+  "storage_contract": {
+    "private_root": ".trading-lab/program-007-corporate-action-metadata-v2",
+    "git_ignored": true,
+    "request_intent_before_transport": true,
+    "bounded_raw_body_before_size_status_or_parse": true,
+    "sha256_receipt_before_size_status_or_parse": true,
+    "create_only": true,
+    "process_lock": true,
+    "root_descriptor_held_through_execution": true,
+    "descriptor_relative_writes": true,
+    "credentials_stored": false,
+    "mock_observation_public": false
+  },
+  "controls": {
+    "positive": "XLB, XLE, XLK, XLU, and XLY must each reconcile to one 2-for-1 forward split with ex_date 2025-12-05.",
+    "discrepancy": "Any extra applicable action for IWM, MDY, SPY, XLF, XLI, XLP, XLRE, or XLV; unresolved unit or identity event; symbol/CUSIP inventory difference; content difference; identity mismatch; unknown array; unusable economic date; or missing positive control fails.",
+    "process_economic_date_separation": "A later process_date is allowed for an older ex_date or effective_date; process_date is never substituted for economic timing.",
+    "http_401": "METADATA-AUTHENTICATION-FAIL-USE-CONSUMED-NO-RETRY.",
+    "http_403": "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY-NO-PURCHASE; no fallback.",
+    "http_429": "METADATA-ACCESS-FAIL-USE-CONSUMED-NO-RETRY.",
+    "fallback_provider": false,
+    "paid_upgrade": false
+  },
+  "verification": {
+    "focused_metadata_tests": "55 passed",
+    "focused_program_007_tests": "101 passed",
+    "full_pytest": "1390 passed, 4 skipped",
+    "full_pytest_environment": "The child process removed only inherited PROGRAM_006_ALPACA_API_KEY_ID and PROGRAM_006_ALPACA_API_SECRET_KEY names. No value was printed, stored, loaded, or used.",
+    "ruff_format": "263 files already formatted",
+    "ruff_check": "passed",
+    "mypy": "passed for 258 source files",
+    "secret_scan": "passed; 575 files scanned",
+    "shell_syntax": "passed",
+    "sdist_sha256": "fabf6c0417547cb005318d48f0d72c29e782c9d6181f594295de233585111356",
+    "wheel_sha256": "21bb000af1b912e970fb896b546b39ff12a4d66844429f051e51ad1114c43b9f",
+    "diff_check": "passed",
+    "provider_requests": 0,
+    "program_007_credential_presence_checks": 0,
+    "program_007_credential_value_loads": 0,
+    "metadata_observations": 0,
+    "ohlcv_requests": 0,
+    "strategy_calculations": 0,
+    "strategy_returns": 0
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "exact_next_step": "After finding-free independent review, green CI, and merge to clean synchronized main, create a separate reviewed ONE-USE PROGRAM 007 CORPORATE-ACTION METADATA QUALIFICATION AUTHORITY PROPOSAL only if the user requests it. Do not create, authorize, or execute that proposal from this implementation.",
+  "implementation_fingerprint": "a27c12de9037c384c49ccbdda7b3c283c25a09079caf109af0051831d8574292"
+}

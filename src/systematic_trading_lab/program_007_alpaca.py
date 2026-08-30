@@ -57,10 +57,27 @@ _NEW_YORK = ZoneInfo("America/New_York")
 _CHAIN_ID = re.compile(r"[a-z0-9][a-z0-9-]*")
 _HEX_64 = re.compile(r"[0-9a-f]{64}")
 _ACTION_SYMBOLS = frozenset({"XLB", "XLE", "XLK", "XLU", "XLY"})
-_UNRESOLVED_ACTION_SYMBOLS = ("IWM", "MDY", "SPY")
-_RESOLVED_ACTION_SYMBOLS = tuple(
-    symbol for symbol in SYMBOLS if symbol not in _UNRESOLVED_ACTION_SYMBOLS
-)
+_CUSIPS_BY_SYMBOL = {
+    "IWM": "464287655",
+    "MDY": "78467Y107",
+    "SPY": "78462F103",
+    "XLB": "81369Y100",
+    "XLE": "81369Y506",
+    "XLF": "81369Y605",
+    "XLI": "81369Y704",
+    "XLK": "81369Y803",
+    "XLP": "81369Y308",
+    "XLRE": "81369Y860",
+    "XLU": "81369Y886",
+    "XLV": "81369Y209",
+    "XLY": "81369Y407",
+}
+_CIKS_BY_SYMBOL = {
+    **{symbol: "0001064641" for symbol in SYMBOLS if symbol.startswith("XL")},
+    "IWM": "0001100663",
+    "MDY": "0000936958",
+    "SPY": "0000884394",
+}
 _AUTHORITY_FIELDS = frozenset(
     {
         "provider_contact",
@@ -638,17 +655,17 @@ def validate_action_ledger(ledger: Mapping[str, Any]) -> None:
     if stored_fingerprint != fingerprint(unsigned):
         raise Program007Error("Program 007 action ledger fingerprint differs")
     if (
-        ledger["schema_version"] != "program-007-unit-changing-action-ledger-v2"
+        ledger["schema_version"] != "program-007-unit-changing-action-ledger-v3"
         or not _string(ledger["ledger_id"], "ledger id")
         or ledger["program_id"] != PROGRAM_ID
-        or ledger["status"] != "PUBLIC-EVIDENCE-INCOMPLETE-DATASET-ADMISSION-BLOCKED"
+        or ledger["status"] != "PUBLIC-EVIDENCE-SUFFICIENT-FOR-FROZEN-FEATURE"
     ):
         raise Program007Error("Program 007 action ledger identity differs")
     schema_binding = _mapping(ledger["schema_binding"], "schema binding")
     _exact_keys(schema_binding, {"path", "sha256"}, "schema binding")
     if (
         schema_binding["path"]
-        != "config/research/program-007-unit-changing-action-ledger-v2.schema.json"
+        != "config/research/program-007-unit-changing-action-ledger-v3.schema.json"
         or not _HEX_64.fullmatch(_string(schema_binding["sha256"], "schema SHA-256"))
     ):
         raise Program007Error("Program 007 action schema SHA-256 differs")
@@ -782,9 +799,15 @@ def validate_action_ledger(ledger: Mapping[str, Any]) -> None:
             item,
             {
                 "symbol",
+                "cusip",
+                "sec_cik",
+                "exchange",
                 "fund_identity",
+                "known_names",
                 "coverage_start",
                 "coverage_end",
+                "identity_continuity_classification",
+                "action_coverage_classification",
                 "coverage_status",
                 "conclusion",
                 "action_ids",
@@ -796,6 +819,7 @@ def validate_action_ledger(ledger: Mapping[str, Any]) -> None:
         symbol = _string(item["symbol"], "coverage symbol")
         _string(item["fund_identity"], "coverage fund identity")
         _string(item["continuity_notes"], "coverage continuity notes")
+        known_names = _strings(item["known_names"], "known fund names")
         seen_symbols.append(symbol)
         action_links = _strings(item["action_ids"], "coverage action ids")
         evidence_links = _strings(item["evidence_ids"], "coverage evidence ids")
@@ -804,19 +828,24 @@ def validate_action_ledger(ledger: Mapping[str, Any]) -> None:
             str(action["action_id"]) for action in actions_by_symbol.get(symbol, [])
         }
         linked_evidence = set(evidence_links)
-        if symbol in _UNRESOLVED_ACTION_SYMBOLS:
-            expected_coverage = "INCOMPLETE"
-            expected_conclusion = "COVERAGE-UNRESOLVED"
-        else:
-            expected_coverage = "COMPLETE"
-            expected_conclusion = (
-                "APPLICABLE-ACTIONS-RECORDED" if expected_actions else "NO-APPLICABLE-ACTION-FOUND"
-            )
+        expected_conclusion = (
+            "APPLICABLE-ACTIONS-RECORDED" if expected_actions else "NO-APPLICABLE-ACTION-FOUND"
+        )
+        expected_classification = (
+            "CONFIRMED-ACTION" if expected_actions else "SUPPORTED-NO-KNOWN-ACTION"
+        )
         if (
             item["coverage_start"] != "2020-06-26"
             or item["coverage_end"] != "2026-07-31"
-            or item["coverage_status"] != expected_coverage
+            or item["coverage_status"] != "COMPLETE"
             or item["conclusion"] != expected_conclusion
+            or item["cusip"] != _CUSIPS_BY_SYMBOL.get(symbol)
+            or item["sec_cik"] != _CIKS_BY_SYMBOL.get(symbol)
+            or item["exchange"] != "NYSE Arca"
+            or item["identity_continuity_classification"] != "CONTINUOUS-CANONICAL-IDENTITY"
+            or item["action_coverage_classification"] != expected_classification
+            or not known_names
+            or len(known_names) != len(set(known_names))
             or linked_actions != expected_actions
             or len(linked_actions) != len(action_links)
             or not linked_evidence
@@ -914,23 +943,22 @@ def _validate_archive_coverage(raw: Any) -> None:
             "dataset_admission",
             "resolved_symbols",
             "unresolved_symbols",
-            "blocking_rule",
-            "completion_condition",
+            "coverage_standard",
+            "limitations",
             "nyse_corpax",
             "primary_corpora",
         },
         "archive coverage",
     )
     if (
-        coverage["status"] != "INCOMPLETE"
-        or coverage["dataset_admission"] != "BLOCKED"
-        or _strings(coverage["resolved_symbols"], "resolved symbols") != _RESOLVED_ACTION_SYMBOLS
-        or _strings(coverage["unresolved_symbols"], "unresolved symbols")
-        != _UNRESOLVED_ACTION_SYMBOLS
+        coverage["status"] != "SUFFICIENT-FOR-FROZEN-FEATURE"
+        or coverage["dataset_admission"] != "ACTION-COVERAGE-GATE-PASS"
+        or _strings(coverage["resolved_symbols"], "resolved symbols") != SYMBOLS
+        or _strings(coverage["unresolved_symbols"], "unresolved symbols") != ()
     ):
         raise Program007Error("Program 007 archive coverage disposition differs")
-    _string(coverage["blocking_rule"], "archive blocking rule")
-    _string(coverage["completion_condition"], "archive completion condition")
+    _string(coverage["coverage_standard"], "archive coverage standard")
+    _string(coverage["limitations"], "archive limitations")
 
     nyse = _mapping(coverage["nyse_corpax"], "NYSE archive coverage")
     _exact_keys(
@@ -1062,7 +1090,7 @@ def _validate_archive_coverage(raw: Any) -> None:
     corpus_items = _sequence(coverage["primary_corpora"], "primary corpora")
     expected_corpora = {
         "sec-select-sector-spdr-2020-06-26-to-2026-07-31-v1": (
-            tuple(_RESOLVED_ACTION_SYMBOLS),
+            tuple(symbol for symbol in SYMBOLS if symbol.startswith("XL")),
             51,
             51,
             "https://data.sec.gov/submissions/CIK0001064641.json",
@@ -1075,7 +1103,7 @@ def _validate_archive_coverage(raw: Any) -> None:
             383,
             "https://data.sec.gov/submissions/CIK0001100663.json",
             "3eea92ce0d8af4be24671e6fabe49ab560c99b68b5230847666e8018233247c1",
-            "NO-APPLICABLE-ACTION-FOUND-IN-SCREEN-COVERAGE-INCOMPLETE",
+            "NO-APPLICABLE-ACTION-FOUND-IN-BOUNDED-SCREEN",
         ),
         "sec-spy-2020-06-26-to-2026-07-31-v1": (
             ("SPY",),
@@ -1083,7 +1111,7 @@ def _validate_archive_coverage(raw: Any) -> None:
             68,
             "https://data.sec.gov/submissions/CIK0000884394.json",
             "6d5e8853788fa245b40daa3f47583da2f05b70212c68380b929a155f8ea5e16a",
-            "NO-APPLICABLE-ACTION-FOUND-IN-SCREEN-COVERAGE-INCOMPLETE",
+            "NO-APPLICABLE-ACTION-FOUND-IN-BOUNDED-SCREEN",
         ),
         "sec-mdy-2020-06-26-to-2026-07-31-v1": (
             ("MDY",),
@@ -1091,7 +1119,7 @@ def _validate_archive_coverage(raw: Any) -> None:
             54,
             "https://data.sec.gov/submissions/CIK0000936958.json",
             "6322b7a15c642e4c376e383b3b14ee883ac101b5312302bf9bf2a9ccdc6839be",
-            "NO-APPLICABLE-ACTION-FOUND-IN-SCREEN-COVERAGE-INCOMPLETE",
+            "NO-APPLICABLE-ACTION-FOUND-IN-BOUNDED-SCREEN",
         ),
     }
     seen_corpora: list[str] = []
@@ -1159,14 +1187,14 @@ def _validate_archive_coverage(raw: Any) -> None:
 
 
 def require_action_ledger_admission(ledger: Mapping[str, Any]) -> None:
-    """Reject dataset use until every symbol has complete public action coverage."""
+    """Reject normalization until every symbol has sufficient public action coverage."""
     validate_action_ledger(ledger)
     coverage = _mapping(ledger["archive_coverage"], "archive coverage")
     unresolved = _strings(coverage["unresolved_symbols"], "unresolved symbols")
-    if unresolved or coverage["dataset_admission"] != "READY":
+    if unresolved or coverage["dataset_admission"] != "ACTION-COVERAGE-GATE-PASS":
         raise Program007Error(
             "Program 007 action coverage is unresolved for "
-            f"{', '.join(unresolved)}; dataset admission is blocked"
+            f"{', '.join(unresolved)}; normalization is blocked"
         )
 
 

@@ -1,0 +1,114 @@
+{
+  "schema_version": "program-007-corporate-action-metadata-source-independent-review-v2",
+  "review_id": "program-007-corporate-action-metadata-source-independent-review-2026-08-29-v2",
+  "program_id": "multi-hour-sector-etf-research-006",
+  "reviewed_at": "2026-08-30T00:16:06Z",
+  "status": "PASS",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_repository": {
+    "base_commit": "66b4c083ac49fb7c6769248bbf47c3e3e47f1612",
+    "reviewed_commit": "7578cacac8e10cb1d86097e2d7bbdc94c2a40b2c",
+    "reviewed_tree": "19ce30cfcdd3d0243b3b89c53ea23c63b770f1c9",
+    "base_to_reviewed_diff_sha256": "98798ff7623153fc01c6183727979545321ff2e890456fc0237c22a7ebac0abc"
+  },
+  "reviewed_implementation": {
+    "source_commit": "fbbe3bf1615799233bce3488949a2c9ac560ce7f",
+    "implementation_root": "4905cc76efdae0281aea935c0dc49d47a4544763e3648de16c02446eeaae4260",
+    "source_file_count": 12
+  },
+  "implementation_artifact_binding": {
+    "path": "config/research/program-007-corporate-action-metadata-source-implementation-v6.json",
+    "sha256": "14ccfd69d54d9035cc36ccc7915c044c2596c06836e400da0016d5c74e9e84eb",
+    "fingerprint": "0d87ce202517fdd1c41275c6d81f9d937189dbb81f33ac7735df3c428791a289"
+  },
+  "provider_evidence_binding": {
+    "path": "config/research/program-007-alpaca-corporate-actions-public-contract-evidence-v1.json",
+    "sha256": "f674122b0e9349dfde972a587adb49eb07bfe3bdb384a3955ecfec97d7035eb7",
+    "fingerprint": "31068af25bdd130f9ba543da4c2496d5942884ff28667de174f04c2da99e8064",
+    "provider_response_sha256": "2a91681f4bd7f6a59d0dda311066249c51f77caa097343f0580ab262934028c1",
+    "provider_response_bytes": 47697,
+    "provider_updated_at": "2026-05-27T17:58:03.000Z",
+    "supported_event_type_count": 16,
+    "capital_gains_distribution_supported": true
+  },
+  "plan_binding": {
+    "path": "config/research/program-007-corporate-action-metadata-source-plan-v3.json",
+    "sha256": "b61758a35ca896890946dfbef1b315d0827b8821a32c2399a7440350d620e0c2",
+    "fingerprint": "6ac30c18035161414cd410ba83715b74c55cb14322f421eda517ea4af375adef"
+  },
+  "ledger_binding": {
+    "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+    "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+    "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f",
+    "resolved_symbols": 13,
+    "unresolved_symbols": []
+  },
+  "review_scope": "Program 007 corporate-action public evidence, bounded best-evidence identity closure, provider contract provenance, bounded-as-of scientific model, type and date semantics, dormant transport, raw-first private storage, pagination, reconciliation controls, synthetic tests, and authority boundaries",
+  "review_results": {
+    "scientific_model": "Public ledger v3 is the action foundation. Alpaca is limited to bounded as-of corroboration and discrepancy detection and cannot prove negative-event completeness.",
+    "provider_contract": "The bound first-party Markdown/OpenAPI and the current canonical reference list sixteen supported types, including capital_gains_distribution, and state that Alpaca gives no guarantee on creation time.",
+    "identity_and_ledger": "IWM, MDY, and SPY are closed to the declared feature-specific bounded best-evidence standard. Ledger v3 has thirteen resolved symbols, five confirmed split controls, and eight supported-no-known-action classifications without an exhaustive-absence claim.",
+    "transport_and_storage": "The fixed-host GET transport remains source-disabled. Persistent execution requires an exact finite MockMetadataTransport and exercises only the transport/storage contract; qualification controls remain a separate future authority concern.",
+    "authority": "No provider request, credential presence check or value load, metadata or OHLCV observation, dataset admission, strategy calculation or return, controlled or protected access, PAPER action, broker write, or live action occurred."
+  },
+  "required_challenges": {
+    "bounded_as_of_replacement_scientifically_legitimate": "PASS",
+    "gate_weakened_only_to_make_alpaca_usable": "NO",
+    "provider_documentation_makes_bounded_lag_proof_impossible": "PASS",
+    "public_issuer_sec_exchange_records_are_ledger_foundation": "PASS",
+    "iwm_mdy_spy_histories_sufficiently_closed": "PASS-BOUNDED-BEST-EVIDENCE",
+    "no_action_claims_overstated": "NO",
+    "alpaca_query_can_find_contradictions": "PASS",
+    "missing_positive_control_fails": "PASS",
+    "unexpected_unit_event_fails": "PASS",
+    "capital_gains_distribution_matches_current_provider_support": "PASS-SUPPORTED-IN-BOUND-16-TYPE-CONTRACT",
+    "process_and_economic_dates_are_distinct": "PASS",
+    "delayed_creation_can_create_a_completeness_claim": "NO",
+    "basic_access_uncertainty_deferred_to_future_bounded_qualification": "PASS",
+    "raw_first_persistence_precedes_parsing": "PASS",
+    "zero_provider_requests_maintained": "PASS"
+  },
+  "review_corrections": [
+    "A preliminary concern based on an incomplete rendered type list was withdrawn after checking the exact bound first-party Markdown/OpenAPI and current canonical page, both of which include capital_gains_distribution as the sixteenth type.",
+    "A preliminary concern about the mock persistent PASS was withdrawn after tracing its exact finite-mock boundary, explicit MOCK-TRANSPORT-PERSISTENT-CONTRACT-PASS status, absence of production callers, and separation from the unauthorized future qualification phase."
+  ],
+  "verification": {
+    "independent_reviewer": "fresh read-only reviewer; final verdict issued after exact-evidence reconsideration",
+    "review_result": "No material correctness, provenance, scientific-contract, transport, storage, or authority findings.",
+    "bindings_recomputed": "reviewed commit tree and diff; implementation artifact and root; provider evidence; plan v3; ledger v3",
+    "reviewer_focused_tests": "96 Program 007 Alpaca and corporate-action metadata tests plus 5 forensic contract tests passed",
+    "reviewer_ruff": "focused check passed",
+    "reviewer_mypy": "focused check passed",
+    "reviewer_secret_private_data_scan": "passed",
+    "reviewer_full_suite": "not rerun; implementation v6 binds 1390 passed and 4 skipped",
+    "provider_or_strategy_execution": "not performed"
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_access": {
+    "program_007_credential_values_or_presence": false,
+    "provider_or_account_endpoint": false,
+    "metadata_or_ohlcv_observations": false,
+    "strategy_returns": false,
+    "controlled_protected_paper_broker_or_live": false
+  },
+  "proof_gap": "Public evidence supports the feature-specific ledger but does not prove exhaustive historical absence. Alpaca Basic access and actual response content remain unknown until a separately reviewed and explicitly authorized one-use metadata qualification. No delayed-record waiting period can close negative-event completeness.",
+  "exact_next_step": "After green CI and merge to clean synchronized main, create a separate reviewed ONE-USE PROGRAM 007 CORPORATE-ACTION METADATA QUALIFICATION AUTHORITY PROPOSAL only if the user requests it. Do not create, authorize, or execute that proposal from this review.",
+  "review_fingerprint": "d3aac3e4774096311339814277ed575df6d1744ca032702c0e50c4e36222b2e5"
+}
