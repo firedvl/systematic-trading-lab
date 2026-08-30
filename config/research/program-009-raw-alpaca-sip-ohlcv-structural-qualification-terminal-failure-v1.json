@@ -1,0 +1,356 @@
+{
+  "schema_version": "program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1",
+  "failure_id": "program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-2026-08-30-v1",
+  "program_id": "multi-hour-sector-etf-research-008",
+  "recorded_at": "2026-08-30T10:51:11Z",
+  "status": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+  "execution_main": "56278b8f2dc8714f58b026b0a13d523072bb64ba",
+  "authorization": {
+    "user_authorization_packet_sha256": "44b9f83bce10ca5372af45924c7e69f7ef668be2ad24d741e6eaf284a736e9ab",
+    "external_authorization_root": "a21491c95307ec9a2d86837c7827fccf6d32d165a069e97cf92ec050247e98c6",
+    "authority_id": "program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-2026-08-30-v1",
+    "authority_sha256": "8f20b8a3b212f71154eede5054b9b1df4b7ac8c723bea2ac31a90ef06feecd1d",
+    "authority_fingerprint": "a21491c95307ec9a2d86837c7827fccf6d32d165a069e97cf92ec050247e98c6",
+    "activation_succeeded": true,
+    "one_use_claim_identifier_basis": "The private claim has no separate claim_id; its schema_version is its public identifier.",
+    "one_use_claim_id": "program-009-private-ohlcv-claim-v1",
+    "one_use_claim_sha256": "967173e28c79b1fed594401a50cff0eb09d639c89d27a3514c5dcf59b6eaad55",
+    "one_use_claim_fingerprint": "967173e28c79b1fed594401a50cff0eb09d639c89d27a3514c5dcf59b6eaad55",
+    "one_use_consumed": true
+  },
+  "bindings": {
+    "program_008_terminal_success": {
+      "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-v1.json",
+      "sha256": "23bf0e29b4f8b4b4655d7eeb470e4ceb1bc319717c854ec3d82790ef52c1762b",
+      "fingerprint": "151091ac4d863d73561afc24dc0138e5326dd237183dfb7da178cb5584871fcd"
+    },
+    "program_008_terminal_success_review": {
+      "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-independent-review-v1.json",
+      "sha256": "65eda8a7e6bc6d262b382227db7ca82ecd42dc38caa97d637d6dd1b207a4e6c9",
+      "fingerprint": "143f8e5023b96bc950f9ec86d37e966fca42ceefd1c07c691d6d3c2af7c66dad"
+    },
+    "public_unit_changing_action_ledger": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+      "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+      "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
+    },
+    "request_plan": {
+      "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-request-plan-v1.json",
+      "sha256": "b7ff3f3339f0a896e08e86ca381eba3ce3fd0db21fa94474d9c3842051ffca64",
+      "fingerprint": "cc8152fdf2eb4cd78cf52c302509a622a5b71b9c9c72cfabe18d7cd5510a7783"
+    },
+    "authority_proposal": {
+      "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-proposal-v1.json",
+      "sha256": "853cd2868704a047a62abcd543e628f5853e768c401aa1cad4a72194ee136d88",
+      "fingerprint": "8594d1872a7c5d3a7db9c695483581251dfb11dea2840bf0ca2b6103aa61b429"
+    },
+    "authority_proposal_review": {
+      "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-proposal-independent-review-v1.json",
+      "sha256": "348f14735a258f8db17bb9af20bf54f20798b1c150638fd67fb4abc7375ebfbd",
+      "fingerprint": "355690a1ec9e9fe23fea32852019e4690a39677394e668bc7b2ab1b42d111773"
+    },
+    "authority_implementation_commit": "842b9db6a973c074f57dc6f1746afc9e02b1c619",
+    "authority_implementation_tree": "92939faf988f288d0086dea76ef4e9bf32676049",
+    "authority_implementation_root": "00839ab4108b336270809a1444bb0077e6045c8f5688c8354c0f5aec6246ab20"
+  },
+  "qualification_contract": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "asof": "2026-07-31",
+    "sort": "asc",
+    "limit": 10000,
+    "inclusive_bounds": true,
+    "redirects": false,
+    "universe": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "range_ids": [
+      "normal-2021-07-08",
+      "normal-2022-01-25",
+      "normal-2022-11-15",
+      "pagination-2023-05-16-to-2023-05-30",
+      "split-pre-early-close-2025-11-28",
+      "split-post-2025-12-15"
+    ],
+    "sessions": [
+      "2021-07-08",
+      "2022-01-25",
+      "2022-11-15",
+      "2023-05-16",
+      "2023-05-17",
+      "2023-05-18",
+      "2023-05-19",
+      "2023-05-22",
+      "2023-05-23",
+      "2023-05-24",
+      "2023-05-25",
+      "2023-05-26",
+      "2023-05-30",
+      "2025-11-28",
+      "2025-12-15"
+    ],
+    "minimum_http_requests": 7,
+    "maximum_http_requests": 11,
+    "minimum_http_responses": 7,
+    "maximum_http_responses": 11,
+    "maximum_pages_per_pagination_chain": 6,
+    "maximum_response_page_bytes": 8388608,
+    "maximum_total_response_bytes": 16777216,
+    "maximum_credential_loads": 1,
+    "minimum_request_interval_seconds": "0.5",
+    "maximum_requests_per_minute": 120,
+    "automatic_retries": 0
+  },
+  "runtime_outcome": {
+    "failure_stage": "sixth page of pagination-2023-05-16-to-2023-05-30 after raw persistence and validation",
+    "error": "Program 009 OHLCV page ceiling exceeded",
+    "credential_presence_preflight": "PASS",
+    "credential_presence_recheck_under_lock": "PASS",
+    "credential_load_count": 1,
+    "authenticated_client_constructed_without_http": true,
+    "claim_written_immediately_before_first_transport": true,
+    "provider_request_count": 9,
+    "http_response_count": 9,
+    "page_count": 9,
+    "http_statuses": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200
+    ],
+    "pages_per_chain": {
+      "normal-2021-07-08": 1,
+      "normal-2022-01-25": 1,
+      "normal-2022-11-15": 1,
+      "pagination-2023-05-16-to-2023-05-30": 6,
+      "split-pre-early-close-2025-11-28": 0,
+      "split-post-2025-12-15": 0
+    },
+    "response_bytes": 1806300,
+    "maximum_observed_page_bytes": 259557,
+    "maximum_allowed_page_bytes": 8388608,
+    "maximum_allowed_total_bytes": 16777216,
+    "minimum_request_interval_seconds": "0.5",
+    "maximum_requests_per_minute": 120,
+    "automatic_retries": 0,
+    "redirects_followed": 0,
+    "raw_body_retained_before_parse": true,
+    "private_terminal_failure_sha256": "1aef6ff43a1389ae662b74d1f3d686eac04a260a7ee04a0ae41b39244b8cd452",
+    "private_terminal_failure_fingerprint": "1aef6ff43a1389ae662b74d1f3d686eac04a260a7ee04a0ae41b39244b8cd452",
+    "private_response_manifest_id": "program-009-raw-alpaca-sip-ohlcv-response-manifest-2026-08-30-v1",
+    "private_response_manifest_sha256": "dc8fb8bb94bd4720a5dc6bbab791045584e4718b1086ca25f2e7be05c8909cf4",
+    "private_response_manifest_fingerprint": "8c0f6de100faf7fcafb97447e9ae35a70ded710557c9e3cc5d144e36e945b37f",
+    "qualification_receipt_created": false,
+    "private_dataset_count": 0
+  },
+  "structural_results": {
+    "raw_rows_received_per_chain": {
+      "normal-2021-07-08": 1014,
+      "normal-2022-01-25": 1014,
+      "normal-2022-11-15": 1014,
+      "pagination-2023-05-16-to-2023-05-30": 14239,
+      "split-pre-early-close-2025-11-28": 0,
+      "split-post-2025-12-15": 0
+    },
+    "valid_extended_hours_rows_per_chain": {
+      "normal-2021-07-08": 0,
+      "normal-2022-01-25": 0,
+      "normal-2022-11-15": 0,
+      "pagination-2023-05-16-to-2023-05-30": 4344,
+      "split-pre-early-close-2025-11-28": 0,
+      "split-post-2025-12-15": 0
+    },
+    "canonical_rth_rows_per_chain": {
+      "normal-2021-07-08": 1014,
+      "normal-2022-01-25": 1014,
+      "normal-2022-11-15": 1014,
+      "pagination-2023-05-16-to-2023-05-30": 9895,
+      "split-pre-early-close-2025-11-28": 0,
+      "split-post-2025-12-15": 0
+    },
+    "total_raw_rows_received": 17281,
+    "total_valid_extended_hours_rows": 4344,
+    "expected_canonical_coordinates": 14742,
+    "retained_canonical_rth_coordinates": 12937,
+    "missing_required_canonical_coordinates": 1805,
+    "missing_required_coordinate_set_fingerprint": "af572b69b806ab64b210470f2214f7d5f2b918d8b18620a97b079a14973cb7a5",
+    "missing_coordinate_groups": {
+      "pagination-2023-05-16-to-2023-05-30": {
+        "count": 245,
+        "coordinate_set_fingerprint": "3d03702e21aad2df53b6dc60539503b2738043c780cecdcc5b665707af10783f",
+        "groups": [
+          {
+            "symbol": "MDY",
+            "session": "2023-05-19",
+            "first": "2023-05-19T17:10:00Z",
+            "last": "2023-05-19T17:10:00Z",
+            "count": 1
+          },
+          {
+            "symbol": "XLY",
+            "session": "2023-05-24",
+            "first": "2023-05-24T19:10:00Z",
+            "last": "2023-05-24T19:55:00Z",
+            "count": 10
+          },
+          {
+            "symbol": "XLY",
+            "session": "2023-05-25",
+            "first": "2023-05-25T13:30:00Z",
+            "last": "2023-05-25T19:55:00Z",
+            "count": 78
+          },
+          {
+            "symbol": "XLY",
+            "session": "2023-05-26",
+            "first": "2023-05-26T13:30:00Z",
+            "last": "2023-05-26T19:55:00Z",
+            "count": 78
+          },
+          {
+            "symbol": "XLY",
+            "session": "2023-05-30",
+            "first": "2023-05-30T13:30:00Z",
+            "last": "2023-05-30T19:55:00Z",
+            "count": 78
+          }
+        ]
+      },
+      "split-pre-early-close-2025-11-28": {
+        "count": 546,
+        "coordinate_set_fingerprint": "6503c12393e3a7e9691242a8f9680209c84201754e56f618686622a6db70579d",
+        "reason": "NOT-REQUESTED-AFTER-TERMINAL-FAILURE",
+        "symbols": [
+          "IWM",
+          "MDY",
+          "SPY",
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLRE",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "first": "2025-11-28T14:30:00Z",
+        "last": "2025-11-28T17:55:00Z",
+        "coordinates_per_symbol": 42
+      },
+      "split-post-2025-12-15": {
+        "count": 1014,
+        "coordinate_set_fingerprint": "d7428ed66c068c67fc36c3a0e02bdb7e18f441e9b4c08ce6583fb82d2ac18d53",
+        "reason": "NOT-REQUESTED-AFTER-TERMINAL-FAILURE",
+        "symbols": [
+          "IWM",
+          "MDY",
+          "SPY",
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLRE",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "first": "2025-12-15T14:30:00Z",
+        "last": "2025-12-15T20:55:00Z",
+        "coordinates_per_symbol": 78
+      }
+    },
+    "unexpected_symbol_count": 0,
+    "unexpected_coordinate_count": 0,
+    "duplicate_coordinate_verdict": "PASS-NONE-IN-RETAINED-PAGES",
+    "timestamp_alignment_verdict": "PASS-RETAINED-PAGES",
+    "ohlc_structural_verdict": "PASS-RETAINED-PAGES",
+    "volume_structural_verdict": "PASS-RETAINED-PAGES",
+    "normal_2021_07_08_verdict": "PASS-EXACT-1014-CANONICAL-COORDINATES",
+    "normal_2022_01_25_verdict": "PASS-EXACT-1014-CANONICAL-COORDINATES",
+    "normal_2022_11_15_verdict": "PASS-EXACT-1014-CANONICAL-COORDINATES",
+    "pagination_range_verdict": "FAIL-SIXTH-ALLOWED-PAGE-HAD-NONTERMINAL-TOKEN",
+    "pagination_page_token_verdict": "PASS-PROGRESSION-THROUGH-SIX-PAGES-THEN-FAIL-CLOSED-AT-CEILING",
+    "early_close_2025_11_28_verdict": "NOT-REQUESTED-AFTER-TERMINAL-PAGINATION-FAILURE",
+    "post_split_2025_12_15_verdict": "NOT-REQUESTED-AFTER-TERMINAL-PAGINATION-FAILURE",
+    "split_volume_structural_verdict": "NOT-REACHED-CONTROL-CHAINS-NOT-REQUESTED",
+    "raw_contemporaneous_price_verdict": "PASS-NO-ADJUSTMENT-OR-DERIVED-PRICE-SURFACE",
+    "qualification": "FAIL",
+    "exact_failure_reason": "The sixth and final allowed page of pagination-2023-05-16-to-2023-05-30 returned HTTP 200 and valid retained raw rows but also a non-null continuation token. The frozen maximum is six pages for that chain. The executor stopped without requesting page seven, the early-close chain, or the post-split chain."
+  },
+  "private_data_boundary": {
+    "private_root": ".trading-lab/program-009-raw-alpaca-sip-ohlcv-v1",
+    "private_root_git_ignored": true,
+    "raw_response_pages_retained": 9,
+    "raw_response_bytes_retained": 1806300,
+    "raw_or_reconstructable_ohlcv_entered_git": false,
+    "credentials_stored_printed_hashed_or_persisted": false,
+    "public_evidence_contains_only_non_reconstructable_structure": true
+  },
+  "prohibited_actions": {
+    "provider_adjusted_ohlcv_requests": 0,
+    "corporate_action_metadata_requests": 0,
+    "full_exposed_acquisition_requests": 0,
+    "real_dataset_admissions": 0,
+    "strategy_calculations": 0,
+    "strategy_returns_generated_or_read": false,
+    "controlled_a_or_b_accessed": false,
+    "protected_ranges_accessed": false,
+    "paper_state_accessed": false,
+    "broker_write_performed": false,
+    "live_state_accessed": false
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "disposition": {
+    "reason": "The frozen pagination chain exceeded its six-page ceiling after the one-use transport boundary.",
+    "retry_allowed": false,
+    "program_009_replay_allowed": false,
+    "replacement_program_009_authority_allowed": false,
+    "subscription_purchase_allowed": false,
+    "fallback_provider_allowed": false,
+    "full_acquisition_allowed": false,
+    "dataset_admission_allowed": false,
+    "strategy_execution_allowed": false,
+    "required_next_action": "None for Program 009. Preserve its private evidence and terminal public record. Any different prospective successor requires a new explicit user authorization and may not replay Program 009."
+  },
+  "failure_fingerprint": "a8ac4102f096204f27b648519cd7b5f3796743102a3a2e49203ff47a13686f96"
+}

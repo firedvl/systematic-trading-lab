@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-30 - Stop Program 009 at the pagination page ceiling
+
+- Decision: record Program 009 as `TERMINAL-FAIL-CONSUMED-NO-RETRY`. Preserve all nine private HTTP 200 pages and the private response manifest. Do not request the seventh pagination page, either remaining chain, a substitute page, another source, or a replacement Program 009 authority.
+- Context: exact root `a21491c95307ec9a2d86837c7827fccf6d32d165a069e97cf92ec050247e98c6` activated the reviewed one-use authority on clean synchronized main `56278b8f2dc8714f58b026b0a13d523072bb64ba`. The run loaded credentials once and retained 1,806,300 bytes. The sixth allowed page of `pagination-2023-05-16-to-2023-05-30` contained valid rows and a non-null continuation token. The frozen chain limit was six pages.
+- Consequences: three normal chains passed their exact grids. The retained pages contain 17,281 raw rows, 4,344 valid raw-only extended-hours rows, and 12,937 canonical RTH coordinates. The full sample remains 1,805 coordinates short because the pagination chain was incomplete and the early-close and post-split chains were not requested. Raw evidence stays Git-ignored. Full acquisition, dataset admission, strategy work, controlled/protected access, PAPER, broker writes, and live execution remain prohibited. Any different successor needs a new explicit user authorization and cannot replay Program 009.
+- Revisit when: never for Program 009. Preserve the terminal record and private evidence.
+
 ## 2026-08-30 - Accept the reviewed Program 009 raw OHLCV authority proposal
 
 - Decision: accept `program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-proposal-2026-08-30-v1` as READY for a later exact one-use user authorization. It permits only the six-chain fresh raw Alpaca SIP five-minute OHLCV structural sample. Full exposed acquisition, dataset admission, strategy work, controlled/protected access, PAPER, broker writes, and live execution remain false.

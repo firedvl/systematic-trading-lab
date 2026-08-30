@@ -95,17 +95,18 @@ recovered all five required split controls without a relevant ledger discrepancy
 Do not activate or run Program 008 metadata again. Its consumed authority grants no OHLCV,
 dataset, strategy, controlled/protected, PAPER, broker, or live authority.
 
-Program 009, `multi-hour-sector-etf-research-008`, has a finding-free reviewed proposal for one
-future raw Alpaca SIP five-minute OHLCV structural qualification. Its repeatable preflight checks
-only the existing Program 006 credential names and does not load values or contact Alpaca:
+Program 009, `multi-hour-sector-etf-research-008`, is terminally consumed and failed. The exact
+one-use run retained nine raw SIP HTTP 200 pages, but the sixth allowed page of the frozen pagination
+chain still had a continuation token. The executor stopped without requesting page seven or the two
+remaining chains. Its repeatable preflight still checks only the existing Program 006 credential
+names and does not load values or contact Alpaca:
 
 ```console
 uv run trading-lab data acquire program-009-ohlcv credential-preflight
 ```
 
 See [Program 009 raw OHLCV structural qualification](docs/program-009-raw-ohlcv-qualification.md).
-The proposal does not activate authority, create a claim, acquire the full exposed range, admit a
-dataset, or run a strategy. Do not run `activate` or `run` without the later exact one-use user grant.
+Do not activate or run Program 009 again. It admitted no dataset and ran no strategy.
 
 ## Using historical data
 
