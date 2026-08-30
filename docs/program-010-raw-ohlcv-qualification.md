@@ -149,7 +149,12 @@ These estimates authorize no full acquisition.
 - Proposal SHA-256/fingerprint:
   `449327a5843902f4a93603ff0f3fd7f01665baf33561ba3d019fde4612acc1f5` /
   `fe24131e1dcd504615a314221d3aec664a0f2c3810127ba69fbceb50f81727a7`
-- Fresh closure review: pending
+- Independent review ID:
+  `program-010-raw-alpaca-sip-ohlcv-structural-qualification-independent-review-2026-08-30-v1`
+- Independent review SHA-256/fingerprint:
+  `41062ea7286a339651818025886dbbf049f2372d7cefc18431322c442e85bfa9` /
+  `5b39c5b6107f3d63292da184a55b32d837e6f513c42d2253a3b38fbda70e4b04`
+- Review verdict: `PASS-FINDING-FREE-OFFLINE-FORENSIC-DESIGN-AND-PROPOSAL-REVIEW`
 
 Initial review found that top-level execution did not always close its unnamed evidence file and that
 one coordinate per symbol could pass catastrophic coverage. V2 closes the source in `finally` on
@@ -163,6 +168,7 @@ that is not already in ascending symbol-then-timestamp order. The next specifica
 that the private Program 009 regression still sorted retained rows before proving the MDY/XLY
 frontier. V5 preserves retained received order, requires strict within-page and cross-page progress,
 and derives the frontier from the final received coordinate. V1-V4 remain immutable review history.
+Fresh independent Standards and Specification reviewers found no remaining issue after v5.
 
 The implementation accepts only finite synthetic responses and holds raw evidence in an unnamed
 temporary file. It has no provider client, credential reader or presence check, activation path, or

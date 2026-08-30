@@ -116,8 +116,9 @@ proposal with one exact XNYS session per chain and token-driven pagination. See
 Review found source-closure, catastrophic-coverage, public-artifact guard, received-order, and
 retained-order proof defects. Proposal v5 closes every valid source, requires strict-majority
 per-symbol coverage, keeps every public artifact in the guard inventory, rejects disordered wire
-rows, and proves the retained Program 009 frontier from received order. Fresh closure review is pending.
-It grants no credential, provider, acquisition, dataset, strategy, PAPER, broker, or live authority.
+rows, and proves the retained Program 009 frontier from received order. The independent v1 review
+is finding-free, binds all 17 required challenges, and leaves every
+provider, credential, acquisition, dataset, strategy, PAPER, broker, and live authority false.
 
 ## Using historical data
 

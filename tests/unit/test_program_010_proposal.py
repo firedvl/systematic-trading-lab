@@ -13,6 +13,9 @@ _IMPLEMENTATION_PATH = Path("config/research/program-010-raw-source-implementati
 _PROPOSAL_PATH = Path(
     "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v5.json"
 )
+_REVIEW_PATH = Path(
+    "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-independent-review-v1.json"
+)
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -99,3 +102,24 @@ def test_program_010_implementation_and_proposal_are_bound_and_non_authorizing()
     assert proposal["implementation_boundary"]["private_program_009_received_order_proved"] is True
     assert proposal["external_authorization_root"] is None
     assert all(value is False for value in proposal["authority"].values())
+
+
+def test_program_010_independent_review_is_bound_and_finding_free() -> None:
+    review = _assert_fingerprint(_REVIEW_PATH, "review_fingerprint")
+    for binding in review["reviewed_artifacts"].values():
+        _assert_binding(binding)
+
+    reviewed_source = review["reviewed_source"]
+    assert reviewed_source["base_commit"] == "af238e1d8cb7ba44fcef3bbc36f5d641990be601"
+    assert reviewed_source["source_commit"] == "17c017921818e55b7a7656e512334c25d5b31dbb"
+    assert reviewed_source["source_tree"] == "d18294246e373f04e0e6e0f93989a59e07ac30e7"
+    assert reviewed_source["diff_sha256"] == (
+        "8170dd6ee63ba80ed3811e8878e541fe090a9ee93685d15dbfee82ac3b83d2bc"
+    )
+    assert len(reviewed_source["change_commits"]) == 11
+    assert review["verdict"] == "PASS"
+    assert review["findings"] == []
+    assert {result["number"] for result in review["challenge_results"]} == set(range(1, 18))
+    assert all(result["verdict"] == "PASS" for result in review["challenge_results"])
+    assert [result["answer"] for result in review["challenge_results"][-2:]] == ["NO", "NO"]
+    assert all(value is False for value in review["authority"].values())
