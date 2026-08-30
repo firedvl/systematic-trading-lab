@@ -1,0 +1,113 @@
+{
+  "schema_version": "program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-proposal-independent-review-v1",
+  "review_id": "program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-proposal-independent-review-2026-08-30-v1",
+  "program_id": "multi-hour-sector-etf-research-008",
+  "reviewed_at": "2026-08-30T09:29:51Z",
+  "status": "PASS-READY-FOR-EXACT-ONE-USE-OHLCV-STRUCTURAL-AUTHORIZATION",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_proposal": {
+    "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-proposal-v1.json",
+    "sha256": "853cd2868704a047a62abcd543e628f5853e768c401aa1cad4a72194ee136d88",
+    "fingerprint": "8594d1872a7c5d3a7db9c695483581251dfb11dea2840bf0ca2b6103aa61b429",
+    "proposal_id": "program-009-raw-alpaca-sip-ohlcv-structural-qualification-authority-proposal-2026-08-30-v1",
+    "proposal_artifact_commit": "a781f202516dca8de9986429ed74f00413b96478"
+  },
+  "reviewed_implementation": {
+    "implementation_id": "program-009-raw-alpaca-sip-ohlcv-structural-qualification-implementation-2026-08-30-v1",
+    "source_commit": "842b9db6a973c074f57dc6f1746afc9e02b1c619",
+    "source_tree": "92939faf988f288d0086dea76ef4e9bf32676049",
+    "implementation_root": "00839ab4108b336270809a1444bb0077e6045c8f5688c8354c0f5aec6246ab20"
+  },
+  "review_scope": "Exact-byte review of the READY proposal, bound implementation, Program 007 and Program 008 lineage, OHLCV freshness, raw SIP endpoint isolation, pre-root and under-lock validation, one-use claim boundary, post-claim terminal persistence, structural qualification gates, and prohibited authority.",
+  "required_challenges": {
+    "program_008_metadata_terminal_pass": "PASS",
+    "program_008_metadata_authority_replayable": "NO",
+    "sample_previously_observed_as_ohlcv": "NO",
+    "metadata_exposure_breaks_ohlcv_freshness": "NO",
+    "non_raw_sip_view_possible": "NO",
+    "provider_adjusted_bars_possible": "NO",
+    "raw_parse_before_persistence": "NO",
+    "extended_hours_forced_into_canonical": "NO",
+    "completeness_before_rth_projection": "NO",
+    "early_close_assumed_to_have_78_bars": "NO",
+    "post_split_control_invalid": "NO",
+    "five_split_events_unbound": "NO",
+    "share_volume_normalization_broader_than_split_crossing": "NO",
+    "adjusted_historical_price_surface_created": "NO",
+    "pagination_range_cannot_require_pagination": "NO",
+    "transport_budgets_unbounded": "NO",
+    "retries_possible": "NO",
+    "full_exposed_acquisition_possible": "NO",
+    "real_dataset_admission_possible": "NO",
+    "strategy_calculation_possible": "NO",
+    "controlled_protected_paper_broker_or_live_possible": "NO",
+    "changed_artifact_self_authorizes": "NO"
+  },
+  "credential_presence_at_review": [
+    {
+      "name": "PROGRAM_006_ALPACA_API_KEY_ID",
+      "present": true
+    },
+    {
+      "name": "PROGRAM_006_ALPACA_API_SECRET_KEY",
+      "present": true
+    }
+  ],
+  "verification": {
+    "independent_reviewer": "fresh read-only reviewer",
+    "review_result": "No material findings in the READY proposal or bound implementation after the pre-root and post-claim persistence corrections.",
+    "credential_preflight": "PASS",
+    "focused_pre_artifact_tests": "17 passed; 1 final chain test deselected because this review artifact did not yet exist",
+    "raw_contract_and_provenance_tests": "77 passed",
+    "secret_scan": "PASS; 608 files scanned",
+    "diff_check": "PASS",
+    "lineage_binding_hashes": "PASS",
+    "early_close_grid": "42 five-minute bar opens from 2025-11-28T14:30:00Z through 2025-11-28T17:55:00Z",
+    "proposal_sha256": "853cd2868704a047a62abcd543e628f5853e768c401aa1cad4a72194ee136d88",
+    "proposal_fingerprint": "8594d1872a7c5d3a7db9c695483581251dfb11dea2840bf0ca2b6103aa61b429",
+    "request_plan_sha256": "b7ff3f3339f0a896e08e86ca381eba3ce3fd0db21fa94474d9c3842051ffca64",
+    "request_plan_fingerprint": "cc8152fdf2eb4cd78cf52c302509a622a5b71b9c9c72cfabe18d7cd5510a7783",
+    "implementation_root": "00839ab4108b336270809a1444bb0077e6045c8f5688c8354c0f5aec6246ab20",
+    "external_authorization_root": null,
+    "active_authority": false,
+    "claim_created": false,
+    "private_root_created": false,
+    "credential_value_loads": 0,
+    "provider_requests": 0,
+    "provider_responses": 0,
+    "provider_bytes": 0,
+    "strategy_calculations": 0,
+    "strategy_returns": 0,
+    "controlled_protected_paper_broker_or_live_accessed": false
+  },
+  "protected_access": {
+    "credential_values": false,
+    "provider_or_account_endpoint": false,
+    "private_runtime_state": false,
+    "market_observations": false,
+    "strategy_returns": false,
+    "controlled_protected_paper_broker_or_live": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "external_authorization_root_generated": false,
+  "proof_gap": "This review artifact and its add commit did not exist during review, so final committed-chain validation, merge, and clean synchronized-main root derivation remained pending. The review did not inspect credential values, load credentials, construct a provider client, contact Alpaca, inspect private runtime state, receive provider bytes, activate authority, create a claim, request OHLCV, execute strategy code, or access controlled, protected, PAPER, broker, or live state.",
+  "required_next_action": "Commit this exact review, run complete reviewed-chain validation, document the prospective authority, merge through green CI, and derive exactly one external authorization root from final clean synchronized main without activating authority or creating a claim.",
+  "review_fingerprint": "355690a1ec9e9fe23fea32852019e4690a39677394e668bc7b2ab1b42d111773"
+}

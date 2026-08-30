@@ -1,0 +1,541 @@
+{
+  "schema_version": "program-009-raw-alpaca-sip-ohlcv-structural-request-plan-v1",
+  "request_plan_id": "program-009-raw-alpaca-sip-ohlcv-structural-request-plan-2026-08-30-v1",
+  "program_id": "multi-hour-sector-etf-research-008",
+  "status": "FROZEN-CREDENTIAL-FREE-NOT-AUTHORIZED",
+  "bindings": {
+    "successor_qualification_proposal": {
+      "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v1.json",
+      "sha256": "d67da94859eb7d574f9c84abd6c538d0831848d3ad32ae1e5cb390dd7930353b",
+      "fingerprint": "64b3e380d1bdf7861afb65ff95882cb72ccf96a645bda382244731311548150f"
+    },
+    "program_008_terminal_success": {
+      "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-v1.json",
+      "sha256": "23bf0e29b4f8b4b4655d7eeb470e4ceb1bc319717c854ec3d82790ef52c1762b",
+      "fingerprint": "151091ac4d863d73561afc24dc0138e5326dd237183dfb7da178cb5584871fcd"
+    },
+    "program_008_terminal_success_review": {
+      "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-independent-review-v1.json",
+      "sha256": "65eda8a7e6bc6d262b382227db7ca82ecd42dc38caa97d637d6dd1b207a4e6c9",
+      "fingerprint": "143f8e5023b96bc950f9ec86d37e966fca42ceefd1c07c691d6d3c2af7c66dad"
+    },
+    "public_unit_changing_action_ledger": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+      "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+      "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
+    }
+  },
+  "request": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "sort": "asc",
+    "limit": 10000,
+    "asof": "2026-07-31",
+    "inclusive_bounds": true,
+    "redirects": false,
+    "pagination_token": "opaque page_token appended after fixed parameters"
+  },
+  "universe": [
+    "IWM",
+    "MDY",
+    "SPY",
+    "XLB",
+    "XLE",
+    "XLF",
+    "XLI",
+    "XLK",
+    "XLP",
+    "XLRE",
+    "XLU",
+    "XLV",
+    "XLY"
+  ],
+  "chains": [
+    {
+      "range_id": "normal-2021-07-08",
+      "start": "2021-07-08T13:30:00Z",
+      "end": "2021-07-08T19:55:00Z",
+      "session_dates": [
+        "2021-07-08"
+      ],
+      "symbols": [
+        "IWM",
+        "MDY",
+        "SPY",
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "fixed_parameters": [
+        [
+          "symbols",
+          "IWM,MDY,SPY,XLB,XLE,XLF,XLI,XLK,XLP,XLRE,XLU,XLV,XLY"
+        ],
+        [
+          "start",
+          "2021-07-08T13:30:00Z"
+        ],
+        [
+          "end",
+          "2021-07-08T19:55:00Z"
+        ],
+        [
+          "feed",
+          "sip"
+        ],
+        [
+          "timeframe",
+          "5Min"
+        ],
+        [
+          "adjustment",
+          "raw"
+        ],
+        [
+          "sort",
+          "asc"
+        ],
+        [
+          "limit",
+          "10000"
+        ],
+        [
+          "asof",
+          "2026-07-31"
+        ]
+      ],
+      "chain_fingerprint": "56db34face88559ccd33463c339c16a22b591dcc813427db3d46bab82287f28e",
+      "maximum_pages": 1,
+      "expected_canonical_coordinate_count": 1014,
+      "expected_canonical_grid_fingerprint": "ca51eb6f8238354a898f4c94cd5d07f6b9b7f94bb57d4cd14334668cb35eb02b"
+    },
+    {
+      "range_id": "normal-2022-01-25",
+      "start": "2022-01-25T14:30:00Z",
+      "end": "2022-01-25T20:55:00Z",
+      "session_dates": [
+        "2022-01-25"
+      ],
+      "symbols": [
+        "IWM",
+        "MDY",
+        "SPY",
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "fixed_parameters": [
+        [
+          "symbols",
+          "IWM,MDY,SPY,XLB,XLE,XLF,XLI,XLK,XLP,XLRE,XLU,XLV,XLY"
+        ],
+        [
+          "start",
+          "2022-01-25T14:30:00Z"
+        ],
+        [
+          "end",
+          "2022-01-25T20:55:00Z"
+        ],
+        [
+          "feed",
+          "sip"
+        ],
+        [
+          "timeframe",
+          "5Min"
+        ],
+        [
+          "adjustment",
+          "raw"
+        ],
+        [
+          "sort",
+          "asc"
+        ],
+        [
+          "limit",
+          "10000"
+        ],
+        [
+          "asof",
+          "2026-07-31"
+        ]
+      ],
+      "chain_fingerprint": "892531e29625f60052bbb14a2e3a06a55c9397f42f7a9ceb190f9590ecee7bc3",
+      "maximum_pages": 1,
+      "expected_canonical_coordinate_count": 1014,
+      "expected_canonical_grid_fingerprint": "0ff22aaa7902e1c9f01952b6e2cc07a636c8e608b5bd14a1e02585cbdbac3c13"
+    },
+    {
+      "range_id": "normal-2022-11-15",
+      "start": "2022-11-15T14:30:00Z",
+      "end": "2022-11-15T20:55:00Z",
+      "session_dates": [
+        "2022-11-15"
+      ],
+      "symbols": [
+        "IWM",
+        "MDY",
+        "SPY",
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "fixed_parameters": [
+        [
+          "symbols",
+          "IWM,MDY,SPY,XLB,XLE,XLF,XLI,XLK,XLP,XLRE,XLU,XLV,XLY"
+        ],
+        [
+          "start",
+          "2022-11-15T14:30:00Z"
+        ],
+        [
+          "end",
+          "2022-11-15T20:55:00Z"
+        ],
+        [
+          "feed",
+          "sip"
+        ],
+        [
+          "timeframe",
+          "5Min"
+        ],
+        [
+          "adjustment",
+          "raw"
+        ],
+        [
+          "sort",
+          "asc"
+        ],
+        [
+          "limit",
+          "10000"
+        ],
+        [
+          "asof",
+          "2026-07-31"
+        ]
+      ],
+      "chain_fingerprint": "1b5ae1309785ebfe78206683312b223323e45d95332aaf57775e39153dea585e",
+      "maximum_pages": 1,
+      "expected_canonical_coordinate_count": 1014,
+      "expected_canonical_grid_fingerprint": "2612096cbf4be3a38a87764a39348d56eca15dc06c13b00885a7849fb3f3e697"
+    },
+    {
+      "range_id": "pagination-2023-05-16-to-2023-05-30",
+      "start": "2023-05-16T13:30:00Z",
+      "end": "2023-05-30T19:55:00Z",
+      "session_dates": [
+        "2023-05-16",
+        "2023-05-17",
+        "2023-05-18",
+        "2023-05-19",
+        "2023-05-22",
+        "2023-05-23",
+        "2023-05-24",
+        "2023-05-25",
+        "2023-05-26",
+        "2023-05-30"
+      ],
+      "symbols": [
+        "IWM",
+        "MDY",
+        "SPY",
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "fixed_parameters": [
+        [
+          "symbols",
+          "IWM,MDY,SPY,XLB,XLE,XLF,XLI,XLK,XLP,XLRE,XLU,XLV,XLY"
+        ],
+        [
+          "start",
+          "2023-05-16T13:30:00Z"
+        ],
+        [
+          "end",
+          "2023-05-30T19:55:00Z"
+        ],
+        [
+          "feed",
+          "sip"
+        ],
+        [
+          "timeframe",
+          "5Min"
+        ],
+        [
+          "adjustment",
+          "raw"
+        ],
+        [
+          "sort",
+          "asc"
+        ],
+        [
+          "limit",
+          "10000"
+        ],
+        [
+          "asof",
+          "2026-07-31"
+        ]
+      ],
+      "chain_fingerprint": "d970f59a1dbc597a6d79b5070586cb1ff306a406aabff7d6cb81c856421b1b81",
+      "maximum_pages": 6,
+      "expected_canonical_coordinate_count": 10140,
+      "expected_canonical_grid_fingerprint": "2735fd6f4a433e5a42bafa64287beed3c94de2908b00f08217a51ee73ae0d16b"
+    },
+    {
+      "range_id": "split-pre-early-close-2025-11-28",
+      "start": "2025-11-28T14:30:00Z",
+      "end": "2025-11-28T17:55:00Z",
+      "session_dates": [
+        "2025-11-28"
+      ],
+      "symbols": [
+        "IWM",
+        "MDY",
+        "SPY",
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "fixed_parameters": [
+        [
+          "symbols",
+          "IWM,MDY,SPY,XLB,XLE,XLF,XLI,XLK,XLP,XLRE,XLU,XLV,XLY"
+        ],
+        [
+          "start",
+          "2025-11-28T14:30:00Z"
+        ],
+        [
+          "end",
+          "2025-11-28T17:55:00Z"
+        ],
+        [
+          "feed",
+          "sip"
+        ],
+        [
+          "timeframe",
+          "5Min"
+        ],
+        [
+          "adjustment",
+          "raw"
+        ],
+        [
+          "sort",
+          "asc"
+        ],
+        [
+          "limit",
+          "10000"
+        ],
+        [
+          "asof",
+          "2026-07-31"
+        ]
+      ],
+      "chain_fingerprint": "84c5e79c0dd89e4eb7ac22e66b81d60a2787f056c05005c4ee7b316f9adc8854",
+      "maximum_pages": 1,
+      "expected_canonical_coordinate_count": 546,
+      "expected_canonical_grid_fingerprint": "6f7cdec65faa67f512d35a3d22d5a2163ff3fde87908aeabad2b80b5203255f9"
+    },
+    {
+      "range_id": "split-post-2025-12-15",
+      "start": "2025-12-15T14:30:00Z",
+      "end": "2025-12-15T20:55:00Z",
+      "session_dates": [
+        "2025-12-15"
+      ],
+      "symbols": [
+        "IWM",
+        "MDY",
+        "SPY",
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY"
+      ],
+      "fixed_parameters": [
+        [
+          "symbols",
+          "IWM,MDY,SPY,XLB,XLE,XLF,XLI,XLK,XLP,XLRE,XLU,XLV,XLY"
+        ],
+        [
+          "start",
+          "2025-12-15T14:30:00Z"
+        ],
+        [
+          "end",
+          "2025-12-15T20:55:00Z"
+        ],
+        [
+          "feed",
+          "sip"
+        ],
+        [
+          "timeframe",
+          "5Min"
+        ],
+        [
+          "adjustment",
+          "raw"
+        ],
+        [
+          "sort",
+          "asc"
+        ],
+        [
+          "limit",
+          "10000"
+        ],
+        [
+          "asof",
+          "2026-07-31"
+        ]
+      ],
+      "chain_fingerprint": "505e5ead4f9e213268e49d6c87d30e601e5897ba4270ac4af2ba91f3a9ffc4ea",
+      "maximum_pages": 1,
+      "expected_canonical_coordinate_count": 1014,
+      "expected_canonical_grid_fingerprint": "188ae0e604a6b8391e204b5f6cf4b96b66b6ca8fd87a6a7c6314404f2f63edb8"
+    }
+  ],
+  "expected_canonical_coordinate_count": 14742,
+  "expected_canonical_grid_fingerprint": "39e882b5c480f7e8ea15ff7e7ecb3efe7362a72b90bdf22e8d61f8334db1f10b",
+  "transport_budget": {
+    "logical_chain_count": 6,
+    "minimum_http_requests": 7,
+    "maximum_http_requests": 11,
+    "minimum_http_responses": 7,
+    "maximum_http_responses": 11,
+    "maximum_response_page_bytes": 8388608,
+    "bounded_read_bytes": 8388609,
+    "maximum_total_bytes": 16777216,
+    "maximum_requests_per_minute": 120,
+    "maximum_credential_loads": 1,
+    "automatic_retries": 0,
+    "minimum_forced_pagination_pages": 2
+  },
+  "raw_first_storage": {
+    "root": ".trading-lab/program-009-raw-alpaca-sip-ohlcv-v1",
+    "separate_from_programs_006_007_008": true,
+    "git_ignored": true,
+    "absent_until_activation": true,
+    "request_intent_before_transport": true,
+    "claim_immediately_before_first_transport": true,
+    "claim_defaults_to_terminal_failure_without_valid_pass_receipt": true,
+    "bounded_body_before_parse": true,
+    "sha256_receipt_before_parse": true,
+    "create_only": true,
+    "file_and_directory_fsync": true,
+    "credentials_stored": false
+  },
+  "projection": {
+    "calendar": "XNYS",
+    "timestamp_semantics": "five-minute bar opens",
+    "valid_extended_hours": "retain raw and exclude from canonical projection",
+    "required_rth_completeness": "exact 13-symbol grid per selected session",
+    "missing_required_coordinate": "whole-session exclusion and qualification FAIL"
+  },
+  "corporate_actions": {
+    "ledger": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+      "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+      "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
+    },
+    "provider_adjusted_view": false,
+    "split_symbols": [
+      "XLB",
+      "XLE",
+      "XLK",
+      "XLU",
+      "XLY"
+    ],
+    "effective_session": "2025-12-05",
+    "pre_action_control": "2025-11-28",
+    "post_action_control": "2025-12-15",
+    "share_volume_factor": "2",
+    "factor_representation": "exact rational",
+    "adjusted_historical_price_surface": false
+  },
+  "credential_names": [
+    "PROGRAM_006_ALPACA_API_KEY_ID",
+    "PROGRAM_006_ALPACA_API_SECRET_KEY"
+  ],
+  "authentication_header_names": [
+    "APCA-API-KEY-ID",
+    "APCA-API-SECRET-KEY"
+  ],
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "request_plan_fingerprint": "cc8152fdf2eb4cd78cf52c302509a622a5b71b9c9c72cfabe18d7cd5510a7783"
+}

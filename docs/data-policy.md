@@ -20,6 +20,15 @@ Prospective Program 006 preserves those public/private rules under the separate 
 credential values remain process-environment-only and never enter manifests or logs. See
 [Program 006 Alpaca source qualification](program-006-alpaca-qualification.md).
 
+Program 009's reviewed proposal uses the separate Git-ignored
+`.trading-lab/program-009-raw-alpaca-sip-ohlcv-v1/` root for one exact structural qualification
+sample only. Activation creates the root; an absent authority or missing credential must not create
+it. Each bounded response body and SHA-256 receipt is create-only and fsynced before parsing. Valid
+extended-hours rows remain immutable raw evidence but do not enter the exact XNYS RTH projection.
+The claim makes any missing or invalid PASS receipt terminal `FAIL-CONSUMED-NO-RETRY`. Qualification
+evidence is not a catalog dataset and grants no full acquisition, admission, strategy, or trading
+authority. See [Program 009 raw OHLCV structural qualification](program-009-raw-ohlcv-qualification.md).
+
 ## Rapid Research inputs
 
 Rapid Research can read immutable cataloged daily datasets without writing controlled experiment state. It can also import a complete user-supplied daily CSV or Parquet file into its separate `rapid-research/datasets/` namespace. The local importer requires exact `timestamp,symbol,open,high,low,close,volume` fields, UTC midnight timestamps, increasing rows per symbol, no duplicate bars, valid OHLC relationships, nonnegative integer volume, and complete XNYS sessions for every included symbol.
