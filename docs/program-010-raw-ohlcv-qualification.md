@@ -184,10 +184,11 @@ preflight, loads credentials once, validates clean synchronized-main provenance,
 operation immediately before transport, and writes raw bodies and receipts create-only before status,
 schema, or continuation checks. It is inert until its exact source commit receives a Git-tracked,
 finding-free child authority and review under the standing mandate.
-Activation holds Git transaction locks on `refs/heads/main` and `refs/remotes/origin/main` from the
-locked revalidation through active-record persistence. Execution holds the same synchronized-main
-snapshot for the whole qualification. After request pacing and before the claim or each later
-transport, the runtime rederives the exact authority; drift fails before provider access.
+Activation holds parent-owned Git lockfiles on `refs/heads/main` and
+`refs/remotes/origin/main` from the locked revalidation through active-record persistence. Execution
+holds the same synchronized-main snapshot for the whole qualification. No child process owns those
+locks. After request pacing and before the claim or each later transport, the runtime rederives the
+exact authority; drift fails before provider access.
 The complete Git delta from that reviewed source commit to synchronized `main` must contain exactly
 the two added child authority and review artifacts; any other repository change invalidates the child
 before credentials or private state.

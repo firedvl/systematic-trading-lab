@@ -1254,66 +1254,91 @@ class _GitPolicySnapshot:
         if _HEX_40.fullmatch(commit) is None:
             raise Program010AuthorityError("Program 010 policy commit is invalid")
         self._repository = repository
-        self._commit = commit
-        self._process: subprocess.Popen[str] | None = None
+        self._locks: list[tuple[Path, int, int, int]] = []
 
     def __enter__(self) -> None:
-        process = subprocess.Popen(
-            (*_git_command(self._repository), "update-ref", "--stdin"),
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            env=_git_environment(),
-        )
-        self._process = process
-        assert process.stdin is not None
-        assert process.stdout is not None
         try:
-            process.stdin.write(
-                "start\n"
-                f"update refs/heads/main {self._commit} {self._commit}\n"
-                f"update refs/remotes/origin/main {self._commit} {self._commit}\n"
-                "prepare\n"
+            storage = subprocess.run(
+                (
+                    *_git_command(self._repository),
+                    "config",
+                    "--local",
+                    "--get",
+                    "extensions.refStorage",
+                ),
+                check=False,
+                capture_output=True,
+                text=True,
+                env=_git_environment(),
             )
-            process.stdin.flush()
-            responses = (process.stdout.readline().strip(), process.stdout.readline().strip())
-        except (OSError, ValueError):
+            if storage.returncode not in {0, 1} or (
+                storage.returncode == 0 and storage.stdout.strip() != "files"
+            ):
+                raise Program010AuthorityError("Program 010 Git ref storage is unsupported")
+            for reference in ("refs/heads/main", "refs/remotes/origin/main"):
+                raw_path = subprocess.run(
+                    (
+                        *_git_command(self._repository),
+                        "rev-parse",
+                        "--path-format=absolute",
+                        "--git-path",
+                        reference,
+                    ),
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    env=_git_environment(),
+                ).stdout.strip()
+                reference_path = Path(raw_path)
+                if not reference_path.is_absolute() or not reference_path.parent.is_dir():
+                    raise Program010AuthorityError("Program 010 Git ref path is invalid")
+                lock_path = Path(f"{reference_path}.lock")
+                descriptor = os.open(
+                    lock_path,
+                    os.O_WRONLY
+                    | os.O_CREAT
+                    | os.O_EXCL
+                    | getattr(os, "O_CLOEXEC", 0)
+                    | getattr(os, "O_NOFOLLOW", 0),
+                    0o600,
+                )
+                try:
+                    metadata = os.fstat(descriptor)
+                except OSError:
+                    os.close(descriptor)
+                    with suppress(OSError):
+                        os.unlink(lock_path)
+                    raise
+                if not stat.S_ISREG(metadata.st_mode) or stat.S_IMODE(metadata.st_mode) & 0o077:
+                    os.close(descriptor)
+                    with suppress(OSError):
+                        os.unlink(lock_path)
+                    raise Program010AuthorityError("Program 010 Git ref lock is invalid")
+                self._locks.append((lock_path, descriptor, metadata.st_dev, metadata.st_ino))
+        except (OSError, subprocess.CalledProcessError, Program010AuthorityError):
             self._release(require_ok=False)
             raise Program010AuthorityError("Program 010 policy snapshot lock failed") from None
-        if responses != ("start: ok", "prepare: ok"):
-            self._release(require_ok=False)
-            raise Program010AuthorityError("Program 010 policy snapshot lock failed")
 
     def __exit__(self, exception_type: type[BaseException] | None, *_args: object) -> None:
         self._release(require_ok=exception_type is None)
 
     def _release(self, *, require_ok: bool) -> None:
-        process = self._process
-        self._process = None
-        if process is None:
-            return
-        response = ""
-        returncode = -1
-        try:
-            assert process.stdin is not None
-            assert process.stdout is not None
-            process.stdin.write("abort\n")
-            process.stdin.flush()
-            response = process.stdout.readline().strip()
-            process.stdin.close()
-            returncode = process.wait(timeout=5)
-        except (OSError, ValueError, subprocess.TimeoutExpired):
-            pass
-        finally:
-            if process.poll() is None:
-                process.kill()
-                process.wait()
-            if process.stdout is not None:
-                process.stdout.close()
-            if process.stderr is not None:
-                process.stderr.close()
-        if require_ok and (response != "abort: ok" or returncode != 0):
+        failed = False
+        while self._locks:
+            lock_path, descriptor, device, inode = self._locks.pop()
+            try:
+                current = os.lstat(lock_path)
+                if current.st_dev != device or current.st_ino != inode:
+                    failed = True
+                else:
+                    os.unlink(lock_path)
+            except OSError:
+                failed = True
+            try:
+                os.close(descriptor)
+            except OSError:
+                failed = True
+        if require_ok and failed:
             raise Program010AuthorityError("Program 010 policy snapshot unlock failed")
 
 

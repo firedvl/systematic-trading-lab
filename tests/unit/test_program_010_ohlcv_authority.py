@@ -277,6 +277,37 @@ def test_git_policy_snapshot_blocks_main_and_origin_ref_updates(tmp_path: Path) 
         assert _git(tmp_path, "rev-parse", reference) == alternate
 
 
+def test_git_policy_snapshot_has_no_independent_lock_owner(tmp_path: Path) -> None:
+    _git(tmp_path, "init", "-b", "main")
+    _git(tmp_path, "config", "user.name", "Program 010 Test")
+    _git(tmp_path, "config", "user.email", "program-010@example.invalid")
+    _git(tmp_path, "commit", "--allow-empty", "-m", "policy source")
+    commit = _git(tmp_path, "rev-parse", "HEAD")
+    tree = _git(tmp_path, "rev-parse", "HEAD^{tree}")
+    alternate = _git(tmp_path, "commit-tree", tree, "-p", commit, "-m", "alternate")
+    _git(tmp_path, "update-ref", "refs/remotes/origin/main", commit)
+    environment = non_broker_subprocess_environment()
+    environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
+    snapshot = authority._GitPolicySnapshot(tmp_path, commit)
+    snapshot.__enter__()
+    try:
+        helper = getattr(snapshot, "_process", None)
+        if helper is not None:
+            helper.terminate()
+            helper.wait()
+        for reference in ("refs/heads/main", "refs/remotes/origin/main"):
+            result = subprocess.run(
+                ("git", "-C", str(tmp_path), "update-ref", reference, alternate, commit),
+                check=False,
+                capture_output=True,
+                env=environment,
+            )
+            assert result.returncode != 0
+            assert _git(tmp_path, "rev-parse", reference) == commit
+    finally:
+        snapshot.__exit__(None)
+
+
 def test_fixed_get_endpoint_rejects_mutation() -> None:
     session = program_010.qualification_requests()[0]
     intent = program_010.PageIntent(session.identity, 1, session.url(), None)
