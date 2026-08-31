@@ -84,6 +84,67 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     assert budget["maximum_requests_and_responses"] == 1_386 * 16 == 22_176
     assert budget["automatic_retries"] == budget["parallel_session_chains"] - 1 == 0
 
+    source = proposal["source_contract"]
+    assert (
+        source["method"],
+        source["endpoint"],
+        source["feed"],
+        source["timeframe"],
+        source["adjustment"],
+        source["sort"],
+        source["limit"],
+        source["asof"],
+    ) == (
+        "GET",
+        "https://data.alpaca.markets/v2/stocks/bars",
+        "sip",
+        "5Min",
+        "raw",
+        "asc",
+        1_000,
+        "2026-07-31",
+    )
+    assert source["symbols"] == [
+        "IWM",
+        "MDY",
+        "SPY",
+        "XLB",
+        "XLE",
+        "XLF",
+        "XLI",
+        "XLK",
+        "XLP",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "XLY",
+    ]
+    assert source["provider_adjusted_view_allowed"] is False
+    assert source["alternate_provider_allowed"] is False
+    assert source["automatic_retries"] == 0
+
+    pagination = proposal["pagination_contract"]
+    assert pagination["terminal_condition"] == "next_page_token is null"
+    assert pagination["raw_body_fsynced_before_parse_or_continuation"] is True
+    assert pagination["maximum_pages_per_session"] == 16
+    assert pagination["incomplete_chain_allows_dataset_admission"] is False
+    restart = proposal["restart_contract"]
+    assert restart["restart_safe_required"] is True
+    assert restart["request_reissue_allowed"] is False
+    assert restart["completed_session_reacquisition_allowed"] is False
+    assert restart["intent_without_completed_page"] == (
+        "AMBIGUOUS-SEND-TERMINAL-FAIL-CONSUMED-NO-RETRY"
+    )
+    assert restart["raw_body_without_response_receipt"] == (
+        "AMBIGUOUS-PERSISTENCE-TERMINAL-FAIL-CONSUMED-NO-RETRY"
+    )
+    assert restart["changed_or_unverifiable_checkpoint"] == "FAIL-CONSUMED-NO-RETRY"
+    assert restart["transport_retries"] == 0
+    evidence = proposal["evidence_contract"]
+    assert evidence["create_only_raw_pages"] is True
+    assert evidence["create_only_request_intents"] is True
+    assert evidence["create_only_response_receipts"] is True
+
     missingness = proposal["missingness_policy"]
     loss = missingness["global_loss_limit"]
     assert loss["overall_excluded_full_session_count_max"] == floor(1_354 * 7 / 1_499) == 6
