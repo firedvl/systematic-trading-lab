@@ -116,15 +116,13 @@ encounter order as global symbol order. Offline forensics found all 1,000 retain
 and expected and every per-symbol bar array timestamp-ascending, so the stop is a
 qualification-specification defect rather than provider incompatibility. See
 [Program 010 raw OHLCV structural qualification](docs/program-010-raw-ohlcv-qualification.md).
-Do not activate or run Program 010 again. It admitted no dataset and ran no strategy. Program 011 is
-the prospective source-qualification successor. Its frozen contract validates timestamp order inside
-each symbol array before deterministic symbol-then-timestamp sorting. Its five fresh sessions exclude
-all Programs 002-010 OHLCV observations and protected chronology. See
+Do not activate or run Program 010 again. It admitted no dataset and ran no strategy. Program 011,
+its source-qualification successor, is terminally consumed and passed. Its exact one-use run retained
+nine HTTP 200 responses totaling 490,879 bytes across five fresh sessions. All 4,602 expected
+coordinates were present, with no source-missing or unobserved coordinates. See
 [Program 011 raw OHLCV structural qualification](docs/program-011-raw-ohlcv-qualification.md).
-Program 011's design review is merged. Its fixed GET-only one-use runtime remains non-authorizing
-by itself. Child v1 is preserved as rejected before review; the runtime accepts only an exact
-source-bound v2 child and finding-free review on synchronized `main`. Both CLI preflight and
-execution validate that full control chain before inspecting credential presence.
+Do not activate or run Program 011 again. It admitted no dataset and ran no strategy. Full exposed
+acquisition and structural dataset admission require a separate reviewed standing child authority.
 
 ## Using historical data
 

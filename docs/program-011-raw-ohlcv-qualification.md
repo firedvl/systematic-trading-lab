@@ -1,9 +1,9 @@
 # Program 011 raw OHLCV structural qualification
 
-Program 011, `multi-hour-sector-etf-research-010`, is `PROPOSED-NOT-AUTHORIZED`. The reviewed
-source contract and sample are frozen, and the fixed one-use runtime is implemented. Child v1 is
-preserved as rejected before review; the runtime now requires an exact v2 child and review. No
-credential access, provider request, dataset, strategy result, or protected action exists.
+Program 011, `multi-hour-sector-etf-research-010`, is
+`TERMINAL-PASS-CONSUMED-NO-REPLAY`. Its reviewed one-use child is consumed and cannot replay. The
+run admitted no dataset, calculated no strategy result, and accessed no controlled or protected
+chronology.
 
 ## Prospective correction
 
@@ -34,7 +34,31 @@ disabled environment proxy routing and redirects, bounded raw-first private pers
 the first transport invocation, zero retries, and immutable terminal evidence. It uses a separate
 ignored private root. Execution and the names-only CLI preflight validate child/review identity,
 synchronized-main lineage, protected registrations, and the operation contract before inspecting
-credential presence. Private state opens only after those controls and credential presence pass.
+credential presence. Private state opened only after those controls and credential presence passed.
+
+## Terminal outcome
+
+The child activated on clean synchronized main
+`f33fb5058de6176c0b32622d0e4eda70c64b4d74`. Execution loaded credentials once and made nine
+zero-retry requests. Nine HTTP 200 responses totaled 490,879 bytes. Raw bodies were persisted before
+parse or continuation, and all five chains terminated with a null token.
+
+Every expected coordinate was present: 4,602 raw rows for 4,602 canonical coordinates. The source
+missing and unobserved inventories are empty. Public terminal-success SHA-256/fingerprint is
+`cdb6aa8ee9c317738399d72a8a3af60882eaa959fb554a3765326fdf3cedfa21` /
+`8174a030b37fb153acda1b3deb519be32910be52341475b4adc29bfcee6c29aa`. Nine private raw pages remain
+ignored and hash-bound.
+
+Current code rejects credential preflight, derivation, activation, loading, and execution before
+credential presence or private-state access. Program 011 cannot receive a replacement qualification
+authority. Full exposed acquisition and structural dataset admission require a separate prospective
+standing child and independent review.
+
+The finding-free independent terminal review binds closeout commit/tree
+`95963e8f935b79e9ce96fa43f9ddd048506f4c15` /
+`0a917a2467ba6e0b4f95ecfd552a616490cfd58a`. Review SHA-256/fingerprint is
+`c2c019b94486a2d9cbe8cd53e1da6dbffadf36a265a57f4f47610a22b51929ac` /
+`86c5f4dae4ce96c4bae9bd4be4886d90c28d851c71831f5169244d112bd50620`.
 
 ## Frozen sample
 
@@ -102,7 +126,6 @@ The finding-free independent review binds source commit
 `f66d7aa735ef48005c911bc68a5c3fc45c9aa41b0015b1f7916d0b77b1490332` /
 `83eeda356a807b266fb93c3e477e7e73469c05f8dca74bf9901c7de075f12b92`.
 
-The authority gate requires an exact v2 one-use standing child bound to the runtime source commit and
-an independent v2 review as the only later source-to-main additions. Full quality checks, green CI,
-and a clean synchronized-main merge must follow. Only then may the names-only credential preflight,
-activation, or provider transport run.
+The authority gate required an exact v2 one-use standing child bound to the runtime source commit and
+an independent v2 review as the only later source-to-main additions. That chain merged through green
+CI before credential preflight, activation, and provider transport.
