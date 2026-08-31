@@ -1,15 +1,17 @@
 # Program 012 exposed-prefix acquisition
 
-Program 012, `multi-hour-sector-etf-research-011`, is `PROPOSED-NOT-AUTHORIZED`. Proposal v2 defines a
+Program 012, `multi-hour-sector-etf-research-011`, is `PROPOSED-NOT-AUTHORIZED`. Proposal v3 defines a
 raw-only Alpaca SIP acquisition and a new prefix-specific structural admission. It does not enact
 Program 002 admission, evaluate its quote grid, or authorize a strategy.
 
 Proposal SHA-256/fingerprint is
-`06a2d2544def3443040e104f246458cd79a8205820a059efef037751f053ef74` /
-`696c4e44ffa4aa1053ee5ea131dea6c3a8a639f2a22f1aff630fd24a142d60e8`.
-V1 remains immutable and is superseded before execution: review found that it did not require a
+`337a5b14ff15f9d40d0f88ed05822cf9e55293fe6c5219f56d63f1d65a67c19a` /
+`7f5817707001b03765ee5563fcb07f728ac066cc7352137b732f87312743c80b`.
+V1 and v2 remain immutable and are superseded before execution. V1 did not require a
 durable intent before dispatch, did not scope credential loads across process recovery, and applied
-its exact-nine-coordinate rule too broadly. V2 changes no chronology, admission ceiling, or authority.
+its exact-nine-coordinate rule too broadly. V2 did not make credential-load accounting crash-safe,
+bind the exact coordinate inventory, or require inter-process serialization. V3 changes no chronology,
+admission ceiling, or authority.
 
 ## Chronology
 
@@ -41,12 +43,18 @@ The 1,386 chains imply 2,760 nominal responses when complete. The hard limits ar
 and responses, 8 MiB per page and session, 4 GiB total response bytes, 8 GiB working disk, 120
 requests per minute, one credential load, one sequential chain, and zero retries.
 
-Before each dispatch, the runtime must create and fsync an intent bound to the authority, source,
-session, page, request identity, and exact private URL. A restart may reparse an exact completed page
-and continue from its stored token, or start a session with no intent. An intent without a complete
-page, an unreceipted body, or a changed checkpoint is terminal failure and may not cause a second
-request. Each validated process may load credentials once; recovery loads are counted in terminal
-evidence, credential values are never persisted, and process restarts are never automatic.
+The runtime must take the existing exclusive Program 011 private-root lock before checkpoint
+validation and hold it through every intent, provider call, page receipt, checkpoint, and terminal
+write. Before each dispatch, it must atomically create and fsync an intent bound to the authority,
+source, session, page, request identity, and exact private URL. A restart may reparse an exact
+completed page and continue from its stored token, or start a session with no intent. An intent
+without a complete page, an unreceipted body, or a changed checkpoint is terminal failure and may
+not cause a second request.
+
+Before credential access, each process must fsync a value-free load-attempt record. It then writes a
+value-free success or failure receipt. An unpaired attempt counts conservatively as a load. Each
+validated process may load credentials once; terminal evidence counts all loads, credential values
+are never persisted, and process restarts are never automatic.
 
 ## Structural policy
 
@@ -58,6 +66,10 @@ symbol dropping, reranking, or date replacement.
 On a fixed quarantine date, any missing coordinate outside the exact nine-coordinate incident
 inventory fails admission. That rule does not consume the one allowed nonquarantine slot: one
 isolated nonquarantine full-session loss may pass only when every concentration gate also passes.
+The nine-coordinate inventory is the sorted unique union of Program 002's completed-segment
+`synthesized_coordinates` and failed-segment `missing_intervals`. Its fingerprint is
+`b725b51b5854a9297f8514c282a15b9729b44a4666de6c09066e5316aef8e9fe`, and it must equal Program
+005's frozen `known_mdy_coordinates` before admission.
 
 The protected truncation requires a new prospective denominator. Applying the old rate without
 weakening it gives `floor(1354 * 7 / 1499) = 6`, so the five fixed dates leave one unexpected

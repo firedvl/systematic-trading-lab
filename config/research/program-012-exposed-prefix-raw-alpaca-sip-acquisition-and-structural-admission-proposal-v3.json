@@ -1,0 +1,724 @@
+{
+  "schema_version": "program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v3",
+  "proposal_id": "program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-2026-08-31-v3",
+  "program_ordinal": 12,
+  "program_id": "multi-hour-sector-etf-research-011",
+  "status": "PROPOSED-NOT-AUTHORIZED",
+  "purpose": "Acquire and structurally assess one raw-only Alpaca SIP five-minute dataset over the complete unprotected exposed prefix needed for later prospective research, without reading protected chronology or granting strategy authority.",
+  "lineage": {
+    "program_011": "TERMINAL-PASS-CONSUMED-NO-REPLAY",
+    "program_011_source_qualification": "PASS",
+    "program_011_replay_allowed": false,
+    "program_011_authority_reused": false,
+    "program_002_contract_mutated": false,
+    "program_002_dataset_admission_claimed": false,
+    "program_005_contract_mutated": false,
+    "new_prefix_specific_structural_policy": true
+  },
+  "supersedes": {
+    "proposals": {
+      "v1": {
+        "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v1.json",
+        "sha256": "8eff48cb37b900d3c00a9ad6078a306fce32d2ae1fea2a6461572b587008b013",
+        "fingerprint": "4457697ccb844155b1c499d9941025900944ea5719203706648e73b4dd5e795b"
+      },
+      "v2": {
+        "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v2.json",
+        "sha256": "06a2d2544def3443040e104f246458cd79a8205820a059efef037751f053ef74",
+        "fingerprint": "696c4e44ffa4aa1053ee5ea131dea6c3a8a639f2a22f1aff630fd24a142d60e8"
+      }
+    },
+    "prior_status": "SUPERSEDED-PROSPECTIVE-SPECIFICATION-DEFECTS-NO-EXECUTION",
+    "prior_provider_requests": 0,
+    "prior_market_observations": 0,
+    "v3_corrections": [
+      "fsync a value-free credential-load-attempt before access and conservatively count an unpaired attempt",
+      "derive and hash-bind the exact nine-coordinate incident inventory",
+      "hold the existing exclusive private-root lifecycle lock across checkpoint validation, transport, and persistence"
+    ],
+    "scientific_population_changed": false,
+    "admission_ceiling_changed": false,
+    "authority_changed": false
+  },
+  "bindings": {
+    "standing_mandate": {
+      "path": "config/research/standing-autonomous-research-mandate-v1.json",
+      "sha256": "a324a464c9e969d5242baeea20a2644edff09432b03c16862f269ef4a0400c1e",
+      "fingerprint": "3465648952ccc094697c8edc24860658c6098235989a868610c1e1b12746d502"
+    },
+    "program_011_terminal_success": {
+      "path": "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-v1.json",
+      "sha256": "cdb6aa8ee9c317738399d72a8a3af60882eaa959fb554a3765326fdf3cedfa21",
+      "fingerprint": "8174a030b37fb153acda1b3deb519be32910be52341475b4adc29bfcee6c29aa"
+    },
+    "program_011_terminal_review": {
+      "path": "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-independent-review-v1.json",
+      "sha256": "c2c019b94486a2d9cbe8cd53e1da6dbffadf36a265a57f4f47610a22b51929ac",
+      "fingerprint": "86c5f4dae4ce96c4bae9bd4be4886d90c28d851c71831f5169244d112bd50620"
+    },
+    "program_007_public_unit_changing_action_ledger": {
+      "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+      "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+      "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f"
+    },
+    "program_005_policy_precedent": {
+      "path": "config/research/program-005-free-alpaca-successor-plan-v1.json",
+      "sha256": "3a71573086418aa8ff53d8359110dee1a951caa333ffd35eccedd8d38678cb11",
+      "fingerprint": "79a73d143700c643d67c2f862b5bfe3655df9706276a1b70e189c425d4397cb7"
+    },
+    "program_002_exposed_acquisition_plan": {
+      "path": "config/research/cross-sectional-sector-etf-program-002-data-acquisition-plan-proposal-v1.json",
+      "sha256": "26c768f422e63e9f00e6adc88be2d57f5c6447972a9de1fa4873ab2826556aae"
+    },
+    "program_002_fixed_quarantine_incident": {
+      "path": "config/research/program-002-exposed-acquisition-completeness-failure-v3.json",
+      "sha256": "ebc8f536d51fd701f9fc26f28630abff9f23a0b5edb3e794a5a3016337273618",
+      "fingerprint": "1f5350eb3f704c343044cd11ac328643fd1ae0939ebeaa030248ce031938b53a"
+    },
+    "program_002_fixed_quarantine_review": {
+      "path": "config/research/program-002-exposed-acquisition-completeness-failure-independent-review-v2.json",
+      "sha256": "18ee95730f5af8698ff090c74df42774e1294dea8ff5552ad6c3b16495566e53",
+      "fingerprint": "23c20fb78b71c3e527eb5c4f916d58463fdb311daf2a66436c5d32f976047cbf"
+    },
+    "protected_chronology": {
+      "path": "config/research/standing-protected-chronology-v1.json",
+      "sha256": "ee2359e907f97d4fc039408e9f6bb16562ac515cd10c4b5e87867c0852867782",
+      "fingerprint": "79492d99a6699ad20642926a390b364796dbc24852fbaad94070935aded7eaf3"
+    },
+    "protected_chronology_registration": {
+      "path": "config/research/protected-chronology-registrations/standing-protected-ranges-v1.json",
+      "sha256": "29d407e0d278aa30dbe107c028f696b99965c89edae938115bdbbf44bd916182",
+      "fingerprint": "2ec67b1895290e6fbe7e48e7aefb23219ced568c3a86fc7b82263f0e6bb238bc"
+    }
+  },
+  "data_classes": [
+    "PUBLIC",
+    "EXPOSED"
+  ],
+  "chronology": {
+    "calendar": "XNYS",
+    "context": {
+      "start": "2020-06-26",
+      "end": "2020-07-24",
+      "role": "CONTEXT-ONLY-NEVER-EVALUATED",
+      "session_count": 20,
+      "full_session_count": 20,
+      "early_close_session_count": 0,
+      "expected_coordinates": 20280,
+      "loss_allowed": false
+    },
+    "exposed_prefix": {
+      "start": "2020-07-27",
+      "end": "2025-12-31",
+      "role": "PREFIX-STRUCTURAL-POPULATION-NOT-PROGRAM-002-ADMISSION",
+      "session_count": 1366,
+      "full_trade_eligible_session_count": 1354,
+      "early_close_session_count": 12,
+      "expected_coordinates": 1379508
+    },
+    "request_range": {
+      "start": "2020-06-26",
+      "end": "2025-12-31",
+      "session_count": 1386,
+      "full_session_count": 1374,
+      "early_close_session_count": 12,
+      "expected_coordinates": 1399788
+    },
+    "early_close_sessions": [
+      "2020-11-27",
+      "2020-12-24",
+      "2021-11-26",
+      "2022-11-25",
+      "2023-07-03",
+      "2023-11-24",
+      "2024-07-03",
+      "2024-11-29",
+      "2024-12-24",
+      "2025-07-03",
+      "2025-11-28",
+      "2025-12-24"
+    ],
+    "structural_blocks": [
+      {
+        "block_id": "context",
+        "start": "2020-06-26",
+        "end": "2020-07-24",
+        "sessions": 20,
+        "full_sessions": 20,
+        "early_close_sessions": 0,
+        "expected_coordinates": 20280,
+        "strategy_role": "CONTEXT-ONLY"
+      },
+      {
+        "block_id": "discovery-01",
+        "start": "2020-07-27",
+        "end": "2021-01-22",
+        "sessions": 125,
+        "full_sessions": 123,
+        "early_close_sessions": 2,
+        "expected_coordinates": 125814,
+        "strategy_role": "UNAUTHORIZED-HISTORICAL-LABEL"
+      },
+      {
+        "block_id": "discovery-02",
+        "start": "2021-01-25",
+        "end": "2021-07-23",
+        "sessions": 126,
+        "full_sessions": 126,
+        "early_close_sessions": 0,
+        "expected_coordinates": 127764,
+        "strategy_role": "UNAUTHORIZED-HISTORICAL-LABEL"
+      },
+      {
+        "block_id": "discovery-03",
+        "start": "2021-07-26",
+        "end": "2022-01-21",
+        "sessions": 126,
+        "full_sessions": 125,
+        "early_close_sessions": 1,
+        "expected_coordinates": 127296,
+        "strategy_role": "UNAUTHORIZED-HISTORICAL-LABEL"
+      },
+      {
+        "block_id": "wf-01",
+        "start": "2022-01-24",
+        "end": "2022-07-25",
+        "sessions": 126,
+        "full_sessions": 126,
+        "early_close_sessions": 0,
+        "expected_coordinates": 127764,
+        "strategy_role": "UNAUTHORIZED-HISTORICAL-LABEL"
+      },
+      {
+        "block_id": "wf-02",
+        "start": "2022-07-26",
+        "end": "2023-01-24",
+        "sessions": 126,
+        "full_sessions": 125,
+        "early_close_sessions": 1,
+        "expected_coordinates": 127296,
+        "strategy_role": "UNAUTHORIZED-HISTORICAL-LABEL"
+      },
+      {
+        "block_id": "wf-03",
+        "start": "2023-01-25",
+        "end": "2023-07-26",
+        "sessions": 126,
+        "full_sessions": 125,
+        "early_close_sessions": 1,
+        "expected_coordinates": 127296,
+        "strategy_role": "UNAUTHORIZED-HISTORICAL-LABEL"
+      },
+      {
+        "block_id": "wf-04",
+        "start": "2023-07-27",
+        "end": "2024-01-25",
+        "sessions": 126,
+        "full_sessions": 125,
+        "early_close_sessions": 1,
+        "expected_coordinates": 127296,
+        "strategy_role": "UNAUTHORIZED-HISTORICAL-LABEL"
+      },
+      {
+        "block_id": "wf-05",
+        "start": "2024-01-26",
+        "end": "2024-07-26",
+        "sessions": 126,
+        "full_sessions": 125,
+        "early_close_sessions": 1,
+        "expected_coordinates": 127296,
+        "strategy_role": "UNAUTHORIZED-HISTORICAL-LABEL"
+      },
+      {
+        "block_id": "wf-06",
+        "start": "2024-07-29",
+        "end": "2025-01-28",
+        "sessions": 126,
+        "full_sessions": 124,
+        "early_close_sessions": 2,
+        "expected_coordinates": 126828,
+        "strategy_role": "UNAUTHORIZED-HISTORICAL-LABEL"
+      },
+      {
+        "block_id": "wf-07",
+        "start": "2025-01-29",
+        "end": "2025-07-30",
+        "sessions": 126,
+        "full_sessions": 125,
+        "early_close_sessions": 1,
+        "expected_coordinates": 127296,
+        "strategy_role": "UNAUTHORIZED-HISTORICAL-LABEL"
+      },
+      {
+        "block_id": "wf-08-prefix",
+        "start": "2025-07-31",
+        "end": "2025-12-31",
+        "sessions": 107,
+        "full_sessions": 105,
+        "early_close_sessions": 2,
+        "expected_coordinates": 107562,
+        "strategy_role": "TRUNCATED-PREFIX-NOT-A-WALK-FORWARD-FOLD"
+      }
+    ],
+    "protected_overlap": {
+      "request_session_count": 0,
+      "request_coordinate_count": 0,
+      "first_later_protected_session": "2026-01-02",
+      "excluded_protected_end": "2026-07-31",
+      "excluded_protected_sessions": 145,
+      "excluded_protected_coordinates": 147030,
+      "protected_sessions_are_missing_data": false,
+      "protected_sessions_enter_any_denominator": false
+    },
+    "program_002_final_fold_preserved": false,
+    "history_extension_allowed": false,
+    "date_replacement_allowed": false
+  },
+  "source_contract": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "sort": "asc",
+    "limit": 1000,
+    "asof": "2026-07-31",
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "chain_scope": "one exact XNYS regular session for all thirteen symbols",
+    "chain_order": "ascending session date",
+    "start": "calendar-derived regular-session open bar timestamp, inclusive",
+    "end": "calendar-derived final regular-session five-minute bar-open timestamp, inclusive",
+    "provider_adjusted_view_allowed": false,
+    "alternate_provider_allowed": false,
+    "alternate_timeframe_allowed": false,
+    "imputation_allowed": false,
+    "automatic_retries": 0
+  },
+  "pagination_contract": {
+    "terminal_condition": "next_page_token is null",
+    "opaque_token_continuation": true,
+    "token_cycle_or_reuse": "FAIL-CONSUMED-NO-RETRY",
+    "nonterminal_zero_progress": "FAIL-CONSUMED-NO-RETRY",
+    "repeated_response": "FAIL-CONSUMED-NO-RETRY",
+    "cross_page_duplicate_coordinate": "FAIL-CONSUMED-NO-RETRY",
+    "request_identity_drift": "FAIL-BEFORE-TRANSPORT-OR-FAIL-CONSUMED-NO-RETRY",
+    "raw_body_fsynced_before_parse_or_continuation": true,
+    "json_object_member_order_has_semantic_meaning": false,
+    "received_symbol_array_timestamp_order": "STRICTLY-ASCENDING",
+    "post_validation_normalization": "DETERMINISTIC-SYMBOL-THEN-TIMESTAMP-SORT",
+    "cross_page_first_coordinate_must_exceed_prior_frontier": true,
+    "maximum_pages_per_session": 16,
+    "ceiling_classification": "CHAIN-INCOMPLETE-RESOURCE-CAP",
+    "nonterminal_ceiling_absences_are_source_missing": false,
+    "incomplete_chain_allows_dataset_admission": false
+  },
+  "transport_budgets": {
+    "session_chains": 1386,
+    "nominal_complete_requests_and_responses": 2760,
+    "maximum_requests_and_responses": 22176,
+    "maximum_response_page_bytes": 8388608,
+    "maximum_session_response_bytes": 8388608,
+    "maximum_total_response_bytes": 4294967296,
+    "working_disk_reservation_bytes": 8589934592,
+    "maximum_requests_per_minute": 120,
+    "request_timeout_seconds": 30,
+    "credential_loads_per_process_max": 1,
+    "credential_load_attempt_fsynced_before_access": true,
+    "unpaired_credential_load_attempt_counts_as_load": true,
+    "automatic_process_restart_attempts": 0,
+    "recovery_credential_loads_counted": true,
+    "terminal_evidence_reports_total_credential_loads": true,
+    "automatic_retries": 0,
+    "parallel_session_chains": 1,
+    "budget_exhaustion": "FAIL-CONSUMED-NO-RETRY"
+  },
+  "restart_contract": {
+    "restart_safe_required": true,
+    "process_recovery_allowed": true,
+    "automatic_process_restart_attempts": 0,
+    "exclusive_private_root_lock_required": true,
+    "lock_implementation": "Reuse Program 011 _LockedRoot with a private run.lock and blocking exclusive fcntl.flock.",
+    "lock_acquired_before": "checkpoint validation, credential-load attempt persistence, credential access, or transport",
+    "lock_held_through": "all request intents, provider calls, raw bodies, response receipts, checkpoints, and terminal lifecycle persistence",
+    "concurrent_owner_action": "BLOCK-BEFORE-CREDENTIAL-ACCESS-OR-TRANSPORT",
+    "request_intent_create_only_and_atomic": true,
+    "request_intent_fsynced_before_transport": true,
+    "request_intent_binds": [
+      "active authority fingerprint",
+      "source commit",
+      "session",
+      "page index",
+      "request identity",
+      "exact private URL including the incoming page token when present"
+    ],
+    "completed_page_definition": "Before dispatch, the exact create-only request intent is fsynced. After response, the raw body and response metadata receipt, byte count, and SHA-256 are create-only and fsynced.",
+    "resume_allowed": "Only under the same active authority, synchronized-main commit, private root, and exact completed-page chain. A new process holds the exclusive private-root lock, revalidates all public controls and the checkpoint, fsyncs a value-free credential-load-attempt, loads credentials at most once, fsyncs a success or failure receipt, reparses completed pages, and continues from the last recorded opaque token or starts the first session with no request intent.",
+    "request_reissue_allowed": false,
+    "completed_session_reacquisition_allowed": false,
+    "transport_without_fsynced_intent": "PROHIBITED-BY-RUNTIME-ORDERING",
+    "intent_without_completed_page": "AMBIGUOUS-SEND-TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "raw_body_without_response_receipt": "AMBIGUOUS-PERSISTENCE-TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "changed_or_unverifiable_checkpoint": "FAIL-CONSUMED-NO-RETRY",
+    "credential_loads_per_process_max": 1,
+    "credential_load_attempt_fsynced_before_access": true,
+    "credential_load_attempt_binds": [
+      "active authority fingerprint",
+      "source commit",
+      "process recovery sequence",
+      "value-free attempt identity"
+    ],
+    "credential_load_receipt_fsynced_after_access": true,
+    "credential_load_receipt_values": "success or failure only; no credential value, hash, or derived secret",
+    "unpaired_credential_load_attempt_action": "COUNT-AS-ONE-LOAD-CONSERVATIVELY",
+    "credential_values_persisted_for_recovery": false,
+    "recovery_credential_loads_counted_in_terminal_evidence": true,
+    "transport_retries": 0
+  },
+  "canonical_data_contract": {
+    "raw_provider_pages": "immutable private source evidence",
+    "canonical_rows": "deterministic raw OHLCV rows sorted by session, symbol, and timestamp",
+    "raw_prices_changed": false,
+    "provider_adjusted_rows_requested": false,
+    "local_adjusted_price_view_created": false,
+    "public_action_ledger_required": true,
+    "action_ledger_admission": "ACTION-COVERAGE-GATE-PASS",
+    "relative_volume_normalization": "For a later authorized feature calculation only, apply program_007_alpaca.normalize_share_volume with exact Fraction factors and the feature session as the basis session.",
+    "normalized_volume_materialized_during_program_012": false,
+    "dataset_identity_binds": [
+      "operation proposal",
+      "source commit",
+      "raw page manifest",
+      "canonical raw row hash",
+      "private missingness report hash",
+      "admitted session index hash",
+      "public action ledger",
+      "structural admission result"
+    ],
+    "correction_rule": "A later provider correction creates a new successor dataset and cannot overwrite Program 012 evidence."
+  },
+  "missingness_policy": {
+    "policy_id": "program-012-exposed-prefix-fixed-quarantine-plus-one-isolated-loss-v1",
+    "prospective_and_return_blind": true,
+    "required_cross_section": "All twelve ranking ETFs plus SPY at every required regular-session five-minute coordinate.",
+    "context_loss_max": 0,
+    "early_close_missing_coordinate_action": "FAIL-STRUCTURAL-ADMISSION",
+    "full_session_missing_coordinate_action": "Exclude the whole full session from every later use; do not drop a symbol, rerank, fill, interpolate, synthesize, or replace the date.",
+    "fixed_quarantine": {
+      "classification": "immutable pre-exposed design quarantine",
+      "sessions": [
+        "2020-12-04",
+        "2021-02-03",
+        "2021-02-05",
+        "2021-02-10",
+        "2021-02-22"
+      ],
+      "session_count": 5,
+      "known_mdy_coordinate_count": 9,
+      "coordinate_inventory": {
+        "source_binding": "program_002_fixed_quarantine_incident",
+        "derivation": "Sort and deduplicate the union of every completed_exposed_segments[*].synthesized_coordinates value and every failed_segment.missing_intervals value.",
+        "source_json_paths": [
+          "$.completed_exposed_segments[*].synthesized_coordinates[*]",
+          "$.failed_segment.missing_intervals[*]"
+        ],
+        "canonical_representation": "fingerprint(sorted unique coordinate strings)",
+        "fingerprint": "b725b51b5854a9297f8514c282a15b9729b44a4666de6c09066e5316aef8e9fe",
+        "required_coordinate_count": 9,
+        "required_symbols": [
+          "MDY"
+        ],
+        "required_sessions": [
+          "2020-12-04",
+          "2021-02-03",
+          "2021-02-05",
+          "2021-02-10",
+          "2021-02-22"
+        ],
+        "program_005_cross_check_json_path": "$.source_qualification.known_mdy_coordinates[*]",
+        "source_union_must_equal_program_005_cross_check": true,
+        "equality_required_before_admission": true
+      },
+      "membership_complete": true,
+      "future_membership_allowed": false,
+      "selected_subset_allowed": false,
+      "action": "Exclude all five sessions even if every coordinate is now present. On those five sessions only, any missing coordinate outside the exact nine-coordinate incident inventory fails admission. Missingness on another full session follows the one-slot unexpected-exclusion policy.",
+      "fixed_counts_by_block": {
+        "discovery-01": 1,
+        "discovery-02": 4
+      },
+      "pre_quarantine_full_sessions_by_discovery_block": {
+        "discovery-01": 123,
+        "discovery-02": 126,
+        "discovery-03": 125
+      },
+      "post_quarantine_full_sessions_by_discovery_block": {
+        "discovery-01": 122,
+        "discovery-02": 122,
+        "discovery-03": 125
+      },
+      "minimum_retained_full_sessions_per_discovery_block": 120,
+      "maximum_pre_quarantine_discovery_block_imbalance": 3,
+      "maximum_post_quarantine_discovery_block_imbalance": 3,
+      "maximum_consecutive_fixed_quarantine_sessions": 1,
+      "affected_months": {
+        "2020-12": {
+          "full_sessions_before_quarantine": 21,
+          "fixed_quarantine_sessions": 1,
+          "retained_full_sessions": 20
+        },
+        "2021-02": {
+          "full_sessions_before_quarantine": 19,
+          "fixed_quarantine_sessions": 4,
+          "retained_full_sessions": 15
+        }
+      },
+      "minimum_retained_full_sessions_per_affected_month": 15,
+      "affected_complete_years": {
+        "2021": {
+          "full_sessions_before_quarantine": 251,
+          "fixed_quarantine_sessions": 4,
+          "retained_full_sessions": 247
+        }
+      },
+      "minimum_retained_full_sessions_per_affected_complete_year": 240,
+      "affected_partial_years": {
+        "2020": {
+          "fixed_quarantine_sessions": 1,
+          "governing_structural_block": "discovery-01"
+        }
+      },
+      "partial_year_rule": "An affected partial year must pass its governing structural-block retention and balance gates.",
+      "decision_rule": "Fail if fixed membership changes, any fixed date leaves discovery evidence, block retention or balance fails, consecutive fixed exclusions exceed one, or an affected month, complete year, or partial-year governing block fails its frozen threshold."
+    },
+    "global_loss_limit": {
+      "legacy_rule": "7/1499",
+      "legacy_rate_decimal": "0.00466977985323549",
+      "prefix_full_session_population": 1354,
+      "derivation": "floor(1354 * 7 / 1499) = 6",
+      "overall_excluded_full_session_count_max": 6,
+      "overall_excluded_full_session_rate_exact": "6/1354",
+      "overall_excluded_full_session_rate_decimal": "0.00443131462333826",
+      "minimum_retained_full_trade_eligible_sessions": 1348,
+      "fixed_quarantine_count": 5,
+      "unexpected_excluded_full_session_count_max": 1,
+      "protected_sessions_count_as_exclusions": false,
+      "post_observation_relaxation_allowed": false
+    },
+    "unexpected_concentration_limits": {
+      "per_calendar_year_max": 1,
+      "per_structural_block_max": 1,
+      "rolling_window_sessions": 63,
+      "per_rolling_63_expected_sessions_max": 1,
+      "maximum_consecutive_total_exclusions": 1,
+      "adjacent_to_any_fixed_or_unexpected_exclusion_allowed": false,
+      "same_missing_symbol_rolling_window_sessions": 252,
+      "same_missing_symbol_per_rolling_252_expected_sessions_max": 1,
+      "in_block_or_rolling_63_window_containing_fixed_quarantine_allowed": false,
+      "unexpected_mdy_in_rolling_252_window_containing_fixed_mdy_allowed": false
+    },
+    "fixed_clock_concentration": {
+      "population_full_sessions": 1354,
+      "regular_session_five_minute_clocks": 78,
+      "uniform_coordinate_population": 105612,
+      "coordinates_per_clock": 1354,
+      "fixed_missing_coordinates": 9,
+      "fixed_coordinate_counts_by_new_york_clock": {
+        "11:40": 1,
+        "11:45": 1,
+        "11:50": 1,
+        "13:10": 1,
+        "13:25": 2,
+        "14:05": 1,
+        "14:20": 1,
+        "15:20": 1
+      },
+      "bonferroni_clock_test_count": 78,
+      "familywise_alpha": "0.05",
+      "per_clock_alpha_exact": "1/1560",
+      "rejection_count_at_one_clock": 3,
+      "exact_hypergeometric_tail_probability_at_rejection_count": "0.000166710909",
+      "bonferroni_union_bound_at_rejection_count": "0.013003450898",
+      "observed_maximum_coordinates_at_one_clock": 2,
+      "fixed_sessions_missing_at_exact_strategy_clocks": {
+        "11:30-decision": 0,
+        "11:35-normal-entry": 0,
+        "11:40-stress-a-entry": 1,
+        "11:45-stress-b-entry": 1,
+        "13:35-normal-two-hour-exit": 0,
+        "13:40-stress-a-two-hour-exit": 0,
+        "13:45-stress-b-two-hour-exit": 0,
+        "15:35-normal-four-hour-exit": 0,
+        "15:40-stress-a-four-hour-exit": 0,
+        "15:45-stress-b-four-hour-exit": 0
+      },
+      "maximum_fixed_sessions_missing_at_any_exact_strategy_clock": 1,
+      "decision_rule": "Fail if any five-minute clock reaches three fixed missing coordinates or any exact decision, entry, or exit clock is missing on more than one fixed session."
+    },
+    "spy_mdy_morning_bias_diagnostic": {
+      "reference_symbols": [
+        "SPY",
+        "MDY"
+      ],
+      "population_full_sessions": 1354,
+      "window": "09:30 through the 11:30 New York decision: open at 09:30 and bars opened 09:30 through 11:25.",
+      "quartile_rule": "Sort each metric ascending by metric and session date. Each tested tail contains ceil(population / 4) sessions.",
+      "tail_size_sessions": 339,
+      "metrics_per_symbol": [
+        "highest absolute return from 09:30 open through 11:25 close",
+        "highest 09:30 through 11:25 range divided by minimum low",
+        "lowest 09:30 through 11:25 volume"
+      ],
+      "bonferroni_test_count": 6,
+      "per_test_alpha_exact": "1/120",
+      "rejection_counts_by_total_exclusions": {
+        "5": 5,
+        "6": 5
+      },
+      "exact_hypergeometric_tail_probabilities_at_rejection_count": {
+        "5": "0.000962161807",
+        "6": "0.004581858747"
+      },
+      "reference_null": "Uniform selection of exclusion dates without replacement from the deterministic 1,354-session population.",
+      "unavailable_action": "FAIL-STRUCTURAL-ADMISSION",
+      "decision_rule": "Fail if any tested tail reaches its frozen rejection count. Reviewer discretion cannot override the result.",
+      "interpretation_limit": "This is a randomization-reference diagnostic, not a missing-completely-at-random claim."
+    },
+    "strategy_metrics_allowed": false,
+    "reviewer_override_allowed": false
+  },
+  "structural_admission_contract": {
+    "complete_chain_required_for_every_session": true,
+    "protected_overlap_required": 0,
+    "context_completeness_required": true,
+    "early_close_completeness_required": true,
+    "action_ledger_validation_required": true,
+    "missingness_gates_required": true,
+    "private_exact_missingness_inventory_required": true,
+    "public_exact_missing_coordinates_allowed": false,
+    "public_exact_unexpected_exclusion_dates_allowed": false,
+    "program_002_admission": false,
+    "program_002_quote_windows_evaluated": 0,
+    "program_002_quote_claim": false,
+    "historical_final_exposed_fold_claim": false,
+    "pass_status": "ADMITTED-PROGRAM-012-RAW-STRUCTURAL-PREFIX",
+    "pass_use": "Input only to a later separately frozen and reviewed prospective exposed strategy successor.",
+    "failure_status": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+    "failure_action": "Retain evidence, publish bounded terminal evidence, perform offline forensics, and create a successor only if scientifically justified."
+  },
+  "evidence_contract": {
+    "private_root": ".trading-lab/program-012-exposed-prefix-raw-alpaca-sip-v1",
+    "create_only_raw_pages": true,
+    "create_only_request_intents": true,
+    "create_only_response_receipts": true,
+    "private_exact_missing_coordinates": true,
+    "private_exact_excluded_sessions": true,
+    "private_provider_tokens": true,
+    "credentials_stored": false,
+    "public_terminal_artifact_required": true,
+    "public_dataset_manifest_on_pass_required": true,
+    "public_artifacts_include": [
+      "authority identity",
+      "source commit",
+      "request and response counts",
+      "response bytes",
+      "aggregate session and coordinate counts",
+      "aggregate gate results",
+      "private evidence hashes",
+      "dataset identity and canonical row hash on pass"
+    ],
+    "public_artifacts_exclude": [
+      "raw response bytes",
+      "provider page tokens",
+      "credential values or hashes",
+      "exact missing coordinates",
+      "exact unexpected exclusion dates",
+      "reconstructable private market observations"
+    ],
+    "terminal_independent_review_required": true
+  },
+  "implementation_boundary": {
+    "runtime_present": false,
+    "credential_reader_or_presence_check_added": false,
+    "provider_transport_added": false,
+    "private_store_added": false,
+    "authority_activation_added": false,
+    "dataset_admission_runtime_added": false,
+    "next_implementation_rule": "Implement this exact proposal in a separate reviewed slice. Reuse Program 011 transport and standing-authority controls and Program 007 ledger normalization functions; do not generalize a new framework.",
+    "required_restart_tests": [
+      "a crash after the fsynced intent but before a complete receipted page terminates without a second transport call",
+      "a new process resumes after a completed nonterminal page, loads credentials once, records the load, and sends only the recorded continuation request",
+      "a crash after credential access but before its receipt leaves an unpaired value-free attempt that terminal accounting counts as one load",
+      "two concurrent recovery processes produce exactly one credential access owner and one continuation transport call"
+    ],
+    "required_missingness_tests": [
+      "one isolated policy-compliant nonquarantine full-session loss passes structural admission",
+      "one extra missing coordinate on a fixed quarantine session fails structural admission",
+      "the exact incident-source union equals the nine-coordinate fingerprint and Program 005 cross-check"
+    ],
+    "focused_tests_required": true
+  },
+  "future_child_authority": {
+    "standing_child_required": true,
+    "finding_free_independent_review_required": true,
+    "clean_synchronized_main_required": true,
+    "runtime_revalidation_required": true,
+    "atomic_one_use_claim_required": true,
+    "terminal_evidence_required": true,
+    "maximum_enabled_capabilities": [
+      "provider_contact",
+      "credential_access",
+      "source_requests",
+      "market_data_acquisition",
+      "real_dataset_admission"
+    ],
+    "strategy_capabilities_allowed": false,
+    "research_qualification_allowed": false,
+    "controlled_or_protected_allowed": false,
+    "paper_broker_or_live_allowed": false,
+    "purchase_allowed": false
+  },
+  "external_authorization_root": null,
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "protected_firewall": {
+    "rederive_registered_ranges_from_synchronized_main_before_credential_presence": true,
+    "revalidate_zero_request_overlap_before_private_state": true,
+    "revalidate_zero_request_overlap_before_every_transport": true,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper": false,
+    "broker": false,
+    "live": false
+  },
+  "next_step": "Obtain finding-free independent correctness and credential-boundary security reviews of v3. Then implement and test the exact runtime on a separate branch without checking credential presence or contacting Alpaca.",
+  "proposal_fingerprint": "7f5817707001b03765ee5563fcb07f728ac066cc7352137b732f87312743c80b"
+}

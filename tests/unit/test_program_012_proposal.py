@@ -16,8 +16,11 @@ _REPOSITORY = Path(__file__).resolve().parents[2]
 _V1_PROPOSAL_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v1.json"
 )
-_PROPOSAL_PATH = Path(
+_V2_PROPOSAL_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v2.json"
+)
+_PROPOSAL_PATH = Path(
+    "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v3.json"
 )
 
 
@@ -50,10 +53,13 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     assert stored_fingerprint == fingerprint(proposal)
     for binding in proposal["bindings"].values():
         _assert_binding(binding)
-    assert proposal["supersedes"]["proposal"]["path"] == _V1_PROPOSAL_PATH.as_posix()
-    _assert_binding(proposal["supersedes"]["proposal"])
-    assert proposal["supersedes"]["v1_provider_requests"] == 0
-    assert proposal["supersedes"]["v1_market_observations"] == 0
+    superseded = proposal["supersedes"]
+    assert superseded["proposals"]["v1"]["path"] == _V1_PROPOSAL_PATH.as_posix()
+    assert superseded["proposals"]["v2"]["path"] == _V2_PROPOSAL_PATH.as_posix()
+    _assert_binding(superseded["proposals"]["v1"])
+    _assert_binding(superseded["proposals"]["v2"])
+    assert superseded["prior_provider_requests"] == 0
+    assert superseded["prior_market_observations"] == 0
 
     chronology = proposal["chronology"]
     request = chronology["request_range"]
@@ -91,6 +97,8 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     assert budget["maximum_requests_and_responses"] == 1_386 * 16 == 22_176
     assert budget["automatic_retries"] == budget["parallel_session_chains"] - 1 == 0
     assert budget["credential_loads_per_process_max"] == 1
+    assert budget["credential_load_attempt_fsynced_before_access"] is True
+    assert budget["unpaired_credential_load_attempt_counts_as_load"] is True
     assert budget["automatic_process_restart_attempts"] == 0
     assert budget["recovery_credential_loads_counted"] is True
 
@@ -142,6 +150,10 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     assert restart["restart_safe_required"] is True
     assert restart["process_recovery_allowed"] is True
     assert restart["automatic_process_restart_attempts"] == 0
+    assert restart["exclusive_private_root_lock_required"] is True
+    assert "_LockedRoot" in restart["lock_implementation"]
+    assert restart["concurrent_owner_action"] == "BLOCK-BEFORE-CREDENTIAL-ACCESS-OR-TRANSPORT"
+    assert restart["request_intent_create_only_and_atomic"] is True
     assert restart["request_intent_fsynced_before_transport"] is True
     assert restart["request_intent_binds"] == [
         "active authority fingerprint",
@@ -162,6 +174,11 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     )
     assert restart["changed_or_unverifiable_checkpoint"] == "FAIL-CONSUMED-NO-RETRY"
     assert restart["credential_loads_per_process_max"] == 1
+    assert restart["credential_load_attempt_fsynced_before_access"] is True
+    assert restart["credential_load_receipt_fsynced_after_access"] is True
+    assert restart["unpaired_credential_load_attempt_action"] == (
+        "COUNT-AS-ONE-LOAD-CONSERVATIVELY"
+    )
     assert restart["credential_values_persisted_for_recovery"] is False
     assert restart["recovery_credential_loads_counted_in_terminal_evidence"] is True
     assert restart["transport_retries"] == 0
@@ -181,6 +198,27 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
         "sessions only, any missing coordinate outside the exact nine-coordinate incident "
         "inventory fails admission. Missingness on another full session follows the one-slot "
         "unexpected-exclusion policy."
+    )
+    inventory_contract = missingness["fixed_quarantine"]["coordinate_inventory"]
+    incident = _load(Path(proposal["bindings"]["program_002_fixed_quarantine_incident"]["path"]))
+    inventory = sorted(
+        {
+            coordinate
+            for segment in incident["completed_exposed_segments"]
+            for coordinate in segment.get("synthesized_coordinates", [])
+        }
+        | set(incident["failed_segment"]["missing_intervals"])
+    )
+    program_005 = _load(Path(proposal["bindings"]["program_005_policy_precedent"]["path"]))
+    assert inventory == program_005["source_qualification"]["known_mdy_coordinates"]
+    assert len(inventory) == inventory_contract["required_coordinate_count"] == 9
+    assert fingerprint(inventory) == inventory_contract["fingerprint"]
+    assert {coordinate.partition("@")[0] for coordinate in inventory} == set(
+        inventory_contract["required_symbols"]
+    )
+    assert (
+        sorted({coordinate.partition("@")[2][:10] for coordinate in inventory})
+        == (inventory_contract["required_sessions"])
     )
     clock = missingness["fixed_clock_concentration"]
     assert clock["uniform_coordinate_population"] == 1_354 * 78
@@ -220,10 +258,16 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
         "without a second transport call",
         "a new process resumes after a completed nonterminal page, loads credentials once, "
         "records the load, and sends only the recorded continuation request",
+        "a crash after credential access but before its receipt leaves an unpaired value-free "
+        "attempt that terminal accounting counts as one load",
+        "two concurrent recovery processes produce exactly one credential access owner and one "
+        "continuation transport call",
     ]
     assert implementation["required_missingness_tests"] == [
         "one isolated policy-compliant nonquarantine full-session loss passes structural admission",
         "one extra missing coordinate on a fixed quarantine session fails structural admission",
+        "the exact incident-source union equals the nine-coordinate fingerprint and Program 005 "
+        "cross-check",
     ]
     assert implementation["focused_tests_required"] is True
     assert "PLACEHOLDER" not in (_REPOSITORY / _PROPOSAL_PATH).read_text(encoding="utf-8")
