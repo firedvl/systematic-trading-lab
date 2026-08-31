@@ -52,9 +52,7 @@ def _commit(root: Path, message: str, *paths: Path) -> tuple[str, str]:
     return commit, _git(root, "rev-parse", f"{commit}^{{tree}}")
 
 
-def _source_binding(
-    root: Path, commit: str, tree: str, paths: tuple[Path, ...]
-) -> dict[str, Any]:
+def _source_binding(root: Path, commit: str, tree: str, paths: tuple[Path, ...]) -> dict[str, Any]:
     source_files = [
         {
             "path": path.as_posix(),

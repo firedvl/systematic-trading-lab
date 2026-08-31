@@ -256,13 +256,11 @@ def _validate_child(
         child.get("required_review_challenges"), "child required review challenges"
     )
     program_ordinal = child.get("program_ordinal")
-    minimum_ordinal = _mapping(
-        mandate.get("activation_contract"), "activation contract"
-    ).get("minimum_program_ordinal")
+    minimum_ordinal = _mapping(mandate.get("activation_contract"), "activation contract").get(
+        "minimum_program_ordinal"
+    )
     source_files = _sequence(runtime.get("source_files"), "child runtime source files")
-    source_paths = {
-        item.get("path") for item in source_files if isinstance(item, Mapping)
-    }
+    source_paths = {item.get("path") for item in source_files if isinstance(item, Mapping)}
     if (
         child.get("schema_version") != "standing-autonomous-research-child-authority-v1"
         or child.get("status") != "PROSPECTIVE-CHILD-CONTROL"
@@ -324,9 +322,7 @@ def _validate_child_review(
         raise StandingAuthorityError("child authority review semantics differ")
 
 
-def _validate_source_binding(
-    repository: Path, value: Mapping[str, Any], label: str
-) -> None:
+def _validate_source_binding(repository: Path, value: Mapping[str, Any], label: str) -> None:
     source_files = _sequence(value.get("source_files"), f"{label} files")
     commit = value.get("source_commit")
     tree = value.get("source_tree")
