@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 from collections import defaultdict
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
 from urllib.request import ProxyHandler, Request
@@ -48,6 +49,7 @@ def _active_authority() -> dict[str, object]:
         "authority_id": authority.CHILD_AUTHORITY_ID,
         "authority_fingerprint": "a" * 64,
         "child_identity_fingerprint": "b" * 64,
+        "control_lineage": {"synchronized_main_commit": "c" * 40},
     }
 
 
@@ -101,7 +103,8 @@ def _responses(*, missing: tuple[str, str] | None = None) -> list[raw_contract.R
 def _stub_active(tmp_path: Path, monkeypatch: MonkeyPatch) -> dict[str, object]:
     active = _active_authority()
     monkeypatch.setattr(authority, "derive_active_authority", lambda *_args, **_kwargs: active)
-    monkeypatch.setattr(authority, "validate_operation_contract", lambda _repository: {})
+    monkeypatch.setattr(authority, "validate_operation_contract", lambda *_args, **_kwargs: {})
+    monkeypatch.setattr(authority, "_GitPolicySnapshot", lambda *_args: nullcontext())
     authority.activate_authority(tmp_path, environ=_credentials())
     return active
 
@@ -158,7 +161,7 @@ def test_internal_child_derivation_enables_only_structural_qualification(
         },
     }
     monkeypatch.setattr(authority, "derive_child_identity", lambda *_args: identity)
-    monkeypatch.setattr(authority, "validate_operation_contract", lambda _repository: {})
+    monkeypatch.setattr(authority, "validate_operation_contract", lambda *_args, **_kwargs: {})
     monkeypatch.setattr(
         authority,
         "_repository_preflight",
@@ -211,6 +214,7 @@ def test_activation_is_internal_and_does_not_consume_claim(
 ) -> None:
     active = _active_authority()
     monkeypatch.setattr(authority, "derive_active_authority", lambda *_args, **_kwargs: active)
+    monkeypatch.setattr(authority, "_GitPolicySnapshot", lambda *_args: nullcontext())
 
     assert authority.activate_authority(tmp_path, environ=_credentials()) == active
     root = tmp_path / authority.PRIVATE_ROOT
@@ -222,6 +226,55 @@ def test_activation_is_internal_and_does_not_consume_claim(
     )
     with pytest.raises(authority.Program010AuthorityError, match="state already exists"):
         authority.activate_authority(tmp_path, environ=_credentials())
+
+
+def test_activation_ref_drift_rejects_before_active_record(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    active = _active_authority()
+    monkeypatch.setattr(authority, "derive_active_authority", lambda *_args, **_kwargs: active)
+
+    class RefDrift:
+        def __enter__(self) -> None:
+            raise authority.Program010AuthorityError("synthetic ref drift")
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+    monkeypatch.setattr(authority, "_GitPolicySnapshot", lambda *_args: RefDrift())
+
+    with pytest.raises(authority.Program010AuthorityError, match="synthetic ref drift"):
+        authority.activate_authority(tmp_path, environ=_credentials())
+
+    assert not (tmp_path / authority.PRIVATE_ROOT / "active-authority.json").exists()
+
+
+def test_git_policy_snapshot_blocks_main_and_origin_ref_updates(tmp_path: Path) -> None:
+    _git(tmp_path, "init", "-b", "main")
+    _git(tmp_path, "config", "user.name", "Program 010 Test")
+    _git(tmp_path, "config", "user.email", "program-010@example.invalid")
+    _git(tmp_path, "commit", "--allow-empty", "-m", "policy source")
+    commit = _git(tmp_path, "rev-parse", "HEAD")
+    tree = _git(tmp_path, "rev-parse", "HEAD^{tree}")
+    alternate = _git(tmp_path, "commit-tree", tree, "-p", commit, "-m", "alternate")
+    _git(tmp_path, "update-ref", "refs/remotes/origin/main", commit)
+    environment = non_broker_subprocess_environment()
+    environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
+
+    with authority._GitPolicySnapshot(tmp_path, commit):
+        for reference in ("refs/heads/main", "refs/remotes/origin/main"):
+            result = subprocess.run(
+                ("git", "-C", str(tmp_path), "update-ref", reference, alternate, commit),
+                check=False,
+                capture_output=True,
+                env=environment,
+            )
+            assert result.returncode != 0
+            assert _git(tmp_path, "rev-parse", reference) == commit
+
+    for reference in ("refs/heads/main", "refs/remotes/origin/main"):
+        _git(tmp_path, "update-ref", reference, alternate, commit)
+        assert _git(tmp_path, "rev-parse", reference) == alternate
 
 
 def test_fixed_get_endpoint_rejects_mutation() -> None:
@@ -297,7 +350,9 @@ def test_new_protected_session_rejects_before_credentials_or_private_state(
     monkeypatch.setattr(
         authority,
         "_current_protected_ranges",
-        lambda _repository: ((program_010.SELECTED_SESSIONS[0], program_010.SELECTED_SESSIONS[0]),),
+        lambda _repository, **_kwargs: (
+            (program_010.SELECTED_SESSIONS[0], program_010.SELECTED_SESSIONS[0]),
+        ),
     )
     monkeypatch.setattr(
         authority,
@@ -318,7 +373,7 @@ def test_new_protected_session_rejects_before_credentials_or_private_state(
     monkeypatch.setattr(
         authority,
         "validate_operation_contract",
-        lambda _repository: authority._validate_chronology(
+        lambda _repository, **_kwargs: authority._validate_chronology(
             _REPOSITORY, proposal, predecessor, terminal
         ),
     )
@@ -390,7 +445,7 @@ def test_unreviewed_repository_artifact_rejects_before_credentials_or_private_st
     credential_checks: list[bool] = []
     private_root_opens: list[bool] = []
     monkeypatch.setattr(authority, "derive_child_identity", lambda *_args: identity)
-    monkeypatch.setattr(authority, "validate_operation_contract", lambda _repository: {})
+    monkeypatch.setattr(authority, "validate_operation_contract", lambda *_args, **_kwargs: {})
     monkeypatch.setattr(authority, "_validate_protected_registration_set", lambda *_args: None)
     monkeypatch.setattr(
         authority,
@@ -489,7 +544,7 @@ def test_omitted_protected_registration_rejects_before_credentials_or_private_st
     credential_checks: list[bool] = []
     private_root_opens: list[bool] = []
     monkeypatch.setattr(authority, "derive_child_identity", lambda *_args: identity)
-    monkeypatch.setattr(authority, "validate_operation_contract", lambda _repository: {})
+    monkeypatch.setattr(authority, "validate_operation_contract", lambda *_args, **_kwargs: {})
     monkeypatch.setattr(
         authority,
         "_require_credentials_present",
@@ -507,6 +562,35 @@ def test_omitted_protected_registration_rejects_before_credentials_or_private_st
     assert credential_checks == []
     assert private_root_opens == []
     assert not (tmp_path / authority.PRIVATE_ROOT).exists()
+
+
+def test_execution_revalidates_authority_before_claim_or_transport(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    active = _stub_active(tmp_path, monkeypatch)
+    calls = 0
+
+    def derive(*_args: object, **_kwargs: object) -> dict[str, object]:
+        nonlocal calls
+        calls += 1
+        if calls < 3:
+            return active
+        return {**active, "authority_fingerprint": "d" * 64}
+
+    monkeypatch.setattr(authority, "derive_active_authority", derive)
+    transport = authority.MockBarsTransport([raw_contract.RawResponse(200, b"{}")])
+
+    with pytest.raises(authority.Program010AuthorityError, match="transport boundary"):
+        authority._execute_mock_qualification(
+            tmp_path,
+            environ=_credentials(),
+            transport=transport,
+        )
+
+    root = tmp_path / authority.PRIVATE_ROOT
+    assert not (root / "claim.json").exists()
+    assert not (root / "terminal-failure.json").exists()
+    assert transport.intents == ()
 
 
 def test_claim_raw_first_private_missingness_and_one_use(

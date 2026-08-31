@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-30 - Bind Program 010 to one synchronized-main commit
+
+- Decision: derive one synchronized-main commit `C`, read all operation and protected-chronology inputs from Git objects at `C`, and use a prepared same-value `git update-ref --stdin` transaction to lock `refs/heads/main` and `refs/remotes/origin/main`. Hold the locks through active-record persistence during activation and through the whole qualification during execution. After request pacing, rederive the same authority before the one-use claim and every transport.
+- Context: the prior runtime checked clean synchronized `main` before activation and execution, then reopened policy inputs from the worktree. Another process could advance synchronized `main` after validation but before active-record persistence, the claim, or transport. That separated the validated chronology and authority from the repository state governing the operation.
+- Consequences: activation fails without an active record if the snapshot cannot be locked or revalidated. Execution fails without a claim or provider call when authority drifts before first transport. Normal Git updates to either synchronized-main ref fail while the snapshot is held and work again after abort releases it. The qualification keeps the existing fixed request, raw-first persistence, one-use, zero-retry, and terminal-evidence behavior.
+- Revisit only through a reviewed successor runtime that preserves the single-commit invariant. Do not shorten the execution lock unless another repository-native mechanism proves the same validation-to-use binding across every provider request.
+
 ## 2026-08-30 - Use typed protected-chronology registrations
 
 - Decision: make exact `protected-chronology-registration-v1` artifacts with `ACTIVE-SEALED-PROTECTED-RANGE` status the sole protected-range registration interface. Require the canonical inventory to list every active registration by path and SHA-256, cross-check its derived ranges against the five existing primary controls, and make every data-reading child enumerate all `config/research` JSON artifacts in its reviewed source commit before credentials or private state.

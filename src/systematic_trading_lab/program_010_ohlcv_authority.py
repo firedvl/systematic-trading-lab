@@ -74,6 +74,7 @@ _ENABLED_AUTHORITY = {
 }
 _PROTECTED_REGISTRATION_SCHEMA = "protected-chronology-registration-v1"
 _PROTECTED_REGISTRATION_STATUS = "ACTIVE-SEALED-PROTECTED-RANGE"
+_HEX_40 = re.compile(r"[0-9a-f]{40}")
 _DIRECTORY_FLAGS = (
     os.O_RDONLY
     | getattr(os, "O_CLOEXEC", 0)
@@ -159,30 +160,39 @@ def read_credentials(environ: Mapping[str, str] | None = None) -> tuple[str, str
     return credentials[0], credentials[1]
 
 
-def validate_operation_contract(repository: Path) -> Mapping[str, Any]:
+def validate_operation_contract(
+    repository: Path, *, commit: str | None = None
+) -> Mapping[str, Any]:
     """Revalidate the frozen qualification and its exact exposed chronology."""
     repository = _repository(repository)
-    proposal = _load_bound_artifact(repository, OPERATION_MANIFEST, "proposal_fingerprint")
-    predecessor = _load_bound_artifact(repository, _PROGRAM_007_PROPOSAL, "proposal_fingerprint")
+    proposal = _load_bound_artifact(
+        repository, OPERATION_MANIFEST, "proposal_fingerprint", commit=commit
+    )
+    predecessor = _load_bound_artifact(
+        repository, _PROGRAM_007_PROPOSAL, "proposal_fingerprint", commit=commit
+    )
     bindings = _mapping(proposal.get("bindings"), "operation bindings")
     terminal = _load_bound_artifact(
         repository,
         _mapping(bindings.get("program_009_terminal_failure"), "Program 009 terminal binding"),
         "failure_fingerprint",
+        commit=commit,
     )
     metadata = _load_bound_artifact(
         repository,
         _mapping(bindings.get("program_008_terminal_success"), "Program 008 terminal binding"),
         "success_fingerprint",
+        commit=commit,
     )
     ledger = _load_bound_artifact(
         repository,
         _mapping(bindings.get("public_unit_changing_action_ledger"), "action ledger binding"),
         "ledger_fingerprint",
+        commit=commit,
     )
     raw_contract.require_action_ledger_admission(ledger)
     _validate_split_controls(ledger)
-    _validate_chronology(repository, proposal, predecessor, terminal)
+    _validate_chronology(repository, proposal, predecessor, terminal, commit=commit)
 
     source = _mapping(proposal.get("source_contract"), "source contract")
     pagination = _mapping(proposal.get("pagination_contract"), "pagination contract")
@@ -265,8 +275,11 @@ def derive_active_authority(
     ):
         raise Program010AuthorityError("Program 010 reviewed child identity differs")
     lineage = _repository_preflight(repository, identity)
-    _validate_protected_registration_set(repository, str(runtime.get("source_commit")))
-    validate_operation_contract(repository)
+    commit = lineage["synchronized_main_commit"]
+    _validate_protected_registration_set(repository, commit)
+    validate_operation_contract(repository, commit=commit)
+    if _repository_preflight(repository, identity) != lineage:
+        raise Program010AuthorityError("Program 010 repository changed during validation")
     _require_credentials_present(environ)
     unsigned: dict[str, Any] = {
         "schema_version": "program-010-raw-sip-qualification-active-authority-v1",
@@ -291,16 +304,18 @@ def activate_authority(
 ) -> Mapping[str, Any]:
     repository = _repository(repository)
     authority = derive_active_authority(repository, environ=environ)
+    commit = _authority_commit(authority)
     root_descriptor = _open_private_root(repository, create=True)
     try:
-        with _LockedRoot(root_descriptor):
+        with _LockedRoot(root_descriptor), _GitPolicySnapshot(repository, commit):
             _reject_existing_state(root_descriptor, allow_active=False)
-            authority = derive_active_authority(repository, environ=environ)
-            _require_credentials_present(environ)
+            locked_authority = derive_active_authority(repository, environ=environ)
+            if locked_authority != authority:
+                raise Program010AuthorityError("Program 010 authority changed under policy lock")
             _append_persistent_evidence(
                 root_descriptor,
                 "active-authority.json",
-                (canonical_json(authority) + "\n").encode(),
+                (canonical_json(locked_authority) + "\n").encode(),
             )
     finally:
         os.close(root_descriptor)
@@ -350,17 +365,18 @@ def _execute_qualification(
     repository = _repository(repository)
     _require_credentials_present(environ)
     expected_authority = derive_active_authority(repository, environ=environ)
+    commit = _authority_commit(expected_authority)
     root_descriptor = _open_private_root(repository, create=False)
     claim_written = False
     budget = _Budget()
     try:
-        with _LockedRoot(root_descriptor):
+        with _LockedRoot(root_descriptor), _GitPolicySnapshot(repository, commit):
             _reject_existing_state(root_descriptor)
             authority = derive_active_authority(repository, environ=environ)
             if authority != expected_authority:
                 raise Program010AuthorityError("Program 010 authority changed under lock")
             _load_active_from_descriptor(root_descriptor, authority)
-            validate_operation_contract(repository)
+            validate_operation_contract(repository, commit=commit)
             _require_credentials_present(environ)
             key_id, secret_key = read_credentials(environ)
             client = _AlpacaBarsClient(key_id, secret_key) if mock_transport is None else None
@@ -370,6 +386,10 @@ def _execute_qualification(
 
             def consume() -> None:
                 nonlocal claim_written
+                if derive_active_authority(repository, environ=environ) != authority:
+                    raise Program010AuthorityError(
+                        "Program 010 authority changed at transport boundary"
+                    )
                 if claim_written:
                     return
                 writer(
@@ -801,6 +821,8 @@ def _validate_chronology(
     proposal: Mapping[str, Any],
     predecessor: Mapping[str, Any],
     terminal: Mapping[str, Any],
+    *,
+    commit: str | None = None,
 ) -> None:
     sample = _mapping(proposal.get("fresh_sample"), "fresh sample")
     records = _sequence(sample.get("sessions"), "fresh sample sessions")
@@ -843,7 +865,7 @@ def _validate_chronology(
         )
         for item in _sequence(exclusions.get("ranges"), "protected ranges")
     )
-    current_ranges = _current_protected_ranges(repository)
+    current_ranges = _current_protected_ranges(repository, commit=commit)
     eligible = _mapping(audit.get("eligible_exposed_chronology"), "eligible chronology")
     eligible_start = date.fromisoformat(str(eligible.get("start_session")))
     eligible_end = date.fromisoformat(str(eligible.get("end_session")))
@@ -862,10 +884,12 @@ def _validate_chronology(
         raise Program010AuthorityError("Program 010 fresh exposed chronology differs")
 
 
-def _protected_chronology_inventory(repository: Path) -> Mapping[str, Any]:
+def _protected_chronology_inventory(
+    repository: Path, *, commit: str | None = None
+) -> Mapping[str, Any]:
     try:
-        raw = (repository / PROTECTED_CHRONOLOGY_PATH).read_bytes()
-    except OSError as error:
+        raw = _read_repository_file(repository, PROTECTED_CHRONOLOGY_PATH, commit=commit)
+    except (OSError, subprocess.CalledProcessError) as error:
         raise Program010AuthorityError("Program 010 protected chronology is absent") from error
     inventory = _json_object(raw, "protected chronology")
     unsigned = dict(inventory)
@@ -903,8 +927,10 @@ def _protected_chronology_inventory(repository: Path) -> Mapping[str, Any]:
     return inventory
 
 
-def _current_protected_ranges(repository: Path) -> tuple[tuple[date, date], ...]:
-    inventory = _protected_chronology_inventory(repository)
+def _current_protected_ranges(
+    repository: Path, *, commit: str | None = None
+) -> tuple[tuple[date, date], ...]:
+    inventory = _protected_chronology_inventory(repository, commit=commit)
     sources = _mapping(inventory.get("source_artifacts"), "protected chronology sources")
     expected_paths = {
         "controlled_ranges": PROTECTED_CHRONOLOGY_SOURCE_PATHS[0],
@@ -918,6 +944,7 @@ def _current_protected_ranges(repository: Path) -> tuple[tuple[date, date], ...]
         name: _load_sha256_artifact(
             repository,
             _mapping(sources.get(name), f"protected chronology {name} source"),
+            commit=commit,
         )
         for name in expected_paths
     }
@@ -979,6 +1006,7 @@ def _current_protected_ranges(repository: Path) -> tuple[tuple[date, date], ...]
             _load_sha256_artifact(
                 repository,
                 _mapping(binding, "protected chronology registration"),
+                commit=commit,
             ),
             "protected chronology registration",
         )
@@ -1068,8 +1096,8 @@ def _range_boundaries(value: Mapping[str, Any], key: str) -> tuple[Any, Any]:
     return item.get("start"), item.get("end")
 
 
-def _validate_protected_registration_set(repository: Path, source_commit: str) -> None:
-    inventory = _protected_chronology_inventory(repository)
+def _validate_protected_registration_set(repository: Path, commit: str) -> None:
+    inventory = _protected_chronology_inventory(repository, commit=commit)
     expected = {
         (str(binding.get("path")), str(binding.get("sha256")))
         for binding in (
@@ -1079,16 +1107,8 @@ def _validate_protected_registration_set(repository: Path, source_commit: str) -
             )
         )
     }
-    environment = non_broker_subprocess_environment()
-    environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
-    command = (
-        "git",
-        "--no-replace-objects",
-        "-c",
-        "core.fsmonitor=false",
-        "-C",
-        str(repository),
-    )
+    environment = _git_environment()
+    command = _git_command(repository)
 
     def git(*arguments: str) -> bytes:
         return subprocess.run(
@@ -1099,9 +1119,9 @@ def _validate_protected_registration_set(repository: Path, source_commit: str) -
         ).stdout
 
     try:
-        paths = git(
-            "ls-tree", "-r", "-z", "--name-only", source_commit, "--", "config/research"
-        ).split(b"\0")
+        paths = git("ls-tree", "-r", "-z", "--name-only", commit, "--", "config/research").split(
+            b"\0"
+        )
         discovered: set[tuple[str, str]] = set()
         registration_ids: set[str] = set()
         for raw_path in paths:
@@ -1110,7 +1130,7 @@ def _validate_protected_registration_set(repository: Path, source_commit: str) -
             path = raw_path.decode("utf-8")
             if not path.endswith(".json"):
                 continue
-            blob = git("cat-file", "blob", f"{source_commit}:{path}")
+            blob = git("cat-file", "blob", f"{commit}:{path}")
             try:
                 value = json.loads(blob)
             except (UnicodeDecodeError, json.JSONDecodeError):
@@ -1142,6 +1162,23 @@ def _validate_split_controls(ledger: Mapping[str, Any]) -> None:
             raise Program010AuthorityError("Program 010 split-volume factor differs")
 
 
+def _git_environment() -> dict[str, str]:
+    environment = non_broker_subprocess_environment()
+    environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
+    return environment
+
+
+def _git_command(repository: Path) -> tuple[str, ...]:
+    return (
+        "git",
+        "--no-replace-objects",
+        "-c",
+        "core.fsmonitor=false",
+        "-C",
+        str(repository),
+    )
+
+
 def _repository_preflight(repository: Path, identity: Mapping[str, Any]) -> Mapping[str, str]:
     runtime = _mapping(identity.get("runtime_binding"), "runtime binding")
     source_commit = str(runtime.get("source_commit"))
@@ -1150,16 +1187,8 @@ def _repository_preflight(repository: Path, identity: Mapping[str, Any]) -> Mapp
         f"A\t{CHILD_AUTHORITY_PATH.as_posix()}",
         f"A\t{CHILD_REVIEW_PATH.as_posix()}",
     }
-    environment = non_broker_subprocess_environment()
-    environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
-    command = (
-        "git",
-        "--no-replace-objects",
-        "-c",
-        "core.fsmonitor=false",
-        "-C",
-        str(repository),
-    )
+    environment = _git_environment()
+    command = _git_command(repository)
 
     def git(*arguments: str, check: bool = True) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
@@ -1218,6 +1247,74 @@ class _LockedRoot:
     def __exit__(self, *_args: object) -> None:
         assert self._handle is not None
         self._handle.close()
+
+
+class _GitPolicySnapshot:
+    def __init__(self, repository: Path, commit: str) -> None:
+        if _HEX_40.fullmatch(commit) is None:
+            raise Program010AuthorityError("Program 010 policy commit is invalid")
+        self._repository = repository
+        self._commit = commit
+        self._process: subprocess.Popen[str] | None = None
+
+    def __enter__(self) -> None:
+        process = subprocess.Popen(
+            (*_git_command(self._repository), "update-ref", "--stdin"),
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=_git_environment(),
+        )
+        self._process = process
+        assert process.stdin is not None
+        assert process.stdout is not None
+        try:
+            process.stdin.write(
+                "start\n"
+                f"update refs/heads/main {self._commit} {self._commit}\n"
+                f"update refs/remotes/origin/main {self._commit} {self._commit}\n"
+                "prepare\n"
+            )
+            process.stdin.flush()
+            responses = (process.stdout.readline().strip(), process.stdout.readline().strip())
+        except (OSError, ValueError):
+            self._release(require_ok=False)
+            raise Program010AuthorityError("Program 010 policy snapshot lock failed") from None
+        if responses != ("start: ok", "prepare: ok"):
+            self._release(require_ok=False)
+            raise Program010AuthorityError("Program 010 policy snapshot lock failed")
+
+    def __exit__(self, exception_type: type[BaseException] | None, *_args: object) -> None:
+        self._release(require_ok=exception_type is None)
+
+    def _release(self, *, require_ok: bool) -> None:
+        process = self._process
+        self._process = None
+        if process is None:
+            return
+        response = ""
+        returncode = -1
+        try:
+            assert process.stdin is not None
+            assert process.stdout is not None
+            process.stdin.write("abort\n")
+            process.stdin.flush()
+            response = process.stdout.readline().strip()
+            process.stdin.close()
+            returncode = process.wait(timeout=5)
+        except (OSError, ValueError, subprocess.TimeoutExpired):
+            pass
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait()
+            if process.stdout is not None:
+                process.stdout.close()
+            if process.stderr is not None:
+                process.stderr.close()
+        if require_ok and (response != "abort: ok" or returncode != 0):
+            raise Program010AuthorityError("Program 010 policy snapshot unlock failed")
 
 
 def _open_private_root(repository: Path, *, create: bool) -> int:
@@ -1306,10 +1403,33 @@ def _require_credentials_present(environ: Mapping[str, str] | None) -> None:
         raise Program010AuthorityError("Program 010 credentials missing: " + ", ".join(missing))
 
 
+def _authority_commit(authority: Mapping[str, Any]) -> str:
+    lineage = _mapping(authority.get("control_lineage"), "authority control lineage")
+    commit = str(lineage.get("synchronized_main_commit"))
+    if _HEX_40.fullmatch(commit) is None:
+        raise Program010AuthorityError("Program 010 authority policy commit differs")
+    return commit
+
+
+def _read_repository_file(repository: Path, path: Path, *, commit: str | None) -> bytes:
+    if commit is None:
+        return (repository / path).read_bytes()
+    if _HEX_40.fullmatch(commit) is None:
+        raise Program010AuthorityError("Program 010 repository commit is invalid")
+    return subprocess.run(
+        (*_git_command(repository), "cat-file", "blob", f"{commit}:{path.as_posix()}"),
+        check=True,
+        capture_output=True,
+        env=_git_environment(),
+    ).stdout
+
+
 def _load_bound_artifact(
     repository: Path,
     binding: Mapping[str, Any],
     fingerprint_field: str,
+    *,
+    commit: str | None = None,
 ) -> Mapping[str, Any]:
     path_value = binding.get("path")
     if not isinstance(path_value, str):
@@ -1318,8 +1438,8 @@ def _load_bound_artifact(
     if path.is_absolute() or ".." in path.parts:
         raise Program010AuthorityError("Program 010 artifact binding path is invalid")
     try:
-        raw = (repository / path).read_bytes()
-    except OSError as error:
+        raw = _read_repository_file(repository, path, commit=commit)
+    except (OSError, subprocess.CalledProcessError) as error:
         raise Program010AuthorityError(f"Program 010 binding is absent: {path.name}") from error
     payload = _json_object(raw, path.name)
     if hashlib.sha256(raw).hexdigest() != binding.get("sha256") or payload.get(
@@ -1332,6 +1452,8 @@ def _load_bound_artifact(
 def _load_sha256_artifact(
     repository: Path,
     binding: Mapping[str, Any],
+    *,
+    commit: str | None = None,
 ) -> Mapping[str, Any]:
     path_value = binding.get("path")
     if not isinstance(path_value, str):
@@ -1340,8 +1462,8 @@ def _load_sha256_artifact(
     if path.is_absolute() or ".." in path.parts:
         raise Program010AuthorityError("Program 010 protected source path is invalid")
     try:
-        raw = (repository / path).read_bytes()
-    except OSError as error:
+        raw = _read_repository_file(repository, path, commit=commit)
+    except (OSError, subprocess.CalledProcessError) as error:
         raise Program010AuthorityError(
             f"Program 010 protected source is absent: {path.name}"
         ) from error

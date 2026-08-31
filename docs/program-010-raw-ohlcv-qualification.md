@@ -103,10 +103,10 @@ unprotected sessions. The seed `program-010-raw-sip-qualification-sample-v1` sel
 lowest `SHA-256(seed|normal|date)` normal-session digests, then adds the two Program 009 controls that
 were never requested.
 
-Before activation and again before execution, the production runtime rederives the current protected
-chronology from `config/research/standing-protected-chronology-v1.json`, its typed registration
-artifact, and the five primary source artifacts. The child authority must Git-bind all seven files.
-The runtime enumerates every `config/research` JSON artifact in the child's reviewed source commit and
+Before activation and again before execution, the production runtime derives one synchronized-main
+commit `C`. It reads `config/research/standing-protected-chronology-v1.json`, its typed registration
+artifact, and the five primary source artifacts from Git objects at `C`. The child authority must
+Git-bind all seven files. The runtime enumerates every `config/research` JSON artifact at `C` and
 rejects any exact active `protected-chronology-registration-v1` artifact absent from the inventory.
 Any new registered, reserved, or sealed range therefore requires a successor inventory, runtime
 binding, and reviewed child before provider access.
@@ -184,6 +184,10 @@ preflight, loads credentials once, validates clean synchronized-main provenance,
 operation immediately before transport, and writes raw bodies and receipts create-only before status,
 schema, or continuation checks. It is inert until its exact source commit receives a Git-tracked,
 finding-free child authority and review under the standing mandate.
+Activation holds Git transaction locks on `refs/heads/main` and `refs/remotes/origin/main` from the
+locked revalidation through active-record persistence. Execution holds the same synchronized-main
+snapshot for the whole qualification. After request pacing and before the claim or each later
+transport, the runtime rederives the exact authority; drift fails before provider access.
 The complete Git delta from that reviewed source commit to synchronized `main` must contain exactly
 the two added child authority and review artifacts; any other repository change invalidates the child
 before credentials or private state.
