@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 from typing import Any, cast
 
@@ -45,10 +46,18 @@ def test_program_010_implementation_and_proposal_are_bound_and_non_authorizing()
         implementation_binding["source_files"]
     )
     for source in implementation_binding["source_files"]:
-        assert (
-            hashlib.sha256((_REPOSITORY / source["path"]).read_bytes()).hexdigest()
-            == source["sha256"]
-        )
+        committed = subprocess.run(
+            (
+                "git",
+                "-C",
+                str(_REPOSITORY),
+                "show",
+                f"{implementation_binding['source_commit']}:{source['path']}",
+            ),
+            check=True,
+            capture_output=True,
+        ).stdout
+        assert hashlib.sha256(committed).hexdigest() == source["sha256"]
     _assert_binding(implementation["supersedes"]["implementation"])
 
     proposal = _assert_fingerprint(_PROPOSAL_PATH, "proposal_fingerprint")

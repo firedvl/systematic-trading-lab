@@ -103,6 +103,11 @@ unprotected sessions. The seed `program-010-raw-sip-qualification-sample-v1` sel
 lowest `SHA-256(seed|normal|date)` normal-session digests, then adds the two Program 009 controls that
 were never requested.
 
+Before activation and again before execution, the production runtime rederives the current protected
+chronology from `config/research/standing-protected-chronology-v1.json` and its five primary source
+artifacts. The child authority must Git-bind all six files. Any new registered, reserved, or sealed
+range requires a successor inventory and a newly reviewed child before provider access.
+
 | Session | Role | Prior OHLCV requests | Coordinates |
 | --- | --- | ---: | ---: |
 | `2021-05-25` | normal | 0 | 1,014 |
@@ -170,12 +175,9 @@ frontier. V5 preserves retained received order, requires strict within-page and 
 and derives the frontier from the final received coordinate. V1-V4 remain immutable review history.
 Fresh independent Standards and Specification reviewers found no remaining issue after v5.
 
-The implementation accepts only finite synthetic responses and holds raw evidence in an unnamed
-temporary file. It has no provider client, credential reader or presence check, activation path, or
-persistent real evidence root. Every top-level synthetic execution closes the evidence source on
-success or failure.
-
-The exact next step is to create and independently review a separate one-use Program 010 raw SIP
-structural qualification authority proposal that binds a fixed GET-only client and ignored persistent
-evidence root. Do not derive an external authorization root, access credentials, or contact Alpaca in
-the current phase.
+The production runtime candidate reuses the unchanged synthetic qualification engine behind a fixed
+GET-only, redirect-disabled, environment-proxy-disabled client. It performs names-only credential
+preflight, loads credentials once, validates clean synchronized-main provenance, claims the one-use
+operation immediately before transport, and writes raw bodies and receipts create-only before status,
+schema, or continuation checks. It is inert until its exact source commit receives a Git-tracked,
+finding-free child authority and review under the standing mandate.
