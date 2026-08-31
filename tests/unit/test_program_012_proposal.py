@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from collections import Counter
 from datetime import UTC, date, datetime, time
 from math import comb, floor
@@ -21,6 +22,9 @@ _V2_PROPOSAL_PATH = Path(
 )
 _PROPOSAL_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v3.json"
+)
+_REVIEW_PATH = Path(
+    "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v1.json"
 )
 
 
@@ -271,3 +275,42 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     ]
     assert implementation["focused_tests_required"] is True
     assert "PLACEHOLDER" not in (_REPOSITORY / _PROPOSAL_PATH).read_text(encoding="utf-8")
+
+
+def test_program_012_review_binds_finding_free_source_and_grants_no_authority() -> None:
+    review = _load(_REVIEW_PATH)
+    stored_fingerprint = review.pop("review_fingerprint")
+    assert stored_fingerprint == fingerprint(review)
+    for binding in review["reviewed_artifacts"].values():
+        _assert_binding(binding)
+
+    source = review["reviewed_source"]
+    tree = subprocess.run(
+        ("git", "-C", str(_REPOSITORY), "rev-parse", f"{source['source_commit']}^{{tree}}"),
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    diff = subprocess.run(
+        (
+            "git",
+            "-C",
+            str(_REPOSITORY),
+            "diff",
+            "--no-ext-diff",
+            source["base_commit"],
+            source["source_commit"],
+        ),
+        check=True,
+        capture_output=True,
+    ).stdout
+    assert tree == source["source_tree"]
+    assert hashlib.sha256(diff).hexdigest() == source["diff_sha256"]
+    assert review["verdict"] == "PASS"
+    assert review["findings"] == []
+    assert all(axis["verdict"] == "PASS" for axis in review["review_axes"].values())
+    assert review["remediation_history"]["v3_disposition"] == (
+        "ALL-PRIOR-FINDINGS-REMEDIATED-BEFORE-EXECUTION"
+    )
+    assert all(value is False for value in review["authority"].values())
+    assert "PLACEHOLDER" not in (_REPOSITORY / _REVIEW_PATH).read_text(encoding="utf-8")

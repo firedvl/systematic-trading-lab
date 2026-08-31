@@ -7,6 +7,9 @@ Program 002 admission, evaluate its quote grid, or authorize a strategy.
 Proposal SHA-256/fingerprint is
 `337a5b14ff15f9d40d0f88ed05822cf9e55293fe6c5219f56d63f1d65a67c19a` /
 `7f5817707001b03765ee5563fcb07f728ac066cc7352137b732f87312743c80b`.
+The finding-free correctness and credential-boundary review binds source commit `4c493b0` at
+SHA-256/fingerprint `3a61db10f5cd074ea3d3d1b446eaa4acd6b8bbdebe8b4c2dc13328ed58cf30e7` /
+`98736a47227b309447c34a8731edb2b7bff8c5e64a9392329145eb444cd5eb4d`.
 V1 and v2 remain immutable and are superseded before execution. V1 did not require a
 durable intent before dispatch, did not scope credential loads across process recovery, and applied
 its exact-nine-coordinate rule too broadly. V2 did not make credential-load accounting crash-safe,
@@ -93,7 +96,8 @@ ignored private root. Public evidence contains only aggregate counts, gate resul
 dataset identity on pass.
 
 This proposal adds no runtime, credential check, provider client, private state, or active authority.
-A later implementation must pass focused tests and independent review. A separate reviewed standing
-child may then enable only provider contact, credential access, source requests, acquisition, and
-structural admission. Controlled/protected data, purchases, strategy execution, PAPER, broker writes,
-and live execution remain disabled.
+After clean merge, a later implementation must pass focused crash, recovery, concurrency,
+cumulative-budget, and admission tests plus independent review. A separate reviewed standing child
+may then enable only provider contact, credential access, source requests, acquisition, and structural
+admission. Controlled/protected data, purchases, strategy execution, PAPER, broker writes, and live
+execution remain disabled.

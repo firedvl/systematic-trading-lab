@@ -1,0 +1,124 @@
+{
+  "schema_version": "program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v1",
+  "review_id": "program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-2026-08-31-v1",
+  "program_id": "multi-hour-sector-etf-research-011",
+  "reviewed_at": "2026-08-31T20:34:09Z",
+  "status": "PASS-FINDING-FREE-PROSPECTIVE-DESIGN-AND-CREDENTIAL-BOUNDARY-REVIEW",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_source": {
+    "base_commit": "169ce2b60941d633615f8c01a7a0a3d52ffb892d",
+    "source_commit": "4c493b0f07b69a00d9d7fc3770352a23f80783d1",
+    "source_tree": "a3bd78af94db64295a3c451bd9ea9b0810585b56",
+    "diff_sha256": "2a933ddb59fe88f6758ddba7e6cdee02f73bc9992b23b6714e04300d070a7e5a",
+    "change_commits": [
+      "1470d2d5a78018899ec956992cf57b8574012c14",
+      "fd6e6d6fd337ee936ca367972af746511fd58a19",
+      "e14fe58d90defc850bfd3c76fa4572d32fb1aad0",
+      "4c493b0f07b69a00d9d7fc3770352a23f80783d1"
+    ]
+  },
+  "reviewed_artifacts": {
+    "program_012_proposal_v1": {
+      "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v1.json",
+      "sha256": "8eff48cb37b900d3c00a9ad6078a306fce32d2ae1fea2a6461572b587008b013",
+      "fingerprint": "4457697ccb844155b1c499d9941025900944ea5719203706648e73b4dd5e795b"
+    },
+    "program_012_proposal_v2": {
+      "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v2.json",
+      "sha256": "06a2d2544def3443040e104f246458cd79a8205820a059efef037751f053ef74",
+      "fingerprint": "696c4e44ffa4aa1053ee5ea131dea6c3a8a639f2a22f1aff630fd24a142d60e8"
+    },
+    "program_012_proposal_v3": {
+      "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v3.json",
+      "sha256": "337a5b14ff15f9d40d0f88ed05822cf9e55293fe6c5219f56d63f1d65a67c19a",
+      "fingerprint": "7f5817707001b03765ee5563fcb07f728ac066cc7352137b732f87312743c80b"
+    }
+  },
+  "review_axes": {
+    "correctness_and_scientific_integrity": {
+      "reviewer": "fresh independent read-only correctness reviewer",
+      "verdict": "PASS",
+      "findings": []
+    },
+    "credential_and_recovery_security": {
+      "reviewer": "fresh independent read-only security auditor",
+      "verdict": "PASS",
+      "findings": []
+    }
+  },
+  "remediation_history": {
+    "v1_findings": [
+      "raw SIP and restart constraints lacked focused binding coverage",
+      "request intent was not required to be durable before dispatch",
+      "process recovery conflicted with an operation-wide one-load interpretation",
+      "quarantine wording contradicted the one allowed nonquarantine exclusion"
+    ],
+    "v2_findings": [
+      "credential-load accounting was not crash-safe",
+      "the nine-coordinate inventory lacked an exact derivation and fingerprint",
+      "recovery lacked mandatory inter-process serialization"
+    ],
+    "v3_disposition": "ALL-PRIOR-FINDINGS-REMEDIATED-BEFORE-EXECUTION",
+    "v1_v2_provider_requests": 0,
+    "v1_v2_market_observations": 0,
+    "chronology_changed": false,
+    "admission_ceiling_changed": false,
+    "authority_changed": false
+  },
+  "challenge_results": {
+    "protected_overlap": "PASS-ZERO-REQUEST-SESSIONS-OR-COORDINATES",
+    "chronology_and_coordinates": "PASS-1386-SESSIONS-1399788-COORDINATES",
+    "transport_and_pagination_budgets": "PASS",
+    "pre_send_intent_and_no_reissue": "PASS-DESIGN-BOUND",
+    "credential_load_crash_accounting": "PASS-DESIGN-BOUND",
+    "concurrent_recovery_serialization": "PASS-DESIGN-BOUND",
+    "fixed_quarantine_inventory": "PASS-NINE-COORDINATES-FINGERPRINT-BOUND",
+    "unexpected_exclusion_policy": "PASS-ONE-SLOT-WITH-CONCENTRATION-GATES",
+    "statistical_thresholds": "PASS-INDEPENDENTLY-RECOMPUTED",
+    "action_ledger_and_raw_data_semantics": "PASS",
+    "program_002_and_final_fold_claims": "PASS-NONE",
+    "authority_and_prohibitions": "PASS-ALL-DISABLED"
+  },
+  "verification": {
+    "program_012_focused_contract": "1 passed",
+    "full_pytest": "1593 passed, 4 skipped",
+    "ruff_format": "PASS",
+    "ruff_lint": "PASS",
+    "mypy": "PASS",
+    "secret_scan": "PASS-666-FILES",
+    "shell_syntax": "PASS",
+    "diff_check": "PASS",
+    "calendar_rederivation": "PASS",
+    "hypergeometric_rederivation": "PASS",
+    "artifact_sha256_and_fingerprints": "PASS",
+    "full_repository_gates_after_review_artifact_binding": "PENDING",
+    "remote_ci_merge_and_post_merge_provenance": "PENDING"
+  },
+  "proof_gaps": [
+    "Program 012 runtime does not exist in the reviewed commit; crash, recovery, concurrency, and admission behavior remain mandatory implementation tests.",
+    "Recovery must reconstruct cumulative request, response-byte, disk, and pacing budgets from completed receipts because Program 011's current budget object is process-local.",
+    "The runtime must atomically publish complete request intents or prove that every torn final-name intent fails terminally without transport.",
+    "The private-root flock serializes cooperating runtimes under the repository's non-hostile same-user-process assumption."
+  ],
+  "scope_limit": "The reviews made no credential check or access, provider request, private-data read, market observation, dataset admission, strategy calculation or return, controlled or protected access, PAPER action, broker write, live action, or purchase.",
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Run post-binding repository gates, merge through green CI, synchronize main, then implement v3 and its required crash, recovery, concurrency, cumulative-budget, and missingness tests in a separate reviewed slice before any child authority, credential presence check, or provider contact.",
+  "review_fingerprint": "98736a47227b309447c34a8731edb2b7bff8c5e64a9392329145eb444cd5eb4d"
+}
