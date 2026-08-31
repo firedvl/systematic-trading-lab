@@ -1,0 +1,262 @@
+{
+  "schema_version": "program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-v1",
+  "success_id": "program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-2026-08-31-v1",
+  "program_ordinal": 11,
+  "program_id": "multi-hour-sector-etf-research-010",
+  "recorded_at": "2026-08-31T11:16:33Z",
+  "status": "TERMINAL-PASS-CONSUMED-NO-REPLAY",
+  "execution_main": "f33fb5058de6176c0b32622d0e4eda70c64b4d74",
+  "authorization": {
+    "standing_mandate": {
+      "path": "config/research/standing-autonomous-research-mandate-v1.json",
+      "sha256": "a324a464c9e969d5242baeea20a2644edff09432b03c16862f269ef4a0400c1e",
+      "fingerprint": "3465648952ccc094697c8edc24860658c6098235989a868610c1e1b12746d502"
+    },
+    "child_authority": {
+      "path": "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-child-authority-v2.json",
+      "sha256": "52d268e628130af6c9d076e24fe4b8f84976c001642c60af7712c00bb8b551a8",
+      "fingerprint": "413fc9a186357335ff4116c7ec81acaa7d80640b67b464e8697f072f4bb2b917"
+    },
+    "child_authority_review": {
+      "path": "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-child-authority-independent-review-v2.json",
+      "sha256": "d76a7afe261647fcc6d69f24b7f17af91346b179edacd654df67e62dfd00282f",
+      "fingerprint": "b73d59674634b70b6452d01e59b0e7b6530246e28f209720ba56fda4ba4fb26c"
+    },
+    "authority_id": "program-011-raw-alpaca-sip-ohlcv-structural-qualification-child-2026-08-31-v2",
+    "authority_fingerprint": "9e27fa0095a681b19023e6265a72cb298964bf060c437a874aaae62aaba246b9",
+    "child_identity_fingerprint": "70cfe289514f61c5a78d7c58a1bc6fc390d34d1606116b8e33062d1da6ec40bf",
+    "activation_succeeded": true,
+    "one_use_claim": {
+      "schema_version": "program-011-private-ohlcv-claim-v1",
+      "sha256": "aac47ceb399c9afc2e22e6f8e42232a390b492668c887574a8547c157c4b99d7",
+      "fingerprint": "aac47ceb399c9afc2e22e6f8e42232a390b492668c887574a8547c157c4b99d7"
+    },
+    "one_use_consumed": true,
+    "external_authorization_root_required": false
+  },
+  "operation_contract": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "sort": "asc",
+    "limit": 1000,
+    "asof": "2026-07-31",
+    "sessions": [
+      "2021-04-28",
+      "2025-01-06",
+      "2025-02-27",
+      "2025-11-28",
+      "2025-12-15"
+    ],
+    "expected_canonical_coordinates": 4602,
+    "maximum_pages_per_session": 16,
+    "maximum_qualification_requests_and_responses": 80,
+    "automatic_retries": 0
+  },
+  "runtime_outcome": {
+    "credential_presence_preflight": "PASS",
+    "credential_presence_recheck_under_lock": "PASS",
+    "credential_load_count": 1,
+    "claim_written_immediately_before_first_transport": true,
+    "provider_request_count": 9,
+    "http_response_count": 9,
+    "page_count": 9,
+    "all_http_statuses": 200,
+    "response_bytes": 490879,
+    "pages_per_session": {
+      "2021-04-28": 2,
+      "2025-01-06": 2,
+      "2025-02-27": 2,
+      "2025-11-28": 1,
+      "2025-12-15": 2
+    },
+    "automatic_retries": 0,
+    "redirects_followed": 0,
+    "raw_bodies_retained_before_parse_or_continuation": true,
+    "qualification_receipt_created": true,
+    "private_dataset_count": 0
+  },
+  "private_records": {
+    "active_authority": {
+      "sha256": "7b12e8bbb565d8a2396163afd80f5d95e31f588bf5925dde359b77b8b830485e",
+      "bytes": 1539,
+      "fingerprint": "9e27fa0095a681b19023e6265a72cb298964bf060c437a874aaae62aaba246b9"
+    },
+    "response_manifest": {
+      "sha256": "680b531d789d19789a2ef7305005d9020ba7f881964af24f28a88dc578c257a8",
+      "bytes": 1979,
+      "page_count": 9,
+      "response_bytes": 490879
+    },
+    "missing_inventory": {
+      "sha256": "586d9aadc24ca734bef90cc9c1036aa725026057e180f003085ee2d4cda42060",
+      "bytes": 552,
+      "source_missing_coordinates": 0,
+      "unobserved_coordinates": 0
+    },
+    "qualification_receipt": {
+      "sha256": "abe138a08f643e65386521bf21764a2453a1ed5db73292ed4096000a12736ccb",
+      "bytes": 1789
+    },
+    "response_pages": [
+      {
+        "session": "2021-04-28",
+        "page_index": 1,
+        "bytes": 106046,
+        "sha256": "8223ec1e3fe4db0ee6c3a7c1c201686329c2b3bd3b7ddc0c7d26d13b28a52be9"
+      },
+      {
+        "session": "2021-04-28",
+        "page_index": 2,
+        "bytes": 1538,
+        "sha256": "a63d59f634489234920b8984629414f434bf464188325ea234a73f3887351730"
+      },
+      {
+        "session": "2025-01-06",
+        "page_index": 1,
+        "bytes": 106542,
+        "sha256": "1c977dd2eb1476500256186836d9d95f71007c2775e6ad0dd87893455ac90340"
+      },
+      {
+        "session": "2025-01-06",
+        "page_index": 2,
+        "bytes": 1536,
+        "sha256": "fdab71b7884c98a219d829e22a719bbd87773b7cb95b6476cee4212ef837e057"
+      },
+      {
+        "session": "2025-02-27",
+        "page_index": 1,
+        "bytes": 106434,
+        "sha256": "44ffa1b057883304e337cb85da0d8657c37979d06f7f4c0ed4d3416fc63a1eac"
+      },
+      {
+        "session": "2025-02-27",
+        "page_index": 2,
+        "bytes": 1540,
+        "sha256": "aac7122e98f216e45765a98bd56fd775f0ce3d90261b885b083539021ad192b0"
+      },
+      {
+        "session": "2025-11-28",
+        "page_index": 1,
+        "bytes": 58424,
+        "sha256": "39c07e6b4370e7c2e28bb7dd87f2b961d32333e7b0498fd774ef69e43fe9a716"
+      },
+      {
+        "session": "2025-12-15",
+        "page_index": 1,
+        "bytes": 107245,
+        "sha256": "e5177beae59a5f4264c11a3a7c626034c6d632ed6cb08c8ac9459960fa7a41e3"
+      },
+      {
+        "session": "2025-12-15",
+        "page_index": 2,
+        "bytes": 1574,
+        "sha256": "04080d2e778b9a954f9abc440caadb3609627f87c241b7ed8f7e815905e8ae30"
+      }
+    ],
+    "credentials_stored": false
+  },
+  "structural_results": {
+    "expected_canonical_coordinates": 4602,
+    "raw_rows_received": 4602,
+    "source_missing_coordinates": 0,
+    "unobserved_coordinates": 0,
+    "sessions": [
+      {
+        "session": "2021-04-28",
+        "status": "PASS",
+        "expected_coordinates": 1014,
+        "raw_rows_received": 1014,
+        "source_missing_coordinates": 0,
+        "unobserved_coordinates": 0
+      },
+      {
+        "session": "2025-01-06",
+        "status": "PASS",
+        "expected_coordinates": 1014,
+        "raw_rows_received": 1014,
+        "source_missing_coordinates": 0,
+        "unobserved_coordinates": 0
+      },
+      {
+        "session": "2025-02-27",
+        "status": "PASS",
+        "expected_coordinates": 1014,
+        "raw_rows_received": 1014,
+        "source_missing_coordinates": 0,
+        "unobserved_coordinates": 0
+      },
+      {
+        "session": "2025-11-28",
+        "status": "PASS",
+        "expected_coordinates": 546,
+        "raw_rows_received": 546,
+        "source_missing_coordinates": 0,
+        "unobserved_coordinates": 0
+      },
+      {
+        "session": "2025-12-15",
+        "status": "PASS",
+        "expected_coordinates": 1014,
+        "raw_rows_received": 1014,
+        "source_missing_coordinates": 0,
+        "unobserved_coordinates": 0
+      }
+    ],
+    "pagination_verdict": "PASS-ALL-FIVE-CHAINS-TERMINATED-WITH-NULL-TOKEN",
+    "coverage_verdict": "PASS-ALL-4602-EXPECTED-COORDINATES-PRESENT",
+    "source_qualification": "PASS",
+    "exact_pass_reason": "All five frozen session chains completed within the reviewed budgets. Nine raw HTTP 200 pages were retained before parse or continuation, all 4,602 expected canonical coordinates were present, and every structural, pagination, identity, and coverage gate passed."
+  },
+  "private_data_boundary": {
+    "private_root": ".trading-lab/program-011-raw-alpaca-sip-ohlcv-v1",
+    "private_root_git_ignored": true,
+    "raw_response_pages_retained": 9,
+    "raw_response_bytes_retained": 490879,
+    "raw_or_reconstructable_market_data_entered_git": false,
+    "credentials_stored_printed_hashed_or_persisted": false,
+    "public_evidence_contains_only_non_reconstructable_structure": true
+  },
+  "protected_state": {
+    "program_010_replayed": false,
+    "full_exposed_acquisition_started": false,
+    "dataset_admitted": false,
+    "strategy_calculations": 0,
+    "strategy_returns_generated_or_read": false,
+    "controlled_reads": 0,
+    "protected_reads": 0,
+    "paper_actions": 0,
+    "broker_writes": 0,
+    "live_actions": 0,
+    "purchases": 0
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "disposition": {
+    "qualification_authority_active": false,
+    "qualification_replay_allowed": false,
+    "replacement_program_011_qualification_authority_allowed": false,
+    "full_exposed_acquisition_or_dataset_admission_allowed_under_this_authority": false,
+    "full_exposed_acquisition_and_dataset_admission_child_may_be_proposed": true,
+    "raw_evidence_retained_privately": true,
+    "required_next_action": "Independently review and merge this terminal PASS, then prospectively freeze a separate standing child for full exposed acquisition and structural dataset admission before any new provider request."
+  },
+  "success_fingerprint": "8174a030b37fb153acda1b3deb519be32910be52341475b4adc29bfcee6c29aa"
+}

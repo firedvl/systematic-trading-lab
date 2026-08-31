@@ -56,6 +56,14 @@ CHILD_REVIEW_PATH = Path(
     "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-"
     "child-authority-independent-review-v2.json"
 )
+_TERMINAL_SUCCESS = {
+    "path": (
+        "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-"
+        "terminal-success-v1.json"
+    ),
+    "sha256": "cdb6aa8ee9c317738399d72a8a3af60882eaa959fb554a3765326fdf3cedfa21",
+    "fingerprint": "8174a030b37fb153acda1b3deb519be32910be52341475b4adc29bfcee6c29aa",
+}
 OPERATION_MANIFEST = {
     "path": (
         "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v2.json"
@@ -315,6 +323,7 @@ def derive_active_authority(
 def _derive_control_validated_authority(repository: Path) -> Mapping[str, Any]:
     """Derive authority only after all credential-free controls pass."""
     repository = _repository(repository)
+    _reject_terminal_state(repository)
     identity = derive_child_identity(repository, CHILD_AUTHORITY_PATH, CHILD_REVIEW_PATH)
     authority = _mapping(identity.get("authority"), "child authority")
     runtime = _mapping(identity.get("runtime_binding"), "child runtime binding")
@@ -1650,6 +1659,30 @@ def _reject_existing_state(root_descriptor: int, *, allow_active: bool = True) -
     entries = set(os.listdir(root_descriptor))
     if entries - allowed or (not allow_active and "active-authority.json" in entries):
         raise Program011AuthorityError("Program 011 one-use authority state already exists")
+
+
+def _reject_terminal_state(repository: Path) -> None:
+    path = repository / str(_TERMINAL_SUCCESS["path"])
+    if not path.exists():
+        raise Program011AuthorityError("Program 011 terminal success artifact is absent")
+    success = _load_bound_artifact(repository, _TERMINAL_SUCCESS, "success_fingerprint")
+    authorization = _mapping(success.get("authorization"), "terminal authorization")
+    structural = _mapping(success.get("structural_results"), "terminal results")
+    disposition = _mapping(success.get("disposition"), "terminal disposition")
+    final_authority = _mapping(success.get("effective_final_authority"), "final authority")
+    if (
+        success.get("program_ordinal") != PROGRAM_ORDINAL
+        or success.get("program_id") != PROGRAM_ID
+        or success.get("status") != "TERMINAL-PASS-CONSUMED-NO-REPLAY"
+        or authorization.get("one_use_consumed") is not True
+        or structural.get("source_qualification") != "PASS"
+        or disposition.get("qualification_authority_active") is not False
+        or disposition.get("qualification_replay_allowed") is not False
+        or disposition.get("replacement_program_011_qualification_authority_allowed") is not False
+        or any(final_authority.values())
+    ):
+        raise Program011AuthorityError("Program 011 terminal success semantics differ")
+    raise Program011AuthorityError("Program 011 OHLCV authority is terminally revoked")
 
 
 def _require_credentials_present(environ: Mapping[str, str] | None) -> None:

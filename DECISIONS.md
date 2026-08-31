@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-31 - Close Program 011 after structural qualification PASS
+
+- Decision: record Program 011 as `TERMINAL-PASS-CONSUMED-NO-REPLAY`, preserve all nine raw responses privately, revoke every Program 011 entry point before credentials or private state, and prohibit replay or a replacement qualification authority.
+- Context: standing child authority fingerprint `9e27fa0095a681b19023e6265a72cb298964bf060c437a874aaae62aaba246b9` activated on synchronized main `f33fb5058de6176c0b32622d0e4eda70c64b4d74`. The zero-retry run retained nine HTTP 200 responses totaling 490,879 bytes. All five frozen session chains terminated, all 4,602 expected coordinates were present, and no source-missing or unobserved coordinate appeared.
+- Consequences: public terminal-success SHA-256/fingerprint is `cdb6aa8ee9c317738399d72a8a3af60882eaa959fb554a3765326fdf3cedfa21` / `8174a030b37fb153acda1b3deb519be32910be52341475b4adc29bfcee6c29aa`. Program 011 admitted no dataset and ran no strategy. Controlled/protected reads, PAPER actions, broker writes, live actions, and purchases remained zero.
+- Revisit when: never for Program 011 qualification. After independent terminal review and merge, freeze and review a separate standing child before full exposed acquisition or structural dataset admission.
+
 ## 2026-08-31 - Validate Program 011 controls before credential presence
 
 - Decision: route Program 011 execution and names-only credential preflight through one credential-free authority validator. Validate the child and review, synchronized-main lineage, protected registrations, and operation contract before checking credential names. Open private state only after controls and credentials pass.

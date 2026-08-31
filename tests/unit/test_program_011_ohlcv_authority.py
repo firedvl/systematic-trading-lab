@@ -27,6 +27,17 @@ from systematic_trading_lab.standing_research_authority import AUTHORITY_FIELDS
 _REPOSITORY = Path(__file__).resolve().parents[2]
 
 
+@pytest.fixture(autouse=True)
+def _allow_historical_runtime_tests(monkeypatch: MonkeyPatch) -> None:
+    reject_terminal_state = authority._reject_terminal_state
+
+    def reject(repository: Path) -> None:
+        if repository.resolve() == _REPOSITORY.resolve():
+            reject_terminal_state(repository)
+
+    monkeypatch.setattr(authority, "_reject_terminal_state", reject)
+
+
 def _credentials() -> dict[str, str]:
     return {
         authority.CREDENTIAL_NAMES[0]: "synthetic-key-material",
@@ -145,6 +156,81 @@ def test_operation_contract_revalidates_fresh_exposed_scope() -> None:
 
     assert proposal["program_id"] == authority.PROGRAM_ID
     assert proposal["proposal_fingerprint"] == authority.OPERATION_MANIFEST["fingerprint"]
+
+
+def test_terminal_success_revokes_before_credentials_or_private_state(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    credential_reads: list[bool] = []
+    private_root_opens: list[bool] = []
+
+    def credential_preflight(_environ: object) -> tuple[str, ...]:
+        credential_reads.append(True)
+        return ()
+
+    monkeypatch.setattr(
+        credential_contract,
+        "credential_presence_preflight",
+        credential_preflight,
+    )
+    monkeypatch.setattr(
+        authority,
+        "_open_private_root",
+        lambda *_args, **_kwargs: private_root_opens.append(True),
+    )
+
+    for operation in (
+        lambda: authority.credential_presence_preflight(_REPOSITORY, environ={}),
+        lambda: authority.derive_active_authority(_REPOSITORY, environ={}),
+        lambda: authority.activate_authority(_REPOSITORY, environ={}),
+        lambda: authority.load_active_authority(_REPOSITORY, environ={}),
+        lambda: authority.execute_qualification(_REPOSITORY, environ={}),
+    ):
+        with pytest.raises(authority.Program011AuthorityError, match="terminally revoked"):
+            operation()
+
+    assert credential_reads == []
+    assert private_root_opens == []
+
+
+def test_missing_terminal_success_rejects_before_credentials_or_private_state(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    credential_reads: list[bool] = []
+    private_root_opens: list[bool] = []
+
+    def credential_preflight(_environ: object) -> tuple[str, ...]:
+        credential_reads.append(True)
+        return ()
+
+    monkeypatch.setattr(
+        authority,
+        "_TERMINAL_SUCCESS",
+        {**authority._TERMINAL_SUCCESS, "path": "config/research/missing-terminal.json"},
+    )
+    monkeypatch.setattr(
+        credential_contract,
+        "credential_presence_preflight",
+        credential_preflight,
+    )
+    monkeypatch.setattr(
+        authority,
+        "_open_private_root",
+        lambda *_args, **_kwargs: private_root_opens.append(True),
+    )
+
+    for operation in (
+        lambda: authority.credential_presence_preflight(_REPOSITORY, environ={}),
+        lambda: authority.derive_active_authority(_REPOSITORY, environ={}),
+        lambda: authority.activate_authority(_REPOSITORY, environ={}),
+        lambda: authority.load_active_authority(_REPOSITORY, environ={}),
+        lambda: authority.execute_qualification(_REPOSITORY, environ={}),
+    ):
+        with pytest.raises(authority.Program011AuthorityError, match="artifact is absent"):
+            operation()
+
+    assert credential_reads == []
+    assert private_root_opens == []
 
 
 def test_credential_preflight_cli_prints_only_pass_or_missing_names(
@@ -336,6 +422,7 @@ def test_invalid_controls_reject_before_credentials_or_private_state(
     monkeypatch.setattr(authority, "_repository_preflight", repository_preflight)
     monkeypatch.setattr(authority, "_validate_protected_registration_set", lambda *_args: None)
     monkeypatch.setattr(authority, "validate_operation_contract", validate_contract)
+    monkeypatch.setattr(authority, "_reject_terminal_state", lambda _repository: None)
     monkeypatch.setattr(
         credential_contract,
         "credential_presence_preflight",
