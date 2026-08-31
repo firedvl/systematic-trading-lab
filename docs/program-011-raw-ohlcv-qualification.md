@@ -54,6 +54,12 @@ credential presence or private-state access. Program 011 cannot receive a replac
 authority. Full exposed acquisition and structural dataset admission require a separate prospective
 standing child and independent review.
 
+The finding-free independent terminal review binds closeout commit/tree
+`95963e8f935b79e9ce96fa43f9ddd048506f4c15` /
+`0a917a2467ba6e0b4f95ecfd552a616490cfd58a`. Review SHA-256/fingerprint is
+`c2c019b94486a2d9cbe8cd53e1da6dbffadf36a265a57f4f47610a22b51929ac` /
+`86c5f4dae4ce96c4bae9bd4be4886d90c28d851c71831f5169244d112bd50620`.
+
 ## Frozen sample
 
 The sample rederives from committed evidence across Programs 002-010 and the current protected

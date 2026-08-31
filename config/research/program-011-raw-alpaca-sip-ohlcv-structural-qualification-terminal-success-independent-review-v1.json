@@ -1,0 +1,307 @@
+{
+  "schema_version": "program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-independent-review-v1",
+  "review_id": "program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-independent-review-2026-08-31-v1",
+  "program_ordinal": 11,
+  "program_id": "multi-hour-sector-etf-research-010",
+  "reviewed_at": "2026-08-31T12:03:10Z",
+  "status": "PASS-TERMINAL-SUCCESS-VERIFIED",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_execution_main": "f33fb5058de6176c0b32622d0e4eda70c64b4d74",
+  "reviewed_base_commit": "f33fb5058de6176c0b32622d0e4eda70c64b4d74",
+  "reviewed_closeout_commits": [
+    {
+      "commit": "95963e8f935b79e9ce96fa43f9ddd048506f4c15",
+      "tree": "0a917a2467ba6e0b4f95ecfd552a616490cfd58a",
+      "purpose": "terminal PASS artifact, revocation guard, regression coverage, and public closeout"
+    }
+  ],
+  "reviewed_success": {
+    "path": "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-v1.json",
+    "sha256": "cdb6aa8ee9c317738399d72a8a3af60882eaa959fb554a3765326fdf3cedfa21",
+    "fingerprint": "8174a030b37fb153acda1b3deb519be32910be52341475b4adc29bfcee6c29aa"
+  },
+  "reviewed_private_records": {
+    "active_authority": {
+      "sha256": "7b12e8bbb565d8a2396163afd80f5d95e31f588bf5925dde359b77b8b830485e",
+      "bytes": 1539,
+      "fingerprint": "9e27fa0095a681b19023e6265a72cb298964bf060c437a874aaae62aaba246b9"
+    },
+    "one_use_claim": {
+      "schema_version": "program-011-private-ohlcv-claim-v1",
+      "sha256": "aac47ceb399c9afc2e22e6f8e42232a390b492668c887574a8547c157c4b99d7",
+      "fingerprint": "aac47ceb399c9afc2e22e6f8e42232a390b492668c887574a8547c157c4b99d7"
+    },
+    "response_manifest": {
+      "sha256": "680b531d789d19789a2ef7305005d9020ba7f881964af24f28a88dc578c257a8",
+      "bytes": 1979,
+      "page_count": 9,
+      "response_bytes": 490879
+    },
+    "missing_inventory": {
+      "sha256": "586d9aadc24ca734bef90cc9c1036aa725026057e180f003085ee2d4cda42060",
+      "bytes": 552,
+      "source_missing_coordinates": 0,
+      "unobserved_coordinates": 0
+    },
+    "qualification_receipt": {
+      "sha256": "abe138a08f643e65386521bf21764a2453a1ed5db73292ed4096000a12736ccb",
+      "bytes": 1789
+    },
+    "response_pages": [
+      {
+        "session": "2021-04-28",
+        "page_index": 1,
+        "bytes": 106046,
+        "sha256": "8223ec1e3fe4db0ee6c3a7c1c201686329c2b3bd3b7ddc0c7d26d13b28a52be9"
+      },
+      {
+        "session": "2021-04-28",
+        "page_index": 2,
+        "bytes": 1538,
+        "sha256": "a63d59f634489234920b8984629414f434bf464188325ea234a73f3887351730"
+      },
+      {
+        "session": "2025-01-06",
+        "page_index": 1,
+        "bytes": 106542,
+        "sha256": "1c977dd2eb1476500256186836d9d95f71007c2775e6ad0dd87893455ac90340"
+      },
+      {
+        "session": "2025-01-06",
+        "page_index": 2,
+        "bytes": 1536,
+        "sha256": "fdab71b7884c98a219d829e22a719bbd87773b7cb95b6476cee4212ef837e057"
+      },
+      {
+        "session": "2025-02-27",
+        "page_index": 1,
+        "bytes": 106434,
+        "sha256": "44ffa1b057883304e337cb85da0d8657c37979d06f7f4c0ed4d3416fc63a1eac"
+      },
+      {
+        "session": "2025-02-27",
+        "page_index": 2,
+        "bytes": 1540,
+        "sha256": "aac7122e98f216e45765a98bd56fd775f0ce3d90261b885b083539021ad192b0"
+      },
+      {
+        "session": "2025-11-28",
+        "page_index": 1,
+        "bytes": 58424,
+        "sha256": "39c07e6b4370e7c2e28bb7dd87f2b961d32333e7b0498fd774ef69e43fe9a716"
+      },
+      {
+        "session": "2025-12-15",
+        "page_index": 1,
+        "bytes": 107245,
+        "sha256": "e5177beae59a5f4264c11a3a7c626034c6d632ed6cb08c8ac9459960fa7a41e3"
+      },
+      {
+        "session": "2025-12-15",
+        "page_index": 2,
+        "bytes": 1574,
+        "sha256": "04080d2e778b9a954f9abc440caadb3609627f87c241b7ed8f7e815905e8ae30"
+      }
+    ],
+    "credentials_stored": false
+  },
+  "reviewed_authority": {
+    "standing_mandate_fingerprint": "3465648952ccc094697c8edc24860658c6098235989a868610c1e1b12746d502",
+    "child_authority_id": "program-011-raw-alpaca-sip-ohlcv-structural-qualification-child-2026-08-31-v2",
+    "child_authority_artifact_fingerprint": "413fc9a186357335ff4116c7ec81acaa7d80640b67b464e8697f072f4bb2b917",
+    "active_authority_fingerprint": "9e27fa0095a681b19023e6265a72cb298964bf060c437a874aaae62aaba246b9",
+    "child_identity_fingerprint": "70cfe289514f61c5a78d7c58a1bc6fc390d34d1606116b8e33062d1da6ec40bf",
+    "activation_succeeded": true,
+    "one_use_consumed": true,
+    "external_authorization_root_required": false,
+    "active_flags_during_consumed_run": [
+      "credential_access",
+      "provider_contact",
+      "source_qualification",
+      "source_requests"
+    ]
+  },
+  "reviewed_runtime_outcome": {
+    "terminal_execution": "CONFIRMED-PASS-CONSUMED-NO-REPLAY",
+    "credential_presence_preflight": "PASS",
+    "credential_presence_recheck_under_lock": "PASS",
+    "credential_load_count": 1,
+    "claim_written_immediately_before_first_transport": true,
+    "provider_request_count": 9,
+    "http_response_count": 9,
+    "page_count": 9,
+    "all_http_statuses": 200,
+    "response_bytes": 490879,
+    "pages_per_session": {
+      "2021-04-28": 2,
+      "2025-01-06": 2,
+      "2025-02-27": 2,
+      "2025-11-28": 1,
+      "2025-12-15": 2
+    },
+    "automatic_retries": 0,
+    "redirects_followed": 0,
+    "raw_bodies_retained_before_parse_or_continuation": true,
+    "qualification_receipt_created": true,
+    "private_dataset_count": 0
+  },
+  "reviewed_structural_outcome": {
+    "expected_canonical_coordinates": 4602,
+    "raw_rows_received": 4602,
+    "unique_coordinates_received": 4602,
+    "unexpected_coordinates": 0,
+    "duplicate_coordinates": 0,
+    "source_missing_coordinates": 0,
+    "unobserved_coordinates": 0,
+    "pagination": "PASS-ALL-FIVE-CHAINS-TERMINATED-WITH-NULL-TOKEN",
+    "coverage": "PASS-ALL-4602-EXPECTED-COORDINATES-PRESENT",
+    "qualification": "PASS"
+  },
+  "terminal_revocation": {
+    "guard_path": "src/systematic_trading_lab/program_011_ohlcv_authority.py",
+    "guard_sha256": "77b2ac6bdfddd7601788b325831773e90753ec65d8ba07a46cb68c5e94b8fbc6",
+    "credential_preflight_rejects_before_credentials_or_private_root": true,
+    "root_derivation_rejects_before_credentials_or_private_root": true,
+    "activation_entry_rejects_before_credentials_or_private_root": true,
+    "load_entry_rejects_before_credentials_or_private_root": true,
+    "execution_entry_rejects_before_credentials_or_private_root": true,
+    "missing_terminal_artifact_rejects_before_credentials_or_private_root": true,
+    "malformed_or_hash_mismatched_terminal_artifact_rejects": true,
+    "exact_terminal_sha256_and_fingerprint_bound": true,
+    "terminal_semantics_validated": true,
+    "regression_test_path": "tests/unit/test_program_011_ohlcv_authority.py",
+    "regression_test_sha256": "8601094832282aee882602c901928fa937c4095d9adb9afbee4beb6b86be32d3"
+  },
+  "challenge_results": [
+    {
+      "number": 1,
+      "challenge": "Did the reviewed child activate on the exact synchronized-main commit and consume one use?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 2,
+      "challenge": "Were exactly nine requests and nine HTTP 200 responses recorded with zero retries and redirects?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 3,
+      "challenge": "Were all raw response bodies retained before parsing or continuation?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 4,
+      "challenge": "Did all five chains terminate with a null continuation token?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 5,
+      "challenge": "Did the exact 4,602-coordinate inventory contain duplicates, unexpected rows, source missingness, or unobserved coordinates?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 6,
+      "challenge": "Were credentials and reconstructable market data kept out of Git?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 7,
+      "challenge": "Did any full acquisition, dataset admission, or strategy calculation occur?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 8,
+      "challenge": "Were controlled, protected, PAPER, broker, live, and purchase boundaries untouched?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 9,
+      "challenge": "Are replay and replacement Program 011 qualification authorities prohibited?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 10,
+      "challenge": "Do absent, malformed, or hash-mismatched terminal bindings fail before credentials or private state?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 11,
+      "challenge": "Does the terminal PASS grant full acquisition or dataset-admission authority?",
+      "answer": "NO; a separate prospective reviewed standing child is required",
+      "verdict": "PASS"
+    }
+  ],
+  "verified_assertions": {
+    "active_authority_matches_reviewed_child_lineage": true,
+    "claim_matches_active_authority": true,
+    "claim_precedes_first_provider_transport_in_reviewed_path": true,
+    "one_use_authority_is_consumed": true,
+    "credential_load_count_is_one": true,
+    "exact_request_response_page_and_byte_counts_reconcile": true,
+    "automatic_transport_retries_are_zero": true,
+    "redirects_are_zero": true,
+    "raw_first_persistence_completed": true,
+    "all_session_chains_terminated": true,
+    "terminal_ohlcv_qualification_is_pass": true,
+    "exact_terminal_artifact_blocks_current_authority_paths": true,
+    "absent_terminal_artifact_blocks_current_authority_paths": true,
+    "hash_mismatched_terminal_artifact_blocks_current_authority_paths": true,
+    "no_raw_or_reconstructable_ohlcv_entered_git": true,
+    "no_full_acquisition_or_dataset_admission_occurred": true,
+    "no_strategy_calculation_or_return_occurred": true,
+    "controlled_protected_paper_broker_live_and_purchase_state_stayed_untouched": true,
+    "program_011_replay_and_replacement_authority_are_prohibited": true
+  },
+  "verification": {
+    "independent_correctness_review": "PASS-FINDING-FREE",
+    "independent_specification_review": "PASS-FINDING-FREE",
+    "independent_standards_review": "PASS-FINDING-FREE",
+    "private_record_cross_hash_audit": "PASS; all lifecycle records and nine response bodies matched declared digests and byte counts",
+    "independent_private_response_reparse": "PASS; 4,602 unique expected coordinates, zero duplicates or unexpected coordinates, five null-token chain completions",
+    "focused_program_011_tests": "79 passed",
+    "independent_focused_program_011_tests": "46 passed",
+    "sanitized_full_test_suite": "1592 passed, 4 skipped",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "secret_and_private_data_scan": "PASS; 660 files scanned",
+    "shell_syntax_diff_and_build_checks": "PASS",
+    "sdist_and_wheel_build": "PASS",
+    "reviewed_working_tree": "clean before this review artifact",
+    "tracked_program_011_private_files": 0
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "Historical write ordering relies on create-only evidence, mutable filesystem timestamps, and the reviewed code path rather than a cryptographic ordering proof.",
+    "Credential loading and its count rely on the private receipt and reviewed path; the review did not inspect credential values.",
+    "Hash-mismatch rejection was manually exercised across the lifecycle entry points; the committed regression suite covers valid and missing terminal artifacts."
+  ],
+  "scope_limit": "The review made no provider request, credential access, credential-value inspection, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Merge this terminal review, then prospectively freeze a separate standing child for full exposed acquisition and structural dataset admission before any new provider request.",
+  "review_fingerprint": "86c5f4dae4ce96c4bae9bd4be4886d90c28d851c71831f5169244d112bd50620"
+}
