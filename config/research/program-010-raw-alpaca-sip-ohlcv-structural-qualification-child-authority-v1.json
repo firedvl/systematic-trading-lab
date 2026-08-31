@@ -1,0 +1,183 @@
+{
+  "schema_version": "standing-autonomous-research-child-authority-v1",
+  "child_authority_id": "program-010-raw-alpaca-sip-ohlcv-structural-qualification-child-2026-08-30-v1",
+  "program_ordinal": 10,
+  "program_id": "multi-hour-sector-etf-research-009",
+  "operation_kind": "RAW-ALPACA-SIP-OHLCV-STRUCTURAL-SOURCE-QUALIFICATION",
+  "status": "PROSPECTIVE-CHILD-CONTROL",
+  "one_use": true,
+  "consumption_boundary": "immediately before first provider transport invocation",
+  "concrete_runtime_validation_required": true,
+  "runtime_revalidation_required": true,
+  "atomic_one_use_claim_required": true,
+  "terminal_evidence_required": true,
+  "standing_mandate": {
+    "path": "config/research/standing-autonomous-research-mandate-v1.json",
+    "sha256": "a324a464c9e969d5242baeea20a2644edff09432b03c16862f269ef4a0400c1e",
+    "fingerprint": "3465648952ccc094697c8edc24860658c6098235989a868610c1e1b12746d502"
+  },
+  "data_classes": [
+    "FRESH-PROSPECTIVE-EXPOSED"
+  ],
+  "operation_manifest": {
+    "path": "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v5.json",
+    "sha256": "449327a5843902f4a93603ff0f3fd7f01665baf33561ba3d019fde4612acc1f5",
+    "fingerprint": "fe24131e1dcd504615a314221d3aec664a0f2c3810127ba69fbceb50f81727a7"
+  },
+  "runtime_entrypoint": "src/systematic_trading_lab/program_010_ohlcv_authority.py",
+  "runtime_binding": {
+    "source_commit": "0b33de8d7ba302ecb02941d7b597d225eb3d8d03",
+    "source_tree": "276a62cf5b70463c0a62a8fee527948949c08981",
+    "implementation_root": "ff360a3bdb30ff747291aa836aebe3a387bcb4df1a6123e245ea5188d096e87d",
+    "source_files": [
+      {
+        "path": "config/research/intraday-exposed-002-june-reservation-v1.json",
+        "sha256": "5a6e7b8e21cf5bd7aad5b7445880a7d1862b304ba5b1f9e3dab4909ab9c674db"
+      },
+      {
+        "path": "config/research/intraday-known-exposures-v1.json",
+        "sha256": "f11977e33a5ade47eeb0ad0923180eca733bc694ffef0e4e2f335936da4746aa"
+      },
+      {
+        "path": "config/research/intraday-v3-period-selection-v2.json",
+        "sha256": "42581c019abc5c3e184b89b31e655bc5ee123bdcb79ced2c9cf894d6668e45cf"
+      },
+      {
+        "path": "config/research/program-005-free-alpaca-successor-plan-v1.json",
+        "sha256": "3a71573086418aa8ff53d8359110dee1a951caa333ffd35eccedd8d38678cb11"
+      },
+      {
+        "path": "config/research/program-007-alpaca-raw-source-qualification-proposal-v1.json",
+        "sha256": "5e92effb829e70d7bbf4636d88519c104565a10bd6f57235169419542cb05b34"
+      },
+      {
+        "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+        "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1"
+      },
+      {
+        "path": "config/research/program-008-corporate-action-metadata-qualification-terminal-success-v1.json",
+        "sha256": "23bf0e29b4f8b4b4655d7eeb470e4ceb1bc319717c854ec3d82790ef52c1762b"
+      },
+      {
+        "path": "config/research/program-009-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
+        "sha256": "c4778d1600c564f34da80ff7052c39e7a4bd599685342795ccb4401a4318ea4a"
+      },
+      {
+        "path": "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v5.json",
+        "sha256": "449327a5843902f4a93603ff0f3fd7f01665baf33561ba3d019fde4612acc1f5"
+      },
+      {
+        "path": "config/research/protected-chronology-registrations/standing-protected-ranges-v1.json",
+        "sha256": "29d407e0d278aa30dbe107c028f696b99965c89edae938115bdbbf44bd916182"
+      },
+      {
+        "path": "config/research/rapid-004-seed-universe-v1.json",
+        "sha256": "876ed95716a2e7010232d2790f6210c0110de42c9b10ada90202b0176238eb59"
+      },
+      {
+        "path": "config/research/standing-protected-chronology-v1.json",
+        "sha256": "ee2359e907f97d4fc039408e9f6bb16562ac515cd10c4b5e87867c0852867782"
+      },
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "16e4e3c2d3d36756420ac1837287c2640a54405c64d0af32d1b0f9ad7ccd5cdd"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/cli.py",
+        "sha256": "f05d3d6d8f0ac54a4dd3ac7c862a0de415cf49442057b518132feb2daa755695"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "eb4ab0d1f5e2f4b2ed42a212bd7997fa1c16c461dd9ce4f0ff40847d4e97d39c"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_005_alpaca.py",
+        "sha256": "1b5f53776d7dd0021d051b9c8ce7bab4722570823b9da1405f7d9ba8a1e20393"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_006_alpaca.py",
+        "sha256": "d34916c10a2867bcd14086e82cbe81fe952a3e8a545312870c34b70139ebf937"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_alpaca.py",
+        "sha256": "cc60139d1f1f8a9f00cd6dbb10100e831b0dd369d62780451e6d1b78e50aae87"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_010_ohlcv.py",
+        "sha256": "87ba1741b06f29d8018679fda8e4d016f4a033ff48e7dfb85f503c55d2d7324c"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_010_ohlcv_authority.py",
+        "sha256": "8e1d591e6fa7d36fed9a5aa93e0bd322d5b38523c28f52846a75a9d7ba016176"
+      },
+      {
+        "path": "src/systematic_trading_lab/standing_research_authority.py",
+        "sha256": "60842b701a462d74e9815edd89780aa6cbdff358b072ab7062418bf101778136"
+      },
+      {
+        "path": "tests/unit/test_intraday_source_provenance.py",
+        "sha256": "624521c6be0e6c26cfcb2bf8cb164a4edb49d485794d56f126a05b59e524b68f"
+      },
+      {
+        "path": "tests/unit/test_program_010_ohlcv.py",
+        "sha256": "e59c93b7079af2ce303c3d0a147fe621deafa10126c5945e08c78a9dda4cfc05"
+      },
+      {
+        "path": "tests/unit/test_program_010_ohlcv_authority.py",
+        "sha256": "24055489d3ebf4a45d9c354d02c2b9f48ec59f7742f5301130291aad04d0904f"
+      },
+      {
+        "path": "tests/unit/test_program_010_proposal.py",
+        "sha256": "6577c1a0ce752603a28e77341fa7e554a1e0cbf036614fb30fa4244e738179b0"
+      },
+      {
+        "path": "tests/unit/test_standing_research_authority.py",
+        "sha256": "e0567101952d0547f0d542c7c03156a8f984e8096f113ba1ee5c26be7d7ae78a"
+      }
+    ]
+  },
+  "required_review_challenges": [
+    "authority-boundaries",
+    "chronology",
+    "data-leakage",
+    "freshness",
+    "git-provenance-integrity",
+    "missingness-rules",
+    "overfitting",
+    "private-data-leakage",
+    "request-budgets",
+    "source-assumptions",
+    "specification-changes",
+    "statistical-validity"
+  ],
+  "authority": {
+    "provider_contact": true,
+    "subscription_purchase": false,
+    "credential_access": true,
+    "source_requests": true,
+    "source_qualification": true,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "child_authority_fingerprint": "656fc232ab8855896169a63e5733fb874353465798ffb0ec61accc4288c8c822"
+}
