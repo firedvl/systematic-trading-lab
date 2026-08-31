@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-31 - Validate Program 011 order per symbol before sorting
+
+- Decision: create Program 011, `multi-hour-sector-etf-research-010`, without authority. Preserve Program 010's tested raw-first pagination engine and every token, duplicate, progress, missingness, coverage, resource, and retry control. Treat JSON object-member order as semantically empty. Require strict timestamp order inside each symbol array, then sort parsed rows by symbol and timestamp before global and cross-page checks.
+- Context: Program 010 consumed its one use after persisting a valid 1,000-row page whose thirteen symbol arrays were each timestamp-ascending but whose object members were not lexicographically ordered. RFC 8259 defines objects as unordered. Changing Program 010 after that observation would be retrospective; a fresh successor is required.
+- Consequences: the 199-session Programs 002-010 observed union now excludes Program 010's `2021-05-25` session from successor qualification. Seed `program-011-raw-sip-qualification-sample-v1` chooses fresh normal sessions `2021-04-28`, `2025-01-06`, and `2025-02-27`, plus still-unrequested split controls `2025-11-28` and `2025-12-15`. The sample has 4,602 coordinates and fingerprint `549a83f7af681088012d2867dfa63aebe6878f817fc13e692e3fe948e9ca62bc`. Implementation SHA-256/fingerprint is `683e411d898c64d4d5ff872368572dec20879555695aa6390f09831f5b01430e` / `19da1ee5205bffc060cdeb860da77b245d8732cc782a415a45140abf762442bc`; proposal SHA-256/fingerprint is `e87a319a98cda47200d615d1a4cb1416033b545a313fd1d9f63c8791c42b5bb3` / `50747cee0606229b6e79c59f6a204806a415f3b4dde6205c1b5e950651357447`. Every authority flag remains false.
+- Revisit after a finding-free independent review and clean synchronized-main merge. Create and review a separate exact one-use standing child authority before any credential or provider access. Never replay Program 010.
+
 ## 2026-08-30 - Close Program 010 on unordered JSON object members
 
 - Decision: record Program 010 as `TERMINAL-FAIL-CONSUMED-NO-RETRY`, preserve its private request and response evidence, revoke every Program 010 lifecycle entry point before credentials or private state, and prohibit replay or a replacement Program 010 authority. Classify the stop as `QUALIFICATION-SPECIFICATION-DEFECT`. Create Program 011 prospectively instead of changing Program 010 after observing provider bytes.
