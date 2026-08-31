@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 from collections import Counter, defaultdict
 from datetime import UTC, date, datetime
@@ -224,3 +225,18 @@ def test_fresh_sample_rederives_from_programs_002_through_010_and_protected_rang
     assert not set(selected) & observed
     assert not set(selected) & protected
     assert sum(grid_counts[value] * len(program_011.SYMBOLS) for value in selected) == 4_602
+
+
+def test_secret_guard_allows_only_reserved_public_program_011_json_artifacts() -> None:
+    spec = importlib.util.spec_from_file_location(
+        "program_011_check_secrets", _REPOSITORY / "scripts/check_secrets.py"
+    )
+    assert spec is not None and spec.loader is not None
+    guard = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(guard)
+    public_program_artifacts = {
+        path.relative_to(_REPOSITORY).as_posix()
+        for path in (_REPOSITORY / "config/research").glob("program-011*.json")
+    }
+
+    assert public_program_artifacts <= guard.PUBLIC_PROGRAM_JSON
