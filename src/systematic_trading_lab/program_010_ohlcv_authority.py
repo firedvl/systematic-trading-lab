@@ -1586,9 +1586,7 @@ def _reject_terminal_state(repository: Path) -> None:
     path = repository / str(_TERMINAL_FAILURE["path"])
     if not path.exists():
         return
-    failure = _load_bound_artifact(
-        repository, _TERMINAL_FAILURE, "failure_fingerprint"
-    )
+    failure = _load_bound_artifact(repository, _TERMINAL_FAILURE, "failure_fingerprint")
     authorization = _mapping(failure.get("authorization"), "terminal authorization")
     structural = _mapping(failure.get("structural_results"), "terminal results")
     forensic = _mapping(failure.get("forensic_classification"), "terminal forensics")
