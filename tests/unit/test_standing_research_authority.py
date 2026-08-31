@@ -108,6 +108,7 @@ def _child(
     root: Path,
     program_ordinal: int = 10,
     *,
+    bind_manifest: bool = True,
     commit_controls: bool = True,
     **updates: Any,
 ) -> tuple[Path, Path]:
@@ -127,8 +128,14 @@ def _child(
         },
         "operation_manifest_fingerprint",
     )
-    commit, tree = _commit(root, "freeze child operation", manifest_relative)
-    runtime_paths = (_RUNTIME_ENTRYPOINT, manifest_relative)
+    runtime_paths = (
+        (_RUNTIME_ENTRYPOINT, manifest_relative) if bind_manifest else (_RUNTIME_ENTRYPOINT,)
+    )
+    if bind_manifest:
+        commit, tree = _commit(root, "freeze child operation", manifest_relative)
+    else:
+        commit = _git(root, "rev-parse", "HEAD")
+        tree = _git(root, "rev-parse", "HEAD^{tree}")
     required_challenges = sorted(authority.CHILD_REVIEW_REQUIRED_CHALLENGES)
     unsigned: dict[str, Any] = {
         "schema_version": "standing-autonomous-research-child-authority-v1",
@@ -282,6 +289,23 @@ def test_untracked_child_controls_fail_closed(tmp_path: Path) -> None:
 
     with pytest.raises(authority.StandingAuthorityError, match="Git provenance"):
         authority.derive_child_identity(tmp_path, child_path, review_path)
+
+
+def test_untracked_operation_manifest_fails_closed(tmp_path: Path) -> None:
+    _standing_repository(tmp_path)
+    child_path, review_path = _child(tmp_path, bind_manifest=False)
+
+    with pytest.raises(authority.StandingAuthorityError, match="exceeds the standing mandate"):
+        authority.derive_child_identity(tmp_path, child_path, review_path)
+
+
+def test_untracked_standing_mandate_fails_closed(tmp_path: Path) -> None:
+    _standing_repository(tmp_path)
+    _git(tmp_path, "rm", "--cached", "--", authority.MANDATE_PATH.as_posix())
+    _git(tmp_path, "commit", "--quiet", "-m", "remove mandate from Git")
+
+    with pytest.raises(authority.StandingAuthorityError, match="Git provenance"):
+        authority.load_standing_mandate(tmp_path)
 
 
 @pytest.mark.parametrize("field", ["source_commit", "source_tree"])

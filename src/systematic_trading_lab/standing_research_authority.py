@@ -112,6 +112,7 @@ def _load_standing_controls(
         repository, MANDATE_PATH, "mandate_fingerprint", "standing mandate"
     )
     _validate_mandate(repository, mandate)
+    _git_tracked_binding(repository, MANDATE_PATH, mandate_binding, "standing mandate")
     review, review_binding = _load_fingerprinted_artifact(
         repository, MANDATE_REVIEW_PATH, "review_fingerprint", "standing mandate review"
     )
@@ -264,6 +265,10 @@ def _validate_child(
     permitted_classes = set(_strings(data_scope.get("permitted_classes"), "permitted data classes"))
     runtime = _mapping(child.get("runtime_binding"), "child runtime binding")
     runtime_entrypoint = _relative_path(child.get("runtime_entrypoint"), "runtime entrypoint")
+    operation_manifest = _mapping(child.get("operation_manifest"), "operation manifest")
+    operation_manifest_path = _relative_path(
+        operation_manifest.get("path"), "operation manifest path"
+    )
     required_challenges = _strings(
         child.get("required_review_challenges"), "child required review challenges"
     )
@@ -297,13 +302,12 @@ def _validate_child(
         or len(required_challenges) != len(set(required_challenges))
         or not set(required_challenges) >= CHILD_REVIEW_REQUIRED_CHALLENGES
         or runtime_entrypoint.as_posix() not in source_paths
+        or operation_manifest_path.as_posix() not in source_paths
         or runtime_entrypoint.parts[:2] != ("src", "systematic_trading_lab")
         or runtime_entrypoint.suffix != ".py"
     ):
         raise StandingAuthorityError("child authority exceeds the standing mandate")
-    _validate_artifact_binding(
-        repository, _mapping(child.get("operation_manifest"), "operation manifest")
-    )
+    _validate_artifact_binding(repository, operation_manifest)
     _validate_source_binding(repository, runtime, "child runtime source")
     return required_challenges
 

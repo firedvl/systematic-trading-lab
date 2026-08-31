@@ -9,10 +9,10 @@ for each operation. The machine-readable control is
 The mandate applies only to prospective Program 010 and later work. Programs 005 through 009 keep
 their historical external-root and terminal-state semantics. A future operation must still have a
 bounded child authority, prospectively frozen inputs, a finding-free independent review, exact
-artifact bindings, and runtime revalidation. The mandate review, child authority, and child review
-must be tracked by the current Git commit and match its exact bytes. The standing control derives a
-deterministic reviewed child identity from those records but does not activate a runtime. Review
-detects scientific and engineering errors; the exact user grant, not the reviewer, supplies
+artifact bindings, and runtime revalidation. The mandate, mandate review, child authority, and child
+review must be tracked by the current Git commit and match its exact bytes. The standing control
+derives a deterministic reviewed child identity from those records but does not activate a runtime.
+Review detects scientific and engineering errors; the exact user grant, not the reviewer, supplies
 authorization.
 
 The common control grants no transport, credential reader, data loader, strategy runner, or broker
@@ -21,6 +21,7 @@ atomic one-use claim, and terminal evidence before activation. A child may enabl
 already enabled by the mandate and may use only
 `PUBLIC`, `EXPOSED`, or `FRESH-PROSPECTIVE-EXPOSED` data. Controlled or protected access, purchases,
 actual paper execution, broker writes, and live execution cannot enter a child authority.
+The operation manifest must be part of the child's Git-bound runtime source list.
 
 Every data-reading child must recompute its exact request or read range against the current
 repository exposure and protected-range controls immediately before access. A label supplied by the
