@@ -1,0 +1,38 @@
+{
+  "schema_version": "protected-chronology-registration-v1",
+  "registration_id": "standing-protected-ranges-2026-08-30-v1",
+  "status": "ACTIVE-SEALED-PROTECTED-RANGE",
+  "ranges": [
+    {
+      "id": "daily-independent-2018-2019",
+      "start": "2018-01-02",
+      "end": "2019-12-31"
+    },
+    {
+      "id": "strategic-allocation-protected-holdout-2026",
+      "start": "2026-01-02",
+      "end": "2026-07-31"
+    },
+    {
+      "id": "june-2026-reservation",
+      "start": "2026-06-01",
+      "end": "2026-06-30"
+    },
+    {
+      "id": "intraday-v3-validation",
+      "start": "2026-10-01",
+      "end": "2027-04-15"
+    },
+    {
+      "id": "controlled-a",
+      "start": "2027-04-16",
+      "end": "2027-10-15"
+    },
+    {
+      "id": "controlled-b",
+      "start": "2027-10-18",
+      "end": "2028-04-14"
+    }
+  ],
+  "registration_fingerprint": "2ec67b1895290e6fbe7e48e7aefb23219ced568c3a86fc7b82263f0e6bb238bc"
+}

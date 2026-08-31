@@ -282,6 +282,11 @@ def parser() -> argparse.ArgumentParser:
     )
     program_009_ohlcv.add_argument("action", choices=("credential-preflight", "activate", "run"))
     program_009_ohlcv.add_argument("--authorization-root")
+    program_010_ohlcv = acquire_program.add_parser(
+        "program-010-ohlcv",
+        help="control the one-use Program 010 raw SIP OHLCV structural qualification",
+    )
+    program_010_ohlcv.add_argument("action", choices=("credential-preflight", "activate", "run"))
     for name in ("validate", "describe"):
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
@@ -1284,6 +1289,31 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         )
         return 0
     if arguments.data_command == "acquire":
+        if arguments.acquire_program == "program-010-ohlcv":
+            from .program_010_ohlcv_authority import (
+                activate_authority as activate_program_010_ohlcv_authority,
+            )
+            from .program_010_ohlcv_authority import (
+                credential_presence_preflight as program_010_ohlcv_credential_preflight,
+            )
+            from .program_010_ohlcv_authority import (
+                execute_qualification as execute_program_010_ohlcv,
+            )
+
+            repository = Path(__file__).resolve().parents[2]
+            if arguments.action == "credential-preflight":
+                missing = program_010_ohlcv_credential_preflight()
+                print("PASS" if not missing else "\n".join(f"MISSING: {name}" for name in missing))
+                return 0 if not missing else 1
+            if settings.mode is not TradingMode.RESEARCH:
+                raise ValueError(
+                    "Program 010 OHLCV qualification requires TRADING_LAB_MODE=research"
+                )
+            if arguments.action == "activate":
+                _print(activate_program_010_ohlcv_authority(repository))
+                return 0
+            _print(execute_program_010_ohlcv(repository).public_summary())
+            return 0
         if arguments.acquire_program == "program-009-ohlcv":
             from .program_009_ohlcv_authority import (
                 activate_authority as activate_program_009_ohlcv_authority,
