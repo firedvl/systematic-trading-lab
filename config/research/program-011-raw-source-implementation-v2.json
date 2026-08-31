@@ -1,0 +1,163 @@
+{
+  "schema_version": "program-011-raw-source-implementation-v2",
+  "implementation_id": "program-011-raw-source-implementation-2026-08-31-v2",
+  "program_ordinal": 11,
+  "program_id": "multi-hour-sector-etf-research-010",
+  "status": "FROZEN-PROSPECTIVE-SYNTHETIC-ONLY",
+  "implementation_binding": {
+    "source_commit": "1b04483966c4463bb8d84cf504f965d813aa4ee2",
+    "source_tree": "1f6ae8a7af6e7c8c87d93ead6f0b75b7ebdf525a",
+    "implementation_root": "f397c827ceb766e5854ed8007e9591e6f6dc236276e83addfc854fff4258b0df",
+    "source_files": [
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "b5abf31ce373f9388402dc06798d163e20a56c394d585b5cff8bbc37928ded3c"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_alpaca.py",
+        "sha256": "cc60139d1f1f8a9f00cd6dbb10100e831b0dd369d62780451e6d1b78e50aae87"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_010_ohlcv.py",
+        "sha256": "fcc353230a26f8e522bf694d8e507d78ac96710d2c265a50600cfaee0a4e8b5c"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_011_ohlcv.py",
+        "sha256": "746ff22d299ae8d69c15e849659b892c4342e2734e87ef3500982aea7367536a"
+      },
+      {
+        "path": "tests/unit/test_program_010_ohlcv.py",
+        "sha256": "e59c93b7079af2ce303c3d0a147fe621deafa10126c5945e08c78a9dda4cfc05"
+      },
+      {
+        "path": "tests/unit/test_program_010_ohlcv_authority.py",
+        "sha256": "0c98c30f219bea859b250df9b3e3205c3b2ce22fb7f1ef87cca4e974ce3cf40c"
+      },
+      {
+        "path": "tests/unit/test_program_011_ohlcv.py",
+        "sha256": "2100d94de7ca98c9c6b08c4cb0c54aeb4839cd740aa58d31d1ee2c60e192127a"
+      }
+    ]
+  },
+  "reuse_boundary": {
+    "shared_predecessor_mechanics": [
+      "bounded raw-first temporary evidence source",
+      "request and page value objects",
+      "token cycle and reuse rejection",
+      "repeated-page rejection",
+      "within-page and cross-page duplicate rejection",
+      "cross-page ordered-progress rejection",
+      "nonterminal zero-progress rejection",
+      "resource and byte caps",
+      "strict-majority per-symbol coverage",
+      "terminal versus incomplete-frontier missingness"
+    ],
+    "successor_owned_behavior": [
+      "Program 011 identity and selected sessions",
+      "strict timestamp-order validation inside each received symbol array",
+      "deterministic symbol-then-timestamp sorting after per-symbol validation",
+      "Program 011 errors and public summaries"
+    ],
+    "program_010_public_entrypoints_changed": false,
+    "program_010_terminal_revocation_changed": false,
+    "program_010_order_semantics_changed": false,
+    "program_010_exact_type_boundary_preserved": true
+  },
+  "ordering_contract": {
+    "json_object_member_order_has_semantic_meaning": false,
+    "received_symbol_array_timestamp_order": "STRICTLY-ASCENDING",
+    "equal_or_regressing_timestamp_inside_one_symbol_array": "FAIL-AFTER-RAW-RETENTION",
+    "normalization_after_received_order_validation": "DETERMINISTIC-SYMBOL-THEN-TIMESTAMP-SORT",
+    "cross_page_first_coordinate_must_exceed_prior_frontier": true,
+    "duplicate_coordinate_within_page": "FAIL-AFTER-RAW-RETENTION",
+    "duplicate_coordinate_across_pages": "FAIL",
+    "token_cycle_or_reuse": "FAIL",
+    "repeated_response": "FAIL",
+    "nonterminal_zero_progress": "FAIL"
+  },
+  "fresh_sample": {
+    "selection_seed": "program-011-raw-sip-qualification-sample-v1",
+    "observed_program_002_through_010_union_sessions": 199,
+    "observed_union_fingerprint": "3fb677dadeefb21dcab5a49d0d53030e064c9ac1a60becd1c5322b0b172729c8",
+    "protected_sessions_in_chronology": 145,
+    "eligible_unobserved_unprotected_sessions": 1188,
+    "eligible_fingerprint": "9274779e7ce6d72349dea14a5f61849b374cde796036041075c8b6e3d5691bba",
+    "sessions": [
+      "2021-04-28",
+      "2025-01-06",
+      "2025-02-27",
+      "2025-11-28",
+      "2025-12-15"
+    ],
+    "sample_fingerprint": "549a83f7af681088012d2867dfa63aebe6878f817fc13e692e3fe948e9ca62bc",
+    "expected_canonical_coordinates": 4602,
+    "program_010_observed_2021_05_25_excluded": true
+  },
+  "synthetic_verification": {
+    "unordered_symbol_object_members": "PASS-AFTER-PER-SYMBOL-VALIDATION-AND-SORT",
+    "timestamp_disorder_inside_one_symbol_array": "FAIL-AFTER-RAW-RETENTION",
+    "duplicate_coordinate_within_page": "FAIL-AFTER-RAW-RETENTION",
+    "duplicate_coordinate_across_pages": "FAIL",
+    "cross_page_order_regression": "FAIL",
+    "fresh_sample_rederivation": "PASS",
+    "focused_program_010_and_011_tests": "59 passed",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "provider_requests": 0,
+    "credential_accesses": 0,
+    "strategy_calculations_or_returns": 0
+  },
+  "execution_boundary": {
+    "entrypoints": [
+      "execute_synthetic_session",
+      "execute_synthetic_qualification"
+    ],
+    "synthetic_responses_only": true,
+    "provider_transport_present": false,
+    "credential_names_or_values_present": false,
+    "authority_activation_present": false,
+    "request_intent_is_immutable": true,
+    "raw_evidence_storage": "capability-held unnamed temporary file",
+    "bounded_raw_body_fsynced_before_parse_or_continuation": true,
+    "automatic_retries": 0,
+    "future_real_transport_requirement": "A separate reviewed one-use standing child authority and ignored persistent evidence store must bind this contract before any provider request."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "supersedes": {
+    "implementation": {
+      "path": "config/research/program-011-raw-source-implementation-v1.json",
+      "sha256": "683e411d898c64d4d5ff872368572dec20879555695aa6390f09831f5b01430e",
+      "fingerprint": "19da1ee5205bffc060cdeb860da77b245d8732cc782a415a45140abf762442bc"
+    },
+    "reason": "V1 reported 58 focused Program 010/011 tests, but its bound source commit collects 59. V2 corrects only that evidence count and binds the reserved v2 artifact paths; the implementation and scientific contract are unchanged."
+  },
+  "implementation_fingerprint": "3a4a310fb9e4eb0baee3439f5a626710c57c1d5070e0546d33fc3b2904a97bb9"
+}

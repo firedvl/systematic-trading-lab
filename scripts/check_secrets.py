@@ -54,6 +54,7 @@ PUBLIC_MARKET_DATA_ROOTS = (
     "program-007-free-alpaca/",
     "program-009-raw-alpaca-sip-ohlcv/",
     "program-010-raw-alpaca-sip-ohlcv/",
+    "program-011-raw-alpaca-sip-ohlcv/",
     "raw-data/",
 )
 PUBLIC_PROGRAM_JSON = frozenset(
@@ -148,6 +149,17 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-independent-review-v1.json",
         "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
         "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-independent-review-v1.json",
+        "config/research/program-011-raw-source-implementation-v1.json",
+        "config/research/program-011-raw-source-implementation-v2.json",
+        "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v1.json",
+        "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v2.json",
+        "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-independent-review-v1.json",
+        "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-child-authority-v1.json",
+        "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-child-authority-independent-review-v1.json",
+        "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-v1.json",
+        "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-independent-review-v1.json",
+        "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
+        "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-independent-review-v1.json",
     }
 )
 _PROVIDER_BAR_KEYS = frozenset({"t", "o", "h", "l", "c", "v"})

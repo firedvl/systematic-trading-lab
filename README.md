@@ -117,7 +117,11 @@ and expected and every per-symbol bar array timestamp-ascending, so the stop is 
 qualification-specification defect rather than provider incompatibility. See
 [Program 010 raw OHLCV structural qualification](docs/program-010-raw-ohlcv-qualification.md).
 Do not activate or run Program 010 again. It admitted no dataset and ran no strategy. Program 011 is
-the next prospective source-qualification successor and must use fresh evidence.
+the prospective source-qualification successor. Its frozen contract validates timestamp order inside
+each symbol array before deterministic symbol-then-timestamp sorting. Its five fresh sessions exclude
+all Programs 002-010 OHLCV observations and protected chronology. See
+[Program 011 raw OHLCV structural qualification](docs/program-011-raw-ohlcv-qualification.md).
+Program 011 remains non-authorizing until its exact design passes independent review and merges.
 
 ## Using historical data
 
