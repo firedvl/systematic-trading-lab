@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import stat
+import subprocess
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -72,28 +73,25 @@ MANDATE_REVIEW_CHALLENGES = frozenset(
         "private-evidence-boundary",
     }
 )
-PROGRAM_010_CHILD_AUTHORITY_ID = (
-    "program-010-raw-alpaca-sip-ohlcv-structural-qualification-authority-2026-08-30-v1"
-)
-PROGRAM_010_CHILD_OPERATION_KIND = "PROGRAM-010-RAW-SIP-OHLCV-STRUCTURAL-QUALIFICATION"
-PROGRAM_010_CHILD_ENABLED_AUTHORITY = frozenset(
-    {"provider_contact", "credential_access", "source_requests", "source_qualification"}
-)
-PROGRAM_010_CHILD_REVIEW_CHALLENGES = (
-    "standing-mandate-and-review-binding",
-    "program-005-through-009-history-preservation",
-    "fresh-exposed-chronology-and-protected-firewall",
-    "fixed-get-endpoint-query-and-redirect-rejection",
-    "credential-confinement-and-no-value-disclosure",
-    "pagination-resource-and-zero-retry-budgets",
-    "raw-first-private-create-only-evidence",
-    "one-use-claim-replay-and-terminal-failure",
-    "source-coverage-missingness-and-no-imputation",
-    "git-lineage-and-runtime-revalidation",
-    "no-dataset-strategy-controlled-paper-broker-or-live-authority",
+CHILD_REVIEW_REQUIRED_CHALLENGES = frozenset(
+    {
+        "data-leakage",
+        "chronology",
+        "freshness",
+        "specification-changes",
+        "request-budgets",
+        "missingness-rules",
+        "source-assumptions",
+        "statistical-validity",
+        "overfitting",
+        "authority-boundaries",
+        "private-data-leakage",
+        "git-provenance-integrity",
+    }
 )
 _HEX_40 = re.compile(r"[0-9a-f]{40}")
 _HEX_64 = re.compile(r"[0-9a-f]{64}")
+_PROGRAM_CONTROL = re.compile(r"program-(?P<ordinal>[0-9]{3,})-.+\.json")
 
 
 class StandingAuthorityError(ValueError):
@@ -128,10 +126,12 @@ def derive_child_identity(
 ) -> Mapping[str, Any]:
     """Derive a reviewed child identity without activating its concrete runtime."""
     repository = _repository(repository)
-    child_path = _program_010_control_path(child_path, "child authority path")
-    review_path = _program_010_control_path(review_path, "child review path")
+    child_path, child_ordinal = _child_control_path(child_path, "child authority path")
+    review_path, review_ordinal = _child_control_path(review_path, "child review path")
     if child_path == review_path:
         raise StandingAuthorityError("child authority and review paths must differ")
+    if child_ordinal != review_ordinal:
+        raise StandingAuthorityError("child authority and review program ordinals differ")
     mandate, mandate_binding, mandate_review_binding = _load_standing_controls(repository)
     child, child_binding = _load_fingerprinted_artifact(
         repository, child_path, "child_authority_fingerprint", "child authority"
@@ -139,15 +139,21 @@ def derive_child_identity(
     review, review_binding = _load_fingerprinted_artifact(
         repository, review_path, "review_fingerprint", "child authority review"
     )
-    _validate_child(repository, child, mandate, mandate_binding)
-    _validate_child_review(review, child_binding)
+    required_challenges = _validate_child(
+        repository, child, mandate, mandate_binding, child_ordinal
+    )
+    _validate_child_review(review, child_binding, required_challenges)
 
     unsigned: dict[str, Any] = {
         "schema_version": "standing-autonomous-research-child-identity-v1",
-        "status": "REVIEWED-READY-FOR-RUNTIME-ACTIVATION",
+        "status": "REVIEWED-CONTROL-IDENTITY",
         "activation_mode": "INTERNAL-DERIVATION-FROM-EXACT-STANDING-USER-MANDATE",
         "external_authorization_root_required": False,
+        "runtime_activation_authorized": False,
+        "concrete_runtime_validation_required": True,
         "runtime_revalidation_required_before_active_state": True,
+        "atomic_one_use_claim_required": True,
+        "terminal_evidence_required": True,
         "child_authority_id": child["child_authority_id"],
         "program_ordinal": child["program_ordinal"],
         "program_id": child["program_id"],
@@ -157,6 +163,9 @@ def derive_child_identity(
         "standing_mandate_review": mandate_review_binding,
         "child_authority": child_binding,
         "child_review": review_binding,
+        "operation_manifest": child["operation_manifest"],
+        "runtime_binding": child["runtime_binding"],
+        "runtime_entrypoint": child["runtime_entrypoint"],
         "data_classes": child["data_classes"],
         "authority": child["authority"],
     }
@@ -216,9 +225,6 @@ def _validate_mandate_review(
         or review.get("verdict") != "PASS"
         or review.get("findings") != []
         or review.get("reviewed_mandate") != mandate_binding
-        or _HEX_40.fullmatch(str(implementation.get("source_commit"))) is None
-        or _HEX_40.fullmatch(str(implementation.get("source_tree"))) is None
-        or implementation.get("implementation_root") != fingerprint(source_files)
         or [item.get("path") for item in source_files if isinstance(item, Mapping)]
         != [path.as_posix() for path in MANDATE_REVIEWED_SOURCE_PATHS]
         or {item.get("challenge") for item in challenges if isinstance(item, Mapping)}
@@ -229,12 +235,7 @@ def _validate_mandate_review(
         or any(authority.values())
     ):
         raise StandingAuthorityError("standing mandate review semantics differ")
-    for item in source_files:
-        binding = _mapping(item, "reviewed source file")
-        path = _relative_path(binding.get("path"), "reviewed source path")
-        raw = _read_regular_file(repository, path, "reviewed source file")
-        if hashlib.sha256(raw).hexdigest() != binding.get("sha256"):
-            raise StandingAuthorityError("reviewed standing-authority source differs")
+    _validate_source_binding(repository, implementation, "reviewed standing-authority source")
 
 
 def _validate_child(
@@ -242,51 +243,66 @@ def _validate_child(
     child: Mapping[str, Any],
     mandate: Mapping[str, Any],
     mandate_binding: Mapping[str, str],
-) -> None:
+    path_ordinal: int,
+) -> tuple[str, ...]:
     authority = _authority(child.get("authority"), "child authority")
     standing = _authority(mandate.get("authority"), "standing authority")
     data_scope = _mapping(mandate.get("data_scope"), "standing data scope")
     data_classes = set(_strings(child.get("data_classes"), "child data classes"))
     permitted_classes = set(_strings(data_scope.get("permitted_classes"), "permitted data classes"))
-    bindings = _mapping(child.get("bindings"), "child bindings")
     runtime = _mapping(child.get("runtime_binding"), "child runtime binding")
+    runtime_entrypoint = _relative_path(child.get("runtime_entrypoint"), "runtime entrypoint")
     required_challenges = _strings(
         child.get("required_review_challenges"), "child required review challenges"
     )
     program_ordinal = child.get("program_ordinal")
+    minimum_ordinal = _mapping(
+        mandate.get("activation_contract"), "activation contract"
+    ).get("minimum_program_ordinal")
+    source_files = _sequence(runtime.get("source_files"), "child runtime source files")
+    source_paths = {
+        item.get("path") for item in source_files if isinstance(item, Mapping)
+    }
     if (
         child.get("schema_version") != "standing-autonomous-research-child-authority-v1"
-        or child.get("status") != "READY-FOR-STANDING-ACTIVATION"
-        or program_ordinal != 10
-        or child.get("child_authority_id") != PROGRAM_010_CHILD_AUTHORITY_ID
-        or child.get("program_id") != "multi-hour-sector-etf-research-009"
-        or child.get("operation_kind") != PROGRAM_010_CHILD_OPERATION_KIND
+        or child.get("status") != "PROSPECTIVE-CHILD-CONTROL"
+        or type(program_ordinal) is not int
+        or type(minimum_ordinal) is not int
+        or program_ordinal < minimum_ordinal
+        or program_ordinal != path_ordinal
+        or not _nonempty_string(child.get("child_authority_id"))
+        or not _nonempty_string(child.get("program_id"))
+        or not _nonempty_string(child.get("operation_kind"))
         or child.get("one_use") is not True
-        or not isinstance(child.get("consumption_boundary"), str)
-        or not child["consumption_boundary"]
+        or not _nonempty_string(child.get("consumption_boundary"))
+        or child.get("concrete_runtime_validation_required") is not True
+        or child.get("runtime_revalidation_required") is not True
+        or child.get("atomic_one_use_claim_required") is not True
+        or child.get("terminal_evidence_required") is not True
         or child.get("standing_mandate") != mandate_binding
-        or not bindings
-        or not _valid_source_binding(runtime)
-        or data_classes != {"FRESH-PROSPECTIVE-EXPOSED"}
+        or not data_classes
         or not data_classes <= permitted_classes
-        or authority
-        != {field: field in PROGRAM_010_CHILD_ENABLED_AUTHORITY for field in AUTHORITY_FIELDS}
         or any(authority[field] and not standing[field] for field in AUTHORITY_FIELDS)
         or any(authority[field] for field in FORBIDDEN_CHILD_AUTHORITY)
-        or required_challenges != PROGRAM_010_CHILD_REVIEW_CHALLENGES
+        or len(required_challenges) != len(set(required_challenges))
+        or not set(required_challenges) >= CHILD_REVIEW_REQUIRED_CHALLENGES
+        or runtime_entrypoint.as_posix() not in source_paths
+        or runtime_entrypoint.parts[:2] != ("src", "systematic_trading_lab")
+        or runtime_entrypoint.suffix != ".py"
     ):
         raise StandingAuthorityError("child authority exceeds the standing mandate")
-    for value in bindings.values():
-        _validate_artifact_binding(repository, _mapping(value, "child binding"))
-    for value in _sequence(runtime["source_files"], "child runtime source files"):
-        binding = _mapping(value, "child runtime source file")
-        path = _relative_path(binding.get("path"), "child runtime source path")
-        raw = _read_regular_file(repository, path, "child runtime source file")
-        if hashlib.sha256(raw).hexdigest() != binding.get("sha256"):
-            raise StandingAuthorityError("child runtime source differs")
+    _validate_artifact_binding(
+        repository, _mapping(child.get("operation_manifest"), "operation manifest")
+    )
+    _validate_source_binding(repository, runtime, "child runtime source")
+    return required_challenges
 
 
-def _validate_child_review(review: Mapping[str, Any], child_binding: Mapping[str, str]) -> None:
+def _validate_child_review(
+    review: Mapping[str, Any],
+    child_binding: Mapping[str, str],
+    required_challenges: Sequence[str],
+) -> None:
     authority = _authority(review.get("authority"), "child review authority")
     challenges = _sequence(review.get("challenge_results"), "child review challenges")
     challenge_names = [item.get("challenge") for item in challenges if isinstance(item, Mapping)]
@@ -299,7 +315,7 @@ def _validate_child_review(review: Mapping[str, Any], child_binding: Mapping[str
         or not isinstance(review.get("review_id"), str)
         or not review["review_id"]
         or review.get("reviewed_child_authority") != child_binding
-        or challenge_names != list(PROGRAM_010_CHILD_REVIEW_CHALLENGES)
+        or challenge_names != list(required_challenges)
         or any(
             not isinstance(item, Mapping) or item.get("verdict") != "PASS" for item in challenges
         )
@@ -308,24 +324,53 @@ def _validate_child_review(review: Mapping[str, Any], child_binding: Mapping[str
         raise StandingAuthorityError("child authority review semantics differ")
 
 
-def _valid_source_binding(value: Mapping[str, Any]) -> bool:
-    source_files = value.get("source_files")
-    if not isinstance(source_files, Sequence) or isinstance(source_files, str | bytes | bytearray):
-        return False
+def _validate_source_binding(
+    repository: Path, value: Mapping[str, Any], label: str
+) -> None:
+    source_files = _sequence(value.get("source_files"), f"{label} files")
+    commit = value.get("source_commit")
+    tree = value.get("source_tree")
     paths = [item.get("path") for item in source_files if isinstance(item, Mapping)]
-    return (
-        _HEX_40.fullmatch(str(value.get("source_commit"))) is not None
-        and _HEX_40.fullmatch(str(value.get("source_tree"))) is not None
-        and bool(source_files)
-        and len(paths) == len(source_files) == len(set(paths))
-        and value.get("implementation_root") == fingerprint(source_files)
-        and all(
-            isinstance(item, Mapping)
-            and isinstance(item.get("path"), str)
-            and _HEX_64.fullmatch(str(item.get("sha256"))) is not None
-            for item in source_files
+    if (
+        _HEX_40.fullmatch(str(commit)) is None
+        or _HEX_40.fullmatch(str(tree)) is None
+        or not source_files
+        or len(paths) != len(source_files)
+        or len(set(paths)) != len(source_files)
+        or value.get("implementation_root") != fingerprint(source_files)
+    ):
+        raise StandingAuthorityError(f"{label} provenance differs")
+    resolved_commit = _git(repository, "rev-parse", "--verify", f"{commit}^{{commit}}")
+    resolved_tree = _git(repository, "rev-parse", "--verify", f"{commit}^{{tree}}")
+    if resolved_commit.decode().strip() != commit or resolved_tree.decode().strip() != tree:
+        raise StandingAuthorityError(f"{label} Git provenance differs")
+    for item in source_files:
+        binding = _mapping(item, f"{label} file")
+        path = _relative_path(binding.get("path"), f"{label} path")
+        expected = binding.get("sha256")
+        committed = _git(repository, "cat-file", "blob", f"{commit}:{path.as_posix()}")
+        current = _read_regular_file(repository, path, f"{label} file")
+        if (
+            _HEX_64.fullmatch(str(expected)) is None
+            or hashlib.sha256(committed).hexdigest() != expected
+            or hashlib.sha256(current).hexdigest() != expected
+        ):
+            raise StandingAuthorityError(f"{label} differs from its Git tree")
+
+
+def _git(repository: Path, *arguments: str) -> bytes:
+    try:
+        result = subprocess.run(
+            ("git", "-C", str(repository), *arguments),
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
         )
-    )
+    except OSError as error:
+        raise StandingAuthorityError("Git provenance cannot be verified") from error
+    if result.returncode != 0:
+        raise StandingAuthorityError("Git provenance cannot be verified")
+    return result.stdout
 
 
 def _validate_artifact_binding(repository: Path, binding: Mapping[str, Any]) -> None:
@@ -405,22 +450,29 @@ def _relative_path(value: Any, label: str) -> Path:
     if not isinstance(value, str):
         raise StandingAuthorityError(f"{label} is invalid")
     path = Path(value)
-    if path.is_absolute() or not path.parts or ".." in path.parts:
+    if (
+        path.is_absolute()
+        or not path.parts
+        or ".." in path.parts
+        or path.parts[0] == ".git"
+        or ":" in value
+    ):
         raise StandingAuthorityError(f"{label} is invalid")
     return path
 
 
-def _program_010_control_path(value: Any, label: str) -> Path:
+def _child_control_path(value: Any, label: str) -> tuple[Path, int]:
     if not isinstance(value, Path):
         raise StandingAuthorityError(f"{label} is invalid")
     path = _relative_path(value.as_posix(), label)
-    if (
-        path.parent != Path("config/research")
-        or not path.name.startswith("program-010-")
-        or path.suffix != ".json"
-    ):
-        raise StandingAuthorityError(f"{label} is outside the Program 010 control namespace")
-    return path
+    match = _PROGRAM_CONTROL.fullmatch(path.name)
+    if path.parent != Path("config/research") or match is None:
+        raise StandingAuthorityError(f"{label} is outside the child-control namespace")
+    return path, int(match.group("ordinal"))
+
+
+def _nonempty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value)
 
 
 def _authority(value: Any, label: str) -> Mapping[str, bool]:

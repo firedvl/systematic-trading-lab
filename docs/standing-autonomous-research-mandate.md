@@ -9,13 +9,14 @@ for each operation. The machine-readable control is
 The mandate applies only to prospective Program 010 and later work. Programs 005 through 009 keep
 their historical external-root and terminal-state semantics. A future operation must still have a
 bounded child authority, prospectively frozen inputs, a finding-free independent review, exact
-artifact bindings, and runtime revalidation. The standing control derives a deterministic child
-activation identity from those records. Review detects scientific and engineering errors; the exact
-user grant, not the reviewer, supplies authorization.
+artifact bindings, and runtime revalidation. The standing control derives a deterministic reviewed
+child identity from those records but does not activate a runtime. Review detects scientific and
+engineering errors; the exact user grant, not the reviewer, supplies authorization.
 
 The common control grants no transport, credential reader, data loader, strategy runner, or broker
-path. Each child owns its exact endpoint, chronology, budgets, private storage, claim, and terminal
-evidence. A child may enable only capabilities already enabled by the mandate and may use only
+path. Each concrete child must validate its exact endpoint, chronology, budgets, private storage,
+atomic one-use claim, and terminal evidence before activation. A child may enable only capabilities
+already enabled by the mandate and may use only
 `PUBLIC`, `EXPOSED`, or `FRESH-PROSPECTIVE-EXPOSED` data. Controlled or protected access, purchases,
 actual paper execution, broker writes, and live execution cannot enter a child authority.
 

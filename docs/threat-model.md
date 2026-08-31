@@ -7,10 +7,11 @@ Main threats are secret disclosure, path or artifact tampering, stale or conflic
 The Program 010-and-later standing research mandate is an exact external user grant committed by
 byte hash and canonical fingerprint. It delegates exposed research but does not grant controlled or
 protected reads, purchases, paper execution, broker writes, or live execution. A reviewed child can
-derive an internal activation identity only when its capabilities are a strict subset of that
-mandate. Review detects errors rather than authenticating the user. Each concrete child must still
-bind and revalidate its exact source, chronology, endpoint, budgets, private evidence, and one-use
-claim. Repository and local remote-ref equality limit accidental drift but are not an external
+derive an internal control identity only when its capabilities are a strict subset of that mandate.
+The common identity explicitly denies runtime activation. Review detects errors rather than
+authenticating the user. Each concrete child must bind and revalidate its exact source, chronology,
+endpoint, budgets, private evidence, and atomic one-use claim. Exact commit, tree, and blob checks
+bind reviewed source to local Git objects. These checks are not an external
 attestation against a principal that controls Git; this delegation intentionally trusts the agent
 within the exact grant and retains the non-hostile local-process assumption.
 
