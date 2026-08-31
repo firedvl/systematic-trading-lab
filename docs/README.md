@@ -13,6 +13,7 @@ Start with the research path. Open the controlled campaign and paper documents o
 - [Program 007 metadata offline forensics](research-campaigns/program-007-corporate-action-metadata-offline-forensics-v1.md) — documented optional identifiers, corrected parser, and the terminal Program 008 metadata PASS
 - [Program 009 raw OHLCV structural qualification](program-009-raw-ohlcv-qualification.md) — reviewed one-use proposal, raw-first retention, XNYS projection, and authorization boundary
 - [Program 010 raw OHLCV structural qualification](program-010-raw-ohlcv-qualification.md) — Program 009 forensics, session-scoped pagination, source missingness, and the non-authorizing successor
+- [Standing autonomous research mandate](standing-autonomous-research-mandate.md) — Program 010-and-later exposed-research authority and human-attention boundaries
 - [Program 005 private Alpaca data](program-005-alpaca-data.md) — public recipe, private storage, credential isolation, and qualification preflight
 - [Open-source guidance](OPEN_SOURCE.md) — project scope and useful contribution areas
 

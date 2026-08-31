@@ -248,6 +248,7 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "systematic_trading_lab/rapid_strategies.py",
         "systematic_trading_lab/research_attempts.py",
         "systematic_trading_lab/research_executor.py",
+        "systematic_trading_lab/standing_research_authority.py",
         "systematic_trading_lab/strategy_registry.py",
     }
 

@@ -1,0 +1,137 @@
+{
+  "schema_version": "standing-autonomous-research-mandate-independent-review-v1",
+  "review_id": "standing-autonomous-research-mandate-independent-review-2026-08-30-v1",
+  "reviewed_at": "2026-08-31T00:53:28Z",
+  "status": "PASS-FINDING-FREE",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_mandate": {
+    "path": "config/research/standing-autonomous-research-mandate-v1.json",
+    "sha256": "a324a464c9e969d5242baeea20a2644edff09432b03c16862f269ef4a0400c1e",
+    "fingerprint": "3465648952ccc094697c8edc24860658c6098235989a868610c1e1b12746d502"
+  },
+  "reviewed_implementation": {
+    "source_commit": "81b7f41a99c2df32b3e5b370e3d35bde2d7a25b9",
+    "source_tree": "3ae0c8d2c79bffa1017aacc9b182c03abbbcfab6",
+    "source_files": [
+      {
+        "path": "config/research/standing-autonomous-research-mandate-v1.json",
+        "sha256": "a324a464c9e969d5242baeea20a2644edff09432b03c16862f269ef4a0400c1e"
+      },
+      {
+        "path": "docs/README.md",
+        "sha256": "828cda42fb76878249305a49cd8427acc994e0e721708252150ca7e218400c1d"
+      },
+      {
+        "path": "docs/research-campaigns/standing-autonomous-research-mandate-v1.txt",
+        "sha256": "b41cee4f7248fdb4f0f850faff9a7bf882007f8416aa5e7f5c0db931622d868a"
+      },
+      {
+        "path": "docs/research-policy.md",
+        "sha256": "bba9d7a0a46b23284a89ca778df84976e243351bc43ceae51c43b78a66461c00"
+      },
+      {
+        "path": "docs/standing-autonomous-research-mandate.md",
+        "sha256": "63af19aab95394e65b571dcddd246c693f7478d5225f4727314326d04e1411a5"
+      },
+      {
+        "path": "docs/threat-model.md",
+        "sha256": "b294c3ffd76768f91cf226b39b6c47a8af0a7e0d2ed92f10af4cb6fc15a57c1b"
+      },
+      {
+        "path": "src/systematic_trading_lab/standing_research_authority.py",
+        "sha256": "60842b701a462d74e9815edd89780aa6cbdff358b072ab7062418bf101778136"
+      },
+      {
+        "path": "tests/unit/test_standing_research_authority.py",
+        "sha256": "e0567101952d0547f0d542c7c03156a8f984e8096f113ba1ee5c26be7d7ae78a"
+      }
+    ],
+    "implementation_root": "3b468f0bb1764f2359fc49c88d99d4e74487e3ddc8110194ac642d686d6cc348"
+  },
+  "challenge_results": [
+    {
+      "challenge": "authority-origin",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "scope-containment",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "controlled-and-protected-firewall",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential-confinement",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "purchase-firewall",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "prospective-scientific-integrity",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "historical-authority-immutability",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "runtime-revalidation",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "one-use-replay-safety",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "private-evidence-boundary",
+      "verdict": "PASS"
+    }
+  ],
+  "verification": {
+    "independent_reviewer": "fresh read-only reviewer",
+    "prior_findings_remediated": [
+      "later-program scope was incorrectly restricted to Program 010",
+      "the common identity could be mistaken for runtime activation",
+      "reviewed source provenance was not checked against Git objects",
+      "child and child-review controls were not required to be Git-tracked",
+      "the root standing mandate was not required to be tracked in the current Git tree",
+      "the operation manifest was not required in the Git-bound child runtime source list"
+    ],
+    "focused_tests": "19 passed; the prior review artifact correctly failed closed pending this rebind",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "git_diff_check": "PASS",
+    "programs_005_through_009_unchanged": true,
+    "credential_values_inspected": false,
+    "provider_requests": 0,
+    "controlled_or_protected_access": false,
+    "paper_broker_or_live_mutation": false
+  },
+  "proof_gaps": [
+    "This revised review artifact did not exist in the reviewed source commit and requires a later Git-tracked artifact commit.",
+    "Concrete Program 010 runtime validation, atomic claim, and terminal evidence require a separate child implementation and review."
+  ],
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Commit this review artifact, pass the full repository gates, merge the standing-control change, and create Program 010's separately reviewed one-use child authority without an external user root.",
+  "review_fingerprint": "c30ecc3f7f9849f2d2f645172ceb68d307016454e485be7a563023ff7359480c"
+}

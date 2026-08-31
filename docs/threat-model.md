@@ -4,6 +4,17 @@ Protected assets are credentials, capital, broker authority, market and portfoli
 
 Main threats are secret disclosure, path or artifact tampering, stale or conflicting data, lookahead leakage, overbroad research reads, replayed intents, duplicate orders, timeout-after-acceptance resubmission, wrong endpoint or mode, broker drift, forged or reordered broker events, control weakening, premature holdout reads, holdout reuse, and selective evidence. Current controls are no broker writes, offline default, rejected live selection, names-only `.env.example`, ignored runtime data, canonical hashes, atomic immutable artifacts, reconstructible catalog, validation and quarantine evidence, secret scan, review-separated protected controls, range-limited cataloged experiment reads, registry-derived qualification evidence, one-time holdout-run authorization, exact candidate binding, atomic authorization consumption before data access, protected result storage, one-time holdout read access, a strict reviewed paper risk configuration, and a redirect-blocking fixed-origin GET-only paper-state reader with normalized response validation.
 
+The Program 010-and-later standing research mandate is an exact external user grant committed by
+byte hash and canonical fingerprint. It delegates exposed research but does not grant controlled or
+protected reads, purchases, paper execution, broker writes, or live execution. A reviewed child can
+derive an internal control identity only when its capabilities are a strict subset of that mandate.
+The common identity explicitly denies runtime activation. Review detects errors rather than
+authenticating the user. Each concrete child must bind and revalidate its exact source, chronology,
+endpoint, budgets, private evidence, and atomic one-use claim. Exact commit, tree, and blob checks
+bind reviewed source to local Git objects. These checks are not an external
+attestation against a principal that controls Git; this delegation intentionally trusts the agent
+within the exact grant and retains the non-hostile local-process assumption.
+
 M4 must add an exact paper endpoint allowlist, immutable intent receipts, durable idempotency, independent
 risk decisions, atomic pending-capacity reservation and single-submitter claims, protected paper
 authorization, a strict order envelope, fresh account/position/order/clock/quote snapshots,
