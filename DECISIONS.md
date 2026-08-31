@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-31 - Truncate Program 012 before protected 2026 chronology
+
+- Decision: propose Program 012, `multi-hour-sector-etf-research-011`, without authority. Request raw SIP five-minute bars only for the distinct context segment `2020-06-26..2020-07-24` and exposed prefix `2020-07-27..2025-12-31`. Bind Program 011's terminal source PASS and the Program 007 public action ledger. Do not request a provider-adjusted view, claim Program 002 admission or quote coverage, or grant strategy authority.
+- Context: the legacy Program 005 chronology extends through `2026-07-31`, while the active protected registration covers `2026-01-02..2026-07-31`. Removing those 145 protected sessions leaves 1,354 full exposed-prefix sessions. Protected dates are not missing observations. The 20 earlier sessions remain necessary context before the first possible exposed decision.
+- Consequences: the exact request has 1,386 sessions and 1,399,788 coordinates. Applying the old `7/1499` rate without weakening it yields `floor(1354 * 7 / 1499) = 6`; the five immutable quarantine dates leave one unexpected full-session slot. Context and early-close omissions fail, and the inherited block, year, rolling, adjacency, same-symbol, clock, and SPY/MDY gates use recomputed prefix populations. The truncated tail is not the historical final fold. Program 012 can at most produce `ADMITTED-PROGRAM-012-RAW-STRUCTURAL-PREFIX` for a later separately reviewed strategy successor. Proposal SHA-256/fingerprint is `8eff48cb37b900d3c00a9ad6078a306fce32d2ae1fea2a6461572b587008b013` / `4457697ccb844155b1c499d9941025900944ea5719203706648e73b4dd5e795b`.
+- Revisit after finding-free independent review and a clean merge. Implement the exact sequential, raw-first, zero-retry, no-request-reissue runtime separately, then create and review a one-use standing child before credential presence or provider contact.
+
 ## 2026-08-31 - Close Program 011 after structural qualification PASS
 
 - Decision: record Program 011 as `TERMINAL-PASS-CONSUMED-NO-REPLAY`, preserve all nine raw responses privately, revoke every Program 011 entry point before credentials or private state, and prohibit replay or a replacement qualification authority.
