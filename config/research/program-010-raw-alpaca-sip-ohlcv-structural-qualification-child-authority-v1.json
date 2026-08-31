@@ -28,7 +28,7 @@
   "runtime_binding": {
     "source_commit": "0b33de8d7ba302ecb02941d7b597d225eb3d8d03",
     "source_tree": "276a62cf5b70463c0a62a8fee527948949c08981",
-    "implementation_root": "60a2836d7c1bfcb89ae8b01330d78c5f489007604b386d569bff75d5537a8bce",
+    "implementation_root": "ff360a3bdb30ff747291aa836aebe3a387bcb4df1a6123e245ea5188d096e87d",
     "source_files": [
       {
         "path": "config/research/intraday-exposed-002-june-reservation-v1.json",
@@ -179,5 +179,5 @@
     "broker_writes": false,
     "live_execution": false
   },
-  "child_authority_fingerprint": "f47619685496ee3bc545fbd83fdaa24e36cb596849aadaf3604d86b86844a414"
+  "child_authority_fingerprint": "656fc232ab8855896169a63e5733fb874353465798ffb0ec61accc4288c8c822"
 }
