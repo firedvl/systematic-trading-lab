@@ -26,6 +26,9 @@ _PROPOSAL_PATH = Path(
 _REVIEW_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v1.json"
 )
+_IMPLEMENTATION_PATH = Path(
+    "config/research/program-012-exposed-prefix-runtime-implementation-v1.json"
+)
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -41,6 +44,43 @@ def _assert_binding(binding: dict[str, str]) -> dict[str, Any]:
             item for key, item in value.items() if key.endswith("_fingerprint")
         }
     return value
+
+
+def test_program_012_runtime_implementation_is_exact_and_non_authorizing() -> None:
+    implementation = _load(_IMPLEMENTATION_PATH)
+    stored_fingerprint = implementation.pop("implementation_fingerprint")
+    assert stored_fingerprint == fingerprint(implementation)
+    binding = implementation["implementation_binding"]
+
+    assert binding["source_commit"] == "da18b55f6e16234dc93fdb61801847a79e4fc178"
+    assert binding["source_tree"] == "709a0f86d2acbe2a9f2667c68acd210f13a3cf6d"
+    assert binding["implementation_root"] == fingerprint(binding["source_files"])
+    for source in binding["source_files"]:
+        committed = subprocess.run(
+            (
+                "git",
+                "-C",
+                str(_REPOSITORY),
+                "show",
+                f"{binding['source_commit']}:{source['path']}",
+            ),
+            check=True,
+            capture_output=True,
+        ).stdout
+        assert hashlib.sha256(committed).hexdigest() == source["sha256"]
+
+    assert implementation["status"] == "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED"
+    assert implementation["runtime_contract"]["atomic_fsynced_intent_before_transport"] is True
+    assert implementation["runtime_contract"]["cumulative_budget_recovery"] is True
+    assert (
+        implementation["runtime_contract"]["credential_load_attempt_fsynced_before_access"] is True
+    )
+    assert implementation["execution_boundary"]["child_authority_present"] is False
+    assert implementation["execution_boundary"]["credential_presence_or_values_accessed"] is False
+    assert implementation["execution_boundary"]["provider_requests"] == 0
+    assert all(value is False for value in implementation["authority"].values())
+    _assert_binding(implementation["operation_contract"])
+    _assert_binding(implementation["operation_contract_review"])
 
 
 def _hypergeometric_tail(population: int, successes: int, draws: int, threshold: int) -> float:

@@ -1,8 +1,10 @@
 # Program 012 exposed-prefix acquisition
 
-Program 012, `multi-hour-sector-etf-research-011`, is `PROPOSED-NOT-AUTHORIZED`. Proposal v3 defines a
-raw-only Alpaca SIP acquisition and a new prefix-specific structural admission. It does not enact
-Program 002 admission, evaluate its quote grid, or authorize a strategy.
+Program 012, `multi-hour-sector-etf-research-011`, is
+`IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`. Proposal v3 defines a raw-only Alpaca SIP acquisition and
+a new prefix-specific structural admission. The runtime is implemented and mock-tested, but
+no standing child authority or child review exists. It does not enact Program 002 admission, evaluate
+its quote grid, or authorize a strategy.
 
 Proposal SHA-256/fingerprint is
 `337a5b14ff15f9d40d0f88ed05822cf9e55293fe6c5219f56d63f1d65a67c19a` /
@@ -37,27 +39,34 @@ structural prefix, not the historical Program 002 final fold.
 
 Each session is one thirteen-symbol `GET https://data.alpaca.markets/v2/stocks/bars` chain with
 raw SIP `5Min`, `sort=asc`, `limit=1000`, and `asof=2026-07-31`. Null
-`next_page_token` is the only successful terminus. The runtime must reuse Program 011's per-symbol
-timestamp validation, deterministic post-validation sorting, token and duplicate checks, raw-first
-persistence, fixed-host client, disabled redirects and environment proxies, synchronized-main and
-protected-range checks, and zero retries.
+`next_page_token` is the only successful terminus. The runtime reuses Program 011's per-symbol
+timestamp validation, deterministic post-validation sorting, token and duplicate checks, fixed-host
+client, disabled redirects and environment proxies, synchronized-main and protected-range checks,
+and zero retries.
 
 The 1,386 chains imply 2,760 nominal responses when complete. The hard limits are 22,176 requests
 and responses, 8 MiB per page and session, 4 GiB total response bytes, 8 GiB working disk, 120
 requests per minute, one credential load, one sequential chain, and zero retries.
 
-The runtime must take the existing exclusive Program 011 private-root lock before checkpoint
-validation and hold it through every intent, provider call, page receipt, checkpoint, and terminal
-write. Before each dispatch, it must atomically create and fsync an intent bound to the authority,
-source, session, page, request identity, and exact private URL. A restart may reparse an exact
-completed page and continue from its stored token, or start a session with no intent. An intent
-without a complete page, an unreceipted body, or a changed checkpoint is terminal failure and may
-not cause a second request.
+The runtime takes the existing exclusive Program 011 private-root lock before checkpoint validation
+and holds it through every intent, provider call, page receipt, checkpoint, and terminal write.
+Before each dispatch, it atomically creates and fsyncs an intent bound to the authority, source,
+session, page, request identity, and exact private URL. It then persists an append-only raw body and
+parser-independent response receipt before budget accounting and parsing. A restart may reparse an
+exact completed page and continue from its stored token, or start a session with no intent. Recovery
+reconstructs request, response, byte, and pacing state from durable receipts. An intent without a
+complete page, an unreceipted body, or a changed checkpoint is terminal failure and may not cause a
+second request.
 
-Before credential access, each process must fsync a value-free load-attempt record. It then writes a
+Before credential access, each process fsyncs a value-free load-attempt record. It then writes a
 value-free success or failure receipt. An unpaired attempt counts conservatively as a load. Each
 validated process may load credentials once; terminal evidence counts all loads, credential values
 are never persisted, and process restarts are never automatic.
+
+Implementation v1 binds runtime commit `da18b55f6e16234dc93fdb61801847a79e4fc178`, tree
+`709a0f86d2acbe2a9f2667c68acd210f13a3cf6d`, and implementation root
+`a00fd6ceda78d6733b51af143d0d1ddfd87b6501e78ffab0245f0631dc347c70`. Its artifact fingerprint is
+`5fc2dc3789f3689307d4b7b352880f51c19753d498fab51d7ae18627152cb080`.
 
 ## Structural policy
 
@@ -95,9 +104,11 @@ Raw pages, response tokens, exact missing coordinates, and exact unexpected excl
 ignored private root. Public evidence contains only aggregate counts, gate results, hashes, and a
 dataset identity on pass.
 
-This proposal adds no runtime, credential check, provider client, private state, or active authority.
-After clean merge, a later implementation must pass focused crash, recovery, concurrency,
-cumulative-budget, and admission tests plus independent review. A separate reviewed standing child
-may then enable only provider contact, credential access, source requests, acquisition, and structural
-admission. Controlled/protected data, purchases, strategy execution, PAPER, broker writes, and live
-execution remain disabled.
+The runtime includes a credential preflight, provider client, private store, activation path, and
+structural admission path. Focused tests cover intent crashes, completed-page recovery, concurrent
+owners, unpaired credential attempts, malformed-response accounting, recovered pacing and budgets,
+and the two key missingness cases. No credential presence or value has been inspected, no private
+state exists, and no provider request has occurred. A fresh independent runtime review and clean
+merge remain mandatory. A separate reviewed standing child may then enable only provider contact,
+credential access, source requests, acquisition, and structural admission. Controlled/protected data,
+purchases, strategy execution, PAPER, broker writes, and live execution remain disabled.
