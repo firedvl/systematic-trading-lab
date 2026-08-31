@@ -1,7 +1,7 @@
 {
   "schema_version": "standing-autonomous-research-mandate-independent-review-v1",
   "review_id": "standing-autonomous-research-mandate-independent-review-2026-08-30-v1",
-  "reviewed_at": "2026-08-31T00:38:48Z",
+  "reviewed_at": "2026-08-31T00:53:28Z",
   "status": "PASS-FINDING-FREE",
   "verdict": "PASS",
   "findings": [],
@@ -11,8 +11,8 @@
     "fingerprint": "3465648952ccc094697c8edc24860658c6098235989a868610c1e1b12746d502"
   },
   "reviewed_implementation": {
-    "source_commit": "ab11ca46e886c12ceb2810c05117ddbdc2b9c7c2",
-    "source_tree": "23e02ef525c87753a6caf9d30faba79f2bf74589",
+    "source_commit": "81b7f41a99c2df32b3e5b370e3d35bde2d7a25b9",
+    "source_tree": "3ae0c8d2c79bffa1017aacc9b182c03abbbcfab6",
     "source_files": [
       {
         "path": "config/research/standing-autonomous-research-mandate-v1.json",
@@ -32,7 +32,7 @@
       },
       {
         "path": "docs/standing-autonomous-research-mandate.md",
-        "sha256": "adc4ae558a59ab9bf576d6e71727ef700f27b1acb65bf0d2e02a027be860bf94"
+        "sha256": "63af19aab95394e65b571dcddd246c693f7478d5225f4727314326d04e1411a5"
       },
       {
         "path": "docs/threat-model.md",
@@ -40,14 +40,14 @@
       },
       {
         "path": "src/systematic_trading_lab/standing_research_authority.py",
-        "sha256": "f902de2e78721b66e51a95924354046adf3a9ab394ed07dd42c75006c2563b1b"
+        "sha256": "60842b701a462d74e9815edd89780aa6cbdff358b072ab7062418bf101778136"
       },
       {
         "path": "tests/unit/test_standing_research_authority.py",
-        "sha256": "3ca2a90fca58698fc4f3b14fc530ffa7641a742bc3cff33f4e3ef7f594d8cfe4"
+        "sha256": "e0567101952d0547f0d542c7c03156a8f984e8096f113ba1ee5c26be7d7ae78a"
       }
     ],
-    "implementation_root": "13562f59ea4333b70c00f37953a911d5eb71a805bde1a940f20744e7f6c12486"
+    "implementation_root": "3b468f0bb1764f2359fc49c88d99d4e74487e3ddc8110194ac642d686d6cc348"
   },
   "challenge_results": [
     {
@@ -97,9 +97,11 @@
       "later-program scope was incorrectly restricted to Program 010",
       "the common identity could be mistaken for runtime activation",
       "reviewed source provenance was not checked against Git objects",
-      "child and child-review controls were not required to be Git-tracked"
+      "child and child-review controls were not required to be Git-tracked",
+      "the root standing mandate was not required to be tracked in the current Git tree",
+      "the operation manifest was not required in the Git-bound child runtime source list"
     ],
-    "focused_tests": "17 passed; 1 expected review-artifact lifecycle skip",
+    "focused_tests": "19 passed; the prior review artifact correctly failed closed pending this rebind",
     "ruff": "PASS",
     "mypy": "PASS",
     "git_diff_check": "PASS",
@@ -110,7 +112,7 @@
     "paper_broker_or_live_mutation": false
   },
   "proof_gaps": [
-    "The review artifact did not exist in the reviewed source commit and requires a later Git-tracked artifact commit.",
+    "This revised review artifact did not exist in the reviewed source commit and requires a later Git-tracked artifact commit.",
     "Concrete Program 010 runtime validation, atomic claim, and terminal evidence require a separate child implementation and review."
   ],
   "authority": {
@@ -131,5 +133,5 @@
     "live_execution": false
   },
   "required_next_action": "Commit this review artifact, pass the full repository gates, merge the standing-control change, and create Program 010's separately reviewed one-use child authority without an external user root.",
-  "review_fingerprint": "eb218e112602fd04324db4031f2169eb8d83618b0ce0c92e2e70776718ca57e4"
+  "review_fingerprint": "c30ecc3f7f9849f2d2f645172ceb68d307016454e485be7a563023ff7359480c"
 }
