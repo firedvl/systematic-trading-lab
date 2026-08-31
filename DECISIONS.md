@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-31 - Validate Program 011 controls before credential presence
+
+- Decision: route Program 011 execution and names-only credential preflight through one credential-free authority validator. Validate the child and review, synchronized-main lineage, protected registrations, and operation contract before checking credential names. Open private state only after controls and credentials pass.
+- Context: independent review found that execution checked credentials before deriving authority and the CLI called the inherited names-only helper without validating any Program 011 control. The first child control therefore could not receive a review.
+- Consequences: preserve child v1 as rejected before review and target an exact v2 child/review pair. Invalid or missing review identity, lineage drift, and chronology conflicts now stop both entry points before credential presence or private-state access. No new authority framework is added.
+- Revisit when: future credential preflights need a different operation contract. Keep the control-before-credential invariant.
+
 ## 2026-08-31 - Reuse the reviewed one-use lifecycle for Program 011
 
 - Decision: keep Program 010 terminal and implement Program 011 as a separate fixed runtime that reuses its reviewed transport, persistence, chronology, Git-lock, claim, and terminal-evidence controls. Change only successor identity, fresh chronology, frozen proposal bindings, and the corrected per-symbol timestamp-order rule.

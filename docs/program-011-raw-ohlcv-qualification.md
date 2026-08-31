@@ -1,8 +1,9 @@
 # Program 011 raw OHLCV structural qualification
 
 Program 011, `multi-hour-sector-etf-research-010`, is `PROPOSED-NOT-AUTHORIZED`. The reviewed
-source contract and sample are frozen, and the fixed one-use runtime is implemented. No child
-authority, credential access, provider request, dataset, strategy result, or protected action exists.
+source contract and sample are frozen, and the fixed one-use runtime is implemented. Child v1 is
+preserved as rejected before review; the runtime now requires an exact v2 child and review. No
+credential access, provider request, dataset, strategy result, or protected action exists.
 
 ## Prospective correction
 
@@ -31,7 +32,9 @@ The successor runtime keeps the reviewed Program 010 lifecycle: fixed-host GET-o
 disabled environment proxy routing and redirects, bounded raw-first private persistence, synchronized
 `main` and protected-chronology revalidation, one credential load, an atomic claim immediately before
 the first transport invocation, zero retries, and immutable terminal evidence. It uses a separate
-ignored private root and cannot derive active authority until the exact child control and review exist.
+ignored private root. Execution and the names-only CLI preflight validate child/review identity,
+synchronized-main lineage, protected registrations, and the operation contract before inspecting
+credential presence. Private state opens only after those controls and credential presence pass.
 
 ## Frozen sample
 
@@ -99,6 +102,7 @@ The finding-free independent review binds source commit
 `f66d7aa735ef48005c911bc68a5c3fc45c9aa41b0015b1f7916d0b77b1490332` /
 `83eeda356a807b266fb93c3e477e7e73469c05f8dca74bf9901c7de075f12b92`.
 
-The next gate is an exact one-use standing child authority bound to the runtime source commit, followed
-by independent review, full quality checks, green CI, and a clean synchronized-main merge. Only then
-may the names-only credential preflight, activation, or provider transport run.
+The authority gate requires an exact v2 one-use standing child bound to the runtime source commit and
+an independent v2 review as the only later source-to-main additions. Full quality checks, green CI,
+and a clean synchronized-main merge must follow. Only then may the names-only credential preflight,
+activation, or provider transport run.

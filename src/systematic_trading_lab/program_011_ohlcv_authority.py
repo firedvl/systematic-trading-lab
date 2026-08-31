@@ -32,7 +32,7 @@ from .standing_research_authority import derive_child_identity
 
 PROGRAM_ID = program_011.PROGRAM_ID
 PROGRAM_ORDINAL = program_011.PROGRAM_ORDINAL
-CHILD_AUTHORITY_ID = "program-011-raw-alpaca-sip-ohlcv-structural-qualification-child-2026-08-31-v1"
+CHILD_AUTHORITY_ID = "program-011-raw-alpaca-sip-ohlcv-structural-qualification-child-2026-08-31-v2"
 CONSUMPTION_BOUNDARY = "immediately before first provider transport invocation"
 PRIVATE_ROOT = Path(".trading-lab/program-011-raw-alpaca-sip-ohlcv-v1")
 CREDENTIAL_NAMES = credential_contract._CREDENTIAL_NAMES
@@ -50,11 +50,11 @@ PROTECTED_CHRONOLOGY_REGISTRATION_PATHS = (
 
 CHILD_AUTHORITY_PATH = Path(
     "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-"
-    "child-authority-v1.json"
+    "child-authority-v2.json"
 )
 CHILD_REVIEW_PATH = Path(
     "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-"
-    "child-authority-independent-review-v1.json"
+    "child-authority-independent-review-v2.json"
 )
 OPERATION_MANIFEST = {
     "path": (
@@ -143,14 +143,12 @@ class QualificationExecution:
         }
 
 
-def credential_presence(environ: Mapping[str, str] | None = None) -> Mapping[str, bool]:
-    """Return names and presence only; never expose credential values."""
-    return credential_contract.credential_presence(environ)
-
-
 def credential_presence_preflight(
+    repository: Path,
     environ: Mapping[str, str] | None = None,
 ) -> tuple[str, ...]:
+    """Validate every public control before checking credential names."""
+    _derive_control_validated_authority(repository)
     return credential_contract.credential_presence_preflight(environ)
 
 
@@ -309,6 +307,13 @@ def derive_active_authority(
     environ: Mapping[str, str] | None = None,
 ) -> Mapping[str, Any]:
     """Derive the concrete active record from the reviewed standing child."""
+    authority = _derive_control_validated_authority(repository)
+    _require_credentials_present(environ)
+    return authority
+
+
+def _derive_control_validated_authority(repository: Path) -> Mapping[str, Any]:
+    """Derive authority only after all credential-free controls pass."""
     repository = _repository(repository)
     identity = derive_child_identity(repository, CHILD_AUTHORITY_PATH, CHILD_REVIEW_PATH)
     authority = _mapping(identity.get("authority"), "child authority")
@@ -339,7 +344,6 @@ def derive_active_authority(
     validate_operation_contract(repository, commit=commit)
     if _repository_preflight(repository, identity) != lineage:
         raise Program011AuthorityError("Program 011 repository changed during validation")
-    _require_credentials_present(environ)
     unsigned: dict[str, Any] = {
         "schema_version": "program-011-raw-sip-qualification-active-authority-v1",
         "status": "ACTIVE-ONE-USE",
@@ -422,7 +426,6 @@ def _execute_qualification(
     mock_transport: MockBarsTransport | None,
 ) -> QualificationExecution:
     repository = _repository(repository)
-    _require_credentials_present(environ)
     expected_authority = derive_active_authority(repository, environ=environ)
     commit = _authority_commit(expected_authority)
     root_descriptor = _open_private_root(repository, create=False)
@@ -1650,7 +1653,7 @@ def _reject_existing_state(root_descriptor: int, *, allow_active: bool = True) -
 
 
 def _require_credentials_present(environ: Mapping[str, str] | None) -> None:
-    missing = credential_presence_preflight(environ)
+    missing = credential_contract.credential_presence_preflight(environ)
     if missing:
         raise Program011AuthorityError("Program 011 credentials missing: " + ", ".join(missing))
 

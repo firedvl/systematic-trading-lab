@@ -1307,7 +1307,7 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
 
             repository = Path(__file__).resolve().parents[2]
             if arguments.action == "credential-preflight":
-                missing = program_011_ohlcv_credential_preflight()
+                missing = program_011_ohlcv_credential_preflight(repository)
                 print("PASS" if not missing else "\n".join(f"MISSING: {name}" for name in missing))
                 return 0 if not missing else 1
             if settings.mode is not TradingMode.RESEARCH:

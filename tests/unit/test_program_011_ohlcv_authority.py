@@ -16,6 +16,7 @@ import pytest
 from pytest import CaptureFixture, MonkeyPatch
 
 import systematic_trading_lab.intraday_fed_policy_absorption_001_cli as dispatcher
+import systematic_trading_lab.program_006_alpaca as credential_contract
 import systematic_trading_lab.program_007_alpaca as raw_contract
 import systematic_trading_lab.program_011_ohlcv as program_011
 import systematic_trading_lab.program_011_ohlcv_authority as authority
@@ -150,6 +151,13 @@ def test_credential_preflight_cli_prints_only_pass_or_missing_names(
     monkeypatch: MonkeyPatch,
     capsys: CaptureFixture[str],
 ) -> None:
+    control_checks: list[Path] = []
+
+    def validate_controls(repository: Path) -> dict[str, object]:
+        control_checks.append(repository)
+        return _active_authority()
+
+    monkeypatch.setattr(authority, "_derive_control_validated_authority", validate_controls)
     for name in authority.CREDENTIAL_NAMES:
         monkeypatch.delenv(name, raising=False)
     assert dispatcher.main(("data", "acquire", "program-011-ohlcv", "credential-preflight")) == 1
@@ -165,6 +173,7 @@ def test_credential_preflight_cli_prints_only_pass_or_missing_names(
     assert passed.err == ""
     assert passed.out == "PASS\n"
     assert all(value not in missing.out + passed.out for value in values.values())
+    assert control_checks == [_REPOSITORY, _REPOSITORY]
 
 
 def test_internal_child_derivation_enables_only_structural_qualification(
@@ -218,15 +227,35 @@ def test_internal_child_derivation_enables_only_structural_qualification(
     assert active["authority"]["live_execution"] is False
 
 
-def test_missing_credentials_stop_before_private_state(
+def test_controls_validate_before_missing_credentials_and_private_state(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
-    calls: list[bool] = []
+    calls: list[str] = []
+    private_root_opens: list[bool] = []
+
+    def validate_controls(_repository: Path) -> dict[str, object]:
+        calls.append("controls")
+        return _active_authority()
+
+    def credential_preflight(_environ: object) -> tuple[str, ...]:
+        calls.append("credentials")
+        return authority.CREDENTIAL_NAMES
+
+    def open_private_root(*_args: object, **_kwargs: object) -> int:
+        private_root_opens.append(True)
+        return -1
+
     monkeypatch.setattr(
         authority,
-        "derive_active_authority",
-        lambda *_args, **_kwargs: calls.append(True),
+        "_derive_control_validated_authority",
+        validate_controls,
     )
+    monkeypatch.setattr(
+        credential_contract,
+        "credential_presence_preflight",
+        credential_preflight,
+    )
+    monkeypatch.setattr(authority, "_open_private_root", open_private_root)
 
     with pytest.raises(authority.Program011AuthorityError, match="credentials missing"):
         authority._execute_mock_qualification(
@@ -235,7 +264,98 @@ def test_missing_credentials_stop_before_private_state(
             transport=authority.MockBarsTransport([raw_contract.RawResponse(200, b"{}")]),
         )
 
-    assert calls == []
+    assert calls == ["controls", "credentials"]
+    assert private_root_opens == []
+    assert not (tmp_path / authority.PRIVATE_ROOT).exists()
+
+
+@pytest.mark.parametrize(
+    "control_failure",
+    (
+        "reviewed child identity differs",
+        "child authority review is absent",
+        "reviewed synchronized-main lineage differs",
+        "fresh exposed chronology differs",
+    ),
+)
+@pytest.mark.parametrize("entrypoint", ("execution", "credential-preflight"))
+def test_invalid_controls_reject_before_credentials_or_private_state(
+    control_failure: str,
+    entrypoint: str,
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+    identity = {
+        "child_authority_id": authority.CHILD_AUTHORITY_ID,
+        "program_ordinal": authority.PROGRAM_ORDINAL,
+        "program_id": authority.PROGRAM_ID,
+        "operation_manifest": authority.OPERATION_MANIFEST,
+        "runtime_entrypoint": "src/systematic_trading_lab/program_011_ohlcv_authority.py",
+        "child_identity_fingerprint": "b" * 64,
+        "authority": {key: key in authority._ENABLED_AUTHORITY for key in AUTHORITY_FIELDS},
+        "runtime_binding": {
+            "source_files": [
+                {"path": path.as_posix()}
+                for path in (
+                    authority.PROTECTED_CHRONOLOGY_PATH,
+                    *authority.PROTECTED_CHRONOLOGY_SOURCE_PATHS,
+                    *authority.PROTECTED_CHRONOLOGY_REGISTRATION_PATHS,
+                )
+            ]
+        },
+    }
+
+    def derive_identity(*_args: object) -> dict[str, object]:
+        calls.append("controls")
+        if control_failure == "child authority review is absent":
+            raise authority.Program011AuthorityError(control_failure)
+        if control_failure == "reviewed child identity differs":
+            return {**identity, "child_authority_id": "invalid-child"}
+        return identity
+
+    def repository_preflight(*_args: object) -> dict[str, str]:
+        if control_failure == "reviewed synchronized-main lineage differs":
+            raise authority.Program011AuthorityError(control_failure)
+        return {"synchronized_main_commit": "c" * 40}
+
+    def validate_contract(*_args: object, **_kwargs: object) -> dict[str, object]:
+        if control_failure == "fresh exposed chronology differs":
+            raise authority.Program011AuthorityError(control_failure)
+        return {}
+
+    def credential_preflight(_environ: object) -> tuple[str, ...]:
+        calls.append("credentials")
+        return ()
+
+    def open_private_root(*_args: object, **_kwargs: object) -> int:
+        calls.append("private-state")
+        return -1
+
+    monkeypatch.setattr(authority, "derive_child_identity", derive_identity)
+    monkeypatch.setattr(authority, "_repository_preflight", repository_preflight)
+    monkeypatch.setattr(authority, "_validate_protected_registration_set", lambda *_args: None)
+    monkeypatch.setattr(authority, "validate_operation_contract", validate_contract)
+    monkeypatch.setattr(
+        credential_contract,
+        "credential_presence_preflight",
+        credential_preflight,
+    )
+    monkeypatch.setattr(authority, "_open_private_root", open_private_root)
+
+    if entrypoint == "execution":
+        with pytest.raises(authority.Program011AuthorityError, match=control_failure):
+            authority._execute_mock_qualification(
+                tmp_path,
+                environ=_credentials(),
+                transport=authority.MockBarsTransport([raw_contract.RawResponse(200, b"{}")]),
+            )
+    else:
+        assert (
+            dispatcher.main(("data", "acquire", "program-011-ohlcv", "credential-preflight")) == 2
+        )
+
+    assert calls == ["controls"]
     assert not (tmp_path / authority.PRIVATE_ROOT).exists()
 
 

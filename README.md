@@ -122,7 +122,9 @@ each symbol array before deterministic symbol-then-timestamp sorting. Its five f
 all Programs 002-010 OHLCV observations and protected chronology. See
 [Program 011 raw OHLCV structural qualification](docs/program-011-raw-ohlcv-qualification.md).
 Program 011's design review is merged. Its fixed GET-only one-use runtime remains non-authorizing
-until a separate standing child authority passes independent review and merges.
+by itself. Child v1 is preserved as rejected before review; the runtime accepts only an exact
+source-bound v2 child and finding-free review on synchronized `main`. Both CLI preflight and
+execution validate that full control chain before inspecting credential presence.
 
 ## Using historical data
 
