@@ -227,7 +227,11 @@ def test_fresh_sample_rederives_from_programs_002_through_010_and_protected_rang
     assert sum(grid_counts[value] * len(program_011.SYMBOLS) for value in selected) == 4_602
 
 
-def test_secret_guard_allows_only_reserved_public_program_011_json_artifacts() -> None:
+def test_secret_guard_allows_only_reserved_public_program_011_json_artifacts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     spec = importlib.util.spec_from_file_location(
         "program_011_check_secrets", _REPOSITORY / "scripts/check_secrets.py"
     )
@@ -240,3 +244,10 @@ def test_secret_guard_allows_only_reserved_public_program_011_json_artifacts() -
     }
 
     assert public_program_artifacts <= guard.PUBLIC_PROGRAM_JSON
+
+    private_path = tmp_path / "program-011-private-market-page.json"
+    private_path.write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(guard, "tracked_files", lambda: [private_path])
+
+    assert guard.main() == 1
+    assert "private-market-data-path" in capsys.readouterr().err

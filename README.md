@@ -121,7 +121,8 @@ the prospective source-qualification successor. Its frozen contract validates ti
 each symbol array before deterministic symbol-then-timestamp sorting. Its five fresh sessions exclude
 all Programs 002-010 OHLCV observations and protected chronology. See
 [Program 011 raw OHLCV structural qualification](docs/program-011-raw-ohlcv-qualification.md).
-Program 011 remains non-authorizing until its exact design passes independent review and merges.
+Program 011's design review is merged. Its fixed GET-only one-use runtime remains non-authorizing
+until a separate standing child authority passes independent review and merges.
 
 ## Using historical data
 

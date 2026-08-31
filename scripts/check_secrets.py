@@ -228,6 +228,7 @@ def main() -> int:
                         "program-008",
                         "program-009",
                         "program-010",
+                        "program-011",
                     )
                 )
                 and suffix in PRIVATE_MARKET_DATA_SUFFIXES
