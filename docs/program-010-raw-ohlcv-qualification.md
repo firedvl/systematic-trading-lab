@@ -1,9 +1,42 @@
 # Program 010 raw OHLCV structural qualification
 
-Program 010, `multi-hour-sector-etf-research-009`, is `PROPOSED-NOT-AUTHORIZED`.
-It is an offline, synthetic successor design. It creates no execution authority, external
-authorization root, credential path, provider transport, provider request, dataset, or strategy
-result.
+Program 010, `multi-hour-sector-etf-research-009`, is
+`TERMINAL-FAIL-CONSUMED-NO-RETRY`. Do not activate, replay, or create another Program 010 authority.
+
+## Terminal outcome
+
+Exact standing child authority fingerprint
+`8c5078ab0984ea1b25d71eae7a5d16c2af76de578d38409cac45da587313068e` activated on clean
+synchronized main `e663235e35f2495d72de3dd709842e484dcf555e`. The names-only credential
+preflight passed. The run loaded credentials once, claimed the one-use operation immediately before
+transport, made one request with zero retries, and retained one 105,852-byte HTTP 200 response before
+parsing.
+
+Frozen validation stopped with `Program 010 response rows are not in ascending received order`.
+Offline coordinate-only analysis found 1,000 unique expected coordinates, no unexpected coordinate,
+and fourteen coordinates unobserved after the stop. Every per-symbol bar array was timestamp-ascending;
+only the JSON object-member encounter order was not lexicographic. RFC 8259 section 4 defines a JSON
+object as an unordered collection. Program 010's global encounter-order invariant was therefore a
+qualification-specification defect, not evidence of provider incompatibility.
+
+Public terminal-failure SHA-256/fingerprint is
+`2e224ab7eb63bf8e844a436457705bdc3db2be34797570c70c254e0286d890c8` /
+`af0425dfdf4a84f88e278b69fac31d0233a71e8790bd51fd37b211487c1b95c6`. Private raw and
+lifecycle evidence remains outside Git and is bound by hashes in that artifact. Program 010 admitted
+no dataset and ran no strategy. It made no controlled/protected read, PAPER action, broker write,
+live action, or purchase.
+
+Independent closeout review found and resolved one high fail-closed gap: absent terminal evidence
+could reach credential presence preflight before later lineage rejection. The final guard rejects a
+missing, malformed, hash-mismatched, or semantically invalid terminal artifact before credentials or
+private state across derivation, activation, loading, and execution. Finding-free review
+SHA-256/fingerprint is `8a75496aeb22b8552d99141ab284b17daabb5f7f5cdf967aa60524e485d42597` /
+`943df3daeb0056c2acce0b6003722db66c25bc62156b46a050896fbdf71b80d7`.
+
+Program 011 is the prospective successor. It must validate timestamp order within each symbol array
+before deterministic symbol-then-timestamp sorting, preserve the remaining raw-first and pagination
+controls, and freeze genuinely fresh qualification evidence that excludes the observed
+`2021-05-25` session.
 
 Program 009 remains `TERMINAL-FAIL-CONSUMED-NO-RETRY`. Do not replay it or create another Program
 009 authority.
@@ -178,12 +211,12 @@ frontier. V5 preserves retained received order, requires strict within-page and 
 and derives the frontier from the final received coordinate. V1-V4 remain immutable review history.
 Fresh independent Standards and Specification reviewers found no remaining issue after v5.
 
-The production runtime candidate reuses the unchanged synthetic qualification engine behind a fixed
+Before execution, the production runtime candidate reused the unchanged synthetic qualification engine behind a fixed
 GET-only, redirect-disabled, environment-proxy-disabled client. It performs names-only credential
 preflight, loads credentials once, validates clean synchronized-main provenance, claims the one-use
 operation immediately before transport, and writes raw bodies and receipts create-only before status,
-schema, or continuation checks. It is inert until its exact source commit receives a Git-tracked,
-finding-free child authority and review under the standing mandate.
+schema, or continuation checks. It remained inert until its exact source commit received a
+Git-tracked, finding-free child authority and review under the standing mandate.
 Activation requires direct `refs/heads/main` and `refs/remotes/origin/main` refs at the expected
 commit and holds lifecycle-owned Git lockfiles from locked revalidation through active-record
 persistence. Execution holds the same synchronized-main snapshot for the whole qualification.

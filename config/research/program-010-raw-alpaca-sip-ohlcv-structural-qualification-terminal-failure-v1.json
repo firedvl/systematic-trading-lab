@@ -1,0 +1,141 @@
+{
+  "schema_version": "program-010-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1",
+  "failure_id": "program-010-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-2026-08-30-v1",
+  "program_ordinal": 10,
+  "program_id": "multi-hour-sector-etf-research-009",
+  "recorded_at": "2026-08-31T06:34:42Z",
+  "status": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+  "classification": "QUALIFICATION-SPECIFICATION-DEFECT",
+  "execution_main": "e663235e35f2495d72de3dd709842e484dcf555e",
+  "authorization": {
+    "standing_mandate": {
+      "path": "config/research/standing-autonomous-research-mandate-v1.json",
+      "sha256": "a324a464c9e969d5242baeea20a2644edff09432b03c16862f269ef4a0400c1e",
+      "fingerprint": "3465648952ccc094697c8edc24860658c6098235989a868610c1e1b12746d502"
+    },
+    "child_authority": {
+      "path": "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-child-authority-v1.json",
+      "sha256": "c6b1d10c63a49e26525572e516b3d898d6fd85e9e70098b47058e2dc359c9d4b",
+      "fingerprint": "656fc232ab8855896169a63e5733fb874353465798ffb0ec61accc4288c8c822"
+    },
+    "child_authority_review": {
+      "path": "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-child-authority-independent-review-v1.json",
+      "sha256": "4f20029e4daa999885dd3bb438bcb46481240e01671a68edd76d1bb4289d812b",
+      "fingerprint": "b1d11f8458799c7e0c140f8714a1dcd9ae0353e6fa378b19b6dd8748f8df22e9"
+    },
+    "authority_id": "program-010-raw-alpaca-sip-ohlcv-structural-qualification-child-2026-08-30-v1",
+    "authority_fingerprint": "8c5078ab0984ea1b25d71eae7a5d16c2af76de578d38409cac45da587313068e",
+    "child_identity_fingerprint": "7cfd17a8b5436bfa4a78493e9b52a9845eca918b110723b40b027dbbff96175a",
+    "activation_succeeded": true,
+    "one_use_claim": {
+      "schema_version": "program-010-private-ohlcv-claim-v1",
+      "sha256": "71019ee7ae20335af955e869574145a43db0ec31986a054e4938dab8d208ea47",
+      "fingerprint": "71019ee7ae20335af955e869574145a43db0ec31986a054e4938dab8d208ea47"
+    },
+    "one_use_consumed": true,
+    "external_authorization_root_required": false
+  },
+  "operation_contract": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "sort": "asc",
+    "limit": 1000,
+    "asof": "2026-07-31",
+    "session": "2021-05-25",
+    "expected_session_coordinates": 1014,
+    "maximum_pages_per_session": 16,
+    "maximum_qualification_requests_and_responses": 80,
+    "automatic_retries": 0
+  },
+  "runtime_outcome": {
+    "failure_stage": "first retained page after HTTP, raw persistence, schema parsing, and before pagination continuation",
+    "error": "Program 010 response rows are not in ascending received order",
+    "credential_presence_preflight": "PASS",
+    "credential_presence_recheck_under_lock": "PASS",
+    "credential_load_count": 1,
+    "claim_written_immediately_before_first_transport": true,
+    "provider_request_count": 1,
+    "http_response_count": 1,
+    "page_count": 1,
+    "all_http_statuses": 200,
+    "response_bytes": 105852,
+    "response_truncated": false,
+    "outgoing_page_token_present": true,
+    "automatic_retries": 0,
+    "redirects_followed": 0,
+    "raw_body_retained_before_parse": true,
+    "qualification_receipt_created": false,
+    "private_dataset_count": 0
+  },
+  "private_records": {
+    "active_authority": {
+      "sha256": "1726be674d03f860d623a0a5983928cdc3ac5ace78d7c9f752768da2240d72d3",
+      "fingerprint": "8c5078ab0984ea1b25d71eae7a5d16c2af76de578d38409cac45da587313068e"
+    },
+    "request_intent": {
+      "sha256": "01df7efcc0b2a67893b4655ef3b88b4e3f6b16d307a01419bcf39d40afc9b7a8",
+      "bytes": 401
+    },
+    "raw_response": {
+      "sha256": "c81d4204fd660b234a0a77710d6876694833fe1862d2e32e1fb7089588ebf9d4",
+      "bytes": 105852,
+      "published": false
+    },
+    "response_receipt": {
+      "sha256": "9083bbd12674f81472e3b2e873fe7d8ad22103647b4d2924ebb29a98962885e6"
+    },
+    "terminal_failure": {
+      "sha256": "18cab9189ac9c9cdcf9ef1f759900e89fee6f663d03b0c28065ab53d1e9d9ab7",
+      "fingerprint": "18cab9189ac9c9cdcf9ef1f759900e89fee6f663d03b0c28065ab53d1e9d9ab7"
+    },
+    "credentials_stored": false
+  },
+  "structural_results": {
+    "raw_rows_received": 1000,
+    "unique_coordinates_received": 1000,
+    "unexpected_coordinates": 0,
+    "unobserved_after_specification_stop": 14,
+    "sorted_coordinate_set_fingerprint": "5188342310f3bb64e13af5a2deb0896d13173ffef3b0856c6d7d377204b5826d",
+    "symbol_member_order_fingerprint": "d51135e3ff464ad869a0008ef652fbdb9bcbbaa77b1487153d39e43996d315b3",
+    "json_object_member_order_ascending": false,
+    "per_symbol_timestamp_order_ascending": true,
+    "duplicate_coordinate_verdict": "PASS-NONE-IN-RETAINED-PAGE",
+    "unexpected_coordinate_verdict": "PASS-NONE-IN-RETAINED-PAGE",
+    "source_missing_coordinates": 0,
+    "source_missingness_assessed": false,
+    "qualification": "FAIL"
+  },
+  "forensic_classification": {
+    "source_incompatibility_established": false,
+    "specification_defect_established": true,
+    "defect": "Program 010 flattened JSON object members in parser encounter order and required that order to equal sorted symbol-then-timestamp rows.",
+    "standard_basis": "RFC 8259 section 4 defines a JSON object as an unordered collection; object-member order cannot carry the row-order invariant.",
+    "standard_reference": "https://www.rfc-editor.org/rfc/rfc8259#section-4",
+    "retained_evidence_basis": "All thirteen symbol arrays were internally timestamp-ascending, while their JSON object-member order was not lexicographically ascending.",
+    "prospective_successor_rule": "Validate timestamp order inside each symbol array before deterministic symbol-then-timestamp sorting; preserve token, duplicate, progress, and raw-first checks.",
+    "program_010_observed_session_reusable_for_successor_qualification": false
+  },
+  "disposition": {
+    "retry_allowed": false,
+    "program_010_replay_allowed": false,
+    "replacement_program_010_authority_allowed": false,
+    "program_011_successor_may_be_proposed": true,
+    "fresh_successor_evidence_required": true,
+    "raw_evidence_retained_privately": true,
+    "dataset_admitted": false,
+    "strategy_calculations": 0,
+    "strategy_returns": 0
+  },
+  "protected_state": {
+    "controlled_reads": 0,
+    "protected_reads": 0,
+    "paper_actions": 0,
+    "broker_writes": 0,
+    "live_actions": 0,
+    "purchases": 0
+  },
+  "failure_fingerprint": "af0425dfdf4a84f88e278b69fac31d0233a71e8790bd51fd37b211487c1b95c6"
+}

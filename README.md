@@ -110,15 +110,14 @@ Do not activate or run Program 009 again. It admitted no dataset and ran no stra
 
 Offline forensics classify Program 009's six-page ceiling as a qualification-specification defect,
 confirm one completed-domain MDY source gap, and classify the truncated XLY tail as unobserved.
-Program 010, `multi-hour-sector-etf-research-009`, is a synthetic-only, non-authorizing successor
-proposal with one exact XNYS session per chain and token-driven pagination. See
+Program 010, `multi-hour-sector-etf-research-009`, is terminally consumed and failed after one
+105,852-byte HTTP 200 page. Its frozen parser incorrectly treated unordered JSON object-member
+encounter order as global symbol order. Offline forensics found all 1,000 retained coordinates unique
+and expected and every per-symbol bar array timestamp-ascending, so the stop is a
+qualification-specification defect rather than provider incompatibility. See
 [Program 010 raw OHLCV structural qualification](docs/program-010-raw-ohlcv-qualification.md).
-Review found source-closure, catastrophic-coverage, public-artifact guard, received-order, and
-retained-order proof defects. Proposal v5 closes every valid source, requires strict-majority
-per-symbol coverage, keeps every public artifact in the guard inventory, rejects disordered wire
-rows, and proves the retained Program 009 frontier from received order. The independent v1 review
-is finding-free, binds all 17 required challenges, and leaves every
-provider, credential, acquisition, dataset, strategy, PAPER, broker, and live authority false.
+Do not activate or run Program 010 again. It admitted no dataset and ran no strategy. Program 011 is
+the next prospective source-qualification successor and must use fresh evidence.
 
 ## Using historical data
 

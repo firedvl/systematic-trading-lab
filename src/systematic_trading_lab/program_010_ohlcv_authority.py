@@ -55,6 +55,14 @@ CHILD_REVIEW_PATH = Path(
     "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-"
     "child-authority-independent-review-v1.json"
 )
+_TERMINAL_FAILURE = {
+    "path": (
+        "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-"
+        "terminal-failure-v1.json"
+    ),
+    "sha256": "2e224ab7eb63bf8e844a436457705bdc3db2be34797570c70c254e0286d890c8",
+    "fingerprint": "af0425dfdf4a84f88e278b69fac31d0233a71e8790bd51fd37b211487c1b95c6",
+}
 OPERATION_MANIFEST = {
     "path": (
         "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v5.json"
@@ -252,6 +260,7 @@ def derive_active_authority(
 ) -> Mapping[str, Any]:
     """Derive the concrete active record from the reviewed standing child."""
     repository = _repository(repository)
+    _reject_terminal_state(repository)
     identity = derive_child_identity(repository, CHILD_AUTHORITY_PATH, CHILD_REVIEW_PATH)
     authority = _mapping(identity.get("authority"), "child authority")
     runtime = _mapping(identity.get("runtime_binding"), "child runtime binding")
@@ -364,6 +373,7 @@ def _execute_qualification(
     mock_transport: MockBarsTransport | None,
 ) -> QualificationExecution:
     repository = _repository(repository)
+    _reject_terminal_state(repository)
     _require_credentials_present(environ)
     expected_authority = derive_active_authority(repository, environ=environ)
     commit = _authority_commit(expected_authority)
@@ -1570,6 +1580,31 @@ def _require_credentials_present(environ: Mapping[str, str] | None) -> None:
     missing = credential_presence_preflight(environ)
     if missing:
         raise Program010AuthorityError("Program 010 credentials missing: " + ", ".join(missing))
+
+
+def _reject_terminal_state(repository: Path) -> None:
+    path = repository / str(_TERMINAL_FAILURE["path"])
+    if not path.exists():
+        raise Program010AuthorityError("Program 010 terminal failure artifact is absent")
+    failure = _load_bound_artifact(repository, _TERMINAL_FAILURE, "failure_fingerprint")
+    authorization = _mapping(failure.get("authorization"), "terminal authorization")
+    structural = _mapping(failure.get("structural_results"), "terminal results")
+    forensic = _mapping(failure.get("forensic_classification"), "terminal forensics")
+    disposition = _mapping(failure.get("disposition"), "terminal disposition")
+    if (
+        failure.get("program_ordinal") != PROGRAM_ORDINAL
+        or failure.get("program_id") != PROGRAM_ID
+        or failure.get("status") != "TERMINAL-FAIL-CONSUMED-NO-RETRY"
+        or failure.get("classification") != "QUALIFICATION-SPECIFICATION-DEFECT"
+        or authorization.get("one_use_consumed") is not True
+        or structural.get("qualification") != "FAIL"
+        or forensic.get("specification_defect_established") is not True
+        or disposition.get("retry_allowed") is not False
+        or disposition.get("program_010_replay_allowed") is not False
+        or disposition.get("replacement_program_010_authority_allowed") is not False
+    ):
+        raise Program010AuthorityError("Program 010 terminal failure semantics differ")
+    raise Program010AuthorityError("Program 010 OHLCV authority is terminally revoked")
 
 
 def _authority_commit(authority: Mapping[str, Any]) -> str:

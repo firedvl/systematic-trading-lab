@@ -1,0 +1,278 @@
+{
+  "schema_version": "program-010-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-independent-review-v1",
+  "review_id": "program-010-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-independent-review-2026-08-31-v1",
+  "program_ordinal": 10,
+  "program_id": "multi-hour-sector-etf-research-009",
+  "reviewed_at": "2026-08-31T07:12:43Z",
+  "status": "PASS-TERMINAL-FAILURE-VERIFIED",
+  "verdict": "PASS",
+  "findings": [],
+  "resolved_findings": [
+    {
+      "severity": "HIGH",
+      "finding": "The first closeout guard returned when the configured terminal artifact was absent, allowing execution to reach credential presence preflight before later lineage rejection.",
+      "reviewed_tip": "d8175d779845c7501fc4fe631e8f5272566c2c56",
+      "resolution_commit": "4fdfb5efd6befb4bb64391f866a962800b617a5d",
+      "resolution": "Missing terminal evidence now fails closed before credentials or private state, with a real-repository regression across derivation, activation, loading, and execution.",
+      "verdict": "PASS-RESOLVED"
+    }
+  ],
+  "reviewed_execution_main": "e663235e35f2495d72de3dd709842e484dcf555e",
+  "reviewed_base_commit": "e663235e35f2495d72de3dd709842e484dcf555e",
+  "reviewed_closeout_commits": [
+    {
+      "commit": "a9def213bd04fa708ab7155dbda33fa2ed8215fe",
+      "tree": "56896759fabcc348552a09a14be87dcfc26a2c54",
+      "purpose": "terminal failure artifact, revocation guard, and public closeout"
+    },
+    {
+      "commit": "d8175d779845c7501fc4fe631e8f5272566c2c56",
+      "tree": "3027e220d6a8a61c8565bb72d33d5293ffa1b6e3",
+      "purpose": "repository formatting"
+    },
+    {
+      "commit": "4fdfb5efd6befb4bb64391f866a962800b617a5d",
+      "tree": "65d8e33d1c65a50ab8e8ef67bcd897f9c75325e8",
+      "purpose": "fail-closed missing-terminal repair and regression"
+    }
+  ],
+  "reviewed_failure": {
+    "path": "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
+    "sha256": "2e224ab7eb63bf8e844a436457705bdc3db2be34797570c70c254e0286d890c8",
+    "fingerprint": "af0425dfdf4a84f88e278b69fac31d0233a71e8790bd51fd37b211487c1b95c6"
+  },
+  "reviewed_private_records": {
+    "active_authority": {
+      "sha256": "1726be674d03f860d623a0a5983928cdc3ac5ace78d7c9f752768da2240d72d3",
+      "fingerprint": "8c5078ab0984ea1b25d71eae7a5d16c2af76de578d38409cac45da587313068e"
+    },
+    "one_use_claim": {
+      "schema_version": "program-010-private-ohlcv-claim-v1",
+      "sha256": "71019ee7ae20335af955e869574145a43db0ec31986a054e4938dab8d208ea47",
+      "fingerprint": "71019ee7ae20335af955e869574145a43db0ec31986a054e4938dab8d208ea47"
+    },
+    "request_intent": {
+      "sha256": "01df7efcc0b2a67893b4655ef3b88b4e3f6b16d307a01419bcf39d40afc9b7a8",
+      "bytes": 401
+    },
+    "raw_response": {
+      "sha256": "c81d4204fd660b234a0a77710d6876694833fe1862d2e32e1fb7089588ebf9d4",
+      "bytes": 105852,
+      "published": false
+    },
+    "response_receipt": {
+      "sha256": "9083bbd12674f81472e3b2e873fe7d8ad22103647b4d2924ebb29a98962885e6"
+    },
+    "terminal_failure": {
+      "sha256": "18cab9189ac9c9cdcf9ef1f759900e89fee6f663d03b0c28065ab53d1e9d9ab7",
+      "fingerprint": "18cab9189ac9c9cdcf9ef1f759900e89fee6f663d03b0c28065ab53d1e9d9ab7"
+    },
+    "credentials_stored": false
+  },
+  "reviewed_authority": {
+    "standing_mandate_fingerprint": "3465648952ccc094697c8edc24860658c6098235989a868610c1e1b12746d502",
+    "child_authority_id": "program-010-raw-alpaca-sip-ohlcv-structural-qualification-child-2026-08-30-v1",
+    "child_authority_fingerprint": "656fc232ab8855896169a63e5733fb874353465798ffb0ec61accc4288c8c822",
+    "active_authority_fingerprint": "8c5078ab0984ea1b25d71eae7a5d16c2af76de578d38409cac45da587313068e",
+    "activation_succeeded": true,
+    "one_use_consumed": true,
+    "external_authorization_root_required": false,
+    "active_flags_during_consumed_run": [
+      "credential_access",
+      "provider_contact",
+      "source_qualification",
+      "source_requests"
+    ]
+  },
+  "reviewed_runtime_outcome": {
+    "terminal_execution": "CONFIRMED-FAIL-CONSUMED-NO-RETRY",
+    "failure_stage": "first retained page after raw persistence and schema parsing, before pagination continuation",
+    "failure_reason": "Program 010 response rows are not in ascending received order",
+    "credential_presence_preflight": "PASS",
+    "credential_presence_recheck_under_lock": "PASS",
+    "credential_load_count": 1,
+    "claim_written_immediately_before_first_transport": true,
+    "provider_request_count": 1,
+    "http_response_count": 1,
+    "page_count": 1,
+    "http_status": 200,
+    "response_bytes": 105852,
+    "response_truncated": false,
+    "automatic_retries": 0,
+    "redirects_followed": 0,
+    "raw_body_retained_before_parse": true,
+    "qualification_receipt_created": false,
+    "private_dataset_count": 0
+  },
+  "reviewed_structural_outcome": {
+    "raw_rows_received": 1000,
+    "unique_coordinates_received": 1000,
+    "expected_session_coordinates": 1014,
+    "unexpected_coordinates": 0,
+    "unobserved_after_specification_stop": 14,
+    "json_object_member_order_ascending": false,
+    "per_symbol_timestamp_order_ascending": true,
+    "source_missing_coordinates": 0,
+    "source_missingness_assessed": false,
+    "qualification": "FAIL"
+  },
+  "forensic_review": {
+    "classification": "QUALIFICATION-SPECIFICATION-DEFECT",
+    "source_incompatibility_established": false,
+    "specification_defect_established": true,
+    "json_object_order_basis": "RFC 8259 section 4 defines an object as an unordered collection; object-member encounter order cannot carry a global row-order invariant.",
+    "retrospective_pass_claimed": false,
+    "retrospective_source_missingness_claimed": false,
+    "program_011_rule": "Validate timestamp order inside each symbol array before deterministic symbol-then-timestamp sorting.",
+    "program_011_freshness_rule": "Exclude all previously observed OHLCV, including Program 010 session 2021-05-25, from fresh qualification evidence."
+  },
+  "terminal_revocation": {
+    "guard_path": "src/systematic_trading_lab/program_010_ohlcv_authority.py",
+    "guard_sha256": "4bd3bf4bd6de9e8b563426290663abf1a6b49e4f0eb76381f79d2dc12a0870bf",
+    "root_derivation_rejects_before_credentials_or_private_root": true,
+    "activation_entry_rejects_before_credentials_or_private_root": true,
+    "load_entry_rejects_before_credentials_or_private_root": true,
+    "execution_entry_rejects_before_credentials_or_private_root": true,
+    "missing_terminal_artifact_rejects_before_credentials_or_private_root": true,
+    "malformed_or_hash_mismatched_terminal_artifact_rejects": true,
+    "exact_terminal_sha256_and_fingerprint_bound": true,
+    "terminal_semantics_validated": true,
+    "regression_test_path": "tests/unit/test_program_010_ohlcv_authority.py",
+    "regression_test_sha256": "0c98c30f219bea859b250df9b3e3205c3b2ce22fb7f1ef87cca4e974ce3cf40c"
+  },
+  "challenge_results": [
+    {
+      "number": 1,
+      "challenge": "Was only the exact first frozen request made before the stop?",
+      "answer": "YES; one request and one response were recorded",
+      "verdict": "PASS"
+    },
+    {
+      "number": 2,
+      "challenge": "Were retries and redirects zero?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 3,
+      "challenge": "Was the raw response retained before parsing and continuation?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 4,
+      "challenge": "Was Program 010 left terminal rather than retrospectively changed to PASS?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 5,
+      "challenge": "Does the forensic classification separate unordered JSON members from per-symbol timestamp order?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 6,
+      "challenge": "Was source missingness left unassessed after the specification stop?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 7,
+      "challenge": "Were credentials and raw market content kept out of Git?",
+      "answer": "YES; public artifacts contain hashes, counts, and classifications only",
+      "verdict": "PASS"
+    },
+    {
+      "number": 8,
+      "challenge": "Did any full acquisition, dataset admission, or strategy calculation occur?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 9,
+      "challenge": "Were controlled, protected, PAPER, broker, live, and purchase boundaries untouched?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 10,
+      "challenge": "Are replay and replacement Program 010 authorities prohibited?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 11,
+      "challenge": "Do absent or invalid terminal bindings fail before credentials or private state?",
+      "answer": "YES after the independently reviewed repair",
+      "verdict": "PASS"
+    },
+    {
+      "number": 12,
+      "challenge": "Must Program 011 freeze a corrected rule and genuinely fresh evidence?",
+      "answer": "YES; observed session 2021-05-25 is excluded",
+      "verdict": "PASS"
+    }
+  ],
+  "verified_assertions": {
+    "active_authority_matches_reviewed_child_lineage": true,
+    "claim_matches_active_authority": true,
+    "claim_precedes_first_provider_transport_in_reviewed_path": true,
+    "one_use_authority_is_consumed": true,
+    "credential_load_count_is_one": true,
+    "exact_request_response_page_and_byte_counts_reconcile": true,
+    "automatic_transport_retries_are_zero": true,
+    "redirects_are_zero": true,
+    "raw_first_persistence_completed": true,
+    "terminal_ohlcv_qualification_is_fail": true,
+    "exact_terminal_artifact_blocks_current_authority_paths": true,
+    "absent_terminal_artifact_blocks_current_authority_paths": true,
+    "no_raw_or_reconstructable_ohlcv_entered_git": true,
+    "no_full_acquisition_or_dataset_admission_occurred": true,
+    "no_strategy_calculation_or_return_occurred": true,
+    "controlled_protected_paper_broker_live_and_purchase_state_stayed_untouched": true,
+    "program_010_replay_and_replacement_authority_are_prohibited": true
+  },
+  "verification": {
+    "independent_correctness_review": "PASS-FINDING-FREE-AFTER-ONE-RESOLVED-HIGH-FINDING",
+    "independent_specification_review": "PASS-FINDING-FREE",
+    "independent_standards_review": "PASS-FINDING-FREE",
+    "private_record_cross_hash_audit": "PASS; digest and byte-count metadata only",
+    "independent_private_response_reparse": "NOT-PERFORMED; raw private payload semantics intentionally not inspected",
+    "focused_program_010_authority_tests": "27 passed",
+    "independent_focused_program_010_tests": "56 passed",
+    "sanitized_full_test_suite": "1546 passed, 4 skipped",
+    "ruff": "PASS; 279 files formatted and lint clean",
+    "mypy": "PASS; 274 source files",
+    "secret_and_private_data_scan": "PASS; 644 files scanned",
+    "shell_syntax_diff_and_build_checks": "PASS",
+    "sdist_and_wheel_build": "PASS",
+    "reviewed_working_tree": "clean before this review artifact",
+    "tracked_program_010_private_files": 0
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "Private raw response semantics were intentionally not independently reparsed; the review used hashes, byte counts, coordinate-only forensic results, and reviewed source ordering.",
+    "Exact historical wall-clock ordering cannot be independently re-observed after transport.",
+    "Remote CI, merge, and final clean synchronized-main checks remain delivery steps after this review."
+  ],
+  "scope_limit": "The review made no provider request, credential access, raw response disclosure, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Preserve Program 010 terminal evidence and merge this review. Then create Program 011 prospectively with corrected JSON object-order semantics and genuinely fresh qualification evidence.",
+  "review_fingerprint": "943df3daeb0056c2acce0b6003722db66c25bc62156b46a050896fbdf71b80d7"
+}
