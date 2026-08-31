@@ -101,9 +101,16 @@ def _standing_repository(root: Path) -> None:
         },
         "review_fingerprint",
     )
+    _commit(root, "record standing review", authority.MANDATE_REVIEW_PATH)
 
 
-def _child(root: Path, program_ordinal: int = 10, **updates: Any) -> tuple[Path, Path]:
+def _child(
+    root: Path,
+    program_ordinal: int = 10,
+    *,
+    commit_controls: bool = True,
+    **updates: Any,
+) -> tuple[Path, Path]:
     mandate = json.loads((root / authority.MANDATE_PATH).read_bytes())
     prefix = f"program-{program_ordinal:03d}"
     manifest_relative = Path(f"config/research/{prefix}-test-operation-manifest-v1.json")
@@ -171,6 +178,8 @@ def _child(root: Path, program_ordinal: int = 10, **updates: Any) -> tuple[Path,
         },
         "review_fingerprint",
     )
+    if commit_controls:
+        _commit(root, "record reviewed child", child_relative, review_relative)
     return child_relative, review_relative
 
 
@@ -206,6 +215,8 @@ def test_reviewed_child_derives_nonactivating_identity_without_external_root(
     assert first["atomic_one_use_claim_required"] is True
     assert first["terminal_evidence_required"] is True
     assert first["runtime_entrypoint"] == _RUNTIME_ENTRYPOINT.as_posix()
+    assert first["child_authority"]["source_commit"] == _git(tmp_path, "rev-parse", "HEAD")
+    assert first["child_review"]["source_commit"] == _git(tmp_path, "rev-parse", "HEAD")
 
 
 def test_later_program_uses_the_same_standing_control(tmp_path: Path) -> None:
@@ -265,6 +276,14 @@ def test_runtime_source_change_after_review_fails_closed(tmp_path: Path) -> None
         authority.derive_child_identity(tmp_path, child_path, review_path)
 
 
+def test_untracked_child_controls_fail_closed(tmp_path: Path) -> None:
+    _standing_repository(tmp_path)
+    child_path, review_path = _child(tmp_path, commit_controls=False)
+
+    with pytest.raises(authority.StandingAuthorityError, match="Git provenance"):
+        authority.derive_child_identity(tmp_path, child_path, review_path)
+
+
 @pytest.mark.parametrize("field", ["source_commit", "source_tree"])
 def test_mandate_review_must_bind_real_git_objects(tmp_path: Path, field: str) -> None:
     _standing_repository(tmp_path)
@@ -300,7 +319,7 @@ def test_child_change_after_review_fails_closed(tmp_path: Path) -> None:
     unsigned = {key: value for key, value in child.items() if key != "child_authority_fingerprint"}
     _write(tmp_path / child_path, unsigned, "child_authority_fingerprint")
 
-    with pytest.raises(authority.StandingAuthorityError, match="review semantics differ"):
+    with pytest.raises(authority.StandingAuthorityError, match="current Git commit"):
         authority.derive_child_identity(tmp_path, child_path, review_path)
 
 
@@ -324,5 +343,5 @@ def test_incomplete_child_review_challenges_fail_closed(tmp_path: Path) -> None:
     unsigned = {key: value for key, value in review.items() if key != "review_fingerprint"}
     _write(tmp_path / review_path, unsigned, "review_fingerprint")
 
-    with pytest.raises(authority.StandingAuthorityError, match="review semantics differ"):
+    with pytest.raises(authority.StandingAuthorityError, match="current Git commit"):
         authority.derive_child_identity(tmp_path, child_path, review_path)

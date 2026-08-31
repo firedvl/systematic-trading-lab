@@ -116,7 +116,13 @@ def _load_standing_controls(
         repository, MANDATE_REVIEW_PATH, "review_fingerprint", "standing mandate review"
     )
     _validate_mandate_review(repository, review, mandate_binding)
-    return mandate, mandate_binding, review_binding
+    return (
+        mandate,
+        mandate_binding,
+        _git_tracked_binding(
+            repository, MANDATE_REVIEW_PATH, review_binding, "standing mandate review"
+        ),
+    )
 
 
 def derive_child_identity(
@@ -138,6 +144,12 @@ def derive_child_identity(
     )
     review, review_binding = _load_fingerprinted_artifact(
         repository, review_path, "review_fingerprint", "child authority review"
+    )
+    tracked_child_binding = _git_tracked_binding(
+        repository, child_path, child_binding, "child authority"
+    )
+    tracked_review_binding = _git_tracked_binding(
+        repository, review_path, review_binding, "child authority review"
     )
     required_challenges = _validate_child(
         repository, child, mandate, mandate_binding, child_ordinal
@@ -161,8 +173,8 @@ def derive_child_identity(
         "consumption_boundary": child["consumption_boundary"],
         "standing_mandate": mandate_binding,
         "standing_mandate_review": mandate_review_binding,
-        "child_authority": child_binding,
-        "child_review": review_binding,
+        "child_authority": tracked_child_binding,
+        "child_review": tracked_review_binding,
         "operation_manifest": child["operation_manifest"],
         "runtime_binding": child["runtime_binding"],
         "runtime_entrypoint": child["runtime_entrypoint"],
@@ -367,6 +379,20 @@ def _git(repository: Path, *arguments: str) -> bytes:
     if result.returncode != 0:
         raise StandingAuthorityError("Git provenance cannot be verified")
     return result.stdout
+
+
+def _git_tracked_binding(
+    repository: Path,
+    path: Path,
+    binding: Mapping[str, str],
+    label: str,
+) -> Mapping[str, str]:
+    commit = _git(repository, "rev-parse", "--verify", "HEAD^{commit}").decode().strip()
+    tree = _git(repository, "rev-parse", "--verify", "HEAD^{tree}").decode().strip()
+    committed = _git(repository, "cat-file", "blob", f"{commit}:{path.as_posix()}")
+    if hashlib.sha256(committed).hexdigest() != binding["sha256"]:
+        raise StandingAuthorityError(f"{label} differs from the current Git commit")
+    return {**binding, "source_commit": commit, "source_tree": tree}
 
 
 def _validate_artifact_binding(repository: Path, binding: Mapping[str, Any]) -> None:
