@@ -1585,7 +1585,7 @@ def _require_credentials_present(environ: Mapping[str, str] | None) -> None:
 def _reject_terminal_state(repository: Path) -> None:
     path = repository / str(_TERMINAL_FAILURE["path"])
     if not path.exists():
-        return
+        raise Program010AuthorityError("Program 010 terminal failure artifact is absent")
     failure = _load_bound_artifact(repository, _TERMINAL_FAILURE, "failure_fingerprint")
     authorization = _mapping(failure.get("authorization"), "terminal authorization")
     structural = _mapping(failure.get("structural_results"), "terminal results")
