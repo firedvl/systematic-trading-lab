@@ -73,15 +73,18 @@ policy. No strategy may run before admission.
 
 ## Immutable controls
 
-- Source commit/tree: `15477e31543b132da4994587d993a84fb7af801a` /
-  `6d690298d1939473cd76f45ec106a82c02fa3267`
-- Implementation root: `db3abe746e6d60b4a906137791f545208bb633c9c2a5f3a896f6ed8b17ee928d`
+- Source commit/tree: `1b04483966c4463bb8d84cf504f965d813aa4ee2` /
+  `1f6ae8a7af6e7c8c87d93ead6f0b75b7ebdf525a`
+- Implementation root: `f397c827ceb766e5854ed8007e9591e6f6dc236276e83addfc854fff4258b0df`
 - Implementation SHA-256/fingerprint:
-  `683e411d898c64d4d5ff872368572dec20879555695aa6390f09831f5b01430e` /
-  `19da1ee5205bffc060cdeb860da77b245d8732cc782a415a45140abf762442bc`
+  `6bc00a76f5681cec5ae560ede1fd76a1ae8e02eb6954a0e483b3f129e8ddd05d` /
+  `3a4a310fb9e4eb0baee3439f5a626710c57c1d5070e0546d33fc3b2904a97bb9`
 - Proposal SHA-256/fingerprint:
-  `e87a319a98cda47200d615d1a4cb1416033b545a313fd1d9f63c8791c42b5bb3` /
-  `50747cee0606229b6e79c59f6a204806a415f3b4dde6205c1b5e950651357447`
+  `ed25205a35bb89ce36326c8e554b92661d63b117015ca6762bb65860a4496766` /
+  `ab2da3f3d08b9267c6f03b93e09ccd4cd20bbe8359aba2e6f36fbf507f307ae0`
+
+These v2 controls supersede v1's incorrect literal count of 58 bound tests. V1 remains immutable;
+the source, sample, scientific rules, gates, budgets, and authority are unchanged.
 
 The next gate is a finding-free independent review of the exact implementation and proposal, full
 quality checks, green CI, and a clean synchronized-main merge. A later, separate slice must bind and

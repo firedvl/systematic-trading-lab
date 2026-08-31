@@ -6,13 +6,13 @@ import subprocess
 from pathlib import Path
 from typing import Any, cast
 
-from systematic_trading_lab import program_011_ohlcv as program_011
+import systematic_trading_lab.program_011_ohlcv as program_011
 from systematic_trading_lab.fingerprints import fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
-_IMPLEMENTATION_PATH = Path("config/research/program-011-raw-source-implementation-v1.json")
+_IMPLEMENTATION_PATH = Path("config/research/program-011-raw-source-implementation-v2.json")
 _PROPOSAL_PATH = Path(
-    "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v1.json"
+    "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v2.json"
 )
 
 
@@ -41,8 +41,8 @@ def test_program_011_implementation_is_exact_and_synthetic_only() -> None:
     implementation = _assert_fingerprint(_IMPLEMENTATION_PATH, "implementation_fingerprint")
     binding = implementation["implementation_binding"]
 
-    assert binding["source_commit"] == "15477e31543b132da4994587d993a84fb7af801a"
-    assert binding["source_tree"] == "6d690298d1939473cd76f45ec106a82c02fa3267"
+    assert binding["source_commit"] == "1b04483966c4463bb8d84cf504f965d813aa4ee2"
+    assert binding["source_tree"] == "1f6ae8a7af6e7c8c87d93ead6f0b75b7ebdf525a"
     assert binding["implementation_root"] == fingerprint(binding["source_files"])
     for source in binding["source_files"]:
         committed = subprocess.run(
@@ -71,6 +71,10 @@ def test_program_011_implementation_is_exact_and_synthetic_only() -> None:
     assert implementation["reuse_boundary"]["program_010_terminal_revocation_changed"] is False
     assert implementation["execution_boundary"]["provider_transport_present"] is False
     assert implementation["execution_boundary"]["authority_activation_present"] is False
+    assert implementation["synthetic_verification"]["focused_program_010_and_011_tests"] == (
+        "59 passed"
+    )
+    _assert_binding(implementation["supersedes"]["implementation"])
     assert all(value is False for value in implementation["authority"].values())
 
 
@@ -118,6 +122,8 @@ def test_program_011_proposal_binds_fresh_sample_and_grants_no_authority() -> No
     assert fresh["program_010_2021_05_25_excluded"] is True
 
     assert proposal["external_authorization_root"] is None
+    _assert_binding(proposal["supersedes"]["proposal"])
+    _assert_binding(proposal["supersedes"]["implementation"])
     assert all(value is False for value in proposal["authority"].values())
     assert all(value is False for value in proposal["protected_firewall"].values())
     assert "PLACEHOLDER" not in (_REPOSITORY / _PROPOSAL_PATH).read_text(encoding="utf-8")
