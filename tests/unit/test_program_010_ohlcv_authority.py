@@ -166,6 +166,35 @@ def test_credential_preflight_cli_prints_only_pass_or_missing_names(
     assert all(value not in missing.out + passed.out for value in values.values())
 
 
+def test_terminal_failure_revokes_before_credentials_or_private_state(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    credential_reads: list[bool] = []
+    private_root_opens: list[bool] = []
+    monkeypatch.setattr(
+        authority,
+        "_require_credentials_present",
+        lambda _environ: credential_reads.append(True),
+    )
+    monkeypatch.setattr(
+        authority,
+        "_open_private_root",
+        lambda *_args, **_kwargs: private_root_opens.append(True),
+    )
+
+    for operation in (
+        lambda: authority.derive_active_authority(_REPOSITORY, environ={}),
+        lambda: authority.activate_authority(_REPOSITORY, environ={}),
+        lambda: authority.load_active_authority(_REPOSITORY, environ={}),
+        lambda: authority.execute_qualification(_REPOSITORY, environ={}),
+    ):
+        with pytest.raises(authority.Program010AuthorityError, match="terminally revoked"):
+            operation()
+
+    assert credential_reads == []
+    assert private_root_opens == []
+
+
 def test_internal_child_derivation_enables_only_structural_qualification(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
