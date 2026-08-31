@@ -156,6 +156,8 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-independent-review-v1.json",
         "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-child-authority-v1.json",
         "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-child-authority-independent-review-v1.json",
+        "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-child-authority-v2.json",
+        "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-child-authority-independent-review-v2.json",
         "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-v1.json",
         "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-independent-review-v1.json",
         "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
@@ -228,6 +230,7 @@ def main() -> int:
                         "program-008",
                         "program-009",
                         "program-010",
+                        "program-011",
                     )
                 )
                 and suffix in PRIVATE_MARKET_DATA_SUFFIXES

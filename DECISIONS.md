@@ -1,5 +1,19 @@
 # Architecture decisions
 
+## 2026-08-31 - Validate Program 011 controls before credential presence
+
+- Decision: route Program 011 execution and names-only credential preflight through one credential-free authority validator. Validate the child and review, synchronized-main lineage, protected registrations, and operation contract before checking credential names. Open private state only after controls and credentials pass.
+- Context: independent review found that execution checked credentials before deriving authority and the CLI called the inherited names-only helper without validating any Program 011 control. The first child control therefore could not receive a review.
+- Consequences: preserve child v1 as rejected before review and target an exact v2 child/review pair. Invalid or missing review identity, lineage drift, and chronology conflicts now stop both entry points before credential presence or private-state access. No new authority framework is added.
+- Revisit when: future credential preflights need a different operation contract. Keep the control-before-credential invariant.
+
+## 2026-08-31 - Reuse the reviewed one-use lifecycle for Program 011
+
+- Decision: keep Program 010 terminal and implement Program 011 as a separate fixed runtime that reuses its reviewed transport, persistence, chronology, Git-lock, claim, and terminal-evidence controls. Change only successor identity, fresh chronology, frozen proposal bindings, and the corrected per-symbol timestamp-order rule.
+- Context: Program 010 consumed its only use on an invalid JSON object-member ordering rule. Refactoring the terminal runtime into a new generic authority framework would enlarge the protected-control change before fresh qualification without improving the bounded operation.
+- Consequences: Program 011 remains non-authorizing until an exact source-bound standing child control and finding-free review merge. Its runtime uses a separate ignored evidence root and enables only provider contact, credential access, source requests, and source qualification. Full acquisition, dataset admission, strategy work, controlled/protected access, PAPER, broker writes, live execution, and purchases remain false.
+- Revisit when: the exact child authority is merged and the names-only credential preflight passes, or a review finding requires a prospective runtime correction before transport.
+
 ## 2026-08-31 - Validate Program 011 order per symbol before sorting
 
 - Decision: create Program 011, `multi-hour-sector-etf-research-010`, without authority. Preserve Program 010's tested raw-first pagination engine and every token, duplicate, progress, missingness, coverage, resource, and retry control. Treat JSON object-member order as semantically empty. Require strict timestamp order inside each symbol array, then sort parsed rows by symbol and timestamp before global and cross-page checks.
