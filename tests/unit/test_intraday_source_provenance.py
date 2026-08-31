@@ -239,6 +239,7 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "systematic_trading_lab/program_009_ohlcv_authority.py",
         "systematic_trading_lab/program_010_ohlcv.py",
         "systematic_trading_lab/program_010_ohlcv_authority.py",
+        "systematic_trading_lab/program_011_ohlcv.py",
         "systematic_trading_lab/public_cli.py",
         "systematic_trading_lab/rapid_004.py",
         "systematic_trading_lab/rapid_004_runner.py",
