@@ -9,6 +9,7 @@ import os
 import re
 import stat
 import subprocess
+import tempfile
 from collections.abc import Callable, Mapping, Sequence
 from contextlib import suppress
 from dataclasses import dataclass
@@ -1250,11 +1251,17 @@ class _LockedRoot:
 
 
 class _GitPolicySnapshot:
+    _REFERENCES = ("refs/heads/main", "refs/remotes/origin/main")
+    _LOCK_SCHEMA = "program-010-git-ref-lock-v1"
+    _MAXIMUM_MARKER_BYTES = 1_024
+
     def __init__(self, repository: Path, commit: str) -> None:
         if _HEX_40.fullmatch(commit) is None:
             raise Program010AuthorityError("Program 010 policy commit is invalid")
         self._repository = repository
+        self._commit = commit
         self._locks: list[tuple[Path, int, int, int]] = []
+        self._liveness_descriptor: int | None = None
 
     def __enter__(self) -> None:
         try:
@@ -1275,49 +1282,19 @@ class _GitPolicySnapshot:
                 storage.returncode == 0 and storage.stdout.strip() != "files"
             ):
                 raise Program010AuthorityError("Program 010 Git ref storage is unsupported")
-            for reference in ("refs/heads/main", "refs/remotes/origin/main"):
-                raw_path = subprocess.run(
-                    (
-                        *_git_command(self._repository),
-                        "rev-parse",
-                        "--path-format=absolute",
-                        "--git-path",
-                        reference,
-                    ),
-                    check=True,
-                    capture_output=True,
-                    text=True,
-                    env=_git_environment(),
-                ).stdout.strip()
-                reference_path = Path(raw_path)
-                if not reference_path.is_absolute() or not reference_path.parent.is_dir():
-                    raise Program010AuthorityError("Program 010 Git ref path is invalid")
+            common_directory = self._common_directory()
+            self._acquire_liveness_lock(common_directory)
+            for reference in self._REFERENCES:
+                reference_path = self._reference_path(reference, common_directory)
                 lock_path = Path(f"{reference_path}.lock")
-                descriptor = os.open(
-                    lock_path,
-                    os.O_WRONLY
-                    | os.O_CREAT
-                    | os.O_EXCL
-                    | getattr(os, "O_CLOEXEC", 0)
-                    | getattr(os, "O_NOFOLLOW", 0),
-                    0o600,
-                )
-                try:
-                    metadata = os.fstat(descriptor)
-                except OSError:
-                    os.close(descriptor)
-                    with suppress(OSError):
-                        os.unlink(lock_path)
-                    raise
-                if not stat.S_ISREG(metadata.st_mode) or stat.S_IMODE(metadata.st_mode) & 0o077:
-                    os.close(descriptor)
-                    with suppress(OSError):
-                        os.unlink(lock_path)
-                    raise Program010AuthorityError("Program 010 Git ref lock is invalid")
-                self._locks.append((lock_path, descriptor, metadata.st_dev, metadata.st_ino))
-        except (OSError, subprocess.CalledProcessError, Program010AuthorityError):
+                self._recover_owned_lock(lock_path, reference)
+                self._acquire_ref_lock(lock_path, reference)
+                self._require_direct_reference(reference)
+        except BaseException as error:
             self._release(require_ok=False)
-            raise Program010AuthorityError("Program 010 policy snapshot lock failed") from None
+            if isinstance(error, OSError | subprocess.CalledProcessError | ValueError):
+                raise Program010AuthorityError("Program 010 policy snapshot lock failed") from None
+            raise
 
     def __exit__(self, exception_type: type[BaseException] | None, *_args: object) -> None:
         self._release(require_ok=exception_type is None)
@@ -1338,8 +1315,175 @@ class _GitPolicySnapshot:
                 os.close(descriptor)
             except OSError:
                 failed = True
+        if self._liveness_descriptor is not None:
+            try:
+                os.close(self._liveness_descriptor)
+            except OSError:
+                failed = True
+            self._liveness_descriptor = None
         if require_ok and failed:
             raise Program010AuthorityError("Program 010 policy snapshot unlock failed")
+
+    def _common_directory(self) -> Path:
+        raw_path = subprocess.run(
+            (
+                *_git_command(self._repository),
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-common-dir",
+            ),
+            check=True,
+            capture_output=True,
+            text=True,
+            env=_git_environment(),
+        ).stdout.strip()
+        common_directory = Path(raw_path)
+        if not common_directory.is_absolute() or not common_directory.is_dir():
+            raise Program010AuthorityError("Program 010 Git common directory is invalid")
+        return common_directory.resolve(strict=True)
+
+    def _acquire_liveness_lock(self, common_directory: Path) -> None:
+        descriptor = os.open(
+            common_directory / "program-010-policy.liveness",
+            os.O_RDWR | os.O_CREAT | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+        )
+        try:
+            metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata.st_mode) or stat.S_IMODE(metadata.st_mode) & 0o077:
+                raise Program010AuthorityError("Program 010 policy liveness lock is invalid")
+            fcntl.flock(descriptor, fcntl.LOCK_EX)
+        except BaseException:
+            os.close(descriptor)
+            raise
+        self._liveness_descriptor = descriptor
+
+    def _reference_path(self, reference: str, common_directory: Path) -> Path:
+        raw_path = subprocess.run(
+            (
+                *_git_command(self._repository),
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-path",
+                reference,
+            ),
+            check=True,
+            capture_output=True,
+            text=True,
+            env=_git_environment(),
+        ).stdout.strip()
+        reference_path = Path(raw_path)
+        if (
+            not reference_path.is_absolute()
+            or not reference_path.is_relative_to(common_directory)
+            or reference_path.name != Path(reference).name
+        ):
+            raise Program010AuthorityError("Program 010 Git ref path is invalid")
+        reference_path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+        parent = reference_path.parent.resolve(strict=True)
+        if not parent.is_relative_to(common_directory):
+            raise Program010AuthorityError("Program 010 Git ref path is invalid")
+        return parent / reference_path.name
+
+    def _marker(self, reference: str, commit: str) -> bytes:
+        return (
+            canonical_json(
+                {
+                    "schema_version": self._LOCK_SCHEMA,
+                    "authority_id": CHILD_AUTHORITY_ID,
+                    "policy_commit": commit,
+                    "reference": reference,
+                }
+            )
+            + "\n"
+        ).encode()
+
+    def _recover_owned_lock(self, lock_path: Path, reference: str) -> None:
+        try:
+            descriptor = os.open(
+                lock_path,
+                os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+            )
+        except FileNotFoundError:
+            return
+        try:
+            metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata.st_mode) or stat.S_IMODE(metadata.st_mode) & 0o077:
+                raise Program010AuthorityError("Program 010 existing Git ref lock is not owned")
+            with os.fdopen(descriptor, "rb") as handle:
+                descriptor = -1
+                raw = handle.read(self._MAXIMUM_MARKER_BYTES + 1)
+            marker = _json_object(raw, "Git ref lock marker")
+            commit = str(marker.get("policy_commit"))
+            expected = self._marker(reference, commit)
+            if (
+                _HEX_40.fullmatch(commit) is None
+                or raw != expected
+                or set(marker) != {"schema_version", "authority_id", "policy_commit", "reference"}
+            ):
+                raise Program010AuthorityError("Program 010 existing Git ref lock is not owned")
+            current = os.lstat(lock_path)
+            if current.st_dev != metadata.st_dev or current.st_ino != metadata.st_ino:
+                raise Program010AuthorityError("Program 010 existing Git ref lock changed")
+            os.unlink(lock_path)
+        finally:
+            if descriptor >= 0:
+                os.close(descriptor)
+
+    def _acquire_ref_lock(self, lock_path: Path, reference: str) -> None:
+        descriptor, raw_owner_path = tempfile.mkstemp(
+            prefix=".program-010-policy-owner-", dir=lock_path.parent
+        )
+        owner_path = Path(raw_owner_path)
+        linked = False
+        try:
+            marker = self._marker(reference, self._commit)
+            written = 0
+            while written < len(marker):
+                count = os.write(descriptor, marker[written:])
+                if count <= 0:
+                    raise OSError("Program 010 Git ref lock marker write failed")
+                written += count
+            os.fsync(descriptor)
+            metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata.st_mode) or stat.S_IMODE(metadata.st_mode) & 0o077:
+                raise Program010AuthorityError("Program 010 Git ref lock is invalid")
+            os.link(owner_path, lock_path, follow_symlinks=False)
+            linked = True
+            os.unlink(owner_path)
+            self._locks.append((lock_path, descriptor, metadata.st_dev, metadata.st_ino))
+        except BaseException:
+            if linked:
+                with suppress(OSError):
+                    current = os.lstat(lock_path)
+                    metadata = os.fstat(descriptor)
+                    if current.st_dev == metadata.st_dev and current.st_ino == metadata.st_ino:
+                        os.unlink(lock_path)
+            with suppress(OSError):
+                os.close(descriptor)
+            with suppress(OSError):
+                os.unlink(owner_path)
+            raise
+
+    def _require_direct_reference(self, reference: str) -> None:
+        symbolic = subprocess.run(
+            (*_git_command(self._repository), "symbolic-ref", "-q", reference),
+            check=False,
+            capture_output=True,
+            text=True,
+            env=_git_environment(),
+        )
+        if symbolic.returncode != 1:
+            raise Program010AuthorityError("Program 010 synchronized-main ref is symbolic")
+        commit = subprocess.run(
+            (*_git_command(self._repository), "rev-parse", "--verify", reference),
+            check=True,
+            capture_output=True,
+            text=True,
+            env=_git_environment(),
+        ).stdout.strip()
+        if commit != self._commit:
+            raise Program010AuthorityError("Program 010 synchronized-main ref differs")
 
 
 def _open_private_root(repository: Path, *, create: bool) -> int:

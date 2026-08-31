@@ -5,6 +5,7 @@ import inspect
 import json
 import os
 import subprocess
+import sys
 from collections import defaultdict
 from contextlib import nullcontext
 from pathlib import Path
@@ -42,6 +43,34 @@ def _git(repository: Path, *arguments: str) -> str:
         text=True,
         env=environment,
     ).stdout.strip()
+
+
+def _git_environment() -> dict[str, str]:
+    environment = non_broker_subprocess_environment()
+    environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
+    return environment
+
+
+def _git_policy_repository(repository: Path) -> tuple[str, str]:
+    repository.mkdir(parents=True, exist_ok=True)
+    _git(repository, "init", "-b", "main")
+    _git(repository, "config", "user.name", "Program 010 Test")
+    _git(repository, "config", "user.email", "program-010@example.invalid")
+    _git(repository, "commit", "--allow-empty", "-m", "policy source")
+    commit = _git(repository, "rev-parse", "HEAD")
+    tree = _git(repository, "rev-parse", "HEAD^{tree}")
+    alternate = _git(repository, "commit-tree", tree, "-p", commit, "-m", "alternate")
+    _git(repository, "update-ref", "refs/remotes/origin/main", commit)
+    return commit, alternate
+
+
+def _make_symbolic_main_refs(repository: Path, commit: str) -> None:
+    for reference, target in (
+        ("refs/heads/main", "refs/heads/pinned"),
+        ("refs/remotes/origin/main", "refs/remotes/origin/pinned"),
+    ):
+        _git(repository, "update-ref", target, commit)
+        _git(repository, "symbolic-ref", reference, target)
 
 
 def _active_authority() -> dict[str, object]:
@@ -250,16 +279,8 @@ def test_activation_ref_drift_rejects_before_active_record(
 
 
 def test_git_policy_snapshot_blocks_main_and_origin_ref_updates(tmp_path: Path) -> None:
-    _git(tmp_path, "init", "-b", "main")
-    _git(tmp_path, "config", "user.name", "Program 010 Test")
-    _git(tmp_path, "config", "user.email", "program-010@example.invalid")
-    _git(tmp_path, "commit", "--allow-empty", "-m", "policy source")
-    commit = _git(tmp_path, "rev-parse", "HEAD")
-    tree = _git(tmp_path, "rev-parse", "HEAD^{tree}")
-    alternate = _git(tmp_path, "commit-tree", tree, "-p", commit, "-m", "alternate")
-    _git(tmp_path, "update-ref", "refs/remotes/origin/main", commit)
-    environment = non_broker_subprocess_environment()
-    environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
+    commit, alternate = _git_policy_repository(tmp_path)
+    environment = _git_environment()
 
     with authority._GitPolicySnapshot(tmp_path, commit):
         for reference in ("refs/heads/main", "refs/remotes/origin/main"):
@@ -278,16 +299,8 @@ def test_git_policy_snapshot_blocks_main_and_origin_ref_updates(tmp_path: Path) 
 
 
 def test_git_policy_snapshot_has_no_independent_lock_owner(tmp_path: Path) -> None:
-    _git(tmp_path, "init", "-b", "main")
-    _git(tmp_path, "config", "user.name", "Program 010 Test")
-    _git(tmp_path, "config", "user.email", "program-010@example.invalid")
-    _git(tmp_path, "commit", "--allow-empty", "-m", "policy source")
-    commit = _git(tmp_path, "rev-parse", "HEAD")
-    tree = _git(tmp_path, "rev-parse", "HEAD^{tree}")
-    alternate = _git(tmp_path, "commit-tree", tree, "-p", commit, "-m", "alternate")
-    _git(tmp_path, "update-ref", "refs/remotes/origin/main", commit)
-    environment = non_broker_subprocess_environment()
-    environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
+    commit, alternate = _git_policy_repository(tmp_path)
+    environment = _git_environment()
     snapshot = authority._GitPolicySnapshot(tmp_path, commit)
     snapshot.__enter__()
     try:
@@ -306,6 +319,118 @@ def test_git_policy_snapshot_has_no_independent_lock_owner(tmp_path: Path) -> No
             assert _git(tmp_path, "rev-parse", reference) == commit
     finally:
         snapshot.__exit__(None)
+
+
+def test_git_policy_snapshot_supports_packed_files_refs(tmp_path: Path) -> None:
+    commit, alternate = _git_policy_repository(tmp_path)
+    _git(tmp_path, "pack-refs", "--all", "--prune")
+
+    with authority._GitPolicySnapshot(tmp_path, commit):
+        for reference in ("refs/heads/main", "refs/remotes/origin/main"):
+            result = subprocess.run(
+                ("git", "-C", str(tmp_path), "update-ref", reference, alternate, commit),
+                check=False,
+                capture_output=True,
+                env=_git_environment(),
+            )
+            assert result.returncode != 0
+            assert _git(tmp_path, "rev-parse", reference) == commit
+
+
+def test_symbolic_main_refs_reject_activation_and_execution(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    activation_repository = tmp_path / "activation"
+    activation_commit, _ = _git_policy_repository(activation_repository)
+    execution_repository = tmp_path / "execution"
+    execution_commit, _ = _git_policy_repository(execution_repository)
+    active = {
+        activation_repository.resolve(): {
+            **_active_authority(),
+            "control_lineage": {"synchronized_main_commit": activation_commit},
+        },
+        execution_repository.resolve(): {
+            **_active_authority(),
+            "control_lineage": {"synchronized_main_commit": execution_commit},
+        },
+    }
+    monkeypatch.setattr(
+        authority,
+        "derive_active_authority",
+        lambda repository, **_kwargs: active[repository.resolve()],
+    )
+    monkeypatch.setattr(authority, "validate_operation_contract", lambda *_args, **_kwargs: {})
+
+    _make_symbolic_main_refs(activation_repository, activation_commit)
+    with pytest.raises(authority.Program010AuthorityError, match="snapshot lock failed"):
+        authority.activate_authority(activation_repository, environ=_credentials())
+    assert not (activation_repository / authority.PRIVATE_ROOT / "active-authority.json").exists()
+
+    authority.activate_authority(execution_repository, environ=_credentials())
+    _make_symbolic_main_refs(execution_repository, execution_commit)
+    transport = authority.MockBarsTransport([raw_contract.RawResponse(200, b"{}")])
+    with pytest.raises(authority.Program010AuthorityError, match="snapshot lock failed"):
+        authority._execute_mock_qualification(
+            execution_repository,
+            environ=_credentials(),
+            transport=transport,
+        )
+    root = execution_repository / authority.PRIVATE_ROOT
+    assert not (root / "claim.json").exists()
+    assert not (root / "terminal-failure.json").exists()
+    assert transport.intents == ()
+
+
+def test_git_policy_snapshot_recovers_owned_locks_after_abrupt_exit(tmp_path: Path) -> None:
+    commit, alternate = _git_policy_repository(tmp_path)
+    code = (
+        "from pathlib import Path; import os,sys; "
+        "from systematic_trading_lab.program_010_ohlcv_authority "
+        "import _GitPolicySnapshot; "
+        "_GitPolicySnapshot(Path(sys.argv[1]), sys.argv[2]).__enter__(); os._exit(0)"
+    )
+    subprocess.run(
+        (sys.executable, "-c", code, str(tmp_path), commit),
+        check=True,
+        env=_git_environment(),
+    )
+    lock_paths = tuple(
+        Path(
+            f"{_git(tmp_path, 'rev-parse', '--path-format=absolute', '--git-path', reference)}.lock"
+        )
+        for reference in ("refs/heads/main", "refs/remotes/origin/main")
+    )
+    assert all(path.is_file() for path in lock_paths)
+
+    with authority._GitPolicySnapshot(tmp_path, commit):
+        for reference in ("refs/heads/main", "refs/remotes/origin/main"):
+            result = subprocess.run(
+                ("git", "-C", str(tmp_path), "update-ref", reference, alternate, commit),
+                check=False,
+                capture_output=True,
+                env=_git_environment(),
+            )
+            assert result.returncode != 0
+    assert not any(path.exists() for path in lock_paths)
+
+
+def test_git_policy_snapshot_preserves_unowned_git_lock(tmp_path: Path) -> None:
+    commit, _ = _git_policy_repository(tmp_path)
+    reference_path = _git(
+        tmp_path, "rev-parse", "--path-format=absolute", "--git-path", "refs/heads/main"
+    )
+    lock_path = Path(f"{reference_path}.lock")
+    content = (commit + "\n").encode()
+    lock_path.write_bytes(content)
+    lock_path.chmod(0o600)
+
+    with (
+        pytest.raises(authority.Program010AuthorityError, match="snapshot lock failed"),
+        authority._GitPolicySnapshot(tmp_path, commit),
+    ):
+        pass
+
+    assert lock_path.read_bytes() == content
 
 
 def test_fixed_get_endpoint_rejects_mutation() -> None:
