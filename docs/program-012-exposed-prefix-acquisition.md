@@ -1,12 +1,15 @@
 # Program 012 exposed-prefix acquisition
 
-Program 012, `multi-hour-sector-etf-research-011`, is `PROPOSED-NOT-AUTHORIZED`. It defines a
+Program 012, `multi-hour-sector-etf-research-011`, is `PROPOSED-NOT-AUTHORIZED`. Proposal v2 defines a
 raw-only Alpaca SIP acquisition and a new prefix-specific structural admission. It does not enact
 Program 002 admission, evaluate its quote grid, or authorize a strategy.
 
 Proposal SHA-256/fingerprint is
-`8eff48cb37b900d3c00a9ad6078a306fce32d2ae1fea2a6461572b587008b013` /
-`4457697ccb844155b1c499d9941025900944ea5719203706648e73b4dd5e795b`.
+`06a2d2544def3443040e104f246458cd79a8205820a059efef037751f053ef74` /
+`696c4e44ffa4aa1053ee5ea131dea6c3a8a639f2a22f1aff630fd24a142d60e8`.
+V1 remains immutable and is superseded before execution: review found that it did not require a
+durable intent before dispatch, did not scope credential loads across process recovery, and applied
+its exact-nine-coordinate rule too broadly. V2 changes no chronology, admission ceiling, or authority.
 
 ## Chronology
 
@@ -38,9 +41,12 @@ The 1,386 chains imply 2,760 nominal responses when complete. The hard limits ar
 and responses, 8 MiB per page and session, 4 GiB total response bytes, 8 GiB working disk, 120
 requests per minute, one credential load, one sequential chain, and zero retries.
 
-A restart may reparse an exact completed page and continue from its stored token, or start a session
-that was never invoked. It may never reissue a request. An intent without a complete page, an
-unreceipted body, or a changed checkpoint is terminal failure.
+Before each dispatch, the runtime must create and fsync an intent bound to the authority, source,
+session, page, request identity, and exact private URL. A restart may reparse an exact completed page
+and continue from its stored token, or start a session with no intent. An intent without a complete
+page, an unreceipted body, or a changed checkpoint is terminal failure and may not cause a second
+request. Each validated process may load credentials once; recovery loads are counted in terminal
+evidence, credential values are never persisted, and process restarts are never automatic.
 
 ## Structural policy
 
@@ -48,6 +54,10 @@ Program 012 keeps the five exact pre-exposed quarantine dates. They remain exclu
 provider now returns every coordinate. Any context or early-close omission fails admission. A
 missing coordinate on another full session excludes that whole session without fill, interpolation,
 symbol dropping, reranking, or date replacement.
+
+On a fixed quarantine date, any missing coordinate outside the exact nine-coordinate incident
+inventory fails admission. That rule does not consume the one allowed nonquarantine slot: one
+isolated nonquarantine full-session loss may pass only when every concentration gate also passes.
 
 The protected truncation requires a new prospective denominator. Applying the old rate without
 weakening it gives `floor(1354 * 7 / 1499) = 6`, so the five fixed dates leave one unexpected

@@ -13,8 +13,11 @@ from systematic_trading_lab.domain import Timeframe
 from systematic_trading_lab.fingerprints import fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
-_PROPOSAL_PATH = Path(
+_V1_PROPOSAL_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v1.json"
+)
+_PROPOSAL_PATH = Path(
+    "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v2.json"
 )
 
 
@@ -47,6 +50,10 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     assert stored_fingerprint == fingerprint(proposal)
     for binding in proposal["bindings"].values():
         _assert_binding(binding)
+    assert proposal["supersedes"]["proposal"]["path"] == _V1_PROPOSAL_PATH.as_posix()
+    _assert_binding(proposal["supersedes"]["proposal"])
+    assert proposal["supersedes"]["v1_provider_requests"] == 0
+    assert proposal["supersedes"]["v1_market_observations"] == 0
 
     chronology = proposal["chronology"]
     request = chronology["request_range"]
@@ -83,6 +90,9 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     assert budget["nominal_complete_requests_and_responses"] == 1_374 * 2 + 12 == 2_760
     assert budget["maximum_requests_and_responses"] == 1_386 * 16 == 22_176
     assert budget["automatic_retries"] == budget["parallel_session_chains"] - 1 == 0
+    assert budget["credential_loads_per_process_max"] == 1
+    assert budget["automatic_process_restart_attempts"] == 0
+    assert budget["recovery_credential_loads_counted"] is True
 
     source = proposal["source_contract"]
     assert (
@@ -130,8 +140,20 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     assert pagination["incomplete_chain_allows_dataset_admission"] is False
     restart = proposal["restart_contract"]
     assert restart["restart_safe_required"] is True
+    assert restart["process_recovery_allowed"] is True
+    assert restart["automatic_process_restart_attempts"] == 0
+    assert restart["request_intent_fsynced_before_transport"] is True
+    assert restart["request_intent_binds"] == [
+        "active authority fingerprint",
+        "source commit",
+        "session",
+        "page index",
+        "request identity",
+        "exact private URL including the incoming page token when present",
+    ]
     assert restart["request_reissue_allowed"] is False
     assert restart["completed_session_reacquisition_allowed"] is False
+    assert restart["transport_without_fsynced_intent"] == "PROHIBITED-BY-RUNTIME-ORDERING"
     assert restart["intent_without_completed_page"] == (
         "AMBIGUOUS-SEND-TERMINAL-FAIL-CONSUMED-NO-RETRY"
     )
@@ -139,6 +161,9 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
         "AMBIGUOUS-PERSISTENCE-TERMINAL-FAIL-CONSUMED-NO-RETRY"
     )
     assert restart["changed_or_unverifiable_checkpoint"] == "FAIL-CONSUMED-NO-RETRY"
+    assert restart["credential_loads_per_process_max"] == 1
+    assert restart["credential_values_persisted_for_recovery"] is False
+    assert restart["recovery_credential_loads_counted_in_terminal_evidence"] is True
     assert restart["transport_retries"] == 0
     evidence = proposal["evidence_contract"]
     assert evidence["create_only_raw_pages"] is True
@@ -150,6 +175,12 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     assert loss["overall_excluded_full_session_count_max"] == floor(1_354 * 7 / 1_499) == 6
     assert loss["unexpected_excluded_full_session_count_max"] == (
         6 - missingness["fixed_quarantine"]["session_count"]
+    )
+    assert missingness["fixed_quarantine"]["action"] == (
+        "Exclude all five sessions even if every coordinate is now present. On those five "
+        "sessions only, any missing coordinate outside the exact nine-coordinate incident "
+        "inventory fails admission. Missingness on another full session follows the one-slot "
+        "unexpected-exclusion policy."
     )
     clock = missingness["fixed_clock_concentration"]
     assert clock["uniform_coordinate_population"] == 1_354 * 78
@@ -184,4 +215,15 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
             "dataset_admission_runtime_added",
         )
     )
+    assert implementation["required_restart_tests"] == [
+        "a crash after the fsynced intent but before a complete receipted page terminates "
+        "without a second transport call",
+        "a new process resumes after a completed nonterminal page, loads credentials once, "
+        "records the load, and sends only the recorded continuation request",
+    ]
+    assert implementation["required_missingness_tests"] == [
+        "one isolated policy-compliant nonquarantine full-session loss passes structural admission",
+        "one extra missing coordinate on a fixed quarantine session fails structural admission",
+    ]
     assert implementation["focused_tests_required"] is True
+    assert "PLACEHOLDER" not in (_REPOSITORY / _PROPOSAL_PATH).read_text(encoding="utf-8")
