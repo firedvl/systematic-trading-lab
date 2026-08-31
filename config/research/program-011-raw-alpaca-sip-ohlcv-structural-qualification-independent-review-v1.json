@@ -1,0 +1,169 @@
+{
+  "schema_version": "program-011-raw-alpaca-sip-ohlcv-structural-qualification-independent-review-v1",
+  "review_id": "program-011-raw-alpaca-sip-ohlcv-structural-qualification-independent-review-2026-08-31-v1",
+  "program_id": "multi-hour-sector-etf-research-010",
+  "reviewed_at": "2026-08-31T08:46:45Z",
+  "status": "PASS-FINDING-FREE-PROSPECTIVE-DESIGN-AND-PROPOSAL-REVIEW",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_source": {
+    "base_commit": "83c55655351b98744679b928165dc3c6a93ef98d",
+    "source_commit": "bc9e4fa926c69f08262215eeeca33f7413df3d63",
+    "source_tree": "3a3649938d98e2724b96626d4b44f8440225400a",
+    "diff_sha256": "f887c9bd8f7c8e0e8b49a02bd1798a4d2f78fa3afec2477cf2dc0af62feb40fb",
+    "change_commits": [
+      "1c5380d6cb994fc92767b6de244a993bbe7c9032",
+      "15477e31543b132da4994587d993a84fb7af801a",
+      "61ae016b38eaa09b571f1789099c2e2d72bc76c4",
+      "5e824b3627a4d226390d73dc111f08fd5861435e",
+      "1b04483966c4463bb8d84cf504f965d813aa4ee2",
+      "03deee3adc22db5020dd6b10553683eec5d46dfe",
+      "bc9e4fa926c69f08262215eeeca33f7413df3d63"
+    ]
+  },
+  "reviewed_artifacts": {
+    "program_011_implementation_v1": {
+      "path": "config/research/program-011-raw-source-implementation-v1.json",
+      "sha256": "683e411d898c64d4d5ff872368572dec20879555695aa6390f09831f5b01430e",
+      "fingerprint": "19da1ee5205bffc060cdeb860da77b245d8732cc782a415a45140abf762442bc"
+    },
+    "program_011_proposal_v1": {
+      "path": "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v1.json",
+      "sha256": "e87a319a98cda47200d615d1a4cb1416033b545a313fd1d9f63c8791c42b5bb3",
+      "fingerprint": "50747cee0606229b6e79c59f6a204806a415f3b4dde6205c1b5e950651357447"
+    },
+    "program_011_implementation_v2": {
+      "path": "config/research/program-011-raw-source-implementation-v2.json",
+      "sha256": "6bc00a76f5681cec5ae560ede1fd76a1ae8e02eb6954a0e483b3f129e8ddd05d",
+      "fingerprint": "3a4a310fb9e4eb0baee3439f5a626710c57c1d5070e0546d33fc3b2904a97bb9"
+    },
+    "program_011_proposal_v2": {
+      "path": "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v2.json",
+      "sha256": "ed25205a35bb89ce36326c8e554b92661d63b117015ca6762bb65860a4496766",
+      "fingerprint": "ab2da3f3d08b9267c6f03b93e09ccd4cd20bbe8359aba2e6f36fbf507f307ae0"
+    }
+  },
+  "review_axes": {
+    "standards": {
+      "reviewer": "independent read-only final reviewer",
+      "verdict": "PASS",
+      "findings": []
+    },
+    "specification": {
+      "reviewer": "independent read-only final reviewer",
+      "verdict": "PASS",
+      "findings": []
+    }
+  },
+  "v2_correction": {
+    "v1_immutable": true,
+    "v1_literal_bound_test_count": "58 passed",
+    "actual_bound_test_count": "59 passed",
+    "scientific_contract_changed": false,
+    "authority_contract_changed": false
+  },
+  "challenge_results": [
+    {
+      "number": 1,
+      "challenge": "Does Program 011 preserve Program 010 terminal immutability and revocation?",
+      "answer": "YES; Program 010 lifecycle code is unchanged and remains fail-closed",
+      "verdict": "PASS"
+    },
+    {
+      "number": 2,
+      "challenge": "Does Program 011 reject timestamp equality or regression inside each received symbol array before normalization?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 3,
+      "challenge": "Does deterministic sorting occur only after per-symbol received-order validation?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 4,
+      "challenge": "Do inherited duplicate, token, progress, repeated-page, frontier, missingness, coverage, and resource controls remain active?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 5,
+      "challenge": "Is the five-session 4,602-coordinate sample fresh against Programs 002-010 observations and protected chronology?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 6,
+      "challenge": "Does v2 preserve v1 while correcting only the bound-test evidence count?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 7,
+      "challenge": "Are implementation and proposal SHA-256, canonical fingerprints, Git source bindings, and supersession bindings exact?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 8,
+      "challenge": "Does the design grant credential, provider, dataset, strategy, protected, PAPER, broker, live, or purchase authority?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 9,
+      "challenge": "Does the Program 011 source addition preserve the closed Campaign v2 source boundary?",
+      "answer": "YES; it is explicitly outside the immutable reviewed surface",
+      "verdict": "PASS"
+    },
+    {
+      "number": 10,
+      "challenge": "Does the exact design change alter a standing-mandate reviewed source file?",
+      "answer": "NO",
+      "verdict": "PASS"
+    }
+  ],
+  "verification": {
+    "bound_program_010_and_011_behavior_and_authority_tests": "59 passed",
+    "program_011_proposal_binding_tests": "2 passed",
+    "closed_campaign_v2_source_surface_tests": "PASS",
+    "standing_mandate_source_binding": "PASS",
+    "v1_v2_sha256_fingerprint_source_and_supersession_bindings": "PASS",
+    "fresh_sample_rederivation": "PASS",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "secret_and_private_data_scan": "PASS",
+    "diff_check": "PASS",
+    "pre_review_artifact_full_pytest": "1556 passed, 4 skipped",
+    "shell_syntax": "PASS",
+    "package_build": "PASS",
+    "full_repository_gates_after_review_artifact_binding": "PENDING",
+    "remote_ci_merge_and_post_merge_provenance": "PENDING"
+  },
+  "proof_gaps": [
+    "Private raw Program 010 market evidence was intentionally not inspected by the final reviewer.",
+    "No credentials, provider transport, or real Program 011 execution were attempted in this design review.",
+    "Post-binding full repository gates, remote CI, merge, and synchronized-main verification remain delivery steps."
+  ],
+  "scope_limit": "The review made no credential check or access, provider request, new market observation, active authority, dataset admission, strategy calculation or return, controlled or protected access, PAPER action, broker write, live action, or purchase.",
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Run full gates, merge through green CI, synchronize main, then create and independently review a separate exact one-use Program 011 standing child authority before names-only credential preflight or provider transport.",
+  "review_fingerprint": "83eeda356a807b266fb93c3e477e7e73469c05f8dca74bf9901c7de075f12b92"
+}

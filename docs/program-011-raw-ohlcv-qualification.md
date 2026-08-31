@@ -86,7 +86,11 @@ policy. No strategy may run before admission.
 These v2 controls supersede v1's incorrect literal count of 58 bound tests. V1 remains immutable;
 the source, sample, scientific rules, gates, budgets, and authority are unchanged.
 
-The next gate is a finding-free independent review of the exact implementation and proposal, full
-quality checks, green CI, and a clean synchronized-main merge. A later, separate slice must bind and
-review an exact one-use standing child authority before names-only credential preflight, activation,
-or provider transport.
+The finding-free independent review binds source commit
+`bc9e4fa926c69f08262215eeeca33f7413df3d63`. Review SHA-256/fingerprint is
+`f66d7aa735ef48005c911bc68a5c3fc45c9aa41b0015b1f7916d0b77b1490332` /
+`83eeda356a807b266fb93c3e477e7e73469c05f8dca74bf9901c7de075f12b92`.
+
+The next gate is full post-binding quality checks, green CI, and a clean synchronized-main merge. A
+later, separate slice must bind and review an exact one-use standing child authority before
+names-only credential preflight, activation, or provider transport.

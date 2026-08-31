@@ -14,6 +14,9 @@ _IMPLEMENTATION_PATH = Path("config/research/program-011-raw-source-implementati
 _PROPOSAL_PATH = Path(
     "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-proposal-v2.json"
 )
+_REVIEW_PATH = Path(
+    "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-independent-review-v1.json"
+)
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -127,3 +130,24 @@ def test_program_011_proposal_binds_fresh_sample_and_grants_no_authority() -> No
     assert all(value is False for value in proposal["authority"].values())
     assert all(value is False for value in proposal["protected_firewall"].values())
     assert "PLACEHOLDER" not in (_REPOSITORY / _PROPOSAL_PATH).read_text(encoding="utf-8")
+
+
+def test_program_011_independent_review_is_bound_and_finding_free() -> None:
+    review = _assert_fingerprint(_REVIEW_PATH, "review_fingerprint")
+    for binding in review["reviewed_artifacts"].values():
+        _assert_binding(binding)
+
+    source = review["reviewed_source"]
+    assert source["base_commit"] == "83c55655351b98744679b928165dc3c6a93ef98d"
+    assert source["source_commit"] == "bc9e4fa926c69f08262215eeeca33f7413df3d63"
+    assert source["source_tree"] == "3a3649938d98e2724b96626d4b44f8440225400a"
+    assert source["diff_sha256"] == (
+        "f887c9bd8f7c8e0e8b49a02bd1798a4d2f78fa3afec2477cf2dc0af62feb40fb"
+    )
+    assert len(source["change_commits"]) == 7
+    assert review["verdict"] == "PASS"
+    assert review["findings"] == []
+    assert review["v2_correction"]["v1_immutable"] is True
+    assert review["v2_correction"]["actual_bound_test_count"] == "59 passed"
+    assert all(result["verdict"] == "PASS" for result in review["challenge_results"])
+    assert all(value is False for value in review["authority"].values())
