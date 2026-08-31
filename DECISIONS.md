@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-08-30 - Use typed protected-chronology registrations
+
+- Decision: make exact `protected-chronology-registration-v1` artifacts with `ACTIVE-SEALED-PROTECTED-RANGE` status the sole protected-range registration interface. Require the canonical inventory to list every active registration by path and SHA-256, cross-check its derived ranges against the five existing primary controls, and make every data-reading child enumerate all `config/research` JSON artifacts in its reviewed source commit before credentials or private state.
+- Context: the initial Program 010 inventory bound the five known primary controls, but an additional sealed artifact already present in a later child's selected source commit could remain outside that closed list. Restricting the source-to-child Git delta prevents later drift but cannot discover an omission already frozen into the source commit. Keyword scans cannot distinguish active controls from historical review prose and false authority fields.
+- Consequences: current registration fingerprint/SHA-256 is `2ec67b1895290e6fbe7e48e7aefb23219ced568c3a86fc7b82263f0e6bb238bc` / `29d407e0d278aa30dbe107c028f696b99965c89edae938115bdbbf44bd916182`; canonical inventory fingerprint/SHA-256 is `79492d99a6699ad20642926a390b364796dbc24852fbaad94070935aded7eaf3` / `ee2359e907f97d4fc039408e9f6bb16562ac515cd10c4b5e87867c0852867782`. Unknown, omitted, duplicated, malformed, hash-mismatched, stale, or inverted active registrations fail before credential checks, private-state creation, or provider access.
+- Revisit only through a successor typed registration and inventory. A new schema or status requires a separately reviewed runtime change; prose or an arbitrary JSON field does not register chronology.
+
 ## 2026-08-30 - Adopt a standing exposed-research mandate
 
 - Decision: record the exact user grant as immutable repository evidence and use it as the authority origin for prospective Program 010 and later public, exposed, and fresh prospective exposed work. Keep Programs 005-009 unchanged. Require each future operation to have a bounded Git-tracked child control, a finding-free Git-tracked review, an exact operation manifest and runtime binding, concrete runtime validation, revalidation before activation, an atomic one-use claim, and terminal evidence. The shared verifier derives a nonactivating identity; concrete runtimes own activation and execution.

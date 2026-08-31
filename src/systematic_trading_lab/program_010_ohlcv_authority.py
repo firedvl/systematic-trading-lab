@@ -42,6 +42,9 @@ PROTECTED_CHRONOLOGY_SOURCE_PATHS = (
     Path("config/research/intraday-exposed-002-june-reservation-v1.json"),
     Path("config/research/intraday-v3-period-selection-v2.json"),
 )
+PROTECTED_CHRONOLOGY_REGISTRATION_PATHS = (
+    Path("config/research/protected-chronology-registrations/standing-protected-ranges-v1.json"),
+)
 
 CHILD_AUTHORITY_PATH = Path(
     "config/research/program-010-raw-alpaca-sip-ohlcv-structural-qualification-"
@@ -69,6 +72,8 @@ _ENABLED_AUTHORITY = {
     "source_requests",
     "source_qualification",
 }
+_PROTECTED_REGISTRATION_SCHEMA = "protected-chronology-registration-v1"
+_PROTECTED_REGISTRATION_STATUS = "ACTIVE-SEALED-PROTECTED-RANGE"
 _DIRECTORY_FLAGS = (
     os.O_RDONLY
     | getattr(os, "O_CLOEXEC", 0)
@@ -237,8 +242,6 @@ def derive_active_authority(
     """Derive the concrete active record from the reviewed standing child."""
     repository = _repository(repository)
     identity = derive_child_identity(repository, CHILD_AUTHORITY_PATH, CHILD_REVIEW_PATH)
-    validate_operation_contract(repository)
-    lineage = _repository_preflight(repository, identity)
     authority = _mapping(identity.get("authority"), "child authority")
     runtime = _mapping(identity.get("runtime_binding"), "child runtime binding")
     source_paths = {
@@ -248,6 +251,7 @@ def derive_active_authority(
     required_protected_paths = {
         PROTECTED_CHRONOLOGY_PATH.as_posix(),
         *(path.as_posix() for path in PROTECTED_CHRONOLOGY_SOURCE_PATHS),
+        *(path.as_posix() for path in PROTECTED_CHRONOLOGY_REGISTRATION_PATHS),
     }
     if (
         identity.get("child_authority_id") != CHILD_AUTHORITY_ID
@@ -260,6 +264,9 @@ def derive_active_authority(
         or {key for key, value in authority.items() if value} != _ENABLED_AUTHORITY
     ):
         raise Program010AuthorityError("Program 010 reviewed child identity differs")
+    lineage = _repository_preflight(repository, identity)
+    _validate_protected_registration_set(repository, str(runtime.get("source_commit")))
+    validate_operation_contract(repository)
     _require_credentials_present(environ)
     unsigned: dict[str, Any] = {
         "schema_version": "program-010-raw-sip-qualification-active-authority-v1",
@@ -855,7 +862,7 @@ def _validate_chronology(
         raise Program010AuthorityError("Program 010 fresh exposed chronology differs")
 
 
-def _current_protected_ranges(repository: Path) -> tuple[tuple[date, date], ...]:
+def _protected_chronology_inventory(repository: Path) -> Mapping[str, Any]:
     try:
         raw = (repository / PROTECTED_CHRONOLOGY_PATH).read_bytes()
     except OSError as error:
@@ -864,6 +871,12 @@ def _current_protected_ranges(repository: Path) -> tuple[tuple[date, date], ...]
     unsigned = dict(inventory)
     stored_fingerprint = unsigned.pop("inventory_fingerprint", None)
     sources = _mapping(inventory.get("source_artifacts"), "protected chronology sources")
+    registrations = tuple(
+        _mapping(value, "protected chronology registration")
+        for value in _sequence(
+            inventory.get("registration_artifacts"), "protected chronology registrations"
+        )
+    )
     expected_paths = {
         "controlled_ranges": PROTECTED_CHRONOLOGY_SOURCE_PATHS[0],
         "daily_independent_range": PROTECTED_CHRONOLOGY_SOURCE_PATHS[1],
@@ -882,8 +895,24 @@ def _current_protected_ranges(repository: Path) -> tuple[tuple[date, date], ...]
             != path.as_posix()
             for name, path in expected_paths.items()
         )
+        or tuple(item.get("path") for item in registrations)
+        != tuple(path.as_posix() for path in PROTECTED_CHRONOLOGY_REGISTRATION_PATHS)
+        or any(set(item) != {"path", "sha256"} for item in registrations)
     ):
         raise Program010AuthorityError("Program 010 protected chronology control differs")
+    return inventory
+
+
+def _current_protected_ranges(repository: Path) -> tuple[tuple[date, date], ...]:
+    inventory = _protected_chronology_inventory(repository)
+    sources = _mapping(inventory.get("source_artifacts"), "protected chronology sources")
+    expected_paths = {
+        "controlled_ranges": PROTECTED_CHRONOLOGY_SOURCE_PATHS[0],
+        "daily_independent_range": PROTECTED_CHRONOLOGY_SOURCE_PATHS[1],
+        "strategic_allocation_range": PROTECTED_CHRONOLOGY_SOURCE_PATHS[2],
+        "june_reservation": PROTECTED_CHRONOLOGY_SOURCE_PATHS[3],
+        "intraday_v3_selection": PROTECTED_CHRONOLOGY_SOURCE_PATHS[4],
+    }
 
     artifacts = {
         name: _load_sha256_artifact(
@@ -941,6 +970,19 @@ def _current_protected_ranges(repository: Path) -> tuple[tuple[date, date], ...]
         ("controlled-a", *_range_boundaries(controlled, "controlled_a")),
         ("controlled-b", *_range_boundaries(controlled, "controlled_b")),
     )
+    registered = tuple(
+        item
+        for binding in _sequence(
+            inventory.get("registration_artifacts"), "protected chronology registrations"
+        )
+        for item in _registered_ranges(
+            _load_sha256_artifact(
+                repository,
+                _mapping(binding, "protected chronology registration"),
+            ),
+            "protected chronology registration",
+        )
+    )
     declared = tuple(
         (item.get("id"), item.get("start"), item.get("end"))
         for item in (
@@ -948,7 +990,11 @@ def _current_protected_ranges(repository: Path) -> tuple[tuple[date, date], ...]
             for value in _sequence(inventory.get("ranges"), "protected chronology ranges")
         )
     )
-    if declared != derived:
+    if (
+        declared != derived
+        or registered != derived
+        or len({identifier for identifier, _, _ in registered}) != len(registered)
+    ):
         raise Program010AuthorityError("Program 010 protected chronology inventory is stale")
     try:
         protected_ranges = tuple(
@@ -964,9 +1010,127 @@ def _current_protected_ranges(repository: Path) -> tuple[tuple[date, date], ...]
     return protected_ranges
 
 
+def _registered_ranges(
+    registration: Mapping[str, Any], label: str
+) -> tuple[tuple[str, str, str], ...]:
+    unsigned = dict(registration)
+    stored_fingerprint = unsigned.pop("registration_fingerprint", None)
+    values = tuple(
+        _mapping(value, f"{label} range")
+        for value in _sequence(registration.get("ranges"), f"{label} ranges")
+    )
+    if (
+        set(registration)
+        != {
+            "schema_version",
+            "registration_id",
+            "status",
+            "ranges",
+            "registration_fingerprint",
+        }
+        or registration.get("schema_version") != _PROTECTED_REGISTRATION_SCHEMA
+        or registration.get("status") != _PROTECTED_REGISTRATION_STATUS
+        or not isinstance(registration.get("registration_id"), str)
+        or _EVIDENCE_KEY.fullmatch(str(registration.get("registration_id"))) is None
+        or not values
+        or stored_fingerprint != fingerprint(unsigned)
+        or any(set(value) != {"id", "start", "end"} for value in values)
+    ):
+        raise Program010AuthorityError("Program 010 protected registration differs")
+    ranges = tuple((value.get("id"), value.get("start"), value.get("end")) for value in values)
+    if any(
+        not isinstance(identifier, str)
+        or _EVIDENCE_KEY.fullmatch(identifier) is None
+        or not isinstance(start, str)
+        or not isinstance(end, str)
+        for identifier, start, end in ranges
+    ) or len({identifier for identifier, _, _ in ranges}) != len(ranges):
+        raise Program010AuthorityError("Program 010 protected registration differs")
+    normalized = tuple(
+        (cast(str, identifier), cast(str, start), cast(str, end))
+        for identifier, start, end in ranges
+    )
+    try:
+        parsed = tuple(
+            (date.fromisoformat(start), date.fromisoformat(end)) for _, start, end in normalized
+        )
+    except ValueError as error:
+        raise Program010AuthorityError(
+            "Program 010 protected registration dates are invalid"
+        ) from error
+    if any(start > end for start, end in parsed):
+        raise Program010AuthorityError("Program 010 protected registration range is inverted")
+    return normalized
+
+
 def _range_boundaries(value: Mapping[str, Any], key: str) -> tuple[Any, Any]:
     item = _mapping(value.get(key), f"{key} range")
     return item.get("start"), item.get("end")
+
+
+def _validate_protected_registration_set(repository: Path, source_commit: str) -> None:
+    inventory = _protected_chronology_inventory(repository)
+    expected = {
+        (str(binding.get("path")), str(binding.get("sha256")))
+        for binding in (
+            _mapping(value, "protected chronology registration")
+            for value in _sequence(
+                inventory.get("registration_artifacts"), "protected chronology registrations"
+            )
+        )
+    }
+    environment = non_broker_subprocess_environment()
+    environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
+    command = (
+        "git",
+        "--no-replace-objects",
+        "-c",
+        "core.fsmonitor=false",
+        "-C",
+        str(repository),
+    )
+
+    def git(*arguments: str) -> bytes:
+        return subprocess.run(
+            (*command, *arguments),
+            check=True,
+            capture_output=True,
+            env=environment,
+        ).stdout
+
+    try:
+        paths = git(
+            "ls-tree", "-r", "-z", "--name-only", source_commit, "--", "config/research"
+        ).split(b"\0")
+        discovered: set[tuple[str, str]] = set()
+        registration_ids: set[str] = set()
+        for raw_path in paths:
+            if not raw_path:
+                continue
+            path = raw_path.decode("utf-8")
+            if not path.endswith(".json"):
+                continue
+            blob = git("cat-file", "blob", f"{source_commit}:{path}")
+            try:
+                value = json.loads(blob)
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                continue
+            if type(value) is not dict or value.get("schema_version") != (
+                _PROTECTED_REGISTRATION_SCHEMA
+            ):
+                continue
+            _registered_ranges(value, path)
+            registration_id = str(value.get("registration_id"))
+            if registration_id in registration_ids:
+                raise Program010AuthorityError("Program 010 protected registration is duplicated")
+            registration_ids.add(registration_id)
+            discovered.add((path, hashlib.sha256(blob).hexdigest()))
+    except (OSError, UnicodeDecodeError, subprocess.CalledProcessError) as error:
+        raise Program010AuthorityError(
+            "Program 010 protected registration Git identity is unavailable"
+        ) from error
+    if discovered != expected:
+        raise Program010AuthorityError("Program 010 protected registration set differs")
 
 
 def _validate_split_controls(ledger: Mapping[str, Any]) -> None:
@@ -981,8 +1145,11 @@ def _validate_split_controls(ledger: Mapping[str, Any]) -> None:
 def _repository_preflight(repository: Path, identity: Mapping[str, Any]) -> Mapping[str, str]:
     runtime = _mapping(identity.get("runtime_binding"), "runtime binding")
     source_commit = str(runtime.get("source_commit"))
-    source_files = _sequence(runtime.get("source_files"), "runtime source files")
-    paths = [str(_mapping(item, "runtime source file").get("path")) for item in source_files]
+    _sequence(runtime.get("source_files"), "runtime source files")
+    expected_changes = {
+        f"A\t{CHILD_AUTHORITY_PATH.as_posix()}",
+        f"A\t{CHILD_REVIEW_PATH.as_posix()}",
+    }
     environment = non_broker_subprocess_environment()
     environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
     command = (
@@ -1009,7 +1176,7 @@ def _repository_preflight(repository: Path, identity: Mapping[str, Any]) -> Mapp
         origin_main = git("rev-parse", "refs/remotes/origin/main").stdout.strip()
         dirty = git("status", "--porcelain", "--untracked-files=all").stdout
         source_tree = git("rev-parse", f"{source_commit}^{{tree}}").stdout.strip()
-        changed = git("diff", "--name-only", source_commit, head, "--", *paths).stdout
+        changed = git("diff", "--name-status", source_commit, head).stdout.splitlines()
         ancestor = git("merge-base", "--is-ancestor", source_commit, head, check=False)
     except (OSError, subprocess.CalledProcessError, ValueError) as error:
         raise Program010AuthorityError("Program 010 repository identity is unavailable") from error
@@ -1019,7 +1186,8 @@ def _repository_preflight(repository: Path, identity: Mapping[str, Any]) -> Mapp
         or head != origin_main
         or source_tree != runtime.get("source_tree")
         or ancestor.returncode != 0
-        or changed
+        or len(changed) != len(expected_changes)
+        or set(changed) != expected_changes
     ):
         raise Program010AuthorityError("Program 010 reviewed synchronized-main lineage differs")
     return {

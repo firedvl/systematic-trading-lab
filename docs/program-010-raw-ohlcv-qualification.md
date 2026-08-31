@@ -104,9 +104,12 @@ lowest `SHA-256(seed|normal|date)` normal-session digests, then adds the two Pro
 were never requested.
 
 Before activation and again before execution, the production runtime rederives the current protected
-chronology from `config/research/standing-protected-chronology-v1.json` and its five primary source
-artifacts. The child authority must Git-bind all six files. Any new registered, reserved, or sealed
-range requires a successor inventory and a newly reviewed child before provider access.
+chronology from `config/research/standing-protected-chronology-v1.json`, its typed registration
+artifact, and the five primary source artifacts. The child authority must Git-bind all seven files.
+The runtime enumerates every `config/research` JSON artifact in the child's reviewed source commit and
+rejects any exact active `protected-chronology-registration-v1` artifact absent from the inventory.
+Any new registered, reserved, or sealed range therefore requires a successor inventory, runtime
+binding, and reviewed child before provider access.
 
 | Session | Role | Prior OHLCV requests | Coordinates |
 | --- | --- | ---: | ---: |
@@ -181,3 +184,6 @@ preflight, loads credentials once, validates clean synchronized-main provenance,
 operation immediately before transport, and writes raw bodies and receipts create-only before status,
 schema, or continuation checks. It is inert until its exact source commit receives a Git-tracked,
 finding-free child authority and review under the standing mandate.
+The complete Git delta from that reviewed source commit to synchronized `main` must contain exactly
+the two added child authority and review artifacts; any other repository change invalidates the child
+before credentials or private state.

@@ -24,6 +24,12 @@
       "sha256": "42581c019abc5c3e184b89b31e655bc5ee123bdcb79ced2c9cf894d6668e45cf"
     }
   },
+  "registration_artifacts": [
+    {
+      "path": "config/research/protected-chronology-registrations/standing-protected-ranges-v1.json",
+      "sha256": "29d407e0d278aa30dbe107c028f696b99965c89edae938115bdbbf44bd916182"
+    }
+  ],
   "ranges": [
     {
       "id": "daily-independent-2018-2019",
@@ -56,6 +62,6 @@
       "end": "2028-04-14"
     }
   ],
-  "update_rule": "Every newly registered, reserved, or sealed protected range must enter a successor inventory before any later data-reading child is reviewed or activated.",
-  "inventory_fingerprint": "7984a30645b0ec123392a2f624f0f52016090a3f00a64615b367ee96ceb72c38"
+  "update_rule": "Only an exact protected-chronology-registration-v1 artifact with ACTIVE-SEALED-PROTECTED-RANGE status registers protected chronology. Every such artifact must enter registration_artifacts in a successor inventory before any later data-reading child is reviewed or activated.",
+  "inventory_fingerprint": "79492d99a6699ad20642926a390b364796dbc24852fbaad94070935aded7eaf3"
 }

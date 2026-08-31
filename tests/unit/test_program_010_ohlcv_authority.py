@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import inspect
 import json
+import os
+import subprocess
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -15,6 +17,8 @@ import systematic_trading_lab.intraday_fed_policy_absorption_001_cli as dispatch
 import systematic_trading_lab.program_007_alpaca as raw_contract
 import systematic_trading_lab.program_010_ohlcv as program_010
 import systematic_trading_lab.program_010_ohlcv_authority as authority
+from systematic_trading_lab.config import non_broker_subprocess_environment
+from systematic_trading_lab.fingerprints import fingerprint
 from systematic_trading_lab.standing_research_authority import AUTHORITY_FIELDS
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
@@ -25,6 +29,18 @@ def _credentials() -> dict[str, str]:
         authority.CREDENTIAL_NAMES[0]: "synthetic-key-material",
         authority.CREDENTIAL_NAMES[1]: "synthetic-secret-material",
     }
+
+
+def _git(repository: Path, *arguments: str) -> str:
+    environment = non_broker_subprocess_environment()
+    environment.update({"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"})
+    return subprocess.run(
+        ("git", "-C", str(repository), *arguments),
+        check=True,
+        capture_output=True,
+        text=True,
+        env=environment,
+    ).stdout.strip()
 
 
 def _active_authority() -> dict[str, object]:
@@ -136,6 +152,7 @@ def test_internal_child_derivation_enables_only_structural_qualification(
                 for path in (
                     authority.PROTECTED_CHRONOLOGY_PATH,
                     *authority.PROTECTED_CHRONOLOGY_SOURCE_PATHS,
+                    *authority.PROTECTED_CHRONOLOGY_REGISTRATION_PATHS,
                 )
             ]
         },
@@ -147,6 +164,7 @@ def test_internal_child_derivation_enables_only_structural_qualification(
         "_repository_preflight",
         lambda _repository, _identity: {"synchronized_main_commit": "c" * 40},
     )
+    monkeypatch.setattr(authority, "_validate_protected_registration_set", lambda *_args: None)
 
     active = authority.derive_active_authority(tmp_path, environ=_credentials())
 
@@ -270,6 +288,7 @@ def test_new_protected_session_rejects_before_credentials_or_private_state(
                     for path in (
                         authority.PROTECTED_CHRONOLOGY_PATH,
                         *authority.PROTECTED_CHRONOLOGY_SOURCE_PATHS,
+                        *authority.PROTECTED_CHRONOLOGY_REGISTRATION_PATHS,
                     )
                 ]
             },
@@ -280,6 +299,12 @@ def test_new_protected_session_rejects_before_credentials_or_private_state(
         "_current_protected_ranges",
         lambda _repository: ((program_010.SELECTED_SESSIONS[0], program_010.SELECTED_SESSIONS[0]),),
     )
+    monkeypatch.setattr(
+        authority,
+        "_repository_preflight",
+        lambda *_args: {"synchronized_main_commit": "c" * 40},
+    )
+    monkeypatch.setattr(authority, "_validate_protected_registration_set", lambda *_args: None)
     monkeypatch.setattr(
         authority,
         "_require_credentials_present",
@@ -301,6 +326,182 @@ def test_new_protected_session_rejects_before_credentials_or_private_state(
     with pytest.raises(
         authority.Program010AuthorityError, match="fresh exposed chronology differs"
     ):
+        authority.activate_authority(tmp_path, environ=_credentials())
+
+    assert credential_checks == []
+    assert private_root_opens == []
+    assert not (tmp_path / authority.PRIVATE_ROOT).exists()
+
+
+def test_unreviewed_repository_artifact_rejects_before_credentials_or_private_state(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _git(tmp_path, "init", "-b", "main")
+    _git(tmp_path, "config", "user.name", "Program 010 Test")
+    _git(tmp_path, "config", "user.email", "program-010@example.invalid")
+    (tmp_path / "source.txt").write_text("reviewed\n", encoding="utf-8")
+    _git(tmp_path, "add", "source.txt")
+    _git(tmp_path, "commit", "-m", "reviewed source")
+    source_commit = _git(tmp_path, "rev-parse", "HEAD")
+    source_tree = _git(tmp_path, "rev-parse", "HEAD^{tree}")
+
+    for path in (authority.CHILD_AUTHORITY_PATH, authority.CHILD_REVIEW_PATH):
+        destination = tmp_path / path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text("{}\n", encoding="utf-8")
+        _git(tmp_path, "add", path.as_posix())
+    _git(tmp_path, "commit", "-m", "review child authority")
+    head = _git(tmp_path, "rev-parse", "HEAD")
+    _git(tmp_path, "update-ref", "refs/remotes/origin/main", head)
+
+    identity = {
+        "child_authority_id": authority.CHILD_AUTHORITY_ID,
+        "program_ordinal": authority.PROGRAM_ORDINAL,
+        "program_id": authority.PROGRAM_ID,
+        "operation_manifest": authority.OPERATION_MANIFEST,
+        "runtime_entrypoint": "src/systematic_trading_lab/program_010_ohlcv_authority.py",
+        "child_identity_fingerprint": "b" * 64,
+        "authority": {key: key in authority._ENABLED_AUTHORITY for key in AUTHORITY_FIELDS},
+        "runtime_binding": {
+            "source_commit": source_commit,
+            "source_tree": source_tree,
+            "source_files": [
+                {"path": path.as_posix()}
+                for path in (
+                    authority.PROTECTED_CHRONOLOGY_PATH,
+                    *authority.PROTECTED_CHRONOLOGY_SOURCE_PATHS,
+                    *authority.PROTECTED_CHRONOLOGY_REGISTRATION_PATHS,
+                )
+            ],
+        },
+    }
+    assert authority._repository_preflight(tmp_path, identity)["synchronized_main_commit"] == head
+
+    extra = tmp_path / "config/research/future-sealed-range-v1.json"
+    extra.write_text("{}\n", encoding="utf-8")
+    _git(tmp_path, "add", extra.relative_to(tmp_path).as_posix())
+    _git(tmp_path, "commit", "-m", "add unreviewed protected artifact")
+    _git(
+        tmp_path,
+        "update-ref",
+        "refs/remotes/origin/main",
+        _git(tmp_path, "rev-parse", "HEAD"),
+    )
+    credential_checks: list[bool] = []
+    private_root_opens: list[bool] = []
+    monkeypatch.setattr(authority, "derive_child_identity", lambda *_args: identity)
+    monkeypatch.setattr(authority, "validate_operation_contract", lambda _repository: {})
+    monkeypatch.setattr(authority, "_validate_protected_registration_set", lambda *_args: None)
+    monkeypatch.setattr(
+        authority,
+        "_require_credentials_present",
+        lambda _environ: credential_checks.append(True),
+    )
+    monkeypatch.setattr(
+        authority,
+        "_open_private_root",
+        lambda *_args, **_kwargs: private_root_opens.append(True),
+    )
+
+    with pytest.raises(
+        authority.Program010AuthorityError, match="reviewed synchronized-main lineage differs"
+    ):
+        authority.activate_authority(tmp_path, environ=_credentials())
+
+    assert credential_checks == []
+    assert private_root_opens == []
+    assert not (tmp_path / authority.PRIVATE_ROOT).exists()
+
+
+def test_omitted_protected_registration_rejects_before_credentials_or_private_state(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _git(tmp_path, "init", "-b", "main")
+    _git(tmp_path, "config", "user.name", "Program 010 Test")
+    _git(tmp_path, "config", "user.email", "program-010@example.invalid")
+    for path in (
+        authority.PROTECTED_CHRONOLOGY_PATH,
+        *authority.PROTECTED_CHRONOLOGY_REGISTRATION_PATHS,
+    ):
+        destination = tmp_path / path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes((_REPOSITORY / path).read_bytes())
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-m", "canonical protected registry")
+    authority._validate_protected_registration_set(tmp_path, _git(tmp_path, "rev-parse", "HEAD"))
+
+    extra_path = Path(
+        "config/research/protected-chronology-registrations/future-sealed-range-v1.json"
+    )
+    unsigned = {
+        "schema_version": authority._PROTECTED_REGISTRATION_SCHEMA,
+        "registration_id": "future-sealed-range-2026-08-30-v1",
+        "status": authority._PROTECTED_REGISTRATION_STATUS,
+        "ranges": [
+            {
+                "id": "future-sealed-2021-05-25",
+                "start": "2021-05-25",
+                "end": "2021-05-25",
+            }
+        ],
+    }
+    (tmp_path / extra_path).write_text(
+        json.dumps(
+            {**unsigned, "registration_fingerprint": fingerprint(unsigned)},
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    _git(tmp_path, "add", extra_path.as_posix())
+    _git(tmp_path, "commit", "-m", "reviewed source with omitted registration")
+    source_commit = _git(tmp_path, "rev-parse", "HEAD")
+    source_tree = _git(tmp_path, "rev-parse", "HEAD^{tree}")
+    for path in (authority.CHILD_AUTHORITY_PATH, authority.CHILD_REVIEW_PATH):
+        destination = tmp_path / path
+        destination.write_text("{}\n", encoding="utf-8")
+        _git(tmp_path, "add", path.as_posix())
+    _git(tmp_path, "commit", "-m", "review child authority")
+    head = _git(tmp_path, "rev-parse", "HEAD")
+    _git(tmp_path, "update-ref", "refs/remotes/origin/main", head)
+
+    identity = {
+        "child_authority_id": authority.CHILD_AUTHORITY_ID,
+        "program_ordinal": authority.PROGRAM_ORDINAL,
+        "program_id": authority.PROGRAM_ID,
+        "operation_manifest": authority.OPERATION_MANIFEST,
+        "runtime_entrypoint": "src/systematic_trading_lab/program_010_ohlcv_authority.py",
+        "child_identity_fingerprint": "b" * 64,
+        "authority": {key: key in authority._ENABLED_AUTHORITY for key in AUTHORITY_FIELDS},
+        "runtime_binding": {
+            "source_commit": source_commit,
+            "source_tree": source_tree,
+            "source_files": [
+                {"path": path.as_posix()}
+                for path in (
+                    authority.PROTECTED_CHRONOLOGY_PATH,
+                    *authority.PROTECTED_CHRONOLOGY_SOURCE_PATHS,
+                    *authority.PROTECTED_CHRONOLOGY_REGISTRATION_PATHS,
+                )
+            ],
+        },
+    }
+    credential_checks: list[bool] = []
+    private_root_opens: list[bool] = []
+    monkeypatch.setattr(authority, "derive_child_identity", lambda *_args: identity)
+    monkeypatch.setattr(authority, "validate_operation_contract", lambda _repository: {})
+    monkeypatch.setattr(
+        authority,
+        "_require_credentials_present",
+        lambda _environ: credential_checks.append(True),
+    )
+    monkeypatch.setattr(
+        authority,
+        "_open_private_root",
+        lambda *_args, **_kwargs: private_root_opens.append(True),
+    )
+
+    with pytest.raises(authority.Program010AuthorityError, match="registration set differs"):
         authority.activate_authority(tmp_path, environ=_credentials())
 
     assert credential_checks == []
