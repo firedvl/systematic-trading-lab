@@ -1426,6 +1426,7 @@ class _ReplaySource:
                 intent,
             ):
                 raise Program012AuthorityError("Program 012 partial page checkpoint differs")
+            self._budget.reserve_request()
             raise _IncompletePageCheckpoint(
                 "Program 012 ambiguous page checkpoint forbids request reissue"
             )
@@ -1556,13 +1557,18 @@ def _reconstruct_state(
         authority_fingerprint=str(authority["authority_fingerprint"]),
         source_commit=source_commit,
     )
+    claim_exists = _exists(root_descriptor, "claim.json")
     if page_entries:
-        if credential_loads == 0:
-            raise Program012AuthorityError("Program 012 page evidence lacks credential audit")
-        if not _exists(root_descriptor, "claim.json"):
+        if claim_exists:
+            if credential_loads == 0:
+                raise Program012AuthorityError("Program 012 page evidence lacks credential audit")
+        elif not allow_terminal_failure or any(
+            not entry.endswith(".intent.json") for entry in page_entries
+        ):
             raise Program012AuthorityError("Program 012 page evidence lacks a transport claim")
-        _validate_claim(root_descriptor, authority, source_commit)
-    elif _exists(root_descriptor, "claim.json"):
+        if claim_exists:
+            _validate_claim(root_descriptor, authority, source_commit)
+    elif claim_exists:
         raise Program012AuthorityError("Program 012 transport claim lacks page evidence")
 
     expected_sessions = {request.session for request in program_012.acquisition_requests()}

@@ -977,6 +977,36 @@ def test_recovery_rejects_completed_failure_page_without_credential_audit(
     assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
 
 
+def test_interrupt_after_intent_seals_without_credentials_or_provider_contact(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _, request = _configure_finite_execution(tmp_path, monkeypatch)
+    transport = authority.MockBarsTransport(
+        [raw_contract.RawResponse(200, _body(request, 0, None))]
+    )
+
+    with pytest.raises(KeyboardInterrupt):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=transport,
+            after_intent=lambda: (_ for _ in ()).throw(KeyboardInterrupt()),
+        )
+
+    public = json.loads((tmp_path / authority.PUBLIC_TERMINAL_PATH).read_bytes())
+    failure = json.loads((tmp_path / authority.PRIVATE_ROOT / "terminal-failure.json").read_bytes())
+    assert public["result_kind"] == "RUNTIME-FAILURE"
+    assert failure["provider_transport_attempted"] is False
+    assert (
+        public["request_count"],
+        public["response_count"],
+        public["response_bytes"],
+        public["sessions_with_completed_responses"],
+        public["credential_loads"],
+    ) == (1, 0, 0, 0, 0)
+    assert transport.intents == ()
+
+
 def test_crash_after_fsynced_intent_forbids_a_second_transport_call(
     tmp_path: Path,
 ) -> None:
