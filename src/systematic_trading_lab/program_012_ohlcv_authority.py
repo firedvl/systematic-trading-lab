@@ -314,6 +314,10 @@ class _TransportRequired(Exception):
     pass
 
 
+class _IncompletePageCheckpoint(Program012AuthorityError):
+    pass
+
+
 @dataclass(frozen=True)
 class AcquisitionExecution:
     status: str
@@ -1413,7 +1417,16 @@ class _ReplaySource:
         if not any(present):
             raise _TransportRequired
         if not all(present):
-            raise Program012AuthorityError(
+            if present not in {(True, False, False), (True, True, False)} or _read(
+                self._root_descriptor, f"{prefix}.intent.json"
+            ) != _intent_payload(
+                self._authority,
+                self._source_commit,
+                self._request,
+                intent,
+            ):
+                raise Program012AuthorityError("Program 012 partial page checkpoint differs")
+            raise _IncompletePageCheckpoint(
                 "Program 012 ambiguous page checkpoint forbids request reissue"
             )
         response, observed_at = _load_completed_page(
@@ -1520,6 +1533,7 @@ def _reconstruct_state(
     authority: Mapping[str, Any],
     source_commit: str,
     budget: _Budget | None = None,
+    allow_terminal_failure: bool = False,
 ) -> _Budget:
     entries = set(os.listdir(root_descriptor))
     allowed = {
@@ -1585,6 +1599,28 @@ def _reconstruct_state(
         source = _ReplaySource(root_descriptor, request, authority, source_commit, budget)
         try:
             result = _execute_session(request, source)
+        except _IncompletePageCheckpoint:
+            if not allow_terminal_failure:
+                raise
+            completed_pages = sum(
+                page["session"] == request.session.isoformat() for page in budget.pages
+            )
+            expected = _expected_session_entries(request, completed_pages)
+            partial_prefix = _page_prefix(request, completed_pages + 1)
+            if frozenset(session_entries) not in {
+                frozenset({*expected, f"{partial_prefix}.intent.json"}),
+                frozenset(
+                    {
+                        *expected,
+                        f"{partial_prefix}.intent.json",
+                        f"{partial_prefix}.body",
+                    }
+                ),
+            }:
+                raise Program012AuthorityError(
+                    "Program 012 terminal checkpoint is not a reachable prefix"
+                ) from None
+            frontier_found = True
         except _TransportRequired:
             completed_pages = sum(
                 page["session"] == request.session.isoformat() for page in budget.pages
@@ -1592,6 +1628,17 @@ def _reconstruct_state(
             if session_entries != _expected_session_entries(request, completed_pages):
                 raise Program012AuthorityError(
                     "Program 012 checkpoint skips a request page"
+                ) from None
+            frontier_found = True
+        except (Program012AuthorityError, program_011.Program011Error):
+            if not allow_terminal_failure:
+                raise
+            completed_pages = sum(
+                page["session"] == request.session.isoformat() for page in budget.pages
+            )
+            if session_entries != _expected_session_entries(request, completed_pages):
+                raise Program012AuthorityError(
+                    "Program 012 terminal checkpoint is not a reachable prefix"
                 ) from None
             frontier_found = True
         else:
@@ -1787,7 +1834,7 @@ def _failure_payload(
 ) -> bytes:
     request_count, response_count, response_bytes, completed_sessions = _durable_failure_counts(
         root_descriptor,
-        authority_fingerprint=str(authority["authority_fingerprint"]),
+        authority=authority,
         source_commit=source_commit,
     )
     record: dict[str, Any] = {
@@ -1860,56 +1907,21 @@ def _evidence_sha256_if_present(root_descriptor: int, key: str) -> str | None:
 def _durable_failure_counts(
     root_descriptor: int,
     *,
-    authority_fingerprint: str,
+    authority: Mapping[str, Any],
     source_commit: str,
 ) -> tuple[int, int, int, int]:
-    requests = {
-        request.session.isoformat(): request for request in program_012.acquisition_requests()
-    }
-    checkpoints: dict[tuple[str, int], set[str]] = {}
-    for entry in os.listdir(root_descriptor):
-        match = _PAGE_KEY.fullmatch(entry)
-        if match is None:
-            continue
-        session = match.group("session")
-        page_index = int(match.group("page"))
-        if session not in requests or not 1 <= page_index <= program_012.MAXIMUM_PAGES_PER_SESSION:
-            raise Program012AuthorityError("Program 012 failure page evidence differs")
-        checkpoints.setdefault((session, page_index), set()).add(match.group("kind"))
-
-    response_count = 0
-    response_bytes = 0
-    completed_sessions: set[str] = set()
-    authority = {"authority_fingerprint": authority_fingerprint}
-    for (session, page_index), kinds in sorted(checkpoints.items()):
-        if "intent.json" not in kinds or kinds - {"intent.json", "body", "receipt.json"}:
-            raise Program012AuthorityError("Program 012 failure page evidence differs")
-        request = requests[session]
-        intent_raw = _read(root_descriptor, f"{_page_prefix(request, page_index)}.intent.json")
-        incoming_token = _json_object(intent_raw, "request intent").get("incoming_page_token")
-        if incoming_token is not None and type(incoming_token) is not str:
-            raise Program012AuthorityError("Program 012 failure page evidence differs")
-        intent = program_011.PageIntent(
-            request.identity,
-            page_index,
-            request.url(incoming_token),
-            incoming_token,
-        )
-        if intent_raw != _intent_payload(authority, source_commit, request, intent):
-            raise Program012AuthorityError("Program 012 failure page evidence differs")
-        if kinds != {"intent.json", "body", "receipt.json"}:
-            continue
-        response, _ = _load_completed_page(
-            root_descriptor,
-            request,
-            intent,
-            authority,
-            source_commit,
-        )
-        response_count += 1
-        response_bytes += len(response.body)
-        completed_sessions.add(session)
-    return len(checkpoints), response_count, response_bytes, len(completed_sessions)
+    budget = _reconstruct_state(
+        root_descriptor,
+        authority=authority,
+        source_commit=source_commit,
+        allow_terminal_failure=True,
+    )
+    return (
+        budget.requests,
+        budget.responses,
+        budget.response_bytes,
+        len({str(page["session"]) for page in budget.pages}),
+    )
 
 
 def _reserve_process_credential_access(write_attempt: Callable[[], None]) -> None:
@@ -2386,7 +2398,7 @@ def _validate_terminal_failure(root_descriptor: int, record: Mapping[str, Any]) 
     request_count, response_count, response_bytes, completed_sessions = counts
     durable_counts = _durable_failure_counts(
         root_descriptor,
-        authority_fingerprint=str(record["authority_fingerprint"]),
+        authority=record,
         source_commit=str(record["source_commit"]),
     )
     if (

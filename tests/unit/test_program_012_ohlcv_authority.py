@@ -447,7 +447,10 @@ def test_git_preflight_allows_only_the_validated_generated_terminal_on_reentry(
             "active-authority.json",
             (canonical_json(active) + "\n").encode(),
         )
+        request = program_012.acquisition_requests()[0]
+        _write_credential_audit(descriptor, active, 1)
         _write_claim(descriptor, active)
+        _write_page(descriptor, active, request, 1, None, _body(request, 0, None))
         authority._append_atomic(
             descriptor,
             "terminal-failure.json",
@@ -868,6 +871,104 @@ def test_recovery_rejects_re_fingerprinted_failure_page_counts(
     failure_path.write_text(canonical_json(failure) + "\n", encoding="utf-8")
 
     with pytest.raises(authority.Program012AuthorityError, match="failure counts differ"):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=authority.MockBarsTransport([]),
+        )
+    assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
+
+
+def test_recovery_rejects_non_reachable_failure_page_prefix(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    active, request = _configure_finite_execution(tmp_path, monkeypatch)
+    body = _body(request, 0, "token-a")
+    original_publish = authority._publish_public_terminal
+    monkeypatch.setattr(
+        authority,
+        "_publish_public_terminal",
+        lambda *_args: (_ for _ in ()).throw(OSError("synthetic publication interruption")),
+    )
+    with pytest.raises(authority.Program012PostClaimPersistenceError):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=authority.MockBarsTransport([raw_contract.RawResponse(200, body)]),
+            after_page=lambda: (_ for _ in ()).throw(KeyboardInterrupt()),
+        )
+    monkeypatch.setattr(authority, "_publish_public_terminal", original_publish)
+
+    descriptor = authority._open_private_root(tmp_path, create=False)
+    try:
+        wrong_intent = program_011.PageIntent(request.identity, 2, request.url(), None)
+        authority._append_atomic(
+            descriptor,
+            f"{authority._page_prefix(request, 2)}.intent.json",
+            authority._intent_payload(
+                active,
+                active["control_lineage"]["runtime_source_commit"],
+                request,
+                wrong_intent,
+            ),
+        )
+    finally:
+        os.close(descriptor)
+
+    failure_path = tmp_path / authority.PRIVATE_ROOT / "terminal-failure.json"
+    failure = json.loads(failure_path.read_bytes())
+    failure["request_count"] = 2
+    failure.pop("terminal_fingerprint")
+    failure["terminal_fingerprint"] = fingerprint(failure)
+    failure_path.write_text(canonical_json(failure) + "\n", encoding="utf-8")
+
+    with pytest.raises(authority.Program012AuthorityError, match="reachable prefix"):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=authority.MockBarsTransport([]),
+        )
+    assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
+
+
+def test_recovery_rejects_completed_failure_page_without_credential_audit(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _, request = _configure_finite_execution(tmp_path, monkeypatch)
+    original_publish = authority._publish_public_terminal
+    monkeypatch.setattr(
+        authority,
+        "_publish_public_terminal",
+        lambda *_args: (_ for _ in ()).throw(OSError("synthetic publication interruption")),
+    )
+    with pytest.raises(authority.Program012PostClaimPersistenceError):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=authority.MockBarsTransport(
+                [raw_contract.RawResponse(200, _body(request, 0, None))]
+            ),
+            after_page=lambda: (_ for _ in ()).throw(KeyboardInterrupt()),
+        )
+    monkeypatch.setattr(authority, "_publish_public_terminal", original_publish)
+
+    descriptor = authority._open_private_root(tmp_path, create=False)
+    try:
+        for entry in os.listdir(descriptor):
+            if entry.startswith("credential-load-"):
+                os.unlink(entry, dir_fd=descriptor)
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+    failure_path = tmp_path / authority.PRIVATE_ROOT / "terminal-failure.json"
+    failure = json.loads(failure_path.read_bytes())
+    failure["credential_loads"] = 0
+    failure.pop("terminal_fingerprint")
+    failure["terminal_fingerprint"] = fingerprint(failure)
+    failure_path.write_text(canonical_json(failure) + "\n", encoding="utf-8")
+
+    with pytest.raises(authority.Program012AuthorityError, match="credential audit"):
         authority._execute_mock_acquisition(
             tmp_path,
             environ=_credentials(),
