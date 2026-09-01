@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-01 - Bind the Program 012 child after runtime finalization
+
+- Decision: supersede Program 012 runtime implementation v3 before authority or execution without changing runtime code. Require the future standing child to freeze its runtime source commit and tree from exact clean synchronized `main` after runtime v4 merges. Keep the existing repository preflight rule that permits only the child authority and its independent review after that source.
+- Context: exact-HEAD correctness review found that v3 bound the future child to `f6d5d18e30de20d3b96aaaf567b4529a25974297`, while eight runtime-finalization files followed before the child could be created. The preflight would therefore reject every later child because those eight files were not the allowed child/review pair. A topology regression reproduces the stale failure and accepts the post-finalization baseline.
+- Consequences: implementation v4 binds checkpoint commit/tree/root `47de7536ca8a85c3dd2c7c8523218751fd751a9c` / `7cf99cfee801370e7a5306019b2ca0a36f18166b` / `52f20b9d3e5a8e36b5b3ee0f03aeac2592577972e969a5362b0df9028b65635b`. Artifact SHA-256/fingerprint is `117212f123d65784d9703b4529dba0dfb196fa64f9589a0d9d5b7fb58bf31a4f` / `8ec987889ec3fe5fb993f26d77eb25d17e1fbb0f452296ab7ad28346da014d27`. Runtime v3 behavior, proposal v4, public redaction, private evidence, chronology, admission, budgets, and disabled authority remain unchanged. The 1,626-test full suite passes with four skips; all other repository gates pass. Program 012 remains non-authorizing.
+- Revisit after exact-HEAD correctness and security review and a clean synchronized-main merge. Freeze and independently review the child against that exact post-merge main before credential preflight, private-state access, or provider contact.
+
 ## 2026-09-01 - Publish only Program 012 public-control lineage
 
 - Decision: supersede Program 012 runtime implementation v2 before authority or execution. Bind proposal v4 and its finding-free review. Use one fixed projection for the repository terminal and CLI output. Publish only authority/source lineage, result kind, status, admission, a pass-only lineage identity derived from public controls, static privacy/scientific/disabled-authority assertions, and observation time. Keep all dynamic counts, hashes, failure and gate detail, private content identity, and terminal fingerprints private.

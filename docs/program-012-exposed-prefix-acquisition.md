@@ -3,9 +3,9 @@
 Program 012, `multi-hour-sector-etf-research-011`, is
 `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`. Proposal v4 defines a raw-only Alpaca SIP acquisition, a
 new prefix-specific structural admission, and a public terminal that discloses no data-derived
-commitment or dynamic acquisition state. Runtime v3 is implemented, mock-tested, and finding-free in
-independent bypass review, but no standing child authority or child review exists. It does not enact
-Program 002 admission, evaluate its quote grid, or authorize a strategy.
+commitment or dynamic acquisition state. Runtime v4 preserves the reviewed v3 code and fixes the
+prospective child lineage baseline. No standing child authority or child review exists. Program 012
+does not enact Program 002 admission, evaluate its quote grid, or authorize a strategy.
 
 Proposal SHA-256/fingerprint is
 `7785108f301052e654d00ea056656e7a9d4c95c1775bcadb7c3bdaf52c1662c4` /
@@ -65,12 +65,19 @@ value-free success or failure receipt. An unpaired attempt counts conservatively
 validated process may load credentials once; terminal evidence counts all loads, credential values
 are never persisted, and process restarts are never automatic.
 
-Implementation v3 supersedes v2 before authority or execution. It binds runtime commit
-`f6d5d18e30de20d3b96aaaf567b4529a25974297`, tree
-`1e0bb08a876dd661e5ec74564b1ac1cd5f3caf92`, and implementation root
-`6d248959a24feae817987bd3fc0a7a570f9614351570599bd804a4649e4801ac`. Its artifact
-SHA-256/fingerprint is `dba943d448c092eff58dc4da3607ae83976e041984448df9a36425caa524fcfd` /
-`de458943b22b561c23025249f8ea45e7a9bdf97c273f667573e509b9a89f75dc`.
+Implementation v4 supersedes v3 before authority or execution without changing runtime behavior. It
+binds checkpoint commit `47de7536ca8a85c3dd2c7c8523218751fd751a9c`, tree
+`7cf99cfee801370e7a5306019b2ca0a36f18166b`, and implementation root
+`52f20b9d3e5a8e36b5b3ee0f03aeac2592577972e969a5362b0df9028b65635b`. Its artifact
+SHA-256/fingerprint is `117212f123d65784d9703b4529dba0dfb196fa64f9589a0d9d5b7fb58bf31a4f` /
+`8ec987889ec3fe5fb993f26d77eb25d17e1fbb0f452296ab7ad28346da014d27`.
+
+Runtime v3 had frozen `f6d5d18e30de20d3b96aaaf567b4529a25974297` as the future child source,
+but eight runtime-finalization files followed that commit. The repository preflight permits only the
+child authority and its review after the child's runtime source, so a later child bound to that stale
+commit could never activate. Runtime v4 requires the child to freeze its runtime source commit and
+tree from clean synchronized `main` after v4 merges. A topology regression proves that the stale
+binding fails and the post-finalization binding passes.
 
 V3 rederives the private dataset content identity, gate results, missingness counts, and admitted
 session bindings from canonical private evidence during recovery. It accepts only an exact generated
@@ -119,14 +126,15 @@ lineage identity derived from public controls, static privacy/scientific/disable
 assertions, and observation time. The public lineage identity is not a content identity.
 
 The runtime includes a credential preflight, provider client, private store, activation path, and
-structural admission path. Twenty-nine focused tests cover intent crashes, completed-page recovery,
+structural admission path. Twenty-nine focused runtime tests cover intent crashes, completed-page recovery,
 concurrent owners, unpaired credential attempts, malformed-response accounting, recovered pacing and
 budgets, terminal re-entry, forged recovery state, public redaction, CLI parity, bounded ordinary
-failure output, and the two key missingness cases. A fresh independent bypass review found no
-material finding. No credential presence or value has been inspected, no private state exists, and
-no provider request has occurred. The full suite passes with 1,626 tests and four skips; Ruff, full
-mypy, the 676-file secret scan, shell syntax, sdist, wheel, and diff checks also pass. Exact-HEAD
-reviews precede the clean merge. A separate reviewed standing child may then enable only provider
+failure output, and the two key missingness cases. The new topology regression and focused Program
+012/provenance checks pass. A fresh independent bypass review found no material finding in the v3
+runtime. No credential presence or value has been inspected, no private state exists, and no
+provider request has occurred. The 1,626-test full suite passes with four skips; Ruff, full mypy,
+the 677-file secret scan, shell syntax, sdist, wheel, and diff checks also pass. Exact-HEAD v4
+correctness and security reviews precede the clean merge. A separate reviewed standing child may then enable only provider
 contact, credential access, source requests, acquisition, and structural admission.
 Controlled/protected data, purchases, strategy execution, PAPER, broker writes, and live execution
 remain disabled.

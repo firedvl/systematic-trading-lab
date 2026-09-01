@@ -125,11 +125,12 @@ Do not activate or run Program 011 again. It admitted no dataset and ran no stra
 acquisition and structural dataset admission require a separate reviewed standing child authority.
 
 Program 012 prospectively limits that acquisition to the unprotected context and exposed prefix
-through `2025-12-31`. Proposal v4 and runtime v3 implement one redacted public terminal/CLI
-projection; dynamic acquisition evidence and private content identity remain private. The runtime is
-mock-tested and finding-free in independent bypass review, but it remains non-authorizing until it
-merges and a separate reviewed standing child is added. Do not run its credential preflight,
-activation, or acquisition yet. See
+through `2025-12-31`. Proposal v4 and runtime v4 preserve one redacted public terminal/CLI
+projection; dynamic acquisition evidence and private content identity remain private. Runtime v4
+keeps the reviewed v3 code and corrects only the future child lineage: the child must bind the exact
+clean synchronized-main commit after runtime v4 merges. It remains non-authorizing until that merge
+and a separate reviewed standing child. Do not run its credential preflight, activation, or
+acquisition yet. See
 [Program 012 exposed-prefix acquisition](docs/program-012-exposed-prefix-acquisition.md).
 
 ## Using historical data

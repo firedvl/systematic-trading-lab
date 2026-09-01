@@ -38,8 +38,11 @@ _V1_IMPLEMENTATION_PATH = Path(
 _V2_IMPLEMENTATION_PATH = Path(
     "config/research/program-012-exposed-prefix-runtime-implementation-v2.json"
 )
-_IMPLEMENTATION_PATH = Path(
+_V3_IMPLEMENTATION_PATH = Path(
     "config/research/program-012-exposed-prefix-runtime-implementation-v3.json"
+)
+_IMPLEMENTATION_PATH = Path(
+    "config/research/program-012-exposed-prefix-runtime-implementation-v4.json"
 )
 
 
@@ -64,8 +67,8 @@ def test_program_012_runtime_implementation_is_exact_and_non_authorizing() -> No
     assert stored_fingerprint == fingerprint(implementation)
     binding = implementation["implementation_binding"]
 
-    assert binding["source_commit"] == "f6d5d18e30de20d3b96aaaf567b4529a25974297"
-    assert binding["source_tree"] == "1e0bb08a876dd661e5ec74564b1ac1cd5f3caf92"
+    assert binding["source_commit"] == "47de7536ca8a85c3dd2c7c8523218751fd751a9c"
+    assert binding["source_tree"] == "7cf99cfee801370e7a5306019b2ca0a36f18166b"
     assert binding["implementation_root"] == fingerprint(binding["source_files"])
     for source in binding["source_files"]:
         committed = subprocess.run(
@@ -82,21 +85,20 @@ def test_program_012_runtime_implementation_is_exact_and_non_authorizing() -> No
         assert hashlib.sha256(committed).hexdigest() == source["sha256"]
 
     assert implementation["status"] == "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED"
-    assert implementation["supersedes"]["path"] == _V2_IMPLEMENTATION_PATH.as_posix()
+    assert implementation["supersedes"]["path"] == _V3_IMPLEMENTATION_PATH.as_posix()
     _assert_binding(implementation["supersedes"])
-    assert implementation["runtime_contract"]["atomic_fsynced_intent_before_transport"] is True
-    assert implementation["runtime_contract"]["cumulative_budget_recovery"] is True
-    assert (
-        implementation["runtime_contract"]["credential_load_attempt_fsynced_before_access"] is True
+    contract = implementation["runtime_contract"]
+    assert contract["runtime_source_changed_from_v3"] is False
+    assert contract["v3_runtime_contract_inherited_without_change"] is True
+    assert contract["future_child_runtime_binding_source_commit"] == (
+        "EXACT-CLEAN-SYNCHRONIZED-MAIN-AFTER-V4-RUNTIME-MERGE"
     )
-    assert implementation["runtime_contract"]["public_low_entropy_private_commitments"] is False
-    assert implementation["runtime_contract"]["terminal_recovery_rederives_dataset_identities"]
-    assert implementation["runtime_contract"]["terminal_recovery_rederives_private_gate_results"]
-    assert implementation["runtime_contract"]["public_projection_shared_by_terminal_and_cli"]
-    assert implementation["runtime_contract"]["public_dynamic_acquisition_counts"] is False
-    assert implementation["runtime_contract"]["public_data_derived_hashes_or_fingerprints"] is False
-    assert implementation["runtime_contract"]["public_detailed_gate_or_failure_evidence"] is False
-    assert implementation["runtime_contract"]["post_consumption_exception_detail_public"] is False
+    assert contract["repository_lineage_diff_base"] == "future child runtime_binding.source_commit"
+    assert contract["runtime_finalization_precedes_future_child_source_commit"] is True
+    assert contract["allowed_later_repository_additions"] == [
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-child-authority-v1.json",
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-child-authority-independent-review-v1.json",
+    ]
     assert implementation["execution_boundary"]["child_authority_present"] is False
     assert implementation["execution_boundary"]["credential_presence_or_values_accessed"] is False
     assert implementation["execution_boundary"]["provider_requests"] == 0

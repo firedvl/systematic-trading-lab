@@ -507,7 +507,7 @@ def test_git_preflight_uses_post_merge_runtime_baseline_on_reentry(
     _git(tmp_path, "commit", "-m", "review child authority")
     head = _git(tmp_path, "rev-parse", "HEAD")
     _git(tmp_path, "update-ref", "refs/remotes/origin/main", head)
-    identity = {
+    identity: dict[str, Any] = {
         "child_authority_id": authority.CHILD_AUTHORITY_ID,
         "program_ordinal": authority.PROGRAM_ORDINAL,
         "program_id": authority.PROGRAM_ID,
