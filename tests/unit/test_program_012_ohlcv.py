@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 from datetime import date
 from decimal import Decimal
@@ -106,3 +107,18 @@ def test_morning_metrics_require_the_exact_frozen_window() -> None:
     program_012.collect_morning_metrics(rows, output)
 
     assert output == {}
+
+
+def test_secret_guard_allows_only_reserved_public_program_012_json_artifacts() -> None:
+    spec = importlib.util.spec_from_file_location(
+        "program_012_check_secrets", _REPOSITORY / "scripts/check_secrets.py"
+    )
+    assert spec is not None and spec.loader is not None
+    guard = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(guard)
+    public_program_artifacts = {
+        path.relative_to(_REPOSITORY).as_posix()
+        for path in (_REPOSITORY / "config/research").glob("program-012*.json")
+    }
+
+    assert public_program_artifacts <= guard.PUBLIC_PROGRAM_JSON

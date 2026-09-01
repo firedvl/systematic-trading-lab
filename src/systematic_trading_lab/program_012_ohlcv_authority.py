@@ -9,6 +9,7 @@ import re
 import secrets
 import stat
 import subprocess
+import threading
 import time
 from collections.abc import Callable, Mapping, Sequence
 from contextlib import suppress
@@ -39,6 +40,10 @@ CHILD_AUTHORITY_ID = (
 )
 CONSUMPTION_BOUNDARY = "immediately before first provider transport invocation"
 PRIVATE_ROOT = Path(".trading-lab/program-012-exposed-prefix-raw-alpaca-sip-v1")
+PUBLIC_TERMINAL_PATH = Path(
+    "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-"
+    "structural-admission-terminal-result-v1.json"
+)
 CREDENTIAL_NAMES = credential_contract._CREDENTIAL_NAMES
 CHILD_AUTHORITY_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-"
@@ -64,6 +69,11 @@ PROPOSAL_REVIEW = {
     "sha256": "3a61db10f5cd074ea3d3d1b446eaa4acd6b8bbdebe8b4c2dc13328ed58cf30e7",
     "fingerprint": "98736a47227b309447c34a8731edb2b7bff8c5e64a9392329145eb444cd5eb4d",
 }
+_ACTION_LEDGER_MANIFEST = {
+    "path": "config/research/program-007-unit-changing-action-ledger-v3.json",
+    "sha256": "e405529489921a0ec8883aa64e855e6600a99105387cbc9ed2766c82bc0826b1",
+    "fingerprint": "37467ced2666cdb716706aa4310e48aa5b0938f168cafadf00f6dec72e336f4f",
+}
 _ENABLED_AUTHORITY = {
     "provider_contact",
     "credential_access",
@@ -79,6 +89,7 @@ _DIRECTORY_FLAGS = (
 )
 _EVIDENCE_KEY = re.compile(r"[a-z0-9][a-z0-9.-]*")
 _HEX_40 = re.compile(r"[0-9a-f]{40}")
+_HEX_64 = re.compile(r"[0-9a-f]{64}")
 _PAGE_KEY = re.compile(
     r"session-(?P<session>[0-9]{4}-[0-9]{2}-[0-9]{2})-"
     r"(?P<page>[0-9]{2})\.(?P<kind>intent\.json|body|receipt\.json)"
@@ -93,6 +104,195 @@ _DERIVED_KEYS = {
     "missing-coordinates.json",
     "response-manifest.json",
     "structural-admission.json",
+}
+_PROCESS_CREDENTIAL_LOCK = threading.Lock()
+_PROCESS_CREDENTIAL_PID: int | None = None
+_FIXED_QUARANTINE_FAILURES = {
+    f"fixed-quarantine:{name}"
+    for name in (
+        "membership",
+        "block-counts",
+        "block-retention",
+        "block-balance",
+        "protected-boundaries",
+        "nonadjacency",
+        "calendar",
+        "clock",
+    )
+}
+_ADMISSION_FAILURES = {
+    *_FIXED_QUARANTINE_FAILURES,
+    "quarantine-unexpected-coordinate",
+    "global-count",
+    "unexpected-count",
+    "quarantine-block",
+    "adjacent",
+    "rolling-63",
+    "quarantine-rolling-63",
+    "same-symbol-rolling-252",
+    "initial-context",
+    "morning-population",
+    "morning-diagnostic-unavailable",
+    "unsupported-exclusion-count",
+    "early-close",
+    *{f"calendar-year:{year}" for year in range(2020, 2026)},
+    *{
+        f"fixed-block:{block}"
+        for block in (
+            "discovery-01",
+            "discovery-02",
+            "discovery-03",
+            "wf-01",
+            "wf-02",
+            "wf-03",
+            "wf-04",
+            "wf-05",
+            "wf-06",
+            "wf-07",
+            "wf-08",
+        )
+    },
+    *{
+        f"morning-bias:{symbol}:{metric}:{tail}"
+        for symbol in ("SPY", "MDY")
+        for metric, tail in (
+            ("absolute-return", "high"),
+            ("range", "high"),
+            ("volume", "low"),
+        )
+    },
+}
+_ACQUISITION_RECEIPT_KEYS = {
+    "schema_version",
+    "program_id",
+    "authority_id",
+    "authority_fingerprint",
+    "source_commit",
+    "public_terminal_path",
+    "status",
+    "admission_passed",
+    "session_count",
+    "request_count",
+    "response_count",
+    "response_bytes",
+    "raw_row_count",
+    "expected_canonical_coordinate_count",
+    "missing_coordinate_count",
+    "excluded_full_session_count",
+    "credential_loads",
+    "aggregate_gate_results",
+    "response_manifest_sha256",
+    "canonical_raw_sha256",
+    "private_missingness_sha256",
+    "structural_admission_sha256",
+    "private_dataset_manifest_sha256",
+    "public_dataset_manifest",
+    "dataset_identity",
+    "private_dataset_identity",
+    "automatic_retries",
+    "credentials_stored",
+    "exact_missing_coordinates_private",
+    "exact_unexpected_exclusion_dates_private",
+    "program_002_admission",
+    "strategy_calculations",
+    "strategy_returns",
+    "observed_at",
+    "terminal_fingerprint",
+}
+_TERMINAL_FAILURE_KEYS = {
+    "schema_version",
+    "program_id",
+    "authority_id",
+    "authority_fingerprint",
+    "source_commit",
+    "public_terminal_path",
+    "status",
+    "admission_passed",
+    "failure_class",
+    "failure_classification",
+    "provider_transport_attempted",
+    "scientific_use_consumed",
+    "session_count",
+    "request_count",
+    "response_count",
+    "response_bytes",
+    "sessions_with_completed_responses",
+    "raw_row_count",
+    "expected_canonical_coordinate_count",
+    "missing_coordinate_count",
+    "excluded_full_session_count",
+    "credential_loads",
+    "aggregate_gate_results",
+    "response_manifest_sha256",
+    "canonical_raw_sha256",
+    "private_missingness_sha256",
+    "structural_admission_sha256",
+    "private_dataset_manifest_sha256",
+    "public_dataset_manifest",
+    "dataset_identity",
+    "unpaired_credential_attempts_count_as_load",
+    "automatic_retries",
+    "dataset_admitted",
+    "strategy_calculations",
+    "strategy_returns",
+    "credentials_stored",
+    "exact_missing_coordinates_private",
+    "exact_unexpected_exclusion_dates_private",
+    "program_002_admission",
+    "observed_at",
+    "terminal_fingerprint",
+}
+_ACQUISITION_GATE_KEYS = {
+    "structural_admission_passed",
+    "failure_count",
+    "failure_classes",
+}
+_RUNTIME_FAILURE_GATE_KEYS = {
+    "structural_admission_passed",
+    "structural_admission_evaluated",
+    "failure_count",
+    "failure_classes",
+}
+_PUBLIC_DATASET_KEYS = {
+    "schema_version",
+    "program_id",
+    "authority_id",
+    "authority_fingerprint",
+    "source_commit",
+    "status",
+    "dataset_identity",
+    "canonical_raw_sha256",
+    "raw_row_count",
+    "expected_coordinate_count",
+    "missing_coordinate_count",
+    "excluded_full_session_count",
+    "admitted_full_session_count",
+    "exact_missingness_private",
+    "exact_excluded_sessions_private",
+    "program_002_admission",
+    "strategy_metrics_present",
+}
+_PRIVATE_DATASET_KEYS = {
+    "schema_version",
+    "program_id",
+    "authority_id",
+    "authority_fingerprint",
+    "source_commit",
+    "status",
+    "dataset_identity",
+    "response_manifest_sha256",
+    "canonical_raw_sha256",
+    "private_missingness_sha256",
+    "structural_admission_sha256",
+    "raw_row_count",
+    "expected_coordinate_count",
+    "missing_coordinate_count",
+    "excluded_full_session_count",
+    "admitted_full_session_count",
+    "admitted_session_index_fingerprint",
+    "exact_missingness_private",
+    "program_002_admission",
+    "strategy_metrics_present",
 }
 
 
@@ -280,6 +480,7 @@ def validate_operation_contract(
         != "PASS-FINDING-FREE-PROSPECTIVE-DESIGN-AND-CREDENTIAL-BOUNDARY-REVIEW"
         or review.get("verdict") != "PASS"
         or review.get("findings") != []
+        or bindings.get("program_007_public_unit_changing_action_ledger") != _ACTION_LEDGER_MANIFEST
         or source.get("method") != "GET"
         or source.get("endpoint") != program_011.ENDPOINT
         or source.get("feed") != "sip"
@@ -407,7 +608,9 @@ def _derive_control_validated_authority(repository: Path) -> Mapping[str, Any]:
         "authority": authority,
         "control_lineage": lineage,
     }
-    return {**unsigned, "authority_fingerprint": fingerprint(unsigned)}
+    active = {**unsigned, "authority_fingerprint": fingerprint(unsigned)}
+    _validate_existing_public_terminal(repository, active, lineage["runtime_source_commit"])
+    return active
 
 
 def activate_authority(
@@ -506,6 +709,10 @@ def _execute_acquisition(
         ):
             try:
                 if any(_exists(root_descriptor, key) for key in _TERMINAL_KEYS):
+                    terminal_key, terminal = _load_terminal_record(
+                        root_descriptor, expected_authority, source_commit
+                    )
+                    _publish_public_terminal(repository, root_descriptor, terminal_key, terminal)
                     raise Program012AuthorityError("Program 012 acquisition is terminally sealed")
                 authority = _derive_control_validated_authority(repository)
                 if authority != expected_authority:
@@ -554,7 +761,7 @@ def _execute_acquisition(
                     if _exists(root_descriptor, "claim.json"):
                         _validate_claim(root_descriptor, authority, source_commit)
                         return
-                    _append(
+                    _append_atomic(
                         root_descriptor,
                         "claim.json",
                         _claim_payload(authority, source_commit),
@@ -677,28 +884,50 @@ def _execute_acquisition(
                     if request.session in program_012.full_trade_sessions()
                     and request.session not in excluded
                 )
-                dataset_identity = None
-                if admission.get("admission_passed") is True:
-                    dataset_identity = fingerprint(
-                        {
-                            "operation_manifest": OPERATION_MANIFEST,
-                            "authority_fingerprint": authority["authority_fingerprint"],
-                            "source_commit": source_commit,
-                            "response_manifest_sha256": response_sha,
-                            "canonical_raw_sha256": canonical_sha,
-                            "private_missingness_sha256": hashlib.sha256(
-                                missing_payload
-                            ).hexdigest(),
-                            "admitted_session_index_fingerprint": fingerprint(admitted_sessions),
-                            "action_ledger": bindings[
-                                "program_007_public_unit_changing_action_ledger"
-                            ],
-                            "admission_fingerprint": admission["admission_fingerprint"],
-                        }
-                    )
+                missingness_sha = hashlib.sha256(missing_payload).hexdigest()
+                admission_sha = hashlib.sha256(admission_payload).hexdigest()
+                admitted_session_fingerprint = fingerprint(admitted_sessions)
+                dataset_identity, private_dataset_identity = _dataset_identities(
+                    authority_fingerprint=str(authority["authority_fingerprint"]),
+                    source_commit=source_commit,
+                    response_manifest_sha256=response_sha,
+                    canonical_raw_sha256=canonical_sha,
+                    private_missingness_sha256=missingness_sha,
+                    admitted_session_index_fingerprint=admitted_session_fingerprint,
+                    admission=admission,
+                )
                 dataset_manifest = {
                     "schema_version": "program-012-raw-structural-prefix-dataset-manifest-v1",
                     "program_id": PROGRAM_ID,
+                    "authority_id": authority["authority_id"],
+                    "authority_fingerprint": authority["authority_fingerprint"],
+                    "source_commit": source_commit,
+                    "status": admission["status"],
+                    "dataset_identity": private_dataset_identity,
+                    "response_manifest_sha256": response_sha,
+                    "canonical_raw_sha256": canonical_sha,
+                    "private_missingness_sha256": missingness_sha,
+                    "structural_admission_sha256": admission_sha,
+                    "raw_row_count": raw_row_count,
+                    "expected_coordinate_count": program_012.EXPECTED_COORDINATE_COUNT,
+                    "missing_coordinate_count": admission["missing_coordinate_count"],
+                    "excluded_full_session_count": admission["excluded_full_session_count"],
+                    "admitted_full_session_count": len(admitted_sessions),
+                    "admitted_session_index_fingerprint": admitted_session_fingerprint,
+                    "exact_missingness_private": True,
+                    "program_002_admission": False,
+                    "strategy_metrics_present": False,
+                }
+                dataset_payload = (canonical_json(dataset_manifest) + "\n").encode()
+                _append_or_validate(root_descriptor, "dataset-manifest.json", dataset_payload)
+                public_dataset_manifest = {
+                    "schema_version": (
+                        "program-012-public-raw-structural-prefix-dataset-manifest-v1"
+                    ),
+                    "program_id": PROGRAM_ID,
+                    "authority_id": authority["authority_id"],
+                    "authority_fingerprint": authority["authority_fingerprint"],
+                    "source_commit": source_commit,
                     "status": admission["status"],
                     "dataset_identity": dataset_identity,
                     "canonical_raw_sha256": canonical_sha,
@@ -707,13 +936,11 @@ def _execute_acquisition(
                     "missing_coordinate_count": admission["missing_coordinate_count"],
                     "excluded_full_session_count": admission["excluded_full_session_count"],
                     "admitted_full_session_count": len(admitted_sessions),
-                    "admitted_session_index_fingerprint": fingerprint(admitted_sessions),
                     "exact_missingness_private": True,
+                    "exact_excluded_sessions_private": True,
                     "program_002_admission": False,
                     "strategy_metrics_present": False,
                 }
-                dataset_payload = (canonical_json(dataset_manifest) + "\n").encode()
-                _append_or_validate(root_descriptor, "dataset-manifest.json", dataset_payload)
                 credential_loads = _credential_load_count(root_descriptor)
                 execution = AcquisitionExecution(
                     str(admission["status"]),
@@ -732,36 +959,63 @@ def _execute_acquisition(
                 )
                 if mock_transport is not None:
                     mock_transport.require_exhausted()
-                receipt_payload = (
-                    canonical_json(
-                        {
-                            "schema_version": "program-012-private-acquisition-receipt-v1",
-                            "authority_id": authority["authority_id"],
-                            **execution.public_summary(),
-                            "private_missingness_sha256": hashlib.sha256(
-                                missing_payload
-                            ).hexdigest(),
-                            "structural_admission_sha256": hashlib.sha256(
-                                admission_payload
-                            ).hexdigest(),
-                            "observed_at": _utc_now(),
-                        }
-                    )
-                    + "\n"
-                ).encode()
-                _append(root_descriptor, "acquisition-receipt.json", receipt_payload)
+                receipt = {
+                    "schema_version": "program-012-private-acquisition-receipt-v2",
+                    "authority_id": authority["authority_id"],
+                    "authority_fingerprint": authority["authority_fingerprint"],
+                    "source_commit": source_commit,
+                    "public_terminal_path": PUBLIC_TERMINAL_PATH.as_posix(),
+                    **execution.public_summary(),
+                    "aggregate_gate_results": {
+                        "structural_admission_passed": bool(admission["admission_passed"]),
+                        "failure_count": len(cast(Sequence[object], admission["failures"])),
+                        "failure_classes": admission["failures"],
+                    },
+                    "private_missingness_sha256": missingness_sha,
+                    "structural_admission_sha256": admission_sha,
+                    "private_dataset_manifest_sha256": hashlib.sha256(dataset_payload).hexdigest(),
+                    "public_dataset_manifest": (
+                        public_dataset_manifest if execution.admission_passed else None
+                    ),
+                    "private_dataset_identity": private_dataset_identity,
+                    "observed_at": _utc_now(),
+                }
+                receipt["terminal_fingerprint"] = fingerprint(receipt)
+                receipt_payload = (canonical_json(receipt) + "\n").encode()
+                _append_atomic(root_descriptor, "acquisition-receipt.json", receipt_payload)
+                terminal_key, terminal = _load_terminal_record(
+                    root_descriptor, authority, source_commit
+                )
+                try:
+                    _publish_public_terminal(repository, root_descriptor, terminal_key, terminal)
+                except BaseException as persistence_error:
+                    raise Program012PostClaimPersistenceError(
+                        "Program 012 public terminal persistence failed after possible transport"
+                    ) from persistence_error
                 return execution
-            except Exception as error:
+            except BaseException as error:
                 if _has_consumed_state(root_descriptor) and not any(
                     _exists(root_descriptor, key) for key in _TERMINAL_KEYS
                 ):
                     try:
-                        _append(
+                        _append_atomic(
                             root_descriptor,
                             "terminal-failure.json",
-                            _failure_payload(root_descriptor, error, budget),
+                            _failure_payload(
+                                root_descriptor,
+                                error,
+                                budget,
+                                expected_authority,
+                                source_commit,
+                            ),
                         )
-                    except Exception as persistence_error:
+                        terminal_key, terminal = _load_terminal_record(
+                            root_descriptor, expected_authority, source_commit
+                        )
+                        _publish_public_terminal(
+                            repository, root_descriptor, terminal_key, terminal
+                        )
+                    except BaseException as persistence_error:
                         raise Program012PostClaimPersistenceError(
                             "Program 012 terminal persistence failed after possible transport"
                         ) from persistence_error
@@ -922,15 +1176,17 @@ class _CredentialLoader:
             }
             attempt = {**unsigned, "attempt_identity": fingerprint(unsigned)}
             prefix = f"credential-load-{sequence:06d}"
-            _append(
-                self._root_descriptor,
-                f"{prefix}.attempt.json",
-                (canonical_json(attempt) + "\n").encode(),
+            _reserve_process_credential_access(
+                lambda: _append_atomic(
+                    self._root_descriptor,
+                    f"{prefix}.attempt.json",
+                    (canonical_json(attempt) + "\n").encode(),
+                )
             )
             try:
                 key_id, secret_key = read_credentials(self._environ)
             except Exception:
-                _append(
+                _append_atomic(
                     self._root_descriptor,
                     f"{prefix}.receipt.json",
                     (
@@ -949,7 +1205,7 @@ class _CredentialLoader:
                 raise
             if self._after_access is not None:
                 self._after_access()
-            _append(
+            _append_atomic(
                 self._root_descriptor,
                 f"{prefix}.receipt.json",
                 (
@@ -1524,31 +1780,764 @@ def _validate_claim(root_descriptor: int, authority: Mapping[str, Any], source_c
         raise Program012AuthorityError("Program 012 transport claim differs")
 
 
-def _failure_payload(root_descriptor: int, error: Exception, budget: _Budget | None) -> bytes:
+def _failure_payload(
+    root_descriptor: int,
+    error: BaseException,
+    budget: _Budget | None,
+    authority: Mapping[str, Any],
+    source_commit: str,
+) -> bytes:
+    record: dict[str, Any] = {
+        "schema_version": "program-012-private-acquisition-failure-v2",
+        "program_id": PROGRAM_ID,
+        "authority_id": authority["authority_id"],
+        "authority_fingerprint": authority["authority_fingerprint"],
+        "source_commit": source_commit,
+        "public_terminal_path": PUBLIC_TERMINAL_PATH.as_posix(),
+        "status": "FAIL-CONSUMED-NO-RETRY",
+        "admission_passed": False,
+        "failure_class": type(error).__name__,
+        "failure_classification": getattr(error, "classification", type(error).__name__),
+        "provider_transport_attempted": _exists(root_descriptor, "claim.json"),
+        "scientific_use_consumed": True,
+        "session_count": program_012.EXPECTED_SESSION_COUNT,
+        "request_count": None if budget is None else budget.requests,
+        "response_count": None if budget is None else budget.responses,
+        "response_bytes": None if budget is None else budget.response_bytes,
+        "sessions_with_completed_responses": (
+            None if budget is None else len({str(page["session"]) for page in budget.pages})
+        ),
+        "raw_row_count": None,
+        "expected_canonical_coordinate_count": program_012.EXPECTED_COORDINATE_COUNT,
+        "missing_coordinate_count": None,
+        "excluded_full_session_count": None,
+        "credential_loads": _credential_load_count(root_descriptor),
+        "aggregate_gate_results": {
+            "structural_admission_passed": False,
+            "structural_admission_evaluated": False,
+            "failure_count": None,
+            "failure_classes": [],
+        },
+        "response_manifest_sha256": _evidence_sha256_if_present(
+            root_descriptor, "response-manifest.json"
+        ),
+        "canonical_raw_sha256": _evidence_sha256_if_present(root_descriptor, "canonical-raw.jsonl"),
+        "private_missingness_sha256": _evidence_sha256_if_present(
+            root_descriptor, "missing-coordinates.json"
+        ),
+        "structural_admission_sha256": _evidence_sha256_if_present(
+            root_descriptor, "structural-admission.json"
+        ),
+        "private_dataset_manifest_sha256": _evidence_sha256_if_present(
+            root_descriptor, "dataset-manifest.json"
+        ),
+        "public_dataset_manifest": None,
+        "dataset_identity": None,
+        "unpaired_credential_attempts_count_as_load": True,
+        "automatic_retries": 0,
+        "dataset_admitted": False,
+        "strategy_calculations": 0,
+        "strategy_returns": 0,
+        "credentials_stored": False,
+        "exact_missing_coordinates_private": True,
+        "exact_unexpected_exclusion_dates_private": True,
+        "program_002_admission": False,
+        "observed_at": _utc_now(),
+    }
+    record["terminal_fingerprint"] = fingerprint(record)
+    return (canonical_json(record) + "\n").encode()
+
+
+def _evidence_sha256_if_present(root_descriptor: int, key: str) -> str | None:
     return (
-        canonical_json(
-            {
-                "schema_version": "program-012-private-acquisition-failure-v1",
-                "status": "FAIL-CONSUMED-NO-RETRY",
-                "failure_class": type(error).__name__,
-                "failure_classification": getattr(error, "classification", type(error).__name__),
-                "provider_transport_attempted": _exists(root_descriptor, "claim.json"),
-                "scientific_use_consumed": True,
-                "completed_requests": None if budget is None else budget.requests,
-                "completed_responses": None if budget is None else budget.responses,
-                "completed_response_bytes": None if budget is None else budget.response_bytes,
-                "credential_loads": _credential_load_count(root_descriptor),
-                "unpaired_credential_attempts_count_as_load": True,
-                "automatic_retries": 0,
-                "dataset_admitted": False,
-                "strategy_calculations": 0,
-                "strategy_returns": 0,
-                "credentials_stored": False,
-                "observed_at": _utc_now(),
-            }
+        hashlib.sha256(_read(root_descriptor, key)).hexdigest()
+        if _exists(root_descriptor, key)
+        else None
+    )
+
+
+def _reserve_process_credential_access(write_attempt: Callable[[], None]) -> None:
+    global _PROCESS_CREDENTIAL_PID
+    process_id = os.getpid()
+    with _PROCESS_CREDENTIAL_LOCK:
+        if process_id == _PROCESS_CREDENTIAL_PID:
+            raise Program012AuthorityError(
+                "Program 012 credential access is already consumed in this process"
+            )
+        try:
+            write_attempt()
+        finally:
+            # A failed or interrupted audit write must also close access in this PID.
+            _PROCESS_CREDENTIAL_PID = process_id
+
+
+def _exact_terminal_object(value: Any, expected_keys: set[str], label: str) -> dict[str, Any]:
+    if type(value) is not dict or set(value) != expected_keys:
+        raise Program012AuthorityError(f"Program 012 {label} schema differs")
+    return cast(dict[str, Any], value)
+
+
+def _terminal_count(value: Any, label: str) -> int:
+    if type(value) is not int or value < 0:
+        raise Program012AuthorityError(f"Program 012 {label} differs")
+    return value
+
+
+def _terminal_sha256(value: Any, label: str) -> str:
+    if type(value) is not str or _HEX_64.fullmatch(value) is None:
+        raise Program012AuthorityError(f"Program 012 {label} differs")
+    return value
+
+
+def _dataset_identities(
+    *,
+    authority_fingerprint: str,
+    source_commit: str,
+    response_manifest_sha256: str,
+    canonical_raw_sha256: str,
+    private_missingness_sha256: str,
+    admitted_session_index_fingerprint: str,
+    admission: Mapping[str, Any],
+) -> tuple[str | None, str | None]:
+    if admission.get("admission_passed") is not True:
+        return None, None
+    public_inputs = {
+        "operation_manifest": OPERATION_MANIFEST,
+        "authority_fingerprint": authority_fingerprint,
+        "source_commit": source_commit,
+        "response_manifest_sha256": response_manifest_sha256,
+        "canonical_raw_sha256": canonical_raw_sha256,
+        "action_ledger": _ACTION_LEDGER_MANIFEST,
+    }
+    return fingerprint(public_inputs), fingerprint(
+        {
+            **public_inputs,
+            "private_missingness_sha256": private_missingness_sha256,
+            "admitted_session_index_fingerprint": admitted_session_index_fingerprint,
+            "admission_fingerprint": admission["admission_fingerprint"],
+        }
+    )
+
+
+def _terminal_dates(value: Any, label: str) -> tuple[date, ...]:
+    if type(value) is not list or any(type(item) is not str for item in value):
+        raise Program012AuthorityError(f"Program 012 {label} differs")
+    try:
+        parsed = tuple(date.fromisoformat(item) for item in value)
+    except ValueError as error:
+        raise Program012AuthorityError(f"Program 012 {label} differs") from error
+    if list(value) != sorted(set(value)):
+        raise Program012AuthorityError(f"Program 012 {label} differs")
+    return parsed
+
+
+def _validated_structural_admission(root_descriptor: int) -> dict[str, Any]:
+    raw = _read(root_descriptor, "structural-admission.json")
+    admission = _json_object(raw, "structural admission")
+    if raw != (canonical_json(admission) + "\n").encode():
+        raise Program012AuthorityError("Program 012 structural admission is not canonical")
+    unsigned = dict(admission)
+    stored_fingerprint = unsigned.pop("admission_fingerprint", None)
+    admission_passed = admission.get("admission_passed")
+    failures = admission.get("failures")
+    if (
+        type(stored_fingerprint) is not str
+        or _HEX_64.fullmatch(stored_fingerprint) is None
+        or stored_fingerprint != fingerprint(unsigned)
+        or type(admission_passed) is not bool
+        or type(failures) is not list
+        or any(type(item) is not str or item not in _ADMISSION_FAILURES for item in failures)
+        or failures != sorted(set(failures))
+        or (admission_passed and failures)
+        or (not admission_passed and not failures)
+        or admission.get("schema_version") != "program-012-private-structural-admission-report-v1"
+        or admission.get("program_id") != PROGRAM_ID
+        or admission.get("status")
+        != (
+            "ADMITTED-PROGRAM-012-RAW-STRUCTURAL-PREFIX"
+            if admission_passed
+            else "TERMINAL-FAIL-CONSUMED-NO-RETRY"
         )
-        + "\n"
-    ).encode()
+        or admission.get("program_002_admission") is not False
+        or admission.get("program_002_quote_windows_evaluated") != 0
+        or admission.get("strategy_metrics_present") is not False
+    ):
+        raise Program012AuthorityError("Program 012 structural admission differs")
+    fixed = _terminal_dates(admission.get("fixed_quarantine_sessions"), "fixed exclusions")
+    unexpected = _terminal_dates(
+        admission.get("unexpected_excluded_sessions"), "unexpected exclusions"
+    )
+    excluded = set(fixed) | set(unexpected)
+    missing_count = _terminal_count(
+        admission.get("missing_coordinate_count"), "admission missing count"
+    )
+    excluded_count = _terminal_count(
+        admission.get("excluded_full_session_count"), "admission excluded count"
+    )
+    if (
+        set(fixed) & set(unexpected)
+        or excluded_count != len(excluded)
+        or not excluded <= program_012.full_trade_sessions()
+        or missing_count > program_012.EXPECTED_COORDINATE_COUNT
+    ):
+        raise Program012AuthorityError("Program 012 structural admission differs")
+    return admission
+
+
+def _validated_missingness_count(root_descriptor: int) -> int:
+    raw = _read(root_descriptor, "missing-coordinates.json")
+    value = _exact_terminal_object(
+        _json_object(raw, "missing coordinates"),
+        {"schema_version", "program_id", "sessions"},
+        "missing coordinates",
+    )
+    if raw != (canonical_json(value) + "\n").encode():
+        raise Program012AuthorityError("Program 012 missing coordinates are not canonical")
+    sessions = value["sessions"]
+    if (
+        value["schema_version"] != "program-012-private-missing-coordinates-v1"
+        or value["program_id"] != PROGRAM_ID
+        or type(sessions) is not dict
+    ):
+        raise Program012AuthorityError("Program 012 missing coordinates differ")
+    count = 0
+    for session, coordinates in sessions.items():
+        if type(session) is not str or type(coordinates) is not list:
+            raise Program012AuthorityError("Program 012 missing coordinates differ")
+        try:
+            date.fromisoformat(session)
+        except ValueError as error:
+            raise Program012AuthorityError("Program 012 missing coordinates differ") from error
+        if any(type(coordinate) is not str for coordinate in coordinates) or coordinates != sorted(
+            set(coordinates)
+        ):
+            raise Program012AuthorityError("Program 012 missing coordinates differ")
+        count += len(coordinates)
+    return count
+
+
+def _admitted_session_fingerprint(admission: Mapping[str, Any]) -> str:
+    excluded = {
+        *_terminal_dates(admission.get("fixed_quarantine_sessions"), "fixed exclusions"),
+        *_terminal_dates(admission.get("unexpected_excluded_sessions"), "unexpected exclusions"),
+    }
+    return fingerprint(
+        tuple(
+            request.session.isoformat()
+            for request in program_012.acquisition_requests()
+            if request.session in program_012.full_trade_sessions()
+            and request.session not in excluded
+        )
+    )
+
+
+def _validate_terminal_evidence_hashes(
+    root_descriptor: int, record: Mapping[str, Any], *, required: bool
+) -> None:
+    for field, key in (
+        ("response_manifest_sha256", "response-manifest.json"),
+        ("canonical_raw_sha256", "canonical-raw.jsonl"),
+        ("private_missingness_sha256", "missing-coordinates.json"),
+        ("structural_admission_sha256", "structural-admission.json"),
+        ("private_dataset_manifest_sha256", "dataset-manifest.json"),
+    ):
+        actual = _evidence_sha256_if_present(root_descriptor, key)
+        stored = record[field]
+        if required and actual is None:
+            raise Program012AuthorityError("Program 012 terminal evidence is incomplete")
+        if stored != actual or (
+            stored is not None and (type(stored) is not str or _HEX_64.fullmatch(stored) is None)
+        ):
+            raise Program012AuthorityError("Program 012 terminal evidence hash differs")
+
+
+def _validated_acquisition_gates(value: Any, admission_passed: bool) -> dict[str, Any]:
+    gates = _exact_terminal_object(value, _ACQUISITION_GATE_KEYS, "acquisition gate result")
+    failures = gates["failure_classes"]
+    if type(failures) is not list or any(
+        type(item) is not str or item not in _ADMISSION_FAILURES for item in failures
+    ):
+        raise Program012AuthorityError("Program 012 acquisition gate result differs")
+    if (
+        failures != sorted(set(failures))
+        or gates["structural_admission_passed"] is not admission_passed
+        or type(gates["failure_count"]) is not int
+        or gates["failure_count"] != len(failures)
+        or (admission_passed and failures)
+        or (not admission_passed and not failures)
+    ):
+        raise Program012AuthorityError("Program 012 acquisition gate result differs")
+    return {
+        "structural_admission_passed": admission_passed,
+        "failure_count": len(failures),
+        "failure_classes": list(failures),
+    }
+
+
+def _validated_runtime_failure_gates(value: Any) -> dict[str, Any]:
+    gates = _exact_terminal_object(value, _RUNTIME_FAILURE_GATE_KEYS, "runtime failure gate result")
+    if (
+        gates["structural_admission_passed"] is not False
+        or gates["structural_admission_evaluated"] is not False
+        or gates["failure_count"] is not None
+        or gates["failure_classes"] != []
+        or type(gates["failure_classes"]) is not list
+    ):
+        raise Program012AuthorityError("Program 012 runtime failure gate result differs")
+    return {
+        "structural_admission_passed": False,
+        "structural_admission_evaluated": False,
+        "failure_count": None,
+        "failure_classes": [],
+    }
+
+
+def _validated_public_dataset_manifest(record: Mapping[str, Any]) -> dict[str, Any] | None:
+    if record["admission_passed"] is False:
+        if record["public_dataset_manifest"] is not None:
+            raise Program012AuthorityError("Program 012 public dataset manifest differs")
+        return None
+    dataset = _exact_terminal_object(
+        record["public_dataset_manifest"], _PUBLIC_DATASET_KEYS, "public dataset manifest"
+    )
+    raw_row_count = _terminal_count(dataset["raw_row_count"], "public raw row count")
+    expected_count = _terminal_count(
+        dataset["expected_coordinate_count"], "public expected coordinate count"
+    )
+    missing_count = _terminal_count(dataset["missing_coordinate_count"], "public missing count")
+    excluded_count = _terminal_count(
+        dataset["excluded_full_session_count"], "public excluded session count"
+    )
+    admitted_count = _terminal_count(
+        dataset["admitted_full_session_count"], "public admitted session count"
+    )
+    if (
+        dataset["schema_version"] != "program-012-public-raw-structural-prefix-dataset-manifest-v1"
+        or dataset["program_id"] != PROGRAM_ID
+        or dataset["authority_id"] != record["authority_id"]
+        or dataset["authority_fingerprint"] != record["authority_fingerprint"]
+        or dataset["source_commit"] != record["source_commit"]
+        or dataset["status"] != "ADMITTED-PROGRAM-012-RAW-STRUCTURAL-PREFIX"
+        or dataset["dataset_identity"] != record["dataset_identity"]
+        or dataset["canonical_raw_sha256"] != record["canonical_raw_sha256"]
+        or raw_row_count != record["raw_row_count"]
+        or expected_count != record["expected_canonical_coordinate_count"]
+        or missing_count != record["missing_coordinate_count"]
+        or excluded_count != record["excluded_full_session_count"]
+        or admitted_count != len(program_012.full_trade_sessions()) - excluded_count
+        or dataset["exact_missingness_private"] is not True
+        or dataset["exact_excluded_sessions_private"] is not True
+        or dataset["program_002_admission"] is not False
+        or dataset["strategy_metrics_present"] is not False
+    ):
+        raise Program012AuthorityError("Program 012 public dataset manifest differs")
+    return {
+        "schema_version": dataset["schema_version"],
+        "program_id": dataset["program_id"],
+        "authority_id": dataset["authority_id"],
+        "authority_fingerprint": dataset["authority_fingerprint"],
+        "source_commit": dataset["source_commit"],
+        "status": dataset["status"],
+        "dataset_identity": dataset["dataset_identity"],
+        "canonical_raw_sha256": dataset["canonical_raw_sha256"],
+        "raw_row_count": dataset["raw_row_count"],
+        "expected_coordinate_count": dataset["expected_coordinate_count"],
+        "missing_coordinate_count": dataset["missing_coordinate_count"],
+        "excluded_full_session_count": dataset["excluded_full_session_count"],
+        "admitted_full_session_count": dataset["admitted_full_session_count"],
+        "exact_missingness_private": True,
+        "exact_excluded_sessions_private": True,
+        "program_002_admission": False,
+        "strategy_metrics_present": False,
+    }
+
+
+def _validate_private_dataset_manifest(
+    root_descriptor: int,
+    record: Mapping[str, Any],
+    admission: Mapping[str, Any],
+    private_dataset_identity: str | None,
+    admitted_session_index_fingerprint: str,
+) -> None:
+    raw = _read(root_descriptor, "dataset-manifest.json")
+    dataset = _exact_terminal_object(
+        _json_object(raw, "private dataset manifest"),
+        _PRIVATE_DATASET_KEYS,
+        "private dataset manifest",
+    )
+    if raw != (canonical_json(dataset) + "\n").encode():
+        raise Program012AuthorityError("Program 012 private dataset manifest is not canonical")
+    excluded_count = _terminal_count(
+        admission.get("excluded_full_session_count"), "admission excluded count"
+    )
+    if (
+        dataset["schema_version"] != "program-012-raw-structural-prefix-dataset-manifest-v1"
+        or dataset["program_id"] != PROGRAM_ID
+        or dataset["authority_id"] != record["authority_id"]
+        or dataset["authority_fingerprint"] != record["authority_fingerprint"]
+        or dataset["source_commit"] != record["source_commit"]
+        or dataset["status"] != admission["status"]
+        or dataset["dataset_identity"] != private_dataset_identity
+        or dataset["response_manifest_sha256"] != record["response_manifest_sha256"]
+        or dataset["canonical_raw_sha256"] != record["canonical_raw_sha256"]
+        or dataset["private_missingness_sha256"] != record["private_missingness_sha256"]
+        or dataset["structural_admission_sha256"] != record["structural_admission_sha256"]
+        or dataset["raw_row_count"] != record["raw_row_count"]
+        or dataset["expected_coordinate_count"] != record["expected_canonical_coordinate_count"]
+        or dataset["missing_coordinate_count"] != record["missing_coordinate_count"]
+        or dataset["excluded_full_session_count"] != excluded_count
+        or dataset["admitted_full_session_count"]
+        != len(program_012.full_trade_sessions()) - excluded_count
+        or dataset["admitted_session_index_fingerprint"] != admitted_session_index_fingerprint
+        or dataset["exact_missingness_private"] is not True
+        or dataset["program_002_admission"] is not False
+        or dataset["strategy_metrics_present"] is not False
+    ):
+        raise Program012AuthorityError("Program 012 private dataset manifest differs")
+
+
+def _validate_acquisition_receipt(root_descriptor: int, record: Mapping[str, Any]) -> None:
+    if type(record["admission_passed"]) is not bool:
+        raise Program012AuthorityError("Program 012 acquisition receipt differs")
+    admission_passed = record["admission_passed"]
+    session_count = _terminal_count(record["session_count"], "session count")
+    request_count = _terminal_count(record["request_count"], "request count")
+    response_count = _terminal_count(record["response_count"], "response count")
+    response_bytes = _terminal_count(record["response_bytes"], "response byte count")
+    raw_row_count = _terminal_count(record["raw_row_count"], "raw row count")
+    expected_count = _terminal_count(
+        record["expected_canonical_coordinate_count"], "expected coordinate count"
+    )
+    missing_count = _terminal_count(record["missing_coordinate_count"], "missing count")
+    excluded_count = _terminal_count(
+        record["excluded_full_session_count"], "excluded session count"
+    )
+    credential_loads = _terminal_count(record["credential_loads"], "credential load count")
+    durable_credential_loads = _credential_load_count(
+        root_descriptor,
+        authority_fingerprint=record["authority_fingerprint"],
+        source_commit=record["source_commit"],
+    )
+    dataset_identity = record["dataset_identity"]
+    private_dataset_identity = record["private_dataset_identity"]
+    if (
+        record["schema_version"] != "program-012-private-acquisition-receipt-v2"
+        or record["status"]
+        != (
+            "ADMITTED-PROGRAM-012-RAW-STRUCTURAL-PREFIX"
+            if admission_passed
+            else "TERMINAL-FAIL-CONSUMED-NO-RETRY"
+        )
+        or session_count != program_012.EXPECTED_SESSION_COUNT
+        or not session_count <= request_count <= program_012.MAXIMUM_REQUESTS_AND_RESPONSES
+        or response_count != request_count
+        or response_bytes > program_012.MAXIMUM_TOTAL_RESPONSE_BYTES
+        or expected_count != program_012.EXPECTED_COORDINATE_COUNT
+        or raw_row_count + missing_count != expected_count
+        or excluded_count > len(program_012.full_trade_sessions())
+        or credential_loads != durable_credential_loads
+        or not 1 <= credential_loads <= request_count
+        or (
+            admission_passed
+            and (type(dataset_identity) is not str or _HEX_64.fullmatch(dataset_identity) is None)
+        )
+        or (
+            admission_passed
+            and (
+                type(private_dataset_identity) is not str
+                or _HEX_64.fullmatch(private_dataset_identity) is None
+                or private_dataset_identity == dataset_identity
+            )
+        )
+        or (
+            not admission_passed
+            and (dataset_identity is not None or private_dataset_identity is not None)
+        )
+        or type(record["automatic_retries"]) is not int
+        or record["automatic_retries"] != 0
+        or record["credentials_stored"] is not False
+        or record["exact_missing_coordinates_private"] is not True
+        or record["exact_unexpected_exclusion_dates_private"] is not True
+        or record["program_002_admission"] is not False
+        or type(record["strategy_calculations"]) is not int
+        or record["strategy_calculations"] != 0
+        or type(record["strategy_returns"]) is not int
+        or record["strategy_returns"] != 0
+    ):
+        raise Program012AuthorityError("Program 012 acquisition receipt differs")
+    _terminal_sha256(record["response_manifest_sha256"], "response manifest hash")
+    _terminal_sha256(record["canonical_raw_sha256"], "canonical raw hash")
+    _terminal_sha256(record["private_missingness_sha256"], "missingness hash")
+    _terminal_sha256(record["structural_admission_sha256"], "admission hash")
+    _terminal_sha256(record["private_dataset_manifest_sha256"], "dataset manifest hash")
+    _validate_terminal_evidence_hashes(root_descriptor, record, required=True)
+    admission = _validated_structural_admission(root_descriptor)
+    failures = cast(list[str], admission["failures"])
+    gates = _validated_acquisition_gates(record["aggregate_gate_results"], admission_passed)
+    expected_gates = {
+        "structural_admission_passed": admission_passed,
+        "failure_count": len(failures),
+        "failure_classes": failures,
+    }
+    admitted_session_index_fingerprint = _admitted_session_fingerprint(admission)
+    expected_dataset_identity, expected_private_dataset_identity = _dataset_identities(
+        authority_fingerprint=str(record["authority_fingerprint"]),
+        source_commit=str(record["source_commit"]),
+        response_manifest_sha256=str(record["response_manifest_sha256"]),
+        canonical_raw_sha256=str(record["canonical_raw_sha256"]),
+        private_missingness_sha256=str(record["private_missingness_sha256"]),
+        admitted_session_index_fingerprint=admitted_session_index_fingerprint,
+        admission=admission,
+    )
+    if (
+        admission["admission_passed"] is not admission_passed
+        or admission["status"] != record["status"]
+        or admission["missing_coordinate_count"] != missing_count
+        or admission["excluded_full_session_count"] != excluded_count
+        or _validated_missingness_count(root_descriptor) != missing_count
+        or gates != expected_gates
+        or dataset_identity != expected_dataset_identity
+        or private_dataset_identity != expected_private_dataset_identity
+    ):
+        raise Program012AuthorityError("Program 012 acquisition receipt differs")
+    _validate_private_dataset_manifest(
+        root_descriptor,
+        record,
+        admission,
+        expected_private_dataset_identity,
+        admitted_session_index_fingerprint,
+    )
+    _validated_public_dataset_manifest(record)
+    _parse_observed_at(record["observed_at"])
+    if not _exists(root_descriptor, "claim.json"):
+        raise Program012AuthorityError("Program 012 acquisition receipt lacks a claim")
+
+
+def _validate_terminal_failure(root_descriptor: int, record: Mapping[str, Any]) -> None:
+    session_count = _terminal_count(record["session_count"], "failure session count")
+    expected_count = _terminal_count(
+        record["expected_canonical_coordinate_count"], "failure expected coordinate count"
+    )
+    counts = tuple(
+        record[field]
+        for field in (
+            "request_count",
+            "response_count",
+            "response_bytes",
+            "sessions_with_completed_responses",
+        )
+    )
+    if any(value is None for value in counts):
+        if any(value is not None for value in counts):
+            raise Program012AuthorityError("Program 012 failure counts differ")
+    else:
+        request_count, response_count, response_bytes, completed_sessions = (
+            _terminal_count(value, "failure count") for value in counts
+        )
+        if (
+            request_count > program_012.MAXIMUM_REQUESTS_AND_RESPONSES
+            or response_count > request_count
+            or request_count - response_count > 1
+            or response_bytes > program_012.MAXIMUM_TOTAL_RESPONSE_BYTES
+            or completed_sessions > min(program_012.EXPECTED_SESSION_COUNT, response_count)
+        ):
+            raise Program012AuthorityError("Program 012 failure counts differ")
+    failure_class = record["failure_class"]
+    failure_classification = record["failure_classification"]
+    expected_classification = (
+        "CHAIN-INCOMPLETE-RESOURCE-CAP"
+        if failure_class == "ChainIncompleteError"
+        else failure_class
+    )
+    credential_loads = _terminal_count(record["credential_loads"], "credential load count")
+    durable_credential_loads = _credential_load_count(
+        root_descriptor,
+        authority_fingerprint=record["authority_fingerprint"],
+        source_commit=record["source_commit"],
+    )
+    if (
+        record["schema_version"] != "program-012-private-acquisition-failure-v2"
+        or record["status"] != "FAIL-CONSUMED-NO-RETRY"
+        or record["admission_passed"] is not False
+        or type(failure_class) is not str
+        or not failure_class.isidentifier()
+        or len(failure_class) > 128
+        or failure_classification != expected_classification
+        or record["provider_transport_attempted"] is not _exists(root_descriptor, "claim.json")
+        or record["scientific_use_consumed"] is not True
+        or session_count != program_012.EXPECTED_SESSION_COUNT
+        or record["raw_row_count"] is not None
+        or expected_count != program_012.EXPECTED_COORDINATE_COUNT
+        or record["missing_coordinate_count"] is not None
+        or record["excluded_full_session_count"] is not None
+        or credential_loads != durable_credential_loads
+        or credential_loads > program_012.MAXIMUM_REQUESTS_AND_RESPONSES
+        or record["public_dataset_manifest"] is not None
+        or record["dataset_identity"] is not None
+        or record["unpaired_credential_attempts_count_as_load"] is not True
+        or type(record["automatic_retries"]) is not int
+        or record["automatic_retries"] != 0
+        or record["dataset_admitted"] is not False
+        or type(record["strategy_calculations"]) is not int
+        or record["strategy_calculations"] != 0
+        or type(record["strategy_returns"]) is not int
+        or record["strategy_returns"] != 0
+        or record["credentials_stored"] is not False
+        or record["exact_missing_coordinates_private"] is not True
+        or record["exact_unexpected_exclusion_dates_private"] is not True
+        or record["program_002_admission"] is not False
+    ):
+        raise Program012AuthorityError("Program 012 failure evidence differs")
+    _validated_runtime_failure_gates(record["aggregate_gate_results"])
+    _validate_terminal_evidence_hashes(root_descriptor, record, required=False)
+    _parse_observed_at(record["observed_at"])
+
+
+def _load_terminal_record(
+    root_descriptor: int,
+    authority: Mapping[str, Any],
+    source_commit: str,
+) -> tuple[str, Mapping[str, Any]]:
+    present = [key for key in sorted(_TERMINAL_KEYS) if _exists(root_descriptor, key)]
+    if len(present) != 1:
+        raise Program012AuthorityError("Program 012 terminal evidence set differs")
+    key = present[0]
+    raw = _read(root_descriptor, key)
+    record = _json_object(raw, "terminal evidence")
+    _exact_terminal_object(
+        record,
+        _ACQUISITION_RECEIPT_KEYS if key == "acquisition-receipt.json" else _TERMINAL_FAILURE_KEYS,
+        "terminal evidence",
+    )
+    if raw != (canonical_json(record) + "\n").encode():
+        raise Program012AuthorityError("Program 012 terminal evidence is not canonical")
+    unsigned = dict(record)
+    stored_fingerprint = unsigned.pop("terminal_fingerprint", None)
+    if (
+        type(stored_fingerprint) is not str
+        or _HEX_64.fullmatch(stored_fingerprint) is None
+        or stored_fingerprint != fingerprint(unsigned)
+        or record.get("program_id") != PROGRAM_ID
+        or record.get("authority_id") != authority.get("authority_id")
+        or record.get("authority_fingerprint") != authority.get("authority_fingerprint")
+        or _HEX_64.fullmatch(str(record.get("authority_fingerprint"))) is None
+        or record.get("source_commit") != source_commit
+        or _HEX_40.fullmatch(str(record.get("source_commit"))) is None
+        or record.get("public_terminal_path") != PUBLIC_TERMINAL_PATH.as_posix()
+        or record.get("credentials_stored") is not False
+    ):
+        raise Program012AuthorityError("Program 012 terminal evidence binding differs")
+    if key == "acquisition-receipt.json":
+        _validate_acquisition_receipt(root_descriptor, record)
+    else:
+        _validate_terminal_failure(root_descriptor, record)
+    if _exists(root_descriptor, "claim.json"):
+        _validate_claim(root_descriptor, authority, source_commit)
+    return key, record
+
+
+def _public_terminal_payload(
+    root_descriptor: int,
+    terminal_key: str,
+    terminal: Mapping[str, Any],
+) -> bytes:
+    result_kind = (
+        "RUNTIME-FAILURE"
+        if terminal_key == "terminal-failure.json"
+        else "ADMISSION-PASS"
+        if terminal["admission_passed"] is True
+        else "ADMISSION-FAILURE"
+    )
+    if terminal_key == "acquisition-receipt.json":
+        admission = _validated_structural_admission(root_descriptor)
+        private_gates = _validated_acquisition_gates(
+            terminal["aggregate_gate_results"], terminal["admission_passed"] is True
+        )
+        failures = cast(list[str], admission["failures"])
+        if private_gates != {
+            "structural_admission_passed": admission["admission_passed"],
+            "failure_count": len(failures),
+            "failure_classes": failures,
+        }:
+            raise Program012AuthorityError("Program 012 acquisition gate result differs")
+        aggregate_gate_results = {
+            "structural_admission_passed": admission["admission_passed"],
+            "failure_count": len(failures),
+        }
+        public_dataset = _validated_public_dataset_manifest(terminal)
+        sessions_with_completed_responses = terminal["session_count"]
+        failure_class = None
+        failure_classification = None
+    else:
+        private_gates = _validated_runtime_failure_gates(terminal["aggregate_gate_results"])
+        aggregate_gate_results = {
+            "structural_admission_passed": private_gates["structural_admission_passed"],
+            "structural_admission_evaluated": private_gates["structural_admission_evaluated"],
+            "failure_count": private_gates["failure_count"],
+        }
+        public_dataset = None
+        sessions_with_completed_responses = terminal["sessions_with_completed_responses"]
+        failure_class = terminal["failure_class"]
+        failure_classification = terminal["failure_classification"]
+    public: dict[str, Any] = {
+        "schema_version": "program-012-exposed-prefix-terminal-result-v1",
+        "terminal_result_id": (
+            "program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-"
+            "structural-admission-terminal-result-2026-08-31-v1"
+        ),
+        "program_ordinal": PROGRAM_ORDINAL,
+        "program_id": PROGRAM_ID,
+        "result_kind": result_kind,
+        "status": terminal["status"],
+        "authority_id": terminal["authority_id"],
+        "authority_fingerprint": terminal["authority_fingerprint"],
+        "source_commit": terminal["source_commit"],
+        "admission_passed": terminal["admission_passed"],
+        "session_count": terminal["session_count"],
+        "sessions_with_completed_responses": sessions_with_completed_responses,
+        "request_count": terminal["request_count"],
+        "response_count": terminal["response_count"],
+        "response_bytes": terminal["response_bytes"],
+        "raw_row_count": terminal["raw_row_count"],
+        "expected_canonical_coordinate_count": terminal["expected_canonical_coordinate_count"],
+        "missing_coordinate_count": terminal["missing_coordinate_count"],
+        "excluded_full_session_count": terminal["excluded_full_session_count"],
+        "credential_loads": terminal["credential_loads"],
+        "aggregate_gate_results": aggregate_gate_results,
+        "failure_class": failure_class,
+        "failure_classification": failure_classification,
+        "private_evidence_hashes": {
+            "response_manifest_sha256": terminal["response_manifest_sha256"],
+            "canonical_raw_sha256": terminal["canonical_raw_sha256"],
+        },
+        "dataset_manifest": public_dataset,
+        "public_dataset_manifest_present": public_dataset is not None,
+        "credentials_stored": False,
+        "provider_tokens_private": True,
+        "exact_missing_coordinates_private": True,
+        "exact_unexpected_exclusion_dates_private": True,
+        "automatic_retries": 0,
+        "program_002_admission": False,
+        "strategy_calculations": 0,
+        "strategy_returns": 0,
+        "observed_at": terminal["observed_at"],
+    }
+    public["terminal_result_fingerprint"] = fingerprint(public)
+    return (canonical_json(public) + "\n").encode()
+
+
+def _publish_public_terminal(
+    repository: Path,
+    root_descriptor: int,
+    terminal_key: str,
+    terminal: Mapping[str, Any],
+) -> None:
+    _append_public_atomic(
+        repository,
+        root_descriptor,
+        PUBLIC_TERMINAL_PATH,
+        _public_terminal_payload(root_descriptor, terminal_key, terminal),
+    )
 
 
 def _credential_load_count(
@@ -1612,6 +2601,62 @@ def _require_working_disk_capacity(root_descriptor: int) -> None:
         raise Program012AuthorityError("Program 012 working disk reservation is unavailable")
 
 
+def _append_public_atomic(
+    repository: Path,
+    root_descriptor: int,
+    path: Path,
+    payload: bytes,
+) -> None:
+    if path != PUBLIC_TERMINAL_PATH or type(payload) is not bytes:
+        raise Program012AuthorityError("Program 012 public artifact path differs")
+    public_descriptor = os.open(repository / path.parent, _DIRECTORY_FLAGS)
+    try:
+        try:
+            existing_descriptor = os.open(
+                path.name,
+                os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+                dir_fd=public_descriptor,
+            )
+        except FileNotFoundError:
+            existing_descriptor = None
+        if existing_descriptor is not None:
+            with os.fdopen(existing_descriptor, "rb") as handle:
+                metadata = os.fstat(handle.fileno())
+                existing = handle.read()
+            if not stat.S_ISREG(metadata.st_mode) or existing != payload:
+                raise Program012AuthorityError("Program 012 public terminal artifact differs")
+            return
+        temp_key, temp_descriptor = _new_temp(root_descriptor, "public-terminal")
+        try:
+            with os.fdopen(temp_descriptor, "wb") as handle:
+                if handle.write(payload) != len(payload):
+                    raise Program012AuthorityError(
+                        "Program 012 public terminal write was incomplete"
+                    )
+                handle.flush()
+                os.fchmod(handle.fileno(), 0o644)
+                os.fsync(handle.fileno())
+            try:
+                os.link(
+                    temp_key,
+                    path.name,
+                    src_dir_fd=root_descriptor,
+                    dst_dir_fd=public_descriptor,
+                    follow_symlinks=False,
+                )
+            except FileExistsError:
+                raise Program012AuthorityError(
+                    "Program 012 public terminal artifact already exists"
+                ) from None
+            os.fsync(public_descriptor)
+        finally:
+            with suppress(FileNotFoundError):
+                os.unlink(temp_key, dir_fd=root_descriptor)
+                os.fsync(root_descriptor)
+    finally:
+        os.close(public_descriptor)
+
+
 def _append(root_descriptor: int, key: str, payload: bytes) -> None:
     _validate_evidence_input(key, payload)
     try:
@@ -1637,7 +2682,7 @@ def _append_atomic(root_descriptor: int, key: str, payload: bytes) -> None:
     try:
         with os.fdopen(descriptor, "wb") as handle:
             if handle.write(payload) != len(payload):
-                raise Program012AuthorityError("Program 012 atomic intent write was incomplete")
+                raise Program012AuthorityError("Program 012 atomic evidence write was incomplete")
             handle.flush()
             os.fsync(handle.fileno())
         try:
@@ -1761,6 +2806,38 @@ def _load_active(root_descriptor: int, expected: Mapping[str, Any]) -> Mapping[s
     return value
 
 
+def _validate_existing_public_terminal(
+    repository: Path,
+    authority: Mapping[str, Any],
+    source_commit: str,
+) -> None:
+    path = repository / PUBLIC_TERMINAL_PATH
+    try:
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    except FileNotFoundError:
+        return
+    except OSError as error:
+        raise Program012AuthorityError("Program 012 public terminal artifact is invalid") from error
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > 1_048_576:
+            raise Program012AuthorityError("Program 012 public terminal artifact is invalid")
+        with os.fdopen(descriptor, "rb") as handle:
+            descriptor = -1
+            actual = handle.read()
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    root_descriptor = _open_private_root(repository, create=False)
+    try:
+        terminal_key, terminal = _load_terminal_record(root_descriptor, authority, source_commit)
+        expected = _public_terminal_payload(root_descriptor, terminal_key, terminal)
+    finally:
+        os.close(root_descriptor)
+    if actual != expected:
+        raise Program012AuthorityError("Program 012 public terminal artifact differs")
+
+
 def _repository_preflight(repository: Path, identity: Mapping[str, Any]) -> Mapping[str, str]:
     runtime = _mapping(identity.get("runtime_binding"), "runtime binding")
     source_commit = str(runtime.get("source_commit"))
@@ -1785,14 +2862,14 @@ def _repository_preflight(repository: Path, identity: Mapping[str, Any]) -> Mapp
         head = git("rev-parse", "HEAD").stdout.strip()
         main = git("rev-parse", "refs/heads/main").stdout.strip()
         origin_main = git("rev-parse", "refs/remotes/origin/main").stdout.strip()
-        dirty = git("status", "--porcelain", "--untracked-files=all").stdout
+        dirty = git("status", "--porcelain", "--untracked-files=all").stdout.splitlines()
         source_tree = git("rev-parse", f"{source_commit}^{{tree}}").stdout.strip()
         changed = git("diff", "--name-status", source_commit, head).stdout.splitlines()
         ancestor = git("merge-base", "--is-ancestor", source_commit, head, check=False)
     except (OSError, subprocess.CalledProcessError, ValueError) as error:
         raise Program012AuthorityError("Program 012 repository identity is unavailable") from error
     if (
-        dirty
+        dirty not in ([], [f"?? {PUBLIC_TERMINAL_PATH.as_posix()}"])
         or head != main
         or head != origin_main
         or source_tree != runtime.get("source_tree")

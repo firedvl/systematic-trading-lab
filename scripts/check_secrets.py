@@ -162,6 +162,16 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-success-independent-review-v1.json",
         "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-v1.json",
         "config/research/program-011-raw-alpaca-sip-ohlcv-structural-qualification-terminal-failure-independent-review-v1.json",
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v1.json",
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v2.json",
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v3.json",
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v1.json",
+        "config/research/program-012-exposed-prefix-runtime-implementation-v1.json",
+        "config/research/program-012-exposed-prefix-runtime-implementation-v2.json",
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-child-authority-v1.json",
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-child-authority-independent-review-v1.json",
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-terminal-result-v1.json",
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-terminal-result-independent-review-v1.json",
     }
 )
 _PROVIDER_BAR_KEYS = frozenset({"t", "o", "h", "l", "c", "v"})
@@ -231,6 +241,7 @@ def main() -> int:
                         "program-009",
                         "program-010",
                         "program-011",
+                        "program-012",
                     )
                 )
                 and suffix in PRIVATE_MARKET_DATA_SUFFIXES
