@@ -26,8 +26,11 @@ _V3_PROPOSAL_PATH = Path(
 _PROPOSAL_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v4.json"
 )
-_REVIEW_PATH = Path(
+_V1_REVIEW_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v1.json"
+)
+_REVIEW_PATH = Path(
+    "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v2.json"
 )
 _V1_IMPLEMENTATION_PATH = Path(
     "config/research/program-012-exposed-prefix-runtime-implementation-v1.json"
@@ -425,8 +428,12 @@ def test_program_012_review_binds_finding_free_source_and_grants_no_authority() 
     assert review["verdict"] == "PASS"
     assert review["findings"] == []
     assert all(axis["verdict"] == "PASS" for axis in review["review_axes"].values())
-    assert review["remediation_history"]["v3_disposition"] == (
-        "ALL-PRIOR-FINDINGS-REMEDIATED-BEFORE-EXECUTION"
+    assert review["reviewed_artifacts"]["program_012_prior_design_review_v1"]["path"] == (
+        _V1_REVIEW_PATH.as_posix()
+    )
+    assert review["implementation_conformance"]["verdict"] == "DEFERRED"
+    assert review["review_followup"]["disposition"] == (
+        "REMEDIATED-BEFORE-RUNTIME-IMPLEMENTATION"
     )
     assert all(value is False for value in review["authority"].values())
     assert "PLACEHOLDER" not in (_REPOSITORY / _REVIEW_PATH).read_text(encoding="utf-8")
