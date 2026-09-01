@@ -478,7 +478,7 @@ def test_cli_validates_public_controls_before_loading_dotenv(
     assert events == ["controls"]
 
 
-def test_git_preflight_allows_only_the_validated_generated_terminal_on_reentry(
+def test_git_preflight_uses_post_merge_runtime_baseline_on_reentry(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
     _git(tmp_path, "init", "-b", "main")
@@ -488,6 +488,15 @@ def test_git_preflight_allows_only_the_validated_generated_terminal_on_reentry(
     (tmp_path / "source.txt").write_text("reviewed\n", encoding="utf-8")
     _git(tmp_path, "add", ".gitignore", "source.txt")
     _git(tmp_path, "commit", "-m", "reviewed source")
+    runtime_source_commit = _git(tmp_path, "rev-parse", "HEAD")
+    runtime_source_tree = _git(tmp_path, "rev-parse", "HEAD^{tree}")
+    finalization = (
+        tmp_path / "config/research/program-012-exposed-prefix-runtime-implementation-v3.json"
+    )
+    finalization.parent.mkdir(parents=True, exist_ok=True)
+    finalization.write_text("{}\n", encoding="utf-8")
+    _git(tmp_path, "add", finalization.relative_to(tmp_path).as_posix())
+    _git(tmp_path, "commit", "-m", "freeze runtime v3")
     source_commit = _git(tmp_path, "rev-parse", "HEAD")
     source_tree = _git(tmp_path, "rev-parse", "HEAD^{tree}")
     for path in (authority.CHILD_AUTHORITY_PATH, authority.CHILD_REVIEW_PATH):
@@ -523,6 +532,17 @@ def test_git_preflight_allows_only_the_validated_generated_terminal_on_reentry(
             ],
         },
     }
+    stale_identity = {
+        **identity,
+        "runtime_binding": {
+            **identity["runtime_binding"],
+            "source_commit": runtime_source_commit,
+            "source_tree": runtime_source_tree,
+        },
+    }
+    with pytest.raises(authority.Program012AuthorityError, match="synchronized-main lineage"):
+        authority._repository_preflight(tmp_path, stale_identity)
+    assert authority._repository_preflight(tmp_path, identity)["synchronized_main_commit"] == head
     monkeypatch.setattr(authority, "derive_child_identity", lambda *_args: identity)
     monkeypatch.setattr(
         predecessor, "_validate_protected_registration_set", lambda *_args, **_kwargs: None
