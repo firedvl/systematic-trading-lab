@@ -454,7 +454,6 @@ def test_git_preflight_allows_only_the_validated_generated_terminal_on_reentry(
             authority._failure_payload(
                 descriptor,
                 authority.Program012AuthorityError("synthetic"),
-                None,
                 active,
                 source_commit,
             ),
@@ -829,6 +828,54 @@ def test_recovery_rejects_re_fingerprinted_failure_credential_count(
     assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
 
 
+def test_recovery_rejects_re_fingerprinted_failure_page_counts(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _, request = _configure_finite_execution(tmp_path, monkeypatch)
+    body = _body(request, 0, None)
+    original_publish = authority._publish_public_terminal
+    monkeypatch.setattr(
+        authority,
+        "_publish_public_terminal",
+        lambda *_args: (_ for _ in ()).throw(OSError("synthetic publication interruption")),
+    )
+    with pytest.raises(authority.Program012PostClaimPersistenceError):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=authority.MockBarsTransport([raw_contract.RawResponse(200, body)]),
+            after_page=lambda: (_ for _ in ()).throw(KeyboardInterrupt()),
+        )
+    monkeypatch.setattr(authority, "_publish_public_terminal", original_publish)
+
+    failure_path = tmp_path / authority.PRIVATE_ROOT / "terminal-failure.json"
+    failure = json.loads(failure_path.read_bytes())
+    assert (
+        failure["request_count"],
+        failure["response_count"],
+        failure["response_bytes"],
+        failure["sessions_with_completed_responses"],
+    ) == (1, 1, len(body), 1)
+    for field in (
+        "request_count",
+        "response_count",
+        "response_bytes",
+        "sessions_with_completed_responses",
+    ):
+        failure[field] = 0
+    failure.pop("terminal_fingerprint")
+    failure["terminal_fingerprint"] = fingerprint(failure)
+    failure_path.write_text(canonical_json(failure) + "\n", encoding="utf-8")
+
+    with pytest.raises(authority.Program012AuthorityError, match="failure counts differ"):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=authority.MockBarsTransport([]),
+        )
+    assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
+
+
 def test_crash_after_fsynced_intent_forbids_a_second_transport_call(
     tmp_path: Path,
 ) -> None:
@@ -1058,7 +1105,6 @@ def test_unpaired_credential_attempt_counts_as_one_load(
         authority._failure_payload(
             root_descriptor,
             authority.Program012AuthorityError("synthetic"),
-            None,
             active,
             active["control_lineage"]["runtime_source_commit"],
         )

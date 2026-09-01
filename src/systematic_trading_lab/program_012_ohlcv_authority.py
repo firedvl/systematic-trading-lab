@@ -1004,7 +1004,6 @@ def _execute_acquisition(
                             _failure_payload(
                                 root_descriptor,
                                 error,
-                                budget,
                                 expected_authority,
                                 source_commit,
                             ),
@@ -1783,10 +1782,14 @@ def _validate_claim(root_descriptor: int, authority: Mapping[str, Any], source_c
 def _failure_payload(
     root_descriptor: int,
     error: BaseException,
-    budget: _Budget | None,
     authority: Mapping[str, Any],
     source_commit: str,
 ) -> bytes:
+    request_count, response_count, response_bytes, completed_sessions = _durable_failure_counts(
+        root_descriptor,
+        authority_fingerprint=str(authority["authority_fingerprint"]),
+        source_commit=source_commit,
+    )
     record: dict[str, Any] = {
         "schema_version": "program-012-private-acquisition-failure-v2",
         "program_id": PROGRAM_ID,
@@ -1801,12 +1804,10 @@ def _failure_payload(
         "provider_transport_attempted": _exists(root_descriptor, "claim.json"),
         "scientific_use_consumed": True,
         "session_count": program_012.EXPECTED_SESSION_COUNT,
-        "request_count": None if budget is None else budget.requests,
-        "response_count": None if budget is None else budget.responses,
-        "response_bytes": None if budget is None else budget.response_bytes,
-        "sessions_with_completed_responses": (
-            None if budget is None else len({str(page["session"]) for page in budget.pages})
-        ),
+        "request_count": request_count,
+        "response_count": response_count,
+        "response_bytes": response_bytes,
+        "sessions_with_completed_responses": completed_sessions,
         "raw_row_count": None,
         "expected_canonical_coordinate_count": program_012.EXPECTED_COORDINATE_COUNT,
         "missing_coordinate_count": None,
@@ -1854,6 +1855,61 @@ def _evidence_sha256_if_present(root_descriptor: int, key: str) -> str | None:
         if _exists(root_descriptor, key)
         else None
     )
+
+
+def _durable_failure_counts(
+    root_descriptor: int,
+    *,
+    authority_fingerprint: str,
+    source_commit: str,
+) -> tuple[int, int, int, int]:
+    requests = {
+        request.session.isoformat(): request for request in program_012.acquisition_requests()
+    }
+    checkpoints: dict[tuple[str, int], set[str]] = {}
+    for entry in os.listdir(root_descriptor):
+        match = _PAGE_KEY.fullmatch(entry)
+        if match is None:
+            continue
+        session = match.group("session")
+        page_index = int(match.group("page"))
+        if session not in requests or not 1 <= page_index <= program_012.MAXIMUM_PAGES_PER_SESSION:
+            raise Program012AuthorityError("Program 012 failure page evidence differs")
+        checkpoints.setdefault((session, page_index), set()).add(match.group("kind"))
+
+    response_count = 0
+    response_bytes = 0
+    completed_sessions: set[str] = set()
+    authority = {"authority_fingerprint": authority_fingerprint}
+    for (session, page_index), kinds in sorted(checkpoints.items()):
+        if "intent.json" not in kinds or kinds - {"intent.json", "body", "receipt.json"}:
+            raise Program012AuthorityError("Program 012 failure page evidence differs")
+        request = requests[session]
+        intent_raw = _read(root_descriptor, f"{_page_prefix(request, page_index)}.intent.json")
+        incoming_token = _json_object(intent_raw, "request intent").get("incoming_page_token")
+        if incoming_token is not None and type(incoming_token) is not str:
+            raise Program012AuthorityError("Program 012 failure page evidence differs")
+        intent = program_011.PageIntent(
+            request.identity,
+            page_index,
+            request.url(incoming_token),
+            incoming_token,
+        )
+        if intent_raw != _intent_payload(authority, source_commit, request, intent):
+            raise Program012AuthorityError("Program 012 failure page evidence differs")
+        if kinds != {"intent.json", "body", "receipt.json"}:
+            continue
+        response, _ = _load_completed_page(
+            root_descriptor,
+            request,
+            intent,
+            authority,
+            source_commit,
+        )
+        response_count += 1
+        response_bytes += len(response.body)
+        completed_sessions.add(session)
+    return len(checkpoints), response_count, response_bytes, len(completed_sessions)
 
 
 def _reserve_process_credential_access(write_attempt: Callable[[], None]) -> None:
@@ -2319,7 +2375,7 @@ def _validate_terminal_failure(root_descriptor: int, record: Mapping[str, Any]) 
         record["expected_canonical_coordinate_count"], "failure expected coordinate count"
     )
     counts = tuple(
-        record[field]
+        _terminal_count(record[field], "failure count")
         for field in (
             "request_count",
             "response_count",
@@ -2327,21 +2383,21 @@ def _validate_terminal_failure(root_descriptor: int, record: Mapping[str, Any]) 
             "sessions_with_completed_responses",
         )
     )
-    if any(value is None for value in counts):
-        if any(value is not None for value in counts):
-            raise Program012AuthorityError("Program 012 failure counts differ")
-    else:
-        request_count, response_count, response_bytes, completed_sessions = (
-            _terminal_count(value, "failure count") for value in counts
-        )
-        if (
-            request_count > program_012.MAXIMUM_REQUESTS_AND_RESPONSES
-            or response_count > request_count
-            or request_count - response_count > 1
-            or response_bytes > program_012.MAXIMUM_TOTAL_RESPONSE_BYTES
-            or completed_sessions > min(program_012.EXPECTED_SESSION_COUNT, response_count)
-        ):
-            raise Program012AuthorityError("Program 012 failure counts differ")
+    request_count, response_count, response_bytes, completed_sessions = counts
+    durable_counts = _durable_failure_counts(
+        root_descriptor,
+        authority_fingerprint=str(record["authority_fingerprint"]),
+        source_commit=str(record["source_commit"]),
+    )
+    if (
+        counts != durable_counts
+        or request_count > program_012.MAXIMUM_REQUESTS_AND_RESPONSES
+        or response_count > request_count
+        or request_count - response_count > 1
+        or response_bytes > program_012.MAXIMUM_TOTAL_RESPONSE_BYTES
+        or completed_sessions > min(program_012.EXPECTED_SESSION_COUNT, response_count)
+    ):
+        raise Program012AuthorityError("Program 012 failure counts differ")
     failure_class = record["failure_class"]
     failure_classification = record["failure_classification"]
     expected_classification = (
