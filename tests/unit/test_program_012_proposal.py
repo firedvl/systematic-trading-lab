@@ -20,11 +20,29 @@ _V1_PROPOSAL_PATH = Path(
 _V2_PROPOSAL_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v2.json"
 )
-_PROPOSAL_PATH = Path(
+_V3_PROPOSAL_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v3.json"
 )
-_REVIEW_PATH = Path(
+_PROPOSAL_PATH = Path(
+    "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v4.json"
+)
+_V1_REVIEW_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v1.json"
+)
+_REVIEW_PATH = Path(
+    "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v2.json"
+)
+_V1_IMPLEMENTATION_PATH = Path(
+    "config/research/program-012-exposed-prefix-runtime-implementation-v1.json"
+)
+_V2_IMPLEMENTATION_PATH = Path(
+    "config/research/program-012-exposed-prefix-runtime-implementation-v2.json"
+)
+_V3_IMPLEMENTATION_PATH = Path(
+    "config/research/program-012-exposed-prefix-runtime-implementation-v3.json"
+)
+_IMPLEMENTATION_PATH = Path(
+    "config/research/program-012-exposed-prefix-runtime-implementation-v4.json"
 )
 
 
@@ -41,6 +59,52 @@ def _assert_binding(binding: dict[str, str]) -> dict[str, Any]:
             item for key, item in value.items() if key.endswith("_fingerprint")
         }
     return value
+
+
+def test_program_012_runtime_implementation_is_exact_and_non_authorizing() -> None:
+    implementation = _load(_IMPLEMENTATION_PATH)
+    stored_fingerprint = implementation.pop("implementation_fingerprint")
+    assert stored_fingerprint == fingerprint(implementation)
+    binding = implementation["implementation_binding"]
+
+    assert binding["source_commit"] == "47de7536ca8a85c3dd2c7c8523218751fd751a9c"
+    assert binding["source_tree"] == "7cf99cfee801370e7a5306019b2ca0a36f18166b"
+    assert binding["implementation_root"] == fingerprint(binding["source_files"])
+    for source in binding["source_files"]:
+        committed = subprocess.run(
+            (
+                "git",
+                "-C",
+                str(_REPOSITORY),
+                "show",
+                f"{binding['source_commit']}:{source['path']}",
+            ),
+            check=True,
+            capture_output=True,
+        ).stdout
+        assert hashlib.sha256(committed).hexdigest() == source["sha256"]
+
+    assert implementation["status"] == "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED"
+    assert implementation["supersedes"]["path"] == _V3_IMPLEMENTATION_PATH.as_posix()
+    _assert_binding(implementation["supersedes"])
+    contract = implementation["runtime_contract"]
+    assert contract["runtime_source_changed_from_v3"] is False
+    assert contract["v3_runtime_contract_inherited_without_change"] is True
+    assert contract["future_child_runtime_binding_source_commit"] == (
+        "EXACT-CLEAN-SYNCHRONIZED-MAIN-AFTER-V4-RUNTIME-MERGE"
+    )
+    assert contract["repository_lineage_diff_base"] == "future child runtime_binding.source_commit"
+    assert contract["runtime_finalization_precedes_future_child_source_commit"] is True
+    assert contract["allowed_later_repository_additions"] == [
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-child-authority-v1.json",
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-child-authority-independent-review-v1.json",
+    ]
+    assert implementation["execution_boundary"]["child_authority_present"] is False
+    assert implementation["execution_boundary"]["credential_presence_or_values_accessed"] is False
+    assert implementation["execution_boundary"]["provider_requests"] == 0
+    assert all(value is False for value in implementation["authority"].values())
+    _assert_binding(implementation["operation_contract"])
+    _assert_binding(implementation["operation_contract_review"])
 
 
 def _hypergeometric_tail(population: int, successes: int, draws: int, threshold: int) -> float:
@@ -60,10 +124,31 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     superseded = proposal["supersedes"]
     assert superseded["proposals"]["v1"]["path"] == _V1_PROPOSAL_PATH.as_posix()
     assert superseded["proposals"]["v2"]["path"] == _V2_PROPOSAL_PATH.as_posix()
+    assert superseded["proposals"]["v3"]["path"] == _V3_PROPOSAL_PATH.as_posix()
     _assert_binding(superseded["proposals"]["v1"])
     _assert_binding(superseded["proposals"]["v2"])
+    _assert_binding(superseded["proposals"]["v3"])
     assert superseded["prior_provider_requests"] == 0
     assert superseded["prior_market_observations"] == 0
+    assert superseded["prior_status"] == (
+        "SUPERSEDED-PROSPECTIVE-PUBLIC-EVIDENCE-SPECIFICATION-DEFECT-NO-EXECUTION"
+    )
+
+    v3 = _load(_V3_PROPOSAL_PATH)
+    for key in (
+        "bindings",
+        "chronology",
+        "source_contract",
+        "pagination_contract",
+        "transport_budgets",
+        "restart_contract",
+        "missingness_policy",
+        "structural_admission_contract",
+        "future_child_authority",
+        "authority",
+        "protected_firewall",
+    ):
+        assert proposal[key] == v3[key]
 
     chronology = proposal["chronology"]
     request = chronology["request_range"]
@@ -190,6 +275,33 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     assert evidence["create_only_raw_pages"] is True
     assert evidence["create_only_request_intents"] is True
     assert evidence["create_only_response_receipts"] is True
+    assert evidence["public_terminal_schema_version"] == (
+        "program-012-exposed-prefix-terminal-result-v2"
+    )
+    assert evidence["public_dataset_manifest_schema_version"] == (
+        "program-012-public-raw-structural-prefix-lineage-manifest-v1"
+    )
+    assert evidence["public_data_derived_hashes_or_fingerprints_allowed"] is False
+    assert evidence["public_dynamic_acquisition_counts_allowed"] is False
+    assert evidence["public_detailed_gate_or_failure_evidence_allowed"] is False
+    assert evidence["private_dataset_content_identity_required"] is True
+    assert evidence["public_artifacts_include"] == [
+        "authority identity",
+        "source commit",
+        "terminal result kind and status",
+        "admission pass or fail",
+        "pass-only dataset lineage identity derived only from public controls",
+        "static privacy and disabled-authority assertions",
+        "terminal observation time",
+    ]
+    assert {
+        "request, response, byte, row, missingness, exclusion, credential-load, or gate counts",
+        "response-manifest, canonical-row, missingness, admission, dataset-manifest, claim, "
+        "receipt, or terminal hashes",
+        "data-derived fingerprints or identities",
+        "detailed gate failures, failure classes, or failure classifications",
+        "private dataset content identity",
+    } <= set(evidence["public_artifacts_exclude"])
 
     missingness = proposal["missingness_policy"]
     loss = missingness["global_loss_limit"]
@@ -240,6 +352,24 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     admission = proposal["structural_admission_contract"]
     assert canonical["raw_prices_changed"] is False
     assert canonical["normalized_volume_materialized_during_program_012"] is False
+    assert canonical["private_dataset_content_identity_binds"] == [
+        "operation proposal",
+        "source commit",
+        "raw page manifest",
+        "canonical raw row hash",
+        "private missingness report hash",
+        "admitted session index hash",
+        "public action ledger",
+        "structural admission result",
+    ]
+    assert canonical["public_dataset_lineage_identity_binds"] == [
+        "operation proposal",
+        "authority fingerprint",
+        "source commit",
+        "public action ledger",
+        "pass status",
+    ]
+    assert canonical["public_dataset_lineage_identity_is_content_identity"] is False
     assert admission["program_002_admission"] is False
     assert admission["program_002_quote_windows_evaluated"] == 0
     assert admission["historical_final_exposed_fold_claim"] is False
@@ -309,8 +439,10 @@ def test_program_012_review_binds_finding_free_source_and_grants_no_authority() 
     assert review["verdict"] == "PASS"
     assert review["findings"] == []
     assert all(axis["verdict"] == "PASS" for axis in review["review_axes"].values())
-    assert review["remediation_history"]["v3_disposition"] == (
-        "ALL-PRIOR-FINDINGS-REMEDIATED-BEFORE-EXECUTION"
+    assert review["reviewed_artifacts"]["program_012_prior_design_review_v1"]["path"] == (
+        _V1_REVIEW_PATH.as_posix()
     )
+    assert review["implementation_conformance"]["verdict"] == "DEFERRED"
+    assert review["review_followup"]["disposition"] == ("REMEDIATED-BEFORE-RUNTIME-IMPLEMENTATION")
     assert all(value is False for value in review["authority"].values())
     assert "PLACEHOLDER" not in (_REPOSITORY / _REVIEW_PATH).read_text(encoding="utf-8")

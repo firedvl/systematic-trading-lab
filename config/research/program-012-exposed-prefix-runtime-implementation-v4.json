@@ -1,0 +1,105 @@
+{
+  "schema_version": "program-012-exposed-prefix-runtime-implementation-v4",
+  "implementation_id": "program-012-exposed-prefix-runtime-implementation-2026-09-01-v4",
+  "program_ordinal": 12,
+  "program_id": "multi-hour-sector-etf-research-011",
+  "status": "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED",
+  "supersedes": {
+    "path": "config/research/program-012-exposed-prefix-runtime-implementation-v3.json",
+    "sha256": "dba943d448c092eff58dc4da3607ae83976e041984448df9a36425caa524fcfd",
+    "fingerprint": "de458943b22b561c23025249f8ea45e7a9bdf97c273f667573e509b9a89f75dc",
+    "status": "SUPERSEDED-BEFORE-AUTHORITY-OR-EXECUTION"
+  },
+  "implementation_binding": {
+    "source_commit": "47de7536ca8a85c3dd2c7c8523218751fd751a9c",
+    "source_tree": "7cf99cfee801370e7a5306019b2ca0a36f18166b",
+    "implementation_root": "52f20b9d3e5a8e36b5b3ee0f03aeac2592577972e969a5362b0df9028b65635b",
+    "source_files": [
+      {
+        "path": "src/systematic_trading_lab/program_012_ohlcv_authority.py",
+        "sha256": "d6e7c708c2f923676c05b28ba6db735febf596fe360f5cba268a21db24c557fa"
+      },
+      {
+        "path": "tests/unit/test_program_012_ohlcv_authority.py",
+        "sha256": "e6f922c33143230bab623553ab65464ae665a1566f5d162c78ea68765606720a"
+      }
+    ]
+  },
+  "reviewed_diff": {
+    "base_commit": "b32a901661587c728403a67428789aa169e92943",
+    "source_commit": "47de7536ca8a85c3dd2c7c8523218751fd751a9c",
+    "sha256": "541e0cc3f0f3f3b6335c0bd2ce2d9ac5da9dc724b9c46f2beb55a2e53da6e703",
+    "files": [
+      "tests/unit/test_program_012_ohlcv_authority.py"
+    ]
+  },
+  "operation_contract": {
+    "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v4.json",
+    "sha256": "7785108f301052e654d00ea056656e7a9d4c95c1775bcadb7c3bdaf52c1662c4",
+    "fingerprint": "66d61d1671964eea30231057a185d4798ad640c7138db05144528b067724aee9"
+  },
+  "operation_contract_review": {
+    "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v2.json",
+    "sha256": "a1ead64e3f1363c39ad3f8839b78853ccd029acbee81d0acf9f6b1290502e661",
+    "fingerprint": "63463151f427f5a61d530480536a3b75d20724822af5879966129ece1003f9d6"
+  },
+  "runtime_contract": {
+    "runtime_source_changed_from_v3": false,
+    "v3_runtime_contract_inherited_without_change": true,
+    "future_child_runtime_binding_source_commit": "EXACT-CLEAN-SYNCHRONIZED-MAIN-AFTER-V4-RUNTIME-MERGE",
+    "future_child_source_commit_frozen_before_credential_presence": true,
+    "future_child_source_commit_frozen_before_private_state": true,
+    "future_child_source_commit_frozen_before_provider_contact": true,
+    "repository_lineage_diff_base": "future child runtime_binding.source_commit",
+    "allowed_later_repository_additions": [
+      "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-child-authority-v1.json",
+      "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-child-authority-independent-review-v1.json"
+    ],
+    "runtime_finalization_precedes_future_child_source_commit": true,
+    "generated_public_terminal_reentry": "ALLOW-ONLY-EXACT-RECONSTRUCTED-BYTES"
+  },
+  "review": {
+    "validated_finding": "The v3 plan bound the future child to f6d5d18 even though runtime-v3 finalization added eight files afterward, so the exact child and review could never be the sole source-to-main additions.",
+    "remediation": "Bind the future child runtime source to the exact clean synchronized main commit after this runtime revision merges. The existing preflight then compares only the child and review against that post-merge baseline.",
+    "topology_regression": "PASS: stale runtime source -> runtime finalization -> child/review rejects the stale source binding and accepts the post-finalization source binding.",
+    "runtime_code_change_required": false
+  },
+  "verification": {
+    "focused_program_012_and_provenance_tests": "70 passed",
+    "full_suite": "1626 passed, 4 skipped",
+    "ruff_format_and_lint": "PASS",
+    "mypy": "PASS; 284 source files",
+    "secret_scan": "PASS; 677 files",
+    "shell_syntax": "PASS",
+    "sdist_and_wheel_build": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "execution_boundary": {
+    "child_authority_present": false,
+    "child_authority_review_present": false,
+    "credential_presence_or_values_accessed": false,
+    "provider_requests": 0,
+    "private_market_observations_read": 0,
+    "dataset_admitted": false,
+    "strategy_calculations_or_returns": 0,
+    "next_gate": "Obtain exact-HEAD correctness and security review, merge runtime v4, then freeze the separate child against that clean synchronized-main commit before credential preflight or provider contact."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "8ec987889ec3fe5fb993f26d77eb25d17e1fbb0f452296ab7ad28346da014d27"
+}

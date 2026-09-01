@@ -1,0 +1,106 @@
+{
+  "schema_version": "program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v2",
+  "review_id": "program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-2026-09-01-v2",
+  "program_id": "multi-hour-sector-etf-research-011",
+  "reviewed_at": "2026-09-01T05:59:11Z",
+  "status": "PASS-FINDING-FREE-PROSPECTIVE-PUBLIC-EVIDENCE-DESIGN-REVIEW",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_source": {
+    "base_commit": "1c1532848ccdea4a12ee28be9ecc3ee56ace5e09",
+    "source_commit": "0fc1eb9692f8113524e8e2c5a0ea0bdc63478db8",
+    "source_tree": "dc9c2b37d157980850327e8f50ac52c803f68648",
+    "diff_sha256": "eb617971de226e7d3b0d89de48aaccd3e648b1f863c6bb6b7f6e81f82cef95ac",
+    "change_commits": [
+      "0fc1eb9692f8113524e8e2c5a0ea0bdc63478db8"
+    ]
+  },
+  "reviewed_artifacts": {
+    "program_012_proposal_v4": {
+      "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v4.json",
+      "sha256": "7785108f301052e654d00ea056656e7a9d4c95c1775bcadb7c3bdaf52c1662c4",
+      "fingerprint": "66d61d1671964eea30231057a185d4798ad640c7138db05144528b067724aee9"
+    },
+    "program_012_proposal_v3": {
+      "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v3.json",
+      "sha256": "337a5b14ff15f9d40d0f88ed05822cf9e55293fe6c5219f56d63f1d65a67c19a",
+      "fingerprint": "7f5817707001b03765ee5563fcb07f728ac066cc7352137b732f87312743c80b"
+    },
+    "program_012_prior_design_review_v1": {
+      "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v1.json",
+      "sha256": "3a61db10f5cd074ea3d3d1b446eaa4acd6b8bbdebe8b4c2dc13328ed58cf30e7",
+      "fingerprint": "98736a47227b309447c34a8731edb2b7bff8c5e64a9392329145eb444cd5eb4d"
+    }
+  },
+  "review_axes": {
+    "public_evidence_privacy": {
+      "reviewer": "fresh independent read-only security-boundary investigator",
+      "verdict": "PASS",
+      "findings": []
+    },
+    "scientific_and_authority_regression": {
+      "reviewer": "fresh independent read-only correctness reviewer",
+      "verdict": "PASS",
+      "findings": []
+    }
+  },
+  "challenge_results": {
+    "public_allowlist": "PASS-AUTHORITY-LINEAGE-DISPOSITION-STATIC-ASSERTIONS-AND-OBSERVATION-TIME-ONLY",
+    "public_data_derived_hashes_or_fingerprints": "PASS-FORBIDDEN",
+    "public_dynamic_acquisition_counts": "PASS-FORBIDDEN",
+    "public_detailed_gate_or_failure_evidence": "PASS-FORBIDDEN",
+    "private_dataset_content_identity": "PASS-PRIVATE-ONLY",
+    "public_pass_lineage_identity": "PASS-PUBLIC-CONTROLS-ONLY",
+    "failure_paths": "PASS-NO-DATA-DERIVED-PUBLIC-IDENTITY",
+    "scientific_contract": "PASS-BYTE-EQUIVALENT-TO-V3",
+    "authority_and_prohibitions": "PASS-ALL-DISABLED"
+  },
+  "review_followup": {
+    "mechanical_findings": [
+      "proposal v4 was absent from the public Program JSON secret-scan allowlist",
+      "the focused proposal test still selected proposal v3"
+    ],
+    "correction_commit": "906f79d54fcf1d8139f1a420bce43fe4fd10c873",
+    "disposition": "REMEDIATED-BEFORE-RUNTIME-IMPLEMENTATION",
+    "provider_requests": 0,
+    "market_observations": 0
+  },
+  "implementation_conformance": {
+    "verdict": "DEFERRED",
+    "reason": "The existing non-authorizing runtime binds proposal v3 and publishes the superseded v1 public projection.",
+    "required_change": "Bind proposal v4 and this review, use one v4-safe public projection for terminal publication and CLI output, and retain all dynamic acquisition evidence in the private root."
+  },
+  "verification": {
+    "proposal_and_calendar_focused_tests": "8 passed",
+    "secret_scan": "PASS-674-FILES",
+    "diff_check": "PASS",
+    "proposal_v4_sha256_and_fingerprint": "PASS",
+    "proposal_v3_binding": "PASS",
+    "scientific_and_authority_sections_equal_v3": "PASS",
+    "runtime_conformance": "PENDING-SEPARATE-IMPLEMENTATION"
+  },
+  "proof_gaps": [
+    "No runtime at the reviewed source commit implements proposal v4.",
+    "A separate reviewed standing child remains required before credential presence checks, private-state access, or provider contact."
+  ],
+  "scope_limit": "The reviews made no credential check or access, provider request, private-data read, market observation, dataset admission, strategy calculation or return, controlled or protected access, PAPER action, broker write, live action, or purchase.",
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Implement and independently review the v4 public projection before any Program 012 child authority, credential preflight, private-state access, or provider contact.",
+  "review_fingerprint": "63463151f427f5a61d530480536a3b75d20724822af5879966129ece1003f9d6"
+}
