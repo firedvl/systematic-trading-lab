@@ -286,7 +286,8 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     ]
     assert {
         "request, response, byte, row, missingness, exclusion, credential-load, or gate counts",
-        "response-manifest, canonical-row, missingness, admission, dataset-manifest, claim, receipt, or terminal hashes",
+        "response-manifest, canonical-row, missingness, admission, dataset-manifest, claim, "
+        "receipt, or terminal hashes",
         "data-derived fingerprints or identities",
         "detailed gate failures, failure classes, or failure classifications",
         "private dataset content identity",
@@ -432,8 +433,6 @@ def test_program_012_review_binds_finding_free_source_and_grants_no_authority() 
         _V1_REVIEW_PATH.as_posix()
     )
     assert review["implementation_conformance"]["verdict"] == "DEFERRED"
-    assert review["review_followup"]["disposition"] == (
-        "REMEDIATED-BEFORE-RUNTIME-IMPLEMENTATION"
-    )
+    assert review["review_followup"]["disposition"] == ("REMEDIATED-BEFORE-RUNTIME-IMPLEMENTATION")
     assert all(value is False for value in review["authority"].values())
     assert "PLACEHOLDER" not in (_REPOSITORY / _REVIEW_PATH).read_text(encoding="utf-8")

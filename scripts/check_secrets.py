@@ -173,6 +173,7 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-child-authority-v1.json",
         "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-child-authority-independent-review-v1.json",
         "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-terminal-result-v1.json",
+        "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-terminal-result-v2.json",
         "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-terminal-result-independent-review-v1.json",
     }
 )

@@ -23,6 +23,59 @@ import systematic_trading_lab.program_012_ohlcv_authority as authority
 from systematic_trading_lab.fingerprints import canonical_json, fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
+_PUBLIC_TERMINAL_KEYS = {
+    "schema_version",
+    "terminal_result_id",
+    "program_ordinal",
+    "program_id",
+    "result_kind",
+    "status",
+    "authority_id",
+    "authority_fingerprint",
+    "source_commit",
+    "admission_passed",
+    "dataset_lineage_manifest",
+    "privacy_assertions",
+    "scientific_assertions",
+    "disabled_authority",
+    "observed_at",
+}
+_PUBLIC_LINEAGE_KEYS = {
+    "schema_version",
+    "program_id",
+    "authority_id",
+    "authority_fingerprint",
+    "source_commit",
+    "status",
+    "dataset_lineage_identity",
+}
+_FORBIDDEN_PUBLIC_KEYS = {
+    "session_count",
+    "sessions_with_completed_responses",
+    "request_count",
+    "response_count",
+    "response_bytes",
+    "raw_row_count",
+    "expected_coordinate_count",
+    "expected_canonical_coordinate_count",
+    "missing_coordinate_count",
+    "excluded_full_session_count",
+    "admitted_full_session_count",
+    "credential_loads",
+    "aggregate_gate_results",
+    "failure_count",
+    "failure_classes",
+    "failure_class",
+    "failure_classification",
+    "response_manifest_sha256",
+    "canonical_raw_sha256",
+    "private_missingness_sha256",
+    "structural_admission_sha256",
+    "private_dataset_manifest_sha256",
+    "private_dataset_identity",
+    "terminal_fingerprint",
+    "terminal_result_fingerprint",
+}
 
 
 class _AbruptExit(BaseException):
@@ -187,14 +240,36 @@ def _write_page(
 def _assert_public_terminal_has_no_private_commitments(
     public: dict[str, Any], root: Path
 ) -> dict[str, Any]:
+    assert set(public) == _PUBLIC_TERMINAL_KEYS
+    assert public["schema_version"] == "program-012-exposed-prefix-terminal-result-v2"
+    lineage = public["dataset_lineage_manifest"]
+    if public["admission_passed"] is True:
+        assert isinstance(lineage, dict)
+        assert set(lineage) == _PUBLIC_LINEAGE_KEYS
+    else:
+        assert lineage is None
+    assert all(public["privacy_assertions"].values()) is False
+    assert public["privacy_assertions"]["credentials_stored"] is False
+    assert all(
+        value is True
+        for key, value in public["privacy_assertions"].items()
+        if key != "credentials_stored"
+    )
+    assert all(value is False for value in public["scientific_assertions"].values())
+    assert all(value is False for value in public["disabled_authority"].values())
+
+    def keys(value: Any) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | set().union(*(keys(item) for item in value.values()))
+        if isinstance(value, list):
+            return set().union(*(keys(item) for item in value))
+        return set()
+
+    assert not (_FORBIDDEN_PUBLIC_KEYS & keys(public))
     terminal_paths = [root / key for key in authority._TERMINAL_KEYS if (root / key).exists()]
     assert len(terminal_paths) == 1
     terminal_path = terminal_paths[0]
     terminal: dict[str, Any] = json.loads(terminal_path.read_bytes())
-    assert public["private_evidence_hashes"] == {
-        "response_manifest_sha256": terminal["response_manifest_sha256"],
-        "canonical_raw_sha256": terminal["canonical_raw_sha256"],
-    }
     serialized = json.dumps(public, sort_keys=True)
     private_commitments = {
         hashlib.sha256(terminal_path.read_bytes()).hexdigest(),
@@ -209,10 +284,26 @@ def _assert_public_terminal_has_no_private_commitments(
         path = root / key
         if path.exists():
             private_commitments.add(hashlib.sha256(path.read_bytes()).hexdigest())
+    for key in (
+        "response_manifest_sha256",
+        "canonical_raw_sha256",
+        "private_missingness_sha256",
+        "structural_admission_sha256",
+        "private_dataset_manifest_sha256",
+    ):
+        value = terminal.get(key)
+        if isinstance(value, str):
+            private_commitments.add(value)
     private_dataset_identity = terminal.get("private_dataset_identity")
     if private_dataset_identity is not None:
         private_commitments.add(private_dataset_identity)
     assert all(value not in serialized for value in private_commitments)
+    gates = terminal["aggregate_gate_results"]
+    assert all(value not in serialized for value in gates.get("failure_classes", []))
+    for key in ("failure_class", "failure_classification"):
+        value = terminal.get(key)
+        if isinstance(value, str):
+            assert value not in serialized
     return terminal
 
 
@@ -492,7 +583,7 @@ def test_git_preflight_allows_only_the_validated_generated_terminal_on_reentry(
 
 
 def test_finite_run_activates_claims_persists_and_seals_once(
-    tmp_path: Path, monkeypatch: MonkeyPatch
+    tmp_path: Path, monkeypatch: MonkeyPatch, capsys: CaptureFixture[str]
 ) -> None:
     active, request = _configure_finite_execution(tmp_path, monkeypatch)
     transport = authority.MockBarsTransport(
@@ -510,44 +601,61 @@ def test_finite_run_activates_claims_persists_and_seals_once(
         tmp_path, environ=_credentials(), transport=transport
     )
 
-    assert execution.admission_passed is True
-    assert execution.request_count == execution.response_count == 1
-    assert execution.credential_loads == 1
     assert (root / "claim.json").exists()
     assert (root / "canonical-raw.jsonl").exists()
     assert (root / "dataset-manifest.json").exists()
     assert (root / "acquisition-receipt.json").exists()
+    receipt = json.loads((root / "acquisition-receipt.json").read_bytes())
+    assert receipt["admission_passed"] is True
+    assert receipt["request_count"] == receipt["response_count"] == 1
+    assert receipt["credential_loads"] == 1
     public_path = tmp_path / authority.PUBLIC_TERMINAL_PATH
     public_result = json.loads(public_path.read_bytes())
     assert public_result["result_kind"] == "ADMISSION-PASS"
     assert public_result["authority_fingerprint"] == active["authority_fingerprint"]
     assert public_result["source_commit"] == active["control_lineage"]["runtime_source_commit"]
-    assert public_result["aggregate_gate_results"]["structural_admission_passed"] is True
-    assert public_result["dataset_manifest"]["dataset_identity"] == execution.dataset_identity
-    assert "admitted_session_index_fingerprint" not in public_result["dataset_manifest"]
+    lineage = public_result["dataset_lineage_manifest"]
+    assert lineage["dataset_lineage_identity"] == receipt["dataset_identity"]
     terminal = _assert_public_terminal_has_no_private_commitments(public_result, root)
     assert (
         terminal["private_dataset_identity"]
         == json.loads((root / "dataset-manifest.json").read_bytes())["dataset_identity"]
     )
-    assert terminal["private_dataset_identity"] != execution.dataset_identity
-    assert execution.dataset_identity == fingerprint(
+    assert terminal["private_dataset_identity"] != lineage["dataset_lineage_identity"]
+    assert lineage["dataset_lineage_identity"] == fingerprint(
         {
             "operation_manifest": authority.OPERATION_MANIFEST,
             "authority_fingerprint": active["authority_fingerprint"],
             "source_commit": active["control_lineage"]["runtime_source_commit"],
-            "response_manifest_sha256": execution.response_manifest_sha256,
-            "canonical_raw_sha256": execution.canonical_raw_sha256,
             "action_ledger": authority._ACTION_LEDGER_MANIFEST,
+            "status": "ADMITTED-PROGRAM-012-RAW-STRUCTURAL-PREFIX",
+        }
+    )
+    private_manifest = json.loads((root / "dataset-manifest.json").read_bytes())
+    admission = json.loads((root / "structural-admission.json").read_bytes())
+    assert terminal["private_dataset_identity"] == fingerprint(
+        {
+            "operation_manifest": authority.OPERATION_MANIFEST,
+            "source_commit": active["control_lineage"]["runtime_source_commit"],
+            "response_manifest_sha256": receipt["response_manifest_sha256"],
+            "canonical_raw_sha256": receipt["canonical_raw_sha256"],
+            "private_missingness_sha256": receipt["private_missingness_sha256"],
+            "admitted_session_index_fingerprint": private_manifest[
+                "admitted_session_index_fingerprint"
+            ],
+            "action_ledger": authority._ACTION_LEDGER_MANIFEST,
+            "structural_admission_fingerprint": admission["admission_fingerprint"],
         }
     )
     serialized_result = json.dumps(public_result, sort_keys=True)
     assert all(value not in serialized_result for value in _credentials().values())
     assert "opaque-page" not in serialized_result
     assert "IWM@" not in serialized_result
-    public = json.dumps(execution.public_summary(), sort_keys=True)
-    assert "opaque-page" not in public
-    assert "IWM@" not in public
+    assert execution.public_summary() == public_result
+    monkeypatch.setattr(authority, "execute_acquisition", lambda *_args, **_kwargs: execution)
+    monkeypatch.setenv("TRADING_LAB_MODE", "research")
+    assert dispatcher.main(("data", "acquire", "program-012-ohlcv", "run")) == 0
+    assert json.loads(capsys.readouterr().out) == public_result
     with pytest.raises(authority.Program012AuthorityError, match="terminally sealed"):
         authority._execute_mock_acquisition(
             tmp_path,
@@ -570,17 +678,21 @@ def test_failed_admission_publishes_one_redacted_terminal_result(
 
     public = json.loads((tmp_path / authority.PUBLIC_TERMINAL_PATH).read_bytes())
     serialized = json.dumps(public, sort_keys=True)
-    assert execution.admission_passed is False
+    assert execution.public_summary() == public
     assert public["result_kind"] == "ADMISSION-FAILURE"
     assert public["status"] == "TERMINAL-FAIL-CONSUMED-NO-RETRY"
-    assert public["aggregate_gate_results"] == {
+    assert "global-count" not in serialized
+    assert public["dataset_lineage_manifest"] is None
+    _assert_public_terminal_has_no_private_commitments(public, tmp_path / authority.PRIVATE_ROOT)
+    receipt = json.loads(
+        (tmp_path / authority.PRIVATE_ROOT / "acquisition-receipt.json").read_bytes()
+    )
+    assert receipt["admission_passed"] is False
+    assert receipt["aggregate_gate_results"] == {
         "structural_admission_passed": False,
         "failure_count": 1,
+        "failure_classes": ["global-count"],
     }
-    assert "global-count" not in serialized
-    assert public["dataset_manifest"] is None
-    assert public["public_dataset_manifest_present"] is False
-    _assert_public_terminal_has_no_private_commitments(public, tmp_path / authority.PRIVATE_ROOT)
     assert all(value not in serialized for value in _credentials().values())
     assert "opaque-page" not in serialized
     assert "IWM@" not in serialized
@@ -612,8 +724,10 @@ def test_keyboard_interrupt_seals_and_reentry_does_not_reload_credentials(
 
     public = json.loads((tmp_path / authority.PUBLIC_TERMINAL_PATH).read_bytes())
     assert public["result_kind"] == "RUNTIME-FAILURE"
-    assert public["failure_class"] == "KeyboardInterrupt"
-    _assert_public_terminal_has_no_private_commitments(public, tmp_path / authority.PRIVATE_ROOT)
+    failure = _assert_public_terminal_has_no_private_commitments(
+        public, tmp_path / authority.PRIVATE_ROOT
+    )
+    assert failure["failure_class"] == "KeyboardInterrupt"
     assert credential_reads == 1
     with pytest.raises(authority.Program012AuthorityError, match="terminally sealed"):
         authority._execute_mock_acquisition(
@@ -622,6 +736,44 @@ def test_keyboard_interrupt_seals_and_reentry_does_not_reload_credentials(
             transport=authority.MockBarsTransport([]),
         )
     assert credential_reads == 1
+
+
+def test_post_consumption_error_is_bounded_at_the_cli_boundary(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+    capsys: CaptureFixture[str],
+) -> None:
+    _, request = _configure_finite_execution(tmp_path, monkeypatch)
+    private_detail = "PRIVATE-RUNTIME-DETAIL"
+    with pytest.raises(
+        authority.Program012AuthorityError,
+        match="Program 012 acquisition ended with a sealed failure",
+    ) as captured:
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=authority.MockBarsTransport(
+                [raw_contract.RawResponse(200, _body(request, 0, None))]
+            ),
+            after_page=lambda: (_ for _ in ()).throw(
+                authority.Program012AuthorityError(private_detail)
+            ),
+        )
+
+    public = json.loads((tmp_path / authority.PUBLIC_TERMINAL_PATH).read_bytes())
+    _assert_public_terminal_has_no_private_commitments(public, tmp_path / authority.PRIVATE_ROOT)
+    assert private_detail not in str(captured.value)
+
+    def fail(*_args: Any, **_kwargs: Any) -> authority.AcquisitionExecution:
+        raise captured.value
+
+    monkeypatch.setattr(authority, "execute_acquisition", fail)
+    monkeypatch.setenv("TRADING_LAB_MODE", "research")
+    assert dispatcher.main(("data", "acquire", "program-012-ohlcv", "run")) == 2
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert output.err == "error: Program 012 acquisition ended with a sealed failure\n"
+    assert private_detail not in output.err
 
 
 def test_terminal_file_must_be_complete_and_bound_before_sealing(
@@ -682,7 +834,7 @@ def test_recovery_rejects_re_fingerprinted_private_fields_before_publication(
     assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
 
 
-def test_recovery_rederives_public_dataset_identity_before_publication(
+def test_recovery_rederives_public_dataset_lineage_identity_before_publication(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
     _, request = _configure_finite_execution(tmp_path, monkeypatch)
@@ -705,7 +857,7 @@ def test_recovery_rederives_public_dataset_identity_before_publication(
     receipt_path = tmp_path / authority.PRIVATE_ROOT / "acquisition-receipt.json"
     receipt = json.loads(receipt_path.read_bytes())
     receipt["dataset_identity"] = "f" * 64
-    receipt["public_dataset_manifest"]["dataset_identity"] = "f" * 64
+    receipt["public_dataset_manifest"]["dataset_lineage_identity"] = "f" * 64
     receipt.pop("terminal_fingerprint")
     receipt["terminal_fingerprint"] = fingerprint(receipt)
     receipt_path.write_text(canonical_json(receipt) + "\n", encoding="utf-8")
@@ -998,12 +1150,13 @@ def test_interrupt_after_intent_seals_without_credentials_or_provider_contact(
     assert public["result_kind"] == "RUNTIME-FAILURE"
     assert failure["provider_transport_attempted"] is False
     assert (
-        public["request_count"],
-        public["response_count"],
-        public["response_bytes"],
-        public["sessions_with_completed_responses"],
-        public["credential_loads"],
+        failure["request_count"],
+        failure["response_count"],
+        failure["response_bytes"],
+        failure["sessions_with_completed_responses"],
+        failure["credential_loads"],
     ) == (1, 0, 0, 0, 0)
+    _assert_public_terminal_has_no_private_commitments(public, tmp_path / authority.PRIVATE_ROOT)
     assert transport.intents == ()
 
 
