@@ -26,8 +26,11 @@ _PROPOSAL_PATH = Path(
 _REVIEW_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v1.json"
 )
-_IMPLEMENTATION_PATH = Path(
+_V1_IMPLEMENTATION_PATH = Path(
     "config/research/program-012-exposed-prefix-runtime-implementation-v1.json"
+)
+_IMPLEMENTATION_PATH = Path(
+    "config/research/program-012-exposed-prefix-runtime-implementation-v2.json"
 )
 
 
@@ -52,8 +55,8 @@ def test_program_012_runtime_implementation_is_exact_and_non_authorizing() -> No
     assert stored_fingerprint == fingerprint(implementation)
     binding = implementation["implementation_binding"]
 
-    assert binding["source_commit"] == "da18b55f6e16234dc93fdb61801847a79e4fc178"
-    assert binding["source_tree"] == "709a0f86d2acbe2a9f2667c68acd210f13a3cf6d"
+    assert binding["source_commit"] == "f64a8f33631d0736ae447c7c74ee69f396d85bd1"
+    assert binding["source_tree"] == "a82f21c8fbd4c7b26564b7690db1263d98f77cf9"
     assert binding["implementation_root"] == fingerprint(binding["source_files"])
     for source in binding["source_files"]:
         committed = subprocess.run(
@@ -70,11 +73,16 @@ def test_program_012_runtime_implementation_is_exact_and_non_authorizing() -> No
         assert hashlib.sha256(committed).hexdigest() == source["sha256"]
 
     assert implementation["status"] == "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED"
+    assert implementation["supersedes"]["path"] == _V1_IMPLEMENTATION_PATH.as_posix()
+    _assert_binding(implementation["supersedes"])
     assert implementation["runtime_contract"]["atomic_fsynced_intent_before_transport"] is True
     assert implementation["runtime_contract"]["cumulative_budget_recovery"] is True
     assert (
         implementation["runtime_contract"]["credential_load_attempt_fsynced_before_access"] is True
     )
+    assert implementation["runtime_contract"]["public_low_entropy_private_commitments"] is False
+    assert implementation["runtime_contract"]["terminal_recovery_rederives_dataset_identities"]
+    assert implementation["runtime_contract"]["terminal_recovery_rederives_private_gate_results"]
     assert implementation["execution_boundary"]["child_authority_present"] is False
     assert implementation["execution_boundary"]["credential_presence_or_values_accessed"] is False
     assert implementation["execution_boundary"]["provider_requests"] == 0

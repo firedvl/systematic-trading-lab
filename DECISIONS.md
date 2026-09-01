@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-01 - Harden Program 012 recovery and public evidence
+
+- Decision: supersede Program 012 runtime implementation v1 before authority or execution. During recovery, rederive public and private dataset identities, structural gate results, missingness counts, and admitted-session bindings from canonical private evidence. Permit the sole generated public terminal as the only untracked Git path, require its bytes to equal a fresh reconstruction, and keep detailed failure classes plus low-entropy private hashes and identities private. Retain the proposal-required response-manifest and canonical-row hashes and aggregate counts.
+- Context: independent review found that a self-re-fingerprinted private receipt could forge a public dataset identity or gate vector, the generated public terminal blocked its own idempotent re-entry, and public low-entropy commitments could reveal exact private admission state. A later review also found that terminal credential-load counts needed comparison with durable authority/source-bound attempt evidence. No credential check, provider request, private observation, dataset admission, or strategy calculation occurred.
+- Consequences: implementation v2 binds source commit/tree/root `f64a8f33631d0736ae447c7c74ee69f396d85bd1` / `a82f21c8fbd4c7b26564b7690db1263d98f77cf9` / `b4fab6feec31a4b536d015f6debb0dbdc18afcb440507375c55f7bf180049c46`. Artifact SHA-256/fingerprint is `971d83c19dd4e1c81cb61792d02f3f659297cc5eb4fb0b248c19945cfa14c122` / `d805de1546f2512acbe1cac66269b1371c14ed8bdd8dbb663d00bd08b8da3ecc`. Independent correctness and security reviews are finding-free; 29 focused tests and the 1,618-test full suite passed with four skips. Program 012 remains non-authorizing.
+- Revisit after the runtime PR merges to clean synchronized `main`. Create and independently review the separate exact one-use standing child before any credential preflight, private-state access, or provider contact.
+
 ## 2026-08-31 - Truncate Program 012 before protected 2026 chronology
 
 - Decision: propose Program 012, `multi-hour-sector-etf-research-011`, without authority. Request raw SIP five-minute bars only for the distinct context segment `2020-06-26..2020-07-24` and exposed prefix `2020-07-27..2025-12-31`. Bind Program 011's terminal source PASS and the Program 007 public action ledger. Do not request a provider-adjusted view, claim Program 002 admission or quote coverage, or grant strategy authority.

@@ -2,9 +2,9 @@
 
 Program 012, `multi-hour-sector-etf-research-011`, is
 `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`. Proposal v3 defines a raw-only Alpaca SIP acquisition and
-a new prefix-specific structural admission. The runtime is implemented and mock-tested, but
-no standing child authority or child review exists. It does not enact Program 002 admission, evaluate
-its quote grid, or authorize a strategy.
+a new prefix-specific structural admission. Runtime v2 is implemented, mock-tested, and finding-free
+in independent correctness and security review, but no standing child authority or child review
+exists. It does not enact Program 002 admission, evaluate its quote grid, or authorize a strategy.
 
 Proposal SHA-256/fingerprint is
 `337a5b14ff15f9d40d0f88ed05822cf9e55293fe6c5219f56d63f1d65a67c19a` /
@@ -63,10 +63,18 @@ value-free success or failure receipt. An unpaired attempt counts conservatively
 validated process may load credentials once; terminal evidence counts all loads, credential values
 are never persisted, and process restarts are never automatic.
 
-Implementation v1 binds runtime commit `da18b55f6e16234dc93fdb61801847a79e4fc178`, tree
-`709a0f86d2acbe2a9f2667c68acd210f13a3cf6d`, and implementation root
-`a00fd6ceda78d6733b51af143d0d1ddfd87b6501e78ffab0245f0631dc347c70`. Its artifact fingerprint is
-`5fc2dc3789f3689307d4b7b352880f51c19753d498fab51d7ae18627152cb080`.
+Implementation v2 supersedes v1 before authority or execution. It binds runtime commit
+`f64a8f33631d0736ae447c7c74ee69f396d85bd1`, tree
+`a82f21c8fbd4c7b26564b7690db1263d98f77cf9`, and implementation root
+`b4fab6feec31a4b536d015f6debb0dbdc18afcb440507375c55f7bf180049c46`. Its artifact
+SHA-256/fingerprint is `971d83c19dd4e1c81cb61792d02f3f659297cc5eb4fb0b248c19945cfa14c122` /
+`d805de1546f2512acbe1cac66269b1371c14ed8bdd8dbb663d00bd08b8da3ecc`.
+
+V2 rederives public and private dataset identities, gate results, missingness counts, and admitted
+session bindings from canonical private evidence during recovery. It accepts only an exact generated
+public terminal on re-entry, rejects all other repository dirt, and compares that terminal with a
+fresh reconstruction before authority derivation completes. A process-local latch also prevents a
+second credential access after an interrupted attempt record.
 
 ## Structural policy
 
@@ -100,15 +108,18 @@ P&L, return, or candidate gate.
 
 ## Evidence and authority
 
-Raw pages, response tokens, exact missing coordinates, and exact unexpected exclusions stay in the
-ignored private root. Public evidence contains only aggregate counts, gate results, hashes, and a
-dataset identity on pass.
+Raw pages, response tokens, exact missing coordinates, exact unexpected exclusions, detailed failure
+classes, private terminal hashes, admission hashes, missingness hashes, dataset-manifest hashes, and
+the private dataset identity stay in the ignored private root. Public evidence contains aggregate
+counts, pass/fail gate results, the proposal-required response-manifest and canonical-row hashes, and
+a separate public dataset identity on pass.
 
 The runtime includes a credential preflight, provider client, private store, activation path, and
-structural admission path. Focused tests cover intent crashes, completed-page recovery, concurrent
-owners, unpaired credential attempts, malformed-response accounting, recovered pacing and budgets,
-and the two key missingness cases. No credential presence or value has been inspected, no private
-state exists, and no provider request has occurred. A fresh independent runtime review and clean
-merge remain mandatory. A separate reviewed standing child may then enable only provider contact,
-credential access, source requests, acquisition, and structural admission. Controlled/protected data,
-purchases, strategy execution, PAPER, broker writes, and live execution remain disabled.
+structural admission path. Twenty-nine focused tests cover intent crashes, completed-page recovery,
+concurrent owners, unpaired credential attempts, malformed-response accounting, recovered pacing and
+budgets, terminal re-entry, forged recovery state, public redaction, and the two key missingness cases.
+The full suite passed with 1,618 tests and four skips. No credential presence or value has been
+inspected, no private state exists, and no provider request has occurred. A clean merge remains
+mandatory. A separate reviewed standing child may then enable only provider contact, credential
+access, source requests, acquisition, and structural admission. Controlled/protected data, purchases,
+strategy execution, PAPER, broker writes, and live execution remain disabled.

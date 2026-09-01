@@ -125,9 +125,10 @@ Do not activate or run Program 011 again. It admitted no dataset and ran no stra
 acquisition and structural dataset admission require a separate reviewed standing child authority.
 
 Program 012 prospectively limits that acquisition to the unprotected context and exposed prefix
-through `2025-12-31`. Its restart-safe runtime is implemented and mock-tested, but it remains
-non-authorizing until fresh runtime reviews merge and a separate reviewed standing child is added.
-Do not run its credential preflight, activation, or acquisition yet. See
+through `2025-12-31`. Runtime v2 is implemented, mock-tested, and finding-free in independent
+correctness and security review, but it remains non-authorizing until it merges and a separate
+reviewed standing child is added. Do not run its credential preflight, activation, or acquisition
+yet. See
 [Program 012 exposed-prefix acquisition](docs/program-012-exposed-prefix-acquisition.md).
 
 ## Using historical data

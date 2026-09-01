@@ -1,0 +1,203 @@
+{
+  "schema_version": "program-012-exposed-prefix-runtime-implementation-v2",
+  "implementation_id": "program-012-exposed-prefix-runtime-implementation-2026-09-01-v2",
+  "program_ordinal": 12,
+  "program_id": "multi-hour-sector-etf-research-011",
+  "status": "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED",
+  "supersedes": {
+    "path": "config/research/program-012-exposed-prefix-runtime-implementation-v1.json",
+    "sha256": "e7ba92d5af4618372f08185042acbc74a5b4f0a97f7d671ef585dd8392f61ccc",
+    "fingerprint": "5fc2dc3789f3689307d4b7b352880f51c19753d498fab51d7ae18627152cb080",
+    "status": "SUPERSEDED-BEFORE-AUTHORITY-OR-EXECUTION"
+  },
+  "implementation_binding": {
+    "source_commit": "f64a8f33631d0736ae447c7c74ee69f396d85bd1",
+    "source_tree": "a82f21c8fbd4c7b26564b7690db1263d98f77cf9",
+    "implementation_root": "b4fab6feec31a4b536d015f6debb0dbdc18afcb440507375c55f7bf180049c46",
+    "source_files": [
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "e7e0b16d0227abfe5358b80fd036bf469118fa9cabc9c5c88275b21654ba3b5d"
+      },
+      {
+        "path": "src/systematic_trading_lab/calendar.py",
+        "sha256": "a7242114f1ae84c89a49d4d8ab5ec37e4a21a0574996268a39ade799f0d1bace"
+      },
+      {
+        "path": "src/systematic_trading_lab/cli.py",
+        "sha256": "6478c66d42826b5d03cb090f368d4424cb5bfd0c67b74117f4086f6626ce1572"
+      },
+      {
+        "path": "src/systematic_trading_lab/config.py",
+        "sha256": "eb4ab0d1f5e2f4b2ed42a212bd7997fa1c16c461dd9ce4f0ff40847d4e97d39c"
+      },
+      {
+        "path": "src/systematic_trading_lab/domain.py",
+        "sha256": "91a49df2d61dbd67606d405a37c2d8ed02969a9dada9613112399630a7473bcf"
+      },
+      {
+        "path": "src/systematic_trading_lab/fingerprints.py",
+        "sha256": "297104abf718502115f5a51093840b09db686d01d9a677a0dfa45dda7c802d47"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_005_alpaca.py",
+        "sha256": "1b5f53776d7dd0021d051b9c8ce7bab4722570823b9da1405f7d9ba8a1e20393"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_006_alpaca.py",
+        "sha256": "d34916c10a2867bcd14086e82cbe81fe952a3e8a545312870c34b70139ebf937"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_007_alpaca.py",
+        "sha256": "cc60139d1f1f8a9f00cd6dbb10100e831b0dd369d62780451e6d1b78e50aae87"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_010_ohlcv.py",
+        "sha256": "fcc353230a26f8e522bf694d8e507d78ac96710d2c265a50600cfaee0a4e8b5c"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_011_ohlcv.py",
+        "sha256": "746ff22d299ae8d69c15e849659b892c4342e2734e87ef3500982aea7367536a"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_011_ohlcv_authority.py",
+        "sha256": "77b2ac6bdfddd7601788b325831773e90753ec65d8ba07a46cb68c5e94b8fbc6"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_012_ohlcv.py",
+        "sha256": "27b6688e1f46d70f76b6cdb339c85c4f65c98ea5fd15fba0c6f295e6d79cf905"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_012_ohlcv_authority.py",
+        "sha256": "d881e6e4164de2ff10b32d892b0c69a2bed6a732432aedbde9cfe7ba29b74bff"
+      },
+      {
+        "path": "src/systematic_trading_lab/standing_research_authority.py",
+        "sha256": "60842b701a462d74e9815edd89780aa6cbdff358b072ab7062418bf101778136"
+      },
+      {
+        "path": "tests/unit/test_intraday_source_provenance.py",
+        "sha256": "6b2b9d0b2d1baa3afd843bc10143613da42adc661f53904717b48d9d0690b243"
+      },
+      {
+        "path": "tests/unit/test_program_012_ohlcv.py",
+        "sha256": "a8a205d8766cca1f4fc46d9ea54cf9b29c0065951b5401f2bc001186f280f9d5"
+      },
+      {
+        "path": "tests/unit/test_program_012_ohlcv_authority.py",
+        "sha256": "1086129aca2dfb3af6978a181b0625e913570470a7e5353baa94dde97b381ed2"
+      },
+      {
+        "path": "tests/unit/test_program_012_proposal.py",
+        "sha256": "ee893685c874a0605b30c41da26b24994eca9047e9a4c97ddcf1109d0e26fd3a"
+      }
+    ]
+  },
+  "reviewed_diff": {
+    "base_commit": "6077556794183c5de06335ea419fe2dae0fe61de",
+    "source_commit": "f64a8f33631d0736ae447c7c74ee69f396d85bd1",
+    "sha256": "c145fc14e363823d932c4a83bcdbf32301c947c3618c8b593e87a864aa353204",
+    "files": [
+      "scripts/check_secrets.py",
+      "src/systematic_trading_lab/cli.py",
+      "src/systematic_trading_lab/program_012_ohlcv_authority.py",
+      "tests/unit/test_program_012_ohlcv.py",
+      "tests/unit/test_program_012_ohlcv_authority.py"
+    ]
+  },
+  "operation_contract": {
+    "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v3.json",
+    "sha256": "337a5b14ff15f9d40d0f88ed05822cf9e55293fe6c5219f56d63f1d65a67c19a",
+    "fingerprint": "7f5817707001b03765ee5563fcb07f728ac066cc7352137b732f87312743c80b"
+  },
+  "operation_contract_review": {
+    "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v1.json",
+    "sha256": "3a61db10f5cd074ea3d3d1b446eaa4acd6b8bbdebe8b4c2dc13328ed58cf30e7",
+    "fingerprint": "98736a47227b309447c34a8731edb2b7bff8c5e64a9392329145eb444cd5eb4d"
+  },
+  "runtime_contract": {
+    "entrypoint": "src/systematic_trading_lab/program_012_ohlcv_authority.py",
+    "cli": "data acquire program-012-ohlcv",
+    "actions": [
+      "credential-preflight",
+      "activate",
+      "run"
+    ],
+    "exclusive_private_root_lock": true,
+    "atomic_fsynced_intent_before_transport": true,
+    "raw_body_and_metadata_receipt_fsynced_before_parse": true,
+    "partial_page_reissue_allowed": false,
+    "completed_page_local_replay": true,
+    "cumulative_budget_recovery": true,
+    "latest_response_pacing_recovery": true,
+    "credential_load_attempt_fsynced_before_access": true,
+    "unpaired_credential_attempt_counts_as_load": true,
+    "credential_loads_per_validated_process": 1,
+    "process_credential_access_latched_after_attempt": true,
+    "terminal_recovery_rederives_dataset_identities": true,
+    "terminal_recovery_rederives_private_gate_results": true,
+    "terminal_recovery_revalidates_private_manifests": true,
+    "public_low_entropy_private_commitments": false,
+    "generated_public_terminal_reentry": "ALLOW-ONLY-EXACT-RECONSTRUCTED-BYTES",
+    "maximum_requests_per_minute": 120,
+    "automatic_retries": 0,
+    "parallel_session_chains": 1
+  },
+  "review": {
+    "correctness": {
+      "reviewer": "fresh independent read-only correctness reviewer",
+      "verdict": "PASS",
+      "findings": [],
+      "focused_verification": "23 passed"
+    },
+    "credential_recovery_and_public_evidence_security": {
+      "reviewer": "fresh independent read-only security reviewer",
+      "verdict": "PASS",
+      "findings": [],
+      "focused_verification": "26 passed; seven exact security invariants passed"
+    }
+  },
+  "verification": {
+    "focused_program_012_tests": "29 passed",
+    "adjacent_program_010_through_012_and_provenance_tests": "PASS",
+    "full_suite": "1618 passed, 4 skipped",
+    "ruff_format_and_lint": "PASS",
+    "mypy": "PASS; 284 source files",
+    "secret_scan": "PASS; 672 files",
+    "shell_syntax": "PASS",
+    "wheel_build": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "execution_boundary": {
+    "credential_reader_present": true,
+    "provider_transport_present": true,
+    "private_store_present": true,
+    "authority_activation_present": true,
+    "child_authority_present": false,
+    "child_authority_review_present": false,
+    "credential_presence_or_values_accessed": false,
+    "provider_requests": 0,
+    "private_market_observations_read": 0,
+    "dataset_admitted": false,
+    "strategy_calculations_or_returns": 0,
+    "next_gate": "Merge runtime v2 on clean synchronized main, then add and independently review the separate exact one-use standing child before credential preflight or provider contact."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "d805de1546f2512acbe1cac66269b1371c14ed8bdd8dbb663d00bd08b8da3ecc"
+}
