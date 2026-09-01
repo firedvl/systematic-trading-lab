@@ -35,8 +35,11 @@ _REVIEW_PATH = Path(
 _V1_IMPLEMENTATION_PATH = Path(
     "config/research/program-012-exposed-prefix-runtime-implementation-v1.json"
 )
-_IMPLEMENTATION_PATH = Path(
+_V2_IMPLEMENTATION_PATH = Path(
     "config/research/program-012-exposed-prefix-runtime-implementation-v2.json"
+)
+_IMPLEMENTATION_PATH = Path(
+    "config/research/program-012-exposed-prefix-runtime-implementation-v3.json"
 )
 
 
@@ -61,8 +64,8 @@ def test_program_012_runtime_implementation_is_exact_and_non_authorizing() -> No
     assert stored_fingerprint == fingerprint(implementation)
     binding = implementation["implementation_binding"]
 
-    assert binding["source_commit"] == "f64a8f33631d0736ae447c7c74ee69f396d85bd1"
-    assert binding["source_tree"] == "a82f21c8fbd4c7b26564b7690db1263d98f77cf9"
+    assert binding["source_commit"] == "f6d5d18e30de20d3b96aaaf567b4529a25974297"
+    assert binding["source_tree"] == "1e0bb08a876dd661e5ec74564b1ac1cd5f3caf92"
     assert binding["implementation_root"] == fingerprint(binding["source_files"])
     for source in binding["source_files"]:
         committed = subprocess.run(
@@ -79,7 +82,7 @@ def test_program_012_runtime_implementation_is_exact_and_non_authorizing() -> No
         assert hashlib.sha256(committed).hexdigest() == source["sha256"]
 
     assert implementation["status"] == "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED"
-    assert implementation["supersedes"]["path"] == _V1_IMPLEMENTATION_PATH.as_posix()
+    assert implementation["supersedes"]["path"] == _V2_IMPLEMENTATION_PATH.as_posix()
     _assert_binding(implementation["supersedes"])
     assert implementation["runtime_contract"]["atomic_fsynced_intent_before_transport"] is True
     assert implementation["runtime_contract"]["cumulative_budget_recovery"] is True
@@ -89,6 +92,11 @@ def test_program_012_runtime_implementation_is_exact_and_non_authorizing() -> No
     assert implementation["runtime_contract"]["public_low_entropy_private_commitments"] is False
     assert implementation["runtime_contract"]["terminal_recovery_rederives_dataset_identities"]
     assert implementation["runtime_contract"]["terminal_recovery_rederives_private_gate_results"]
+    assert implementation["runtime_contract"]["public_projection_shared_by_terminal_and_cli"]
+    assert implementation["runtime_contract"]["public_dynamic_acquisition_counts"] is False
+    assert implementation["runtime_contract"]["public_data_derived_hashes_or_fingerprints"] is False
+    assert implementation["runtime_contract"]["public_detailed_gate_or_failure_evidence"] is False
+    assert implementation["runtime_contract"]["post_consumption_exception_detail_public"] is False
     assert implementation["execution_boundary"]["child_authority_present"] is False
     assert implementation["execution_boundary"]["credential_presence_or_values_accessed"] is False
     assert implementation["execution_boundary"]["provider_requests"] == 0
