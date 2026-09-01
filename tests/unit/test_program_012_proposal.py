@@ -20,8 +20,11 @@ _V1_PROPOSAL_PATH = Path(
 _V2_PROPOSAL_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v2.json"
 )
-_PROPOSAL_PATH = Path(
+_V3_PROPOSAL_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v3.json"
+)
+_PROPOSAL_PATH = Path(
+    "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v4.json"
 )
 _REVIEW_PATH = Path(
     "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v1.json"
@@ -108,10 +111,31 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     superseded = proposal["supersedes"]
     assert superseded["proposals"]["v1"]["path"] == _V1_PROPOSAL_PATH.as_posix()
     assert superseded["proposals"]["v2"]["path"] == _V2_PROPOSAL_PATH.as_posix()
+    assert superseded["proposals"]["v3"]["path"] == _V3_PROPOSAL_PATH.as_posix()
     _assert_binding(superseded["proposals"]["v1"])
     _assert_binding(superseded["proposals"]["v2"])
+    _assert_binding(superseded["proposals"]["v3"])
     assert superseded["prior_provider_requests"] == 0
     assert superseded["prior_market_observations"] == 0
+    assert superseded["prior_status"] == (
+        "SUPERSEDED-PROSPECTIVE-PUBLIC-EVIDENCE-SPECIFICATION-DEFECT-NO-EXECUTION"
+    )
+
+    v3 = _load(_V3_PROPOSAL_PATH)
+    for key in (
+        "bindings",
+        "chronology",
+        "source_contract",
+        "pagination_contract",
+        "transport_budgets",
+        "restart_contract",
+        "missingness_policy",
+        "structural_admission_contract",
+        "future_child_authority",
+        "authority",
+        "protected_firewall",
+    ):
+        assert proposal[key] == v3[key]
 
     chronology = proposal["chronology"]
     request = chronology["request_range"]
@@ -238,6 +262,32 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     assert evidence["create_only_raw_pages"] is True
     assert evidence["create_only_request_intents"] is True
     assert evidence["create_only_response_receipts"] is True
+    assert evidence["public_terminal_schema_version"] == (
+        "program-012-exposed-prefix-terminal-result-v2"
+    )
+    assert evidence["public_dataset_manifest_schema_version"] == (
+        "program-012-public-raw-structural-prefix-lineage-manifest-v1"
+    )
+    assert evidence["public_data_derived_hashes_or_fingerprints_allowed"] is False
+    assert evidence["public_dynamic_acquisition_counts_allowed"] is False
+    assert evidence["public_detailed_gate_or_failure_evidence_allowed"] is False
+    assert evidence["private_dataset_content_identity_required"] is True
+    assert evidence["public_artifacts_include"] == [
+        "authority identity",
+        "source commit",
+        "terminal result kind and status",
+        "admission pass or fail",
+        "pass-only dataset lineage identity derived only from public controls",
+        "static privacy and disabled-authority assertions",
+        "terminal observation time",
+    ]
+    assert {
+        "request, response, byte, row, missingness, exclusion, credential-load, or gate counts",
+        "response-manifest, canonical-row, missingness, admission, dataset-manifest, claim, receipt, or terminal hashes",
+        "data-derived fingerprints or identities",
+        "detailed gate failures, failure classes, or failure classifications",
+        "private dataset content identity",
+    } <= set(evidence["public_artifacts_exclude"])
 
     missingness = proposal["missingness_policy"]
     loss = missingness["global_loss_limit"]
@@ -288,6 +338,24 @@ def test_program_012_proposal_is_exact_protected_and_non_authorizing() -> None:
     admission = proposal["structural_admission_contract"]
     assert canonical["raw_prices_changed"] is False
     assert canonical["normalized_volume_materialized_during_program_012"] is False
+    assert canonical["private_dataset_content_identity_binds"] == [
+        "operation proposal",
+        "source commit",
+        "raw page manifest",
+        "canonical raw row hash",
+        "private missingness report hash",
+        "admitted session index hash",
+        "public action ledger",
+        "structural admission result",
+    ]
+    assert canonical["public_dataset_lineage_identity_binds"] == [
+        "operation proposal",
+        "authority fingerprint",
+        "source commit",
+        "public action ledger",
+        "pass status",
+    ]
+    assert canonical["public_dataset_lineage_identity_is_content_identity"] is False
     assert admission["program_002_admission"] is False
     assert admission["program_002_quote_windows_evaluated"] == 0
     assert admission["historical_final_exposed_fold_claim"] is False
