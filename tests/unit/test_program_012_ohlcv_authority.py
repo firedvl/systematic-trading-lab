@@ -439,10 +439,13 @@ def test_terminal_failure_revokes_before_credentials_or_private_state(
     credential_reads: list[bool] = []
     private_root_opens: list[bool] = []
 
+    def record_credential_read(_environ: object) -> tuple[str, ...]:
+        credential_reads.append(True)
+        return ()
+
     monkeypatch.setattr(
-        authority.credential_contract,
-        "credential_presence_preflight",
-        lambda _environ: credential_reads.append(True) or (),
+        "systematic_trading_lab.program_012_ohlcv_authority.credential_contract.credential_presence_preflight",
+        record_credential_read,
     )
     monkeypatch.setattr(
         authority,
@@ -470,10 +473,14 @@ def test_missing_terminal_failure_rejects_before_credentials_or_private_state(
     credential_reads: list[bool] = []
     private_root_opens: list[bool] = []
     monkeypatch.setattr(authority, "PUBLIC_TERMINAL_PATH", Path("config/research/missing.json"))
+
+    def record_credential_read(_environ: object) -> tuple[str, ...]:
+        credential_reads.append(True)
+        return ()
+
     monkeypatch.setattr(
-        authority.credential_contract,
-        "credential_presence_preflight",
-        lambda _environ: credential_reads.append(True) or (),
+        "systematic_trading_lab.program_012_ohlcv_authority.credential_contract.credential_presence_preflight",
+        record_credential_read,
     )
     monkeypatch.setattr(
         authority,
@@ -504,10 +511,14 @@ def test_changed_terminal_observation_time_rejects_before_credentials(
     path.write_bytes((canonical_json(terminal) + "\n").encode())
     credential_reads: list[bool] = []
     monkeypatch.setattr(authority, "PUBLIC_TERMINAL_PATH", path)
+
+    def record_credential_read(_environ: object) -> tuple[str, ...]:
+        credential_reads.append(True)
+        return ()
+
     monkeypatch.setattr(
-        authority.credential_contract,
-        "credential_presence_preflight",
-        lambda _environ: credential_reads.append(True) or (),
+        "systematic_trading_lab.program_012_ohlcv_authority.credential_contract.credential_presence_preflight",
+        record_credential_read,
     )
 
     with pytest.raises(authority.Program012AuthorityError, match="semantics differ"):
