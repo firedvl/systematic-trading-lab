@@ -20,6 +20,12 @@ Subscription purchase, controlled or protected access, PAPER, broker writes, and
 remain disabled. After independent terminal review and merge, bounded offline forensics may support
 a prospectively frozen successor; the terminal result cannot be reinterpreted or retried.
 
+The finding-free independent terminal review binds closeout commits
+`5cfd9d8e6cfc7e69434545013363ef9e08e0d98c` and
+`17ea479cfea19006d9cfd042c41b324de2f41b44`. Review artifact SHA-256/fingerprint is
+`abb99b2fc066b192455967c6a1fc51899d9ef3abeee49dbf91ef3821a71c3a1a` /
+`90565910623a1bba80c93c15d81525014a3e763e9c6fcef92b826359ad270993`.
+
 Proposal SHA-256/fingerprint is
 `7785108f301052e654d00ea056656e7a9d4c95c1775bcadb7c3bdaf52c1662c4` /
 `66d61d1671964eea30231057a185d4798ad640c7138db05144528b067724aee9`.

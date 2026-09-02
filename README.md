@@ -127,8 +127,9 @@ acquisition and structural dataset admission require a separate reviewed standin
 Program 012 limited that acquisition to the unprotected context and exposed prefix through
 `2025-12-31`. Its reviewed one-use child is now consumed and sealed as `FAIL-CONSUMED-NO-RETRY`.
 The redacted public terminal records a runtime failure, no structural admission, no dataset lineage,
-and no strategy work. Dynamic acquisition state and private content identity remain private. Do not
-run its credential preflight, activation, or acquisition again. See
+and no strategy work. Dynamic acquisition state and private content identity remain private. A
+finding-free independent terminal review confirmed the closeout and replay guard. Do not run its
+credential preflight, activation, or acquisition again. See
 [Program 012 exposed-prefix acquisition](docs/program-012-exposed-prefix-acquisition.md).
 
 ## Using historical data
