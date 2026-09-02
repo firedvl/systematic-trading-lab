@@ -78,6 +78,17 @@ _FORBIDDEN_PUBLIC_KEYS = {
 }
 
 
+@pytest.fixture(autouse=True)
+def _allow_historical_runtime_tests(monkeypatch: MonkeyPatch) -> None:
+    reject_terminal_state = authority._reject_terminal_state
+
+    def reject(repository: Path) -> None:
+        if repository.resolve() == _REPOSITORY.resolve():
+            reject_terminal_state(repository)
+
+    monkeypatch.setattr(authority, "_reject_terminal_state", reject)
+
+
 class _AbruptExit(BaseException):
     pass
 
@@ -420,6 +431,89 @@ def test_operation_contract_revalidates_the_exposed_prefix() -> None:
 
     assert proposal["program_id"] == authority.PROGRAM_ID
     assert proposal["proposal_fingerprint"] == authority.OPERATION_MANIFEST["fingerprint"]
+
+
+def test_terminal_failure_revokes_before_credentials_or_private_state(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    credential_reads: list[bool] = []
+    private_root_opens: list[bool] = []
+
+    monkeypatch.setattr(
+        authority.credential_contract,
+        "credential_presence_preflight",
+        lambda _environ: credential_reads.append(True) or (),
+    )
+    monkeypatch.setattr(
+        authority,
+        "_open_private_root",
+        lambda *_args, **_kwargs: private_root_opens.append(True),
+    )
+
+    for operation in (
+        lambda: authority.credential_presence_preflight(_REPOSITORY, environ={}),
+        lambda: authority.derive_active_authority(_REPOSITORY),
+        lambda: authority.activate_authority(_REPOSITORY, environ={}),
+        lambda: authority.load_active_authority(_REPOSITORY),
+        lambda: authority.execute_acquisition(_REPOSITORY, environ={}),
+    ):
+        with pytest.raises(authority.Program012AuthorityError, match="terminally revoked"):
+            operation()
+
+    assert credential_reads == []
+    assert private_root_opens == []
+
+
+def test_missing_terminal_failure_rejects_before_credentials_or_private_state(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    credential_reads: list[bool] = []
+    private_root_opens: list[bool] = []
+    monkeypatch.setattr(authority, "PUBLIC_TERMINAL_PATH", Path("config/research/missing.json"))
+    monkeypatch.setattr(
+        authority.credential_contract,
+        "credential_presence_preflight",
+        lambda _environ: credential_reads.append(True) or (),
+    )
+    monkeypatch.setattr(
+        authority,
+        "_open_private_root",
+        lambda *_args, **_kwargs: private_root_opens.append(True),
+    )
+
+    for operation in (
+        lambda: authority.credential_presence_preflight(_REPOSITORY, environ={}),
+        lambda: authority.derive_active_authority(_REPOSITORY),
+        lambda: authority.activate_authority(_REPOSITORY, environ={}),
+        lambda: authority.load_active_authority(_REPOSITORY),
+        lambda: authority.execute_acquisition(_REPOSITORY, environ={}),
+    ):
+        with pytest.raises(authority.Program012AuthorityError, match="artifact is absent"):
+            operation()
+
+    assert credential_reads == []
+    assert private_root_opens == []
+
+
+def test_changed_terminal_observation_time_rejects_before_credentials(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    terminal = json.loads((_REPOSITORY / authority.PUBLIC_TERMINAL_PATH).read_bytes())
+    terminal["observed_at"] = "2026-09-02T07:49:11.481935Z"
+    path = tmp_path / "terminal.json"
+    path.write_bytes((canonical_json(terminal) + "\n").encode())
+    credential_reads: list[bool] = []
+    monkeypatch.setattr(authority, "PUBLIC_TERMINAL_PATH", path)
+    monkeypatch.setattr(
+        authority.credential_contract,
+        "credential_presence_preflight",
+        lambda _environ: credential_reads.append(True) or (),
+    )
+
+    with pytest.raises(authority.Program012AuthorityError, match="semantics differ"):
+        authority.credential_presence_preflight(_REPOSITORY, environ={})
+
+    assert credential_reads == []
 
 
 def test_credential_preflight_cli_prints_only_pass_or_missing_names(

@@ -1,11 +1,24 @@
 # Program 012 exposed-prefix acquisition
 
-Program 012, `multi-hour-sector-etf-research-011`, is
-`IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`. Proposal v4 defines a raw-only Alpaca SIP acquisition, a
-new prefix-specific structural admission, and a public terminal that discloses no data-derived
-commitment or dynamic acquisition state. Runtime v4 preserves the reviewed v3 code and fixes the
-prospective child lineage baseline. No standing child authority or child review exists. Program 012
-does not enact Program 002 admission, evaluate its quote grid, or authorize a strategy.
+Program 012, `multi-hour-sector-etf-research-011`, is `FAIL-CONSUMED-NO-RETRY`. Proposal v4 defined
+a raw-only Alpaca SIP acquisition, a prefix-specific structural admission, and a public terminal
+that discloses no data-derived commitment or dynamic acquisition state. The reviewed standing child
+activated on synchronized main `778e03e6b1a5cb1ecfbd242b39260a0983fcc347` and consumed its one
+use. Program 012 did not enact Program 002 admission, evaluate its quote grid, or run a strategy.
+
+## Terminal result
+
+The public terminal classifies the result as `RUNTIME-FAILURE` with status
+`FAIL-CONSUMED-NO-RETRY`. Structural admission did not pass, no dataset lineage exists, and no
+strategy calculation or return occurred. Proposal v4 keeps dynamic acquisition state, detailed
+failure and gate evidence, private content identity, raw market data, provider tokens, exact
+missingness, and exact unexpected exclusions in the ignored private root. Program 012 cannot replay.
+
+The closeout binds the exact redacted terminal semantics and rejects credential preflight,
+authority derivation, activation, loading, and execution before credential or private-root access.
+Subscription purchase, controlled or protected access, PAPER, broker writes, and live execution
+remain disabled. After independent terminal review and merge, bounded offline forensics may support
+a prospectively frozen successor; the terminal result cannot be reinterpreted or retried.
 
 Proposal SHA-256/fingerprint is
 `7785108f301052e654d00ea056656e7a9d4c95c1775bcadb7c3bdaf52c1662c4` /
@@ -125,16 +138,12 @@ evidence contains only authority and source lineage, result kind, status, admiss
 lineage identity derived from public controls, static privacy/scientific/disabled-authority
 assertions, and observation time. The public lineage identity is not a content identity.
 
-The runtime includes a credential preflight, provider client, private store, activation path, and
-structural admission path. Twenty-nine focused runtime tests cover intent crashes, completed-page recovery,
+The historical runtime included a credential preflight, provider client, private store, activation
+path, and structural admission path. The terminal closeout now revokes all five entrypoints before
+credential or private-root access. Focused runtime tests cover intent crashes, completed-page recovery,
 concurrent owners, unpaired credential attempts, malformed-response accounting, recovered pacing and
 budgets, terminal re-entry, forged recovery state, public redaction, CLI parity, bounded ordinary
-failure output, and the two key missingness cases. The new topology regression and focused Program
-012/provenance checks pass. A fresh independent bypass review found no material finding in the v3
-runtime. No credential presence or value has been inspected, no private state exists, and no
-provider request has occurred. The 1,626-test full suite passes with four skips; Ruff, full mypy,
-the 677-file secret scan, shell syntax, sdist, wheel, and diff checks also pass. Exact-HEAD v4
-correctness and security reviews precede the clean merge. A separate reviewed standing child may then enable only provider
-contact, credential access, source requests, acquisition, and structural admission.
-Controlled/protected data, purchases, strategy execution, PAPER, broker writes, and live execution
-remain disabled.
+failure output, terminal revocation, and the two key missingness cases. The terminal result itself
+contains no private counts, hashes, classifications, identities, or market observations. Independent
+terminal review and repository gates precede merge. Controlled or protected data, purchases,
+strategy execution, PAPER, broker writes, and live execution remain disabled.
