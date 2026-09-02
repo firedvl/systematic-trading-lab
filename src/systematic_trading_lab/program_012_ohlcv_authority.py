@@ -262,6 +262,23 @@ _PUBLIC_DATASET_LINEAGE_KEYS = {
     "status",
     "dataset_lineage_identity",
 }
+_PUBLIC_TERMINAL_KEYS = {
+    "schema_version",
+    "terminal_result_id",
+    "program_ordinal",
+    "program_id",
+    "result_kind",
+    "status",
+    "authority_id",
+    "authority_fingerprint",
+    "source_commit",
+    "admission_passed",
+    "dataset_lineage_manifest",
+    "privacy_assertions",
+    "scientific_assertions",
+    "disabled_authority",
+    "observed_at",
+}
 _PRIVATE_DATASET_KEYS = {
     "schema_version",
     "program_id",
@@ -541,6 +558,7 @@ def derive_active_authority(repository: Path) -> Mapping[str, Any]:
 
 def _derive_control_validated_authority(repository: Path) -> Mapping[str, Any]:
     repository = _repository(repository)
+    _reject_terminal_state(repository)
     identity = derive_child_identity(repository, CHILD_AUTHORITY_PATH, CHILD_REVIEW_PATH)
     authority = _mapping(identity.get("authority"), "child authority")
     runtime = _mapping(identity.get("runtime_binding"), "child runtime binding")
@@ -2847,6 +2865,81 @@ def _validate_existing_public_terminal(
         os.close(root_descriptor)
     if actual != expected:
         raise Program012AuthorityError("Program 012 public terminal artifact differs")
+
+
+def _reject_terminal_state(repository: Path) -> None:
+    path = repository / PUBLIC_TERMINAL_PATH
+    try:
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    except FileNotFoundError as error:
+        raise Program012AuthorityError("Program 012 terminal result artifact is absent") from error
+    except OSError as error:
+        raise Program012AuthorityError("Program 012 terminal result artifact is invalid") from error
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > 1_048_576:
+            raise Program012AuthorityError("Program 012 terminal result artifact is invalid")
+        with os.fdopen(descriptor, "rb") as handle:
+            descriptor = -1
+            raw = handle.read()
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    result = _json_object(raw, "terminal result")
+    _parse_observed_at(result.get("observed_at"))
+    if (
+        set(result) != _PUBLIC_TERMINAL_KEYS
+        or raw != (canonical_json(result) + "\n").encode()
+        or result.get("schema_version") != "program-012-exposed-prefix-terminal-result-v2"
+        or result.get("terminal_result_id")
+        != (
+            "program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-"
+            "structural-admission-terminal-result-2026-09-01-v2"
+        )
+        or result.get("program_ordinal") != PROGRAM_ORDINAL
+        or result.get("program_id") != PROGRAM_ID
+        or result.get("result_kind") != "RUNTIME-FAILURE"
+        or result.get("status") != "FAIL-CONSUMED-NO-RETRY"
+        or result.get("authority_id") != CHILD_AUTHORITY_ID
+        or result.get("authority_fingerprint")
+        != "36a64747ae29f7bdaa997002f4da0ef4cfd2721fc030617f1c003012aae18fe4"
+        or result.get("source_commit") != "6087eba824776d2c424295af7feda49ae80d59c5"
+        or result.get("observed_at") != "2026-09-02T07:49:11.481934Z"
+        or result.get("admission_passed") is not False
+        or result.get("dataset_lineage_manifest") is not None
+        or result.get("privacy_assertions")
+        != {
+            "credentials_stored": False,
+            "provider_tokens_private": True,
+            "market_data_private": True,
+            "dynamic_acquisition_counts_private": True,
+            "data_derived_hashes_and_identities_private": True,
+            "detailed_gate_and_failure_evidence_private": True,
+            "private_dataset_content_identity_private": True,
+            "exact_missing_coordinates_private": True,
+            "exact_unexpected_exclusion_dates_private": True,
+        }
+        or result.get("scientific_assertions")
+        != {
+            "program_002_admission": False,
+            "strategy_calculations_present": False,
+            "strategy_returns_present": False,
+        }
+        or result.get("disabled_authority")
+        != {
+            "subscription_purchase": False,
+            "strategy_implementation": False,
+            "strategy_execution": False,
+            "research_qualification": False,
+            "controlled_evaluation": False,
+            "protected_holdout": False,
+            "paper_execution": False,
+            "broker_writes": False,
+            "live_execution": False,
+        }
+    ):
+        raise Program012AuthorityError("Program 012 terminal result semantics differ")
+    raise Program012AuthorityError("Program 012 authority is terminally revoked")
 
 
 def _repository_preflight(repository: Path, identity: Mapping[str, Any]) -> Mapping[str, str]:

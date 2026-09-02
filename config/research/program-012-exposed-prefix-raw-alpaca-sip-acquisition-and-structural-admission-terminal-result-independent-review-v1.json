@@ -1,0 +1,152 @@
+{
+  "schema_version": "program-012-exposed-prefix-terminal-result-independent-review-v1",
+  "review_id": "program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-terminal-result-independent-review-2026-09-02-v1",
+  "program_ordinal": 12,
+  "program_id": "multi-hour-sector-etf-research-011",
+  "reviewed_at": "2026-09-02T08:25:54Z",
+  "status": "PASS-TERMINAL-FAILURE-VERIFIED",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_execution_main": "778e03e6b1a5cb1ecfbd242b39260a0983fcc347",
+  "reviewed_base_commit": "778e03e6b1a5cb1ecfbd242b39260a0983fcc347",
+  "reviewed_closeout_commits": [
+    {
+      "commit": "5cfd9d8e6cfc7e69434545013363ef9e08e0d98c",
+      "tree": "7cd561a1ae0e33c169e24be57446756bbc28930b",
+      "purpose": "redacted terminal artifact, terminal revocation guard, regression coverage, and public closeout"
+    },
+    {
+      "commit": "17ea479cfea19006d9cfd042c41b324de2f41b44",
+      "tree": "a65eb81c62a9c0ddccc490fd023816ee3ca85488",
+      "purpose": "test-only typing repair with unchanged terminal behavior"
+    }
+  ],
+  "reviewed_public_terminal": {
+    "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-terminal-result-v2.json",
+    "schema_version": "program-012-exposed-prefix-terminal-result-v2",
+    "result_kind": "RUNTIME-FAILURE",
+    "status": "FAIL-CONSUMED-NO-RETRY",
+    "admission_passed": false,
+    "dataset_lineage_manifest_present": false,
+    "program_002_admission": false,
+    "strategy_calculations_present": false,
+    "strategy_returns_present": false
+  },
+  "private_evidence_review": {
+    "ignored_private_root_inspected": true,
+    "canonical_terminal_evidence_validated": true,
+    "public_terminal_exact_derivation_confirmed": true,
+    "credentials_stored": false,
+    "private_details_redacted_under_proposal_v4": true
+  },
+  "terminal_revocation": {
+    "guard_path": "src/systematic_trading_lab/program_012_ohlcv_authority.py",
+    "credential_preflight_rejects_before_credentials_or_private_root": true,
+    "authority_derivation_rejects_before_credentials_or_private_root": true,
+    "activation_rejects_before_credentials_or_private_root": true,
+    "active_authority_load_rejects_before_credentials_or_private_root": true,
+    "execution_rejects_before_credentials_or_private_root": true,
+    "missing_terminal_rejects_before_credentials_or_private_root": true,
+    "changed_terminal_semantics_reject_before_credentials_or_private_root": true,
+    "exact_terminal_semantics_bound": true,
+    "program_012_replay_prohibited": true
+  },
+  "challenge_results": [
+    {
+      "number": 1,
+      "challenge": "Did the reviewed child consume its one use and leave Program 012 terminal?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 2,
+      "challenge": "Does the public terminal match validated canonical private terminal evidence without publishing private fields?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 3,
+      "challenge": "Does every Program 012 lifecycle entrypoint reject before credential or private-root access?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 4,
+      "challenge": "Do absent or semantically changed terminal artifacts fail closed?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 5,
+      "challenge": "Did Program 012 admit a dataset or calculate a strategy result?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 6,
+      "challenge": "Were controlled, protected, PAPER, broker, live, and purchase boundaries untouched?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 7,
+      "challenge": "Does the review preserve Program 012 as consumed rather than authorize replay?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 8,
+      "challenge": "Must any successor be prospectively frozen and independently reviewed?",
+      "answer": "YES",
+      "verdict": "PASS"
+    }
+  ],
+  "verified_assertions": {
+    "public_terminal_is_canonical": true,
+    "public_terminal_matches_private_terminal_projection": true,
+    "public_terminal_contains_no_forbidden_private_evidence": true,
+    "one_use_authority_is_consumed": true,
+    "terminal_result_blocks_all_current_entrypoints": true,
+    "missing_terminal_blocks_all_current_entrypoints": true,
+    "changed_terminal_semantics_block_current_entrypoints": true,
+    "no_dataset_lineage_was_published": true,
+    "no_program_002_admission_occurred": true,
+    "no_strategy_calculation_or_return_occurred": true,
+    "controlled_protected_paper_broker_live_and_purchase_state_stayed_untouched": true,
+    "program_012_replay_is_prohibited": true
+  },
+  "verification": {
+    "independent_terminal_review": "PASS-FINDING-FREE",
+    "independent_addendum_review": "PASS-FINDING-FREE",
+    "focused_program_012_and_provenance_tests": "PASS",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "secret_and_private_data_scan": "PASS",
+    "shell_syntax_diff_and_build_checks": "PASS",
+    "sdist_and_wheel_build": "PASS",
+    "reviewed_working_tree": "clean after the addendum commit"
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "The review validates the locally available private root under the repository's non-hostile local filesystem and Git threat model."
+  ],
+  "scope_limit": "The review made no credential access, provider request, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Merge the terminal closeout, perform bounded offline forensics, and create a prospective successor only if the private evidence supports one without changing Program 012's frozen rules.",
+  "review_fingerprint": "90565910623a1bba80c93c15d81525014a3e763e9c6fcef92b826359ad270993"
+}
