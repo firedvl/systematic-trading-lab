@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-02 - Freeze Program 013 restart, terminal, budget, and import controls
+
+- Decision: supersede non-authorizing Program 013 proposal v1 with prospective v2. Keep the inherited scientific contract unchanged. Require a read-only lock and exact rederivation of Program 012's completed whole-session prefix plus first-page intent-only frontier; a distinct locked Program 013 root; create-only fsynced claim, intent, body, and receipt evidence; no request reissue; cumulative Program 012 plus Program 013 request, response, byte, session, and private-storage ceilings; a private predecessor import manifest; a combined private identity; and a create-only redacted public terminal that revokes re-entry before credentials or private state.
+- Context: proposal v1 failed independent design review on four missing control contracts. V2 resolves those findings prospectively without using new market evidence or changing a scientific gate.
+- Consequences: the Program 012 intent-only frontier counts against its consumed request budget, and a Program 013 request at that frontier consumes one additional request. Program 013 may reuse completed predecessor pages only by local read-only parsing. Any Program 013 intent-only, body-without-receipt, changed, or ambiguous checkpoint terminally consumes the successor without provider reissue. All dynamic counts, dates, hashes, tokens, failure details, and content identities remain private.
+- Revisit when: only after fresh design and security-boundary reviews pass. Implementation and a separate exact merged-main standing child remain required before credential presence or provider contact.
+
 ## 2026-09-02 - Correct Program 013 controls before implementation
 
 - Decision: preserve Program 013 proposal v1 as failed-review history. Do not implement it. Issue a prospective v2 that freezes Program 013's own restart-safe one-use transport, redacted public terminal and early revocation, cumulative inherited request/response/disk ceilings, and private predecessor-import identity.

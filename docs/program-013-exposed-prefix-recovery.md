@@ -23,8 +23,15 @@ broker writes, and live execution remain disabled.
 
 Proposal v1 failed independent design review. It did not fully freeze Program 013's own restart and
 replay controls, public terminal revocation, cumulative inherited budgets, or private predecessor
-import identity. It remains non-authorizing failed-review history. A prospective v2 must correct all
-four findings and pass fresh design and security-boundary reviews before implementation.
+import identity. It remains non-authorizing failed-review history.
+
+Proposal v2 corrects all four findings without changing the inherited science. It requires a
+read-only predecessor lock and exact frontier rederivation, a distinct locked Program 013 root,
+create-only fsynced claim/intent/body/receipt evidence, terminal treatment of ambiguous checkpoints,
+cumulative Program 012 plus Program 013 resource ceilings, a private predecessor import manifest, a
+combined private dataset identity, and a create-only redacted public terminal that blocks re-entry
+before credentials or private state. V2 still grants no authority and requires fresh design and
+security-boundary reviews before implementation.
 
 No Program 013 proposal grants authority. Implementation, repository gates, merge, an exact
 merged-main child, and a separate child review must all pass before credential presence or provider

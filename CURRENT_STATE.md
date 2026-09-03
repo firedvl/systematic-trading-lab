@@ -1,8 +1,8 @@
 # Current state
 
-Program 013 planning is current. Program 012 remains terminal and immutable.
+Program 013 proposal v2 is current. Program 012 remains terminal and immutable.
 
-- Program 013, `multi-hour-sector-etf-research-012`, is `DESIGN-CORRECTION-REQUIRED-NOT-AUTHORIZED`.
+- Program 013, `multi-hour-sector-etf-research-012`, is `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
   Redacted read-only private forensics validated a completed whole-session Program 012 prefix plus
   one reachable first-page intent-only frontier with no retained body, receipt, HTTP status, parsed
   missingness, data-quality outcome, partial page, or later-session evidence. The prospective
@@ -12,11 +12,14 @@ Program 013 planning is current. Program 012 remains terminal and immutable.
   private root remains immutable. Program 013 keeps zero automatic retries and cannot reissue its
   own requests or retry any retained response or scientific outcome. Proposal v1 failed independent
   review because it did not fully freeze Program 013 restart/replay controls, public terminal
-  revocation, cumulative inherited budgets, or predecessor-import identity. No credential access,
-  provider contact, acquisition, admission, strategy work, controlled/protected access, purchase,
-  PAPER, broker write, or live action occurred. Next autonomous action: preserve v1, issue a
-  prospective v2 correction, and obtain fresh design and security-boundary reviews before runtime
-  implementation.
+  revocation, cumulative inherited budgets, or predecessor-import identity. Proposal v2 preserves
+  v1 and corrects all four findings without changing source, chronology, pagination, missingness,
+  admission, privacy, or no-strategy science. It requires cumulative Program 012 plus Program 013
+  resource accounting, a read-only predecessor import manifest, create-only fsynced Program 013
+  request evidence, a redacted public terminal, and pre-credential terminal revocation. No credential
+  access, provider contact, acquisition, admission, strategy work, controlled/protected access,
+  purchase, PAPER, broker write, or live action occurred. Next autonomous action: obtain fresh
+  design and security-boundary reviews before runtime implementation.
 
 Program 012's terminal result is current. Earlier Program 012, Program 011, and Program 010 entries
 are preserved as historical snapshots, including their former next actions.
