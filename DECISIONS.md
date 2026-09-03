@@ -1,5 +1,19 @@
 # Architecture decisions
 
+## 2026-09-02 - Correct Program 013 controls before implementation
+
+- Decision: preserve Program 013 proposal v1 as failed-review history. Do not implement it. Issue a prospective v2 that freezes Program 013's own restart-safe one-use transport, redacted public terminal and early revocation, cumulative inherited request/response/disk ceilings, and private predecessor-import identity.
+- Context: independent review found two high-severity authority and terminal-control gaps plus two medium-severity budget and provenance gaps. The source, chronology, missingness, admission gates, and no-strategy contract remain unchanged.
+- Consequences: proposal v1 grants no authority. No credential presence or value, provider request, private market observation, acquisition, admission, strategy work, controlled/protected access, PAPER action, broker write, live action, or purchase occurred. V2 requires fresh design and security-boundary reviews before implementation.
+- Revisit when: after every finding is prospectively resolved and both reviews pass without findings.
+
+## 2026-09-02 - Recover Program 012 only through a new intent-only successor
+
+- Decision: create Program 013 as a prospective successor that reuses only Program 012's validated completed whole-session prefix. Keep Program 012 terminal and immutable. Permit one new Program 013 request at the predecessor's first-page intent-only frontier because no response body, receipt, HTTP status, parsed missingness, or data-quality outcome was retained there. Keep zero automatic retries and forbid Program 013 from reissuing its own requests or retrying any retained outcome.
+- Context: read-only private validation proved an exact whole-session prefix, one reachable intent-only frontier, no partial page, and no later-session evidence. The temporary canonical projection ended at an exact record boundary because buffered output was never finalized.
+- Consequences: Program 013 uses a distinct private root, reads Program 012 evidence in place, keeps the frozen source and structural science unchanged, and grants no strategy, controlled/protected, PAPER, broker, live, or purchase authority. Independent review, implementation, merge, and a separate reviewed child remain required before provider contact.
+- Revisit when: never for Program 012. A Program 013 retained response or scientific outcome is final; another infrastructure-only intent checkpoint requires a new prospective successor.
+
 ## 2026-09-01 - Bind the Program 012 child after runtime finalization
 
 - Decision: supersede Program 012 runtime implementation v3 before authority or execution without changing runtime code. Require the future standing child to freeze its runtime source commit and tree from exact clean synchronized `main` after runtime v4 merges. Keep the existing repository preflight rule that permits only the child authority and its independent review after that source.

@@ -1,0 +1,205 @@
+{
+  "schema_version": "program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1",
+  "proposal_id": "program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-2026-09-02-v1",
+  "program_ordinal": 13,
+  "program_id": "multi-hour-sector-etf-research-012",
+  "status": "PROPOSED-PROSPECTIVE-NOT-AUTHORIZED",
+  "purpose": "Complete the unchanged exposed-prefix raw SIP acquisition and structural admission after Program 012 stopped at a validated intent-only infrastructure checkpoint.",
+  "predecessor": {
+    "program_012_terminal_result": {
+      "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-terminal-result-v2.json",
+      "sha256": "4080adcd6eae480fc6c077a5738b7d81eda0f7d239227fd4f445afeaa37106c2"
+    },
+    "program_012_terminal_review": {
+      "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-terminal-result-independent-review-v1.json",
+      "sha256": "abb99b2fc066b192455967c6a1fc51899d9ef3abeee49dbf91ef3821a71c3a1a",
+      "fingerprint": "90565910623a1bba80c93c15d81525014a3e763e9c6fcef92b826359ad270993"
+    },
+    "program_012_scientific_contract": {
+      "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-proposal-v4.json",
+      "sha256": "7785108f301052e654d00ea056656e7a9d4c95c1775bcadb7c3bdaf52c1662c4",
+      "fingerprint": "66d61d1671964eea30231057a185d4798ad640c7138db05144528b067724aee9"
+    },
+    "program_012_scientific_contract_review": {
+      "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-independent-review-v2.json",
+      "sha256": "a1ead64e3f1363c39ad3f8839b78853ccd029acbee81d0acf9f6b1290502e661",
+      "fingerprint": "63463151f427f5a61d530480536a3b75d20724822af5879966129ece1003f9d6"
+    },
+    "redacted_private_forensic_disposition": {
+      "path": "config/research/program-013-predecessor-recovery-forensic-disposition-v1.json",
+      "sha256": "438f6fe1ff485ed63e8493ff1f26f63aaf8fb1a944499dd0af8465f94f2c0866",
+      "fingerprint": "e2ae06a7d10c5ab3b0641be55304ee116561a721b242baba16361e76ab609852"
+    }
+  },
+  "scientific_contract": {
+    "inherit_program_012_contract_exactly": true,
+    "hypothesis_changed": false,
+    "source_contract_changed": false,
+    "request_chronology_changed": false,
+    "symbols_changed": false,
+    "pagination_semantics_changed": false,
+    "canonical_data_contract_changed": false,
+    "missingness_semantics_changed": false,
+    "structural_admission_gates_changed": false,
+    "thresholds_changed": false,
+    "corporate_action_contract_changed": false,
+    "strategy_contract_added": false,
+    "retrospective_gate_weakening": false,
+    "program_002_admission": false
+  },
+  "source_contract": {
+    "method": "GET",
+    "endpoint": "https://data.alpaca.markets/v2/stocks/bars",
+    "feed": "sip",
+    "timeframe": "5Min",
+    "adjustment": "raw",
+    "sort": "asc",
+    "limit": 1000,
+    "asof": "2026-07-31",
+    "symbols": [
+      "IWM",
+      "MDY",
+      "SPY",
+      "XLB",
+      "XLE",
+      "XLF",
+      "XLI",
+      "XLK",
+      "XLP",
+      "XLRE",
+      "XLU",
+      "XLV",
+      "XLY"
+    ],
+    "fixed_host": "data.alpaca.markets",
+    "redirects_allowed": false,
+    "environment_proxies_allowed": false,
+    "automatic_retries": 0
+  },
+  "chronology": {
+    "context_start": "2020-06-26",
+    "context_end": "2020-07-24",
+    "exposed_start": "2020-07-27",
+    "exposed_end": "2025-12-31",
+    "session_count": 1386,
+    "expected_coordinate_count": 1399788,
+    "controlled_or_protected_session_count": 0,
+    "protected_dates_are_not_missingness": true
+  },
+  "recovery_contract": {
+    "program_012_private_evidence_access": "READ-ONLY",
+    "program_012_private_evidence_mutation_allowed": false,
+    "program_012_terminal_reinterpretation_allowed": false,
+    "program_012_replay_allowed": false,
+    "program_013_private_root_must_be_distinct": true,
+    "accepted_predecessor_shape": "EXACT-COMPLETED-WHOLE-SESSION-PREFIX-PLUS-ONE-FIRST-PAGE-INTENT-ONLY-FRONTIER",
+    "predecessor_shape_must_be_rederived_before_credential_presence": true,
+    "predecessor_shape_must_be_rederived_before_activation": true,
+    "predecessor_shape_must_be_rederived_before_transport": true,
+    "reuse_unit": "COMPLETED-WHOLE-SESSION",
+    "completed_predecessor_pages_are_reparsed_locally": true,
+    "completed_predecessor_pages_are_never_requested_again": true,
+    "partial_predecessor_session_reuse_allowed": false,
+    "frontier_body_or_receipt_or_status_must_be_absent": true,
+    "frontier_parsed_missingness_or_data_quality_outcome_must_be_absent": true,
+    "frontier_request_under_program_013_max": 1,
+    "program_013_request_reissue_allowed": false,
+    "program_013_automatic_retries": 0,
+    "retained_response_retry_allowed": false,
+    "retained_http_result_retry_allowed": false,
+    "parsed_missingness_retry_allowed": false,
+    "data_quality_outcome_retry_allowed": false,
+    "later_provider_correction_requires_new_successor": true
+  },
+  "pagination_contract": {
+    "terminal_condition": "next_page_token is null",
+    "maximum_pages_per_session": 16,
+    "opaque_token_progression_required": true,
+    "token_cycle_allowed": false,
+    "repeated_page_allowed": false,
+    "duplicate_coordinate_allowed": false,
+    "page_order_regression_allowed": false,
+    "nonterminal_new_coordinate_progress_required": true,
+    "raw_body_fsynced_before_parse_or_continuation": true,
+    "chain_incomplete_classification": "CHAIN-INCOMPLETE-RESOURCE-CAP",
+    "coordinates_after_incomplete_chain_are_source_missing": false
+  },
+  "transport_budgets": {
+    "session_chains": 1386,
+    "maximum_new_requests_and_responses": 22176,
+    "maximum_response_page_bytes": 8388608,
+    "maximum_session_response_bytes": 8388608,
+    "maximum_new_response_bytes": 4294967296,
+    "working_disk_reservation_bytes": 8589934592,
+    "maximum_requests_per_minute": 120,
+    "request_timeout_seconds": 30,
+    "credential_loads_per_process_max": 1,
+    "parallel_session_chains": 1,
+    "automatic_retries": 0
+  },
+  "structural_admission": {
+    "complete_chain_required_for_every_session": true,
+    "all_program_012_gates_and_populations_inherited": true,
+    "five_fixed_quarantine_sessions_inherited": true,
+    "maximum_total_excluded_full_sessions": 6,
+    "maximum_unexpected_excluded_full_sessions": 1,
+    "no_imputation": true,
+    "no_symbol_dropping": true,
+    "no_reranking": true,
+    "no_date_replacement": true,
+    "strategy_metrics_allowed": false
+  },
+  "credential_contract": {
+    "environment_variables": [
+      "PROGRAM_006_ALPACA_API_KEY_ID",
+      "PROGRAM_006_ALPACA_API_SECRET_KEY"
+    ],
+    "names_only_preflight": true,
+    "values_printed_logged_committed_hashed_or_passed_in_cli_args": false,
+    "provider_contact_during_preflight": false
+  },
+  "evidence_contract": {
+    "program_012_private_root_remains_immutable": true,
+    "program_013_new_pages_use_separate_private_root": true,
+    "combined_canonical_projection_rebuilt_from_validated_predecessor_prefix_and_program_013_pages": true,
+    "combined_dataset_identity_private": true,
+    "private_predecessor_import_manifest_required": true,
+    "public_dynamic_acquisition_counts_allowed": false,
+    "public_data_derived_hashes_or_fingerprints_allowed": false,
+    "public_detailed_gate_or_failure_evidence_allowed": false,
+    "exact_missing_coordinates_private": true,
+    "exact_unexpected_exclusion_dates_private": true,
+    "provider_tokens_private": true,
+    "credentials_stored": false,
+    "terminal_evidence_required": true
+  },
+  "protected_firewall": {
+    "rederive_registered_ranges_from_synchronized_main_before_credential_presence": true,
+    "revalidate_zero_request_overlap_before_private_state": true,
+    "revalidate_zero_request_overlap_before_every_transport": true,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper": false,
+    "broker": false,
+    "live": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Obtain a finding-free independent review, implement and test the exact recovery runtime, merge it, then freeze and review a separate one-use standing child before any credential access or provider contact.",
+  "proposal_fingerprint": "8115ce8fc08b2d3cb14b1d6b47ee376b8fffe6707a289c7fdd90134d794dbc66"
+}
