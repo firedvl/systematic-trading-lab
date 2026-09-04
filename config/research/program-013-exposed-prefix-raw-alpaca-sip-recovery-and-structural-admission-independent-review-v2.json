@@ -1,0 +1,143 @@
+{
+  "schema_version": "program-013-exposed-prefix-recovery-design-and-security-independent-review-v2",
+  "review_id": "program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-03-v2",
+  "program_ordinal": 13,
+  "program_id": "multi-hour-sector-etf-research-012",
+  "status": "FAIL-FINDINGS-REQUIRE-PROSPECTIVE-CORRECTION",
+  "verdict": "FAIL",
+  "reviewed_source_commit": "0af60f068f2fed2fbfe613de7fbd0075e06098f9",
+  "reviewed_proposal": {
+    "path": "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json",
+    "sha256": "120a7418497fb9d47e1ecc884082e8d730b8a3a7f9830c5753aa52468eac5342",
+    "fingerprint": "3ab2db28ca13f091b21afeb27a436b7f97800229a5f06e876399bb77e1c62b03"
+  },
+  "review_contexts": [
+    "FRESH-INDEPENDENT-DESIGN-AND-SCIENTIFIC-CONTROL-REVIEW",
+    "FRESH-INDEPENDENT-SECURITY-AND-AUTHORITY-BOUNDARY-REVIEW"
+  ],
+  "findings": [
+    {
+      "finding_id": "P013-V2-DESIGN-001",
+      "severity": "HIGH",
+      "summary": "The restart contract did not require the regression cases needed to prove the one-use controls.",
+      "evidence": "Proposal v2 specified durable checkpoints and generic two-process serialization but omitted required tests for successor intent-only and body-without-receipt terminalization, completed-page local replay, and exactly one concurrent credential and transport owner.",
+      "required_correction": "Freeze an explicit implementation-test contract covering each crash checkpoint, completed-page replay, and two-process serialization."
+    },
+    {
+      "finding_id": "P013-V2-DESIGN-002",
+      "severity": "HIGH",
+      "summary": "The public terminal allowlist constrained only top-level fields.",
+      "evidence": "Proposal v2 permitted nested dataset lineage, privacy, scientific, and disabled-authority objects without exact recursive key and value contracts.",
+      "required_correction": "Freeze exact nested schemas and branch semantics, use one validated private-to-public projection, and reject unknown nested keys before credential or private-root access."
+    },
+    {
+      "finding_id": "P013-V2-DESIGN-003",
+      "severity": "MEDIUM",
+      "summary": "The cumulative request cap left the effective maximum response envelope ambiguous by one page.",
+      "evidence": "The predecessor intent-only frontier consumes one of 22,176 combined intents, while the successor must create a second intent to obtain that page; therefore at most 22,175 response pages can be retained under the unchanged combined intent ceiling.",
+      "required_correction": "Freeze the 22,175 effective combined-response envelope and classify an additional required page as terminal combined-request-budget exhaustion without source-missing inference."
+    },
+    {
+      "finding_id": "P013-V2-SECURITY-001",
+      "severity": "HIGH",
+      "summary": "The successor did not freeze one exact private root or the complete two-root lock lifetime.",
+      "evidence": "A merely distinct Program 013 root and generic serialization allow separate roots or early lock release to create multiple claim owners or a predecessor-validation TOCTOU window.",
+      "required_correction": "Freeze one non-overridable repository-relative Program 013 root and run.lock; acquire the successor exclusive lock before any predecessor access, then the predecessor read lock, and hold both through public terminal persistence."
+    },
+    {
+      "finding_id": "P013-V2-SECURITY-002",
+      "severity": "HIGH",
+      "summary": "Recovery checkpoints were not fully immutable or bound to the reviewed child, runtime, and predecessor import.",
+      "evidence": "Proposal v2 did not define exact claim, intent, receipt, import-manifest, and private-terminal schemas; bodies and receipts were not explicitly create-only; and checkpoint bindings did not include the proposal, child, runtime, and predecessor-import identities.",
+      "required_correction": "Freeze exact create-only canonical checkpoint schemas and bind every checkpoint to proposal, child, runtime, and import-manifest identities before credentials or transport."
+    },
+    {
+      "finding_id": "P013-V2-SECURITY-003",
+      "severity": "HIGH",
+      "summary": "Public terminal result branches were not mechanically consistent.",
+      "evidence": "Proposal v2 did not bind each result kind to exact status, admission, and pass-only dataset-lineage semantics, so a shallowly valid artifact could contradict the private terminal.",
+      "required_correction": "Freeze exact result-kind branch mappings and derive repository and CLI output from one byte-exact validated private terminal projection."
+    },
+    {
+      "finding_id": "P013-V2-SECURITY-004",
+      "severity": "MEDIUM",
+      "summary": "Credential access omitted the inherited crash-safe value-free audit protocol.",
+      "evidence": "Proposal v2 limited loads per process but did not require a durable pre-access attempt, success or failure receipt, process latch, conservative unpaired-attempt accounting, or private terminal load accounting.",
+      "required_correction": "Restore the Program 012 credential attempt and receipt protocol, bind it to the child and runtime, count unpaired attempts as loads, and retain only private counts."
+    }
+  ],
+  "challenge_results": [
+    {
+      "challenge": "authority-boundaries",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "chronology",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential-confinement",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "git-provenance-integrity",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "missingness-rules",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "predecessor-immutability-and-toctou",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "private-data-leakage",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "public-terminal-redaction",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "request-budgets",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "restart-and-replay-safety",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "scientific-contract-preservation",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "source-assumptions",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "statistical-validity",
+      "verdict": "PASS"
+    }
+  ],
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "scope_limit": "The reviews made no credential access, provider request, private market-data read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Preserve proposal v2, issue a prospective v3 resolving all seven findings, and obtain fresh design and security-boundary reviews before implementation.",
+  "review_fingerprint": "ceb68db4937ba052fac3c2d09138c4600682687847014810524098b92a57056e"
+}

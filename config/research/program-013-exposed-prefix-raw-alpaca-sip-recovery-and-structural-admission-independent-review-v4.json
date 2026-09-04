@@ -1,0 +1,106 @@
+{
+  "schema_version": "program-013-exposed-prefix-recovery-design-and-security-independent-review-v4",
+  "review_id": "program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-03-v4",
+  "program_ordinal": 13,
+  "program_id": "multi-hour-sector-etf-research-012",
+  "status": "FAIL-DESIGN-FINDING-REQUIRES-PROSPECTIVE-CORRECTION",
+  "verdict": "FAIL",
+  "reviewed_source_commit": "2862897bad75304d0bace23db512395c6c720ea2",
+  "reviewed_proposal": {
+    "path": "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v4.json",
+    "sha256": "62f80c1249cf3f3e2efa8ead66d1eabedb2b736459d8a9e8b1445a6ebe0a0128",
+    "fingerprint": "c356c2f658b2dac59afea5c079de81a9b803c66fbcef9ed85df815ed7f2b02d7"
+  },
+  "review_contexts": [
+    "FRESH-INDEPENDENT-DESIGN-AND-SCIENTIFIC-CONTROL-REVIEW",
+    "FRESH-INDEPENDENT-SECURITY-AND-AUTHORITY-BOUNDARY-REVIEW"
+  ],
+  "findings": [
+    {
+      "finding_id": "P013-V4-DESIGN-001",
+      "severity": "HIGH",
+      "summary": "The Git-policy snapshot was bound to the pre-child runtime source commit instead of the post-child synchronized-main commit.",
+      "evidence": "Program 013 must merge its runtime before freezing a child and independent child review. Proposal v4 nevertheless required direct main and origin/main refs to equal the earlier runtime source commit, making the required child topology impossible.",
+      "required_correction": "Keep runtime source commit, tree, and implementation-root provenance separate; bind the Git snapshot to the exact later synchronized-main commit; and permit exactly the child authority and its review between those commits."
+    }
+  ],
+  "challenge_results": [
+    {
+      "challenge": "authority-boundaries",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "chronology",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential-confinement",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "git-provenance-integrity",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "missingness-rules",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "predecessor-immutability-and-toctou",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "private-data-leakage",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "public-terminal-redaction",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "request-budgets",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "restart-and-replay-safety",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "scientific-contract-preservation",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "source-assumptions",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "statistical-validity",
+      "verdict": "PASS"
+    }
+  ],
+  "security_review_result": {
+    "verdict": "PASS",
+    "findings": [],
+    "proof_gap": "Program 013 has no runtime yet, so runtime reachability and crash behavior remain unvalidated."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "scope_limit": "The reviews made no credential access, provider request, private market-data read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Preserve proposal v4, issue prospective v5 with separate runtime-source and synchronized-main bindings, and obtain fresh design and security reviews before implementation.",
+  "review_fingerprint": "071c1fad482c0b32260e7af206b0f21d43f881c3172cb35e6478c8643254a007"
+}

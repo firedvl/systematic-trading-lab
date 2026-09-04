@@ -132,6 +132,13 @@ finding-free independent terminal review confirmed the closeout and replay guard
 credential preflight, activation, or acquisition again. See
 [Program 012 exposed-prefix acquisition](docs/program-012-exposed-prefix-acquisition.md).
 
+Program 013 is the prospective recovery successor. Its non-authorizing runtime reuses only Program
+012's validated completed whole-session prefix and may issue the intent-only frontier under a later
+reviewed child. It uses a separate private root, counts the inherited frontier against the unchanged
+combined budget, and publishes one redacted terminal projection. Do not run its credential preflight,
+activation, or acquisition until the runtime binding and exact child review merge. See
+[Program 013 exposed-prefix recovery](docs/program-013-exposed-prefix-recovery.md).
+
 ## Using historical data
 
 Alpaca imports are read-only and require research mode plus credentials:

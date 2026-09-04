@@ -1,0 +1,97 @@
+{
+  "schema_version": "program-013-program-012-private-evidence-recovery-forensic-disposition-v1",
+  "disposition_id": "program-013-program-012-private-evidence-recovery-forensic-disposition-2026-09-02-v1",
+  "program_ordinal": 13,
+  "program_id": "multi-hour-sector-etf-research-012",
+  "status": "COMPLETE-REDACTED-OFFLINE-FORENSIC-DISPOSITION",
+  "predecessor": {
+    "program_ordinal": 12,
+    "program_id": "multi-hour-sector-etf-research-011",
+    "terminal_result": {
+      "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-terminal-result-v2.json",
+      "sha256": "4080adcd6eae480fc6c077a5738b7d81eda0f7d239227fd4f445afeaa37106c2"
+    },
+    "terminal_review": {
+      "path": "config/research/program-012-exposed-prefix-raw-alpaca-sip-acquisition-and-structural-admission-terminal-result-independent-review-v1.json",
+      "sha256": "abb99b2fc066b192455967c6a1fc51899d9ef3abeee49dbf91ef3821a71c3a1a",
+      "fingerprint": "90565910623a1bba80c93c15d81525014a3e763e9c6fcef92b826359ad270993"
+    },
+    "terminal_status": "FAIL-CONSUMED-NO-RETRY",
+    "replay_allowed": false,
+    "history_mutation_allowed": false
+  },
+  "method": {
+    "mode": "READ-ONLY-OFFLINE-PRIVATE-EVIDENCE-VALIDATION",
+    "provider_contact": false,
+    "credential_access": false,
+    "private_evidence_mutation": false,
+    "public_dynamic_observation_allowed": false,
+    "validation": [
+      "revalidate the canonical private terminal against the reviewed public terminal lineage",
+      "replay retained complete pages locally through the frozen parser and pagination checks",
+      "prove that retained pages form an exact completed whole-session prefix",
+      "prove that the first incomplete session has only a durable first-page request intent",
+      "prove that no body, response receipt, HTTP status, parsed missingness, or data-quality result exists at that frontier",
+      "prove that no later session evidence exists"
+    ]
+  },
+  "conclusions": {
+    "canonical_private_terminal_valid": true,
+    "completed_evidence_is_exact_whole_session_prefix": true,
+    "single_reachable_incomplete_checkpoint": true,
+    "incomplete_checkpoint_kind": "FIRST-PAGE-INTENT-ONLY",
+    "frontier_body_retained": false,
+    "frontier_response_receipt_retained": false,
+    "frontier_http_status_retained": false,
+    "frontier_parsed_missingness_retained": false,
+    "frontier_data_quality_outcome_retained": false,
+    "partial_page_retained": false,
+    "later_session_evidence_present": false,
+    "temporary_canonical_projection_is_exact_record_boundary_prefix": true,
+    "temporary_projection_shortfall_cause": "buffered canonical output was not finalized before terminal closeout",
+    "structural_admission_evaluated": false,
+    "dataset_published": false,
+    "strategy_work_occurred": false,
+    "program_012_zero_reissue_rule_followed": true
+  },
+  "prospective_disposition": {
+    "successor_allowed": true,
+    "successor_must_be_new_program": true,
+    "program_012_private_root_must_remain_immutable": true,
+    "completed_whole_session_prefix_may_be_reused_read_only": true,
+    "incomplete_session_or_page_may_not_be_reused": true,
+    "frontier_request_may_be_issued_once_only_under_a_new_reviewed_child": true,
+    "retained_response_http_result_parsed_missingness_or_data_quality_outcome_retry_allowed": false,
+    "scientific_contract_may_be_weakened": false
+  },
+  "privacy": {
+    "evidence_location_published": false,
+    "dynamic_counts_published": false,
+    "session_dates_published": false,
+    "page_counts_published": false,
+    "response_hashes_published": false,
+    "private_terminal_fingerprint_published": false,
+    "provider_tokens_published": false,
+    "failure_details_published": false,
+    "market_observations_published": false,
+    "credential_values_accessed": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "forensic_disposition_fingerprint": "e2ae06a7d10c5ab3b0641be55304ee116561a721b242baba16361e76ab609852"
+}

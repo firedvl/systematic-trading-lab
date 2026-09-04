@@ -1,5 +1,84 @@
 # Current state
 
+Program 013 has a superseding, non-authorizing v5 runtime implementation v2 binding. Program 012 remains terminal and immutable.
+
+- Program 013, `multi-hour-sector-etf-research-012`, is `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.
+  Redacted read-only private forensics validated a completed whole-session Program 012 prefix plus
+  one reachable first-page intent-only frontier with no retained body, receipt, HTTP status, parsed
+  missingness, data-quality outcome, partial page, or later-session evidence. The prospective
+  successor preserves Program 012's source, chronology, pagination, missingness, admission, privacy,
+  and no-strategy contracts. It may reuse only completed whole sessions in place and may issue the
+  frontier request once under a new reviewed child. Program 012 remains non-replayable and its
+  private root remains immutable. Program 013 keeps zero automatic retries and cannot reissue its
+  own requests or retry any retained response or scientific outcome. Proposal v1 failed independent
+  review because it did not fully freeze Program 013 restart/replay controls, public terminal
+  revocation, cumulative inherited budgets, or predecessor-import identity. Proposal v2 preserved
+  the science but failed fresh design and security review on seven remaining controls: required
+  crash/concurrency tests, recursive public-terminal schemas, the intent-only budget off-by-one, one
+  exact private root and full two-root lock lifetime, immutable authority-bound checkpoints, exact
+  result-branch semantics, and crash-safe credential audit evidence. Proposal v3 resolved those seven
+  points but failed fresh design and security review on eight narrower controls: admission-failure
+  private identity and status, the inherited Git-policy snapshot lifetime, the 8 GiB working-space
+  meaning, exact required public keys, the child capability ceiling, crash recovery from a private
+  terminal without public revocation, exact credential-evidence sequencing, and the unenforceable
+  invented private-evidence cap. Proposal v4 preserves v1-v3 as non-authorizing history and resolves
+  those findings prospectively. It holds the Program 013 lock, Program 012 lock, and Git snapshot
+  through durable public closeout; restores the 8 GiB value as available working headroom rather than
+  an artifact-size cap; requires exact public schemas and private-terminal recovery; caps the child to
+  acquisition and admission; retains a non-null private dataset identity on admission failure; and
+  freezes contiguous credential attempt/receipt evidence with a durable success receipt before
+  transport. V4 security review was finding-free, but design review found that its Git snapshot
+  incorrectly required post-child `main` to equal the earlier runtime-source commit. Proposal v5
+  preserves v1-v4 as non-authorizing history and separates those identities: the child binds the
+  exact clean pre-child runtime source commit, tree, and implementation root, while the Git snapshot
+  binds the later synchronized-main commit containing exactly the child authority and its review.
+  The 22,175-page effective combined response envelope under the unchanged 22,176-intent ceiling
+  remains unchanged. Proposal-v5 SHA-256/fingerprint is
+  `bcfae8da387daf0012afc3fd2636e2d81fa1a5f7e11a0f82a826bd021484f269` /
+  `8beea434b1dd2e129eaa32154a9cdfeb515611d5a96a1e4826fb0dfcaddd61bf`.
+  Failed-review-v4 SHA-256/fingerprint is
+  `abac41eaa2cd51c519dcd74f92262e48c3904617eae7b37d30cf2e925ea83cc6` /
+  `071c1fad482c0b32260e7af206b0f21d43f881c3172cb35e6478c8643254a007`.
+  Fresh independent design and security reviews of exact commit
+  `93aeaaa73d700897a5629ecf0fa6c110ce80449f` are finding-free. The combined
+  review SHA-256/fingerprint is
+  `45171e25fed0042be425457b4288efc1d698fbcf3f2a643703454ad592c0c780` /
+  `d2cd4ff809e616dab50538ec4cdbf9c6f38d29e719b6b58cdad86c7dd13ff1af`.
+  The runtime candidate now enforces the fixed Program 013 exclusive lock, Program 012 read-only
+  lock, and Git-policy snapshot through durable public closeout. It rederives the predecessor prefix
+  and frontier, keeps Program 013 checkpoints in a separate private root, counts the inherited
+  intent-only frontier in the 22,176-intent ceiling, seals an exhausted envelope without credentials
+  or transport, treats surviving credential, page, claim, or derived evidence as consumed state, and
+  hashes large canonical evidence through bounded descriptor reads. It uses one exact redacted
+  projection for the repository terminal and CLI. Fifty-five behavioral Program 013 tests cover the
+  23 required v5 cases; the implementation-binding test makes 56 focused tests. Fresh independent
+  correctness and defensive implementation reviews found no runtime finding. The full suite reports
+  1,684 passed and four skipped; Ruff format and lint, mypy across 286 files, the 695-file secret
+  scan, shell syntax, build, and diff checks pass. Runtime implementation v1 bound source
+  commit/tree/root
+  `c8b7f944df741cd71c31e6f7c617ea0904a96778` /
+  `90abf948d36d86df077fbcfb459d793e0b591b10` /
+  `ecfe9fcb3667701f08e8a497ef97a8f3856480d1cab42eee0f235bd2f39a28d9`.
+  Its artifact SHA-256/fingerprint is
+  `85c595930c35fb1e7a76c717cb09fb460e0bf0bfdc9206ead3bd13ecd92a23c2` /
+  `d2231524bfa48b20f54f230d68d7cb4141bc8d10efc726051cc95b71dff28b27`.
+  Exact-commit binding review found that v1 omitted the two future child files from the public JSON
+  allowlist, so its frozen two-file child topology could not pass the secret gate. V1 remains
+  immutable failed-review history. Runtime implementation v2 reserves both exact paths and rejects
+  unreserved Program 013 JSON. It binds source commit/tree/root
+  `a3b7dc47a517749f3217279f04df2555cf207f7a` /
+  `c531978f4da4d072f82ed01d655cf182c123cebe` /
+  `e14a36e8fda6604c05be2d4ab96df26ee79d1f2013ecb57c8b86f9b5ae2a931d`.
+  Its artifact SHA-256/fingerprint is
+  `9344a27358cd06c15c53138628787df896f05366d0ba9b12d00ba13d3ccfc753` /
+  `8c99b0f1021cd5ac57543ed031583919d7f753cfe675ca313a6e3b60fc12df28`.
+  Fresh repair review found no remaining material issue. The 56 focused tests, 92 Program 013 plus
+  provenance tests, 1,685-test full suite with four skips, Ruff, mypy across 286 files, 697-file
+  secret scan, shell syntax, package build, provenance, and Git checks pass. No credential presence
+  or value, provider contact, acquisition, admission, strategy work, controlled/protected access,
+  purchase, PAPER, broker write, or live action occurred. Next autonomous action: push and merge v2;
+  then freeze that synchronized main as the separate standing child's runtime source.
+
 Program 012's terminal result is current. Earlier Program 012, Program 011, and Program 010 entries
 are preserved as historical snapshots, including their former next actions.
 

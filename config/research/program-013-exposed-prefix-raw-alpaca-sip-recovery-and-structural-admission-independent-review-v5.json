@@ -1,0 +1,104 @@
+{
+  "schema_version": "program-013-exposed-prefix-recovery-design-and-security-independent-review-v5",
+  "review_id": "program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-03-v5",
+  "program_ordinal": 13,
+  "program_id": "multi-hour-sector-etf-research-012",
+  "status": "PASS-FINDING-FREE-PROSPECTIVE-DESIGN-AND-SECURITY-REVIEW",
+  "verdict": "PASS",
+  "reviewed_source_commit": "93aeaaa73d700897a5629ecf0fa6c110ce80449f",
+  "reviewed_proposal": {
+    "path": "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v5.json",
+    "sha256": "bcfae8da387daf0012afc3fd2636e2d81fa1a5f7e11a0f82a826bd021484f269",
+    "fingerprint": "8beea434b1dd2e129eaa32154a9cdfeb515611d5a96a1e4826fb0dfcaddd61bf"
+  },
+  "review_contexts": [
+    "FRESH-INDEPENDENT-DESIGN-AND-SCIENTIFIC-CONTROL-REVIEW",
+    "FRESH-INDEPENDENT-SECURITY-AND-AUTHORITY-BOUNDARY-REVIEW"
+  ],
+  "findings": [],
+  "challenge_results": [
+    {
+      "challenge": "authority-boundaries",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "chronology",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential-confinement",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "git-provenance-integrity",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "missingness-rules",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "predecessor-immutability-and-toctou",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "private-data-leakage",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "public-terminal-redaction",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "request-budgets",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "restart-and-replay-safety",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "scientific-contract-preservation",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "source-assumptions",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "statistical-validity",
+      "verdict": "PASS"
+    }
+  ],
+  "design_review_result": {
+    "verdict": "PASS",
+    "findings": [],
+    "resolved_finding": "P013-V4-DESIGN-001",
+    "proof_gap": "Program 013 runtime behavior, lock lifetime, crash recovery, and boundary revalidation remain unproved until implementation and focused tests exist."
+  },
+  "security_review_result": {
+    "verdict": "PASS",
+    "findings": [],
+    "proof_gap": "Program 013 has no runtime, standing child, or focused implementation tests, so runtime reachability and enforcement remain unvalidated."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "scope_limit": "The reviews made no credential access, provider request, private market-data read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Implement and test the exact Program 013 recovery runtime, merge it, then freeze and independently review a separate one-use standing child before credential access or provider contact.",
+  "review_fingerprint": "d2cd4ff809e616dab50538ec4cdbf9c6f38d29e719b6b58cdad86c7dd13ff1af"
+}
