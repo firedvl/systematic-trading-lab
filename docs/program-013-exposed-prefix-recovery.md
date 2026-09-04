@@ -74,7 +74,7 @@ finding-free design and security reviews before implementation. Both fresh revie
 SHA-256/fingerprint is `45171e25fed0042be425457b4288efc1d698fbcf3f2a643703454ad592c0c780` /
 `d2cd4ff809e616dab50538ec4cdbf9c6f38d29e719b6b58cdad86c7dd13ff1af`.
 
-The v5 runtime candidate now implements the fixed three-control lifetime, exact predecessor import,
+The v5 runtime implements the fixed three-control lifetime, exact predecessor import,
 separate restart-safe Program 013 checkpoints, cumulative intent/response/byte budgets, names-only
 credential preflight, one-access-per-process credential audit, local completed-page replay, combined
 structural admission, one private terminal, and one redacted public projection shared with the CLI.
@@ -82,10 +82,11 @@ It checks protected overlap before either private root, terminally closes an alr
 combined request envelope without credential access or transport, and recovers an exact private
 terminal through create-only file and parent-directory fsync. Surviving credential, page, claim, or
 derived evidence enters recovery before credentials or transport, and large canonical evidence uses
-bounded descriptor hashing. Fifty-five focused Program 013 tests cover the 23 required v5 cases.
-Fresh independent correctness and defensive implementation reviews found no finding. The full suite
-reports 1,684 passed and four skipped; Ruff format and lint, mypy across 286 files, the 695-file
-secret scan, shell syntax, build, and diff checks pass.
+bounded descriptor hashing. Fifty-five behavioral Program 013 tests cover the 23 required v5 cases;
+the implementation-binding test makes 56 focused tests. Fresh independent correctness and defensive
+implementation reviews found no runtime finding. The full suite reports 1,684 passed and four
+skipped; Ruff format and lint, mypy across 286 files, the 695-file secret scan, shell syntax, build,
+and diff checks pass.
 
 Runtime implementation v1 binds source commit/tree/root
 `c8b7f944df741cd71c31e6f7c617ea0904a96778` /
@@ -94,8 +95,22 @@ Runtime implementation v1 binds source commit/tree/root
 Its artifact SHA-256/fingerprint is
 `85c595930c35fb1e7a76c717cb09fb460e0bf0bfdc9206ead3bd13ecd92a23c2` /
 `d2231524bfa48b20f54f230d68d7cb4141bc8d10efc726051cc95b71dff28b27`.
-The exact-binding test and 696-file secret scan pass.
+Exact-commit binding review then found one topology blocker: v1 did not pre-allowlist the exact
+future child authority and child-review paths, so adding those files alone would fail the secret
+gate. V1 remains immutable failed-review history.
 
-No Program 013 proposal or runtime grants authority. The binding must merge before an exact
+Runtime implementation v2 reserves both exact future child paths and rejects every unreserved
+Program 013 JSON path. It binds source commit/tree/root
+`a3b7dc47a517749f3217279f04df2555cf207f7a` /
+`c531978f4da4d072f82ed01d655cf182c123cebe` /
+`e14a36e8fda6604c05be2d4ab96df26ee79d1f2013ecb57c8b86f9b5ae2a931d`.
+Its artifact SHA-256/fingerprint is
+`9344a27358cd06c15c53138628787df896f05366d0ba9b12d00ba13d3ccfc753` /
+`8c99b0f1021cd5ac57543ed031583919d7f753cfe675ca313a6e3b60fc12df28`.
+Fresh repair review found no remaining material issue. The 56 focused tests, 92 Program 013 plus
+provenance tests, 1,685-test full suite with four skips, Ruff, mypy across 286 files, 697-file secret
+scan, shell syntax, package build, provenance, and Git checks pass.
+
+No Program 013 proposal or runtime grants authority. Runtime implementation v2 must merge before an exact
 merged-main child and separate child review may be added. All must pass before credential presence
 or provider contact.

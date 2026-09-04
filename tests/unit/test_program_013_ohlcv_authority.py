@@ -29,7 +29,7 @@ from systematic_trading_lab.fingerprints import canonical_json, fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _IMPLEMENTATION_PATH = Path(
-    "config/research/program-013-exposed-prefix-runtime-implementation-v1.json"
+    "config/research/program-013-exposed-prefix-runtime-implementation-v2.json"
 )
 
 
@@ -54,8 +54,8 @@ def test_program_013_runtime_implementation_is_exact_and_non_authorizing() -> No
     stored_fingerprint = implementation.pop("implementation_fingerprint")
     assert stored_fingerprint == fingerprint(implementation)
     binding = implementation["implementation_binding"]
-    assert binding["source_commit"] == "c8b7f944df741cd71c31e6f7c617ea0904a96778"
-    assert binding["source_tree"] == "90abf948d36d86df077fbcfb459d793e0b591b10"
+    assert binding["source_commit"] == "a3b7dc47a517749f3217279f04df2555cf207f7a"
+    assert binding["source_tree"] == "c531978f4da4d072f82ed01d655cf182c123cebe"
     assert binding["implementation_root"] == fingerprint(binding["source_files"])
     for source in binding["source_files"]:
         committed = subprocess.run(
@@ -85,6 +85,14 @@ def test_program_013_runtime_implementation_is_exact_and_non_authorizing() -> No
         capture_output=True,
     ).stdout
     assert hashlib.sha256(diff).hexdigest() == reviewed["sha256"]
+    superseded = implementation["supersedes"]
+    assert superseded["path"].endswith("runtime-implementation-v1.json")
+    assert superseded["sha256"] == (
+        "85c595930c35fb1e7a76c717cb09fb460e0bf0bfdc9206ead3bd13ecd92a23c2"
+    )
+    assert superseded["fingerprint"] == (
+        "d2231524bfa48b20f54f230d68d7cb4141bc8d10efc726051cc95b71dff28b27"
+    )
     assert implementation["status"] == "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED"
     assert all(review["verdict"] == "PASS" for review in implementation["review"].values())
     assert implementation["execution_boundary"]["child_authority_present"] is False

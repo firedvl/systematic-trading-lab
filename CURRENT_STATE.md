@@ -1,6 +1,6 @@
 # Current state
 
-Program 013 has an immutable, non-authorizing v5 runtime implementation binding. Program 012 remains terminal and immutable.
+Program 013 has a superseding, non-authorizing v5 runtime implementation v2 binding. Program 012 remains terminal and immutable.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.
   Redacted read-only private forensics validated a completed whole-session Program 012 prefix plus
@@ -50,21 +50,34 @@ Program 013 has an immutable, non-authorizing v5 runtime implementation binding.
   intent-only frontier in the 22,176-intent ceiling, seals an exhausted envelope without credentials
   or transport, treats surviving credential, page, claim, or derived evidence as consumed state, and
   hashes large canonical evidence through bounded descriptor reads. It uses one exact redacted
-  projection for the repository terminal and CLI. Fifty-five focused Program 013 tests cover the 23
-  required v5 cases. Fresh independent correctness and defensive implementation reviews found no
-  finding. The full suite reports 1,684 passed and four skipped; Ruff format and lint, mypy across
-  286 files, the 695-file secret scan, shell syntax, build, and diff checks pass. Runtime
-  implementation v1 binds source commit/tree/root
+  projection for the repository terminal and CLI. Fifty-five behavioral Program 013 tests cover the
+  23 required v5 cases; the implementation-binding test makes 56 focused tests. Fresh independent
+  correctness and defensive implementation reviews found no runtime finding. The full suite reports
+  1,684 passed and four skipped; Ruff format and lint, mypy across 286 files, the 695-file secret
+  scan, shell syntax, build, and diff checks pass. Runtime implementation v1 bound source
+  commit/tree/root
   `c8b7f944df741cd71c31e6f7c617ea0904a96778` /
   `90abf948d36d86df077fbcfb459d793e0b591b10` /
   `ecfe9fcb3667701f08e8a497ef97a8f3856480d1cab42eee0f235bd2f39a28d9`.
   Its artifact SHA-256/fingerprint is
   `85c595930c35fb1e7a76c717cb09fb460e0bf0bfdc9206ead3bd13ecd92a23c2` /
   `d2231524bfa48b20f54f230d68d7cb4141bc8d10efc726051cc95b71dff28b27`.
-  The exact-binding test and 696-file secret scan pass. No credential presence or value, provider
-  contact, acquisition, admission, strategy work, controlled/protected access, purchase, PAPER,
-  broker write, or live action occurred. Next autonomous action: review, commit, push, and merge the
-  runtime binding before creating the separate standing child.
+  Exact-commit binding review found that v1 omitted the two future child files from the public JSON
+  allowlist, so its frozen two-file child topology could not pass the secret gate. V1 remains
+  immutable failed-review history. Runtime implementation v2 reserves both exact paths and rejects
+  unreserved Program 013 JSON. It binds source commit/tree/root
+  `a3b7dc47a517749f3217279f04df2555cf207f7a` /
+  `c531978f4da4d072f82ed01d655cf182c123cebe` /
+  `e14a36e8fda6604c05be2d4ab96df26ee79d1f2013ecb57c8b86f9b5ae2a931d`.
+  Its artifact SHA-256/fingerprint is
+  `9344a27358cd06c15c53138628787df896f05366d0ba9b12d00ba13d3ccfc753` /
+  `8c99b0f1021cd5ac57543ed031583919d7f753cfe675ca313a6e3b60fc12df28`.
+  Fresh repair review found no remaining material issue. The 56 focused tests, 92 Program 013 plus
+  provenance tests, 1,685-test full suite with four skips, Ruff, mypy across 286 files, 697-file
+  secret scan, shell syntax, package build, provenance, and Git checks pass. No credential presence
+  or value, provider contact, acquisition, admission, strategy work, controlled/protected access,
+  purchase, PAPER, broker write, or live action occurred. Next autonomous action: push and merge v2;
+  then freeze that synchronized main as the separate standing child's runtime source.
 
 Program 012's terminal result is current. Earlier Program 012, Program 011, and Program 010 entries
 are preserved as historical snapshots, including their former next actions.

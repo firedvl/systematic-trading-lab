@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-04 - Reserve the Program 013 child-control topology
+
+- Decision: preserve runtime implementation v1 as failed-review history and supersede it with non-authorizing v2. Pre-allowlist the exact future Program 013 child authority and child-review paths before freezing the child runtime source. Keep every authority field false.
+- Context: exact-commit binding review found that the runtime permits only those two post-source files while the secret guard rejected both. Adding the allowlist later would create a third changed path and make the frozen topology impossible. The repair changes only the shared public-artifact gate and its focused regression.
+- Consequences: v2 binds source commit/tree/root `a3b7dc47a517749f3217279f04df2555cf207f7a` / `c531978f4da4d072f82ed01d655cf182c123cebe` / `e14a36e8fda6604c05be2d4ab96df26ee79d1f2013ecb57c8b86f9b5ae2a931d`. Artifact SHA-256/fingerprint is `9344a27358cd06c15c53138628787df896f05366d0ba9b12d00ba13d3ccfc753` / `8c99b0f1021cd5ac57543ed031583919d7f753cfe675ca313a6e3b60fc12df28`. Fresh repair review found no remaining material issue. The 56 focused tests, 92 Program 013 plus provenance tests, 1,685-test full suite with four skips, Ruff, mypy across 286 files, 697-file secret scan, shell syntax, package build, provenance, and Git checks pass. No credential presence or value, private state, provider request, acquisition, admission, strategy, controlled/protected, purchase, PAPER, broker, or live action occurred.
+- Revisit when: v2 passes all exact-commit gates and merges to clean synchronized `main`. Freeze that exact main as the child runtime source, then add only the child and its independent review before credential preflight or provider contact.
+
 ## 2026-09-04 - Freeze the Program 013 runtime implementation binding
 
 - Decision: bind the reviewed Program 013 v5 runtime to exact source commit/tree/root `c8b7f944df741cd71c31e6f7c617ea0904a96778` / `90abf948d36d86df077fbcfb459d793e0b591b10` / `ecfe9fcb3667701f08e8a497ef97a8f3856480d1cab42eee0f235bd2f39a28d9`. Keep every authority field false.
