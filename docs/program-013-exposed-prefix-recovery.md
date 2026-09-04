@@ -87,6 +87,15 @@ Fresh independent correctness and defensive implementation reviews found no find
 reports 1,684 passed and four skipped; Ruff format and lint, mypy across 286 files, the 695-file
 secret scan, shell syntax, build, and diff checks pass.
 
-No Program 013 proposal or runtime grants authority. An immutable runtime binding, merge, an exact
-merged-main child, and a separate child review must all pass before credential presence or provider
-contact.
+Runtime implementation v1 binds source commit/tree/root
+`c8b7f944df741cd71c31e6f7c617ea0904a96778` /
+`90abf948d36d86df077fbcfb459d793e0b591b10` /
+`ecfe9fcb3667701f08e8a497ef97a8f3856480d1cab42eee0f235bd2f39a28d9`.
+Its artifact SHA-256/fingerprint is
+`85c595930c35fb1e7a76c717cb09fb460e0bf0bfdc9206ead3bd13ecd92a23c2` /
+`d2231524bfa48b20f54f230d68d7cb4141bc8d10efc726051cc95b71dff28b27`.
+The exact-binding test and 696-file secret scan pass.
+
+No Program 013 proposal or runtime grants authority. The binding must merge before an exact
+merged-main child and separate child review may be added. All must pass before credential presence
+or provider contact.

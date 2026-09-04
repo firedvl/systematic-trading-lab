@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-04 - Freeze the Program 013 runtime implementation binding
+
+- Decision: bind the reviewed Program 013 v5 runtime to exact source commit/tree/root `c8b7f944df741cd71c31e6f7c617ea0904a96778` / `90abf948d36d86df077fbcfb459d793e0b591b10` / `ecfe9fcb3667701f08e8a497ef97a8f3856480d1cab42eee0f235bd2f39a28d9`. Keep every authority field false.
+- Context: the runtime slice and both independent reviews are complete. The implementation artifact binds the exact source files and reviewed diff, records the 1,684-passed/four-skipped full suite, and permits only the later Program 013 child authority and its review after a clean synchronized runtime-source main.
+- Consequences: implementation artifact SHA-256/fingerprint is `85c595930c35fb1e7a76c717cb09fb460e0bf0bfdc9206ead3bd13ecd92a23c2` / `d2231524bfa48b20f54f230d68d7cb4141bc8d10efc726051cc95b71dff28b27`. Its exact-binding test and the 696-file secret scan pass. No credential presence or value, private Program 013 state, provider request, acquisition, admission, strategy, controlled/protected, purchase, PAPER, broker, or live action occurred.
+- Revisit when: this artifact merges to clean synchronized `main`. Freeze that exact main as the child runtime source, then add only the exact child and its independent review before credential preflight or provider contact.
+
 ## 2026-09-04 - Implement Program 013 as a bounded Program 012 recovery
 
 - Decision: implement proposal v5 as a narrow Program 012 lifecycle adaptation. Keep Program 012 immutable, read its exact completed whole-session prefix under a shared lock, and place every new Program 013 checkpoint in the fixed separate private root. Hold the Program 013 lock, Program 012 lock, and Git-policy snapshot through public-terminal fsync.
