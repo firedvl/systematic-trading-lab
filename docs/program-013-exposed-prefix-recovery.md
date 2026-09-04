@@ -1,8 +1,8 @@
 # Program 013 exposed-prefix recovery
 
-Program 013, `multi-hour-sector-etf-research-012`, is a prospective successor to terminal Program
-012. It preserves Program 012's source, chronology, pagination, missingness, structural admission,
-privacy, and no-strategy contracts. It changes only the infrastructure recovery boundary.
+Program 013, `multi-hour-sector-etf-research-012`, is `FAIL-CONSUMED-NO-RETRY`. It preserved
+Program 012's source, chronology, pagination, missingness, structural admission, privacy, and
+no-strategy contracts. It changed only the infrastructure recovery boundary.
 
 Read-only private forensics validated an exact completed whole-session prefix followed by one
 reachable first-page intent-only checkpoint. No body, response receipt, HTTP status, parsed
@@ -10,16 +10,32 @@ missingness, data-quality outcome, partial page, or later-session evidence exist
 The public forensic disposition omits all private counts, dates, hashes, tokens, failure details, and
 market observations.
 
-Program 013 may read the validated completed whole-session prefix in place. It may not mutate or
-replay Program 012, reuse a partial session, or request any completed predecessor page again. A
-separately reviewed Program 013 child may issue the frontier request once under new authority.
-Program 013 keeps zero automatic retries and cannot reissue one of its own requests. Any retained
-response, HTTP result, parsed missingness, or data-quality outcome remains final for that authority.
+Program 013 could read the validated completed whole-session prefix in place. It could not mutate or
+replay Program 012, reuse a partial session, or request any completed predecessor page again. Its
+separately reviewed child could issue the frontier request once under new authority. Program 013 kept
+zero automatic retries and could not reissue one of its own requests. Any retained response, HTTP
+result, parsed missingness, or data-quality outcome remained final for that authority.
 
-The successor uses a distinct ignored private root for new pages and rebuilds the combined canonical
+The successor used a distinct ignored private root for new pages and rebuilt the combined canonical
 projection from the immutable predecessor prefix plus Program 013 evidence. Dynamic state and every
 data-derived identity remain private. Controlled or protected data, purchases, strategy work, PAPER,
 broker writes, and live execution remain disabled.
+
+## Terminal result
+
+The reviewed child sealed `RUNTIME-FAILURE` with `admission_passed=false`, no dataset lineage, no
+Program 002 admission, and no strategy calculation or return. The public terminal was observed at
+`2026-09-04T22:34:41.313169Z`. Its SHA-256 is
+`7e4d148b7a20122cdb5fde21f6f8d70493cfd5772a527aa42a3c127c067f56ee`; its authority
+fingerprint is `b424096aabf9aaec0ad6282db9c8d5b291c405dde551377c584a3cbf063a9916`; its source
+commit is `71b8a66dc8ea1f70673456f4bfe34561d05b6891`.
+
+The closeout requires those exact public bytes and rejects a missing, changed, or invalid terminal
+before credential preflight, authority derivation, activation, loading, execution, or private-root
+access. Program 013 cannot replay or retry. Dynamic acquisition state, detailed failure evidence,
+private identities, exact missingness, provider tokens, and market observations remain private.
+After independent terminal review and merge, Program 014 may prospectively reuse only the validated
+completed whole-session prefix and issue the intent-only frontier once under a new reviewed child.
 
 Proposal v1 failed independent design review. It did not fully freeze Program 013's own restart and
 replay controls, public terminal revocation, cumulative inherited budgets, or private predecessor
@@ -74,7 +90,7 @@ finding-free design and security reviews before implementation. Both fresh revie
 SHA-256/fingerprint is `45171e25fed0042be425457b4288efc1d698fbcf3f2a643703454ad592c0c780` /
 `d2cd4ff809e616dab50538ec4cdbf9c6f38d29e719b6b58cdad86c7dd13ff1af`.
 
-The v5 runtime implements the fixed three-control lifetime, exact predecessor import,
+The v5 runtime implemented the fixed three-control lifetime, exact predecessor import,
 separate restart-safe Program 013 checkpoints, cumulative intent/response/byte budgets, names-only
 credential preflight, one-access-per-process credential audit, local completed-page replay, combined
 structural admission, one private terminal, and one redacted public projection shared with the CLI.
@@ -99,7 +115,7 @@ Exact-commit binding review then found one topology blocker: v1 did not pre-allo
 future child authority and child-review paths, so adding those files alone would fail the secret
 gate. V1 remains immutable failed-review history.
 
-Runtime implementation v2 reserves both exact future child paths and rejects every unreserved
+Runtime implementation v2 reserved both exact future child paths and rejected every unreserved
 Program 013 JSON path. It binds source commit/tree/root
 `a3b7dc47a517749f3217279f04df2555cf207f7a` /
 `c531978f4da4d072f82ed01d655cf182c123cebe` /
@@ -111,6 +127,6 @@ Fresh repair review found no remaining material issue. The 56 focused tests, 92 
 provenance tests, 1,685-test full suite with four skips, Ruff, mypy across 286 files, 697-file secret
 scan, shell syntax, package build, provenance, and Git checks pass.
 
-No Program 013 proposal or runtime grants authority. Runtime implementation v2 must merge before an exact
-merged-main child and separate child review may be added. All must pass before credential presence
-or provider contact.
+Program 013's authority is consumed. Its terminal closeout and independent terminal review must merge
+before Program 014 planning proceeds. No Program 013 credential check, provider contact, acquisition,
+admission, or strategy operation may run again.

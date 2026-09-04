@@ -1,8 +1,26 @@
 # Current state
 
-Program 013 has a superseding, non-authorizing v5 runtime implementation v2 binding. Program 012 remains terminal and immutable.
+Program 013's terminal result is current. Earlier Program 013 planning and implementation state is
+preserved below as historical context. Program 012 remains terminal and immutable.
 
-- Program 013, `multi-hour-sector-etf-research-012`, is `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.
+- Program 013, `multi-hour-sector-etf-research-012`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
+  standing child consumed its one use. The exact redacted public terminal binds runtime source commit
+  `71b8a66dc8ea1f70673456f4bfe34561d05b6891` and records `RUNTIME-FAILURE`,
+  `admission_passed=false`, no dataset lineage, no Program 002 admission, and no strategy calculation
+  or return. Its SHA-256 is
+  `7e4d148b7a20122cdb5fde21f6f8d70493cfd5772a527aa42a3c127c067f56ee`; the child authority
+  fingerprint is `b424096aabf9aaec0ad6282db9c8d5b291c405dde551377c584a3cbf063a9916`.
+  Dynamic acquisition state, detailed failure evidence, private content identities, raw market data,
+  provider tokens, exact missingness, and exact unexpected exclusions remain private. Current code
+  requires the exact committed terminal and rejects credential preflight, authority derivation,
+  activation, loading, and execution before credential or private-root access. Program 013 cannot
+  replay or retry. Controlled or protected access, purchases, PAPER, broker writes, and live
+  execution remained disabled. Next autonomous action: obtain an independent terminal review, merge
+  the closeout, publish the redacted Program 014 forensic disposition, and freeze a prospective
+  successor only from the validated completed prefix and intent-only frontier.
+
+- Historical Program 013 planning snapshot: `multi-hour-sector-etf-research-012` was
+  `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.
   Redacted read-only private forensics validated a completed whole-session Program 012 prefix plus
   one reachable first-page intent-only frontier with no retained body, receipt, HTTP status, parsed
   missingness, data-quality outcome, partial page, or later-session evidence. The prospective
@@ -76,8 +94,8 @@ Program 013 has a superseding, non-authorizing v5 runtime implementation v2 bind
   provenance tests, 1,685-test full suite with four skips, Ruff, mypy across 286 files, 697-file
   secret scan, shell syntax, package build, provenance, and Git checks pass. No credential presence
   or value, provider contact, acquisition, admission, strategy work, controlled/protected access,
-  purchase, PAPER, broker write, or live action occurred. Next autonomous action: push and merge v2;
-  then freeze that synchronized main as the separate standing child's runtime source.
+  purchase, PAPER, broker write, or live action occurred. Its former next action was to push and
+  merge v2, then freeze that synchronized main as the separate standing child's runtime source.
 
 Program 012's terminal result is current. Earlier Program 012, Program 011, and Program 010 entries
 are preserved as historical snapshots, including their former next actions.

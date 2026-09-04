@@ -42,6 +42,18 @@ def _reset_process_credential_latch(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(authority, "_PROCESS_CREDENTIAL_PID", None)
 
 
+@pytest.fixture(autouse=True)
+def _allow_historical_runtime_tests(monkeypatch: MonkeyPatch) -> None:
+    reject_terminal_state = authority._reject_terminal_state
+
+    def reject(repository: Path) -> None:
+        terminal = repository / authority.PUBLIC_TERMINAL_PATH
+        if repository.resolve() == _REPOSITORY.resolve() or os.path.lexists(terminal):
+            reject_terminal_state(repository)
+
+    monkeypatch.setattr(authority, "_reject_terminal_state", reject)
+
+
 def _credentials() -> dict[str, str]:
     return {
         authority.CREDENTIAL_NAMES[0]: "synthetic-key-material",
@@ -1551,7 +1563,8 @@ def test_invalid_public_terminal_fields_fail_before_credentials_or_private_roots
     monkeypatch: MonkeyPatch,
     mutation: str,
 ) -> None:
-    public = _public_terminal()
+    committed_path = _REPOSITORY / authority.PUBLIC_TERMINAL_PATH
+    public = json.loads(committed_path.read_bytes())
     if mutation == "missing-top-level":
         public.pop("status")
     elif mutation == "unknown-top-level":
@@ -1588,11 +1601,8 @@ def test_invalid_public_terminal_fields_fail_before_credentials_or_private_roots
 
 
 def test_every_lifecycle_entrypoint_rejects_an_exact_public_terminal_first(
-    tmp_path: Path, monkeypatch: MonkeyPatch
+    monkeypatch: MonkeyPatch,
 ) -> None:
-    path = tmp_path / authority.PUBLIC_TERMINAL_PATH
-    path.parent.mkdir(parents=True)
-    path.write_bytes((canonical_json(_public_terminal()) + "\n").encode())
     opened: list[bool] = []
     credential_checks: list[bool] = []
     monkeypatch.setattr(
@@ -1607,16 +1617,68 @@ def test_every_lifecycle_entrypoint_rejects_an_exact_public_terminal_first(
     )
 
     for operation in (
-        lambda: authority.credential_presence_preflight(tmp_path, environ={}),
-        lambda: authority.derive_active_authority(tmp_path),
-        lambda: authority.activate_authority(tmp_path, environ={}),
-        lambda: authority.load_active_authority(tmp_path),
-        lambda: authority.execute_acquisition(tmp_path, environ={}),
+        lambda: authority.credential_presence_preflight(_REPOSITORY, environ={}),
+        lambda: authority.derive_active_authority(_REPOSITORY),
+        lambda: authority.activate_authority(_REPOSITORY, environ={}),
+        lambda: authority.load_active_authority(_REPOSITORY),
+        lambda: authority.execute_acquisition(_REPOSITORY, environ={}),
     ):
         with pytest.raises(authority.Program013AuthorityError, match="terminally revoked"):
             operation()
 
     assert opened == []
+    assert credential_checks == []
+
+
+def test_missing_terminal_rejects_before_credentials_or_private_roots(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    opened: list[bool] = []
+    credential_checks: list[bool] = []
+    monkeypatch.setattr(authority, "PUBLIC_TERMINAL_PATH", Path("config/research/missing.json"))
+    monkeypatch.setattr(
+        authority,
+        "_open_root",
+        lambda *_args, **_kwargs: opened.append(True),
+    )
+    monkeypatch.setattr(
+        credential_contract,
+        "credential_presence_preflight",
+        lambda *_args: credential_checks.append(True),
+    )
+
+    for operation in (
+        lambda: authority.credential_presence_preflight(_REPOSITORY, environ={}),
+        lambda: authority.derive_active_authority(_REPOSITORY),
+        lambda: authority.activate_authority(_REPOSITORY, environ={}),
+        lambda: authority.load_active_authority(_REPOSITORY),
+        lambda: authority.execute_acquisition(_REPOSITORY, environ={}),
+    ):
+        with pytest.raises(authority.Program013AuthorityError, match="artifact is absent"):
+            operation()
+
+    assert opened == []
+    assert credential_checks == []
+
+
+def test_changed_terminal_observation_time_rejects_before_credentials(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    terminal = json.loads((_REPOSITORY / authority.PUBLIC_TERMINAL_PATH).read_bytes())
+    terminal["observed_at"] = "2026-09-04T22:34:41.313170Z"
+    path = tmp_path / "terminal.json"
+    path.write_bytes((canonical_json(terminal) + "\n").encode())
+    credential_checks: list[bool] = []
+    monkeypatch.setattr(authority, "PUBLIC_TERMINAL_PATH", path)
+    monkeypatch.setattr(
+        credential_contract,
+        "credential_presence_preflight",
+        lambda *_args: credential_checks.append(True),
+    )
+
+    with pytest.raises(authority.Program013AuthorityError, match="semantics differ"):
+        authority.credential_presence_preflight(_REPOSITORY, environ={})
+
     assert credential_checks == []
 
 
