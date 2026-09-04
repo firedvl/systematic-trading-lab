@@ -194,6 +194,7 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-013-exposed-prefix-runtime-implementation-v1.json",
         "config/research/program-013-exposed-prefix-runtime-implementation-v2.json",
         "config/research/program-013-predecessor-recovery-forensic-disposition-v1.json",
+        "config/research/program-014-predecessor-recovery-forensic-disposition-v1.json",
     }
 )
 _PROVIDER_BAR_KEYS = frozenset({"t", "o", "h", "l", "c", "v"})
@@ -265,6 +266,7 @@ def main() -> int:
                         "program-011",
                         "program-012",
                         "program-013",
+                        "program-014",
                     )
                 )
                 and suffix in PRIVATE_MARKET_DATA_SUFFIXES

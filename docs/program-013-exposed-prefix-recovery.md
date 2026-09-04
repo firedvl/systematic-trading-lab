@@ -133,3 +133,19 @@ scan, shell syntax, package build, provenance, and Git checks pass.
 Program 013's authority is consumed and its independent terminal review is finding-free. The closeout
 must merge before Program 014 planning proceeds. No Program 013 credential check, provider contact,
 acquisition, admission, or strategy operation may run again.
+
+## Program 014 forensic disposition
+
+Read-only offline validation rederived the historical Program 013 child identity, canonical private
+terminal, exact public projection, and retained page sequence. Program 012 plus Program 013 evidence
+forms an exact completed whole-session prefix followed by one intent-only page frontier. No body,
+receipt, HTTP status, parsed missingness, data-quality outcome, partial response, or later evidence
+exists at that frontier. Structural admission was not evaluated; no dataset or strategy work exists.
+
+The redacted disposition SHA-256/fingerprint is
+`df50e1006a5deaac6ac0b2fcef4144bc85b43333dd175c93db8c050f9c1b6cc2` /
+`aa5deeef6cde6dd498e672c30f44da2db9e128cd11578c5ce1c72e390b842d58`. A prospective
+Program 014 must keep both predecessor roots immutable, reuse only completed whole sessions, discard
+the incomplete Program 013 session and page, issue the frontier once under a new reviewed child,
+preserve cumulative budgets and zero retries, and prove that its process cannot restart or relaunch
+automatically.

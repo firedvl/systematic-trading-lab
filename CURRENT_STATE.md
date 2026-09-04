@@ -1,7 +1,19 @@
 # Current state
 
-Program 013's terminal result is current. Earlier Program 013 planning and implementation state is
-preserved below as historical context. Program 012 remains terminal and immutable.
+Program 014's redacted predecessor forensics are current. Program 013 and Program 012 remain terminal
+and immutable.
+
+- Program 014, `multi-hour-sector-etf-research-013`, is `FORENSICS-COMPLETE-PROSPECTIVE-NOT-AUTHORIZED`.
+  Read-only offline validation rederived Program 013's historical child identity, canonical private
+  terminal, and exact public projection. Retained Program 012 plus Program 013 evidence forms a
+  completed whole-session prefix followed by one intent-only page frontier with no body, receipt,
+  HTTP status, parsed missingness, data-quality outcome, or later evidence. Structural admission was
+  not evaluated and no dataset or strategy work exists. The redacted forensic disposition SHA-256 /
+  fingerprint is `df50e1006a5deaac6ac0b2fcef4144bc85b43333dd175c93db8c050f9c1b6cc2` /
+  `aa5deeef6cde6dd498e672c30f44da2db9e128cd11578c5ce1c72e390b842d58`. Next autonomous
+  action: freeze and independently review a prospective non-restarting Program 014 recovery that
+  reuses only completed whole sessions, discards the incomplete Program 013 session and page, and
+  preserves cumulative transport budgets.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use. The exact redacted public terminal binds runtime source commit

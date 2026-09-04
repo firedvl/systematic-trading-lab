@@ -1,0 +1,105 @@
+{
+  "schema_version": "program-014-program-013-private-evidence-recovery-forensic-disposition-v1",
+  "disposition_id": "program-014-program-013-private-evidence-recovery-forensic-disposition-2026-09-04-v1",
+  "program_ordinal": 14,
+  "program_id": "multi-hour-sector-etf-research-013",
+  "status": "COMPLETE-REDACTED-OFFLINE-FORENSIC-DISPOSITION",
+  "predecessor": {
+    "program_ordinal": 13,
+    "program_id": "multi-hour-sector-etf-research-012",
+    "terminal_result": {
+      "path": "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+      "sha256": "7e4d148b7a20122cdb5fde21f6f8d70493cfd5772a527aa42a3c127c067f56ee"
+    },
+    "terminal_review": {
+      "path": "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1.json",
+      "sha256": "ac22344cdf031ee3df7b5eeae0448887b2140603f9b0af8193a296e82238a010",
+      "fingerprint": "37dfee69e0cd43a2588e397fbec22d59656de61d12cff189368862cab87195f4"
+    },
+    "terminal_status": "FAIL-CONSUMED-NO-RETRY",
+    "replay_allowed": false,
+    "history_mutation_allowed": false
+  },
+  "method": {
+    "mode": "READ-ONLY-OFFLINE-PRIVATE-EVIDENCE-VALIDATION",
+    "provider_contact": false,
+    "credential_access": false,
+    "private_evidence_mutation": false,
+    "public_dynamic_observation_allowed": false,
+    "resource_policy": "single process, macOS background scheduling, lowest nice priority, explicit CPU duty-cycle cap",
+    "validation": [
+      "revalidate the historical reviewed child identity against its exact synchronized-main Git tree",
+      "revalidate the canonical private terminal against the exact reviewed public terminal",
+      "replay retained predecessor and Program 013 completed pages locally under shared read locks",
+      "prove that retained pages form an exact completed whole-session prefix",
+      "prove that the single reachable incomplete checkpoint is intent-only",
+      "prove that no body, response receipt, HTTP status, parsed missingness, or data-quality result exists at that frontier",
+      "prove that no later session or page evidence exists"
+    ]
+  },
+  "conclusions": {
+    "historical_child_identity_valid": true,
+    "canonical_private_terminal_valid": true,
+    "public_terminal_exact_derivation_confirmed": true,
+    "completed_evidence_is_exact_whole_session_prefix": true,
+    "single_reachable_incomplete_checkpoint": true,
+    "incomplete_checkpoint_kind": "INTENT-ONLY-PAGE-FRONTIER",
+    "frontier_body_retained": false,
+    "frontier_response_receipt_retained": false,
+    "frontier_http_status_retained": false,
+    "frontier_parsed_missingness_retained": false,
+    "frontier_data_quality_outcome_retained": false,
+    "partial_response_retained": false,
+    "later_session_or_page_evidence_present": false,
+    "structural_admission_evaluated": false,
+    "dataset_published": false,
+    "strategy_work_occurred": false,
+    "program_013_zero_reissue_rule_followed": true
+  },
+  "prospective_disposition": {
+    "successor_allowed": true,
+    "successor_must_be_new_program": true,
+    "program_012_private_root_must_remain_immutable": true,
+    "program_013_private_root_must_remain_immutable": true,
+    "completed_whole_session_prefix_may_be_reused_read_only": true,
+    "completed_predecessor_pages_may_never_be_requested_again": true,
+    "incomplete_program_013_session_or_page_may_not_be_reused": true,
+    "frontier_request_may_be_issued_once_only_under_a_new_reviewed_child": true,
+    "retained_response_http_result_parsed_missingness_or_data_quality_outcome_retry_allowed": false,
+    "program_012_program_013_and_successor_transport_budgets_must_be_cumulative": true,
+    "successor_launch_must_prove_no_automatic_restart_or_relaunch": true,
+    "launchctl_submit_allowed_without_verified_disabled_restart_semantics": false,
+    "scientific_contract_may_be_weakened": false
+  },
+  "privacy": {
+    "evidence_location_published": false,
+    "dynamic_counts_published": false,
+    "session_dates_published": false,
+    "page_indices_or_counts_published": false,
+    "response_hashes_published": false,
+    "private_terminal_fingerprint_published": false,
+    "provider_tokens_published": false,
+    "failure_details_published": false,
+    "market_observations_published": false,
+    "credential_values_accessed": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Freeze and independently review a prospective Program 014 recovery that reuses only the completed whole-session prefix, discards the incomplete Program 013 session and page, issues the intent-only frontier once under a new child, preserves cumulative budgets, and cannot restart automatically.",
+  "forensic_disposition_fingerprint": "aa5deeef6cde6dd498e672c30f44da2db9e128cd11578c5ce1c72e390b842d58"
+}

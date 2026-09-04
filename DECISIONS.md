@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-04 - Recover only Program 013's completed whole-session prefix
+
+- Decision: keep Program 012 and Program 013 terminal and immutable. Permit a prospective Program 014 to reuse only the locally revalidated completed whole-session prefix and to issue the intent-only page frontier once under a new reviewed child. Discard the incomplete Program 013 session and page; never request any completed predecessor page again.
+- Context: read-only private forensics revalidated the historical Program 013 child identity, canonical private terminal, exact reviewed public projection, completed-prefix replay, one intent-only frontier, and no later evidence. Program 013 performed no structural admission, dataset publication, or strategy work.
+- Consequences: forensic disposition SHA-256/fingerprint is `df50e1006a5deaac6ac0b2fcef4144bc85b43333dd175c93db8c050f9c1b6cc2` / `aa5deeef6cde6dd498e672c30f44da2db9e128cd11578c5ce1c72e390b842d58`. Program 014 must use a distinct private root, cumulative Program 012 plus Program 013 plus Program 014 budgets, zero retries, and a launch contract that cannot restart or relaunch automatically. No provider, credential, acquisition, admission, strategy, controlled/protected, purchase, PAPER, broker, or live authority exists yet.
+- Revisit when: after prospective Program 014 design, independent review, implementation, merge, and a separately reviewed child. Never revisit Program 012 or Program 013 replay.
+
 ## 2026-09-04 - Program 013 terminal evidence is immutable and revokes every entrypoint
 
 - Decision: commit only Program 013's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, activation, loading, execution, or private-root access.
