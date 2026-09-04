@@ -1,6 +1,6 @@
 # Current state
 
-Program 013 proposal v2 is current. Program 012 remains terminal and immutable.
+Program 013 proposal v3 is current. Program 012 remains terminal and immutable.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
   Redacted read-only private forensics validated a completed whole-session Program 012 prefix plus
@@ -12,14 +12,24 @@ Program 013 proposal v2 is current. Program 012 remains terminal and immutable.
   private root remains immutable. Program 013 keeps zero automatic retries and cannot reissue its
   own requests or retry any retained response or scientific outcome. Proposal v1 failed independent
   review because it did not fully freeze Program 013 restart/replay controls, public terminal
-  revocation, cumulative inherited budgets, or predecessor-import identity. Proposal v2 preserves
-  v1 and corrects all four findings without changing source, chronology, pagination, missingness,
-  admission, privacy, or no-strategy science. It requires cumulative Program 012 plus Program 013
-  resource accounting, a read-only predecessor import manifest, create-only fsynced Program 013
-  request evidence, a redacted public terminal, and pre-credential terminal revocation. No credential
-  access, provider contact, acquisition, admission, strategy work, controlled/protected access,
-  purchase, PAPER, broker write, or live action occurred. Next autonomous action: obtain fresh
-  design and security-boundary reviews before runtime implementation.
+  revocation, cumulative inherited budgets, or predecessor-import identity. Proposal v2 preserved
+  the science but failed fresh design and security review on seven remaining controls: required
+  crash/concurrency tests, recursive public-terminal schemas, the intent-only budget off-by-one, one
+  exact private root and full two-root lock lifetime, immutable authority-bound checkpoints, exact
+  result-branch semantics, and crash-safe credential audit evidence. Proposal v3 preserves v1 and v2
+  as non-authorizing history and resolves all seven prospectively. It freezes the exact successor
+  root and lock order, exact create-only checkpoint and terminal schemas, value-free credential
+  attempt/receipt accounting, a 22,175-page effective combined response envelope under the unchanged
+  22,176-intent ceiling, and focused crash/replay/concurrency/redaction regressions. Proposal-v3
+  SHA-256/fingerprint is `4dc78ad90dcbcf06babf252ee7a222e6fe22d4439485683e7bbd7fac3a500ce2` /
+  `72b43d99ee6a536a165818e319ecfeb30b0aed90bad6d95012877ccf2e26f697`.
+  Failed-review-v2 SHA-256/fingerprint is
+  `c42585f2cab974449b8b279d847dee47960d3834fbdb78fd5370a9eb1a4f55d6` /
+  `ceb68db4937ba052fac3c2d09138c4600682687847014810524098b92a57056e`.
+  No credential access, provider contact, acquisition, admission, strategy work,
+  controlled/protected access, purchase, PAPER, broker write, or live action occurred. Next
+  autonomous action: obtain fresh finding-free v3 design and security-boundary reviews before
+  runtime implementation.
 
 Program 012's terminal result is current. Earlier Program 012, Program 011, and Program 010 entries
 are preserved as historical snapshots, including their former next actions.

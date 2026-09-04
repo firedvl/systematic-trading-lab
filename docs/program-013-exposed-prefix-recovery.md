@@ -25,13 +25,26 @@ Proposal v1 failed independent design review. It did not fully freeze Program 01
 replay controls, public terminal revocation, cumulative inherited budgets, or private predecessor
 import identity. It remains non-authorizing failed-review history.
 
-Proposal v2 corrects all four findings without changing the inherited science. It requires a
+Proposal v2 attempted to correct all four findings without changing the inherited science. It requires a
 read-only predecessor lock and exact frontier rederivation, a distinct locked Program 013 root,
 create-only fsynced claim/intent/body/receipt evidence, terminal treatment of ambiguous checkpoints,
 cumulative Program 012 plus Program 013 resource ceilings, a private predecessor import manifest, a
 combined private dataset identity, and a create-only redacted public terminal that blocks re-entry
-before credentials or private state. V2 still grants no authority and requires fresh design and
-security-boundary reviews before implementation.
+before credentials or private state. Fresh design and security-boundary reviews nevertheless found
+seven unresolved controls: explicit crash/concurrency tests, recursive public schemas, the consumed
+intent off-by-one, one exact successor root and complete lock lifetime, immutable authority-bound
+checkpoints, exact terminal branch semantics, and crash-safe credential audit evidence. V2 remains
+non-authorizing failed-review history.
+
+Proposal v3 resolves those findings prospectively. It fixes the exact Program 013 private root and
+two-root lock order, holds both locks through terminal publication, binds every create-only checkpoint
+to the proposal/child/runtime/import identities, restores value-free credential attempt and receipt
+accounting, freezes one exact private terminal plus recursive public projections, and requires focused
+crash, replay, concurrency, budget, and redaction tests. Because the Program 012 frontier intent
+already consumed one of the unchanged 22,176 combined intents without a response, v3 explicitly caps
+the effective combined receipted-page envelope at 22,175. A later required page fails as resource-cap
+incompleteness; unobserved coordinates are not source missing. V3 grants no authority and requires
+fresh finding-free design and security reviews before implementation.
 
 No Program 013 proposal grants authority. Implementation, repository gates, merge, an exact
 merged-main child, and a separate child review must all pass before credential presence or provider
