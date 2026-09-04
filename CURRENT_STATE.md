@@ -1,6 +1,6 @@
 # Current state
 
-Program 013 proposal v5 is current. Program 012 remains terminal and immutable.
+Program 013 proposal v5 and its finding-free design review are current. Program 012 remains terminal and immutable.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
   Redacted read-only private forensics validated a completed whole-session Program 012 prefix plus
@@ -39,10 +39,15 @@ Program 013 proposal v5 is current. Program 012 remains terminal and immutable.
   Failed-review-v4 SHA-256/fingerprint is
   `abac41eaa2cd51c519dcd74f92262e48c3904617eae7b37d30cf2e925ea83cc6` /
   `071c1fad482c0b32260e7af206b0f21d43f881c3172cb35e6478c8643254a007`.
+  Fresh independent design and security reviews of exact commit
+  `93aeaaa73d700897a5629ecf0fa6c110ce80449f` are finding-free. The combined
+  review SHA-256/fingerprint is
+  `45171e25fed0042be425457b4288efc1d698fbcf3f2a643703454ad592c0c780` /
+  `d2cd4ff809e616dab50538ec4cdbf9c6f38d29e719b6b58cdad86c7dd13ff1af`.
   No credential access, provider contact, acquisition, admission, strategy work,
   controlled/protected access, purchase, PAPER, broker write, or live action occurred. Next
-  autonomous action: obtain fresh finding-free v5 design and security-boundary reviews before
-  runtime implementation.
+  autonomous action: implement and test the exact v5 recovery runtime before a separate standing
+  child is frozen or any credential or provider boundary is approached.
 
 Program 012's terminal result is current. Earlier Program 012, Program 011, and Program 010 entries
 are preserved as historical snapshots, including their former next actions.

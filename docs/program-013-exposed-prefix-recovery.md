@@ -69,7 +69,12 @@ commit, tree, and implementation root before child creation. After that runtime 
 child authority and its independent review may be added. The Git snapshot then binds the later clean
 synchronized-main commit containing those two files. A stale runtime-source-as-main topology fails.
 No scientific, budget, privacy, or authority rule changes. V5 grants no authority and requires fresh
-finding-free design and security reviews before implementation.
+finding-free design and security reviews before implementation. Both fresh reviews of exact commit
+`93aeaaa73d700897a5629ecf0fa6c110ce80449f` passed without findings. Combined review
+SHA-256/fingerprint is `45171e25fed0042be425457b4288efc1d698fbcf3f2a643703454ad592c0c780` /
+`d2cd4ff809e616dab50538ec4cdbf9c6f38d29e719b6b58cdad86c7dd13ff1af`. Their proof gap is the
+runtime itself: lock timing, crash recovery, credential sequencing, cumulative budgets, terminal
+redaction, and boundary revalidation still require implementation and focused tests.
 
 No Program 013 proposal grants authority. Implementation, repository gates, merge, an exact
 merged-main child, and a separate child review must all pass before credential presence or provider

@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-03 - Accept the Program 013 v5 recovery design for implementation
+
+- Decision: accept prospective Program 013 proposal v5 after fresh independent design and security reviews found no finding. Keep every operation authority false until the runtime merges and a separate exact standing child and child review bind that merged runtime.
+- Context: both reviews checked exact commit `93aeaaa73d700897a5629ecf0fa6c110ce80449f`, confirmed the corrected runtime-source and synchronized-main topology, recomputed the proposal SHA-256 and fingerprint, and found no change to the inherited scientific or safety controls. Runtime enforcement remains unproved and is the next implementation boundary.
+- Consequences: combined review SHA-256/fingerprint is `45171e25fed0042be425457b4288efc1d698fbcf3f2a643703454ad592c0c780` / `d2cd4ff809e616dab50538ec4cdbf9c6f38d29e719b6b58cdad86c7dd13ff1af`. No credential, provider, private-data, acquisition, admission, strategy, controlled/protected, PAPER, broker, live, or purchase authority exists yet.
+- Revisit when: the exact runtime and focused crash, replay, concurrency, budget, credential, topology, admission, and redaction tests pass independent implementation review.
+
 ## 2026-09-03 - Separate Program 013 runtime source from synchronized-main authority
 
 - Decision: preserve non-authorizing Program 013 proposal v4 as failed-design-review history and supersede it with prospective v5. Bind the child to the exact clean pre-child runtime source commit, tree, and implementation root. Bind the Git-policy snapshot and direct `main` and `origin/main` refs to the later synchronized-main commit. Permit exactly the Program 013 child authority and its independent review as the tracked diff between them.
