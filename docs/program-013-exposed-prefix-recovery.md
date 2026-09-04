@@ -34,8 +34,11 @@ The closeout requires those exact public bytes and rejects a missing, changed, o
 before credential preflight, authority derivation, activation, loading, execution, or private-root
 access. Program 013 cannot replay or retry. Dynamic acquisition state, detailed failure evidence,
 private identities, exact missingness, provider tokens, and market observations remain private.
-After independent terminal review and merge, Program 014 may prospectively reuse only the validated
-completed whole-session prefix and issue the intent-only frontier once under a new reviewed child.
+The finding-free independent terminal review artifact has SHA-256
+`ac22344cdf031ee3df7b5eeae0448887b2140603f9b0af8193a296e82238a010` and fingerprint
+`37dfee69e0cd43a2588e397fbec22d59656de61d12cff189368862cab87195f4`. After merge,
+Program 014 may prospectively reuse only the validated completed whole-session prefix and issue the
+intent-only frontier once under a new reviewed child.
 
 Proposal v1 failed independent design review. It did not fully freeze Program 013's own restart and
 replay controls, public terminal revocation, cumulative inherited budgets, or private predecessor
@@ -127,6 +130,6 @@ Fresh repair review found no remaining material issue. The 56 focused tests, 92 
 provenance tests, 1,685-test full suite with four skips, Ruff, mypy across 286 files, 697-file secret
 scan, shell syntax, package build, provenance, and Git checks pass.
 
-Program 013's authority is consumed. Its terminal closeout and independent terminal review must merge
-before Program 014 planning proceeds. No Program 013 credential check, provider contact, acquisition,
-admission, or strategy operation may run again.
+Program 013's authority is consumed and its independent terminal review is finding-free. The closeout
+must merge before Program 014 planning proceeds. No Program 013 credential check, provider contact,
+acquisition, admission, or strategy operation may run again.

@@ -1,0 +1,166 @@
+{
+  "schema_version": "program-013-exposed-prefix-terminal-result-independent-review-v1",
+  "review_id": "program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-2026-09-04-v1",
+  "program_ordinal": 13,
+  "program_id": "multi-hour-sector-etf-research-012",
+  "reviewed_at": "2026-09-04T22:59:43Z",
+  "status": "PASS-TERMINAL-FAILURE-VERIFIED",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_execution_main": "481e380bd2c80e53a69ef4f23fb0975f21a22d8f",
+  "reviewed_base_commit": "481e380bd2c80e53a69ef4f23fb0975f21a22d8f",
+  "reviewed_base_tree": "dcdfbfb294882d818a7d5ca94ea20023b4fe00a9",
+  "reviewed_head_commit": "75250205303184838c7b518d0db42a7422a215ab",
+  "reviewed_closeout_commits": [
+    {
+      "commit": "9e0ee583bb2e7cde9dd094c3b07e269d310cb1c9",
+      "tree": "99a8c9b5337b684cca57164e747e73f700317a8e",
+      "purpose": "exact generated redacted Program 013 terminal artifact"
+    },
+    {
+      "commit": "ee68a9fd62b8c556ab6ac33ae81af338fa0fb7c8",
+      "tree": "91e8c1e5ee3cae54ed89f251f222d5c9602bc666",
+      "purpose": "terminal revocation guard, regression coverage, and public closeout documentation"
+    },
+    {
+      "commit": "75250205303184838c7b518d0db42a7422a215ab",
+      "tree": "b7d3fe4637f0ae93dd7372ac0edc25bb4c7d3558",
+      "purpose": "exact secret-guard reservation and regression for the public terminal review artifact"
+    }
+  ],
+  "reviewed_public_terminal": {
+    "path": "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+    "sha256": "7e4d148b7a20122cdb5fde21f6f8d70493cfd5772a527aa42a3c127c067f56ee",
+    "schema_version": "program-013-exposed-prefix-terminal-result-v1",
+    "result_kind": "RUNTIME-FAILURE",
+    "status": "FAIL-CONSUMED-NO-RETRY",
+    "admission_passed": false,
+    "dataset_lineage_manifest_present": false,
+    "program_002_admission": false,
+    "strategy_calculations_present": false,
+    "strategy_returns_present": false,
+    "authority_fingerprint": "b424096aabf9aaec0ad6282db9c8d5b291c405dde551377c584a3cbf063a9916",
+    "runtime_source_commit": "71b8a66dc8ea1f70673456f4bfe34561d05b6891"
+  },
+  "private_evidence_review": {
+    "ignored_private_root_inspected": false,
+    "credentials_or_private_evidence_accessed": false,
+    "public_terminal_exact_worktree_and_commit_bytes_confirmed": true,
+    "credentials_stored": false,
+    "private_details_remain_redacted_under_proposal_v5": true
+  },
+  "terminal_revocation": {
+    "guard_path": "src/systematic_trading_lab/program_013_ohlcv_authority.py",
+    "credential_preflight_rejects_before_credentials_or_private_root": true,
+    "authority_derivation_rejects_before_credentials_or_private_root": true,
+    "activation_rejects_before_credentials_or_private_root": true,
+    "active_authority_load_rejects_before_credentials_or_private_root": true,
+    "execution_rejects_before_credentials_or_private_root": true,
+    "missing_terminal_rejects_before_credentials_or_private_root": true,
+    "invalid_terminal_rejects_before_credentials_or_private_root": true,
+    "changed_terminal_shape_rejects_before_credentials_or_private_root": true,
+    "changed_terminal_bytes_reject_before_credentials_or_private_root": true,
+    "exact_terminal_bytes_bound": true,
+    "program_013_replay_or_retry_prohibited": true
+  },
+  "challenge_results": [
+    {
+      "number": 1,
+      "challenge": "Did the reviewed child consume its one use and leave Program 013 terminal?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 2,
+      "challenge": "Does the committed public terminal preserve the exact generated redacted bytes?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 3,
+      "challenge": "Does every Program 013 lifecycle entrypoint reject before credential or private-root access?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 4,
+      "challenge": "Do absent, invalid, semantically changed, or byte-changed terminal artifacts fail closed?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 5,
+      "challenge": "Did Program 013 admit a dataset or calculate a strategy result?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 6,
+      "challenge": "Were controlled, protected, PAPER, broker, live, and purchase boundaries untouched?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 7,
+      "challenge": "Does the review preserve Program 013 as consumed rather than authorize replay or retry?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 8,
+      "challenge": "Must any successor be prospective and independently reviewed?",
+      "answer": "YES",
+      "verdict": "PASS"
+    }
+  ],
+  "verified_assertions": {
+    "public_terminal_is_canonical": true,
+    "public_terminal_matches_committed_generated_bytes": true,
+    "public_terminal_contains_no_forbidden_private_evidence": true,
+    "one_use_authority_is_consumed": true,
+    "terminal_result_blocks_all_current_entrypoints": true,
+    "missing_or_invalid_terminal_blocks_all_current_entrypoints": true,
+    "changed_terminal_shape_or_bytes_block_current_entrypoints": true,
+    "no_dataset_lineage_was_published": true,
+    "no_program_002_admission_occurred": true,
+    "no_strategy_calculation_or_return_occurred": true,
+    "controlled_protected_paper_broker_live_and_purchase_state_stayed_untouched": true,
+    "program_013_replay_or_retry_is_prohibited": true
+  },
+  "verification": {
+    "independent_terminal_review": "PASS-FINDING-FREE",
+    "independent_addendum_review": "PASS-FINDING-FREE",
+    "reviewer_scope": "READ-ONLY-RESOURCE-LIMITED",
+    "focused_program_013_tests": "PASS-58",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "secret_and_private_data_scan": "PASS-701-FILES",
+    "git_diff_check": "PASS",
+    "reviewed_working_tree": "clean before this review artifact"
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "The independent terminal reviewer did not access credentials, the ignored private root, or private evidence; it verified the exact public artifact and revocation behavior by committed-byte checks and static source tracing.",
+    "The terminal closeout did not repeat the full repository suite because the Mac was under unrelated Docker Desktop resource pressure; focused regressions and affected quality gates passed.",
+    "The independent addendum reviewer reviewed the exact secret-guard commit before this review artifact was tracked; canonical JSON fingerprint and secret-scan checks validate the final public artifact itself."
+  ],
+  "scope_limit": "The review made no credential access, provider request, private-root read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Merge the terminal closeout, publish the redacted Program 014 forensic disposition, and create a prospective separately reviewed successor without changing Program 013 or the inherited science.",
+  "review_fingerprint": "37dfee69e0cd43a2588e397fbec22d59656de61d12cff189368862cab87195f4"
+}
