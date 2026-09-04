@@ -72,10 +72,21 @@ No scientific, budget, privacy, or authority rule changes. V5 grants no authorit
 finding-free design and security reviews before implementation. Both fresh reviews of exact commit
 `93aeaaa73d700897a5629ecf0fa6c110ce80449f` passed without findings. Combined review
 SHA-256/fingerprint is `45171e25fed0042be425457b4288efc1d698fbcf3f2a643703454ad592c0c780` /
-`d2cd4ff809e616dab50538ec4cdbf9c6f38d29e719b6b58cdad86c7dd13ff1af`. Their proof gap is the
-runtime itself: lock timing, crash recovery, credential sequencing, cumulative budgets, terminal
-redaction, and boundary revalidation still require implementation and focused tests.
+`d2cd4ff809e616dab50538ec4cdbf9c6f38d29e719b6b58cdad86c7dd13ff1af`.
 
-No Program 013 proposal grants authority. Implementation, repository gates, merge, an exact
+The v5 runtime candidate now implements the fixed three-control lifetime, exact predecessor import,
+separate restart-safe Program 013 checkpoints, cumulative intent/response/byte budgets, names-only
+credential preflight, one-access-per-process credential audit, local completed-page replay, combined
+structural admission, one private terminal, and one redacted public projection shared with the CLI.
+It checks protected overlap before either private root, terminally closes an already exhausted
+combined request envelope without credential access or transport, and recovers an exact private
+terminal through create-only file and parent-directory fsync. Surviving credential, page, claim, or
+derived evidence enters recovery before credentials or transport, and large canonical evidence uses
+bounded descriptor hashing. Fifty-five focused Program 013 tests cover the 23 required v5 cases.
+Fresh independent correctness and defensive implementation reviews found no finding. The full suite
+reports 1,684 passed and four skipped; Ruff format and lint, mypy across 286 files, the 695-file
+secret scan, shell syntax, build, and diff checks pass.
+
+No Program 013 proposal or runtime grants authority. An immutable runtime binding, merge, an exact
 merged-main child, and a separate child review must all pass before credential presence or provider
 contact.

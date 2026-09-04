@@ -297,6 +297,11 @@ def parser() -> argparse.ArgumentParser:
         help="control the recoverable Program 012 raw SIP acquisition and admission",
     )
     program_012_ohlcv.add_argument("action", choices=("credential-preflight", "activate", "run"))
+    program_013_ohlcv = acquire_program.add_parser(
+        "program-013-ohlcv",
+        help="control the recoverable Program 013 raw SIP acquisition and admission",
+    )
+    program_013_ohlcv.add_argument("action", choices=("credential-preflight", "activate", "run"))
     for name in ("validate", "describe"):
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
@@ -523,6 +528,33 @@ def _run_program_012_ohlcv(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _run_program_013_ohlcv(arguments: argparse.Namespace) -> int:
+    from .program_013_ohlcv_authority import (
+        activate_authority as activate_program_013_ohlcv_authority,
+    )
+    from .program_013_ohlcv_authority import (
+        credential_presence_preflight as program_013_ohlcv_credential_preflight,
+    )
+    from .program_013_ohlcv_authority import (
+        execute_acquisition as execute_program_013_ohlcv,
+    )
+
+    repository = Path(__file__).resolve().parents[2]
+    if arguments.action == "credential-preflight":
+        missing = program_013_ohlcv_credential_preflight(repository)
+        print("PASS" if not missing else "\n".join(f"MISSING: {name}" for name in missing))
+        return 0 if not missing else 1
+    if os.environ.get("TRADING_LAB_MODE", TradingMode.OFFLINE.value).strip() != (
+        TradingMode.RESEARCH.value
+    ):
+        raise ValueError("Program 013 OHLCV acquisition requires TRADING_LAB_MODE=research")
+    if arguments.action == "activate":
+        _print(activate_program_013_ohlcv_authority(repository))
+        return 0
+    sys.stdout.buffer.write(execute_program_013_ohlcv(repository).public_payload())
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     raw_arguments = tuple(sys.argv[1:] if argv is None else argv)
     if raw_arguments[:2] == ("program-002", "source"):
@@ -534,9 +566,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         if (
             arguments.command == "data"
             and arguments.data_command == "acquire"
-            and arguments.acquire_program == "program-012-ohlcv"
+            and arguments.acquire_program in {"program-012-ohlcv", "program-013-ohlcv"}
         ):
-            return _run_program_012_ohlcv(arguments)
+            return (
+                _run_program_013_ohlcv(arguments)
+                if arguments.acquire_program == "program-013-ohlcv"
+                else _run_program_012_ohlcv(arguments)
+            )
         load_dotenv()
         settings = load_settings()
         return run(arguments, settings)
@@ -1332,6 +1368,8 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         )
         return 0
     if arguments.data_command == "acquire":
+        if arguments.acquire_program == "program-013-ohlcv":
+            return _run_program_013_ohlcv(arguments)
         if arguments.acquire_program == "program-012-ohlcv":
             return _run_program_012_ohlcv(arguments)
         if arguments.acquire_program == "program-011-ohlcv":

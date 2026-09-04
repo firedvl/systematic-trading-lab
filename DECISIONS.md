@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-04 - Implement Program 013 as a bounded Program 012 recovery
+
+- Decision: implement proposal v5 as a narrow Program 012 lifecycle adaptation. Keep Program 012 immutable, read its exact completed whole-session prefix under a shared lock, and place every new Program 013 checkpoint in the fixed separate private root. Hold the Program 013 lock, Program 012 lock, and Git-policy snapshot through public-terminal fsync.
+- Context: the reviewed predecessor contains one first-page intent without a body or receipt after an exact completed prefix. Implementation review found protected-overlap validation after private-root creation, nonterminal handling of an already exhausted combined request envelope, no CLI entrypoint, no focused v5 tests, failure closeout that reparsed a changed consumed checkpoint instead of sealing it, incomplete consumed-state detection, whole-file canonical hashing, and receipt-only failure accounting that could exceed the frozen response envelope. The runtime now checks overlap before either root, seals budget exhaustion and every recognized surviving operational artifact without credential access or transport, bounds corrupt failure counts, hashes canonical evidence through bounded descriptor reads, exposes the fixed CLI shape, and covers all 23 required cases in 55 tests.
+- Consequences: the runtime reuses Program 012 source and admission science, standard-library transport and filesystem controls, and zero-retry semantics. It adds no strategy, controlled/protected, purchase, PAPER, broker, or live authority. Fresh independent correctness and defensive implementation reviews found no finding. The full suite reports 1,684 passed and four skipped; Ruff format and lint, mypy across 286 files, the 695-file secret scan, shell syntax, build, and diff checks pass. No credential presence or value, provider request, or private Program 013 state was accessed.
+- Revisit when: the runtime slice is committed. Freeze and merge its exact implementation binding, then create and review the exact one-use child before credential preflight or provider contact.
+
 ## 2026-09-03 - Accept the Program 013 v5 recovery design for implementation
 
 - Decision: accept prospective Program 013 proposal v5 after fresh independent design and security reviews found no finding. Keep every operation authority false until the runtime merges and a separate exact standing child and child review bind that merged runtime.

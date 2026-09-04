@@ -1,8 +1,8 @@
 # Current state
 
-Program 013 proposal v5 and its finding-free design review are current. Program 012 remains terminal and immutable.
+Program 013 has an implemented, non-authorizing v5 runtime candidate. Program 012 remains terminal and immutable.
 
-- Program 013, `multi-hour-sector-etf-research-012`, is `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
+- Program 013, `multi-hour-sector-etf-research-012`, is `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.
   Redacted read-only private forensics validated a completed whole-session Program 012 prefix plus
   one reachable first-page intent-only frontier with no retained body, receipt, HTTP status, parsed
   missingness, data-quality outcome, partial page, or later-session evidence. The prospective
@@ -44,10 +44,20 @@ Program 013 proposal v5 and its finding-free design review are current. Program 
   review SHA-256/fingerprint is
   `45171e25fed0042be425457b4288efc1d698fbcf3f2a643703454ad592c0c780` /
   `d2cd4ff809e616dab50538ec4cdbf9c6f38d29e719b6b58cdad86c7dd13ff1af`.
-  No credential access, provider contact, acquisition, admission, strategy work,
-  controlled/protected access, purchase, PAPER, broker write, or live action occurred. Next
-  autonomous action: implement and test the exact v5 recovery runtime before a separate standing
-  child is frozen or any credential or provider boundary is approached.
+  The runtime candidate now enforces the fixed Program 013 exclusive lock, Program 012 read-only
+  lock, and Git-policy snapshot through durable public closeout. It rederives the predecessor prefix
+  and frontier, keeps Program 013 checkpoints in a separate private root, counts the inherited
+  intent-only frontier in the 22,176-intent ceiling, seals an exhausted envelope without credentials
+  or transport, treats surviving credential, page, claim, or derived evidence as consumed state, and
+  hashes large canonical evidence through bounded descriptor reads. It uses one exact redacted
+  projection for the repository terminal and CLI. Fifty-five focused Program 013 tests cover the 23
+  required v5 cases. Fresh independent correctness and defensive implementation reviews found no
+  finding. The full suite reports 1,684 passed and four skipped; Ruff format and lint, mypy across
+  286 files, the 695-file secret scan, shell syntax, build, and diff checks pass. No credential
+  presence or value, provider contact, acquisition, admission, strategy work, controlled/protected
+  access, purchase, PAPER, broker write, or live action occurred. Next autonomous action: commit the
+  runtime slice, freeze its exact implementation binding, and merge before creating the separate
+  standing child.
 
 Program 012's terminal result is current. Earlier Program 012, Program 011, and Program 010 entries
 are preserved as historical snapshots, including their former next actions.
