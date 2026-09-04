@@ -1832,7 +1832,15 @@ def test_secret_guard_allows_reserved_program_013_control_artifacts_only(
     spec.loader.exec_module(guard)
     monkeypatch.chdir(tmp_path)
     public = authority.PUBLIC_TERMINAL_PATH
-    reserved = (public, authority.CHILD_AUTHORITY_PATH, authority.CHILD_REVIEW_PATH)
+    terminal_review = Path(
+        "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1.json"
+    )
+    reserved = (
+        public,
+        terminal_review,
+        authority.CHILD_AUTHORITY_PATH,
+        authority.CHILD_REVIEW_PATH,
+    )
     observation = Path("config/research/program-013-market-observations.json")
     private = Path(".trading-lab/program-013-private-terminal.json")
     for path in (*reserved, observation, private):
