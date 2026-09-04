@@ -1751,7 +1751,7 @@ def test_repository_terminal_bytes_exactly_equal_cli_output(
     assert captured.out.encode() == terminal_bytes
 
 
-def test_secret_guard_allows_only_the_exact_program_013_public_terminal(
+def test_secret_guard_allows_reserved_program_013_control_artifacts_only(
     tmp_path: Path, monkeypatch: MonkeyPatch, capsys: CaptureFixture[str]
 ) -> None:
     spec = importlib.util.spec_from_file_location(
@@ -1762,16 +1762,18 @@ def test_secret_guard_allows_only_the_exact_program_013_public_terminal(
     spec.loader.exec_module(guard)
     monkeypatch.chdir(tmp_path)
     public = authority.PUBLIC_TERMINAL_PATH
+    reserved = (public, authority.CHILD_AUTHORITY_PATH, authority.CHILD_REVIEW_PATH)
     observation = Path("config/research/program-013-market-observations.json")
     private = Path(".trading-lab/program-013-private-terminal.json")
-    for path in (public, observation, private):
+    for path in (*reserved, observation, private):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("{}\n", encoding="utf-8")
-    monkeypatch.setattr(guard, "tracked_files", lambda: [public, observation, private])
+    monkeypatch.setattr(guard, "tracked_files", lambda: [*reserved, observation, private])
 
     assert guard.main() == 1
     errors = capsys.readouterr().err
-    assert public.as_posix() in guard.PUBLIC_PROGRAM_JSON
-    assert public.as_posix() not in errors
+    for path in reserved:
+        assert path.as_posix() in guard.PUBLIC_PROGRAM_JSON
+        assert path.as_posix() not in errors
     assert f"{observation}:private-market-data-path" in errors
     assert f"{private}:private-market-data-path" in errors
