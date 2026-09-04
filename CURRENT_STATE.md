@@ -1,19 +1,28 @@
 # Current state
 
-Program 014's redacted predecessor forensics are current. Program 013 and Program 012 remain terminal
-and immutable.
+Program 014's prospective recovery proposal is frozen but not authorized. Program 013 and Program
+012 remain terminal and immutable.
 
-- Program 014, `multi-hour-sector-etf-research-013`, is `FORENSICS-COMPLETE-PROSPECTIVE-NOT-AUTHORIZED`.
+- Program 014, `multi-hour-sector-etf-research-013`, is `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
   Read-only offline validation rederived Program 013's historical child identity, canonical private
   terminal, and exact public projection. Retained Program 012 plus Program 013 evidence forms a
   completed whole-session prefix followed by one intent-only page frontier with no body, receipt,
   HTTP status, parsed missingness, data-quality outcome, or later evidence. Structural admission was
-  not evaluated and no dataset or strategy work exists. The redacted forensic disposition SHA-256 /
-  fingerprint is `df50e1006a5deaac6ac0b2fcef4144bc85b43333dd175c93db8c050f9c1b6cc2` /
-  `aa5deeef6cde6dd498e672c30f44da2db9e128cd11578c5ce1c72e390b842d58`. Next autonomous
-  action: freeze and independently review a prospective non-restarting Program 014 recovery that
-  reuses only completed whole sessions, discards the incomplete Program 013 session and page, and
-  preserves cumulative transport budgets.
+  not evaluated and no dataset or strategy work exists. The corrected redacted forensic disposition
+  now binds the Program 013 scientific contract, child authority and review, runtime commit/tree/root,
+  public terminal, and exact cumulative transport ceiling. Its SHA-256 / fingerprint is
+  `72f99f9fb3f46fc2b03e3c77085348085c2125652b57c9c7a4aa99a14d29366b` /
+  `7e59cc4e3657df1d3a658943b0fcf35ab97b90a388c26fd32d8077ac03810afb`. Proposal v1 keeps
+  both predecessor roots immutable, uses a distinct Program 014 root, reuses only completed whole
+  sessions, discards the incomplete Program 013 session/page, and permits one new frontier request
+  with zero retries. The unchanged 22,176-intent ceiling permits at most 22,174 combined responses
+  because Program 012 and Program 013 each left one consumed intent without a response. Automatic
+  restart, relaunch, `launchctl submit`, KeepAlive, restart-on-exit, and process-manager retry are
+  prohibited. Proposal SHA-256/fingerprint is
+  `52a4a523eed878530fe5112b72ddabc5b839c2bbd479825cd9fb18ce5c03e6f9` /
+  `7d9a136af9e868a73cf18497ee2db323429046ae1573be3843b9f774f302b27d`. Every current
+  authority remains false. Next autonomous action: obtain fresh finding-free design and security
+  review before implementation.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use. The exact redacted public terminal binds runtime source commit
@@ -30,8 +39,7 @@ and immutable.
   execution remained disabled. The finding-free independent terminal review artifact has SHA-256
   `ac22344cdf031ee3df7b5eeae0448887b2140603f9b0af8193a296e82238a010` and fingerprint
   `37dfee69e0cd43a2588e397fbec22d59656de61d12cff189368862cab87195f4`. Next autonomous
-  action: merge the closeout, publish the redacted Program 014 forensic disposition, and freeze a
-  prospective successor only from the validated completed prefix and intent-only frontier.
+  action: keep Program 013 closed while Program 014's separate prospective design is reviewed.
 
 - Historical Program 013 planning snapshot: `multi-hour-sector-etf-research-012` was
   `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.

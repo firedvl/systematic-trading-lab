@@ -142,10 +142,19 @@ forms an exact completed whole-session prefix followed by one intent-only page f
 receipt, HTTP status, parsed missingness, data-quality outcome, partial response, or later evidence
 exists at that frontier. Structural admission was not evaluated; no dataset or strategy work exists.
 
-The redacted disposition SHA-256/fingerprint is
-`df50e1006a5deaac6ac0b2fcef4144bc85b43333dd175c93db8c050f9c1b6cc2` /
-`aa5deeef6cde6dd498e672c30f44da2db9e128cd11578c5ce1c72e390b842d58`. A prospective
-Program 014 must keep both predecessor roots immutable, reuse only completed whole sessions, discard
-the incomplete Program 013 session and page, issue the frontier once under a new reviewed child,
-preserve cumulative budgets and zero retries, and prove that its process cannot restart or relaunch
-automatically.
+The corrected redacted disposition binds the exact Program 013 scientific contract, child authority
+and review, runtime commit/tree/root, public terminal, and inherited transport budget. Its SHA-256 /
+fingerprint is `72f99f9fb3f46fc2b03e3c77085348085c2125652b57c9c7a4aa99a14d29366b` /
+`7e59cc4e3657df1d3a658943b0fcf35ab97b90a388c26fd32d8077ac03810afb`.
+
+Program 014 proposal v1 keeps both predecessor roots immutable and read-only, uses the distinct
+`.trading-lab/program-014-exposed-prefix-raw-alpaca-sip-v1` root, reuses only completed whole
+sessions, discards the incomplete Program 013 session/page, and permits the frontier request once
+under a later reviewed child. Programs 012 and 013 each left one consumed intent without a response,
+so the unchanged 22,176-intent ceiling permits at most 22,174 combined responses. The proposal bans
+automatic restart, relaunch, `launchctl submit`, KeepAlive, restart-on-exit, and process-manager
+retry. Its SHA-256/fingerprint is
+`52a4a523eed878530fe5112b72ddabc5b839c2bbd479825cd9fb18ce5c03e6f9` /
+`7d9a136af9e868a73cf18497ee2db323429046ae1573be3843b9f774f302b27d`.
+It grants no authority and requires fresh finding-free design and security review before
+implementation.

@@ -16,7 +16,7 @@ PATTERNS = (
     re.compile(r"(?i)(?:secret|token|password|api[_-]?key)\s*=\s*['\"][^'\"]+['\"]"),
     re.compile(r"(?m)^\s*(?:APCA_API_KEY_ID|APCA_API_SECRET_KEY)\s*=\s*\S+"),
     re.compile(
-        r"(?m)^\s*(?:export\s+)?PROGRAM_(?:00[567]|010)_ALPACA_API_"
+        r"(?m)^\s*(?:export\s+)?PROGRAM_[0-9]{3}_ALPACA_API_"
         r"(?:KEY_ID|SECRET_KEY)\s*=\s*\S+"
     ),
     re.compile(
@@ -26,7 +26,7 @@ PATTERNS = (
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
 )
 PROGRAM_JSON_CREDENTIAL = re.compile(
-    r"""["'](?:PROGRAM_(?:00[567]|010)_ALPACA|PROGRAM_007_CORPORATE_ACTIONS)_API_(?:KEY_ID|SECRET_KEY)["']\s*:\s*\S+"""
+    r"""["'](?:PROGRAM_[0-9]{3}_ALPACA|PROGRAM_007_CORPORATE_ACTIONS)_API_(?:KEY_ID|SECRET_KEY)["']\s*:\s*\S+"""
 )
 
 PRIVATE_MARKET_DATA_SUFFIXES = frozenset(
@@ -195,6 +195,13 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-013-exposed-prefix-runtime-implementation-v2.json",
         "config/research/program-013-predecessor-recovery-forensic-disposition-v1.json",
         "config/research/program-014-predecessor-recovery-forensic-disposition-v1.json",
+        "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json",
+        "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json",
+        "config/research/program-014-exposed-prefix-runtime-implementation-v1.json",
+        "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",
+        "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json",
+        "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+        "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1.json",
     }
 )
 _PROVIDER_BAR_KEYS = frozenset({"t", "o", "h", "l", "c", "v"})

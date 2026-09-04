@@ -7,6 +7,38 @@
   "predecessor": {
     "program_ordinal": 13,
     "program_id": "multi-hour-sector-etf-research-012",
+    "scientific_contract": {
+      "path": "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v5.json",
+      "sha256": "bcfae8da387daf0012afc3fd2636e2d81fa1a5f7e11a0f82a826bd021484f269",
+      "fingerprint": "8beea434b1dd2e129eaa32154a9cdfeb515611d5a96a1e4826fb0dfcaddd61bf"
+    },
+    "scientific_contract_review": {
+      "path": "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v5.json",
+      "sha256": "45171e25fed0042be425457b4288efc1d698fbcf3f2a643703454ad592c0c780",
+      "fingerprint": "d2cd4ff809e616dab50538ec4cdbf9c6f38d29e719b6b58cdad86c7dd13ff1af"
+    },
+    "runtime_implementation": {
+      "path": "config/research/program-013-exposed-prefix-runtime-implementation-v2.json",
+      "sha256": "9344a27358cd06c15c53138628787df896f05366d0ba9b12d00ba13d3ccfc753",
+      "fingerprint": "8c99b0f1021cd5ac57543ed031583919d7f753cfe675ca313a6e3b60fc12df28"
+    },
+    "child_authority": {
+      "path": "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",
+      "sha256": "751a2c3fe43347f5bcb6e4f24f108bf272cd72e3e51fe18862a9dab6fc2a37d2",
+      "child_authority_id": "program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-2026-09-03-v1",
+      "fingerprint": "5c233ff2aa474039e662ed39165eba7c0e213b6f35462a70b014d85fb1be061b"
+    },
+    "child_authority_review": {
+      "path": "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json",
+      "sha256": "62b30b99b2dee468d3243cbcb3cafbcd4fdb79fe5b582600a622d5fc90578e02",
+      "review_id": "program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-2026-09-04-v1",
+      "fingerprint": "cad3d97fd2cb1bbc753c5e9293801141e8fc0722eccb06d8dbfb403f67d0eae2"
+    },
+    "runtime_source": {
+      "commit": "71b8a66dc8ea1f70673456f4bfe34561d05b6891",
+      "tree": "69d75a58b1147e3f1b4203873317be282efb89bf",
+      "implementation_root": "58b01f45febb7bbfb19358f26562172cd9858d292e02b2f51ab5b0290d29e7b1"
+    },
     "terminal_result": {
       "path": "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
       "sha256": "7e4d148b7a20122cdb5fde21f6f8d70493cfd5772a527aa42a3c127c067f56ee"
@@ -28,7 +60,9 @@
     "public_dynamic_observation_allowed": false,
     "resource_policy": "single process, macOS background scheduling, lowest nice priority, explicit CPU duty-cycle cap",
     "validation": [
+      "revalidate the exact Program 013 scientific contract and finding-free review",
       "revalidate the historical reviewed child identity against its exact synchronized-main Git tree",
+      "revalidate the child ID, child fingerprint, runtime source commit, runtime source tree, and implementation root",
       "revalidate the canonical private terminal against the exact reviewed public terminal",
       "replay retained predecessor and Program 013 completed pages locally under shared read locks",
       "prove that retained pages form an exact completed whole-session prefix",
@@ -56,6 +90,18 @@
     "strategy_work_occurred": false,
     "program_013_zero_reissue_rule_followed": true
   },
+  "cumulative_transport_contract": {
+    "authoritative_contract": "predecessor.scientific_contract",
+    "maximum_combined_request_intents": 22176,
+    "program_012_intent_only_frontier_counts_as_consumed_request": true,
+    "program_013_intent_only_frontier_counts_as_consumed_request": true,
+    "consumed_intents_without_response_before_program_014": 2,
+    "maximum_effective_combined_responses_for_program_014": 22174,
+    "combined_request_formula": "completed Program 012 and Program 013 response pages plus both predecessor intent-only frontiers plus every Program 014 request intent",
+    "combined_response_formula": "completed Program 012 and Program 013 response pages plus every Program 014 receipted response",
+    "additional_page_after_effective_response_envelope": "FAIL-CONSUMED-NO-RETRY-COMBINED-REQUEST-BUDGET-EXHAUSTED",
+    "automatic_retries": 0
+  },
   "prospective_disposition": {
     "successor_allowed": true,
     "successor_must_be_new_program": true,
@@ -75,7 +121,8 @@
     "evidence_location_published": false,
     "dynamic_counts_published": false,
     "session_dates_published": false,
-    "page_indices_or_counts_published": false,
+    "private_completed_page_indices_or_counts_published": false,
+    "static_transport_control_counts_published": true,
     "response_hashes_published": false,
     "private_terminal_fingerprint_published": false,
     "provider_tokens_published": false,
@@ -101,5 +148,5 @@
     "live_execution": false
   },
   "required_next_action": "Freeze and independently review a prospective Program 014 recovery that reuses only the completed whole-session prefix, discards the incomplete Program 013 session and page, issues the intent-only frontier once under a new child, preserves cumulative budgets, and cannot restart automatically.",
-  "forensic_disposition_fingerprint": "aa5deeef6cde6dd498e672c30f44da2db9e128cd11578c5ce1c72e390b842d58"
+  "forensic_disposition_fingerprint": "7e59cc4e3657df1d3a658943b0fcf35ab97b90a388c26fd32d8077ac03810afb"
 }
