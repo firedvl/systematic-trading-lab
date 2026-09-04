@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-04 - Program 013 terminal evidence is immutable and revokes every entrypoint
+
+- Decision: commit only Program 013's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, activation, loading, execution, or private-root access.
+- Context: the one-use child sealed `RUNTIME-FAILURE` / `FAIL-CONSUMED-NO-RETRY`. The public terminal records no structural admission, dataset lineage, Program 002 admission, strategy calculation, or strategy return. Proposal v5 keeps dynamic acquisition state, detailed failure evidence, private identities, exact missingness, provider tokens, and market observations private.
+- Consequences: public terminal SHA-256 is `7e4d148b7a20122cdb5fde21f6f8d70493cfd5772a527aa42a3c127c067f56ee`; authority fingerprint is `b424096aabf9aaec0ad6282db9c8d5b291c405dde551377c584a3cbf063a9916`; source commit is `71b8a66dc8ea1f70673456f4bfe34561d05b6891`. Finding-free independent terminal review SHA-256/fingerprint is `ac22344cdf031ee3df7b5eeae0448887b2140603f9b0af8193a296e82238a010` / `37dfee69e0cd43a2588e397fbec22d59656de61d12cff189368862cab87195f4`. Program 013 cannot replay or retry. Controlled or protected access, purchases, PAPER, broker writes, and live execution remain false.
+- Revisit when: never for Program 013. After independent terminal review and merge, Program 014 may prospectively reuse only the validated completed whole-session prefix and issue the intent-only frontier once under a new reviewed child.
+
 ## 2026-09-04 - Reserve the Program 013 child-control topology
 
 - Decision: preserve runtime implementation v1 as failed-review history and supersede it with non-authorizing v2. Pre-allowlist the exact future Program 013 child authority and child-review paths before freezing the child runtime source. Keep every authority field false.

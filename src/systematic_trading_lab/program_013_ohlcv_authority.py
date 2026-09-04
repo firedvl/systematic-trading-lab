@@ -103,6 +103,7 @@ _PUBLIC_TERMINAL_RESULT_ID = (
     "program-013-exposed-prefix-raw-alpaca-sip-recovery-and-"
     "structural-admission-terminal-result-2026-09-03-v1"
 )
+_PUBLIC_TERMINAL_SHA256 = "7e4d148b7a20122cdb5fde21f6f8d70493cfd5772a527aa42a3c127c067f56ee"
 _PRIVATE_TERMINAL_KEYS = {
     "schema_version",
     "program_id",
@@ -2574,14 +2575,14 @@ def _reject_terminal_state(repository: Path) -> None:
     path = repository / PUBLIC_TERMINAL_PATH
     try:
         descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
-    except FileNotFoundError:
-        return
+    except FileNotFoundError as error:
+        raise Program013AuthorityError("Program 013 terminal result artifact is absent") from error
     except OSError as error:
-        raise Program013AuthorityError("Program 013 public terminal is invalid") from error
+        raise Program013AuthorityError("Program 013 terminal result artifact is invalid") from error
     try:
         metadata = os.fstat(descriptor)
         if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > 1_048_576:
-            raise Program013AuthorityError("Program 013 public terminal is invalid")
+            raise Program013AuthorityError("Program 013 terminal result artifact is invalid")
         with os.fdopen(descriptor, "rb") as handle:
             descriptor = -1
             raw = handle.read()
@@ -2592,6 +2593,8 @@ def _reject_terminal_state(repository: Path) -> None:
     if raw != (canonical_json(value) + "\n").encode():
         raise Program013AuthorityError("Program 013 public terminal is not canonical")
     _validate_public_terminal_shape(value)
+    if hashlib.sha256(raw).hexdigest() != _PUBLIC_TERMINAL_SHA256:
+        raise Program013AuthorityError("Program 013 terminal result semantics differ")
     raise Program013AuthorityError("Program 013 authority is terminally revoked")
 
 
