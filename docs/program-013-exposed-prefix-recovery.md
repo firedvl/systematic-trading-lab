@@ -44,7 +44,23 @@ crash, replay, concurrency, budget, and redaction tests. Because the Program 012
 already consumed one of the unchanged 22,176 combined intents without a response, v3 explicitly caps
 the effective combined receipted-page envelope at 22,175. A later required page fails as resource-cap
 incompleteness; unobserved coordinates are not source missing. V3 grants no authority and requires
-fresh finding-free design and security reviews before implementation.
+fresh finding-free design and security reviews before implementation. Those reviews found eight
+remaining defects: inconsistent admission-failure identity and status, no inherited Git-policy
+snapshot lifetime, a changed 8 GiB disk-reservation meaning, an optional public top-level allowlist,
+an overbroad future-child possibility, no durable private-to-public terminal recovery, incomplete
+credential-evidence sequencing, and no enforceable definition for the invented private-evidence cap.
+V3 remains non-authorizing failed-review history.
+
+Proposal v4 resolves those findings prospectively. It holds the exact Program 013 lock, Program 012
+read-only lock, and inherited Git-policy snapshot through fsynced public closeout. It removes the
+private-artifact cap and restores the unchanged 8 GiB available working-space reservation. It
+requires exact public key sets, recovery from a valid private terminal without credentials or
+transport, contiguous credential attempt/receipt evidence with a durable success receipt before
+transport, and a child limited to provider contact, credentials, source requests, acquisition, and
+admission. Admission failure retains a validated private dataset identity and the inherited terminal
+status while public lineage stays null. The effective 22,175 combined-response envelope remains
+unchanged. V4 grants no authority and requires fresh finding-free design and security reviews before
+implementation.
 
 No Program 013 proposal grants authority. Implementation, repository gates, merge, an exact
 merged-main child, and a separate child review must all pass before credential presence or provider

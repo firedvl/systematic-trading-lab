@@ -1,6 +1,6 @@
 # Current state
 
-Program 013 proposal v3 is current. Program 012 remains terminal and immutable.
+Program 013 proposal v4 is current. Program 012 remains terminal and immutable.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
   Redacted read-only private forensics validated a completed whole-session Program 012 prefix plus
@@ -16,19 +16,27 @@ Program 013 proposal v3 is current. Program 012 remains terminal and immutable.
   the science but failed fresh design and security review on seven remaining controls: required
   crash/concurrency tests, recursive public-terminal schemas, the intent-only budget off-by-one, one
   exact private root and full two-root lock lifetime, immutable authority-bound checkpoints, exact
-  result-branch semantics, and crash-safe credential audit evidence. Proposal v3 preserves v1 and v2
-  as non-authorizing history and resolves all seven prospectively. It freezes the exact successor
-  root and lock order, exact create-only checkpoint and terminal schemas, value-free credential
-  attempt/receipt accounting, a 22,175-page effective combined response envelope under the unchanged
-  22,176-intent ceiling, and focused crash/replay/concurrency/redaction regressions. Proposal-v3
-  SHA-256/fingerprint is `4dc78ad90dcbcf06babf252ee7a222e6fe22d4439485683e7bbd7fac3a500ce2` /
-  `72b43d99ee6a536a165818e319ecfeb30b0aed90bad6d95012877ccf2e26f697`.
-  Failed-review-v2 SHA-256/fingerprint is
-  `c42585f2cab974449b8b279d847dee47960d3834fbdb78fd5370a9eb1a4f55d6` /
-  `ceb68db4937ba052fac3c2d09138c4600682687847014810524098b92a57056e`.
+  result-branch semantics, and crash-safe credential audit evidence. Proposal v3 resolved those seven
+  points but failed fresh design and security review on eight narrower controls: admission-failure
+  private identity and status, the inherited Git-policy snapshot lifetime, the 8 GiB working-space
+  meaning, exact required public keys, the child capability ceiling, crash recovery from a private
+  terminal without public revocation, exact credential-evidence sequencing, and the unenforceable
+  invented private-evidence cap. Proposal v4 preserves v1-v3 as non-authorizing history and resolves
+  those findings prospectively. It holds the Program 013 lock, Program 012 lock, and Git snapshot
+  through durable public closeout; restores the 8 GiB value as available working headroom rather than
+  an artifact-size cap; requires exact public schemas and private-terminal recovery; caps the child to
+  acquisition and admission; retains a non-null private dataset identity on admission failure; and
+  freezes contiguous credential attempt/receipt evidence with a durable success receipt before
+  transport. The 22,175-page effective combined response envelope under the unchanged 22,176-intent
+  ceiling remains unchanged. Proposal-v4 SHA-256/fingerprint is
+  `62f80c1249cf3f3e2efa8ead66d1eabedb2b736459d8a9e8b1445a6ebe0a0128` /
+  `c356c2f658b2dac59afea5c079de81a9b803c66fbcef9ed85df815ed7f2b02d7`.
+  Failed-review-v3 SHA-256/fingerprint is
+  `8c9a0c50b40cbfe8e58e00801df321f8e0e1ebfbdd7112e61c27e145d90140cf` /
+  `3aa42dab9ffa26ea440da0bb900bec3c53e928b156e6ee793e09f9728eabbf82`.
   No credential access, provider contact, acquisition, admission, strategy work,
   controlled/protected access, purchase, PAPER, broker write, or live action occurred. Next
-  autonomous action: obtain fresh finding-free v3 design and security-boundary reviews before
+  autonomous action: obtain fresh finding-free v4 design and security-boundary reviews before
   runtime implementation.
 
 Program 012's terminal result is current. Earlier Program 012, Program 011, and Program 010 entries

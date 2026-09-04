@@ -1,0 +1,150 @@
+{
+  "schema_version": "program-013-exposed-prefix-recovery-design-and-security-independent-review-v3",
+  "review_id": "program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-03-v3",
+  "program_ordinal": 13,
+  "program_id": "multi-hour-sector-etf-research-012",
+  "status": "FAIL-FINDINGS-REQUIRE-PROSPECTIVE-CORRECTION",
+  "verdict": "FAIL",
+  "reviewed_source_commit": "f970c71f13d6a33c07145cc95864aa515172f6c2",
+  "reviewed_proposal": {
+    "path": "config/research/program-013-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json",
+    "sha256": "4dc78ad90dcbcf06babf252ee7a222e6fe22d4439485683e7bbd7fac3a500ce2",
+    "fingerprint": "72b43d99ee6a536a165818e319ecfeb30b0aed90bad6d95012877ccf2e26f697"
+  },
+  "review_contexts": [
+    "FRESH-INDEPENDENT-DESIGN-AND-SCIENTIFIC-CONTROL-REVIEW",
+    "FRESH-INDEPENDENT-SECURITY-AND-AUTHORITY-BOUNDARY-REVIEW"
+  ],
+  "findings": [
+    {
+      "finding_id": "P013-V3-DESIGN-001",
+      "severity": "HIGH",
+      "summary": "The admission-failure branch contradicted the inherited private identity and terminal-status contract.",
+      "evidence": "Proposal v3 required the combined private dataset identity after structural admission evaluation but forced that identity to null on admission failure and changed the inherited admission-failure status.",
+      "required_correction": "Require a validated non-null private dataset identity on admission failure, keep public lineage null, and restore the inherited TERMINAL-FAIL-CONSUMED-NO-RETRY status."
+    },
+    {
+      "finding_id": "P013-V3-DESIGN-002",
+      "severity": "HIGH",
+      "summary": "The two-root lock contract omitted the inherited Git-policy snapshot lifetime.",
+      "evidence": "Proposal v3 held the Program 013 and Program 012 locks through terminal publication but did not freeze direct main and origin/main references against change through admission and public closeout.",
+      "required_correction": "Acquire the inherited Git-policy snapshot after both private locks, bind it to the exact runtime source commit, and hold all three controls through validated public-terminal persistence."
+    },
+    {
+      "finding_id": "P013-V3-DESIGN-003",
+      "severity": "MEDIUM",
+      "summary": "The design changed Program 012's 8 GiB working-space reservation into an invented cumulative evidence-size cap.",
+      "evidence": "Program 012 uses 8 GiB as an available-space precondition. Proposal v3 instead subtracted predecessor evidence from an 8 GiB cumulative private-evidence limit.",
+      "required_correction": "Keep the cumulative 4 GiB response-byte ceiling, remove the private-evidence-size cap, and retain the unchanged 8 GiB available working-space reservation."
+    },
+    {
+      "finding_id": "P013-V3-DESIGN-004",
+      "severity": "MEDIUM",
+      "summary": "The public terminal top level remained an optional allowlist instead of an exact required schema.",
+      "evidence": "Proposal v3 rejected unknown public keys but did not require every listed top-level field or test rejection after a required field was deleted.",
+      "required_correction": "Freeze exact required top-level and nested key sets, require set equality for every branch, and add deletion regressions before credential or private-root access."
+    },
+    {
+      "finding_id": "P013-V3-SECURITY-001",
+      "severity": "HIGH",
+      "summary": "The future standing child was not capped to the recovery operation.",
+      "evidence": "The standing mandate permits strategy and research-qualification capabilities that Program 013 denies, while proposal v3 omitted an operation-specific child capability ceiling.",
+      "required_correction": "Freeze the exact maximum child capabilities to provider contact, credential access, source requests, market-data acquisition, and real-dataset admission; reject every broader child."
+    },
+    {
+      "finding_id": "P013-V3-SECURITY-002",
+      "severity": "HIGH",
+      "summary": "A crash could leave a durable private terminal without durable public revocation.",
+      "evidence": "Proposal v3 did not require fsync of the public terminal and parent directory or recovery from a valid private terminal when the public terminal is absent.",
+      "required_correction": "Fsync the public file and parent directory before lock release, and recover a missing public terminal from a validated private terminal before credentials or transport."
+    },
+    {
+      "finding_id": "P013-V3-SECURITY-003",
+      "severity": "MEDIUM",
+      "summary": "Credential evidence did not freeze the namespace, pairing, sequencing, or pre-transport receipt rule.",
+      "evidence": "Proposal v3 required an attempt and later receipt but did not require contiguous filenames, exact pairing, duplicate and gap rejection, or a durable success receipt before provider contact.",
+      "required_correction": "Reuse the Program 012 credential-load filename and sequence rules, reject malformed evidence, and require a fsynced success receipt before every first provider transport in a process."
+    },
+    {
+      "finding_id": "P013-V3-SECURITY-004",
+      "severity": "MEDIUM",
+      "summary": "The invented private-storage cap had no deterministic accounting contract.",
+      "evidence": "Proposal v3 neither defined an exact private-file inventory nor persisted a derived private-evidence total, so the new cap could not be enforced mechanically.",
+      "required_correction": "Remove the non-inherited private-evidence cap and retain the inherited working-space reservation; do not claim a cumulative private-artifact ceiling."
+    }
+  ],
+  "challenge_results": [
+    {
+      "challenge": "authority-boundaries",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "chronology",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential-confinement",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "git-provenance-integrity",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "missingness-rules",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "predecessor-immutability-and-toctou",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "private-data-leakage",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "public-terminal-redaction",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "request-budgets",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "restart-and-replay-safety",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "scientific-contract-preservation",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "source-assumptions",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "statistical-validity",
+      "verdict": "PASS"
+    }
+  ],
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "scope_limit": "The reviews made no credential access, provider request, private market-data read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Preserve proposal v3, issue a prospective v4 resolving all eight findings, and obtain fresh design and security-boundary reviews before implementation.",
+  "review_fingerprint": "3aa42dab9ffa26ea440da0bb900bec3c53e928b156e6ee793e09f9728eabbf82"
+}

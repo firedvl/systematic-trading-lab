@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-03 - Restore inherited Program 013 closeout, Git, disk, and child controls
+
+- Decision: preserve non-authorizing Program 013 proposal v3 as failed-review history and supersede it with prospective v4. Hold the exact Program 013 lock, Program 012 read-only lock, and inherited Git-policy snapshot through durable public-terminal persistence. Restore the 8 GiB value as an available working-space reservation, not a cumulative private-artifact cap. Require exact public key sets, private-terminal-to-public recovery, contiguous credential attempt/receipt evidence with a success receipt before transport, and the Program 012 operation-specific child capability ceiling.
+- Context: fresh v3 design and security reviews found eight defects. V3 also forced the private dataset identity to null and changed the inherited status on admission failure; v4 retains the validated private identity and restores `TERMINAL-FAIL-CONSUMED-NO-RETRY` while keeping public lineage null.
+- Consequences: v4 changes no source, chronology, request plan, effective 22,175-response envelope, missingness rule, admission gate, or strategy authority. Proposal-v4 SHA-256/fingerprint is `62f80c1249cf3f3e2efa8ead66d1eabedb2b736459d8a9e8b1445a6ebe0a0128` / `c356c2f658b2dac59afea5c079de81a9b803c66fbcef9ed85df815ed7f2b02d7`; failed-review-v3 SHA-256/fingerprint is `8c9a0c50b40cbfe8e58e00801df321f8e0e1ebfbdd7112e61c27e145d90140cf` / `3aa42dab9ffa26ea440da0bb900bec3c53e928b156e6ee793e09f9728eabbf82`.
+- Revisit when: only after fresh v4 design and security reviews pass. Runtime implementation and a separate exact merged-main standing child remain required before credential access or provider contact.
+
 ## 2026-09-03 - Freeze Program 013 exact lock, checkpoint, terminal, and recovery-budget contract
 
 - Decision: preserve non-authorizing Program 013 proposal v2 as failed-review history and supersede it with prospective v3. Freeze one exact successor private root and `run.lock`; acquire its exclusive lock before the predecessor read-only lock and hold both through public terminal persistence. Require exact create-only canonical schemas binding the proposal, child, runtime, and predecessor-import identity for every claim, intent, body, receipt, credential audit, and private terminal. Freeze recursive public-terminal branch semantics and mandatory crash, replay, concurrency, budget, and redaction tests.
