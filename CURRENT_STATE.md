@@ -1,6 +1,6 @@
 # Current state
 
-Program 013 proposal v4 is current. Program 012 remains terminal and immutable.
+Program 013 proposal v5 is current. Program 012 remains terminal and immutable.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
   Redacted read-only private forensics validated a completed whole-session Program 012 prefix plus
@@ -27,16 +27,21 @@ Program 013 proposal v4 is current. Program 012 remains terminal and immutable.
   an artifact-size cap; requires exact public schemas and private-terminal recovery; caps the child to
   acquisition and admission; retains a non-null private dataset identity on admission failure; and
   freezes contiguous credential attempt/receipt evidence with a durable success receipt before
-  transport. The 22,175-page effective combined response envelope under the unchanged 22,176-intent
-  ceiling remains unchanged. Proposal-v4 SHA-256/fingerprint is
-  `62f80c1249cf3f3e2efa8ead66d1eabedb2b736459d8a9e8b1445a6ebe0a0128` /
-  `c356c2f658b2dac59afea5c079de81a9b803c66fbcef9ed85df815ed7f2b02d7`.
-  Failed-review-v3 SHA-256/fingerprint is
-  `8c9a0c50b40cbfe8e58e00801df321f8e0e1ebfbdd7112e61c27e145d90140cf` /
-  `3aa42dab9ffa26ea440da0bb900bec3c53e928b156e6ee793e09f9728eabbf82`.
+  transport. V4 security review was finding-free, but design review found that its Git snapshot
+  incorrectly required post-child `main` to equal the earlier runtime-source commit. Proposal v5
+  preserves v1-v4 as non-authorizing history and separates those identities: the child binds the
+  exact clean pre-child runtime source commit, tree, and implementation root, while the Git snapshot
+  binds the later synchronized-main commit containing exactly the child authority and its review.
+  The 22,175-page effective combined response envelope under the unchanged 22,176-intent ceiling
+  remains unchanged. Proposal-v5 SHA-256/fingerprint is
+  `bcfae8da387daf0012afc3fd2636e2d81fa1a5f7e11a0f82a826bd021484f269` /
+  `8beea434b1dd2e129eaa32154a9cdfeb515611d5a96a1e4826fb0dfcaddd61bf`.
+  Failed-review-v4 SHA-256/fingerprint is
+  `abac41eaa2cd51c519dcd74f92262e48c3904617eae7b37d30cf2e925ea83cc6` /
+  `071c1fad482c0b32260e7af206b0f21d43f881c3172cb35e6478c8643254a007`.
   No credential access, provider contact, acquisition, admission, strategy work,
   controlled/protected access, purchase, PAPER, broker write, or live action occurred. Next
-  autonomous action: obtain fresh finding-free v4 design and security-boundary reviews before
+  autonomous action: obtain fresh finding-free v5 design and security-boundary reviews before
   runtime implementation.
 
 Program 012's terminal result is current. Earlier Program 012, Program 011, and Program 010 entries

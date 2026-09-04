@@ -60,7 +60,16 @@ transport, and a child limited to provider contact, credentials, source requests
 admission. Admission failure retains a validated private dataset identity and the inherited terminal
 status while public lineage stays null. The effective 22,175 combined-response envelope remains
 unchanged. V4 grants no authority and requires fresh finding-free design and security reviews before
-implementation.
+implementation. Security review found no separate issue, but design review found that v4 bound the
+Git snapshot to the pre-child runtime source commit even though the required child and review must be
+later commits. V4 remains non-authorizing failed-review history.
+
+Proposal v5 separates the two identities. The future child binds the exact clean runtime source
+commit, tree, and implementation root before child creation. After that runtime merges, exactly the
+child authority and its independent review may be added. The Git snapshot then binds the later clean
+synchronized-main commit containing those two files. A stale runtime-source-as-main topology fails.
+No scientific, budget, privacy, or authority rule changes. V5 grants no authority and requires fresh
+finding-free design and security reviews before implementation.
 
 No Program 013 proposal grants authority. Implementation, repository gates, merge, an exact
 merged-main child, and a separate child review must all pass before credential presence or provider

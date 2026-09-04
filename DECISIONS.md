@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-03 - Separate Program 013 runtime source from synchronized-main authority
+
+- Decision: preserve non-authorizing Program 013 proposal v4 as failed-design-review history and supersede it with prospective v5. Bind the child to the exact clean pre-child runtime source commit, tree, and implementation root. Bind the Git-policy snapshot and direct `main` and `origin/main` refs to the later synchronized-main commit. Permit exactly the Program 013 child authority and its independent review as the tracked diff between them.
+- Context: v4 security review found no separate issue, but design review showed that requiring post-child `main` to equal the pre-child runtime source made the mandatory child and review topology impossible. Program 012 already separates these two commits.
+- Consequences: v5 changes no runtime, source, chronology, pagination, budget, missingness, admission, privacy, or authority rule. Proposal-v5 SHA-256/fingerprint is `bcfae8da387daf0012afc3fd2636e2d81fa1a5f7e11a0f82a826bd021484f269` / `8beea434b1dd2e129eaa32154a9cdfeb515611d5a96a1e4826fb0dfcaddd61bf`; failed-review-v4 SHA-256/fingerprint is `abac41eaa2cd51c519dcd74f92262e48c3904617eae7b37d30cf2e925ea83cc6` / `071c1fad482c0b32260e7af206b0f21d43f881c3172cb35e6478c8643254a007`.
+- Revisit when: only after fresh v5 design and security reviews pass. Runtime implementation and a separate exact merged-main standing child remain required before credential access or provider contact.
+
 ## 2026-09-03 - Restore inherited Program 013 closeout, Git, disk, and child controls
 
 - Decision: preserve non-authorizing Program 013 proposal v3 as failed-review history and supersede it with prospective v4. Hold the exact Program 013 lock, Program 012 read-only lock, and inherited Git-policy snapshot through durable public-terminal persistence. Restore the 8 GiB value as an available working-space reservation, not a cumulative private-artifact cap. Require exact public key sets, private-terminal-to-public recovery, contiguous credential attempt/receipt evidence with a success receipt before transport, and the Program 012 operation-specific child capability ceiling.
