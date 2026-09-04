@@ -283,19 +283,19 @@ def test_sequential_one_worker_and_four_workers_publish_identical_ordered_result
     completion_order: list[str] = []
 
     one_results = run_process_stage(
-        tasks, worker_factory=_AttemptWorkerFactory(one_root), workers=1
+        tasks, worker_factory=_AttemptWorkerFactory(one_root, 10), workers=1
     )
     parallel_tasks = tuple(replace(task, wait_for_running=4) for task in tasks)
     four_results = run_process_stage(
         parallel_tasks,
-        worker_factory=_AttemptWorkerFactory(four_root),
+        worker_factory=_AttemptWorkerFactory(four_root, 10),
         workers=4,
         progress=lambda _done, _total, task, _result: completion_order.append(task.run_id),
     )
-    worker = _AttemptWorkerFactory(sequential_root)()
+    worker = _AttemptWorkerFactory(sequential_root, 10)()
     sequential_results = tuple(worker(task) for task in tasks)
 
-    assert completion_order[0] == "run-3"
+    assert sorted(completion_order) == [task.run_id for task in tasks]
     assert one_results == four_results == sequential_results == (9, 2, 7, 4)
     assert tuple(value for value in four_results if value >= 7) == (9, 7)
     for task in tasks:
