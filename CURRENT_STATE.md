@@ -1,25 +1,7 @@
 # Current state
 
-Program 014's recovery runtime and exact one-use child are merged on clean synchronized `main`, but
-execution is paused at the credential-restoration boundary. Program 013 and Program 012 remain terminal
-and immutable.
-
-- Program 014 current checkpoint, September 5, 2026: PR #265 merged at
-  `d81c09183ac3b3c48229205a9bf8f9034f6c69c9`; `HEAD`, `main`, and `origin/main` are synchronized and
-  clean. The branch differed from runtime-source commit `818a923349ec13b18ec6dc1743e1f136f56bcc8c`
-  by exactly the child authority and its independent review. Fresh independent review passed all 12
-  required challenges with no findings. Child SHA-256/fingerprint is
-  `561299d05ac40f41513d92a3076f0eaf789c861f9a17d442a3d34e6ef2a54e2a` /
-  `3b46ea5689db84cee4e069628574a117c23a2374deea02b2bcde1f6a48b3a4b4`; review SHA-256/fingerprint is
-  `b946917095f89a4d4c858a9df10658eda093ff6e1b917a5fed62fc9ea22e2061` /
-  `57cf2f12c069e0a2dbae9f8a758b4e282ceca2ebb93acdc3fd6dc1631d9e8a07`; derived child identity
-  fingerprint is `526cf757f999aa751c6dd60a18515eb65fbaaf7f60e88a943741ee6ed5378fd3`. The names-only
-  preflight ran once and reported `PROGRAM_006_ALPACA_API_KEY_ID` and
-  `PROGRAM_006_ALPACA_API_SECRET_KEY` absent from the current process. No credential value was loaded,
-  no provider request occurred, and no private Program 014 state, acquisition, admission, strategy
-  calculation, or strategy return occurred. The exact next action is to restore/export those existing
-  variables, rerun the names-only preflight, and proceed only if it passes. Disk cleanup remains complete
-  with approximately 144 GiB available. This is the standing mandate's human-attention credential boundary.
+Program 014's recovery runtime is implemented and reviewed but not authorized. Program 013 and
+Program 012 remain terminal and immutable.
 
 - Program 014, `multi-hour-sector-etf-research-013`, is `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.
   Read-only offline validation rederived Program 013's historical child identity, canonical private
@@ -70,9 +52,9 @@ and immutable.
   rejection before review output, and HTTP 429. The full suite reports 1,759 passed and four skipped;
   Ruff, mypy, secret, shell, wheel, and diff checks pass. Every current authority remains false. No
   credential presence or value, provider request, private Program 014 state, dataset admission,
-  strategy calculation, or strategy return was accessed. Historical next action: merge this exact runtime
-  binding, freeze clean synchronized main, then add and independently review only the exact one-use child
-  and its review before names-only credential preflight or provider contact.
+  strategy calculation, or strategy return was accessed. Next autonomous action: merge this exact
+  runtime binding, freeze clean synchronized main, then add and independently review only the exact
+  one-use child and its review before names-only credential preflight or provider contact.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use. The exact redacted public terminal binds runtime source commit

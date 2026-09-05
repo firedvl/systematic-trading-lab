@@ -140,12 +140,10 @@ credential or private-root access. A finding-free independent terminal review co
 terminal bytes and replay guard. Do not run Program 013 again. See
 [Program 013 exposed-prefix recovery](docs/program-013-exposed-prefix-recovery.md).
 
-Program 014's recovery runtime, exact one-use child authority, and finding-free independent child review
-are merged on clean synchronized `main` at `d81c09183ac3b3c48229205a9bf8f9034f6c69c9`. Its names-only
-credential preflight ran on September 5, 2026 and found both required environment-variable names absent
-from the process. No credential value or provider request occurred. Restore those existing variables before
-retrying the preflight; do not run the acquisition command until it passes. See
-[Program 014 exposed-prefix recovery](docs/program-014-exposed-prefix-recovery.md).
+Program 014's recovery runtime is implemented and independently reviewed, but it has no active child
+authority. Do not run its credential preflight or acquisition yet. The next gate is to merge the
+exact runtime binding, freeze clean synchronized main, then add and review only the one-use child and
+its review. See [Program 014 exposed-prefix recovery](docs/program-014-exposed-prefix-recovery.md).
 
 ## Using historical data
 

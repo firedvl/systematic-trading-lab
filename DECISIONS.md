@@ -1,24 +1,5 @@
 # Architecture decisions
 
-## 2026-09-05 - Pause Program 014 at the credential-restoration boundary
-
-- Decision: merge the exact one-use Program 014 child authority and its finding-free independent review,
-  then stop before runtime activation because the names-only preflight found both required credential
-  variable names absent from the current process.
-- Context: PR #265 merged at `d81c09183ac3b3c48229205a9bf8f9034f6c69c9` after two green CI workflows.
-  The fresh child review passed all 12 required challenges. The preflight reported only the names
-  `PROGRAM_006_ALPACA_API_KEY_ID` and `PROGRAM_006_ALPACA_API_SECRET_KEY`; no credential value was read
-  and no Alpaca request occurred.
-- Consequences: child SHA-256/fingerprint is
-  `561299d05ac40f41513d92a3076f0eaf789c861f9a17d442a3d34e6ef2a54e2a` /
-  `3b46ea5689db84cee4e069628574a117c23a2374deea02b2bcde1f6a48b3a4b4`; review SHA-256/fingerprint is
-  `b946917095f89a4d4c858a9df10658eda093ff6e1b917a5fed62fc9ea22e2061` /
-  `57cf2f12c069e0a2dbae9f8a758b4e282ceca2ebb93acdc3fd6dc1631d9e8a07`. All downstream and execution
-  authorities remain false. The exact next action is to restore/export the existing variables and rerun
-  the names-only preflight; do not run acquisition until it passes.
-- Revisit when: the required credential variables are visible in the execution environment, or the user
-  confirms they have been revoked and chooses a replacement credential path.
-
 ## 2026-09-05 - Freeze the Program 014 runtime implementation binding
 
 - Decision: bind the reviewed Program 014 v3 runtime to exact source commit/tree/root `e3c1e49e45c5c75c29feb050fb687ca4405ccc07` / `0a66061a785617c1d0475dd54a9f26bf03adcc7b` / `e5bff812bc2a47b349f56f8860ea350c61574bd209883e7edae88be8f463391c`. Keep every authority field false.
