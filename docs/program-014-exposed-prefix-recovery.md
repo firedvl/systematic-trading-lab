@@ -33,17 +33,38 @@ mypy, secret, shell, wheel, and diff checks pass.
 
 ## Current gate
 
-Do not run either command yet:
+The exact child authority and its finding-free independent review are merged on clean synchronized
+`main` at `d81c09183ac3b3c48229205a9bf8f9034f6c69c9`. The child artifact SHA-256/fingerprint is
+`561299d05ac40f41513d92a3076f0eaf789c861f9a17d442a3d34e6ef2a54e2a` /
+`3b46ea5689db84cee4e069628574a117c23a2374deea02b2bcde1f6a48b3a4b4`; the independent review
+artifact SHA-256/fingerprint is `b946917095f89a4d4c858a9df10658eda093ff6e1b917a5fed62fc9ea22e2061` /
+`57cf2f12c069e0a2dbae9f8a758b4e282ceca2ebb93acdc3fd6dc1631d9e8a07`. The review passed all 12
+required challenges with no findings. The derived child identity fingerprint is
+`526cf757f999aa751c6dd60a18515eb65fbaaf7f60e88a943741ee6ed5378fd3`.
+
+The names-only preflight ran on September 5, 2026 and reported both required environment-variable names
+missing from the current process:
+
+```text
+PROGRAM_006_ALPACA_API_KEY_ID
+PROGRAM_006_ALPACA_API_SECRET_KEY
+```
+
+No credential value was read and no provider request occurred. Credential restoration is the current
+human-attention boundary. After those existing variables are exported, retry only the names-only preflight:
 
 ```console
 uv run trading-lab data acquire program-014-ohlcv credential-preflight
+```
+
+When that preflight passes, the authorized runtime command is:
+
+```console
 uv run trading-lab data acquire program-014-ohlcv run
 ```
 
-The runtime binding must first merge to clean synchronized `main`. That exact main then becomes the
-child runtime source. Only the exact child authority and its independent review may be added before
-the names-only credential preflight. The public terminal digest remains intentionally unset until a
-separately reviewed post-run closeout binds the exact redacted terminal.
+The public terminal digest remains intentionally unset until a separately reviewed post-run closeout binds
+the exact redacted terminal.
 
 No credential presence or value, provider request, private Program 014 state, dataset admission,
 strategy calculation, or strategy return has occurred. Controlled or protected access, purchases,

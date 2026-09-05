@@ -175,6 +175,21 @@ Gate: merge this exact runtime binding, freeze clean synchronized main, add only
 its independent review, then run names-only credential preflight. No credential value, provider,
 private Program 014 state, acquisition, admission, or strategy action has occurred.
 
+Program 014 child-authority update, September 5, 2026: the exact one-use child and its independent
+finding-free review were added as the only two files after runtime-source commit
+`818a923349ec13b18ec6dc1743e1f136f56bcc8c` and merged at `d81c09183ac3b3c48229205a9bf8f9034f6c69c9`.
+The child enables only provider contact, credential access, source requests, market-data acquisition,
+and real-dataset admission; all strategy, qualification, controlled, protected, PAPER, broker, live,
+and purchase flags remain false. Child SHA-256/fingerprint is
+`561299d05ac40f41513d92a3076f0eaf789c861f9a17d442a3d34e6ef2a54e2a` /
+`3b46ea5689db84cee4e069628574a117c23a2374deea02b2bcde1f6a48b3a4b4`; review SHA-256/fingerprint is
+`b946917095f89a4d4c858a9df10658eda093ff6e1b917a5fed62fc9ea22e2061` /
+`57cf2f12c069e0a2dbae9f8a758b4e282ceca2ebb93acdc3fd6dc1631d9e8a07`. The names-only preflight then
+reported `PROGRAM_006_ALPACA_API_KEY_ID` and `PROGRAM_006_ALPACA_API_SECRET_KEY` missing from the
+current process. No credential value, provider request, private state, acquisition, admission, or
+strategy action occurred. Gate: restore/export those existing variables, rerun the names-only preflight,
+and proceed only if it passes; the missing credentials are the current human-attention boundary.
+
 Intraday Autonomous Research 001 fixed three successor mechanisms, 90 specifications per campaign, 270 total, and no Campaign 4. Campaign 1 completed 18 discovery runs and remained empty after an independently reviewed read-only reassessment. Campaign 2 completed 18 discovery runs; four parents had positive Normal and zero-cost returns, but every parent failed activity and participation-bucket concentration. Campaign 3 launched once from exact main `e74c5632529ef568b043428a251a1014e4f443de`. All 18 discovery specifications failed once at the inherited per-run plan-container boundary before bounded bar loading, strategy execution, or return observation. Campaign 3 is terminal and its Fed-policy hypothesis is unassessed. The program consumed 54 specifications and has no permitted campaign capacity. No serious cohort, controlled-qualified candidate, or intraday PAPER-ready candidate exists. Remaining infrastructure work includes root-cause evidence for the Exposed 005 lease-loss episodes and resumable long runs where needed. Gate: all attempted candidates and failures remain recorded; unsupported task envelopes fail closed; agents cannot alter protected controls or promote strategies.
 
 Campaign 3 terminal update: one exact four-worker launch from clean main
