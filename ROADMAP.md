@@ -125,6 +125,22 @@ Program 014 forensic update, September 4, 2026: read-only offline validation con
 
 Program 014 design update, September 4, 2026: proposal v1 keeps Program 012 and Program 013 roots immutable, uses a distinct Program 014 root, reuses only completed whole sessions, discards the incomplete Program 013 session/page, and permits the frontier request once with zero retry. The unchanged 22,176 combined-intent ceiling allows at most 22,174 combined responses because both predecessors left one consumed intent without a response. Automatic restart, relaunch, `launchctl submit`, KeepAlive, restart-on-exit, and process-manager retry are prohibited. Proposal SHA-256/fingerprint is `52a4a523eed878530fe5112b72ddabc5b839c2bbd479825cd9fb18ce5c03e6f9` / `7d9a136af9e868a73cf18497ee2db323429046ae1573be3843b9f774f302b27d`. Gate: fresh finding-free design and security review, then implementation and a separate reviewed child. No credential, provider, acquisition, admission, strategy, controlled/protected, PAPER, broker, live, or purchase authority exists.
 
+Program 014 design v2 update, September 4, 2026: proposal v1 failed independent review because
+its terminal contracts were not exact recursive schemas and the secret guard scanned JSON
+credential assignments one line at a time. Proposal v2 preserves all science, budgets, locks,
+zero-retry rules, and disabled authority while adapting Program 013's exact private/public terminal
+keys, branch values, assertions, pass-only control lineage, and missing/unknown-field rejection.
+`observed_at` is the sole public closeout timestamp; market, session, and request dates remain
+private. The whole-document JSON/JSONL credential scan and multiline regression are in place.
+Failed-review SHA-256/fingerprint is
+`3c8c5d53c657011905c0a49af3c34f0508a4b5116da8d95f42e02b790fc957ae` /
+`8481bf093e4a35221d32e44b4b6cd319f4335d6a15ce6e0460b3c53e515c5698`; v2 proposal
+SHA-256/fingerprint is
+`3a6f4f1d78400a94e6a16bf43abcd6587a938bf9a309aacfd7028575f8f9c2d1` /
+`fa86d332b58f182f0bd8488463a696268de0262ecfa82bb7b757ff00fa07283d`. Gate: fresh
+finding-free v2 design and security review before implementation. Every current authority remains
+false.
+
 Intraday Autonomous Research 001 fixed three successor mechanisms, 90 specifications per campaign, 270 total, and no Campaign 4. Campaign 1 completed 18 discovery runs and remained empty after an independently reviewed read-only reassessment. Campaign 2 completed 18 discovery runs; four parents had positive Normal and zero-cost returns, but every parent failed activity and participation-bucket concentration. Campaign 3 launched once from exact main `e74c5632529ef568b043428a251a1014e4f443de`. All 18 discovery specifications failed once at the inherited per-run plan-container boundary before bounded bar loading, strategy execution, or return observation. Campaign 3 is terminal and its Fed-policy hypothesis is unassessed. The program consumed 54 specifications and has no permitted campaign capacity. No serious cohort, controlled-qualified candidate, or intraday PAPER-ready candidate exists. Remaining infrastructure work includes root-cause evidence for the Exposed 005 lease-loss episodes and resumable long runs where needed. Gate: all attempted candidates and failures remain recorded; unsupported task envelopes fail closed; agents cannot alter protected controls or promote strategies.
 
 Campaign 3 terminal update: one exact four-worker launch from clean main

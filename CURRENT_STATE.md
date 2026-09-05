@@ -12,17 +12,21 @@ Program 014's prospective recovery proposal is frozen but not authorized. Progra
   now binds the Program 013 scientific contract, child authority and review, runtime commit/tree/root,
   public terminal, and exact cumulative transport ceiling. Its SHA-256 / fingerprint is
   `72f99f9fb3f46fc2b03e3c77085348085c2125652b57c9c7a4aa99a14d29366b` /
-  `7e59cc4e3657df1d3a658943b0fcf35ab97b90a388c26fd32d8077ac03810afb`. Proposal v1 keeps
-  both predecessor roots immutable, uses a distinct Program 014 root, reuses only completed whole
-  sessions, discards the incomplete Program 013 session/page, and permits one new frontier request
-  with zero retries. The unchanged 22,176-intent ceiling permits at most 22,174 combined responses
-  because Program 012 and Program 013 each left one consumed intent without a response. Automatic
-  restart, relaunch, `launchctl submit`, KeepAlive, restart-on-exit, and process-manager retry are
-  prohibited. Proposal SHA-256/fingerprint is
-  `52a4a523eed878530fe5112b72ddabc5b839c2bbd479825cd9fb18ce5c03e6f9` /
-  `7d9a136af9e868a73cf18497ee2db323429046ae1573be3843b9f774f302b27d`. Every current
-  authority remains false. Next autonomous action: obtain fresh finding-free design and security
-  review before implementation.
+  `7e59cc4e3657df1d3a658943b0fcf35ab97b90a388c26fd32d8077ac03810afb`. Proposal v1 preserved
+  both predecessor roots, the distinct Program 014 root, whole-session-only reuse, one frontier
+  request, zero retries, the 22,176-intent / 22,174-response ceiling, and the no-restart launcher
+  contract. Independent review rejected v1 because its private and public terminal schemas were not
+  exact recursive contracts and the shared secret guard could miss multiline JSON credential
+  assignments. Review SHA-256/fingerprint is
+  `3c8c5d53c657011905c0a49af3c34f0508a4b5116da8d95f42e02b790fc957ae` /
+  `8481bf093e4a35221d32e44b4b6cd319f4335d6a15ce6e0460b3c53e515c5698`. Proposal v2 preserves
+  the scientific and operational contract, freezes exact private and public top-level and nested
+  terminal keys and branch values, makes `observed_at` the sole public closeout timestamp, and binds
+  the repaired whole-document JSON/JSONL credential scan. V2 SHA-256/fingerprint is
+  `3a6f4f1d78400a94e6a16bf43abcd6587a938bf9a309aacfd7028575f8f9c2d1` /
+  `fa86d332b58f182f0bd8488463a696268de0262ecfa82bb7b757ff00fa07283d`. Every current authority
+  remains false. Next autonomous action: obtain fresh finding-free v2 design and security review
+  before implementation.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use. The exact redacted public terminal binds runtime source commit

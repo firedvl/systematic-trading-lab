@@ -1,0 +1,122 @@
+{
+  "schema_version": "program-014-exposed-prefix-recovery-design-and-security-independent-review-v1",
+  "review_id": "program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-04-v1",
+  "program_ordinal": 14,
+  "program_id": "multi-hour-sector-etf-research-013",
+  "status": "FAIL-FINDINGS-REQUIRE-PROSPECTIVE-CORRECTION",
+  "verdict": "FAIL",
+  "reviewed_source_commit": "1dbdad5a9be125b44e1ae4c62381a9e3be7b99a7",
+  "reviewed_proposal": {
+    "path": "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json",
+    "sha256": "52a4a523eed878530fe5112b72ddabc5b839c2bbd479825cd9fb18ce5c03e6f9",
+    "fingerprint": "7d9a136af9e868a73cf18497ee2db323429046ae1573be3843b9f774f302b27d"
+  },
+  "review_contexts": [
+    "FRESH-INDEPENDENT-DESIGN-AND-SCIENTIFIC-CONTROL-REVIEW",
+    "FRESH-INDEPENDENT-SECURITY-AND-AUTHORITY-BOUNDARY-REVIEW"
+  ],
+  "findings": [
+    {
+      "finding_id": "P014-V1-DESIGN-001",
+      "severity": "HIGH",
+      "summary": "The private and public terminal contracts did not freeze exact recursive schemas.",
+      "evidence": "Proposal v1 required canonical terminal bytes and broad redaction, but it did not enumerate exact private or public top-level and nested keys, exact branch semantics, exact public assertion values, or rejection of missing and unknown fields. It also broadly forbade dates while requiring public observed_at.",
+      "required_correction": "Preserve proposal v1, issue a prospective v2 that adapts Program 013's exact private and public terminal schemas and branch values, rejects missing or unknown top-level and nested fields before credentials or private roots, and states that observed_at is the sole allowed public closeout timestamp rather than market or request chronology."
+    },
+    {
+      "finding_id": "P014-V1-SECURITY-001",
+      "severity": "HIGH",
+      "summary": "The shared secret guard could miss a multiline JSON credential assignment.",
+      "evidence": "The JSON credential expression was applied one line at a time. A tracked JSON or JSONL document could place the credential name, colon, and assigned value on separate lines and bypass that check.",
+      "required_correction": "Apply the credential expression to the complete JSON or JSONL text, report the match's source line, and retain a focused multiline regression."
+    }
+  ],
+  "challenge_results": [
+    {
+      "challenge": "authority-boundaries",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "chronology",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential-confinement",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "git-provenance-integrity",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "missingness-rules",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "predecessor-immutability-and-toctou",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "private-data-leakage",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "public-terminal-redaction",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "request-budgets",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "restart-and-replay-safety",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "scientific-contract-preservation",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "source-assumptions",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "statistical-validity",
+      "verdict": "PASS"
+    }
+  ],
+  "design_review_result": {
+    "verdict": "FAIL",
+    "finding_ids": [
+      "P014-V1-DESIGN-001"
+    ],
+    "proof_gap": "Program 014 has no runtime, so exact terminal validation, projection, recovery, and revocation remain unproved."
+  },
+  "security_review_result": {
+    "verdict": "FAIL",
+    "finding_ids": [
+      "P014-V1-SECURITY-001"
+    ],
+    "proof_gap": "No credential values, private roots, provider transport, or runtime reachability were inspected."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "scope_limit": "The reviews made no credential access, provider request, private market-data read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Preserve proposal v1, repair the shared multiline JSON credential guard, issue prospective proposal v2 with exact recursive terminal contracts, and obtain fresh finding-free design and security reviews before implementation.",
+  "review_fingerprint": "8481bf093e4a35221d32e44b4b6cd319f4335d6a15ce6e0460b3c53e515c5698"
+}

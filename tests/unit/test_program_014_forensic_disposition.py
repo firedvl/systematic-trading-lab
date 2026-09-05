@@ -10,8 +10,14 @@ from systematic_trading_lab.fingerprints import fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _DISPOSITION = Path("config/research/program-014-predecessor-recovery-forensic-disposition-v1.json")
-_PROPOSAL = Path(
+_PROPOSAL_V1 = Path(
     "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
+)
+_PROPOSAL = Path(
+    "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json"
+)
+_TERMINAL = Path(
+    "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json"
 )
 
 
@@ -99,6 +105,20 @@ def test_program_014_proposal_is_bound_cumulative_nonrestarting_and_non_authoriz
     stored = proposal.pop("proposal_fingerprint")
     assert stored == fingerprint(proposal)
 
+    supersedes = proposal["supersedes"]
+    assert (
+        hashlib.sha256((_REPOSITORY / supersedes["path"]).read_bytes()).hexdigest()
+        == supersedes["sha256"]
+    )
+    correction = proposal["correction_basis"]
+    assert (
+        hashlib.sha256((_REPOSITORY / correction["path"]).read_bytes()).hexdigest()
+        == correction["sha256"]
+    )
+    review = _load(Path(correction["path"]))
+    assert correction["fingerprint"] == review["review_fingerprint"]
+    assert correction["resolved_findings"] == ["P014-V1-DESIGN-001", "P014-V1-SECURITY-001"]
+
     predecessor = proposal["predecessor"]
     for binding in predecessor.values():
         assert (
@@ -169,6 +189,31 @@ def test_program_014_proposal_is_bound_cumulative_nonrestarting_and_non_authoriz
     ):
         assert launch[key] is False
     assert launch["single_nonrestarting_process_required"] is True
+
+    private_terminal = proposal["private_terminal_contract"]
+    assert private_terminal["exact_top_level_and_private_evidence_key_set_equality_required"]
+    assert private_terminal["missing_or_unknown_top_level_or_private_evidence_keys_rejected"]
+    assert private_terminal["exact_static_values"] == {
+        "schema_version": "program-014-private-terminal-v1",
+        "program_id": "multi-hour-sector-etf-research-013",
+        "public_terminal_path": _TERMINAL.as_posix(),
+        "scientific_use_consumed": True,
+        "automatic_retries": 0,
+        "credentials_stored": False,
+        "program_002_admission": False,
+        "strategy_calculations": False,
+        "strategy_returns": False,
+    }
+
+    public_terminal = proposal["public_terminal_contract"]
+    assert public_terminal["exact_top_level_and_nested_key_set_equality_required"]
+    assert public_terminal["missing_or_unknown_top_level_or_nested_keys_rejected"]
+    assert public_terminal[
+        "observed_at_is_the_sole_public_timestamp_and_records_terminal_closeout_only"
+    ]
+    assert all(
+        value is False for value in public_terminal["disabled_authority_exact_value"].values()
+    )
     assert all(value is False for value in proposal["authority"].values())
 
 
@@ -184,11 +229,13 @@ def test_secret_guard_reserves_only_planned_program_014_public_artifacts(
     monkeypatch.chdir(tmp_path)
     reserved = (
         _DISPOSITION,
-        Path(
-            "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
-        ),
+        _PROPOSAL_V1,
+        _PROPOSAL,
         Path(
             "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json"
+        ),
+        Path(
+            "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v2.json"
         ),
         Path("config/research/program-014-exposed-prefix-runtime-implementation-v1.json"),
         Path(
@@ -197,9 +244,7 @@ def test_secret_guard_reserves_only_planned_program_014_public_artifacts(
         Path(
             "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json"
         ),
-        Path(
-            "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json"
-        ),
+        _TERMINAL,
         Path(
             "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1.json"
         ),

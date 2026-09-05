@@ -156,5 +156,18 @@ automatic restart, relaunch, `launchctl submit`, KeepAlive, restart-on-exit, and
 retry. Its SHA-256/fingerprint is
 `52a4a523eed878530fe5112b72ddabc5b839c2bbd479825cd9fb18ce5c03e6f9` /
 `7d9a136af9e868a73cf18497ee2db323429046ae1573be3843b9f774f302b27d`.
-It grants no authority and requires fresh finding-free design and security review before
-implementation.
+It grants no authority. Independent review rejected v1 because it did not freeze exact recursive
+private and public terminal schemas and because the shared secret guard could miss a multiline JSON
+credential assignment. Review SHA-256/fingerprint is
+`3c8c5d53c657011905c0a49af3c34f0508a4b5116da8d95f42e02b790fc957ae` /
+`8481bf093e4a35221d32e44b4b6cd319f4335d6a15ce6e0460b3c53e515c5698`.
+
+Proposal v2 preserves the source, chronology, pagination, budget, missingness, admission, and
+authority contract. It adapts Program 013's exact private and public terminal key sets, branch
+values, public assertions, pass-only control lineage, and missing/unknown-field rejection. It makes
+`observed_at` the sole public closeout timestamp and keeps market, session, and request dates
+private. The shared secret guard now scans complete JSON and JSONL documents and has a multiline
+regression. V2 SHA-256/fingerprint is
+`3a6f4f1d78400a94e6a16bf43abcd6587a938bf9a309aacfd7028575f8f9c2d1` /
+`fa86d332b58f182f0bd8488463a696268de0262ecfa82bb7b757ff00fa07283d`.
+It requires fresh finding-free v2 design and security review before implementation.

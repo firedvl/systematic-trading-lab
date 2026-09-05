@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-04 - Correct Program 014 terminal schemas and multiline secret scanning
+
+- Decision: preserve non-authorizing Program 014 proposal v1 as failed-review history and supersede it with prospective v2. Adapt Program 013's exact private and public terminal key sets, branch values, public assertions, pass-only control lineage, missing/unknown-field rejection, and private-terminal recovery. Treat `observed_at` as the sole public closeout timestamp; keep market, session, and request dates private. Scan complete JSON and JSONL documents for multiline Program credential assignments.
+- Context: independent review found that v1's broad canonical/redaction rules allowed an expanded terminal schema and contradicted its required public `observed_at`. A separate security review showed that line-by-line JSON scanning missed assignments split across lines.
+- Consequences: failed-review v1 SHA-256/fingerprint is `3c8c5d53c657011905c0a49af3c34f0508a4b5116da8d95f42e02b790fc957ae` / `8481bf093e4a35221d32e44b4b6cd319f4335d6a15ce6e0460b3c53e515c5698`. Proposal v2 SHA-256/fingerprint is `3a6f4f1d78400a94e6a16bf43abcd6587a938bf9a309aacfd7028575f8f9c2d1` / `fa86d332b58f182f0bd8488463a696268de0262ecfa82bb7b757ff00fa07283d`. The multiline secret fix is commit `20dd5ea`. No source, chronology, budget, missingness, admission, strategy, or authority rule changed.
+- Revisit when: only after fresh finding-free v2 design and security review. Runtime implementation, merge, and a separate reviewed child remain required before credential presence or provider contact.
+
 ## 2026-09-04 - Freeze Program 014 as a non-restarting three-root recovery
 
 - Decision: inherit Program 013 proposal v5 without changing its source, chronology, pagination, missingness, admission, privacy, or no-strategy rules. Keep Program 012 and Program 013 roots immutable and read-only, use one distinct Program 014 root, reuse only completed whole sessions, discard the incomplete Program 013 session/page, and issue the frontier once under a later reviewed child.
