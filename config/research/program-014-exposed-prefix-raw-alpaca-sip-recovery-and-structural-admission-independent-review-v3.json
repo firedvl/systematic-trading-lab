@@ -1,0 +1,121 @@
+{
+  "schema_version": "program-014-exposed-prefix-recovery-design-and-security-independent-review-v3",
+  "review_id": "program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-04-v3",
+  "program_ordinal": 14,
+  "program_id": "multi-hour-sector-etf-research-013",
+  "status": "PASS-FINDING-FREE-PROSPECTIVE-DESIGN-AND-SECURITY-REVIEW",
+  "verdict": "PASS",
+  "reviewed_source_commit": "07899b4846ad646f87640f3b385c41116f2c52cc",
+  "reviewed_proposal": {
+    "path": "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json",
+    "sha256": "bdd2cdefd3f89f513fc19087d4a6191ad8e8cfbd891d77172de6736865425d1e",
+    "fingerprint": "e3969f650dd0bee166793c10c76e85dae81b25e9f4402dd02c2b1a1fc8e0a442"
+  },
+  "review_contexts": [
+    "FRESH-INDEPENDENT-DESIGN-AND-SCIENTIFIC-CONTROL-REVIEW",
+    "FRESH-INDEPENDENT-SECURITY-AND-AUTHORITY-BOUNDARY-REVIEW"
+  ],
+  "findings": [],
+  "challenge_results": [
+    {
+      "challenge": "authority-boundaries",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "chronology",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential-confinement",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "git-provenance-integrity",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "missingness-rules",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "predecessor-immutability-and-toctou",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "private-data-leakage",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "public-terminal-redaction",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "request-budgets",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "restart-and-replay-safety",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "scientific-contract-preservation",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "source-assumptions",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "statistical-validity",
+      "verdict": "PASS"
+    }
+  ],
+  "design_review_result": {
+    "verdict": "PASS",
+    "findings": [],
+    "resolved_finding": "P014-V2-DESIGN-001",
+    "evidence": "Proposal v3 preserves proposal v2's scientific, source, chronology, pagination, missingness, admission, budget, lock, retry, privacy, terminal, and authority contracts while changing both private strategy work counts to exact JSON integer zero and requiring type(value) is int before equality.",
+    "proof_gap": "Program 014 has no runtime, so exact integer field validation, lock lifetime, crash recovery, and terminal enforcement remain unproved until implementation and focused tests exist."
+  },
+  "security_review_result": {
+    "verdict": "PASS",
+    "findings": [],
+    "resolved_finding": "P014-V2-SECURITY-001",
+    "evidence": "The shared secret guard recursively inspects decoded JSON mappings and sequences and every nonblank JSONL record, retains malformed-document raw-text detection, and passes escaped-key JSON and JSONL regressions plus the 708-file repository secret scan.",
+    "proof_gap": "Program 014 has no runtime or standing child, so later runtime reachability and credential-boundary enforcement remain unvalidated."
+  },
+  "verification": {
+    "proposal_sha256_revalidated": true,
+    "proposal_fingerprint_revalidated": true,
+    "failed_review_v2_sha256_revalidated": true,
+    "failed_review_v2_fingerprint_revalidated": true,
+    "v2_v3_contract_difference_limited_to_recorded_corrections": true,
+    "strategy_calculation_count_is_exact_integer_zero": true,
+    "strategy_return_count_is_exact_integer_zero": true,
+    "decoded_json_and_jsonl_key_scan_present": true,
+    "escaped_key_regressions_passed": true,
+    "focused_tests_passed": 5,
+    "repository_secret_scan_files_passed": 708,
+    "current_authority_flags_false": true
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "scope_limit": "The independent reviews made no credential access, provider request, private market-data read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Implement and test the exact Program 014 recovery runtime, merge it, then freeze and independently review a separate one-use standing child before credential access or provider contact.",
+  "review_fingerprint": "a6c6720d40dfe020b5c4a02d3dc987bc0fd44d8e5ebf104e66efc43a5d8b9a1a"
+}

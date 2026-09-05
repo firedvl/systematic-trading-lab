@@ -133,3 +133,60 @@ scan, shell syntax, package build, provenance, and Git checks pass.
 Program 013's authority is consumed and its independent terminal review is finding-free. The closeout
 must merge before Program 014 planning proceeds. No Program 013 credential check, provider contact,
 acquisition, admission, or strategy operation may run again.
+
+## Program 014 forensic disposition
+
+Read-only offline validation rederived the historical Program 013 child identity, canonical private
+terminal, exact public projection, and retained page sequence. Program 012 plus Program 013 evidence
+forms an exact completed whole-session prefix followed by one intent-only page frontier. No body,
+receipt, HTTP status, parsed missingness, data-quality outcome, partial response, or later evidence
+exists at that frontier. Structural admission was not evaluated; no dataset or strategy work exists.
+
+The corrected redacted disposition binds the exact Program 013 scientific contract, child authority
+and review, runtime commit/tree/root, public terminal, and inherited transport budget. Its SHA-256 /
+fingerprint is `72f99f9fb3f46fc2b03e3c77085348085c2125652b57c9c7a4aa99a14d29366b` /
+`7e59cc4e3657df1d3a658943b0fcf35ab97b90a388c26fd32d8077ac03810afb`.
+
+Program 014 proposal v1 keeps both predecessor roots immutable and read-only, uses the distinct
+`.trading-lab/program-014-exposed-prefix-raw-alpaca-sip-v1` root, reuses only completed whole
+sessions, discards the incomplete Program 013 session/page, and permits the frontier request once
+under a later reviewed child. Programs 012 and 013 each left one consumed intent without a response,
+so the unchanged 22,176-intent ceiling permits at most 22,174 combined responses. The proposal bans
+automatic restart, relaunch, `launchctl submit`, KeepAlive, restart-on-exit, and process-manager
+retry. Its SHA-256/fingerprint is
+`52a4a523eed878530fe5112b72ddabc5b839c2bbd479825cd9fb18ce5c03e6f9` /
+`7d9a136af9e868a73cf18497ee2db323429046ae1573be3843b9f774f302b27d`.
+It grants no authority. Independent review rejected v1 because it did not freeze exact recursive
+private and public terminal schemas and because the shared secret guard could miss a multiline JSON
+credential assignment. Review SHA-256/fingerprint is
+`3c8c5d53c657011905c0a49af3c34f0508a4b5116da8d95f42e02b790fc957ae` /
+`8481bf093e4a35221d32e44b4b6cd319f4335d6a15ce6e0460b3c53e515c5698`.
+
+Proposal v2 preserves the source, chronology, pagination, budget, missingness, admission, and
+authority contract. It adapts Program 013's exact private and public terminal key sets, branch
+values, public assertions, pass-only control lineage, and missing/unknown-field rejection. It makes
+`observed_at` the sole public closeout timestamp and keeps market, session, and request dates
+private. The shared secret guard now scans complete JSON and JSONL documents and has a multiline
+regression. V2 SHA-256/fingerprint is
+`3a6f4f1d78400a94e6a16bf43abcd6587a938bf9a309aacfd7028575f8f9c2d1` /
+`fa86d332b58f182f0bd8488463a696268de0262ecfa82bb7b757ff00fa07283d`.
+Fresh review rejected v2 because the private strategy count fields were booleans and the raw-text
+guard did not detect escaped JSON credential keys. Failed-review SHA-256/fingerprint is
+`13b0588e45e2e996087a21d7d8afc81c64368384f73f60f3e45024f0202f7e3b` /
+`ff9e8b091ef598d922bd064c34c227dae47f915c65a4fa0f2dcd6ebffcef5d41`. V2 remains
+non-authorizing failed-review history.
+
+Proposal v3 preserves all v2 scientific, budget, lock, retry, privacy, terminal, and authority
+controls. It fixes `strategy_calculations` and `strategy_returns` to exact integer zero and requires
+the future runtime validator to check `type(value) is int` before zero equality. The shared secret
+guard now recursively scans decoded object keys in JSON and every nonblank JSONL record, so escaped
+credential names fail; its raw-text fallback still covers malformed documents with literal names.
+Escaped-key JSON and JSONL regressions pass. V3 SHA-256/fingerprint is
+`bdd2cdefd3f89f513fc19087d4a6191ad8e8cfbd891d77172de6736865425d1e` /
+`e3969f650dd0bee166793c10c76e85dae81b25e9f4402dd02c2b1a1fc8e0a442`. Fresh independent design
+and security reviews of exact source commit `07899b4846ad646f87640f3b385c41116f2c52cc` passed
+without findings. Combined review SHA-256/fingerprint is
+`c34bd327fd065dee1eb93f0c631f0df2dfa2f85d9cbb72195ff4c9da71b93e98` /
+`a6c6720d40dfe020b5c4a02d3dc987bc0fd44d8e5ebf104e66efc43a5d8b9a1a`. The next step is to
+implement and test the exact Program 014 runtime, merge it, then freeze and independently review a
+separate one-use standing child before credential access or provider contact.

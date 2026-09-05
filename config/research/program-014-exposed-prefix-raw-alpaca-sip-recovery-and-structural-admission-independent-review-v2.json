@@ -1,0 +1,122 @@
+{
+  "schema_version": "program-014-exposed-prefix-recovery-design-and-security-independent-review-v2",
+  "review_id": "program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-05-v2",
+  "program_ordinal": 14,
+  "program_id": "multi-hour-sector-etf-research-013",
+  "status": "FAIL-FINDINGS-REQUIRE-PROSPECTIVE-CORRECTION",
+  "verdict": "FAIL",
+  "reviewed_source_commit": "3cdbe266daa4745760a837d279b11025051f4984",
+  "reviewed_proposal": {
+    "path": "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json",
+    "sha256": "3a6f4f1d78400a94e6a16bf43abcd6587a938bf9a309aacfd7028575f8f9c2d1",
+    "fingerprint": "fa86d332b58f182f0bd8488463a696268de0262ecfa82bb7b757ff00fa07283d"
+  },
+  "review_contexts": [
+    "FRESH-INDEPENDENT-DESIGN-AND-SCIENTIFIC-CONTROL-REVIEW",
+    "FRESH-INDEPENDENT-SECURITY-AND-AUTHORITY-BOUNDARY-REVIEW"
+  ],
+  "findings": [
+    {
+      "finding_id": "P014-V2-DESIGN-001",
+      "severity": "MEDIUM",
+      "summary": "The private terminal contract encoded strategy work counts as booleans.",
+      "evidence": "Proposal v2 fixed strategy_calculations and strategy_returns to false even though the inherited private terminal records both fields as integer counts with value zero. Python also treats False as equal to zero, so a validator that checks equality alone does not enforce the exact count type.",
+      "required_correction": "Preserve proposal v2, issue a prospective v3 that fixes both fields to integer zero, and require the future runtime validator to check type(value) is int before equality with zero."
+    },
+    {
+      "finding_id": "P014-V2-SECURITY-001",
+      "severity": "HIGH",
+      "summary": "Escaped JSON credential keys bypassed the shared secret guard.",
+      "evidence": "The guard searched raw JSON text for literal credential names. A valid key such as PROGRAM\\u005f014_ALPACA_API_KEY_ID decodes to a prohibited name but did not match the raw expression, so an allowlisted public JSON artifact could pass the repository check with a credential value.",
+      "required_correction": "Recursively inspect decoded object keys in valid JSON and every nonblank JSONL record, retain the raw-text fallback for malformed input, and add escaped-key JSON and JSONL regressions."
+    }
+  ],
+  "challenge_results": [
+    {
+      "challenge": "authority-boundaries",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "chronology",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential-confinement",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "git-provenance-integrity",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "missingness-rules",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "predecessor-immutability-and-toctou",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "private-data-leakage",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "public-terminal-redaction",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "request-budgets",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "restart-and-replay-safety",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "scientific-contract-preservation",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "source-assumptions",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "statistical-validity",
+      "verdict": "PASS"
+    }
+  ],
+  "design_review_result": {
+    "verdict": "FAIL",
+    "finding_ids": [
+      "P014-V2-DESIGN-001"
+    ],
+    "proof_gap": "Program 014 has no runtime, so exact integer field validation and terminal enforcement remain unproved."
+  },
+  "security_review_result": {
+    "verdict": "FAIL",
+    "finding_ids": [
+      "P014-V2-SECURITY-001"
+    ],
+    "proof_gap": "The review used synthetic public files only and made no credential access, provider request, or private-root read."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "scope_limit": "The reviews made no credential access, provider request, private market-data read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Preserve proposal v2, repair decoded JSON and JSONL credential-key detection, issue prospective proposal v3 with exact integer-zero strategy counts, and obtain fresh finding-free design and security reviews before implementation.",
+  "review_fingerprint": "ff9e8b091ef598d922bd064c34c227dae47f915c65a4fa0f2dcd6ebffcef5d41"
+}

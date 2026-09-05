@@ -1,5 +1,40 @@
 # Architecture decisions
 
+## 2026-09-04 - Accept Program 014 proposal v3 for runtime implementation
+
+- Decision: accept the finding-free independent design and security reviews of Program 014 proposal v3 at exact source commit `07899b4846ad646f87640f3b385c41116f2c52cc`. Preserve the frozen proposal unchanged and proceed to a separate runtime implementation before any child authority or external action.
+- Context: the design review revalidated v3's SHA-256 and fingerprint, the failed v2 review binding, the exact integer-zero count correction, and the unchanged scientific and authority contract. The security review revalidated recursive decoded JSON/JSONL key scanning, malformed-document fallback, escaped-key regressions, and the 708-file secret scan.
+- Consequences: combined review SHA-256/fingerprint is `c34bd327fd065dee1eb93f0c631f0df2dfa2f85d9cbb72195ff4c9da71b93e98` / `a6c6720d40dfe020b5c4a02d3dc987bc0fd44d8e5ebf104e66efc43a5d8b9a1a`. No credential access, provider contact, acquisition, admission, strategy work, controlled/protected access, purchase, PAPER action, broker write, or live action occurred.
+- Revisit when: the exact runtime and focused tests are ready for independent implementation review. The runtime must merge before a separate child authority is frozen.
+
+## 2026-09-04 - Enforce Program 014 count types and decoded credential keys
+
+- Decision: preserve Program 014 proposal v2 as failed-review history and supersede it with prospective v3. Require `strategy_calculations` and `strategy_returns` to be integer zero in the private terminal, with `type(value) is int` checked before zero equality. Recursively inspect decoded JSON and JSONL object keys for Program credential names while retaining raw-text detection for malformed documents.
+- Context: fresh design review found that v2 encoded count fields as booleans and that Python equality alone accepts `False == 0`. Fresh security review proved that a key such as `PROGRAM\\u005f014_ALPACA_API_KEY_ID` decoded to a prohibited name but bypassed the literal raw-text expression.
+- Consequences: failed-review v2 SHA-256/fingerprint is `13b0588e45e2e996087a21d7d8afc81c64368384f73f60f3e45024f0202f7e3b` / `ff9e8b091ef598d922bd064c34c227dae47f915c65a4fa0f2dcd6ebffcef5d41`. Proposal v3 SHA-256/fingerprint is `bdd2cdefd3f89f513fc19087d4a6191ad8e8cfbd891d77172de6736865425d1e` / `e3969f650dd0bee166793c10c76e85dae81b25e9f4402dd02c2b1a1fc8e0a442`. Five focused tests pass under background scheduling. No source, chronology, budget, missingness, admission, strategy, or authority rule changed.
+- Revisit when: during the separately reviewed runtime implementation. Merge and a separate reviewed child remain required before credential presence or provider contact.
+
+## 2026-09-04 - Correct Program 014 terminal schemas and multiline secret scanning
+
+- Decision: preserve non-authorizing Program 014 proposal v1 as failed-review history and supersede it with prospective v2. Adapt Program 013's exact private and public terminal key sets, branch values, public assertions, pass-only control lineage, missing/unknown-field rejection, and private-terminal recovery. Treat `observed_at` as the sole public closeout timestamp; keep market, session, and request dates private. Scan complete JSON and JSONL documents for multiline Program credential assignments.
+- Context: independent review found that v1's broad canonical/redaction rules allowed an expanded terminal schema and contradicted its required public `observed_at`. A separate security review showed that line-by-line JSON scanning missed assignments split across lines.
+- Consequences: failed-review v1 SHA-256/fingerprint is `3c8c5d53c657011905c0a49af3c34f0508a4b5116da8d95f42e02b790fc957ae` / `8481bf093e4a35221d32e44b4b6cd319f4335d6a15ce6e0460b3c53e515c5698`. Proposal v2 SHA-256/fingerprint is `3a6f4f1d78400a94e6a16bf43abcd6587a938bf9a309aacfd7028575f8f9c2d1` / `fa86d332b58f182f0bd8488463a696268de0262ecfa82bb7b757ff00fa07283d`. The multiline secret fix is commit `20dd5ea`. No source, chronology, budget, missingness, admission, strategy, or authority rule changed.
+- Revisit when: only after fresh finding-free v2 design and security review. Runtime implementation, merge, and a separate reviewed child remain required before credential presence or provider contact.
+
+## 2026-09-04 - Freeze Program 014 as a non-restarting three-root recovery
+
+- Decision: inherit Program 013 proposal v5 without changing its source, chronology, pagination, missingness, admission, privacy, or no-strategy rules. Keep Program 012 and Program 013 roots immutable and read-only, use one distinct Program 014 root, reuse only completed whole sessions, discard the incomplete Program 013 session/page, and issue the frontier once under a later reviewed child.
+- Context: Programs 012 and 013 each consumed one request intent without a response. Under the unchanged 22,176 combined-intent ceiling, Program 014 therefore has a maximum effective combined response envelope of 22,174. Automatic restart, relaunch, `launchctl submit`, KeepAlive, restart-on-exit, and process-manager retry would turn one-use recovery into replay risk and are prohibited.
+- Consequences: proposal v1 SHA-256/fingerprint is `52a4a523eed878530fe5112b72ddabc5b839c2bbd479825cd9fb18ce5c03e6f9` / `7d9a136af9e868a73cf18497ee2db323429046ae1573be3843b9f774f302b27d`. The proposal grants no provider, credential, source-request, acquisition, admission, strategy, controlled/protected, purchase, PAPER, broker, or live authority. The shared secret guard now rejects Alpaca credential assignments for any three-digit Program ordinal, including allowlisted public JSON.
+- Revisit when: only after fresh finding-free design and security review. Implementation, merge, and a separate exact reviewed child remain required before credential presence or provider contact.
+
+## 2026-09-04 - Recover only Program 013's completed whole-session prefix
+
+- Decision: keep Program 012 and Program 013 terminal and immutable. Permit a prospective Program 014 to reuse only the locally revalidated completed whole-session prefix and to issue the intent-only page frontier once under a new reviewed child. Discard the incomplete Program 013 session and page; never request any completed predecessor page again.
+- Context: read-only private forensics revalidated the historical Program 013 child identity, canonical private terminal, exact reviewed public projection, completed-prefix replay, one intent-only frontier, and no later evidence. Independent review required public bindings for the exact child/review, runtime source, scientific contract, and inherited budget, and found that the secret guard did not recognize Program 014 credential names.
+- Consequences: the corrected forensic disposition binds those artifacts and the exact 22,176-intent / 22,174-response accounting. Its SHA-256/fingerprint is `72f99f9fb3f46fc2b03e3c77085348085c2125652b57c9c7a4aa99a14d29366b` / `7e59cc4e3657df1d3a658943b0fcf35ab97b90a388c26fd32d8077ac03810afb`. Program 014 must use a distinct private root, cumulative Program 012 plus Program 013 plus Program 014 budgets, zero retries, and a launch contract that cannot restart or relaunch automatically. No provider, credential, acquisition, admission, strategy, controlled/protected, purchase, PAPER, broker, or live authority exists yet.
+- Revisit when: after prospective Program 014 design, independent review, implementation, merge, and a separately reviewed child. Never revisit Program 012 or Program 013 replay.
+
 ## 2026-09-04 - Program 013 terminal evidence is immutable and revokes every entrypoint
 
 - Decision: commit only Program 013's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, activation, loading, execution, or private-root access.

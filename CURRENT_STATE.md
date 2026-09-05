@@ -1,7 +1,46 @@
 # Current state
 
-Program 013's terminal result is current. Earlier Program 013 planning and implementation state is
-preserved below as historical context. Program 012 remains terminal and immutable.
+Program 014's prospective recovery proposal is frozen but not authorized. Program 013 and Program
+012 remain terminal and immutable.
+
+- Program 014, `multi-hour-sector-etf-research-013`, is `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
+  Read-only offline validation rederived Program 013's historical child identity, canonical private
+  terminal, and exact public projection. Retained Program 012 plus Program 013 evidence forms a
+  completed whole-session prefix followed by one intent-only page frontier with no body, receipt,
+  HTTP status, parsed missingness, data-quality outcome, or later evidence. Structural admission was
+  not evaluated and no dataset or strategy work exists. The corrected redacted forensic disposition
+  now binds the Program 013 scientific contract, child authority and review, runtime commit/tree/root,
+  public terminal, and exact cumulative transport ceiling. Its SHA-256 / fingerprint is
+  `72f99f9fb3f46fc2b03e3c77085348085c2125652b57c9c7a4aa99a14d29366b` /
+  `7e59cc4e3657df1d3a658943b0fcf35ab97b90a388c26fd32d8077ac03810afb`. Proposal v1 preserved
+  both predecessor roots, the distinct Program 014 root, whole-session-only reuse, one frontier
+  request, zero retries, the 22,176-intent / 22,174-response ceiling, and the no-restart launcher
+  contract. Independent review rejected v1 because its private and public terminal schemas were not
+  exact recursive contracts and the shared secret guard could miss multiline JSON credential
+  assignments. Review SHA-256/fingerprint is
+  `3c8c5d53c657011905c0a49af3c34f0508a4b5116da8d95f42e02b790fc957ae` /
+  `8481bf093e4a35221d32e44b4b6cd319f4335d6a15ce6e0460b3c53e515c5698`. Proposal v2 preserved
+  the scientific and operational contract, froze exact private and public top-level and nested
+  terminal keys and branch values, and made `observed_at` the sole public closeout timestamp. V2
+  SHA-256/fingerprint is
+  `3a6f4f1d78400a94e6a16bf43abcd6587a938bf9a309aacfd7028575f8f9c2d1` /
+  `fa86d332b58f182f0bd8488463a696268de0262ecfa82bb7b757ff00fa07283d`. Fresh review rejected v2
+  because its private strategy count fields were booleans and escaped JSON credential keys bypassed
+  the raw-text guard. Failed-review SHA-256/fingerprint is
+  `13b0588e45e2e996087a21d7d8afc81c64368384f73f60f3e45024f0202f7e3b` /
+  `ff9e8b091ef598d922bd064c34c227dae47f915c65a4fa0f2dcd6ebffcef5d41`. Proposal v3 fixes both
+  strategy fields to exact integer zero with a required `type(value) is int` runtime check. The
+  shared guard now recursively checks decoded JSON and JSONL keys while retaining its malformed-text
+  fallback. V3 SHA-256/fingerprint is
+  `bdd2cdefd3f89f513fc19087d4a6191ad8e8cfbd891d77172de6736865425d1e` /
+  `e3969f650dd0bee166793c10c76e85dae81b25e9f4402dd02c2b1a1fc8e0a442`. Fresh independent design
+  and security reviews of exact source commit `07899b4846ad646f87640f3b385c41116f2c52cc` passed
+  without findings. Combined review SHA-256/fingerprint is
+  `c34bd327fd065dee1eb93f0c631f0df2dfa2f85d9cbb72195ff4c9da71b93e98` /
+  `a6c6720d40dfe020b5c4a02d3dc987bc0fd44d8e5ebf104e66efc43a5d8b9a1a`. Every current authority
+  remains false. Next autonomous action: implement and test the exact Program 014 runtime, merge it,
+  then freeze and independently review the separate one-use standing child before credential access
+  or provider contact.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use. The exact redacted public terminal binds runtime source commit
@@ -18,8 +57,7 @@ preserved below as historical context. Program 012 remains terminal and immutabl
   execution remained disabled. The finding-free independent terminal review artifact has SHA-256
   `ac22344cdf031ee3df7b5eeae0448887b2140603f9b0af8193a296e82238a010` and fingerprint
   `37dfee69e0cd43a2588e397fbec22d59656de61d12cff189368862cab87195f4`. Next autonomous
-  action: merge the closeout, publish the redacted Program 014 forensic disposition, and freeze a
-  prospective successor only from the validated completed prefix and intent-only frontier.
+  action: keep Program 013 closed while Program 014's reviewed prospective runtime is implemented.
 
 - Historical Program 013 planning snapshot: `multi-hour-sector-etf-research-012` was
   `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.

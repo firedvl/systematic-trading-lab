@@ -121,6 +121,43 @@ Program 012 terminal update, September 2, 2026: the reviewed standing child acti
 
 Program 013 terminal update, September 4, 2026: `multi-hour-sector-etf-research-012` is `FAIL-CONSUMED-NO-RETRY`. The reviewed child sealed a redacted `RUNTIME-FAILURE` with `admission_passed=false`, no dataset lineage, no Program 002 admission, and no strategy calculation or return. Public terminal SHA-256 is `7e4d148b7a20122cdb5fde21f6f8d70493cfd5772a527aa42a3c127c067f56ee`; authority fingerprint is `b424096aabf9aaec0ad6282db9c8d5b291c405dde551377c584a3cbf063a9916`; source commit is `71b8a66dc8ea1f70673456f4bfe34561d05b6891`. Current closeout code requires the exact terminal and rejects every lifecycle entrypoint before credentials or private roots. Program 013 cannot replay or retry. Finding-free independent terminal review SHA-256/fingerprint is `ac22344cdf031ee3df7b5eeae0448887b2140603f9b0af8193a296e82238a010` / `37dfee69e0cd43a2588e397fbec22d59656de61d12cff189368862cab87195f4`. Gate: green CI and merge; then publish the redacted Program 014 forensic disposition and freeze a new reviewed successor without changing the inherited science.
 
+Program 014 forensic update, September 4, 2026: read-only offline validation confirmed that Program 012 plus Program 013 retained evidence is an exact completed whole-session prefix followed by one intent-only page frontier with no body, receipt, HTTP status, parsed missingness, data-quality outcome, or later evidence. Program 013 remains immutable and cannot replay. The corrected redacted disposition binds the exact Program 013 scientific contract, child/review, runtime source, terminal, and inherited cumulative budget. Its SHA-256/fingerprint is `72f99f9fb3f46fc2b03e3c77085348085c2125652b57c9c7a4aa99a14d29366b` / `7e59cc4e3657df1d3a658943b0fcf35ab97b90a388c26fd32d8077ac03810afb`.
+
+Program 014 design update, September 4, 2026: proposal v1 keeps Program 012 and Program 013 roots immutable, uses a distinct Program 014 root, reuses only completed whole sessions, discards the incomplete Program 013 session/page, and permits the frontier request once with zero retry. The unchanged 22,176 combined-intent ceiling allows at most 22,174 combined responses because both predecessors left one consumed intent without a response. Automatic restart, relaunch, `launchctl submit`, KeepAlive, restart-on-exit, and process-manager retry are prohibited. Proposal SHA-256/fingerprint is `52a4a523eed878530fe5112b72ddabc5b839c2bbd479825cd9fb18ce5c03e6f9` / `7d9a136af9e868a73cf18497ee2db323429046ae1573be3843b9f774f302b27d`. Gate: fresh finding-free design and security review, then implementation and a separate reviewed child. No credential, provider, acquisition, admission, strategy, controlled/protected, PAPER, broker, live, or purchase authority exists.
+
+Program 014 design v2 update, September 4, 2026: proposal v1 failed independent review because
+its terminal contracts were not exact recursive schemas and the secret guard scanned JSON
+credential assignments one line at a time. Proposal v2 preserves all science, budgets, locks,
+zero-retry rules, and disabled authority while adapting Program 013's exact private/public terminal
+keys, branch values, assertions, pass-only control lineage, and missing/unknown-field rejection.
+`observed_at` is the sole public closeout timestamp; market, session, and request dates remain
+private. The whole-document JSON/JSONL credential scan and multiline regression are in place.
+Failed-review SHA-256/fingerprint is
+`3c8c5d53c657011905c0a49af3c34f0508a4b5116da8d95f42e02b790fc957ae` /
+`8481bf093e4a35221d32e44b4b6cd319f4335d6a15ce6e0460b3c53e515c5698`; v2 proposal
+SHA-256/fingerprint is
+`3a6f4f1d78400a94e6a16bf43abcd6587a938bf9a309aacfd7028575f8f9c2d1` /
+`fa86d332b58f182f0bd8488463a696268de0262ecfa82bb7b757ff00fa07283d`. Fresh review then found
+that the private strategy work counts used booleans instead of integers and valid escaped JSON keys
+could bypass the credential guard. V2 remains non-authorizing failed-review history.
+
+Program 014 design v3 update, September 4, 2026 PDT (September 5 UTC): failed-review v2 SHA-256/fingerprint is
+`13b0588e45e2e996087a21d7d8afc81c64368384f73f60f3e45024f0202f7e3b` /
+`ff9e8b091ef598d922bd064c34c227dae47f915c65a4fa0f2dcd6ebffcef5d41`. Proposal v3 preserves
+all v2 science and controls, fixes `strategy_calculations` and `strategy_returns` to exact integer
+zero, and requires `type(value) is int` before a future runtime accepts either count. The shared
+secret guard recursively checks decoded JSON and JSONL object keys, including escaped names, while
+retaining raw-text detection for malformed documents. Escaped-key JSON and JSONL regressions pass.
+V3 SHA-256/fingerprint is
+`bdd2cdefd3f89f513fc19087d4a6191ad8e8cfbd891d77172de6736865425d1e` /
+`e3969f650dd0bee166793c10c76e85dae81b25e9f4402dd02c2b1a1fc8e0a442`. Fresh independent design
+and security reviews of source commit `07899b4846ad646f87640f3b385c41116f2c52cc` passed without findings.
+Combined review SHA-256/fingerprint is
+`c34bd327fd065dee1eb93f0c631f0df2dfa2f85d9cbb72195ff4c9da71b93e98` /
+`a6c6720d40dfe020b5c4a02d3dc987bc0fd44d8e5ebf104e66efc43a5d8b9a1a`. Gate: green CI and merge;
+then implement and independently review the exact runtime before any separate child, credential,
+provider, acquisition, admission, or strategy action. Every current authority remains false.
+
 Intraday Autonomous Research 001 fixed three successor mechanisms, 90 specifications per campaign, 270 total, and no Campaign 4. Campaign 1 completed 18 discovery runs and remained empty after an independently reviewed read-only reassessment. Campaign 2 completed 18 discovery runs; four parents had positive Normal and zero-cost returns, but every parent failed activity and participation-bucket concentration. Campaign 3 launched once from exact main `e74c5632529ef568b043428a251a1014e4f443de`. All 18 discovery specifications failed once at the inherited per-run plan-container boundary before bounded bar loading, strategy execution, or return observation. Campaign 3 is terminal and its Fed-policy hypothesis is unassessed. The program consumed 54 specifications and has no permitted campaign capacity. No serious cohort, controlled-qualified candidate, or intraday PAPER-ready candidate exists. Remaining infrastructure work includes root-cause evidence for the Exposed 005 lease-loss episodes and resumable long runs where needed. Gate: all attempted candidates and failures remain recorded; unsupported task envelopes fail closed; agents cannot alter protected controls or promote strategies.
 
 Campaign 3 terminal update: one exact four-worker launch from clean main
