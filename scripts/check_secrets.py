@@ -286,15 +286,20 @@ def main() -> int:
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
+        json_credential = (
+            PROGRAM_JSON_CREDENTIAL.search(text) if suffix in {".json", ".jsonl"} else None
+        )
+        if json_credential is not None:
+            number = text.count("\n", 0, json_credential.start()) + 1
+            findings.append(f"{path}:{number}")
+            continue
         if (suffix in {".json", ".jsonl"} and _contains_json_market_observation(text, suffix)) or (
             suffix == ".csv" and _contains_csv_market_observation(text)
         ):
             findings.append(f"{path}:private-market-data-content")
             continue
         for number, line in enumerate(text.splitlines(), 1):
-            if any(pattern.search(line) for pattern in PATTERNS) or (
-                suffix in {".json", ".jsonl"} and PROGRAM_JSON_CREDENTIAL.search(line)
-            ):
+            if any(pattern.search(line) for pattern in PATTERNS):
                 findings.append(f"{path}:{number}")
     if findings:
         print("possible secrets found:\n" + "\n".join(findings), file=sys.stderr)

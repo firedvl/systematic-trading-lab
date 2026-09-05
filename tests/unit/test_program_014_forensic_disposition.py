@@ -232,11 +232,14 @@ def test_secret_guard_rejects_program_014_credentials_in_public_json_and_shell(
     public = _PROPOSAL
     shell = Path("program-014-credentials.env")
     public.parent.mkdir(parents=True, exist_ok=True)
-    public.write_text('{"PROGRAM_014_ALPACA_API_KEY_ID": "synthetic-value"}\n', encoding="utf-8")
+    public.write_text(
+        '{\n  "PROGRAM_014_ALPACA_API_KEY_ID":\n  "synthetic-value"\n}\n',
+        encoding="utf-8",
+    )
     shell.write_text("PROGRAM_014_ALPACA_API_SECRET_KEY=synthetic-value\n", encoding="utf-8")
     monkeypatch.setattr(guard, "tracked_files", lambda: [public, shell])
 
     assert guard.main() == 1
     errors = capsys.readouterr().err
-    assert f"{public}:1" in errors
+    assert f"{public}:2" in errors
     assert f"{shell}:1" in errors
