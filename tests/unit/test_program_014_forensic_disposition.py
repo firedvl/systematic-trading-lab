@@ -19,6 +19,9 @@ _PROPOSAL_V2 = Path(
 _PROPOSAL = Path(
     "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json"
 )
+_REVIEW = Path(
+    "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v3.json"
+)
 _TERMINAL = Path(
     "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json"
 )
@@ -227,6 +230,27 @@ def test_program_014_proposal_is_bound_cumulative_nonrestarting_and_non_authoriz
         value is False for value in public_terminal["disabled_authority_exact_value"].values()
     )
     assert all(value is False for value in proposal["authority"].values())
+
+
+def test_program_014_v3_review_is_finding_free_bound_and_non_authorizing() -> None:
+    review = _load(_REVIEW)
+    stored = review.pop("review_fingerprint")
+    assert stored == fingerprint(review)
+    assert review["reviewed_source_commit"] == "07899b4846ad646f87640f3b385c41116f2c52cc"
+    assert review["verdict"] == "PASS"
+    assert review["findings"] == []
+
+    proposal_binding = review["reviewed_proposal"]
+    assert proposal_binding["path"] == _PROPOSAL.as_posix()
+    assert (
+        hashlib.sha256((_REPOSITORY / _PROPOSAL).read_bytes()).hexdigest()
+        == proposal_binding["sha256"]
+    )
+    proposal = _load(_PROPOSAL)
+    assert proposal_binding["fingerprint"] == proposal["proposal_fingerprint"]
+    assert review["design_review_result"]["verdict"] == "PASS"
+    assert review["security_review_result"]["verdict"] == "PASS"
+    assert all(value is False for value in review["authority"].values())
 
 
 def test_secret_guard_reserves_only_planned_program_014_public_artifacts(

@@ -1,11 +1,18 @@
 # Architecture decisions
 
-## 2026-09-05 - Enforce Program 014 count types and decoded credential keys
+## 2026-09-04 - Accept Program 014 proposal v3 for runtime implementation
+
+- Decision: accept the finding-free independent design and security reviews of Program 014 proposal v3 at exact source commit `07899b4846ad646f87640f3b385c41116f2c52cc`. Preserve the frozen proposal unchanged and proceed to a separate runtime implementation before any child authority or external action.
+- Context: the design review revalidated v3's SHA-256 and fingerprint, the failed v2 review binding, the exact integer-zero count correction, and the unchanged scientific and authority contract. The security review revalidated recursive decoded JSON/JSONL key scanning, malformed-document fallback, escaped-key regressions, and the 708-file secret scan.
+- Consequences: combined review SHA-256/fingerprint is `c34bd327fd065dee1eb93f0c631f0df2dfa2f85d9cbb72195ff4c9da71b93e98` / `a6c6720d40dfe020b5c4a02d3dc987bc0fd44d8e5ebf104e66efc43a5d8b9a1a`. No credential access, provider contact, acquisition, admission, strategy work, controlled/protected access, purchase, PAPER action, broker write, or live action occurred.
+- Revisit when: the exact runtime and focused tests are ready for independent implementation review. The runtime must merge before a separate child authority is frozen.
+
+## 2026-09-04 - Enforce Program 014 count types and decoded credential keys
 
 - Decision: preserve Program 014 proposal v2 as failed-review history and supersede it with prospective v3. Require `strategy_calculations` and `strategy_returns` to be integer zero in the private terminal, with `type(value) is int` checked before zero equality. Recursively inspect decoded JSON and JSONL object keys for Program credential names while retaining raw-text detection for malformed documents.
 - Context: fresh design review found that v2 encoded count fields as booleans and that Python equality alone accepts `False == 0`. Fresh security review proved that a key such as `PROGRAM\\u005f014_ALPACA_API_KEY_ID` decoded to a prohibited name but bypassed the literal raw-text expression.
 - Consequences: failed-review v2 SHA-256/fingerprint is `13b0588e45e2e996087a21d7d8afc81c64368384f73f60f3e45024f0202f7e3b` / `ff9e8b091ef598d922bd064c34c227dae47f915c65a4fa0f2dcd6ebffcef5d41`. Proposal v3 SHA-256/fingerprint is `bdd2cdefd3f89f513fc19087d4a6191ad8e8cfbd891d77172de6736865425d1e` / `e3969f650dd0bee166793c10c76e85dae81b25e9f4402dd02c2b1a1fc8e0a442`. Five focused tests pass under background scheduling. No source, chronology, budget, missingness, admission, strategy, or authority rule changed.
-- Revisit when: only after fresh finding-free v3 design and security review. Runtime implementation, merge, and a separate reviewed child remain required before credential presence or provider contact.
+- Revisit when: during the separately reviewed runtime implementation. Merge and a separate reviewed child remain required before credential presence or provider contact.
 
 ## 2026-09-04 - Correct Program 014 terminal schemas and multiline secret scanning
 

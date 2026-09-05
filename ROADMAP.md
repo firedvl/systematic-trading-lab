@@ -141,7 +141,7 @@ SHA-256/fingerprint is
 that the private strategy work counts used booleans instead of integers and valid escaped JSON keys
 could bypass the credential guard. V2 remains non-authorizing failed-review history.
 
-Program 014 design v3 update, September 5, 2026: failed-review v2 SHA-256/fingerprint is
+Program 014 design v3 update, September 4, 2026 PDT (September 5 UTC): failed-review v2 SHA-256/fingerprint is
 `13b0588e45e2e996087a21d7d8afc81c64368384f73f60f3e45024f0202f7e3b` /
 `ff9e8b091ef598d922bd064c34c227dae47f915c65a4fa0f2dcd6ebffcef5d41`. Proposal v3 preserves
 all v2 science and controls, fixes `strategy_calculations` and `strategy_returns` to exact integer
@@ -150,8 +150,13 @@ secret guard recursively checks decoded JSON and JSONL object keys, including es
 retaining raw-text detection for malformed documents. Escaped-key JSON and JSONL regressions pass.
 V3 SHA-256/fingerprint is
 `bdd2cdefd3f89f513fc19087d4a6191ad8e8cfbd891d77172de6736865425d1e` /
-`e3969f650dd0bee166793c10c76e85dae81b25e9f4402dd02c2b1a1fc8e0a442`. Gate: fresh finding-free
-v3 design and security review before implementation. Every current authority remains false.
+`e3969f650dd0bee166793c10c76e85dae81b25e9f4402dd02c2b1a1fc8e0a442`. Fresh independent design
+and security reviews of source commit `07899b4846ad646f87640f3b385c41116f2c52cc` passed without findings.
+Combined review SHA-256/fingerprint is
+`c34bd327fd065dee1eb93f0c631f0df2dfa2f85d9cbb72195ff4c9da71b93e98` /
+`a6c6720d40dfe020b5c4a02d3dc987bc0fd44d8e5ebf104e66efc43a5d8b9a1a`. Gate: green CI and merge;
+then implement and independently review the exact runtime before any separate child, credential,
+provider, acquisition, admission, or strategy action. Every current authority remains false.
 
 Intraday Autonomous Research 001 fixed three successor mechanisms, 90 specifications per campaign, 270 total, and no Campaign 4. Campaign 1 completed 18 discovery runs and remained empty after an independently reviewed read-only reassessment. Campaign 2 completed 18 discovery runs; four parents had positive Normal and zero-cost returns, but every parent failed activity and participation-bucket concentration. Campaign 3 launched once from exact main `e74c5632529ef568b043428a251a1014e4f443de`. All 18 discovery specifications failed once at the inherited per-run plan-container boundary before bounded bar loading, strategy execution, or return observation. Campaign 3 is terminal and its Fed-policy hypothesis is unassessed. The program consumed 54 specifications and has no permitted campaign capacity. No serious cohort, controlled-qualified candidate, or intraday PAPER-ready candidate exists. Remaining infrastructure work includes root-cause evidence for the Exposed 005 lease-loss episodes and resumable long runs where needed. Gate: all attempted candidates and failures remain recorded; unsupported task envelopes fail closed; agents cannot alter protected controls or promote strategies.
 
