@@ -158,6 +158,23 @@ Combined review SHA-256/fingerprint is
 then implement and independently review the exact runtime before any separate child, credential,
 provider, acquisition, admission, or strategy action. Every current authority remains false.
 
+Program 014 runtime update, September 5, 2026: the reviewed v3 runtime uses one lock-held
+activation/execution transaction, holds Program 014, Program 013, Program 012, and Git controls
+through terminal fsync, rejects restarted launcher state, enforces the 22,176-intent / 22,174-response
+ceiling and exact integer-zero strategy counts, and leaves the public terminal digest for a separate
+post-run closeout. Source commit/tree/root is
+`e3c1e49e45c5c75c29feb050fb687ca4405ccc07` /
+`0a66061a785617c1d0475dd54a9f26bf03adcc7b` /
+`e5bff812bc2a47b349f56f8860ea350c61574bd209883e7edae88be8f463391c`; artifact
+SHA-256/fingerprint is `c233f35850d709bca15d3abae2bbf8463d5da570f92afdcd5efe667fce55b147` /
+`a79e7d4281b0265b3d7a2302f1910ca23d20366ba7338f3583cad731ecd58d2d`. Fresh independent
+design/correctness and alternate defensive-boundary reviews passed without findings; dedicated
+security-review attempts failed only through HTTP 503, policy-service rejection before output, and
+HTTP 429. The full suite reports 1,759 passed and four skipped, and all other repository gates pass.
+Gate: merge this exact runtime binding, freeze clean synchronized main, add only the exact child and
+its independent review, then run names-only credential preflight. No credential value, provider,
+private Program 014 state, acquisition, admission, or strategy action has occurred.
+
 Intraday Autonomous Research 001 fixed three successor mechanisms, 90 specifications per campaign, 270 total, and no Campaign 4. Campaign 1 completed 18 discovery runs and remained empty after an independently reviewed read-only reassessment. Campaign 2 completed 18 discovery runs; four parents had positive Normal and zero-cost returns, but every parent failed activity and participation-bucket concentration. Campaign 3 launched once from exact main `e74c5632529ef568b043428a251a1014e4f443de`. All 18 discovery specifications failed once at the inherited per-run plan-container boundary before bounded bar loading, strategy execution, or return observation. Campaign 3 is terminal and its Fed-policy hypothesis is unassessed. The program consumed 54 specifications and has no permitted campaign capacity. No serious cohort, controlled-qualified candidate, or intraday PAPER-ready candidate exists. Remaining infrastructure work includes root-cause evidence for the Exposed 005 lease-loss episodes and resumable long runs where needed. Gate: all attempted candidates and failures remain recorded; unsupported task envelopes fail closed; agents cannot alter protected controls or promote strategies.
 
 Campaign 3 terminal update: one exact four-worker launch from clean main
