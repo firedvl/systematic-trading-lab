@@ -140,6 +140,11 @@ credential or private-root access. A finding-free independent terminal review co
 terminal bytes and replay guard. Do not run Program 013 again. See
 [Program 013 exposed-prefix recovery](docs/program-013-exposed-prefix-recovery.md).
 
+Program 014's recovery runtime is implemented and independently reviewed, but it has no active child
+authority. Do not run its credential preflight or acquisition yet. The next gate is to merge the
+exact runtime binding, freeze clean synchronized main, then add and review only the one-use child and
+its review. See [Program 014 exposed-prefix recovery](docs/program-014-exposed-prefix-recovery.md).
+
 ## Using historical data
 
 Alpaca imports are read-only and require research mode plus credentials:

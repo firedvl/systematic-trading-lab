@@ -30,6 +30,9 @@ import systematic_trading_lab.standing_research_authority as standing
 from systematic_trading_lab.fingerprints import canonical_json, fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
+_IMPLEMENTATION_PATH = Path(
+    "config/research/program-014-exposed-prefix-runtime-implementation-v1.json"
+)
 
 
 class _AbruptExit(BaseException):
@@ -58,6 +61,50 @@ def _credentials() -> dict[str, str]:
         authority.CREDENTIAL_NAMES[0]: "synthetic-key-material",
         authority.CREDENTIAL_NAMES[1]: "synthetic-secret-material",
     }
+
+
+def test_program_014_runtime_implementation_is_exact_and_non_authorizing() -> None:
+    implementation = json.loads((_REPOSITORY / _IMPLEMENTATION_PATH).read_text())
+    stored_fingerprint = implementation.pop("implementation_fingerprint")
+    assert stored_fingerprint == fingerprint(implementation)
+    binding = implementation["implementation_binding"]
+    assert binding["source_commit"] == "e3c1e49e45c5c75c29feb050fb687ca4405ccc07"
+    assert binding["source_tree"] == "0a66061a785617c1d0475dd54a9f26bf03adcc7b"
+    assert binding["implementation_root"] == fingerprint(binding["source_files"])
+    for source in binding["source_files"]:
+        committed = subprocess.run(
+            (
+                "git",
+                "-C",
+                str(_REPOSITORY),
+                "show",
+                f"{binding['source_commit']}:{source['path']}",
+            ),
+            check=True,
+            capture_output=True,
+        ).stdout
+        assert hashlib.sha256(committed).hexdigest() == source["sha256"]
+    reviewed = implementation["reviewed_diff"]
+    diff = subprocess.run(
+        (
+            "git",
+            "-C",
+            str(_REPOSITORY),
+            "diff",
+            "--binary",
+            reviewed["base_commit"],
+            reviewed["source_commit"],
+        ),
+        check=True,
+        capture_output=True,
+    ).stdout
+    assert hashlib.sha256(diff).hexdigest() == reviewed["sha256"]
+    assert implementation["status"] == "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED"
+    assert all(review["verdict"] == "PASS" for review in implementation["review"].values())
+    assert implementation["execution_boundary"]["child_authority_present"] is False
+    assert implementation["execution_boundary"]["credential_presence_or_values_accessed"] is False
+    assert implementation["execution_boundary"]["provider_requests"] == 0
+    assert all(value is False for value in implementation["authority"].values())
 
 
 def _git(repository: Path, *arguments: str) -> str:

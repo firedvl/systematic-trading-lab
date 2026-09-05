@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-05 - Freeze the Program 014 runtime implementation binding
+
+- Decision: bind the reviewed Program 014 v3 runtime to exact source commit/tree/root `e3c1e49e45c5c75c29feb050fb687ca4405ccc07` / `0a66061a785617c1d0475dd54a9f26bf03adcc7b` / `e5bff812bc2a47b349f56f8860ea350c61574bd209883e7edae88be8f463391c`. Keep every authority field false.
+- Context: the runtime uses one lock-held activation/execution transaction, validates launcher identity before reconstruction or replay, holds all four controls through terminal fsync, enforces exact cumulative budgets and integer-zero strategy counts, and reserves only the exact future child and child-review paths. Fresh independent design/correctness and alternate defensive-boundary reviews found no issue. Dedicated security-review calls returned infrastructure failures only: HTTP 503, a policy-service rejection before review output, and HTTP 429.
+- Consequences: implementation artifact SHA-256/fingerprint is `c233f35850d709bca15d3abae2bbf8463d5da570f92afdcd5efe667fce55b147` / `a79e7d4281b0265b3d7a2302f1910ca23d20366ba7338f3583cad731ecd58d2d`. The full suite reports 1,759 passed and four skipped; Ruff, mypy across 289 files, the 711-file secret scan, shell syntax, wheel build, and diff checks pass. No credential presence or value, provider request, private Program 014 state, acquisition, admission, strategy, controlled/protected, purchase, PAPER, broker, or live action occurred.
+- Revisit when: this binding merges to clean synchronized `main`. Freeze that exact main as the child runtime source, then add only the child and its independent review before names-only credential preflight or provider contact.
+
 ## 2026-09-04 - Accept Program 014 proposal v3 for runtime implementation
 
 - Decision: accept the finding-free independent design and security reviews of Program 014 proposal v3 at exact source commit `07899b4846ad646f87640f3b385c41116f2c52cc`. Preserve the frozen proposal unchanged and proceed to a separate runtime implementation before any child authority or external action.

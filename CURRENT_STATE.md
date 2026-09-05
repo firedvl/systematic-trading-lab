@@ -1,9 +1,9 @@
 # Current state
 
-Program 014's prospective recovery proposal is frozen but not authorized. Program 013 and Program
-012 remain terminal and immutable.
+Program 014's recovery runtime is implemented and reviewed but not authorized. Program 013 and
+Program 012 remain terminal and immutable.
 
-- Program 014, `multi-hour-sector-etf-research-013`, is `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
+- Program 014, `multi-hour-sector-etf-research-013`, is `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.
   Read-only offline validation rederived Program 013's historical child identity, canonical private
   terminal, and exact public projection. Retained Program 012 plus Program 013 evidence forms a
   completed whole-session prefix followed by one intent-only page frontier with no body, receipt,
@@ -37,10 +37,24 @@ Program 014's prospective recovery proposal is frozen but not authorized. Progra
   and security reviews of exact source commit `07899b4846ad646f87640f3b385c41116f2c52cc` passed
   without findings. Combined review SHA-256/fingerprint is
   `c34bd327fd065dee1eb93f0c631f0df2dfa2f85d9cbb72195ff4c9da71b93e98` /
-  `a6c6720d40dfe020b5c4a02d3dc987bc0fd44d8e5ebf104e66efc43a5d8b9a1a`. Every current authority
-  remains false. Next autonomous action: implement and test the exact Program 014 runtime, merge it,
-  then freeze and independently review the separate one-use standing child before credential access
-  or provider contact.
+  `a6c6720d40dfe020b5c4a02d3dc987bc0fd44d8e5ebf104e66efc43a5d8b9a1a`. The reviewed runtime
+  implements one lock-held activation/execution transaction, three immutable-root reconstruction,
+  non-restarting launcher checks, cumulative intent/response budgets, one credential access per
+  process, zero retries, local replay only, exact terminal validation, and shared redacted terminal
+  projection. Its source commit/tree/root is
+  `e3c1e49e45c5c75c29feb050fb687ca4405ccc07` /
+  `0a66061a785617c1d0475dd54a9f26bf03adcc7b` /
+  `e5bff812bc2a47b349f56f8860ea350c61574bd209883e7edae88be8f463391c`. Runtime artifact
+  SHA-256/fingerprint is `c233f35850d709bca15d3abae2bbf8463d5da570f92afdcd5efe667fce55b147` /
+  `a79e7d4281b0265b3d7a2302f1910ca23d20366ba7338f3583cad731ecd58d2d`. Fresh independent
+  design/correctness and alternate defensive-boundary reviews passed without findings. The primary
+  security-review service returned only infrastructure failures: HTTP 503, a policy-service
+  rejection before review output, and HTTP 429. The full suite reports 1,759 passed and four skipped;
+  Ruff, mypy, secret, shell, wheel, and diff checks pass. Every current authority remains false. No
+  credential presence or value, provider request, private Program 014 state, dataset admission,
+  strategy calculation, or strategy return was accessed. Next autonomous action: merge this exact
+  runtime binding, freeze clean synchronized main, then add and independently review only the exact
+  one-use child and its review before names-only credential preflight or provider contact.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use. The exact redacted public terminal binds runtime source commit
