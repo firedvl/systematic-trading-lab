@@ -13,8 +13,11 @@ _DISPOSITION = Path("config/research/program-014-predecessor-recovery-forensic-d
 _PROPOSAL_V1 = Path(
     "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
 )
-_PROPOSAL = Path(
+_PROPOSAL_V2 = Path(
     "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json"
+)
+_PROPOSAL = Path(
+    "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json"
 )
 _TERMINAL = Path(
     "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json"
@@ -106,6 +109,7 @@ def test_program_014_proposal_is_bound_cumulative_nonrestarting_and_non_authoriz
     assert stored == fingerprint(proposal)
 
     supersedes = proposal["supersedes"]
+    assert supersedes["path"] == _PROPOSAL_V2.as_posix()
     assert (
         hashlib.sha256((_REPOSITORY / supersedes["path"]).read_bytes()).hexdigest()
         == supersedes["sha256"]
@@ -116,8 +120,10 @@ def test_program_014_proposal_is_bound_cumulative_nonrestarting_and_non_authoriz
         == correction["sha256"]
     )
     review = _load(Path(correction["path"]))
-    assert correction["fingerprint"] == review["review_fingerprint"]
-    assert correction["resolved_findings"] == ["P014-V1-DESIGN-001", "P014-V1-SECURITY-001"]
+    stored_review_fingerprint = review.pop("review_fingerprint")
+    assert correction["fingerprint"] == stored_review_fingerprint
+    assert stored_review_fingerprint == fingerprint(review)
+    assert correction["resolved_findings"] == ["P014-V2-DESIGN-001", "P014-V2-SECURITY-001"]
 
     predecessor = proposal["predecessor"]
     for binding in predecessor.values():
@@ -201,9 +207,15 @@ def test_program_014_proposal_is_bound_cumulative_nonrestarting_and_non_authoriz
         "automatic_retries": 0,
         "credentials_stored": False,
         "program_002_admission": False,
-        "strategy_calculations": False,
-        "strategy_returns": False,
+        "strategy_calculations": 0,
+        "strategy_returns": 0,
     }
+    for key in ("strategy_calculations", "strategy_returns"):
+        assert type(private_terminal["exact_static_values"][key]) is int
+        assert private_terminal["exact_integer_zero_fields"][key] == {
+            "required_value": 0,
+            "python_type_predicate": "type(value) is int",
+        }
 
     public_terminal = proposal["public_terminal_contract"]
     assert public_terminal["exact_top_level_and_nested_key_set_equality_required"]
@@ -230,12 +242,16 @@ def test_secret_guard_reserves_only_planned_program_014_public_artifacts(
     reserved = (
         _DISPOSITION,
         _PROPOSAL_V1,
+        _PROPOSAL_V2,
         _PROPOSAL,
         Path(
             "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json"
         ),
         Path(
             "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v2.json"
+        ),
+        Path(
+            "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v3.json"
         ),
         Path("config/research/program-014-exposed-prefix-runtime-implementation-v1.json"),
         Path(
@@ -288,3 +304,34 @@ def test_secret_guard_rejects_program_014_credentials_in_public_json_and_shell(
     errors = capsys.readouterr().err
     assert f"{public}:2" in errors
     assert f"{shell}:1" in errors
+
+
+def test_secret_guard_rejects_escaped_credential_keys_in_json_and_jsonl(
+    tmp_path: Path, monkeypatch: Any, capsys: Any
+) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "program_014_check_secrets_escaped_credentials",
+        _REPOSITORY / "scripts/check_secrets.py",
+    )
+    assert spec is not None and spec.loader is not None
+    guard = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(guard)
+    monkeypatch.chdir(tmp_path)
+
+    public = _PROPOSAL
+    records = Path("credential-keys.jsonl")
+    public.parent.mkdir(parents=True, exist_ok=True)
+    public.write_text(
+        '{"nested":{"PROGRAM\\u005f014_ALPACA_API_KEY_ID":"synthetic-value"}}\n',
+        encoding="utf-8",
+    )
+    records.write_text(
+        '\n{"items":[{"PROGRAM\\u005f014_ALPACA_API_SECRET_KEY":"synthetic-value"}]}\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(guard, "tracked_files", lambda: [public, records])
+
+    assert guard.main() == 1
+    errors = capsys.readouterr().err
+    assert f"{public}:1" in errors
+    assert f"{records}:2" in errors

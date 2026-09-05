@@ -19,13 +19,22 @@ Program 014's prospective recovery proposal is frozen but not authorized. Progra
   exact recursive contracts and the shared secret guard could miss multiline JSON credential
   assignments. Review SHA-256/fingerprint is
   `3c8c5d53c657011905c0a49af3c34f0508a4b5116da8d95f42e02b790fc957ae` /
-  `8481bf093e4a35221d32e44b4b6cd319f4335d6a15ce6e0460b3c53e515c5698`. Proposal v2 preserves
-  the scientific and operational contract, freezes exact private and public top-level and nested
-  terminal keys and branch values, makes `observed_at` the sole public closeout timestamp, and binds
-  the repaired whole-document JSON/JSONL credential scan. V2 SHA-256/fingerprint is
+  `8481bf093e4a35221d32e44b4b6cd319f4335d6a15ce6e0460b3c53e515c5698`. Proposal v2 preserved
+  the scientific and operational contract, froze exact private and public top-level and nested
+  terminal keys and branch values, and made `observed_at` the sole public closeout timestamp. V2
+  SHA-256/fingerprint is
   `3a6f4f1d78400a94e6a16bf43abcd6587a938bf9a309aacfd7028575f8f9c2d1` /
-  `fa86d332b58f182f0bd8488463a696268de0262ecfa82bb7b757ff00fa07283d`. Every current authority
-  remains false. Next autonomous action: obtain fresh finding-free v2 design and security review
+  `fa86d332b58f182f0bd8488463a696268de0262ecfa82bb7b757ff00fa07283d`. Fresh review rejected v2
+  because its private strategy count fields were booleans and escaped JSON credential keys bypassed
+  the raw-text guard. Failed-review SHA-256/fingerprint is
+  `13b0588e45e2e996087a21d7d8afc81c64368384f73f60f3e45024f0202f7e3b` /
+  `ff9e8b091ef598d922bd064c34c227dae47f915c65a4fa0f2dcd6ebffcef5d41`. Proposal v3 fixes both
+  strategy fields to exact integer zero with a required `type(value) is int` runtime check. The
+  shared guard now recursively checks decoded JSON and JSONL keys while retaining its malformed-text
+  fallback. V3 SHA-256/fingerprint is
+  `bdd2cdefd3f89f513fc19087d4a6191ad8e8cfbd891d77172de6736865425d1e` /
+  `e3969f650dd0bee166793c10c76e85dae81b25e9f4402dd02c2b1a1fc8e0a442`. Every current authority
+  remains false. Next autonomous action: obtain fresh finding-free v3 design and security review
   before implementation.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed

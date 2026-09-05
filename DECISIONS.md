@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-05 - Enforce Program 014 count types and decoded credential keys
+
+- Decision: preserve Program 014 proposal v2 as failed-review history and supersede it with prospective v3. Require `strategy_calculations` and `strategy_returns` to be integer zero in the private terminal, with `type(value) is int` checked before zero equality. Recursively inspect decoded JSON and JSONL object keys for Program credential names while retaining raw-text detection for malformed documents.
+- Context: fresh design review found that v2 encoded count fields as booleans and that Python equality alone accepts `False == 0`. Fresh security review proved that a key such as `PROGRAM\\u005f014_ALPACA_API_KEY_ID` decoded to a prohibited name but bypassed the literal raw-text expression.
+- Consequences: failed-review v2 SHA-256/fingerprint is `13b0588e45e2e996087a21d7d8afc81c64368384f73f60f3e45024f0202f7e3b` / `ff9e8b091ef598d922bd064c34c227dae47f915c65a4fa0f2dcd6ebffcef5d41`. Proposal v3 SHA-256/fingerprint is `bdd2cdefd3f89f513fc19087d4a6191ad8e8cfbd891d77172de6736865425d1e` / `e3969f650dd0bee166793c10c76e85dae81b25e9f4402dd02c2b1a1fc8e0a442`. Five focused tests pass under background scheduling. No source, chronology, budget, missingness, admission, strategy, or authority rule changed.
+- Revisit when: only after fresh finding-free v3 design and security review. Runtime implementation, merge, and a separate reviewed child remain required before credential presence or provider contact.
+
 ## 2026-09-04 - Correct Program 014 terminal schemas and multiline secret scanning
 
 - Decision: preserve non-authorizing Program 014 proposal v1 as failed-review history and supersede it with prospective v2. Adapt Program 013's exact private and public terminal key sets, branch values, public assertions, pass-only control lineage, missing/unknown-field rejection, and private-terminal recovery. Treat `observed_at` as the sole public closeout timestamp; keep market, session, and request dates private. Scan complete JSON and JSONL documents for multiline Program credential assignments.

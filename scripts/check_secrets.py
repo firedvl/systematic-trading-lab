@@ -28,6 +28,9 @@ PATTERNS = (
 PROGRAM_JSON_CREDENTIAL = re.compile(
     r"""["'](?:PROGRAM_[0-9]{3}_ALPACA|PROGRAM_007_CORPORATE_ACTIONS)_API_(?:KEY_ID|SECRET_KEY)["']\s*:\s*\S+"""
 )
+PROGRAM_JSON_CREDENTIAL_NAME = re.compile(
+    r"(?:PROGRAM_[0-9]{3}_ALPACA|PROGRAM_007_CORPORATE_ACTIONS)_API_(?:KEY_ID|SECRET_KEY)"
+)
 
 PRIVATE_MARKET_DATA_SUFFIXES = frozenset(
     {
@@ -197,8 +200,10 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-014-predecessor-recovery-forensic-disposition-v1.json",
         "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json",
         "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json",
+        "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json",
         "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json",
         "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v2.json",
+        "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v3.json",
         "config/research/program-014-exposed-prefix-runtime-implementation-v1.json",
         "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",
         "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json",
@@ -219,6 +224,39 @@ def _contains_market_observation(value: Any) -> bool:
     if isinstance(value, Sequence) and not isinstance(value, str | bytes | bytearray):
         return any(_contains_market_observation(item) for item in value)
     return False
+
+
+def _contains_json_credential_key(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        return any(
+            PROGRAM_JSON_CREDENTIAL_NAME.fullmatch(str(key)) or _contains_json_credential_key(item)
+            for key, item in value.items()
+        )
+    if isinstance(value, Sequence) and not isinstance(value, str | bytes | bytearray):
+        return any(_contains_json_credential_key(item) for item in value)
+    return False
+
+
+def _json_credential_line(text: str, suffix: str) -> int | None:
+    raw_match = PROGRAM_JSON_CREDENTIAL.search(text)
+    if raw_match is not None:
+        return text.count("\n", 0, raw_match.start()) + 1
+    if suffix == ".jsonl":
+        for number, line in enumerate(text.splitlines(), 1):
+            if not line.strip():
+                continue
+            try:
+                value = loads(line)
+            except JSONDecodeError:
+                continue
+            if _contains_json_credential_key(value):
+                return number
+        return None
+    try:
+        value = loads(text)
+    except JSONDecodeError:
+        return None
+    return 1 if _contains_json_credential_key(value) else None
 
 
 def _contains_json_market_observation(text: str, suffix: str) -> bool:
@@ -288,11 +326,11 @@ def main() -> int:
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
-        json_credential = (
-            PROGRAM_JSON_CREDENTIAL.search(text) if suffix in {".json", ".jsonl"} else None
+        json_credential_line = (
+            _json_credential_line(text, suffix) if suffix in {".json", ".jsonl"} else None
         )
-        if json_credential is not None:
-            number = text.count("\n", 0, json_credential.start()) + 1
+        if json_credential_line is not None:
+            number = json_credential_line
             findings.append(f"{path}:{number}")
             continue
         if (suffix in {".json", ".jsonl"} and _contains_json_market_observation(text, suffix)) or (

@@ -170,4 +170,18 @@ private. The shared secret guard now scans complete JSON and JSONL documents and
 regression. V2 SHA-256/fingerprint is
 `3a6f4f1d78400a94e6a16bf43abcd6587a938bf9a309aacfd7028575f8f9c2d1` /
 `fa86d332b58f182f0bd8488463a696268de0262ecfa82bb7b757ff00fa07283d`.
-It requires fresh finding-free v2 design and security review before implementation.
+Fresh review rejected v2 because the private strategy count fields were booleans and the raw-text
+guard did not detect escaped JSON credential keys. Failed-review SHA-256/fingerprint is
+`13b0588e45e2e996087a21d7d8afc81c64368384f73f60f3e45024f0202f7e3b` /
+`ff9e8b091ef598d922bd064c34c227dae47f915c65a4fa0f2dcd6ebffcef5d41`. V2 remains
+non-authorizing failed-review history.
+
+Proposal v3 preserves all v2 scientific, budget, lock, retry, privacy, terminal, and authority
+controls. It fixes `strategy_calculations` and `strategy_returns` to exact integer zero and requires
+the future runtime validator to check `type(value) is int` before zero equality. The shared secret
+guard now recursively scans decoded object keys in JSON and every nonblank JSONL record, so escaped
+credential names fail; its raw-text fallback still covers malformed documents with literal names.
+Escaped-key JSON and JSONL regressions pass. V3 SHA-256/fingerprint is
+`bdd2cdefd3f89f513fc19087d4a6191ad8e8cfbd891d77172de6736865425d1e` /
+`e3969f650dd0bee166793c10c76e85dae81b25e9f4402dd02c2b1a1fc8e0a442`. It requires fresh
+finding-free v3 design and security review before implementation.
