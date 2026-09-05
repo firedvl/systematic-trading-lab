@@ -152,6 +152,7 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         if observed[path] != reviewed_hash
     } == set(CURRENT_V2_SURFACE_MISMATCHES)
     assert set(observed) - dict(CAMPAIGN_V2_SURFACE.hashes).keys() == {
+        "systematic_trading_lab/program_014_ohlcv_authority.py",
         "systematic_trading_lab/intraday_autonomous_research_program.py",
         "systematic_trading_lab/intraday_cost_calibration.py",
         "systematic_trading_lab/intraday_event_drift_001_launch_control.py",
