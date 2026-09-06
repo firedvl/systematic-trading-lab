@@ -1,0 +1,114 @@
+{
+  "schema_version": "program-015-exposed-prefix-recovery-design-and-security-independent-review-v1",
+  "review_id": "program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-06-v1",
+  "program_ordinal": 15,
+  "program_id": "multi-hour-sector-etf-research-014",
+  "status": "FAIL-FINDINGS-REQUIRE-PROSPECTIVE-CORRECTION",
+  "verdict": "FAIL",
+  "reviewed_source_commit": "ac0618d11bc9d667800325d2df1e19ee61355ac6",
+  "reviewed_source_tree": "a71c00e8378d1594992377a2ea18e66b5af232eb",
+  "reviewed_proposal": {
+    "path": "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json",
+    "sha256": "206139a59714cae6b327bf5ae0590141a4bb6ba3de8415fdd840ba41e1826a00",
+    "fingerprint": "606b4747db28eacd62b082ff6e0a7a73cad7c17b626861d5c60e20f0a0763018"
+  },
+  "review_contexts": [
+    "FRESH-INDEPENDENT-DESIGN-AND-SCIENTIFIC-CONTROL-REVIEW",
+    "FRESH-INDEPENDENT-SECURITY-AND-AUTHORITY-BOUNDARY-REVIEW"
+  ],
+  "findings": [
+    {
+      "finding_id": "P015-V1-SECURITY-001",
+      "severity": "HIGH",
+      "summary": "The proposal did not freeze the credential-reader remediation required by Program 014.",
+      "evidence": "The credential contract required presence preflight, lock-scoped access, and once-per-process loading but did not prohibit module-, class-, static-, or instance-callable credential readers or freeze the exact launcher-validation, durable attempt, process-global latch, receipt, client-construction, and transport ordering that closed Program 014 terminal-review findings.",
+      "required_correction": "Preserve proposal v1 and issue prospective v2 requiring no standalone callable credential reader; inline parsing only in the lock-bound loader after launcher revalidation, a create-only fsynced authority/source/predecessor-bound attempt, and process-global latch consumption; consume the latch on reservation or parse failure; persist failure or success receipt before propagation, client construction, or transport; add AST/API absence and forbidden-environment regressions."
+    }
+  ],
+  "challenge_results": [
+    {
+      "challenge": "authority-boundaries",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "chronology",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential-confinement",
+      "verdict": "FAIL"
+    },
+    {
+      "challenge": "git-provenance-integrity",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "missingness-rules",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "predecessor-immutability-and-toctou",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "private-data-leakage",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "public-terminal-redaction",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "request-budgets",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "restart-and-replay-safety",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "scientific-contract-preservation",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "source-assumptions",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "statistical-validity",
+      "verdict": "PASS"
+    }
+  ],
+  "design_review_result": {
+    "verdict": "PASS",
+    "finding_ids": [],
+    "proof_gap": "Program 015 has no runtime, so actual lock, terminal, credential, transport, and private-root behavior remains future implementation work."
+  },
+  "security_review_result": {
+    "verdict": "FAIL",
+    "finding_ids": [
+      "P015-V1-SECURITY-001"
+    ],
+    "proof_gap": "The review was static and synthetic and made no credential access, provider request, or private-root read."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "scope_limit": "The reviews made no credential access, provider request, private market-data read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Preserve proposal v1, issue prospective proposal v2 with the exact Program 014 credential-reader remediation and sequencing contract, add focused regressions, and obtain fresh finding-free design/correctness and defensive reviews before implementation.",
+  "review_fingerprint": "baf58bd4b7485cd8da88e6f16298bebd10a486ae5eb0bedf540a9c3740d9f9e5"
+}

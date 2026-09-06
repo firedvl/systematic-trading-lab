@@ -1,0 +1,128 @@
+{
+  "schema_version": "program-015-exposed-prefix-recovery-design-and-security-independent-review-v2",
+  "review_id": "program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-06-v2",
+  "program_ordinal": 15,
+  "program_id": "multi-hour-sector-etf-research-014",
+  "status": "PASS-FINDING-FREE-PROSPECTIVE-DESIGN-AND-SECURITY-REVIEW",
+  "verdict": "PASS",
+  "reviewed_source_commit": "c1084e2aa2f20230e2c1c03c0903a73be4e29d2c",
+  "reviewed_source_tree": "179f42f4c2517238f7f6eb0976f20c539d2dba3d",
+  "reviewed_proposal": {
+    "path": "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json",
+    "sha256": "94236834b3e169430bb031b760e141e77ccdd84188f27404c178eefd0119e82a",
+    "fingerprint": "118f84f7384012830b0f8daddce24c89d5e2ea35ef6b66c4590294541dadf493"
+  },
+  "reviewed_failed_review": {
+    "path": "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json",
+    "sha256": "27a412af2c6f92c5b8a1487fa2edee4b9ffec1c92fb266db94237d61739a477f",
+    "fingerprint": "baf58bd4b7485cd8da88e6f16298bebd10a486ae5eb0bedf540a9c3740d9f9e5"
+  },
+  "review_contexts": [
+    "FRESH-INDEPENDENT-DESIGN-AND-SCIENTIFIC-CONTROL-REVIEW",
+    "FRESH-INDEPENDENT-SECURITY-AND-AUTHORITY-BOUNDARY-REVIEW"
+  ],
+  "findings": [],
+  "challenge_results": [
+    {
+      "challenge": "authority-boundaries",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "chronology",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential-confinement",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "git-provenance-integrity",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "missingness-rules",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "predecessor-immutability-and-toctou",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "private-data-leakage",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "public-terminal-redaction",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "request-budgets",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "restart-and-replay-safety",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "scientific-contract-preservation",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "source-assumptions",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "statistical-validity",
+      "verdict": "PASS"
+    }
+  ],
+  "design_review_result": {
+    "verdict": "PASS",
+    "findings": [],
+    "evidence": "Proposal v2 preserves proposal v1 scientific, source, chronology, pagination, missingness, admission, privacy, transport, root, frontier, terminal, and false-authority contracts. The cumulative ceiling remains 22,176 request intents and 22,173 responses after three consumed intent-only predecessors.",
+    "proof_gap": "Program 015 has no runtime, so actual lock, terminal, credential, transport, and private-root behavior remains future implementation work."
+  },
+  "security_review_result": {
+    "verdict": "PASS",
+    "findings": [],
+    "resolved_finding": "P015-V1-SECURITY-001",
+    "disposition": "SUPPRESSED-RESOLVED-HIGH-CONFIDENCE",
+    "evidence": "Proposal v2 prohibits module-, class-, static-, and instance-callable credential readers; permits credential parsing only inline in the lock-bound loader after launcher revalidation, a create-only fsynced authority/source/predecessor-bound attempt, and process-global latch consumption; consumes the latch after reservation or parsing failure; orders durable failure and success receipts before propagation, client construction, or transport; and requires AST/API absence and forbidden-environment regressions.",
+    "proof_gap": "No Program 015 runtime exists, so actual API absence, failure ordering, terminal replay behavior, and environment-access confinement require fresh implementation review."
+  },
+  "verification": {
+    "proposal_sha256_revalidated": true,
+    "proposal_fingerprint_revalidated": true,
+    "failed_review_v1_sha256_revalidated": true,
+    "failed_review_v1_fingerprint_revalidated": true,
+    "v1_v2_contract_difference_limited_to_recorded_credential_correction": true,
+    "standalone_callable_credential_readers_prohibited": true,
+    "inline_lock_bound_credential_parsing_required": true,
+    "launcher_attempt_latch_receipt_order_required": true,
+    "credential_latch_failure_consumption_required": true,
+    "terminal_replay_recovery_environment_access_forbidden": true,
+    "focused_tests_passed": 3,
+    "repository_secret_scan_files_passed": 723,
+    "current_authority_flags_false": true
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "scope_limit": "The independent reviews made no credential access, provider request, private market-data read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Implement and test the exact Program 015 recovery runtime, merge it, then freeze and independently review a separate one-use standing child before credential access or provider contact.",
+  "review_fingerprint": "4dc259b5560e6c0cc144aa72c0608961fd2803d1d8c30fca3480e3d8f8b1d14d"
+}

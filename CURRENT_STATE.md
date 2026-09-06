@@ -1,7 +1,37 @@
 # Current state
 
-Program 014's terminal result is current. Earlier Program 014 planning and implementation state is
-preserved below as historical context. Programs 013 and 012 remain terminal and immutable.
+Program 015's frozen proposal is current. Program 014 and its predecessors remain terminal and
+immutable. No Program 015 runtime, credential access, provider contact, or authority exists.
+
+- Program 015, `multi-hour-sector-etf-research-014`, is
+  `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`. Read-only offline forensics bind Program 014's exact
+  proposal, independent review, runtime implementation, reviewed child, terminal, and independent
+  terminal review. Retained Program 012–014 evidence remains an exact completed whole-session
+  prefix followed by one Program 014 intent-only frontier with no body, response receipt, HTTP
+  status, parsed missingness, data-quality outcome, or later evidence. Three cumulative consumed
+  intents without responses reduce the unchanged 22,176-intent ceiling to at most 22,173 responses.
+  Program 015 preserves the inherited source, chronology, pagination, missingness, admission,
+  privacy, and no-strategy science; keeps all three predecessor roots immutable; uses a distinct
+  ignored root; allows the exact frontier once; and prohibits retry, reissue, restart, or relaunch.
+  Forensic SHA-256/fingerprint is
+  `2cba8a365433a588dc38c33021983a6d6d83ec4d768b4d93cc9ed04ab2e7369d` /
+  `0f4284ca20220cdd11d8a5365f3245cf6f1a50ea5465ef46ebb2a4aad9369565`.
+  Proposal v1 failed independent defensive review because it did not explicitly freeze the final
+  Program 014 credential-reader remediation and durable access ordering. Failed-review
+  SHA-256/fingerprint is
+  `27a412af2c6f92c5b8a1487fa2edee4b9ffec1c92fb266db94237d61739a477f` /
+  `baf58bd4b7485cd8da88e6f16298bebd10a486ae5eb0bedf540a9c3740d9f9e5`.
+  Proposal v2 prohibits every standalone callable credential reader and requires inline parsing only
+  after launcher revalidation, a durable bound attempt, and process-global latch consumption, with
+  receipts ordered before propagation, client construction, or transport. V2 SHA-256/fingerprint is
+  `94236834b3e169430bb031b760e141e77ccdd84188f27404c178eefd0119e82a` /
+  `118f84f7384012830b0f8daddce24c89d5e2ea35ef6b66c4590294541dadf493`.
+  Fresh independent design/correctness and defensive reviews of exact source commit `c1084e2` pass
+  finding-free. Review SHA-256/fingerprint is
+  `01b7587d1ee96cdf3e0fc7b74acf9061943f300d855c3ffdd354071a7e23f7f2` /
+  `4dc259b5560e6c0cc144aa72c0608961fd2803d1d8c30fca3480e3d8f8b1d14d`.
+  Next gate: merge the reviewed proposal, then implement and independently review the smallest exact
+  Program 015 runtime. All authority remains false.
 
 - Program 014, `multi-hour-sector-etf-research-013`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use. The exact redacted public terminal binds runtime source commit
@@ -20,9 +50,9 @@ preserved below as historical context. Programs 013 and 012 remain terminal and 
   `04a5ec8b50a051ed457d0d5dc7cc001c4224be3750cab6c2d552c94d26ba07f2` /
   `db9b391c9e7770da16ab2414102a0e8148785c957d8ca5f182eb02acaac9cdb6`. Program 014 cannot
   replay or retry. Controlled or protected access, purchases, PAPER, broker writes, and live
-  execution remained disabled. Next autonomous action: merge the closeout, then perform bounded
-  offline forensics and freeze a prospective successor only if the retained evidence supports one
-  without changing the inherited science.
+  execution remained disabled. The closeout merged at
+  `712222de32eaba8e7096a80e6432206a55688e9b`; bounded offline forensics then supported the frozen
+  Program 015 proposal without changing the inherited science.
 
 - Historical Program 014 planning snapshot: `multi-hour-sector-etf-research-013` was
   `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.
