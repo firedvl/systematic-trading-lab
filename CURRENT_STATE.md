@@ -3,18 +3,22 @@
 Program 016's read-only forensic disposition is current. Program 015's terminal result and all
 earlier terminal programs remain immutable.
 
-- Program 016, `multi-hour-sector-etf-research-015`, has no proposal or authority. Read-only offline
-  validation rederived Program 015's historical child identity, canonical private terminal, exact
-  public projection, and retained completed whole-session prefix. The only reachable incomplete
-  checkpoint is intent-only, with no body, response receipt, HTTP status, parsed missingness,
-  data-quality outcome, partial response, or later evidence. Four cumulative intents without
-  responses reduce the unchanged 22,176-intent ceiling to at most 22,172 responses. The redacted
-  disposition SHA-256/fingerprint is
+- Program 016, `multi-hour-sector-etf-research-015`, is `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
+  Read-only offline validation rederived Program 015's historical child identity, canonical private
+  terminal, exact public projection, and retained completed whole-session prefix. The only reachable
+  incomplete checkpoint is intent-only, with no body, response receipt, HTTP status, parsed
+  missingness, data-quality outcome, partial response, or later evidence. Four cumulative intents
+  without responses reduce the unchanged 22,176-intent ceiling to at most 22,172 responses. The
+  redacted disposition SHA-256/fingerprint is
   `a8bf3d02a980d425c0a430cbb740b7253f707fabf30c0681f37e68cb4b2517bb` /
-  `e311ab60a6eba7c19c597dacb68657c4ccd01cf6d7a3d04da9d3b0833e2244ac`. No credential value,
-  provider request, evidence mutation, dataset admission, or strategy work occurred. Next autonomous
-  action: freeze and independently review a prospective Program 016 recovery without changing the
-  inherited science.
+  `e311ab60a6eba7c19c597dacb68657c4ccd01cf6d7a3d04da9d3b0833e2244ac`. Proposal v1 preserves
+  Program 015's source, chronology, pagination, missingness, admission, privacy, and no-strategy
+  science; keeps Programs 012 through 015 immutable; adds one distinct private root; and permits the
+  frontier once with no retry or restart. Proposal SHA-256/fingerprint is
+  `76f946df1a50f1e1a866f144c7fe5cf4d2f12b1c5cf874dc9d901f994ff59776` /
+  `48a2ce7333f9422609d3bf9c00e4f7fbc3a58414768585063b6f8db68abacafe`. Every authority remains
+  false. Next autonomous action: obtain fresh independent design/correctness and defensive reviews
+  before runtime implementation, credentials, private Program 016 state, or provider contact.
 
 - Program 015, `multi-hour-sector-etf-research-014`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use after provider transport began. The built-in recovery path
