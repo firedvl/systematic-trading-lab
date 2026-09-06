@@ -219,6 +219,7 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json",
         "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
         "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1.json",
+        "config/research/program-016-predecessor-recovery-forensic-disposition-v1.json",
     }
 )
 _PROVIDER_BAR_KEYS = frozenset({"t", "o", "h", "l", "c", "v"})

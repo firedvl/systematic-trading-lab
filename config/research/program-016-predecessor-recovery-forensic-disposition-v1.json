@@ -1,0 +1,156 @@
+{
+  "schema_version": "program-016-program-015-private-evidence-recovery-forensic-disposition-v1",
+  "disposition_id": "program-016-program-015-private-evidence-recovery-forensic-disposition-2026-09-06-v1",
+  "program_ordinal": 16,
+  "program_id": "multi-hour-sector-etf-research-015",
+  "status": "COMPLETE-REDACTED-OFFLINE-FORENSIC-DISPOSITION",
+  "predecessor": {
+    "program_ordinal": 15,
+    "program_id": "multi-hour-sector-etf-research-014",
+    "scientific_contract": {
+      "path": "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json",
+      "sha256": "94236834b3e169430bb031b760e141e77ccdd84188f27404c178eefd0119e82a",
+      "fingerprint": "118f84f7384012830b0f8daddce24c89d5e2ea35ef6b66c4590294541dadf493"
+    },
+    "scientific_contract_review": {
+      "path": "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v2.json",
+      "sha256": "01b7587d1ee96cdf3e0fc7b74acf9061943f300d855c3ffdd354071a7e23f7f2",
+      "fingerprint": "4dc259b5560e6c0cc144aa72c0608961fd2803d1d8c30fca3480e3d8f8b1d14d"
+    },
+    "runtime_implementation": {
+      "path": "config/research/program-015-exposed-prefix-runtime-implementation-v1.json",
+      "sha256": "20531ddb93556aaa6451279c3e9d1757adbd44277f74698db44be7d7df8ca39a",
+      "fingerprint": "e8fa3532fd47b3bb1858e8718ae4f6b2caa2f3606f5e4338472161640fc25b00"
+    },
+    "child_authority": {
+      "path": "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",
+      "sha256": "9875116c38899003d0787f40bdebf9eb2e54276ea2c32409fb03072340fe4f2c",
+      "fingerprint": "76495136e467544806e9c4c24025c180f734358e321201aff49a11fde13c9cac",
+      "child_authority_id": "program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-2026-09-06-v1"
+    },
+    "child_authority_review": {
+      "path": "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json",
+      "sha256": "54a463f84e327dbf95f3ca99ebeadbe161c1b36f67eaf9a46a4df6a4340ce083",
+      "fingerprint": "934c49feebf550aa94b420004963aae3a00a65519afe54ae36abf8ae0c2665d1",
+      "review_id": "program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-2026-09-06-v1"
+    },
+    "runtime_source": {
+      "commit": "4bc030ed6fd073463df739b96a799d1e1a76ee49",
+      "tree": "ee2985e4b4bb00233f29ad864b9c5428c2187ea9",
+      "implementation_root": "4413657c6c229bbb5e009f217f89d77bcb5d73a4ccb7f1cb90f5162447427275"
+    },
+    "terminal_result": {
+      "path": "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+      "sha256": "48c6aa4578fb47e8b17d6da98164c9c8852eade6a78e3b760edbbd6b5841431d"
+    },
+    "terminal_review": {
+      "path": "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1.json",
+      "sha256": "3db948e486a5d6b31ec8003dfc57205c31c561f4b744ccc2d6b554c95f618e7c",
+      "fingerprint": "1683df76b7cfcf0c9187194b3b47118d77f3cfdaae1bcf637d5a650da387bcd5"
+    },
+    "terminal_status": "FAIL-CONSUMED-NO-RETRY",
+    "replay_allowed": false,
+    "history_mutation_allowed": false
+  },
+  "method": {
+    "mode": "READ-ONLY-OFFLINE-PRIVATE-EVIDENCE-VALIDATION",
+    "provider_contact": false,
+    "credential_access": false,
+    "private_evidence_mutation": false,
+    "public_dynamic_observation_allowed": false,
+    "resource_policy": "single process, macOS background scheduling, lowest nice priority, explicit CPU duty-cycle cap",
+    "validation": [
+      "revalidate the exact Program 015 scientific contract and finding-free reviews",
+      "revalidate the historical reviewed child identity against its exact synchronized-main Git tree",
+      "revalidate the child ID, child artifact fingerprint, derived active-authority fingerprint, runtime source commit, runtime source tree, and implementation root",
+      "revalidate the canonical private terminal against the exact reviewed public terminal",
+      "replay retained predecessor and Program 015 completed pages locally under shared read locks",
+      "prove that retained pages form an exact completed whole-session prefix",
+      "prove that the single reachable incomplete checkpoint is intent-only",
+      "prove that no body, response receipt, HTTP status, parsed missingness, or data-quality result exists at that frontier",
+      "prove that no later session or page evidence exists"
+    ]
+  },
+  "conclusions": {
+    "historical_child_identity_valid": true,
+    "canonical_private_terminal_valid": true,
+    "public_terminal_exact_derivation_confirmed": true,
+    "completed_evidence_is_exact_whole_session_prefix": true,
+    "single_reachable_incomplete_checkpoint": true,
+    "incomplete_checkpoint_kind": "INTENT-ONLY-PAGE-FRONTIER",
+    "frontier_body_retained": false,
+    "frontier_response_receipt_retained": false,
+    "frontier_http_status_retained": false,
+    "frontier_parsed_missingness_retained": false,
+    "frontier_data_quality_outcome_retained": false,
+    "partial_response_retained": false,
+    "later_session_or_page_evidence_present": false,
+    "structural_admission_evaluated": false,
+    "dataset_published": false,
+    "strategy_work_occurred": false,
+    "program_015_zero_reissue_rule_followed": true
+  },
+  "cumulative_transport_contract": {
+    "authoritative_contract": "predecessor.scientific_contract",
+    "maximum_combined_request_intents": 22176,
+    "program_012_intent_only_frontier_counts_as_consumed_request": true,
+    "program_013_intent_only_frontier_counts_as_consumed_request": true,
+    "program_014_intent_only_frontier_counts_as_consumed_request": true,
+    "program_015_intent_only_frontier_counts_as_consumed_request": true,
+    "consumed_intents_without_response_before_program_016": 4,
+    "maximum_effective_combined_responses_for_program_016": 22172,
+    "combined_request_formula": "completed Program 012, Program 013, Program 014, and Program 015 response pages plus all four predecessor intent-only frontiers plus every Program 016 request intent",
+    "combined_response_formula": "completed Program 012, Program 013, Program 014, and Program 015 response pages plus every Program 016 receipted response",
+    "additional_page_after_effective_response_envelope": "FAIL-CONSUMED-NO-RETRY-COMBINED-REQUEST-BUDGET-EXHAUSTED",
+    "automatic_retries": 0
+  },
+  "prospective_disposition": {
+    "successor_allowed": true,
+    "successor_must_be_new_program": true,
+    "program_012_private_root_must_remain_immutable": true,
+    "program_013_private_root_must_remain_immutable": true,
+    "program_014_private_root_must_remain_immutable": true,
+    "program_015_private_root_must_remain_immutable": true,
+    "completed_whole_session_prefix_may_be_reused_read_only": true,
+    "completed_predecessor_pages_may_never_be_requested_again": true,
+    "incomplete_program_015_session_or_page_may_not_be_reused": true,
+    "frontier_request_may_be_issued_once_only_under_a_new_reviewed_child": true,
+    "retained_response_http_result_parsed_missingness_or_data_quality_outcome_retry_allowed": false,
+    "program_012_program_013_program_014_program_015_and_successor_transport_budgets_must_be_cumulative": true,
+    "successor_launch_must_prove_no_automatic_restart_or_relaunch": true,
+    "launchctl_submit_allowed_without_verified_disabled_restart_semantics": false,
+    "scientific_contract_may_be_weakened": false
+  },
+  "privacy": {
+    "evidence_location_published": false,
+    "dynamic_counts_published": false,
+    "session_dates_published": false,
+    "private_completed_page_indices_or_counts_published": false,
+    "static_transport_control_counts_published": true,
+    "response_hashes_published": false,
+    "private_terminal_fingerprint_published": false,
+    "provider_tokens_published": false,
+    "failure_details_published": false,
+    "market_observations_published": false,
+    "credential_values_accessed": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Freeze and independently review a prospective Program 016 recovery that reuses only the completed whole-session prefix, discards the incomplete Program 015 session and page, issues the intent-only frontier once under a new child, preserves cumulative budgets, and cannot restart automatically.",
+  "forensic_disposition_fingerprint": "e311ab60a6eba7c19c597dacb68657c4ccd01cf6d7a3d04da9d3b0833e2244ac"
+}

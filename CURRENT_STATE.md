@@ -1,8 +1,20 @@
 # Current state
 
-Program 015's terminal result is current. Earlier Program 015 planning and implementation state is
-preserved below as historical context. Program 014 and its predecessors remain terminal and
-immutable.
+Program 016's read-only forensic disposition is current. Program 015's terminal result and all
+earlier terminal programs remain immutable.
+
+- Program 016, `multi-hour-sector-etf-research-015`, has no proposal or authority. Read-only offline
+  validation rederived Program 015's historical child identity, canonical private terminal, exact
+  public projection, and retained completed whole-session prefix. The only reachable incomplete
+  checkpoint is intent-only, with no body, response receipt, HTTP status, parsed missingness,
+  data-quality outcome, partial response, or later evidence. Four cumulative intents without
+  responses reduce the unchanged 22,176-intent ceiling to at most 22,172 responses. The redacted
+  disposition SHA-256/fingerprint is
+  `a8bf3d02a980d425c0a430cbb740b7253f707fabf30c0681f37e68cb4b2517bb` /
+  `e311ab60a6eba7c19c597dacb68657c4ccd01cf6d7a3d04da9d3b0833e2244ac`. No credential value,
+  provider request, evidence mutation, dataset admission, or strategy work occurred. Next autonomous
+  action: freeze and independently review a prospective Program 016 recovery without changing the
+  inherited science.
 
 - Program 015, `multi-hour-sector-etf-research-014`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use after provider transport began. The built-in recovery path
@@ -21,9 +33,9 @@ immutable.
   independent correctness and defensive reviews pass finding-free after resolving one public
   fingerprint-label finding. Review artifact SHA-256/fingerprint is
   `3db948e486a5d6b31ec8003dfc57205c31c561f4b744ccc2d6b554c95f618e7c` /
-  `1683df76b7cfcf0c9187194b3b47118d77f3cfdaae1bcf637d5a650da387bcd5`. Next autonomous action:
-  merge the closeout, then perform bounded offline forensics and freeze a prospective successor only
-  if retained evidence supports one without changing the inherited science.
+  `1683df76b7cfcf0c9187194b3b47118d77f3cfdaae1bcf637d5a650da387bcd5`. The closeout merged at
+  `073661deb77d0c306187a7e5d108e470f36ea596`; bounded offline forensics now support the prospective
+  Program 016 disposition without changing the inherited science.
 
 - Historical Program 015 planning snapshot: `multi-hour-sector-etf-research-014` was
   `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`. Read-only offline forensics bind Program 014's exact

@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-06 - Recover only Program 015's completed whole-session prefix
+
+- Decision: keep Programs 012 through 015 terminal and immutable. Permit a prospective Program 016 to reuse only the locally revalidated completed whole-session prefix and to issue the intent-only page frontier once under a new reviewed child. Discard the incomplete Program 015 session and page; never request any completed predecessor page again.
+- Context: read-only private forensics revalidated the historical Program 015 child identity, canonical private terminal, exact reviewed public projection, completed-prefix replay, one intent-only frontier, and no later evidence. Four cumulative intents were consumed without responses.
+- Consequences: the redacted disposition binds Program 015's scientific contract, reviews, runtime, child, terminal, and exact 22,176-intent / 22,172-response accounting. Its SHA-256/fingerprint is `a8bf3d02a980d425c0a430cbb740b7253f707fabf30c0681f37e68cb4b2517bb` / `e311ab60a6eba7c19c597dacb68657c4ccd01cf6d7a3d04da9d3b0833e2244ac`. Program 016 must use a distinct private root, cumulative Programs 012 through 016 budgets, zero retries, and a launch contract that cannot restart or relaunch automatically. No provider, credential, acquisition, admission, strategy, controlled/protected, purchase, PAPER, broker, or live authority exists.
+- Revisit when: after prospective Program 016 design, independent review, implementation, merge, and a separately reviewed child. Never revisit Programs 012 through 015 replay.
+
 ## 2026-09-06 - Program 015 terminal evidence is immutable and revokes every entrypoint
 
 - Decision: commit only Program 015's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, execution, or private-root access.
