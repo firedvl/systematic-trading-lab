@@ -40,6 +40,12 @@ Proposal v2 SHA-256/fingerprint is
 `94236834b3e169430bb031b760e141e77ccdd84188f27404c178eefd0119e82a` /
 `118f84f7384012830b0f8daddce24c89d5e2ea35ef6b66c4590294541dadf493`.
 
-The next gate is fresh finding-free independent design/correctness and defensive review. No Program
-015 runtime exists. Credential access, provider contact, acquisition, admission, strategy work,
+Fresh independent design/correctness and defensive reviews of exact proposal source `c1084e2`
+passed finding-free and suppressed `P015-V1-SECURITY-001` as resolved. Review
+SHA-256/fingerprint is
+`01b7587d1ee96cdf3e0fc7b74acf9061943f300d855c3ffdd354071a7e23f7f2` /
+`4dc259b5560e6c0cc144aa72c0608961fd2803d1d8c30fca3480e3d8f8b1d14d`.
+
+The next gate is merge followed by exact runtime implementation and fresh implementation review. No
+Program 015 runtime exists. Credential access, provider contact, acquisition, admission, strategy work,
 controlled or protected access, purchases, PAPER, broker writes, and live execution remain disabled.

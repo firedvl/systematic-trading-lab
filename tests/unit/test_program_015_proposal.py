@@ -19,6 +19,9 @@ _PROPOSAL = Path(
 _FAILED_REVIEW = Path(
     "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json"
 )
+_REVIEW = Path(
+    "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v2.json"
+)
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -215,3 +218,27 @@ def test_secret_guard_reserves_program_015_public_artifacts(
     assert all(path.as_posix() in guard.PUBLIC_PROGRAM_JSON for path in reserved)
     assert all(str(path) not in errors for path in reserved)
     assert f"{private}:private-market-data-path" in errors
+
+
+def test_program_015_v2_review_is_finding_free_bound_and_non_authorizing() -> None:
+    review = _load(_REVIEW)
+    stored = review.pop("review_fingerprint")
+    assert stored == fingerprint(review)
+    assert review["reviewed_source_commit"] == "c1084e2aa2f20230e2c1c03c0903a73be4e29d2c"
+    assert review["verdict"] == "PASS"
+    assert review["findings"] == []
+    for name in ("reviewed_proposal", "reviewed_failed_review"):
+        binding = review[name]
+        assert (
+            hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest()
+            == binding["sha256"]
+        )
+    assert review["reviewed_proposal"]["fingerprint"] == _load(_PROPOSAL)["proposal_fingerprint"]
+    assert (
+        review["reviewed_failed_review"]["fingerprint"]
+        == _load(_FAILED_REVIEW)["review_fingerprint"]
+    )
+    assert review["design_review_result"]["verdict"] == "PASS"
+    assert review["security_review_result"]["verdict"] == "PASS"
+    assert review["security_review_result"]["resolved_finding"] == "P015-V1-SECURITY-001"
+    assert all(value is False for value in review["authority"].values())

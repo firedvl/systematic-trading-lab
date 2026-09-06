@@ -26,8 +26,12 @@ immutable. No Program 015 runtime, credential access, provider contact, or autho
   receipts ordered before propagation, client construction, or transport. V2 SHA-256/fingerprint is
   `94236834b3e169430bb031b760e141e77ccdd84188f27404c178eefd0119e82a` /
   `118f84f7384012830b0f8daddce24c89d5e2ea35ef6b66c4590294541dadf493`.
-  Next gate: fresh finding-free independent design/correctness and defensive reviews before any
-  runtime implementation. All authority remains false.
+  Fresh independent design/correctness and defensive reviews of exact source commit `c1084e2` pass
+  finding-free. Review SHA-256/fingerprint is
+  `01b7587d1ee96cdf3e0fc7b74acf9061943f300d855c3ffdd354071a7e23f7f2` /
+  `4dc259b5560e6c0cc144aa72c0608961fd2803d1d8c30fca3480e3d8f8b1d14d`.
+  Next gate: merge the reviewed proposal, then implement and independently review the smallest exact
+  Program 015 runtime. All authority remains false.
 
 - Program 014, `multi-hour-sector-etf-research-013`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use. The exact redacted public terminal binds runtime source commit
