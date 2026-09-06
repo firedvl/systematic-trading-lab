@@ -129,7 +129,7 @@
   },
   "verification": {
     "focused_program_015_and_provenance_tests": "108 passed",
-    "full_suite_excluding_pending_binding": "1836 passed, 4 skipped",
+    "full_suite": "1837 passed, 4 skipped",
     "full_suite_failures_or_errors": 0,
     "ruff_format_and_lint": "PASS; 297 files",
     "mypy": "PASS; 292 files",
@@ -150,7 +150,7 @@
     "private_program_015_state_accessed": false,
     "dataset_admitted": false,
     "strategy_calculations_or_returns": 0,
-    "next_gate": "Complete fresh exact binding reviews, merge this runtime binding, freeze exact clean synchronized main as the Program 015 child runtime source, add only the child and its independent review, then run names-only credential preflight."
+    "next_gate": "Merge this runtime binding, freeze exact clean synchronized main as the Program 015 child runtime source, add only the child and its independent review, then run names-only credential preflight."
   },
   "authority": {
     "provider_contact": false,
@@ -169,5 +169,5 @@
     "broker_writes": false,
     "live_execution": false
   },
-  "implementation_fingerprint": "b284d15c54de7e25c41e8009ab13445244fdaea0e06be1c1e150cacf077968ad"
+  "implementation_fingerprint": "e8fa3532fd47b3bb1858e8718ae4f6b2caa2f3606f5e4338472161640fc25b00"
 }

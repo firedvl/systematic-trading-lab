@@ -38,8 +38,8 @@ exists.
   Initial correctness review found stale Program 014 attestation bindings; binding commit `9939247`
   fixed them without changing the runtime source. Fresh exact binding correctness and alternate
   defensive reviews pass finding-free. Implementation artifact SHA-256/fingerprint is
-  `3c0fca8784125a8793e173e70c085a79c5730ac198feea6da7a5bcf9a9b25882` /
-  `b284d15c54de7e25c41e8009ab13445244fdaea0e06be1c1e150cacf077968ad`.
+  `20531ddb93556aaa6451279c3e9d1757adbd44277f74698db44be7d7df8ca39a` /
+  `e8fa3532fd47b3bb1858e8718ae4f6b2caa2f3606f5e4338472161640fc25b00`.
   Next gate: merge the exact runtime binding to clean synchronized `main`, then create and
   independently review the separate one-use child before names-only credential preflight. All
   authority remains false.
