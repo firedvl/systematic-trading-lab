@@ -307,6 +307,11 @@ def parser() -> argparse.ArgumentParser:
         help="control the single-process Program 014 raw SIP recovery and admission",
     )
     program_014_ohlcv.add_argument("action", choices=("credential-preflight", "run"))
+    program_015_ohlcv = acquire_program.add_parser(
+        "program-015-ohlcv",
+        help="control the single-process Program 015 raw SIP recovery and admission",
+    )
+    program_015_ohlcv.add_argument("action", choices=("credential-preflight", "run"))
     for name in ("validate", "describe"):
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
@@ -581,6 +586,27 @@ def _run_program_014_ohlcv(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _run_program_015_ohlcv(arguments: argparse.Namespace) -> int:
+    from .program_015_ohlcv_authority import (
+        credential_presence_preflight as program_015_ohlcv_credential_preflight,
+    )
+    from .program_015_ohlcv_authority import (
+        execute_acquisition as execute_program_015_ohlcv,
+    )
+
+    repository = Path(__file__).resolve().parents[2]
+    if arguments.action == "credential-preflight":
+        missing = program_015_ohlcv_credential_preflight(repository)
+        print("PASS" if not missing else "\n".join(f"MISSING: {name}" for name in missing))
+        return 0 if not missing else 1
+    if os.environ.get("TRADING_LAB_MODE", TradingMode.OFFLINE.value).strip() != (
+        TradingMode.RESEARCH.value
+    ):
+        raise ValueError("Program 015 OHLCV acquisition requires TRADING_LAB_MODE=research")
+    sys.stdout.buffer.write(execute_program_015_ohlcv(repository).public_payload())
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     raw_arguments = tuple(sys.argv[1:] if argv is None else argv)
     if raw_arguments[:2] == ("program-002", "source"):
@@ -593,8 +619,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             arguments.command == "data"
             and arguments.data_command == "acquire"
             and arguments.acquire_program
-            in {"program-012-ohlcv", "program-013-ohlcv", "program-014-ohlcv"}
+            in {
+                "program-012-ohlcv",
+                "program-013-ohlcv",
+                "program-014-ohlcv",
+                "program-015-ohlcv",
+            }
         ):
+            if arguments.acquire_program == "program-015-ohlcv":
+                return _run_program_015_ohlcv(arguments)
             if arguments.acquire_program == "program-014-ohlcv":
                 return _run_program_014_ohlcv(arguments)
             if arguments.acquire_program == "program-013-ohlcv":
@@ -1395,6 +1428,8 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         )
         return 0
     if arguments.data_command == "acquire":
+        if arguments.acquire_program == "program-015-ohlcv":
+            return _run_program_015_ohlcv(arguments)
         if arguments.acquire_program == "program-014-ohlcv":
             return _run_program_014_ohlcv(arguments)
         if arguments.acquire_program == "program-013-ohlcv":
