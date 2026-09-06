@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-06 - Program 014 terminal evidence is immutable and revokes every entrypoint
+
+- Decision: commit only Program 014's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, execution, or private-root access.
+- Context: the one-use child left consumed runtime state after transport began. The built-in recovery path sealed `RUNTIME-FAILURE` / `FAIL-CONSUMED-NO-RETRY` without another credential check or provider request. The public terminal records no structural admission, dataset lineage, Program 002 admission, strategy calculation, or strategy return. Proposal v3 keeps dynamic acquisition state, detailed failure evidence, private identities, exact missingness, provider tokens, and market observations private.
+- Consequences: public terminal SHA-256 is `8630f5748266f75a676da31ca3463bb25dcf2bb9447eb7b1fbe5c3b4c636ddf9`; authority fingerprint is `52be3ed20d80f0abe62b58a6e3d3ce6667279d55a9d04915229f8805c89254dc`; source commit is `818a923349ec13b18ec6dc1743e1f136f56bcc8c`. Program 014 cannot replay or retry. Controlled or protected access, purchases, PAPER, broker writes, and live execution remain false.
+- Revisit when: never for Program 014. After independent terminal review and merge, use bounded offline forensics to decide whether a prospective successor is scientifically valid.
+
 ## 2026-09-05 - Freeze the Program 014 runtime implementation binding
 
 - Decision: bind the reviewed Program 014 v3 runtime to exact source commit/tree/root `e3c1e49e45c5c75c29feb050fb687ca4405ccc07` / `0a66061a785617c1d0475dd54a9f26bf03adcc7b` / `e5bff812bc2a47b349f56f8860ea350c61574bd209883e7edae88be8f463391c`. Keep every authority field false.

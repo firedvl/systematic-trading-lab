@@ -108,9 +108,9 @@ _PUBLIC_TERMINAL_RESULT_ID = (
     "program-014-exposed-prefix-raw-alpaca-sip-recovery-and-"
     "structural-admission-terminal-result-2026-09-04-v1"
 )
-# Bound only by the separately reviewed post-run closeout commit. Until then,
-# terminal presence still revokes every entrypoint but cannot be self-certified.
-_PUBLIC_TERMINAL_SHA256: str | None = None
+_PUBLIC_TERMINAL_SHA256: str | None = (
+    "8630f5748266f75a676da31ca3463bb25dcf2bb9447eb7b1fbe5c3b4c636ddf9"
+)
 _PRIVATE_TERMINAL_KEYS = {
     "schema_version",
     "program_id",

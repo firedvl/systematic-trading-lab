@@ -1,18 +1,17 @@
 # Program 014 exposed-prefix recovery
 
-Program 014, `multi-hour-sector-etf-research-013`, is
-`IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`. It preserves Program 013's source, chronology,
-pagination, missingness, structural admission, privacy, and no-strategy contracts. Programs 012 and
-013 remain terminal and immutable.
+Program 014, `multi-hour-sector-etf-research-013`, is `FAIL-CONSUMED-NO-RETRY`. It preserved
+Program 013's source, chronology, pagination, missingness, structural admission, privacy, and
+no-strategy contracts. Programs 012 and 013 remain terminal and immutable.
 
 Read-only forensics found a completed whole-session prefix followed by one Program 013 intent-only
-page frontier. Program 014 may reuse only the completed sessions in place, discard the incomplete
-session and page, and issue the frontier once under a later reviewed child. It has zero retries and
-may never reissue a retained Program 014 request.
+page frontier. Program 014 could reuse only the completed sessions in place, discard the incomplete
+session and page, and issue the frontier once under a reviewed child. It had zero retries and may
+never reissue a retained Program 014 request.
 
-The runtime uses a distinct ignored private root and one lock-held activation/execution transaction.
-It holds the Program 014 exclusive lock, both predecessor shared locks, and the Git-policy snapshot
-through public-terminal fsync. It rejects restarted launcher state, ambiguous or surviving
+The runtime used a distinct ignored private root and one lock-held activation/execution transaction.
+It held the Program 014 exclusive lock, both predecessor shared locks, and the Git-policy snapshot
+through public-terminal fsync. It rejected restarted launcher state, ambiguous or surviving
 operational checkpoints, changed predecessor evidence, protected overlap, and budget exhaustion
 before credential access or transport. The unchanged cumulative limits are 22,176 request intents
 and at most 22,174 receipted responses.
@@ -31,20 +30,24 @@ policy-service rejection before review output, and HTTP 429. The alternate revie
 fresh-context independent-review path. The full suite reports 1,759 passed and four skipped; Ruff,
 mypy, secret, shell, wheel, and diff checks pass.
 
-## Current gate
+## Terminal result
 
-Do not run either command yet:
+The reviewed child left consumed runtime state after transport began. The built-in recovery path
+sealed `RUNTIME-FAILURE` with `admission_passed=false`, no dataset lineage, no Program 002 admission,
+and no strategy calculation or return. Recovery made no second credential check or provider request.
+The public terminal was observed at `2026-09-06T10:52:24.166713Z`. Its SHA-256 is
+`8630f5748266f75a676da31ca3463bb25dcf2bb9447eb7b1fbe5c3b4c636ddf9`; its authority
+fingerprint is `52be3ed20d80f0abe62b58a6e3d3ce6667279d55a9d04915229f8805c89254dc`; its source
+commit is `818a923349ec13b18ec6dc1743e1f136f56bcc8c`.
 
-```console
-uv run trading-lab data acquire program-014-ohlcv credential-preflight
-uv run trading-lab data acquire program-014-ohlcv run
-```
+The closeout requires those exact public bytes and rejects a missing, changed, or invalid terminal
+before credential preflight, authority derivation, execution, or private-root access. Program 014
+cannot replay or retry. Dynamic acquisition state, detailed failure evidence, private identities,
+exact missingness, provider tokens, and market observations remain private.
 
-The runtime binding must first merge to clean synchronized `main`. That exact main then becomes the
-child runtime source. Only the exact child authority and its independent review may be added before
-the names-only credential preflight. The public terminal digest remains intentionally unset until a
-separately reviewed post-run closeout binds the exact redacted terminal.
+The terminal closeout requires a finding-free independent review and merge. Afterward, bounded
+offline forensics may support a prospective successor only if the retained evidence does so without
+changing the inherited science.
 
-No credential presence or value, provider request, private Program 014 state, dataset admission,
-strategy calculation, or strategy return has occurred. Controlled or protected access, purchases,
-PAPER, broker writes, and live execution remain disabled.
+Do not run Program 014 credential preflight or acquisition again. Controlled or protected access,
+purchases, PAPER, broker writes, and live execution remain disabled.
