@@ -540,14 +540,6 @@ def credential_presence_preflight(
         return credential_contract.credential_presence_preflight(environ)
 
 
-def read_credentials(environ: Mapping[str, str] | None = None) -> tuple[str, str]:
-    values = os.environ if environ is None else environ
-    credentials = tuple(values.get(name, "").strip() for name in CREDENTIAL_NAMES)
-    if any(not value or "\r" in value or "\n" in value for value in credentials):
-        raise Program014AuthorityError("Program 014 OHLCV credentials are required")
-    return credentials[0], credentials[1]
-
-
 def validate_operation_contract(
     repository: Path, *, commit: str | None = None
 ) -> Mapping[str, Any]:
@@ -1163,6 +1155,13 @@ class _CredentialLoader:
         self._loaded = False
         self._client: predecessor._AlpacaBarsClient | None = None
 
+    def _read_credentials(self) -> tuple[str, str]:
+        values = os.environ if self._environ is None else self._environ
+        credentials = tuple(values.get(name, "").strip() for name in CREDENTIAL_NAMES)
+        if any(not value or "\r" in value or "\n" in value for value in credentials):
+            raise Program014AuthorityError("Program 014 OHLCV credentials are required")
+        return credentials[0], credentials[1]
+
     def get(
         self, intent: program_011.PageIntent, before_transport: Callable[[], None]
     ) -> raw_contract.RawResponse:
@@ -1181,7 +1180,7 @@ class _CredentialLoader:
                 )
             )
             try:
-                key_id, secret_key = read_credentials(self._environ)
+                key_id, secret_key = self._read_credentials()
             except Exception:
                 predecessor._append_atomic(
                     self._root_descriptor,
