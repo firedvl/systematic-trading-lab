@@ -148,13 +148,13 @@ finding-free independent terminal review confirmed the exact terminal bytes and 
 standalone credential reader. Do not run Program 014 again. See
 [Program 014 exposed-prefix recovery](docs/program-014-exposed-prefix-recovery.md).
 
-Program 015, `multi-hour-sector-etf-research-014`, has a frozen v2, non-authorizing prospective
-successor proposal. Offline forensics support read-only reuse of completed whole sessions and one issuance of
-the Program 014 intent-only frontier under a future separately reviewed child. Its unchanged maximum
-is 22,176 cumulative request intents and 22,173 responses after three consumed intents without
-responses. V2 also freezes the final Program 014 credential-reader remediation and durable access
-ordering. No Program 015 runtime, credential access, provider contact, or execution authority exists.
-Fresh independent design/correctness and defensive reviews of proposal v2 pass finding-free.
+Program 015, `multi-hour-sector-etf-research-014`, is implemented prospectively but remains
+non-authorizing. Its exact reviewed runtime can reparse completed Program 012–014 whole sessions and
+issue the Program 014 intent-only frontier once under a future separately reviewed child. The fixed
+maximum is 22,176 cumulative request intents and 22,173 responses after three consumed intents
+without responses. No callable credential reader exists; parsing is confined to the lock-bound
+loader after durable attempt reservation and process-latch consumption. Do not run Program 015 yet.
+No child, credential access, provider contact, private Program 015 state, or execution has occurred.
 See [Program 015 exposed-prefix recovery](docs/program-015-exposed-prefix-recovery.md).
 
 ## Using historical data

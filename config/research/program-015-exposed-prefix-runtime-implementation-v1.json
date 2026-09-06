@@ -1,0 +1,173 @@
+{
+  "schema_version": "program-015-exposed-prefix-runtime-implementation-v1",
+  "implementation_id": "program-015-exposed-prefix-runtime-implementation-2026-09-06-v1",
+  "program_ordinal": 15,
+  "program_id": "multi-hour-sector-etf-research-014",
+  "status": "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED",
+  "review_status": "PASS-FINDING-FREE-EXACT-RUNTIME-AND-BINDING-REVIEW",
+  "implementation_binding": {
+    "source_commit": "b7fa5ec660cfbfad076fb8b0577034b44e9d4e53",
+    "source_tree": "17509321c567f791049d81eebc7fa860e6aa4721",
+    "implementation_root": "1fece120bee9a07ccfb0565878d3b97336877ef60624d4b2aa5e80567896e403",
+    "source_files": [
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "b3f8982d763ba6d15b2e0a152e06e4d58b89004e55df54fae3f6e2ba312339b4"
+      },
+      {
+        "path": "src/systematic_trading_lab/cli.py",
+        "sha256": "e534214412267ad9bb045ae01e9ce3710d024e3c0265923d51aa746f79edef0e"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_015_ohlcv_authority.py",
+        "sha256": "71497db7a073039ef2969ecb19d285091eeb0c7af2e2fb36062598ad7558fabc"
+      },
+      {
+        "path": "tests/unit/test_intraday_source_provenance.py",
+        "sha256": "69c6608ed1e326be4ae6df17f342bc92f8eb82058946ca98a6e31a4b17d7debb"
+      },
+      {
+        "path": "tests/unit/test_program_015_ohlcv_authority.py",
+        "sha256": "4be6abf8a2a81eeca8ef6b9787eaa3b3815569cc7bd17fd478b4316fb3966d4f"
+      }
+    ]
+  },
+  "reviewed_diff": {
+    "base_commit": "8177e929e41d0d25b6c87f87a6920c872e0209c5",
+    "source_commit": "b7fa5ec660cfbfad076fb8b0577034b44e9d4e53",
+    "sha256": "1e30a53df8a43f15c318867a7049e59060da377687ca83523fed0ffd12825219",
+    "files": [
+      "src/systematic_trading_lab/cli.py",
+      "src/systematic_trading_lab/program_015_ohlcv_authority.py",
+      "tests/unit/test_intraday_source_provenance.py",
+      "tests/unit/test_program_015_ohlcv_authority.py"
+    ]
+  },
+  "operation_contract": {
+    "path": "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json",
+    "sha256": "94236834b3e169430bb031b760e141e77ccdd84188f27404c178eefd0119e82a",
+    "fingerprint": "118f84f7384012830b0f8daddce24c89d5e2ea35ef6b66c4590294541dadf493"
+  },
+  "operation_contract_review": {
+    "path": "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v2.json",
+    "sha256": "01b7587d1ee96cdf3e0fc7b74acf9061943f300d855c3ffdd354071a7e23f7f2",
+    "fingerprint": "4dc259b5560e6c0cc144aa72c0608961fd2803d1d8c30fca3480e3d8f8b1d14d"
+  },
+  "runtime_contract": {
+    "entrypoint": "src/systematic_trading_lab/program_015_ohlcv_authority.py",
+    "cli": "data acquire program-015-ohlcv",
+    "actions": [
+      "credential-preflight",
+      "run"
+    ],
+    "activation_and_execution_share_one_lock_held_transaction": true,
+    "program_015_exclusive_lock_before_program_014_program_013_and_program_012_shared_locks": true,
+    "git_policy_snapshot_held_through_public_terminal_fsync": true,
+    "protected_overlap_rejected_before_private_root_access": true,
+    "predecessor_prefix_and_frontier_rederived": true,
+    "predecessor_raw_pages_copied": false,
+    "separate_program_015_private_root": true,
+    "single_nonrestarting_process_enforced": true,
+    "launcher_validated_before_reconstruction_or_replay": true,
+    "prior_nonterminal_launcher_state_seals_runtime_failure": true,
+    "atomic_fsynced_claim_before_transport": true,
+    "atomic_fsynced_intent_before_transport": true,
+    "raw_body_fsynced_before_receipt": true,
+    "response_receipt_fsynced_before_parse_or_continuation": true,
+    "program_015_request_reissue_allowed": false,
+    "completed_page_local_replay_same_process_only": true,
+    "surviving_operational_artifact_consumes_successor": true,
+    "cumulative_request_intent_ceiling": 22176,
+    "effective_cumulative_response_ceiling": 22173,
+    "credential_attempt_fsynced_before_access": true,
+    "standalone_callable_credential_reader_present": false,
+    "credential_parsing_inline_only_in_lock_bound_loader": true,
+    "process_latch_consumed_before_environment_access": true,
+    "process_latch_consumed_on_attempt_reservation_or_parse_failure": true,
+    "credential_failure_receipt_fsynced_before_propagation": true,
+    "credential_success_receipt_fsynced_before_client_construction_and_transport": true,
+    "credential_accesses_per_program_015_process": 1,
+    "private_terminal_recovery_before_credentials_or_transport": true,
+    "public_projection_shared_by_terminal_and_cli": true,
+    "public_terminal_digest_bound_by_separately_reviewed_post_run_closeout": true,
+    "large_canonical_evidence_hashed_by_bounded_descriptor_reads": true,
+    "maximum_requests_per_minute": 120,
+    "automatic_retries": 0,
+    "parallel_session_chains": 1,
+    "future_child_runtime_source": "EXACT-CLEAN-SYNCHRONIZED-MAIN-AFTER-RUNTIME-MERGE",
+    "allowed_later_repository_additions": [
+      "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",
+      "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json"
+    ]
+  },
+  "review": {
+    "initial_design_and_correctness": {
+      "reviewer": "fresh independent read-only runtime design reviewer",
+      "verdict": "FINDING",
+      "finding_id": "P015-RUNTIME-CORRECTNESS-001",
+      "finding": "The frozen runtime source commit lacked its post-freeze implementation attestation and retained cloned Program 014 assertion bindings.",
+      "remediation": "This binding commit adds the exact Program 015 attestation and updates the assertion to the frozen b7fa5ec commit tree root and binary diff."
+    },
+    "binding_design_and_correctness": {
+      "reviewer": "fresh independent read-only runtime design reviewer",
+      "verdict": "PASS",
+      "findings": [],
+      "scope": "Program 015 lifecycle, four-lock ordering, three-layer predecessor replay, budgets, frontier derivation, terminal recovery, CLI, credential ordering, and exact implementation binding",
+      "proof_gap": "Synthetic and mock evidence only; no private root, credential, or provider access occurred."
+    },
+    "defensive_boundary": {
+      "reviewer": "fresh independent alternate defensive trust-boundary reviewer",
+      "verdict": "PASS",
+      "findings": [],
+      "runtime_source_sha256": "71497db7a073039ef2969ecb19d285091eeb0c7af2e2fb36062598ad7558fabc",
+      "runtime_test_sha256": "4be6abf8a2a81eeca8ef6b9787eaa3b3815569cc7bd17fd478b4316fb3966d4f",
+      "primary_service_failures": [
+        "503 Service Unavailable"
+      ],
+      "proof_gap": "No real child exists, so provider and private-state behavior remains intentionally unexecuted; static, AST/API, synthetic, and mock checks cover the prospective runtime boundary."
+    }
+  },
+  "verification": {
+    "focused_program_015_and_provenance_tests": "108 passed",
+    "full_suite": "1837 passed, 4 skipped",
+    "full_suite_failures_or_errors": 0,
+    "ruff_format_and_lint": "PASS; 297 files",
+    "mypy": "PASS; 292 files",
+    "secret_scan": "PASS; 726 files",
+    "shell_syntax": "PASS",
+    "wheel_build": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "execution_boundary": {
+    "credential_reader_present": false,
+    "provider_transport_present": true,
+    "private_store_present": true,
+    "authority_activation_present": true,
+    "child_authority_present": false,
+    "child_authority_review_present": false,
+    "credential_presence_or_values_accessed": false,
+    "provider_requests": 0,
+    "private_program_015_state_accessed": false,
+    "dataset_admitted": false,
+    "strategy_calculations_or_returns": 0,
+    "next_gate": "Merge this runtime binding, freeze exact clean synchronized main as the Program 015 child runtime source, add only the child and its independent review, then run names-only credential preflight."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "e8fa3532fd47b3bb1858e8718ae4f6b2caa2f3606f5e4338472161640fc25b00"
+}
