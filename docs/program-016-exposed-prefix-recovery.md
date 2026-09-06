@@ -37,5 +37,13 @@ passed finding-free. Review SHA-256/fingerprint is
 merge plus a separately reviewed exact one-use child are required before any credential presence
 check, credential access, private Program 016 state, or provider contact.
 
+The prospective runtime is frozen at source commit/tree/root `4b0ee2763ceeb654b057f38c656b7f1e90818c9a` /
+`60f63b34cfe71e7949af68b76182f57abd8c0502` /
+`91eb8ce71b44ac308f81d7e500941aba68ce24b384f735ecc0c90878e6ed79e3`. Fresh independent
+correctness and defensive reviews passed finding-free. Implementation fingerprint is
+`80215fb0a0d3e3884aa29023f99a512430e2de37a69822ae427498e79ffd72a7`. Merge and a separately
+reviewed exact one-use child remain required before credentials, private Program 016 state, or
+provider contact.
+
 No Program 016 credential preflight or acquisition is authorized. Controlled or protected access,
 purchases, PAPER, broker writes, and live execution remain disabled.

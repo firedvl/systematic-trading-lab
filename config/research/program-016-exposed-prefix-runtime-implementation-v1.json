@@ -1,0 +1,110 @@
+{
+  "schema_version": "program-016-exposed-prefix-runtime-implementation-v1",
+  "implementation_id": "program-016-exposed-prefix-runtime-implementation-2026-09-06-v1",
+  "program_ordinal": 16,
+  "program_id": "multi-hour-sector-etf-research-015",
+  "status": "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED",
+  "review_status": "PASS-FINDING-FREE-EXACT-RUNTIME-REVIEW",
+  "implementation_binding": {
+    "source_commit": "4b0ee2763ceeb654b057f38c656b7f1e90818c9a",
+    "source_tree": "60f63b34cfe71e7949af68b76182f57abd8c0502",
+    "implementation_root": "91eb8ce71b44ac308f81d7e500941aba68ce24b384f735ecc0c90878e6ed79e3",
+    "source_files": [
+      {"path": "scripts/check_secrets.py", "sha256": "2677dc94c038a9fd02ddfbb722b4c9d9085714f708dc7e1545db887211923a7b"},
+      {"path": "src/systematic_trading_lab/cli.py", "sha256": "639a9f5e0cb157a85fc1e09a97e567c46970fcf2a98874671d289f033e9697e6"},
+      {"path": "src/systematic_trading_lab/program_016_ohlcv_authority.py", "sha256": "dfd912a4bee4b9dff83fcaa62212f5e72084cb28f630dc339570823cf9b9f0c2"},
+      {"path": "tests/unit/test_intraday_source_provenance.py", "sha256": "dc71417fa7ad4fda145ebdab6a9771e0cfe780a6facc7d27d72a4c947ce32e50"},
+      {"path": "tests/unit/test_program_016_ohlcv_authority.py", "sha256": "ad9ef0864fd3e55f56fc47ab899b8153a77773bb89f460945eec13b8d6c60f97"}
+    ]
+  },
+  "reviewed_diff": {
+    "base_commit": "671ef334d770adb3b45caa664bc7498b91cd75bc",
+    "source_commit": "4b0ee2763ceeb654b057f38c656b7f1e90818c9a",
+    "sha256": "e3b02cab30f7997c59e8a7bb3f6c2e5aa2671a2527fdac2a8eabb787f2bbdd02",
+    "files": [
+      "src/systematic_trading_lab/cli.py",
+      "src/systematic_trading_lab/program_016_ohlcv_authority.py",
+      "tests/unit/test_intraday_source_provenance.py",
+      "tests/unit/test_program_016_ohlcv_authority.py"
+    ]
+  },
+  "operation_contract": {
+    "path": "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json",
+    "sha256": "76f946df1a50f1e1a866f144c7fe5cf4d2f12b1c5cf874dc9d901f994ff59776",
+    "fingerprint": "48a2ce7333f9422609d3bf9c00e4f7fbc3a58414768585063b6f8db68abacafe"
+  },
+  "operation_contract_review": {
+    "path": "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json",
+    "sha256": "fab92d4355453a9971df60b2609af39ab8ff2bece9ea2bfa9c32ec235343ea62",
+    "fingerprint": "c5f9626858ce72639becc0757351ae1451ec73fbfd5d710a2ff8621a2fac664d"
+  },
+  "runtime_contract": {
+    "entrypoint": "src/systematic_trading_lab/program_016_ohlcv_authority.py",
+    "cli": "data acquire program-016-ohlcv",
+    "actions": ["credential-preflight", "run"],
+    "activation_and_execution_share_one_lock_held_transaction": true,
+    "six_control_lock_order_enforced": true,
+    "predecessor_prefix_and_frontier_rederived": true,
+    "predecessor_raw_pages_copied": false,
+    "single_nonrestarting_process_enforced": true,
+    "durable_claim_intent_body_and_receipt_order_enforced": true,
+    "program_016_request_reissue_allowed": false,
+    "cumulative_request_intent_ceiling": 22176,
+    "effective_cumulative_response_ceiling": 22172,
+    "standalone_callable_credential_reader_present": false,
+    "credential_parsing_inline_only_in_lock_bound_loader": true,
+    "credential_accesses_per_program_016_process": 1,
+    "private_terminal_recovery_before_credentials_or_transport": true,
+    "public_projection_shared_by_terminal_and_cli": true,
+    "maximum_requests_per_minute": 120,
+    "automatic_retries": 0,
+    "parallel_session_chains": 1,
+    "future_child_runtime_source": "EXACT-CLEAN-SYNCHRONIZED-MAIN-AFTER-RUNTIME-MERGE",
+    "allowed_later_repository_additions": [
+      "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",
+      "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json"
+    ]
+  },
+  "review": {
+    "design_and_correctness": {
+      "reviewer": "fresh independent read-only runtime design reviewer",
+      "verdict": "PASS",
+      "findings": [],
+      "verification": "106 focused tests, targeted Ruff, and git diff check passed"
+    },
+    "defensive_boundary": {
+      "reviewer": "fresh independent read-only defensive trust-boundary reviewer",
+      "verdict": "PASS",
+      "findings": [],
+      "verification": "106 focused tests, 738-file secret scan, targeted Ruff, mypy, and git diff check passed"
+    }
+  },
+  "execution_boundary": {
+    "child_authority_present": false,
+    "child_authority_review_present": false,
+    "credential_presence_or_values_accessed": false,
+    "provider_requests": 0,
+    "private_program_016_state_accessed": false,
+    "dataset_admitted": false,
+    "strategy_calculations_or_returns": 0,
+    "next_gate": "Merge the exact runtime binding, freeze clean synchronized main, then add and independently review only the exact one-use child before names-only credential preflight."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "80215fb0a0d3e3884aa29023f99a512430e2de37a69822ae427498e79ffd72a7"
+}

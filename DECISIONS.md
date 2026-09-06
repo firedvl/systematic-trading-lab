@@ -1,5 +1,11 @@
 # Architecture decisions
 
+## 2026-09-06 - Implement the reviewed Program 016 runtime without authority
+
+- Decision: reuse the Program 015 runtime controls and add only Program 015 as a fourth immutable predecessor layer, the sixth control lock, Program 016 identities, and the 22,172 effective response ceiling.
+- Evidence: exact runtime source commit/tree/root is `4b0ee2763ceeb654b057f38c656b7f1e90818c9a` / `60f63b34cfe71e7949af68b76182f57abd8c0502` / `91eb8ce71b44ac308f81d7e500941aba68ce24b384f735ecc0c90878e6ed79e3`. Fresh independent correctness and defensive reviews passed finding-free. Implementation fingerprint is `80215fb0a0d3e3884aa29023f99a512430e2de37a69822ae427498e79ffd72a7`.
+- Revisit when: after runtime merge, add and independently review only the exact one-use child before credentials or provider contact.
+
 ## 2026-09-06 - Freeze Program 016 as a non-restarting five-root recovery
 
 - Decision: inherit Program 015 proposal v2 without changing its source, chronology, pagination, missingness, admission, privacy, or no-strategy rules. Keep Programs 012 through 015 immutable and read-only, use one distinct Program 016 root, reuse only completed whole sessions, discard the incomplete Program 015 session and page, and issue the frontier once under a later reviewed child.
