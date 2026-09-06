@@ -143,8 +143,9 @@ terminal bytes and replay guard. Do not run Program 013 again. See
 Program 014's reviewed one-use child is consumed and sealed as `FAIL-CONSUMED-NO-RETRY`. The
 redacted public terminal records a runtime failure, no structural admission, no dataset lineage, and
 no strategy work. Dynamic acquisition state and detailed failure evidence remain private. Current
-code rejects every Program 014 lifecycle entrypoint before credential or private-root access. Do not
-run Program 014 again. See
+code rejects every Program 014 lifecycle entrypoint before credential or private-root access. A
+finding-free independent terminal review confirmed the exact terminal bytes and removal of every
+standalone credential reader. Do not run Program 014 again. See
 [Program 014 exposed-prefix recovery](docs/program-014-exposed-prefix-recovery.md).
 
 ## Using historical data

@@ -45,9 +45,19 @@ before credential preflight, authority derivation, execution, or private-root ac
 cannot replay or retry. Dynamic acquisition state, detailed failure evidence, private identities,
 exact missingness, provider tokens, and market observations remain private.
 
-The terminal closeout requires a finding-free independent review and merge. Afterward, bounded
-offline forensics may support a prospective successor only if the retained evidence does so without
-changing the inherited science.
+Independent review found two callable credential-reader bypasses. Commits
+`4c3eb75598ead8f8c385ebcabefe18cd09b793a3` and
+`085f062b448901e30e22f40732cd6583032cccda` removed the public and internal helpers, respectively;
+credential parsing now occurs only inside the lock-bound loader after launcher validation and durable
+access reservation. Fresh exact-head correctness and defensive reviews passed finding-free. The
+review artifact SHA-256/fingerprint is
+`04a5ec8b50a051ed457d0d5dc7cc001c4224be3750cab6c2d552c94d26ba07f2` /
+`db9b391c9e7770da16ab2414102a0e8148785c957d8ca5f182eb02acaac9cdb6`. The original dedicated
+security reviewer returned HTTP 503 before output; the approved fresh-context alternate path supplied
+the final defensive validation.
+
+After merge, bounded offline forensics may support a prospective successor only if the retained
+evidence does so without changing the inherited science.
 
 Do not run Program 014 credential preflight or acquisition again. Controlled or protected access,
 purchases, PAPER, broker writes, and live execution remain disabled.

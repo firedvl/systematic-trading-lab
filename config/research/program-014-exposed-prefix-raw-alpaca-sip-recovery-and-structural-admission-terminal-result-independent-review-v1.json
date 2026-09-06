@@ -1,0 +1,205 @@
+{
+  "schema_version": "program-014-exposed-prefix-terminal-result-independent-review-v1",
+  "review_id": "program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-2026-09-06-v1",
+  "program_ordinal": 14,
+  "program_id": "multi-hour-sector-etf-research-013",
+  "reviewed_at": "2026-09-06T11:21:40Z",
+  "status": "PASS-TERMINAL-FAILURE-VERIFIED",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_execution_main": "818a923349ec13b18ec6dc1743e1f136f56bcc8c",
+  "reviewed_base_commit": "c7fc70557d5c3af711b7abf263c69bc3a12ee41e",
+  "reviewed_base_tree": "664249bc09358422a3803fb6c91071eab8e5101e",
+  "reviewed_head_commit": "085f062b448901e30e22f40732cd6583032cccda",
+  "reviewed_head_tree": "af3fe369b228de2d6d15bc4998483c8328c48205",
+  "reviewed_closeout_commits": [
+    {
+      "commit": "10c29892c7f1274f831f366813bcb49102de4b66",
+      "tree": "0ea57425b3d66313bc7e9f90aed384780c903176",
+      "purpose": "exact generated redacted Program 014 terminal artifact"
+    },
+    {
+      "commit": "8c5da6d38d2c212cd46f26ef9e403a5d16fe763b",
+      "tree": "ff38f183f5715fd2c3addc9988b162295c665036",
+      "purpose": "immutable terminal binding, revocation regression, and public closeout"
+    },
+    {
+      "commit": "4c3eb75598ead8f8c385ebcabefe18cd09b793a3",
+      "tree": "cfe0e6d69b123528f875d47216395c785834ee21",
+      "purpose": "remove the public standalone credential reader after independent review"
+    },
+    {
+      "commit": "085f062b448901e30e22f40732cd6583032cccda",
+      "tree": "af3fe369b228de2d6d15bc4998483c8328c48205",
+      "purpose": "remove the directly callable internal credential reader and inline parsing inside the lock-bound loader"
+    }
+  ],
+  "reviewed_public_terminal": {
+    "path": "config/research/program-014-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+    "sha256": "8630f5748266f75a676da31ca3463bb25dcf2bb9447eb7b1fbe5c3b4c636ddf9",
+    "schema_version": "program-014-exposed-prefix-terminal-result-v1",
+    "result_kind": "RUNTIME-FAILURE",
+    "status": "FAIL-CONSUMED-NO-RETRY",
+    "admission_passed": false,
+    "dataset_lineage_manifest_present": false,
+    "program_002_admission": false,
+    "strategy_calculations_present": false,
+    "strategy_returns_present": false,
+    "authority_fingerprint": "52be3ed20d80f0abe62b58a6e3d3ce6667279d55a9d04915229f8805c89254dc",
+    "runtime_source_commit": "818a923349ec13b18ec6dc1743e1f136f56bcc8c",
+    "runtime_source_tree": "ca93b687d3d139a74678e9a998ea732d93016098"
+  },
+  "private_evidence_review": {
+    "ignored_private_root_inspected": false,
+    "credentials_or_private_evidence_accessed": false,
+    "public_terminal_exact_worktree_and_commit_bytes_confirmed": true,
+    "credentials_stored": false,
+    "private_details_remain_redacted_under_proposal_v3": true
+  },
+  "review_history": {
+    "primary_security_review": "INFRASTRUCTURE-FAILURE-HTTP-503-BEFORE-OUTPUT",
+    "alternate_defensive_review_before_remediation": "PASS-NO-MATERIAL-DEFENSIVE-BOUNDARY-FINDING",
+    "initial_correctness_review": "FINDING-PUBLIC-CREDENTIAL-READER-BYPASSED-TERMINAL",
+    "first_remediation_review": "FINDING-INTERNAL-CREDENTIAL-READER-REMAINED-DIRECTLY-CALLABLE",
+    "final_correctness_review": "PASS-FINDING-FREE",
+    "final_defensive_validation": "PASS-FINDING-FREE-CANDIDATES-SUPPRESSED"
+  },
+  "resolved_findings": [
+    {
+      "severity": "MEDIUM",
+      "finding": "The public standalone read_credentials helper could return caller-supplied or process credential values after terminal revocation.",
+      "resolution": "Commit 4c3eb75598ead8f8c385ebcabefe18cd09b793a3 removed the public helper."
+    },
+    {
+      "severity": "HIGH",
+      "finding": "The first remediation left a directly callable _CredentialLoader._read_credentials method outside the terminal lifecycle boundary.",
+      "resolution": "Commit 085f062b448901e30e22f40732cd6583032cccda removed the method and inlined parsing inside _CredentialLoader.get after launcher validation and durable credential-access reservation."
+    }
+  ],
+  "terminal_revocation": {
+    "guard_path": "src/systematic_trading_lab/program_014_ohlcv_authority.py",
+    "credential_preflight_rejects_before_credentials_or_private_root": true,
+    "authority_derivation_rejects_before_credentials_or_private_root": true,
+    "execution_rejects_before_credentials_or_private_root": true,
+    "missing_terminal_rejects_before_credentials_or_private_root": true,
+    "invalid_terminal_rejects_before_credentials_or_private_root": true,
+    "changed_terminal_shape_rejects_before_credentials_or_private_root": true,
+    "changed_terminal_bytes_reject_before_credentials_or_private_root": true,
+    "module_level_credential_reader_absent": true,
+    "loader_level_credential_reader_absent": true,
+    "credential_parsing_occurs_only_inside_lock_bound_get": true,
+    "exact_terminal_bytes_bound": true,
+    "program_014_replay_or_retry_prohibited": true
+  },
+  "challenge_results": [
+    {
+      "number": 1,
+      "challenge": "Did the reviewed child consume its one use and leave Program 014 terminal?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 2,
+      "challenge": "Does the committed public terminal preserve the exact generated redacted bytes?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 3,
+      "challenge": "Does every public Program 014 lifecycle entrypoint reject before credential or private-root access?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 4,
+      "challenge": "Are standalone public and internal credential readers absent after terminal closeout?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 5,
+      "challenge": "Do absent, invalid, semantically changed, or byte-changed terminal artifacts fail closed?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 6,
+      "challenge": "Did Program 014 admit a dataset or calculate a strategy result?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "number": 7,
+      "challenge": "Were controlled, protected, PAPER, broker, live, and purchase boundaries untouched?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 8,
+      "challenge": "Does the review preserve Program 014 as consumed rather than authorize replay or retry?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "number": 9,
+      "challenge": "Must any successor be prospective and independently reviewed?",
+      "answer": "YES",
+      "verdict": "PASS"
+    }
+  ],
+  "verified_assertions": {
+    "public_terminal_is_canonical": true,
+    "public_terminal_matches_committed_generated_bytes": true,
+    "public_terminal_contains_no_forbidden_private_evidence": true,
+    "one_use_authority_is_consumed": true,
+    "terminal_result_blocks_all_public_lifecycle_entrypoints": true,
+    "missing_or_invalid_terminal_blocks_all_public_lifecycle_entrypoints": true,
+    "changed_terminal_shape_or_bytes_block_public_lifecycle_entrypoints": true,
+    "standalone_credential_readers_are_absent": true,
+    "no_dataset_lineage_was_published": true,
+    "no_program_002_admission_occurred": true,
+    "no_strategy_calculation_or_return_occurred": true,
+    "controlled_protected_paper_broker_live_and_purchase_state_stayed_untouched": true,
+    "program_014_replay_or_retry_is_prohibited": true
+  },
+  "verification": {
+    "independent_final_correctness_review": "PASS-FINDING-FREE",
+    "independent_final_defensive_validation": "PASS-FINDING-FREE",
+    "reviewer_scope": "READ-ONLY-NO-CREDENTIAL-NO-PRIVATE-ROOT-NO-PROVIDER",
+    "focused_program_014_tests": "PASS-74",
+    "full_repository_tests": "PASS-1761-WITH-4-SKIPPED",
+    "ruff_format_and_lint": "PASS",
+    "mypy_src_and_tests": "PASS-289-FILES",
+    "secret_and_private_data_scan": "PASS-717-FILES",
+    "shell_syntax_checks": "PASS",
+    "sdist_and_wheel_build": "PASS",
+    "canonical_review_fingerprint": "PASS",
+    "git_diff_check": "PASS",
+    "reviewed_working_tree": "clean at reviewed head before this review artifact"
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "The independent reviewers did not access credentials, the ignored private root, or provider state; they verified exact public bytes and reachable lifecycle behavior using static tracing and synthetic tests.",
+    "The historical private terminal-to-public projection was not independently reconstructed because that would require prohibited private-evidence access.",
+    "The original dedicated security reviewer returned HTTP 503 before producing output; the approved fresh-context alternate defensive-validation path supplied the final independent security result."
+  ],
+  "scope_limit": "The review made no credential access, provider request, private-root read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Merge the terminal closeout, perform bounded offline forensics, and create a prospective successor only if retained evidence supports one without changing Program 014's frozen rules.",
+  "review_fingerprint": "db9b391c9e7770da16ab2414102a0e8148785c957d8ca5f182eb02acaac9cdb6"
+}

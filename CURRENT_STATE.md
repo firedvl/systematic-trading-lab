@@ -13,11 +13,16 @@ preserved below as historical context. Programs 013 and 012 remain terminal and 
   Dynamic acquisition state, detailed failure evidence, private content identities, raw market data,
   provider tokens, exact missingness, and exact unexpected exclusions remain private. Current code
   requires the exact committed terminal and rejects credential preflight, authority derivation, and
-  execution before credential or private-root access. Program 014 cannot replay or retry. Controlled
-  or protected access, purchases, PAPER, broker writes, and live execution remained disabled. Next
-  autonomous action: obtain a finding-free independent terminal review, merge the closeout, then
-  perform bounded offline forensics and freeze a prospective successor only if the retained evidence
-  supports one without changing the inherited science.
+  execution before credential or private-root access. Independent review found and prospectively
+  fixed standalone public and internal credential-reader bypasses; exact head
+  `085f062b448901e30e22f40732cd6583032cccda` then passed fresh correctness and defensive reviews
+  finding-free. Review artifact SHA-256/fingerprint is
+  `04a5ec8b50a051ed457d0d5dc7cc001c4224be3750cab6c2d552c94d26ba07f2` /
+  `db9b391c9e7770da16ab2414102a0e8148785c957d8ca5f182eb02acaac9cdb6`. Program 014 cannot
+  replay or retry. Controlled or protected access, purchases, PAPER, broker writes, and live
+  execution remained disabled. Next autonomous action: merge the closeout, then perform bounded
+  offline forensics and freeze a prospective successor only if the retained evidence supports one
+  without changing the inherited science.
 
 - Historical Program 014 planning snapshot: `multi-hour-sector-etf-research-013` was
   `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.
