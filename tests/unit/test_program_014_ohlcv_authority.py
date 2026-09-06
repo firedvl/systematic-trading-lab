@@ -7,7 +7,7 @@ import json
 import multiprocessing
 import os
 import subprocess
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager, nullcontext
 from datetime import UTC, datetime
 from pathlib import Path
@@ -37,6 +37,34 @@ _IMPLEMENTATION_PATH = Path(
 
 class _AbruptExit(BaseException):
     pass
+
+
+class _ForbiddenCredentialEnvironment(Mapping[str, str]):
+    def __getitem__(self, _key: str) -> str:
+        pytest.fail("credential environment was accessed")
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(())
+
+    def __len__(self) -> int:
+        return 0
+
+
+class _PresenceOnlyCredentialEnvironment(Mapping[str, str]):
+    def __init__(self) -> None:
+        self.reads = 0
+
+    def __getitem__(self, key: str) -> str:
+        self.reads += 1
+        if self.reads > len(authority.CREDENTIAL_NAMES):
+            pytest.fail("credential values were loaded after presence preflight")
+        return _credentials()[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(authority.CREDENTIAL_NAMES)
+
+    def __len__(self) -> int:
+        return len(authority.CREDENTIAL_NAMES)
 
 
 @pytest.fixture(autouse=True)
@@ -1044,15 +1072,10 @@ def test_crash_after_intent_seals_without_credentials_or_transport(
     assert private["cumulative_request_intents"] == 3
     assert private["cumulative_responses"] == 0
     assert transport.intents == ()
-    monkeypatch.setattr(
-        authority,
-        "read_credentials",
-        lambda *_args: pytest.fail("terminal recovery accessed credentials"),
-    )
     with pytest.raises(authority.Program014AuthorityError, match="terminally sealed"):
         authority._execute_mock_acquisition(
             tmp_path,
-            environ=_credentials(),
+            environ=_ForbiddenCredentialEnvironment(),
             transport=authority.MockBarsTransport([]),
         )
 
@@ -1079,15 +1102,10 @@ def test_crash_after_body_seals_without_a_second_transport(
     assert private["cumulative_request_intents"] == 3
     assert private["cumulative_responses"] == 0
     assert len(transport.intents) == 1
-    monkeypatch.setattr(
-        authority,
-        "read_credentials",
-        lambda *_args: pytest.fail("terminal recovery accessed credentials"),
-    )
     with pytest.raises(authority.Program014AuthorityError, match="terminally sealed"):
         authority._execute_mock_acquisition(
             tmp_path,
-            environ=_credentials(),
+            environ=_ForbiddenCredentialEnvironment(),
             transport=authority.MockBarsTransport([]),
         )
 
@@ -1314,17 +1332,12 @@ def test_restarted_process_cannot_publish_success_from_completed_pages(
     _write_page(descriptor, active, state, request, 1, None, _body(request, 0, None))
     os.close(descriptor)
     monkeypatch.setattr(authority, "_PROCESS_LAUNCH_NONCE", "0" * 64)
-    monkeypatch.setattr(
-        authority,
-        "read_credentials",
-        lambda *_args: pytest.fail("restarted process accessed credentials"),
-    )
     transport = authority.MockBarsTransport([])
 
     with pytest.raises(authority.Program014AuthorityError, match="terminally sealed"):
         authority._execute_mock_acquisition(
             tmp_path,
-            environ=_credentials(),
+            environ=_ForbiddenCredentialEnvironment(),
             transport=transport,
         )
 
@@ -1532,18 +1545,13 @@ def test_exhausted_inherited_envelope_seals_without_credentials_or_transport(
         monkeypatch,
         completed_responses=science.MAXIMUM_REQUESTS_AND_RESPONSES - 2,
     )
-    credential_reads: list[bool] = []
-    monkeypatch.setattr(
-        authority,
-        "read_credentials",
-        lambda *_args: credential_reads.append(True),
-    )
     transport = authority.MockBarsTransport(
         [raw_contract.RawResponse(200, _body(request, 0, None))]
     )
+    environ = _PresenceOnlyCredentialEnvironment()
 
     with pytest.raises(authority.Program014AuthorityError, match="sealed failure"):
-        authority._execute_mock_acquisition(tmp_path, environ=_credentials(), transport=transport)
+        authority._execute_mock_acquisition(tmp_path, environ=environ, transport=transport)
 
     private = json.loads((tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).read_bytes())
     assert private["failure_class"] == "CombinedRequestBudgetExhausted"
@@ -1553,7 +1561,7 @@ def test_exhausted_inherited_envelope_seals_without_credentials_or_transport(
     assert private["cumulative_request_intents"] == 22_176
     assert private["cumulative_responses"] == 22_174
     assert private["provider_transport_attempted"] is False
-    assert credential_reads == []
+    assert environ.reads == len(authority.CREDENTIAL_NAMES)
     assert transport.intents == ()
 
 
@@ -1635,18 +1643,14 @@ def test_every_surviving_operational_artifact_seals_before_credentials_or_transp
     else:
         predecessor._append(descriptor, "combined-missing-coordinates.json", b"{}\n")
     os.close(descriptor)
-    credential_reads: list[bool] = []
-    monkeypatch.setattr(
-        authority,
-        "read_credentials",
-        lambda *_args: credential_reads.append(True),
-    )
     transport = authority.MockBarsTransport(
         [raw_contract.RawResponse(200, _body(request, 0, None))]
     )
 
     with pytest.raises(authority.Program014AuthorityError, match="terminally sealed"):
-        authority._execute_mock_acquisition(tmp_path, environ=_credentials(), transport=transport)
+        authority._execute_mock_acquisition(
+            tmp_path, environ=_ForbiddenCredentialEnvironment(), transport=transport
+        )
 
     private = json.loads((tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).read_bytes())
     assert private["result_kind"] == "RUNTIME-FAILURE"
@@ -1655,7 +1659,6 @@ def test_every_surviving_operational_artifact_seals_before_credentials_or_transp
     assert private["cumulative_request_intents"] <= science.MAXIMUM_REQUESTS_AND_RESPONSES
     assert private["cumulative_responses"] <= science.MAXIMUM_REQUESTS_AND_RESPONSES - 2
     assert private["cumulative_responses"] < private["cumulative_request_intents"]
-    assert credential_reads == []
     assert transport.intents == ()
 
 
@@ -1672,17 +1675,14 @@ def test_receipt_only_corruption_cannot_exceed_the_combined_envelope(
     prefix = predecessor._page_prefix(request, 1)
     predecessor._append(descriptor, f"{prefix}.receipt.json", b"{}\n")
     os.close(descriptor)
-    monkeypatch.setattr(
-        authority,
-        "read_credentials",
-        lambda *_args: pytest.fail("receipt-only recovery accessed credentials"),
-    )
     transport = authority.MockBarsTransport(
         [raw_contract.RawResponse(200, _body(request, 0, None))]
     )
 
     with pytest.raises(authority.Program014AuthorityError, match="terminally sealed"):
-        authority._execute_mock_acquisition(tmp_path, environ=_credentials(), transport=transport)
+        authority._execute_mock_acquisition(
+            tmp_path, environ=_ForbiddenCredentialEnvironment(), transport=transport
+        )
 
     private = json.loads((tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).read_bytes())
     assert private["cumulative_request_intents"] == science.MAXIMUM_REQUESTS_AND_RESPONSES
@@ -1933,6 +1933,16 @@ def test_every_lifecycle_entrypoint_rejects_an_exact_public_terminal_first(
     assert credential_checks == []
 
 
+def test_committed_terminal_is_immutably_bound() -> None:
+    payload = (_REPOSITORY / authority.PUBLIC_TERMINAL_PATH).read_bytes()
+
+    assert hashlib.sha256(payload).hexdigest() == authority._PUBLIC_TERMINAL_SHA256
+    assert not hasattr(authority, "read_credentials")
+    assert not hasattr(authority._CredentialLoader, "_read_credentials")
+    with pytest.raises(authority.Program014AuthorityError, match="terminally revoked"):
+        authority._reject_terminal_state(_REPOSITORY)
+
+
 def test_valid_shaped_terminal_without_immutable_binding_rejects_before_credentials(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
@@ -2036,17 +2046,12 @@ def test_valid_private_terminal_recovers_without_credentials_or_transport(
     assert private_path.exists()
     assert not public_path.exists()
     monkeypatch.setattr(authority, "_append_public_atomic", original_append_public)
-    monkeypatch.setattr(
-        authority,
-        "read_credentials",
-        lambda *_args: pytest.fail("private terminal recovery accessed credentials"),
-    )
     transport = authority.MockBarsTransport([])
 
     with pytest.raises(authority.Program014AuthorityError, match="terminally sealed"):
         authority._execute_mock_acquisition(
             tmp_path,
-            environ=_credentials(),
+            environ=_ForbiddenCredentialEnvironment(),
             transport=transport,
         )
 

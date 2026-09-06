@@ -1,9 +1,31 @@
 # Current state
 
-Program 014's recovery runtime is implemented and reviewed but not authorized. Program 013 and
-Program 012 remain terminal and immutable.
+Program 014's terminal result is current. Earlier Program 014 planning and implementation state is
+preserved below as historical context. Programs 013 and 012 remain terminal and immutable.
 
-- Program 014, `multi-hour-sector-etf-research-013`, is `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.
+- Program 014, `multi-hour-sector-etf-research-013`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
+  standing child consumed its one use. The exact redacted public terminal binds runtime source commit
+  `818a923349ec13b18ec6dc1743e1f136f56bcc8c` and records `RUNTIME-FAILURE`,
+  `admission_passed=false`, no dataset lineage, no Program 002 admission, and no strategy calculation
+  or return. Its SHA-256 is
+  `8630f5748266f75a676da31ca3463bb25dcf2bb9447eb7b1fbe5c3b4c636ddf9`; the child authority
+  fingerprint is `52be3ed20d80f0abe62b58a6e3d3ce6667279d55a9d04915229f8805c89254dc`.
+  Dynamic acquisition state, detailed failure evidence, private content identities, raw market data,
+  provider tokens, exact missingness, and exact unexpected exclusions remain private. Current code
+  requires the exact committed terminal and rejects credential preflight, authority derivation, and
+  execution before credential or private-root access. Independent review found and prospectively
+  fixed standalone public and internal credential-reader bypasses; exact head
+  `085f062b448901e30e22f40732cd6583032cccda` then passed fresh correctness and defensive reviews
+  finding-free. Review artifact SHA-256/fingerprint is
+  `04a5ec8b50a051ed457d0d5dc7cc001c4224be3750cab6c2d552c94d26ba07f2` /
+  `db9b391c9e7770da16ab2414102a0e8148785c957d8ca5f182eb02acaac9cdb6`. Program 014 cannot
+  replay or retry. Controlled or protected access, purchases, PAPER, broker writes, and live
+  execution remained disabled. Next autonomous action: merge the closeout, then perform bounded
+  offline forensics and freeze a prospective successor only if the retained evidence supports one
+  without changing the inherited science.
+
+- Historical Program 014 planning snapshot: `multi-hour-sector-etf-research-013` was
+  `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.
   Read-only offline validation rederived Program 013's historical child identity, canonical private
   terminal, and exact public projection. Retained Program 012 plus Program 013 evidence forms a
   completed whole-session prefix followed by one intent-only page frontier with no body, receipt,
@@ -52,9 +74,9 @@ Program 012 remain terminal and immutable.
   rejection before review output, and HTTP 429. The full suite reports 1,759 passed and four skipped;
   Ruff, mypy, secret, shell, wheel, and diff checks pass. Every current authority remains false. No
   credential presence or value, provider request, private Program 014 state, dataset admission,
-  strategy calculation, or strategy return was accessed. Next autonomous action: merge this exact
-  runtime binding, freeze clean synchronized main, then add and independently review only the exact
-  one-use child and its review before names-only credential preflight or provider contact.
+  strategy calculation, or strategy return was accessed. Its former next action was to merge this
+  exact runtime binding, freeze clean synchronized main, then add and independently review only the
+  exact one-use child and its review before names-only credential preflight or provider contact.
 
 - Program 013, `multi-hour-sector-etf-research-012`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use. The exact redacted public terminal binds runtime source commit

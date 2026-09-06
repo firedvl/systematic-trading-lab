@@ -108,9 +108,9 @@ _PUBLIC_TERMINAL_RESULT_ID = (
     "program-014-exposed-prefix-raw-alpaca-sip-recovery-and-"
     "structural-admission-terminal-result-2026-09-04-v1"
 )
-# Bound only by the separately reviewed post-run closeout commit. Until then,
-# terminal presence still revokes every entrypoint but cannot be self-certified.
-_PUBLIC_TERMINAL_SHA256: str | None = None
+_PUBLIC_TERMINAL_SHA256: str | None = (
+    "8630f5748266f75a676da31ca3463bb25dcf2bb9447eb7b1fbe5c3b4c636ddf9"
+)
 _PRIVATE_TERMINAL_KEYS = {
     "schema_version",
     "program_id",
@@ -538,14 +538,6 @@ def credential_presence_preflight(
             predecessor_state,
         )
         return credential_contract.credential_presence_preflight(environ)
-
-
-def read_credentials(environ: Mapping[str, str] | None = None) -> tuple[str, str]:
-    values = os.environ if environ is None else environ
-    credentials = tuple(values.get(name, "").strip() for name in CREDENTIAL_NAMES)
-    if any(not value or "\r" in value or "\n" in value for value in credentials):
-        raise Program014AuthorityError("Program 014 OHLCV credentials are required")
-    return credentials[0], credentials[1]
 
 
 def validate_operation_contract(
@@ -1181,7 +1173,11 @@ class _CredentialLoader:
                 )
             )
             try:
-                key_id, secret_key = read_credentials(self._environ)
+                values = os.environ if self._environ is None else self._environ
+                credentials = tuple(values.get(name, "").strip() for name in CREDENTIAL_NAMES)
+                if any(not value or "\r" in value or "\n" in value for value in credentials):
+                    raise Program014AuthorityError("Program 014 OHLCV credentials are required")
+                key_id, secret_key = credentials
             except Exception:
                 predecessor._append_atomic(
                     self._root_descriptor,
