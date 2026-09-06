@@ -35,9 +35,10 @@ def test_program_015_forensic_disposition_binds_terminal_predecessor() -> None:
         "terminal_review",
     ):
         binding = predecessor[name]
-        assert hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest() == binding[
-            "sha256"
-        ]
+        assert (
+            hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest()
+            == binding["sha256"]
+        )
 
     child = _load(Path(predecessor["child_authority"]["path"]))
     child_review = _load(Path(predecessor["child_authority_review"]["path"]))
@@ -47,8 +48,7 @@ def test_program_015_forensic_disposition_binds_terminal_predecessor() -> None:
     assert predecessor["child_authority"]["fingerprint"] == child["child_authority_fingerprint"]
     assert predecessor["child_authority_review"]["review_id"] == child_review["review_id"]
     assert (
-        predecessor["child_authority_review"]["fingerprint"]
-        == child_review["review_fingerprint"]
+        predecessor["child_authority_review"]["fingerprint"] == child_review["review_fingerprint"]
     )
     assert predecessor["runtime_source"] == {
         "commit": child["runtime_binding"]["source_commit"],
@@ -57,9 +57,10 @@ def test_program_015_forensic_disposition_binds_terminal_predecessor() -> None:
     }
     assert terminal["authority_id"] == child["child_authority_id"]
     assert terminal["source_commit"] == predecessor["runtime_source"]["commit"]
-    assert terminal_review["reviewed_public_terminal"]["authority_fingerprint"] == terminal[
-        "authority_fingerprint"
-    ]
+    assert (
+        terminal_review["reviewed_public_terminal"]["authority_fingerprint"]
+        == terminal["authority_fingerprint"]
+    )
 
     conclusions = disposition["conclusions"]
     assert conclusions["completed_evidence_is_exact_whole_session_prefix"] is True
@@ -82,13 +83,14 @@ def test_program_015_proposal_is_cumulative_nonrestarting_and_non_authorizing() 
     assert stored == fingerprint(proposal)
 
     for binding in proposal["predecessor"].values():
-        assert hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest() == binding[
-            "sha256"
-        ]
+        assert (
+            hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest()
+            == binding["sha256"]
+        )
     forensic = proposal["predecessor"]["redacted_private_forensic_disposition"]
-    assert forensic["fingerprint"] == _load(Path(forensic["path"]))[
-        "forensic_disposition_fingerprint"
-    ]
+    assert (
+        forensic["fingerprint"] == _load(Path(forensic["path"]))["forensic_disposition_fingerprint"]
+    )
 
     inheritance = proposal["inheritance_contract"]
     assert inheritance["base_contract"] == "program_014_scientific_contract"
