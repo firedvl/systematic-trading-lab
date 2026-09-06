@@ -1,8 +1,7 @@
 # Program 015 exposed-prefix recovery
 
 Program 015, `multi-hour-sector-etf-research-014`, is
-`IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`. It is a new prospective successor, not a replay or retry
-of Program 014.
+`FAIL-CONSUMED-NO-RETRY`. It was a new prospective successor, not a replay or retry of Program 014.
 
 Read-only offline forensics bind Program 014's exact scientific contract and review, runtime
 implementation, reviewed child, terminal, and terminal review. Retained Program 012–014 evidence is
@@ -57,17 +56,31 @@ artifact SHA-256/fingerprint is
 `20531ddb93556aaa6451279c3e9d1757adbd44277f74698db44be7d7df8ca39a` /
 `e8fa3532fd47b3bb1858e8718ae4f6b2caa2f3606f5e4338472161640fc25b00`.
 
-## Current gate
+## Terminal result
 
-Do not run either command yet:
+The reviewed child left consumed runtime state after provider transport began. The built-in recovery
+path sealed `RUNTIME-FAILURE` with `admission_passed=false`, no dataset lineage, no Program 002
+admission, and no strategy calculation or return. Recovery made no second credential load or
+provider request. The public terminal was observed at `2026-09-06T19:11:03.353420Z`. Its SHA-256 is
+`48c6aa4578fb47e8b17d6da98164c9c8852eade6a78e3b760edbbd6b5841431d`; its authority
+fingerprint is `068c4155f7cd6c4f0a155b5a0140fea610b9ee8a731c65db44780639368aef6f`; its source
+commit is `4bc030ed6fd073463df739b96a799d1e1a76ee49`.
 
-```console
-uv run trading-lab data acquire program-015-ohlcv credential-preflight
-uv run trading-lab data acquire program-015-ohlcv run
-```
+The closeout requires those exact public bytes and rejects a missing, changed, or invalid terminal
+before credential preflight, authority derivation, execution, or private-root access. Program 015
+cannot replay or retry. Dynamic acquisition state, detailed failure evidence, private identities,
+exact missingness, provider tokens, and market observations remain private.
 
-The exact runtime binding must merge to clean synchronized `main`. That main becomes the child
-runtime source. Only the exact separately reviewed one-use child may be added before names-only
-credential preflight. Credential access, provider contact, private Program 015 state, acquisition,
-admission, strategy work, controlled or protected access, purchases, PAPER, broker writes, and live
-execution remain disabled.
+Independent correctness review found one documentation issue: the public closeout called the
+runtime-derived fingerprint the child fingerprint even though the committed child artifact has a
+distinct fingerprint. Commit `a2bf47d` corrected the label without changing runtime or terminal
+bytes. Fresh correctness and defensive reviews then passed finding-free. Terminal-review artifact
+SHA-256/fingerprint is
+`3db948e486a5d6b31ec8003dfc57205c31c561f4b744ccc2d6b554c95f618e7c` /
+`1683df76b7cfcf0c9187194b3b47118d77f3cfdaae1bcf637d5a650da387bcd5`.
+
+After merge, bounded offline forensics may support a prospective successor only if retained evidence
+does so without changing the inherited science.
+
+Do not run Program 015 credential preflight or acquisition again. Controlled or protected access,
+purchases, PAPER, broker writes, and live execution remain disabled.
