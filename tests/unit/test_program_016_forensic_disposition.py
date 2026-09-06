@@ -13,6 +13,9 @@ _DISPOSITION = Path("config/research/program-016-predecessor-recovery-forensic-d
 _PROPOSAL = Path(
     "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
 )
+_REVIEW = Path(
+    "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json"
+)
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -153,3 +156,21 @@ def test_program_016_proposal_is_cumulative_nonrestarting_and_non_authorizing() 
         "ADMITTED-PROGRAM-016-RAW-STRUCTURAL-PREFIX"
     )
     assert all(value is False for value in proposal["authority"].values())
+
+
+def test_program_016_proposal_review_is_bound_and_finding_free() -> None:
+    review = _load(_REVIEW)
+    stored = review.pop("review_fingerprint")
+    assert stored == fingerprint(review)
+    assert review["reviewed_source_commit"] == "699e175f269763e974bdbd9f5d319b2e094bcb7c"
+    assert review["reviewed_source_tree"] == "0526c8c33677a4ad1e5b048b6cb6826fc039f774"
+    binding = review["reviewed_proposal"]
+    assert (
+        hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest()
+        == binding["sha256"]
+    )
+    assert binding["fingerprint"] == _load(Path(binding["path"]))["proposal_fingerprint"]
+    assert review["verdict"] == "PASS"
+    assert review["findings"] == []
+    assert all(result["verdict"] == "PASS" for result in review["challenge_results"])
+    assert all(value is False for value in review["authority"].values())

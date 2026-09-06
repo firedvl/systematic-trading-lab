@@ -158,8 +158,9 @@ See [Program 015 exposed-prefix recovery](docs/program-015-exposed-prefix-recove
 
 Program 016 is a prospective, non-authorizing recovery proposal. It preserves Program 015's frozen
 science, keeps Programs 012 through 015 immutable, and reduces the unchanged cumulative response
-envelope for four consumed intent-only frontiers. Independent proposal review is required before any
-runtime implementation, credential access, private Program 016 state, or provider contact. See
+envelope for four consumed intent-only frontiers. Independent design and defensive reviews passed
+finding-free; runtime implementation and a later reviewed child remain required before credential
+access, private Program 016 state, or provider contact. See
 [Program 016 exposed-prefix recovery](docs/program-016-exposed-prefix-recovery.md).
 
 ## Using historical data
