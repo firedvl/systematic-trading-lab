@@ -1,7 +1,26 @@
 # Current state
 
-Program 014's terminal result is current. Earlier Program 014 planning and implementation state is
-preserved below as historical context. Programs 013 and 012 remain terminal and immutable.
+Program 015's frozen proposal is current. Program 014 and its predecessors remain terminal and
+immutable. No Program 015 runtime, credential access, provider contact, or authority exists.
+
+- Program 015, `multi-hour-sector-etf-research-014`, is
+  `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`. Read-only offline forensics bind Program 014's exact
+  proposal, independent review, runtime implementation, reviewed child, terminal, and independent
+  terminal review. Retained Program 012–014 evidence remains an exact completed whole-session
+  prefix followed by one Program 014 intent-only frontier with no body, response receipt, HTTP
+  status, parsed missingness, data-quality outcome, or later evidence. Three cumulative consumed
+  intents without responses reduce the unchanged 22,176-intent ceiling to at most 22,173 responses.
+  Program 015 preserves the inherited source, chronology, pagination, missingness, admission,
+  privacy, and no-strategy science; keeps all three predecessor roots immutable; uses a distinct
+  ignored root; allows the exact frontier once; and prohibits retry, reissue, restart, or relaunch.
+  Forensic SHA-256/fingerprint is
+  `2cba8a365433a588dc38c33021983a6d6d83ec4d768b4d93cc9ed04ab2e7369d` /
+  `0f4284ca20220cdd11d8a5365f3245cf6f1a50ea5465ef46ebb2a4aad9369565`.
+  Proposal SHA-256/fingerprint is
+  `206139a59714cae6b327bf5ae0590141a4bb6ba3de8415fdd840ba41e1826a00` /
+  `606b4747db28eacd62b082ff6e0a7a73cad7c17b626861d5c60e20f0a0763018`.
+  Next gate: fresh finding-free independent design/correctness and defensive reviews before any
+  runtime implementation. All authority remains false.
 
 - Program 014, `multi-hour-sector-etf-research-013`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use. The exact redacted public terminal binds runtime source commit
@@ -20,9 +39,9 @@ preserved below as historical context. Programs 013 and 012 remain terminal and 
   `04a5ec8b50a051ed457d0d5dc7cc001c4224be3750cab6c2d552c94d26ba07f2` /
   `db9b391c9e7770da16ab2414102a0e8148785c957d8ca5f182eb02acaac9cdb6`. Program 014 cannot
   replay or retry. Controlled or protected access, purchases, PAPER, broker writes, and live
-  execution remained disabled. Next autonomous action: merge the closeout, then perform bounded
-  offline forensics and freeze a prospective successor only if the retained evidence supports one
-  without changing the inherited science.
+  execution remained disabled. The closeout merged at
+  `712222de32eaba8e7096a80e6432206a55688e9b`; bounded offline forensics then supported the frozen
+  Program 015 proposal without changing the inherited science.
 
 - Historical Program 014 planning snapshot: `multi-hour-sector-etf-research-013` was
   `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`.
