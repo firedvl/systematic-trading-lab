@@ -11,7 +11,7 @@ immutable.
   `4bc030ed6fd073463df739b96a799d1e1a76ee49` and records `RUNTIME-FAILURE`,
   `admission_passed=false`, no dataset lineage, no Program 002 admission, and no strategy calculation
   or return. Its SHA-256 is
-  `48c6aa4578fb47e8b17d6da98164c9c8852eade6a78e3b760edbbd6b5841431d`; the child authority
+  `48c6aa4578fb47e8b17d6da98164c9c8852eade6a78e3b760edbbd6b5841431d`; the derived active-authority
   fingerprint is `068c4155f7cd6c4f0a155b5a0140fea610b9ee8a731c65db44780639368aef6f`.
   Dynamic acquisition state, detailed failure evidence, private content identities, raw market data,
   provider tokens, exact missingness, and exact unexpected exclusions remain private. Current code
