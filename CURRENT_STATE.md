@@ -1,8 +1,28 @@
 # Current state
 
-Program 015's terminal result is current. Earlier Program 015 planning and implementation state is
-preserved below as historical context. Program 014 and its predecessors remain terminal and
-immutable.
+Program 016's read-only forensic disposition is current. Program 015's terminal result and all
+earlier terminal programs remain immutable.
+
+- Program 016, `multi-hour-sector-etf-research-015`, is `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
+  Read-only offline validation rederived Program 015's historical child identity, canonical private
+  terminal, exact public projection, and retained completed whole-session prefix. The only reachable
+  incomplete checkpoint is intent-only, with no body, response receipt, HTTP status, parsed
+  missingness, data-quality outcome, partial response, or later evidence. Four cumulative intents
+  without responses reduce the unchanged 22,176-intent ceiling to at most 22,172 responses. The
+  redacted disposition SHA-256/fingerprint is
+  `a8bf3d02a980d425c0a430cbb740b7253f707fabf30c0681f37e68cb4b2517bb` /
+  `e311ab60a6eba7c19c597dacb68657c4ccd01cf6d7a3d04da9d3b0833e2244ac`. Proposal v1 preserves
+  Program 015's source, chronology, pagination, missingness, admission, privacy, and no-strategy
+  science; keeps Programs 012 through 015 immutable; adds one distinct private root; and permits the
+  frontier once with no retry or restart. Proposal SHA-256/fingerprint is
+  `76f946df1a50f1e1a866f144c7fe5cf4d2f12b1c5cf874dc9d901f994ff59776` /
+  `48a2ce7333f9422609d3bf9c00e4f7fbc3a58414768585063b6f8db68abacafe`. Every authority remains
+  false. Fresh independent design/correctness and defensive reviews of exact source commit
+  `699e175f269763e974bdbd9f5d319b2e094bcb7c` pass finding-free. Combined review artifact
+  SHA-256/fingerprint is `fab92d4355453a9971df60b2609af39ab8ff2bece9ea2bfa9c32ec235343ea62` /
+  `c5f9626858ce72639becc0757351ae1451ec73fbfd5d710a2ff8621a2fac664d`. Next autonomous action:
+  implement and test the exact Program 016 runtime before credentials, private Program 016 state, or
+  provider contact.
 
 - Program 015, `multi-hour-sector-etf-research-014`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use after provider transport began. The built-in recovery path
@@ -21,9 +41,9 @@ immutable.
   independent correctness and defensive reviews pass finding-free after resolving one public
   fingerprint-label finding. Review artifact SHA-256/fingerprint is
   `3db948e486a5d6b31ec8003dfc57205c31c561f4b744ccc2d6b554c95f618e7c` /
-  `1683df76b7cfcf0c9187194b3b47118d77f3cfdaae1bcf637d5a650da387bcd5`. Next autonomous action:
-  merge the closeout, then perform bounded offline forensics and freeze a prospective successor only
-  if retained evidence supports one without changing the inherited science.
+  `1683df76b7cfcf0c9187194b3b47118d77f3cfdaae1bcf637d5a650da387bcd5`. The closeout merged at
+  `073661deb77d0c306187a7e5d108e470f36ea596`; bounded offline forensics now support the prospective
+  Program 016 disposition without changing the inherited science.
 
 - Historical Program 015 planning snapshot: `multi-hour-sector-etf-research-014` was
   `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`. Read-only offline forensics bind Program 014's exact

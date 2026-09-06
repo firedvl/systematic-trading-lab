@@ -1,5 +1,19 @@
 # Architecture decisions
 
+## 2026-09-06 - Freeze Program 016 as a non-restarting five-root recovery
+
+- Decision: inherit Program 015 proposal v2 without changing its source, chronology, pagination, missingness, admission, privacy, or no-strategy rules. Keep Programs 012 through 015 immutable and read-only, use one distinct Program 016 root, reuse only completed whole sessions, discard the incomplete Program 015 session and page, and issue the frontier once under a later reviewed child.
+- Context: Programs 012 through 015 each consumed one request intent without a response. Under the unchanged 22,176 combined-intent ceiling, Program 016 therefore has a maximum effective combined response envelope of 22,172. Automatic restart, relaunch, `launchctl submit`, KeepAlive, restart-on-exit, and process-manager retry remain prohibited.
+- Consequences: proposal v1 SHA-256/fingerprint is `76f946df1a50f1e1a866f144c7fe5cf4d2f12b1c5cf874dc9d901f994ff59776` / `48a2ce7333f9422609d3bf9c00e4f7fbc3a58414768585063b6f8db68abacafe`. It preserves inline-only credential parsing after durable access reservation and the process-global one-load latch. The proposal grants no provider, credential, source-request, acquisition, admission, strategy, controlled/protected, purchase, PAPER, broker, or live authority.
+- Revisit when: fresh finding-free design and defensive reviews of exact proposal source `699e175f269763e974bdbd9f5d319b2e094bcb7c` passed. Review SHA-256/fingerprint is `fab92d4355453a9971df60b2609af39ab8ff2bece9ea2bfa9c32ec235343ea62` / `c5f9626858ce72639becc0757351ae1451ec73fbfd5d710a2ff8621a2fac664d`. Implementation, merge, and a separate exact reviewed child remain required before credential presence or provider contact.
+
+## 2026-09-06 - Recover only Program 015's completed whole-session prefix
+
+- Decision: keep Programs 012 through 015 terminal and immutable. Permit a prospective Program 016 to reuse only the locally revalidated completed whole-session prefix and to issue the intent-only page frontier once under a new reviewed child. Discard the incomplete Program 015 session and page; never request any completed predecessor page again.
+- Context: read-only private forensics revalidated the historical Program 015 child identity, canonical private terminal, exact reviewed public projection, completed-prefix replay, one intent-only frontier, and no later evidence. Four cumulative intents were consumed without responses.
+- Consequences: the redacted disposition binds Program 015's scientific contract, reviews, runtime, child, terminal, and exact 22,176-intent / 22,172-response accounting. Its SHA-256/fingerprint is `a8bf3d02a980d425c0a430cbb740b7253f707fabf30c0681f37e68cb4b2517bb` / `e311ab60a6eba7c19c597dacb68657c4ccd01cf6d7a3d04da9d3b0833e2244ac`. Program 016 must use a distinct private root, cumulative Programs 012 through 016 budgets, zero retries, and a launch contract that cannot restart or relaunch automatically. No provider, credential, acquisition, admission, strategy, controlled/protected, purchase, PAPER, broker, or live authority exists.
+- Revisit when: after prospective Program 016 design, independent review, implementation, merge, and a separately reviewed child. Never revisit Programs 012 through 015 replay.
+
 ## 2026-09-06 - Program 015 terminal evidence is immutable and revokes every entrypoint
 
 - Decision: commit only Program 015's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, execution, or private-root access.

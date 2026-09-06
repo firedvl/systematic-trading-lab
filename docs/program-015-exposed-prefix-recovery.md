@@ -79,8 +79,10 @@ SHA-256/fingerprint is
 `3db948e486a5d6b31ec8003dfc57205c31c561f4b744ccc2d6b554c95f618e7c` /
 `1683df76b7cfcf0c9187194b3b47118d77f3cfdaae1bcf637d5a650da387bcd5`.
 
-After merge, bounded offline forensics may support a prospective successor only if retained evidence
-does so without changing the inherited science.
+The closeout merged at `073661d`. Bounded read-only offline forensics then validated the historical
+child, canonical private terminal, exact public projection, completed whole-session prefix, and one
+intent-only frontier with no later evidence. The redacted Program 016 disposition preserves the
+inherited science and grants no authority.
 
 Do not run Program 015 credential preflight or acquisition again. Controlled or protected access,
 purchases, PAPER, broker writes, and live execution remain disabled.

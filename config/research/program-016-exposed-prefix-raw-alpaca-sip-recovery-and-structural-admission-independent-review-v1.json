@@ -1,0 +1,83 @@
+{
+  "schema_version": "program-016-exposed-prefix-recovery-design-and-security-independent-review-v1",
+  "review_id": "program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-06-v1",
+  "program_ordinal": 16,
+  "program_id": "multi-hour-sector-etf-research-015",
+  "status": "PASS-FINDING-FREE-PROSPECTIVE-DESIGN-AND-SECURITY-REVIEW",
+  "verdict": "PASS",
+  "reviewed_source_commit": "699e175f269763e974bdbd9f5d319b2e094bcb7c",
+  "reviewed_source_tree": "0526c8c33677a4ad1e5b048b6cb6826fc039f774",
+  "reviewed_proposal": {
+    "path": "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json",
+    "sha256": "76f946df1a50f1e1a866f144c7fe5cf4d2f12b1c5cf874dc9d901f994ff59776",
+    "fingerprint": "48a2ce7333f9422609d3bf9c00e4f7fbc3a58414768585063b6f8db68abacafe"
+  },
+  "review_contexts": [
+    "FRESH-INDEPENDENT-DESIGN-AND-SCIENTIFIC-CONTROL-REVIEW",
+    "FRESH-INDEPENDENT-SECURITY-AND-AUTHORITY-BOUNDARY-REVIEW"
+  ],
+  "findings": [],
+  "challenge_results": [
+    {"challenge": "authority-boundaries", "verdict": "PASS"},
+    {"challenge": "chronology", "verdict": "PASS"},
+    {"challenge": "credential-confinement", "verdict": "PASS"},
+    {"challenge": "git-provenance-integrity", "verdict": "PASS"},
+    {"challenge": "missingness-rules", "verdict": "PASS"},
+    {"challenge": "predecessor-immutability-and-toctou", "verdict": "PASS"},
+    {"challenge": "private-data-leakage", "verdict": "PASS"},
+    {"challenge": "public-terminal-redaction", "verdict": "PASS"},
+    {"challenge": "request-budgets", "verdict": "PASS"},
+    {"challenge": "restart-and-replay-safety", "verdict": "PASS"},
+    {"challenge": "scientific-contract-preservation", "verdict": "PASS"},
+    {"challenge": "source-assumptions", "verdict": "PASS"},
+    {"challenge": "statistical-validity", "verdict": "PASS"}
+  ],
+  "design_review_result": {
+    "verdict": "PASS",
+    "findings": [],
+    "evidence": "The proposal preserves the reviewed Program 015 scientific, source, chronology, pagination, missingness, admission, privacy, transport, and no-strategy contract; retains Programs 012 through 015 as immutable read-only predecessor evidence; adds one distinct private root; and accounts for four consumed intent-only frontiers within the unchanged 22,176-intent ceiling.",
+    "proof_gap": "Program 016 has no runtime at the reviewed commit, so actual lock, persistence, terminal, credential, transport, and private-root behavior remains implementation work."
+  },
+  "security_review_result": {
+    "verdict": "PASS",
+    "findings": [],
+    "evidence": "All current authority is false. A future child remains separately reviewed, clean-main-bound, runtime-revalidated, atomic-one-use, and limited to provider read, acquisition, and structural admission. The proposal requires six-control locking, durable claims and intents, no reissue or retry, inline lock-bound one-load credential parsing with durable receipts, exact terminal redaction, and protected-range exclusion before private state and every transport.",
+    "proof_gap": "Runtime enforcement and API absence require fresh implementation and child reviews; no credential or provider behavior was executed."
+  },
+  "verification": {
+    "proposal_sha256_revalidated": true,
+    "proposal_fingerprint_revalidated": true,
+    "predecessor_sha_bindings_revalidated": 6,
+    "predecessor_fingerprints_revalidated": 5,
+    "distinct_private_roots_revalidated": 5,
+    "maximum_combined_request_intents": 22176,
+    "maximum_effective_combined_responses": 22172,
+    "consumed_intent_without_response_count": 4,
+    "automatic_retries": 0,
+    "focused_tests_passed": 2,
+    "repository_secret_scan_files_passed": 735,
+    "targeted_ruff_passed": true,
+    "git_diff_check_passed": true,
+    "current_authority_flags_false": true
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "scope_limit": "The independent reviews made no credential access, provider request, private market-data read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Implement and test the exact Program 016 recovery runtime, merge it, then freeze and independently review a separate one-use standing child before credential access or provider contact.",
+  "review_fingerprint": "c5f9626858ce72639becc0757351ae1451ec73fbfd5d710a2ff8621a2fac664d"
+}
