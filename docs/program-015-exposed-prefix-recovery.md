@@ -71,9 +71,16 @@ before credential preflight, authority derivation, execution, or private-root ac
 cannot replay or retry. Dynamic acquisition state, detailed failure evidence, private identities,
 exact missingness, provider tokens, and market observations remain private.
 
-The terminal closeout requires a finding-free independent review and merge. Afterward, bounded
-offline forensics may support a prospective successor only if retained evidence does so without
-changing the inherited science.
+Independent correctness review found one documentation issue: the public closeout called the
+runtime-derived fingerprint the child fingerprint even though the committed child artifact has a
+distinct fingerprint. Commit `a2bf47d` corrected the label without changing runtime or terminal
+bytes. Fresh correctness and defensive reviews then passed finding-free. Terminal-review artifact
+SHA-256/fingerprint is
+`3db948e486a5d6b31ec8003dfc57205c31c561f4b744ccc2d6b554c95f618e7c` /
+`1683df76b7cfcf0c9187194b3b47118d77f3cfdaae1bcf637d5a650da387bcd5`.
+
+After merge, bounded offline forensics may support a prospective successor only if retained evidence
+does so without changing the inherited science.
 
 Do not run Program 015 credential preflight or acquisition again. Controlled or protected access,
 purchases, PAPER, broker writes, and live execution remain disabled.

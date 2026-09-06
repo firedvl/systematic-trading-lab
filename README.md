@@ -151,8 +151,9 @@ standalone credential reader. Do not run Program 014 again. See
 Program 015's reviewed one-use child is consumed and sealed as `FAIL-CONSUMED-NO-RETRY`. The
 redacted public terminal records a runtime failure, no structural admission, no dataset lineage, and
 no strategy work. Dynamic acquisition state and detailed failure evidence remain private. Current
-code rejects every Program 015 lifecycle entrypoint before credential or private-root access. Do not
-run Program 015 again.
+code rejects every Program 015 lifecycle entrypoint before credential or private-root access. A
+finding-free independent terminal review confirmed the exact terminal bytes, replay guard, and
+distinct runtime-derived and child-artifact fingerprints. Do not run Program 015 again.
 See [Program 015 exposed-prefix recovery](docs/program-015-exposed-prefix-recovery.md).
 
 ## Using historical data
