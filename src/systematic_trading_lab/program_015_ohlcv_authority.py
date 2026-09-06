@@ -110,7 +110,9 @@ _PUBLIC_TERMINAL_RESULT_ID = (
     "program-015-exposed-prefix-raw-alpaca-sip-recovery-and-"
     "structural-admission-terminal-result-2026-09-06-v1"
 )
-_PUBLIC_TERMINAL_SHA256: str | None = None
+_PUBLIC_TERMINAL_SHA256: str | None = (
+    "48c6aa4578fb47e8b17d6da98164c9c8852eade6a78e3b760edbbd6b5841431d"
+)
 _PRIVATE_TERMINAL_KEYS = {
     "schema_version",
     "program_id",

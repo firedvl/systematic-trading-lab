@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-06 - Program 015 terminal evidence is immutable and revokes every entrypoint
+
+- Decision: commit only Program 015's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, execution, or private-root access.
+- Context: the one-use child left consumed runtime state after transport began. The built-in recovery path sealed `RUNTIME-FAILURE` / `FAIL-CONSUMED-NO-RETRY` without another credential load or provider request. The public terminal records no structural admission, dataset lineage, Program 002 admission, strategy calculation, or strategy return. Proposal v2 keeps dynamic acquisition state, detailed failure evidence, private identities, exact missingness, provider tokens, and market observations private.
+- Consequences: public terminal SHA-256 is `48c6aa4578fb47e8b17d6da98164c9c8852eade6a78e3b760edbbd6b5841431d`; authority fingerprint is `068c4155f7cd6c4f0a155b5a0140fea610b9ee8a731c65db44780639368aef6f`; source commit is `4bc030ed6fd073463df739b96a799d1e1a76ee49`. Program 015 cannot replay or retry. Controlled or protected access, purchases, PAPER, broker writes, and live execution remain false.
+- Revisit when: never for Program 015. After independent terminal review and merge, use bounded offline forensics to decide whether a prospective successor is scientifically valid.
+
 ## 2026-09-06 - Freeze the Program 015 runtime implementation binding
 
 - Decision: bind the Program 015 v2 runtime to exact source commit/tree/root `b7fa5ec660cfbfad076fb8b0577034b44e9d4e53` / `17509321c567f791049d81eebc7fa860e6aa4721` / `1fece120bee9a07ccfb0565878d3b97336877ef60624d4b2aa5e80567896e403`. Keep every authority field false.
