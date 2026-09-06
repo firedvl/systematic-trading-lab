@@ -1,10 +1,11 @@
 # Current state
 
-Program 015's frozen proposal is current. Program 014 and its predecessors remain terminal and
-immutable. No Program 015 runtime, credential access, provider contact, or authority exists.
+Program 015's reviewed prospective runtime is current. Program 014 and its predecessors remain
+terminal and immutable. No Program 015 child, credential access, provider contact, or authority
+exists.
 
 - Program 015, `multi-hour-sector-etf-research-014`, is
-  `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`. Read-only offline forensics bind Program 014's exact
+  `IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`. Read-only offline forensics bind Program 014's exact
   proposal, independent review, runtime implementation, reviewed child, terminal, and independent
   terminal review. Retained Program 012–014 evidence remains an exact completed whole-session
   prefix followed by one Program 014 intent-only frontier with no body, response receipt, HTTP
@@ -30,8 +31,18 @@ immutable. No Program 015 runtime, credential access, provider contact, or autho
   finding-free. Review SHA-256/fingerprint is
   `01b7587d1ee96cdf3e0fc7b74acf9061943f300d855c3ffdd354071a7e23f7f2` /
   `4dc259b5560e6c0cc144aa72c0608961fd2803d1d8c30fca3480e3d8f8b1d14d`.
-  Next gate: merge the reviewed proposal, then implement and independently review the smallest exact
-  Program 015 runtime. All authority remains false.
+  The exact runtime source commit/tree/root is
+  `b7fa5ec660cfbfad076fb8b0577034b44e9d4e53` /
+  `17509321c567f791049d81eebc7fa860e6aa4721` /
+  `1fece120bee9a07ccfb0565878d3b97336877ef60624d4b2aa5e80567896e403`.
+  Initial correctness review found stale Program 014 attestation bindings; binding commit `9939247`
+  fixed them without changing the runtime source. Fresh exact binding correctness and alternate
+  defensive reviews pass finding-free. Implementation artifact SHA-256/fingerprint is
+  `3c0fca8784125a8793e173e70c085a79c5730ac198feea6da7a5bcf9a9b25882` /
+  `b284d15c54de7e25c41e8009ab13445244fdaea0e06be1c1e150cacf077968ad`.
+  Next gate: merge the exact runtime binding to clean synchronized `main`, then create and
+  independently review the separate one-use child before names-only credential preflight. All
+  authority remains false.
 
 - Program 014, `multi-hour-sector-etf-research-013`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use. The exact redacted public terminal binds runtime source commit

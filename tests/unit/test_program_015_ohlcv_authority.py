@@ -133,10 +133,14 @@ def test_program_015_runtime_implementation_is_exact_and_non_authorizing() -> No
     ).stdout
     assert hashlib.sha256(diff).hexdigest() == reviewed["sha256"]
     assert implementation["status"] == "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED"
-    assert implementation["review_status"] == "PENDING-FRESH-EXACT-BINDING-REVIEW"
+    assert implementation["review_status"] == ("PASS-FINDING-FREE-EXACT-RUNTIME-AND-BINDING-REVIEW")
     assert implementation["review"]["initial_design_and_correctness"]["verdict"] == "FINDING"
     assert implementation["review"]["initial_design_and_correctness"]["finding_id"] == (
         "P015-RUNTIME-CORRECTNESS-001"
+    )
+    assert all(
+        implementation["review"][name]["verdict"] == "PASS"
+        for name in ("binding_design_and_correctness", "defensive_boundary")
     )
     assert implementation["execution_boundary"]["child_authority_present"] is False
     assert implementation["execution_boundary"]["credential_presence_or_values_accessed"] is False

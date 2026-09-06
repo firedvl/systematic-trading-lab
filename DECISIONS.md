@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-06 - Freeze the Program 015 runtime implementation binding
+
+- Decision: bind the Program 015 v2 runtime to exact source commit/tree/root `b7fa5ec660cfbfad076fb8b0577034b44e9d4e53` / `17509321c567f791049d81eebc7fa860e6aa4721` / `1fece120bee9a07ccfb0565878d3b97336877ef60624d4b2aa5e80567896e403`. Keep every authority field false.
+- Context: the runtime reuses the reviewed predecessor machinery with one additional immutable predecessor layer and the v2 credential-reader remediation. Initial independent correctness review found only that the post-freeze implementation attestation was absent and its cloned assertion still named Program 014. Binding commit `9939247` fixed the attestation without changing runtime source. Fresh exact binding correctness and alternate defensive reviews passed finding-free; primary reviewer attempts returned HTTP 503 before output.
+- Consequences: implementation artifact SHA-256/fingerprint is `3c0fca8784125a8793e173e70c085a79c5730ac198feea6da7a5bcf9a9b25882` / `b284d15c54de7e25c41e8009ab13445244fdaea0e06be1c1e150cacf077968ad`. The focused Program 015/provenance suite reports 108 passed. The full suite reports 1,837 passed and four skipped; Ruff, mypy across 292 files, the 727-file secret scan, shell syntax, wheel build, and diff checks pass. No credential presence or value, provider request, private Program 015 state, acquisition, admission, strategy, controlled/protected, purchase, PAPER, broker, or live action occurred.
+- Revisit when: this binding merges to clean synchronized `main`. Freeze that exact main as the child runtime source, then add only the child and its independent review before names-only credential preflight or provider contact.
+
 ## 2026-09-06 - Program 014 terminal evidence is immutable and revokes every entrypoint
 
 - Decision: commit only Program 014's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, execution, or private-root access.

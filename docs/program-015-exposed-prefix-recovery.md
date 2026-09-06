@@ -1,8 +1,8 @@
 # Program 015 exposed-prefix recovery
 
 Program 015, `multi-hour-sector-etf-research-014`, is
-`PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`. It is a new prospective successor, not a replay or retry of
-Program 014.
+`IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`. It is a new prospective successor, not a replay or retry
+of Program 014.
 
 Read-only offline forensics bind Program 014's exact scientific contract and review, runtime
 implementation, reviewed child, terminal, and terminal review. Retained Program 012–014 evidence is
@@ -46,6 +46,28 @@ SHA-256/fingerprint is
 `01b7587d1ee96cdf3e0fc7b74acf9061943f300d855c3ffdd354071a7e23f7f2` /
 `4dc259b5560e6c0cc144aa72c0608961fd2803d1d8c30fca3480e3d8f8b1d14d`.
 
-The next gate is merge followed by exact runtime implementation and fresh implementation review. No
-Program 015 runtime exists. Credential access, provider contact, acquisition, admission, strategy work,
-controlled or protected access, purchases, PAPER, broker writes, and live execution remain disabled.
+Runtime source commit/tree/root is
+`b7fa5ec660cfbfad076fb8b0577034b44e9d4e53` /
+`17509321c567f791049d81eebc7fa860e6aa4721` /
+`1fece120bee9a07ccfb0565878d3b97336877ef60624d4b2aa5e80567896e403`.
+Initial correctness review found that the post-freeze attestation was absent and its cloned test still
+named Program 014. Binding commit `9939247` fixed that without changing the runtime source. Fresh
+exact binding correctness and alternate defensive reviews then passed finding-free. Implementation
+artifact SHA-256/fingerprint is
+`3c0fca8784125a8793e173e70c085a79c5730ac198feea6da7a5bcf9a9b25882` /
+`b284d15c54de7e25c41e8009ab13445244fdaea0e06be1c1e150cacf077968ad`.
+
+## Current gate
+
+Do not run either command yet:
+
+```console
+uv run trading-lab data acquire program-015-ohlcv credential-preflight
+uv run trading-lab data acquire program-015-ohlcv run
+```
+
+The exact runtime binding must merge to clean synchronized `main`. That main becomes the child
+runtime source. Only the exact separately reviewed one-use child may be added before names-only
+credential preflight. Credential access, provider contact, private Program 015 state, acquisition,
+admission, strategy work, controlled or protected access, purchases, PAPER, broker writes, and live
+execution remain disabled.
