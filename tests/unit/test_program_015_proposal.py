@@ -10,8 +10,14 @@ from systematic_trading_lab.fingerprints import fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _DISPOSITION = Path("config/research/program-015-predecessor-recovery-forensic-disposition-v1.json")
-_PROPOSAL = Path(
+_PROPOSAL_V1 = Path(
     "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
+)
+_PROPOSAL = Path(
+    "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json"
+)
+_FAILED_REVIEW = Path(
+    "config/research/program-015-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json"
 )
 
 
@@ -82,6 +88,23 @@ def test_program_015_proposal_is_cumulative_nonrestarting_and_non_authorizing() 
     stored = proposal.pop("proposal_fingerprint")
     assert stored == fingerprint(proposal)
 
+    supersedes = proposal["supersedes"]
+    assert supersedes["path"] == _PROPOSAL_V1.as_posix()
+    assert (
+        hashlib.sha256((_REPOSITORY / _PROPOSAL_V1).read_bytes()).hexdigest()
+        == supersedes["sha256"]
+    )
+    assert supersedes["fingerprint"] == _load(_PROPOSAL_V1)["proposal_fingerprint"]
+    correction = proposal["correction_basis"]
+    assert correction["path"] == _FAILED_REVIEW.as_posix()
+    assert (
+        hashlib.sha256((_REPOSITORY / _FAILED_REVIEW).read_bytes()).hexdigest()
+        == correction["sha256"]
+    )
+    failed_review = _load(_FAILED_REVIEW)
+    assert correction["fingerprint"] == failed_review["review_fingerprint"]
+    assert correction["resolved_findings"] == ["P015-V1-SECURITY-001"]
+
     for binding in proposal["predecessor"].values():
         assert (
             hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest()
@@ -106,6 +129,28 @@ def test_program_015_proposal_is_cumulative_nonrestarting_and_non_authorizing() 
     assert recovery["incomplete_program_014_session_or_page_reuse_allowed"] is False
     assert recovery["frontier_request_under_program_015_max"] == 1
     assert recovery["program_015_request_reissue_allowed"] is False
+
+    credentials = proposal["credential_contract"]
+    assert credentials["standalone_callable_credential_readers_allowed"] is False
+    assert credentials["prohibited_reader_scopes"] == ["module", "class", "static", "instance"]
+    assert credentials["credential_parsing_location"] == (
+        "INLINE-ONLY-IN-LOCK-BOUND-LOADER-OPERATION"
+    )
+    for key in (
+        "launcher_revalidated_immediately_before_credential_attempt",
+        "credential_attempt_create_only_fsynced_before_environment_access",
+        "credential_attempt_binds_authority_source_and_predecessor_identity",
+        "process_global_credential_latch_consumed_before_environment_access",
+        "process_global_credential_latch_consumed_if_attempt_reservation_fails",
+        "process_global_credential_latch_consumed_if_parsing_fails",
+        "credential_failure_receipt_fsynced_before_error_propagation",
+        "credential_success_receipt_fsynced_before_client_construction",
+        "credential_success_receipt_fsynced_before_transport",
+        "terminal_replay_and_recovery_paths_must_not_access_credential_environment",
+        "ast_and_api_absence_regression_required",
+        "forbidden_environment_terminal_replay_and_recovery_regressions_required",
+    ):
+        assert credentials[key] is True
 
     budgets = proposal["cumulative_transport_and_working_space_budgets"]
     assert budgets["maximum_combined_request_intents"] == 22176
@@ -158,7 +203,7 @@ def test_secret_guard_reserves_program_015_public_artifacts(
     spec.loader.exec_module(guard)
     monkeypatch.chdir(tmp_path)
     reserved = tuple(Path(path) for path in guard.PUBLIC_PROGRAM_JSON if "program-015" in path)
-    assert len(reserved) == 8
+    assert len(reserved) == 10
     private = Path("config/research/program-015-market-observations.json")
     for path in (*reserved, private):
         path.parent.mkdir(parents=True, exist_ok=True)
