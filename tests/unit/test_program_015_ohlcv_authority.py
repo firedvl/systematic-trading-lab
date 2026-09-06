@@ -98,8 +98,11 @@ def test_program_015_runtime_implementation_is_exact_and_non_authorizing() -> No
     stored_fingerprint = implementation.pop("implementation_fingerprint")
     assert stored_fingerprint == fingerprint(implementation)
     binding = implementation["implementation_binding"]
-    assert binding["source_commit"] == "e3c1e49e45c5c75c29feb050fb687ca4405ccc07"
-    assert binding["source_tree"] == "0a66061a785617c1d0475dd54a9f26bf03adcc7b"
+    assert binding["source_commit"] == "b7fa5ec660cfbfad076fb8b0577034b44e9d4e53"
+    assert binding["source_tree"] == "17509321c567f791049d81eebc7fa860e6aa4721"
+    assert binding["implementation_root"] == (
+        "1fece120bee9a07ccfb0565878d3b97336877ef60624d4b2aa5e80567896e403"
+    )
     assert binding["implementation_root"] == fingerprint(binding["source_files"])
     for source in binding["source_files"]:
         committed = subprocess.run(
@@ -130,7 +133,11 @@ def test_program_015_runtime_implementation_is_exact_and_non_authorizing() -> No
     ).stdout
     assert hashlib.sha256(diff).hexdigest() == reviewed["sha256"]
     assert implementation["status"] == "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED"
-    assert all(review["verdict"] == "PASS" for review in implementation["review"].values())
+    assert implementation["review_status"] == "PENDING-FRESH-EXACT-BINDING-REVIEW"
+    assert implementation["review"]["initial_design_and_correctness"]["verdict"] == "FINDING"
+    assert implementation["review"]["initial_design_and_correctness"]["finding_id"] == (
+        "P015-RUNTIME-CORRECTNESS-001"
+    )
     assert implementation["execution_boundary"]["child_authority_present"] is False
     assert implementation["execution_boundary"]["credential_presence_or_values_accessed"] is False
     assert implementation["execution_boundary"]["provider_requests"] == 0
