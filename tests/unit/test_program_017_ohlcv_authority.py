@@ -1347,6 +1347,33 @@ def test_restarted_wrong_stage_combined_temp_fails_terminal_persistence(
     assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
 
 
+def test_canonical_publish_failure_seals_with_its_special_temp(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _, request, _ = _configure_finite_execution(tmp_path, monkeypatch)
+    original_link = os.link
+
+    def fail_canonical_link(source: str, target: str, *args: Any, **kwargs: Any) -> None:
+        if source == "tmp-program-017-combined-canonical-raw":
+            raise OSError("synthetic canonical link failure")
+        original_link(source, target, *args, **kwargs)
+
+    monkeypatch.setattr(os, "link", fail_canonical_link)
+
+    with pytest.raises(authority.Program017AuthorityError, match="sealed failure"):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=authority.MockBarsTransport(
+                [raw_contract.RawResponse(200, _body(request, 0, None))]
+            ),
+        )
+
+    assert (tmp_path / authority.PRIVATE_ROOT / "tmp-program-017-combined-canonical-raw").exists()
+    assert (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
+    assert (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
+
+
 def test_restarted_unreachable_claim_temp_fails_terminal_persistence(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:

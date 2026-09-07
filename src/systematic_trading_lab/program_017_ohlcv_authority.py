@@ -2791,6 +2791,8 @@ def _revalidate_failure_closeout_boundary(
                 expected = {failed_key}
             elif failed_key.startswith("tmp-"):
                 expected = {f"tmp-program-017-{failed_key.removeprefix('tmp-')}"}
+            elif failed_key == "combined-canonical-raw.jsonl":
+                expected = {"tmp-program-017-combined-canonical-raw"}
             elif (
                 failed_key in _STATIC_PRIVATE_KEYS
                 or (
