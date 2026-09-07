@@ -6,12 +6,17 @@ import json
 from pathlib import Path
 from typing import Any, cast
 
+from pytest import CaptureFixture, MonkeyPatch
+
 from systematic_trading_lab.fingerprints import fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _DISPOSITION = Path("config/research/program-018-predecessor-recovery-forensic-disposition-v1.json")
-_PROPOSAL = Path(
+_PROPOSAL_V1 = Path(
     "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
+)
+_PROPOSAL = Path(
+    "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json"
 )
 
 
@@ -88,6 +93,12 @@ def test_program_018_proposal_is_an_exact_non_authorizing_delta() -> None:
     proposal = _load(_PROPOSAL)
     stored = proposal.pop("proposal_fingerprint")
     assert stored == fingerprint(proposal)
+    superseded = proposal["supersedes"]
+    assert superseded["path"] == _PROPOSAL_V1.as_posix()
+    assert (
+        hashlib.sha256((_REPOSITORY / _PROPOSAL_V1).read_bytes()).hexdigest()
+        == superseded["sha256"]
+    )
     for binding in proposal["predecessor"].values():
         assert (
             hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest()
@@ -119,11 +130,56 @@ def test_program_018_proposal_is_an_exact_non_authorizing_delta() -> None:
     bounded = proposal["bounded_reconstruction_contract"]
     assert bounded["execution_maximum_full_predecessor_passes"] == 2
     assert bounded["full_predecessor_reconstruction_between_transports"] is False
-    assert proposal["transport_boundary_contract"]["all_eight_controls_held_continuously"]
+    boundary = proposal["transport_boundary_contract"]
+    assert boundary["all_eight_controls_held_continuously"]
+    assert len(boundary["immutable_predecessor_root_and_all_lock_descriptor_metadata_tuple"]) == 8
+    assert len(boundary["program_018_mutable_root_stable_identity_tuple"]) == 5
+    assert len(boundary["program_018_mutable_root_expected_full_tuple"]) == 8
+    assert boundary["root_and_lock_descriptors_opened_with_o_nofollow"]
+    assert boundary[
+        "program_018_root_expected_full_tuple_refreshed_only_after_authorized_create_only_write_and_parent_fsync"
+    ]
     budget = proposal["cumulative_transport_contract"]
     assert budget["maximum_combined_request_intents"] == 22176
     assert budget["consumed_intent_without_response_count"] == 6
     assert budget["maximum_effective_combined_responses"] == 22170
     assert budget["automatic_retries"] == 0
     assert proposal["storage_contract"]["minimum_additional_available_bytes"] == 16 * 1024**3
+    private_terminal = proposal["private_terminal_contract"]
+    assert "program_018_credential_loads" in private_terminal["exact_top_level_keys"]
+    assert "program_018_response_manifest_sha256" in private_terminal["private_evidence_exact_keys"]
+    assert private_terminal["result_branches"]["ADMISSION-PASS"]["status"] == (
+        "ADMITTED-PROGRAM-018-RAW-STRUCTURAL-PREFIX"
+    )
+    public_terminal = proposal["public_terminal_contract"]
+    assert public_terminal["exact_static_identity_values"]["program_ordinal"] == 18
+    assert public_terminal["pass_branch_semantics"]["status"] == (
+        "ADMITTED-PROGRAM-018-RAW-STRUCTURAL-PREFIX"
+    )
+    assert proposal["public_pass_lineage_contract"]["schema_version"] == (
+        "program-018-public-raw-structural-prefix-lineage-manifest-v1"
+    )
     assert all(value is False for value in proposal["authority"].values())
+
+
+def test_program_018_secret_guard_rejects_private_json(
+    tmp_path: Path, monkeypatch: MonkeyPatch, capsys: CaptureFixture[str]
+) -> None:
+    spec = importlib.util.spec_from_file_location(
+        "program_018_private_check_secrets", _REPOSITORY / "scripts/check_secrets.py"
+    )
+    assert spec is not None and spec.loader is not None
+    guard = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(guard)
+    monkeypatch.chdir(tmp_path)
+    private = Path("config/research/program-018-private-terminal.json")
+    private.parent.mkdir(parents=True)
+    private.write_text("{}\n", encoding="utf-8")
+    public = Path(_PROPOSAL)
+    public.write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(guard, "tracked_files", lambda: [private, public])
+
+    assert guard.main() == 1
+    errors = capsys.readouterr().err
+    assert f"{private}:private-market-data-path" in errors
+    assert str(public) not in errors

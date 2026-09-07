@@ -15,9 +15,12 @@ programs remain immutable.
   No credential or provider access, evidence mutation, dataset admission, or strategy work occurred
   during forensics. Next autonomous action: freeze and independently review a non-authorizing
   Program 018 proposal that adds Program 017 as an immutable predecessor and preserves the bounded
-  transport-boundary design. Proposal v1 is now frozen as an exact delta over Program 017 v5 with
-  fingerprint `0280686ec95a8b9f33f69656de5ac774d522c86f5dae0cc04a67c289036de471`;
-  fresh independent review is required before implementation.
+  transport-boundary design. Independent review rejected proposal v1 because Program 018 private
+  JSON escaped path classification and compact inheritance left terminal schemas and mutable-root
+  transport semantics ambiguous. Proposal v2 fixes those findings with explicit full schemas,
+  descriptor tuples, root-role substitutions, and a private-path regression. V2 fingerprint is
+  `2ba21d104ea7938cbb01df995fbcd638c663073c14e3b3e3ccbf478693c94d46`; fresh independent review is
+  required before implementation.
 
 - Program 017, `multi-hour-sector-etf-research-016`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use, and the process ended before publishing a public terminal.
