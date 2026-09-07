@@ -22,12 +22,16 @@ programs remain immutable.
   schemas, credential failure ordering, descriptor metadata, closeout checks, and runtime-before-child
   topology. Review rejected v2 for missing general post-intent no-reissue semantics, exact next-request
   binding, closeout-only public timestamp semantics, and exact integer-zero typing. V3 restores those
-  inherited controls and removes the stale spool documentation. V3 SHA-256/fingerprint is
-  `8fdd3b4060da41211ffd8c197770fb72eb157d1303d5205c284b995d0a3120f7` /
-  `3bc611025c2aef9bd2fe3bd1ae6842fb0a32e8afa7283b03a2ef997c3ceb2b8f`. Every authority remains false.
+  inherited controls and removes the stale spool documentation. Review rejected v3 because its full
+  metadata tuple could not distinguish immutable predecessor roots from Program 017's intentionally
+  mutable root. V4 freezes full tuples for immutable roots and every lock, while Program 017 keeps a
+  stable identity tuple and refreshes its expected full tuple only after authorized create-only writes
+  and parent fsync. V4 SHA-256/fingerprint is
+  `ae8ebcb4de841294fde5548baef97a75832684d472130557cb5812026e29e323` /
+  `f1f84a11c63e40e50bef54f889f6f1ee85a3e46e8ec7368ad9875797725ffefd`. Every authority remains false.
   No credential access, provider request, evidence mutation, dataset admission, or strategy work
   occurred. Next autonomous action: obtain fresh independent design/correctness and defensive reviews
-  of v3 before implementation.
+  of v4 before implementation.
 
 - Program 016, `multi-hour-sector-etf-research-015`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use after provider transport began. The process was interrupted

@@ -168,7 +168,7 @@ Program 017 is a prospective, non-authorizing successor proposal. It discards Pr
 session, preserves the unchanged cumulative science, and removes predecessor reconstruction from
 transport boundaries. V2 uses one precredential validation pass and one post-transport projection
 pass under continuously held controls, with a stricter 16 GiB free-space reservation and exact
-request, terminal, credential, and runtime-topology contracts. Proposal v3 awaits fresh independent
+request, terminal, credential, mutable-root, and runtime-topology contracts. Proposal v4 awaits fresh independent
 review; implementation,
 merge, and a separate reviewed one-use child are still required. Do not run Program 017. See
 [Program 017 exposed-prefix recovery](docs/program-017-exposed-prefix-recovery.md).
