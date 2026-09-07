@@ -25,6 +25,9 @@ _PROPOSAL_V4 = Path(
 _PROPOSAL = Path(
     "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v5.json"
 )
+_REVIEW = Path(
+    "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json"
+)
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -198,3 +201,21 @@ def test_program_017_proposal_is_single_reconstruction_and_non_authorizing() -> 
         "runtime_source_must_merge_before_child_creation"
     ]
     assert all(value is False for value in proposal["authority"].values())
+
+
+def test_program_017_proposal_review_is_bound_finding_free_and_non_authorizing() -> None:
+    review = _load(_REVIEW)
+    stored = review.pop("review_fingerprint")
+    assert stored == fingerprint(review)
+    assert review["reviewed_source_commit"] == "aa17bd0fc7f9201f8c0a3458dae8e54ad11e75aa"
+    assert review["reviewed_source_tree"] == "e960fc7db444d814f940657b44f25ada10356041"
+    binding = review["reviewed_proposal"]
+    assert (
+        hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest()
+        == binding["sha256"]
+    )
+    assert binding["fingerprint"] == _load(Path(binding["path"]))["proposal_fingerprint"]
+    assert review["verdict"] == "PASS"
+    assert review["findings"] == []
+    assert all(result["verdict"] == "PASS" for result in review["challenge_results"])
+    assert all(value is False for value in review["authority"].values())

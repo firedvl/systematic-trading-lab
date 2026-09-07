@@ -1,0 +1,156 @@
+{
+  "schema_version": "program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1",
+  "review_id": "program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-07-v1",
+  "program_ordinal": 17,
+  "program_id": "multi-hour-sector-etf-research-016",
+  "status": "PASS-FINDING-FREE",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_source_commit": "aa17bd0fc7f9201f8c0a3458dae8e54ad11e75aa",
+  "reviewed_source_tree": "e960fc7db444d814f940657b44f25ada10356041",
+  "reviewed_proposal": {
+    "path": "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v5.json",
+    "sha256": "10086f90ae320397914f95fdf9c780ae9c782f93a6b65f48f8d9af4f09cd41a7",
+    "fingerprint": "ecb8bffdbc5af0c5ffc9d189c1d49d5ca99b6b7d2257dcfa1002d747142f8f98"
+  },
+  "review_history": [
+    {
+      "path": "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json",
+      "sha256": "a8205be3687326b7c02be74cac450319362ef15a6261b50aa9ab43998605af00",
+      "fingerprint": "0ed8cace9ea51677a06b65697af9c956294418656762edbf69b759fffda5f7a4",
+      "verdict": "REJECTED-MATERIAL-FINDINGS"
+    },
+    {
+      "path": "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json",
+      "sha256": "0b370290372b206c716d8c409ce169c726d4a6295e62fdff4fdf26f60cca46b7",
+      "fingerprint": "d8ed5a6627754cff45d3f813f9e6ff0e5e0131044eadcfdf377158ae3ee3431c",
+      "verdict": "REJECTED-MATERIAL-FINDINGS"
+    },
+    {
+      "path": "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json",
+      "sha256": "8fdd3b4060da41211ffd8c197770fb72eb157d1303d5205c284b995d0a3120f7",
+      "fingerprint": "3bc611025c2aef9bd2fe3bd1ae6842fb0a32e8afa7283b03a2ef997c3ceb2b8f",
+      "verdict": "REJECTED-MATERIAL-FINDINGS"
+    },
+    {
+      "path": "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v4.json",
+      "sha256": "ae8ebcb4de841294fde5548baef97a75832684d472130557cb5812026e29e323",
+      "fingerprint": "f1f84a11c63e40e50bef54f889f6f1ee85a3e46e8ec7368ad9875797725ffefd",
+      "verdict": "REJECTED-MATERIAL-FINDINGS"
+    }
+  ],
+  "resolved_findings": [
+    "v1 unbounded predecessor spool storage and missing aggregate capacity accounting",
+    "v1 implicit private public and lineage terminal contracts",
+    "v1 incomplete credential failure ordering and runtime-before-child topology",
+    "v1 contradictory durable state label",
+    "v2 missing general post-intent no-reissue and ambiguous-transport rules",
+    "v2 missing exact privately rederived first Program 017 request identity",
+    "v2 missing closeout-only public timestamp provenance",
+    "v2 missing exact integer-zero type predicates",
+    "v2 stale spool-descriptor documentation",
+    "v3 immutable metadata tuple incorrectly applied to mutable Program 017 root",
+    "v4 partial failed-write drift prevented mandatory failure terminal sealing"
+  ],
+  "challenge_results": [
+    {
+      "challenge": "authority-boundaries",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "chronology-and-partial-session-discard",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "no-retry-no-reissue-and-ambiguous-transport",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "cumulative-request-response-byte-and-storage-budgets",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "bounded-predecessor-reconstruction",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "seven-control-validation-to-use-binding",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "mutable-root-authorized-write-and-failure-closeout",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential-access-ordering-and-latch",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "terminal-schema-redaction-recovery-and-timestamp",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "git-provenance-and-runtime-child-topology",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "source-missingness-admission-data-leakage-overfitting-and-statistical-validity",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "implementation-test-contract",
+      "verdict": "PASS"
+    }
+  ],
+  "verified_assertions": {
+    "partial_program_016_session_discarded_in_full": true,
+    "first_program_017_request_exactly_rederived": true,
+    "five_consumed_intents_leave_22171_responses": true,
+    "predecessor_spool_prohibited": true,
+    "execution_precredential_and_final_projection_passes_bounded_to_two": true,
+    "transport_boundary_predecessor_reparse_prohibited": true,
+    "minimum_additional_space_is_16_gib_with_exact_aggregate_accounting": true,
+    "immutable_and_mutable_descriptor_rules_are_distinct": true,
+    "authorized_write_failure_irreversibly_enters_closeout_only": true,
+    "failure_closeout_cannot_continue_or_reissue_transport": true,
+    "failure_closeout_accepts_only_exact_known_failed_target_delta": true,
+    "credential_parser_remains_inline_and_one_load": true,
+    "private_strategy_counters_require_exact_integer_zero": true,
+    "public_timestamp_is_closeout_only": true,
+    "private_public_and_lineage_schemas_are_exact": true,
+    "runtime_must_merge_before_exact_child_binding": true,
+    "all_current_authority_is_false": true
+  },
+  "verification": {
+    "independent_design_and_correctness_review": "PASS-FINDING-FREE",
+    "independent_defensive_review": "PASS-FINDING-FREE",
+    "focused_program_017_tests": "PASS-2",
+    "ruff_format_and_lint": "PASS",
+    "secret_and_private_data_scan": "PASS-751-FILES",
+    "git_diff_check": "PASS",
+    "review_scope": "READ-ONLY-GIT-TRACKED-PUBLIC-SOURCE"
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "Program 017 has no runtime yet; reconstruction counts, storage boundaries, descriptor refresh, failure injection, bounded scan classification, and terminal-write recursion remain implementation-review obligations.",
+    "No private roots, credentials, Keychain, provider, dataset, strategy, controlled or protected data, PAPER, broker, live, or purchase state was accessed."
+  ],
+  "required_next_action": "Merge the finding-free Program 017 proposal, then implement and independently review the exact runtime before any child authority, credential access, private Program 017 state, or provider contact.",
+  "review_fingerprint": "03ac9a8a0109d3d4a65cfd9d6e2f85d1418b73fdc89928a573e8f83ab89bbf32"
+}
