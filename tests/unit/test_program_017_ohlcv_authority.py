@@ -1228,6 +1228,52 @@ def test_mutable_root_tracker_accepts_tracked_writes_and_rejects_unaccounted_dri
             os.close(descriptor)
 
 
+def test_atomic_temp_unlink_failure_remains_valid_for_failure_closeout(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    active = _active_authority()
+    state = _predecessor_state()
+    root = _open_program_017_root(tmp_path)
+    immutable = tuple(
+        authority._open_root(tmp_path, path, create=False)
+        for path in (
+            authority.PROGRAM_016_PRIVATE_ROOT,
+            authority.PROGRAM_015_PRIVATE_ROOT,
+            authority.PROGRAM_014_PRIVATE_ROOT,
+            authority.PROGRAM_013_PRIVATE_ROOT,
+            authority.PROGRAM_012_PRIVATE_ROOT,
+        )
+    )
+    snapshot = authority._ControlSnapshot(root, immutable)
+    authority._ROOT_TRACKERS[root] = snapshot
+    temp_key = "tmp-program-017-write-predecessor-import-manifest.json"
+    original_unlink = os.unlink
+
+    def fail_temp_unlink(path: str, *args: Any, **kwargs: Any) -> None:
+        if path == temp_key:
+            raise OSError("synthetic temp unlink failure")
+        original_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "unlink", fail_temp_unlink)
+    monkeypatch.setattr(authority, "_derive_control_validated_authority", lambda _repo: active)
+    monkeypatch.setattr(authority, "_require_zero_protected_overlap", lambda *_args: None)
+    try:
+        with pytest.raises(OSError, match="temp unlink failure"):
+            authority._tracked_append_atomic(
+                root, "predecessor-import-manifest.json", state.payload
+            )
+        assert snapshot.failed_write is not None
+        assert snapshot.failed_write[0] == temp_key
+        snapshot.begin_failure_closeout()
+        authority._revalidate_failure_closeout_boundary(tmp_path, root, active, state)
+    finally:
+        authority._ROOT_TRACKERS.pop(root, None)
+        snapshot.close()
+        os.close(root)
+        for descriptor in immutable:
+            os.close(descriptor)
+
+
 def test_partial_body_write_enters_failure_closeout_without_reissue(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
@@ -1272,6 +1318,42 @@ def test_restarted_wrong_stage_combined_temp_fails_terminal_persistence(
 
     assert not (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
     assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
+
+
+def test_restarted_unreachable_claim_temp_fails_terminal_persistence(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _configure_finite_execution(tmp_path, monkeypatch, activated=True)
+    root = authority._open_root(tmp_path, authority.PRIVATE_ROOT, create=False)
+    predecessor._append(root, "tmp-program-017-write-claim.json", b"partial")
+    os.close(root)
+
+    with pytest.raises(authority.Program017PostClaimPersistenceError, match="terminal persistence"):
+        authority.credential_presence_preflight(tmp_path, environ=_ForbiddenCredentialEnvironment())
+
+    assert not (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
+
+
+def test_restarted_reachable_claim_temp_seals_without_credentials(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    active, request, state = _configure_finite_execution(tmp_path, monkeypatch, activated=True)
+    root = authority._open_root(tmp_path, authority.PRIVATE_ROOT, create=False)
+    intent = program_011.PageIntent(request.identity, 1, request.url(), None)
+    predecessor._append_atomic(
+        root,
+        f"{predecessor._page_prefix(request, 1)}.intent.json",
+        authority._intent_payload(active, state, request, intent),
+    )
+    _write_credential_audit(root, active, state, 1)
+    predecessor._append(root, "tmp-program-017-write-claim.json", b"partial")
+    os.close(root)
+
+    with pytest.raises(authority.Program017AuthorityError, match="terminally sealed"):
+        authority.credential_presence_preflight(tmp_path, environ=_ForbiddenCredentialEnvironment())
+
+    assert (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
+    assert (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
 
 
 @pytest.mark.parametrize(
@@ -2611,11 +2693,21 @@ def test_atomic_publication_recovers_after_link_before_parent_fsync(
 
 
 @pytest.mark.parametrize("partial", (False, True))
-def test_publication_recovers_deterministic_public_temp(tmp_path: Path, partial: bool) -> None:
+@pytest.mark.parametrize("mode", (0o600, 0o644))
+def test_publication_recovers_deterministic_public_temp(
+    tmp_path: Path, partial: bool, mode: int
+) -> None:
     descriptor = _open_program_017_root(tmp_path)
     payload = (canonical_json(_public_terminal()) + "\n").encode()
     retained = payload[: len(payload) // 2] if partial else payload
     predecessor._append(descriptor, "tmp-program-017-public-terminal", retained)
+    temp_descriptor = os.open(
+        "tmp-program-017-public-terminal",
+        os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+        dir_fd=descriptor,
+    )
+    os.fchmod(temp_descriptor, mode)
+    os.close(temp_descriptor)
 
     authority._append_public_atomic(tmp_path, descriptor, payload)
 

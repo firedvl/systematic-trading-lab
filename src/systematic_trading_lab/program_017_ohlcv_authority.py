@@ -428,6 +428,8 @@ def _recognized_temporary_target(entry: str) -> str | None:
     if not entry.startswith(prefix):
         return None
     target = entry.removeprefix(prefix)
+    if target == "combined-canonical-raw.jsonl":
+        return None
     if (
         target in _STATIC_PRIVATE_KEYS
         or _PAGE_KEY.fullmatch(target) is not None
@@ -2623,6 +2625,146 @@ def _revalidate_closeout_boundary(
     _require_zero_protected_overlap(repository, _authority_commit(authority))
 
 
+def _restart_page_temp_is_reachable(
+    root_descriptor: int,
+    target: str,
+    predecessor_state: _PredecessorState,
+    authority: Mapping[str, Any],
+) -> bool:
+    match = _PAGE_KEY.fullmatch(target)
+    if match is None or match.group("kind") == "body":
+        return False
+    target_session = date.fromisoformat(match.group("session"))
+    target_page = int(match.group("page"))
+    page_entries = {
+        entry for entry in os.listdir(root_descriptor) if _PAGE_KEY.fullmatch(entry) is not None
+    }
+    budget = _Budget(predecessor_state)
+    for request in science.acquisition_requests()[predecessor_state.frontier_request_index :]:
+        session_entries = {
+            entry for entry in page_entries if entry.startswith(f"session-{request.session}-")
+        }
+        source = _ReplaySource(root_descriptor, request, authority, predecessor_state, budget)
+        if request.session != target_session:
+            try:
+                _execute_session(request, source)
+            except (
+                _TransportRequired,
+                _IncompletePageCheckpoint,
+                Program017AuthorityError,
+                program_011.Program011Error,
+            ):
+                return False
+            continue
+        prefix = predecessor._page_prefix(request, target_page)
+        try:
+            _execute_session(request, source)
+        except _TransportRequired:
+            completed_pages = sum(
+                page["session"] == request.session.isoformat() for page in budget.pages
+            )
+            return (
+                match.group("kind") == "intent.json"
+                and target_page == completed_pages + 1
+                and target not in session_entries
+                and all(not entry.startswith(prefix) for entry in session_entries)
+            )
+        except _IncompletePageCheckpoint:
+            completed_pages = sum(
+                page["session"] == request.session.isoformat() for page in budget.pages
+            )
+            return (
+                match.group("kind") == "receipt.json"
+                and target_page == completed_pages + 1
+                and f"{prefix}.intent.json" in session_entries
+                and f"{prefix}.body" in session_entries
+                and f"{prefix}.receipt.json" not in session_entries
+            )
+        except (Program017AuthorityError, program_011.Program011Error):
+            return False
+        return False
+    return False
+
+
+def _restart_temp_stage_is_reachable(
+    root_descriptor: int,
+    target: str,
+    predecessor_state: _PredecessorState,
+    authority: Mapping[str, Any],
+) -> bool:
+    entries = set(os.listdir(root_descriptor))
+    pages = {entry for entry in entries if _PAGE_KEY.fullmatch(entry) is not None}
+    credentials = {entry for entry in entries if _CREDENTIAL_KEY.fullmatch(entry) is not None}
+    if target == "public-terminal":
+        return _TERMINAL_KEY in entries
+    if target == "combined-canonical-raw.jsonl" or target in _DERIVED_KEYS:
+        try:
+            _reconstruct_state(
+                root_descriptor,
+                predecessor_state,
+                authority=authority,
+                require_complete=True,
+            )
+        except (Program017AuthorityError, program_011.Program011Error):
+            return False
+        if target == "combined-canonical-raw.jsonl":
+            return "combined-canonical-raw.jsonl" not in entries
+        order = (
+            "program-017-response-manifest.json",
+            "combined-missing-coordinates.json",
+            "combined-structural-admission.json",
+            "combined-dataset-manifest.json",
+        )
+        if target not in order or "combined-canonical-raw.jsonl" not in entries:
+            return False
+        index = order.index(target)
+        return all(key in entries for key in order[:index]) and all(
+            key not in entries for key in order[index:]
+        )
+    if target == _LAUNCHER_KEY:
+        return "predecessor-import-manifest.json" in entries and not (
+            {_LAUNCHER_KEY, "active-authority.json", "claim.json", _TERMINAL_KEY} & entries
+            or pages
+            or credentials
+        )
+    if target == "active-authority.json":
+        return {_LAUNCHER_KEY, "predecessor-import-manifest.json"} <= entries and not (
+            {"active-authority.json", "claim.json", _TERMINAL_KEY} & entries or pages or credentials
+        )
+    if target == "claim.json":
+        try:
+            credential_counts = _credential_load_counts(
+                root_descriptor, authority, predecessor_state
+            )
+        except Program017AuthorityError:
+            return False
+        return (
+            {_LAUNCHER_KEY, "active-authority.json", "predecessor-import-manifest.json"} <= entries
+            and "claim.json" not in entries
+            and credential_counts == (1, 1)
+            and any(entry.endswith(".intent.json") for entry in pages)
+        )
+    credential_match = _CREDENTIAL_KEY.fullmatch(target)
+    if credential_match is not None:
+        sequence = credential_match.group("sequence")
+        kind = credential_match.group("kind")
+        attempt = f"credential-load-{sequence}.attempt.json"
+        receipt = f"credential-load-{sequence}.receipt.json"
+        base = {_LAUNCHER_KEY, "active-authority.json", "predecessor-import-manifest.json"}
+        if not base <= entries or "claim.json" in entries or not pages:
+            return False
+        return (kind == "attempt" and attempt not in entries and not credentials) or (
+            kind == "receipt" and attempt in entries and receipt not in entries
+        )
+    if _PAGE_KEY.fullmatch(target) is not None:
+        return _restart_page_temp_is_reachable(
+            root_descriptor, target, predecessor_state, authority
+        )
+    if target == _TERMINAL_KEY:
+        return "active-authority.json" in entries and _TERMINAL_KEY not in entries
+    return False
+
+
 def _revalidate_failure_closeout_boundary(
     repository: Path,
     root_descriptor: int,
@@ -2641,7 +2783,9 @@ def _revalidate_failure_closeout_boundary(
         }
         if snapshot.failed_write is not None:
             failed_key = snapshot.failed_write[0]
-            if failed_key.startswith("tmp-"):
+            if _recognized_temporary_target(failed_key) is not None:
+                expected = {failed_key}
+            elif failed_key.startswith("tmp-"):
                 expected = {f"tmp-program-017-{failed_key.removeprefix('tmp-')}"}
             elif (
                 failed_key in _STATIC_PRIVATE_KEYS
@@ -2655,17 +2799,10 @@ def _revalidate_failure_closeout_boundary(
                 raise Program017AuthorityError("Program 017 failure temp does not match its stage")
         elif temporary_entries:
             target = _recognized_temporary_target(next(iter(temporary_entries)))
-            if target == "public-terminal" and not predecessor._exists(
-                root_descriptor, _TERMINAL_KEY
+            if target is None or not _restart_temp_stage_is_reachable(
+                root_descriptor, target, predecessor_state, authority
             ):
-                raise Program017AuthorityError("Program 017 public temp precedes private terminal")
-            if target == "combined-canonical-raw.jsonl" or target in _DERIVED_KEYS:
-                _reconstruct_state(
-                    root_descriptor,
-                    predecessor_state,
-                    authority=authority,
-                    require_complete=True,
-                )
+                raise Program017AuthorityError("Program 017 recovery temp stage is unreachable")
     _validate_predecessor_manifest(root_descriptor, predecessor_state)
     _reconstruct_state(
         root_descriptor,
@@ -3307,6 +3444,26 @@ def _public_terminal_payload(record: Mapping[str, Any]) -> bytes:
     return (canonical_json(_public_terminal_value(record)) + "\n").encode()
 
 
+def _read_public_terminal_temp(root_descriptor: int, key: str) -> bytes:
+    try:
+        descriptor = os.open(
+            key,
+            os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+            dir_fd=root_descriptor,
+        )
+    except OSError as error:
+        raise Program017AuthorityError("Program 017 public terminal temp is invalid") from error
+    with os.fdopen(descriptor, "rb") as handle:
+        metadata = os.fstat(handle.fileno())
+        if (
+            not stat.S_ISREG(metadata.st_mode)
+            or stat.S_IMODE(metadata.st_mode) not in {0o600, 0o644}
+            or metadata.st_size > 1_048_576
+        ):
+            raise Program017AuthorityError("Program 017 public terminal temp is invalid")
+        return handle.read()
+
+
 def _publish_public_terminal(
     repository: Path,
     root_descriptor: int,
@@ -3375,7 +3532,7 @@ def _append_public_atomic(repository: Path, root_descriptor: int, payload: bytes
             return
         recovery_temp = "tmp-program-017-public-terminal"
         if predecessor._exists(root_descriptor, recovery_temp):
-            retained = predecessor._read(root_descriptor, recovery_temp)
+            retained = _read_public_terminal_temp(root_descriptor, recovery_temp)
             if retained == payload:
                 try:
                     os.link(
