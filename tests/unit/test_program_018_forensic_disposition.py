@@ -10,6 +10,9 @@ from systematic_trading_lab.fingerprints import fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _DISPOSITION = Path("config/research/program-018-predecessor-recovery-forensic-disposition-v1.json")
+_PROPOSAL = Path(
+    "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
+)
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -79,3 +82,48 @@ def test_program_018_forensic_disposition_is_bound_redacted_and_non_authorizing(
     guard = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(guard)
     assert _DISPOSITION.as_posix() in guard.PUBLIC_PROGRAM_JSON
+
+
+def test_program_018_proposal_is_an_exact_non_authorizing_delta() -> None:
+    proposal = _load(_PROPOSAL)
+    stored = proposal.pop("proposal_fingerprint")
+    assert stored == fingerprint(proposal)
+    for binding in proposal["predecessor"].values():
+        assert (
+            hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest()
+            == binding["sha256"]
+        )
+
+    inheritance = proposal["exact_inheritance_contract"]
+    assert inheritance["all_unlisted_program_017_v5_fields_and_semantics_inherited_exactly"]
+    assert len(inheritance["allowed_delta_keys"]) == 8
+    assert all(
+        value is False
+        for key, value in inheritance.items()
+        if key.endswith("_changed") or key == "authority_expanded"
+    )
+
+    recovery = proposal["recovery_contract"]
+    assert len(recovery["predecessor_private_roots_in_lock_order"]) == 6
+    assert recovery["partial_session_coordinates_classification"] == (
+        "UNOBSERVED-BECAUSE-CHAIN-INCOMPLETE"
+    )
+    assert recovery["incomplete_program_017_request_reissue_allowed"] is False
+    assert (
+        recovery["first_program_018_request_private_derivation"][
+            "skipped_scheduled_session_allowed"
+        ]
+        is False
+    )
+
+    bounded = proposal["bounded_reconstruction_contract"]
+    assert bounded["execution_maximum_full_predecessor_passes"] == 2
+    assert bounded["full_predecessor_reconstruction_between_transports"] is False
+    assert proposal["transport_boundary_contract"]["all_eight_controls_held_continuously"]
+    budget = proposal["cumulative_transport_contract"]
+    assert budget["maximum_combined_request_intents"] == 22176
+    assert budget["consumed_intent_without_response_count"] == 6
+    assert budget["maximum_effective_combined_responses"] == 22170
+    assert budget["automatic_retries"] == 0
+    assert proposal["storage_contract"]["minimum_additional_available_bytes"] == 16 * 1024**3
+    assert all(value is False for value in proposal["authority"].values())
