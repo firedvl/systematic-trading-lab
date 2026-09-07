@@ -15,8 +15,11 @@ _DISPOSITION = Path("config/research/program-018-predecessor-recovery-forensic-d
 _PROPOSAL_V1 = Path(
     "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
 )
-_PROPOSAL = Path(
+_PROPOSAL_V2 = Path(
     "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json"
+)
+_PROPOSAL = Path(
+    "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json"
 )
 
 
@@ -94,9 +97,9 @@ def test_program_018_proposal_is_an_exact_non_authorizing_delta() -> None:
     stored = proposal.pop("proposal_fingerprint")
     assert stored == fingerprint(proposal)
     superseded = proposal["supersedes"]
-    assert superseded["path"] == _PROPOSAL_V1.as_posix()
+    assert superseded["path"] == _PROPOSAL_V2.as_posix()
     assert (
-        hashlib.sha256((_REPOSITORY / _PROPOSAL_V1).read_bytes()).hexdigest()
+        hashlib.sha256((_REPOSITORY / _PROPOSAL_V2).read_bytes()).hexdigest()
         == superseded["sha256"]
     )
     for binding in proposal["predecessor"].values():
@@ -159,6 +162,7 @@ def test_program_018_proposal_is_an_exact_non_authorizing_delta() -> None:
     assert proposal["public_pass_lineage_contract"]["schema_version"] == (
         "program-018-public-raw-structural-prefix-lineage-manifest-v1"
     )
+    assert "proposal v3" in proposal["required_next_action"]
     assert all(value is False for value in proposal["authority"].values())
 
 
@@ -175,11 +179,13 @@ def test_program_018_secret_guard_rejects_private_json(
     private = Path("config/research/program-018-private-terminal.json")
     private.parent.mkdir(parents=True)
     private.write_text("{}\n", encoding="utf-8")
-    public = Path(_PROPOSAL)
-    public.write_text("{}\n", encoding="utf-8")
-    monkeypatch.setattr(guard, "tracked_files", lambda: [private, public])
+    public_paths = [Path(path) for path in guard.PUBLIC_PROGRAM_JSON if "program-018" in path]
+    for public in public_paths:
+        public.parent.mkdir(parents=True, exist_ok=True)
+        public.write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(guard, "tracked_files", lambda: [private, *public_paths])
 
     assert guard.main() == 1
     errors = capsys.readouterr().err
     assert f"{private}:private-market-data-path" in errors
-    assert str(public) not in errors
+    assert all(str(public) not in errors for public in public_paths)

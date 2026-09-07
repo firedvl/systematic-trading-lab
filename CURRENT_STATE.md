@@ -18,8 +18,10 @@ programs remain immutable.
   transport-boundary design. Independent review rejected proposal v1 because Program 018 private
   JSON escaped path classification and compact inheritance left terminal schemas and mutable-root
   transport semantics ambiguous. Proposal v2 fixes those findings with explicit full schemas,
-  descriptor tuples, root-role substitutions, and a private-path regression. V2 fingerprint is
-  `2ba21d104ea7938cbb01df995fbcd638c663073c14e3b3e3ccbf478693c94d46`; fresh independent review is
+  descriptor tuples, root-role substitutions, and a private-path regression. Review rejected v2
+  because the strict classifier lacked future public terminal paths and its gate named superseded
+  v1. V3 reserves the complete public topology and binds its own review gate. V3 fingerprint is
+  `b7c8ac3f0794b2119a7ac27129ce14c665eea63eacba892b3c459b16c8686732`; fresh independent review is
   required before implementation.
 
 - Program 017, `multi-hour-sector-etf-research-016`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
