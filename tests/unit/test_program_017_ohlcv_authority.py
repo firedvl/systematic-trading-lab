@@ -1258,8 +1258,12 @@ def test_partial_body_write_enters_failure_closeout_without_reissue(
     assert len(transport.intents) == 1
 
 
-def test_unknown_temporary_sibling_blocks_failure_terminal(
-    tmp_path: Path, monkeypatch: MonkeyPatch
+@pytest.mark.parametrize(
+    "sibling",
+    ("tmp-unrelated-sibling", "tmp-program-017-combined-canonical-raw"),
+)
+def test_wrong_stage_temporary_sibling_blocks_failure_terminal(
+    tmp_path: Path, monkeypatch: MonkeyPatch, sibling: str
 ) -> None:
     _, request, _ = _configure_finite_execution(tmp_path, monkeypatch)
     original_append = predecessor._append
@@ -1267,7 +1271,7 @@ def test_unknown_temporary_sibling_blocks_failure_terminal(
     def partial_append(root_descriptor: int, key: str, payload: bytes) -> None:
         if key.endswith(".body"):
             original_append(root_descriptor, key, payload[: max(1, len(payload) // 2)])
-            original_append(root_descriptor, "tmp-unrelated-sibling", b"x")
+            original_append(root_descriptor, sibling, b"x")
             raise OSError("synthetic partial body write")
         original_append(root_descriptor, key, payload)
 
@@ -1284,6 +1288,33 @@ def test_unknown_temporary_sibling_blocks_failure_terminal(
 
     assert not (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
     assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
+
+
+def test_crash_temp_before_manifest_link_seals_without_credentials(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _, _, state = _configure_finite_execution(tmp_path, monkeypatch)
+    root = authority._open_root(tmp_path, authority.PRIVATE_ROOT, create=False)
+    temp_key = "tmp-program-017-write-predecessor-import-manifest.json"
+    descriptor = os.open(
+        temp_key,
+        os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+        0o600,
+        dir_fd=root,
+    )
+    with os.fdopen(descriptor, "wb") as handle:
+        handle.write(state.payload)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.fsync(root)
+    os.close(root)
+
+    with pytest.raises(authority.Program017AuthorityError, match="terminally sealed"):
+        authority.credential_presence_preflight(tmp_path, environ=_ForbiddenCredentialEnvironment())
+
+    assert (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
+    assert (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
+    assert not (tmp_path / authority.PRIVATE_ROOT / temp_key).exists()
 
 
 def test_public_observed_at_comes_from_terminal_closeout_only(

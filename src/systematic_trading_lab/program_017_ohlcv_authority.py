@@ -306,6 +306,14 @@ _PUBLIC_LINEAGE_KEYS = {
     "status",
     "dataset_lineage_identity",
 }
+_STATIC_PRIVATE_KEYS = {
+    "active-authority.json",
+    "claim.json",
+    "launcher.json",
+    "predecessor-import-manifest.json",
+    "terminal.json",
+    *_DERIVED_KEYS,
+}
 _PRIVACY_ASSERTIONS = {
     "credentials_stored": False,
     "provider_tokens_private": True,
@@ -409,6 +417,24 @@ _STABLE_STAT_FIELDS = _FULL_STAT_FIELDS[:5]
 def _stat_tuple(descriptor: int, fields: Sequence[str]) -> tuple[int, ...]:
     metadata = os.fstat(descriptor)
     return tuple(int(getattr(metadata, field)) for field in fields)
+
+
+def _recognized_temporary_target(entry: str) -> str | None:
+    if entry == "tmp-program-017-combined-canonical-raw":
+        return "combined-canonical-raw.jsonl"
+    if entry == "tmp-program-017-public-terminal":
+        return "public-terminal"
+    prefix = "tmp-program-017-write-"
+    if not entry.startswith(prefix):
+        return None
+    target = entry.removeprefix(prefix)
+    if (
+        target in _STATIC_PRIVATE_KEYS
+        or _PAGE_KEY.fullmatch(target) is not None
+        or _CREDENTIAL_KEY.fullmatch(target) is not None
+    ):
+        return target
+    return None
 
 
 class _ControlSnapshot:
@@ -2065,19 +2091,7 @@ def _reconstruct_state(
             page_entries.add(entry)
         elif _CREDENTIAL_KEY.fullmatch(entry):
             continue
-        elif entry in {
-            "tmp-program-017-combined-canonical-raw",
-            "tmp-program-017-public-terminal",
-        }:
-            temporary_entries.add(entry)
-        elif entry.startswith("tmp-program-017-write-"):
-            target = entry.removeprefix("tmp-program-017-write-")
-            if (
-                target not in allowed
-                and _PAGE_KEY.fullmatch(target) is None
-                and _CREDENTIAL_KEY.fullmatch(target) is None
-            ):
-                raise Program017AuthorityError("Program 017 temporary target is invalid")
+        elif _recognized_temporary_target(entry) is not None:
             temporary_entries.add(entry)
         else:
             raise Program017AuthorityError("Program 017 private checkpoint contains unknown state")
@@ -2620,6 +2634,20 @@ def _revalidate_failure_closeout_boundary(
     snapshot = _ROOT_TRACKERS.get(root_descriptor)
     if snapshot is not None:
         snapshot.validate_failure_closeout()
+        temporary_entries = {
+            entry
+            for entry in os.listdir(root_descriptor)
+            if _recognized_temporary_target(entry) is not None
+        }
+        if snapshot.failed_write is not None:
+            failed_key = snapshot.failed_write[0]
+            expected = (
+                {f"tmp-program-017-{failed_key.removeprefix('tmp-')}"}
+                if failed_key.startswith("tmp-")
+                else set()
+            )
+            if temporary_entries not in (set(), expected):
+                raise Program017AuthorityError("Program 017 failure temp does not match its stage")
     _validate_predecessor_manifest(root_descriptor, predecessor_state)
     _reconstruct_state(
         root_descriptor,
@@ -3357,6 +3385,23 @@ def _append_public_atomic(repository: Path, root_descriptor: int, payload: bytes
         os.close(public_descriptor)
 
 
+def _recover_predecessor_manifest_temp(
+    root_descriptor: int, predecessor_state: _PredecessorState
+) -> bool:
+    temp_key = "tmp-program-017-write-predecessor-import-manifest.json"
+    if not predecessor._exists(root_descriptor, temp_key):
+        return False
+    if predecessor._read(root_descriptor, temp_key) != predecessor_state.payload:
+        raise Program017AuthorityError("Program 017 predecessor manifest temp differs")
+    _publish_temp_or_validate(
+        root_descriptor,
+        temp_key,
+        "predecessor-import-manifest.json",
+        predecessor_state.sha256,
+    )
+    return True
+
+
 def _recover_private_terminal_if_present(
     repository: Path,
     root_descriptor: int,
@@ -3368,6 +3413,7 @@ def _recover_private_terminal_if_present(
     authority: Mapping[str, Any],
     predecessor_state: _PredecessorState,
 ) -> None:
+    recovered_manifest_temp = _recover_predecessor_manifest_temp(root_descriptor, predecessor_state)
     if predecessor._exists(root_descriptor, _TERMINAL_KEY):
         _validate_predecessor_manifest(root_descriptor, predecessor_state)
         if predecessor._exists(root_descriptor, "active-authority.json"):
@@ -3396,7 +3442,7 @@ def _recover_private_terminal_if_present(
             terminal,
         )
         raise Program017AuthorityError("Program 017 acquisition is terminally sealed")
-    if not _has_consumed_state(root_descriptor):
+    if not recovered_manifest_temp and not _has_consumed_state(root_descriptor):
         return
     try:
         _validate_predecessor_manifest(root_descriptor, predecessor_state)
@@ -3627,6 +3673,7 @@ def _has_consumed_state(root_descriptor: int) -> bool:
             or entry in _DERIVED_KEYS
             or _PAGE_KEY.fullmatch(entry)
             or _CREDENTIAL_KEY.fullmatch(entry)
+            or _recognized_temporary_target(entry) is not None
         ):
             return True
     return False
