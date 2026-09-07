@@ -160,7 +160,8 @@ Program 016's reviewed one-use child is consumed and sealed as `FAIL-CONSUMED-NO
 redacted public terminal records a runtime failure after interruption, no structural admission, no
 dataset lineage, and no strategy work. Current code rejects every Program 016 lifecycle entrypoint
 before credential or private-root access. The frozen no-reissue rule prohibits resuming its final
-intent-only request. Do not run Program 016 again. See
+intent-only request. A finding-free independent terminal review confirms the closeout and public
+redaction. Do not run Program 016 again. See
 [Program 016 exposed-prefix recovery](docs/program-016-exposed-prefix-recovery.md).
 
 ## Using historical data
