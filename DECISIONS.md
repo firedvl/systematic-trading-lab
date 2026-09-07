@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-07 - Freeze the Program 017 runtime implementation binding
+
+- Decision: bind the finding-free Program 017 runtime to exact source commit/tree/root `efcf5ef2abf56167be7f3741c10a98e2acf3e5f8` / `6bd870133b606d2232e00146cfe4777709a4888c` / `bce103b0719eea804d4ab1e320729f4272a79e18c47c3c313fcd07a32916225e`. Keep every authority field false.
+- Context: the runtime implements proposal v5 with one full precredential predecessor validation, no predecessor reconstruction at transport boundaries, one final projection, seven held controls, exact deterministic temp recovery, and irreversible failure closeout. Review findings covering write-stage reachability and terminal recovery were fixed prospectively; fresh correctness and defensive reviews of the final exact source found no remaining issue.
+- Consequences: 132 focused tests, Ruff, mypy, the 754-file secret scan, and Git checks pass. No credential presence or value, private Program 017 state, provider request, dataset admission, strategy, controlled/protected, purchase, PAPER, broker, or live action occurred.
+- Revisit when: this binding merges to clean synchronized `main`. Freeze that exact main as the child runtime source, then add and independently review only the exact one-use child before credential preflight or provider contact.
+
 ## 2026-09-07 - Freeze Program 017 with bounded reconstruction and no predecessor spool
 
 - Decision: preserve Program 016's science. Fully validate predecessor evidence once before credential presence, perform provider requests without any predecessor reconstruction at transport boundaries, then reparse once into the existing final canonical projection after transport completes. Do not add a predecessor spool. At each transport boundary, revalidate only exact authority, Git, descriptor, manifest, disk, and chronology metadata while all controls remain held.

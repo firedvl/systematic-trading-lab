@@ -1,7 +1,7 @@
 # Current state
 
-Program 017's read-only forensic disposition is current. Program 016 and all earlier terminal
-programs remain immutable.
+Program 017's reviewed prospective runtime is current. Program 016 and all earlier terminal programs
+remain immutable.
 
 - Program 017, `multi-hour-sector-etf-research-016`, has a prospective proposal but no authority. Read-only offline
   validation binds Program 016's scientific contract, reviews, runtime, child, terminal, and terminal
@@ -34,11 +34,15 @@ programs remain immutable.
   `ecb8bffdbc5af0c5ffc9d189c1d49d5ca99b6b7d2257dcfa1002d747142f8f98`. Fresh independent
   design/correctness and defensive reviews pass finding-free. Review SHA-256/fingerprint is
   `e2aaecb0c6cd44e359d0ead286aae5513cd6d08ed75e7aa96a91c0506de81000` /
-  `03ac9a8a0109d3d4a65cfd9d6e2f85d1418b73fdc89928a573e8f83ab89bbf32`. Every authority remains false.
-  No credential access, provider request, evidence mutation, dataset admission, or strategy work
-  occurred. Next autonomous action: obtain fresh independent design/correctness and defensive reviews
-  merge the proposal, then implement and independently review the runtime before any child,
-  credential access, private Program 017 state, or provider contact.
+  `03ac9a8a0109d3d4a65cfd9d6e2f85d1418b73fdc89928a573e8f83ab89bbf32`. The runtime is implemented at
+  exact source commit/tree/root `efcf5ef2abf56167be7f3741c10a98e2acf3e5f8` /
+  `6bd870133b606d2232e00146cfe4777709a4888c` /
+  `bce103b0719eea804d4ab1e320729f4272a79e18c47c3c313fcd07a32916225e`. Fresh independent
+  design/correctness and defensive reviews of that exact source pass finding-free after every raised
+  temp-recovery finding was fixed prospectively. Every authority remains false. No credential access,
+  private Program 017 state, provider request, dataset admission, or strategy work occurred. Next
+  autonomous action: merge the runtime binding, synchronize clean main, then create and independently
+  review only the separate exact one-use child before any credential preflight or provider contact.
 
 - Program 016, `multi-hour-sector-etf-research-015`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use after provider transport began. The process was interrupted

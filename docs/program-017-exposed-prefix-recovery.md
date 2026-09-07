@@ -1,7 +1,7 @@
 # Program 017 exposed-prefix recovery
 
 Program 017, `multi-hour-sector-etf-research-016`, is
-`PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`. It is not a replay or retry of Program 016.
+`IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`. It is not a replay or retry of Program 016.
 
 Read-only forensics bind Program 016's exact scientific contract, reviews, runtime, child, terminal,
 and terminal review. Its final partial session contains completed page evidence followed by one
@@ -44,10 +44,15 @@ unchanged. Proposal v5 SHA-256/fingerprint is
 `10086f90ae320397914f95fdf9c780ae9c782f93a6b65f48f8d9af4f09cd41a7` /
 `ecb8bffdbc5af0c5ffc9d189c1d49d5ca99b6b7d2257dcfa1002d747142f8f98`.
 
-Fresh independent design/correctness and defensive reviews pass finding-free. Review
+Fresh independent proposal design/correctness and defensive reviews pass finding-free. Review
 SHA-256/fingerprint is `e2aaecb0c6cd44e359d0ead286aae5513cd6d08ed75e7aa96a91c0506de81000` /
 `03ac9a8a0109d3d4a65cfd9d6e2f85d1418b73fdc89928a573e8f83ab89bbf32`.
-Implementation must merge before a separate exact one-use child and review can exist. No credential
+The runtime is frozen at exact source commit/tree/root
+`efcf5ef2abf56167be7f3741c10a98e2acf3e5f8` / `6bd870133b606d2232e00146cfe4777709a4888c` /
+`bce103b0719eea804d4ab1e320729f4272a79e18c47c3c313fcd07a32916225e`.
+Fresh independent correctness and defensive reviews of that exact runtime pass finding-free after
+all raised temp-recovery findings were fixed prospectively. The implementation binding must merge
+before a separate exact one-use child and review can exist. No credential
 presence check, credential access, private Program 017 state, provider contact, dataset admission,
 strategy work, controlled or protected access, PAPER action, broker write, live action, or purchase
 is authorized.
