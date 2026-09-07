@@ -71,5 +71,9 @@ before credential preflight, authority derivation, execution, or private-root ac
 cannot replay or retry. Dynamic acquisition counts, detailed failure evidence, private identities,
 exact missingness, provider tokens, and market observations remain private.
 
+Fresh independent terminal review reconstructed the public child and runtime bindings, verified 22
+focused terminal tests and 14 direct API/CLI rejection sentinels, and passed finding-free. Its review
+fingerprint is `9fe0cf53e78db7768db04c29f6a9ae679f17ce49f73fd58be03cd8d1c4d75945`.
+
 Do not run Program 017 credential preflight or acquisition again. Controlled or protected access,
 purchases, PAPER, broker writes, and live execution remain disabled.
