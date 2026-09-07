@@ -164,6 +164,13 @@ intent-only request. A finding-free independent terminal review confirms the clo
 redaction. Do not run Program 016 again. See
 [Program 016 exposed-prefix recovery](docs/program-016-exposed-prefix-recovery.md).
 
+Program 017 is a prospective, non-authorizing successor proposal. It discards Program 016's partial
+session, preserves the unchanged cumulative science, and replaces repeated predecessor reconstruction
+with one validated private canonical spool plus bounded transport checks under continuously held
+controls. Independent review, implementation, merge, and a separate reviewed one-use child are still
+required. Do not run Program 017. See
+[Program 017 exposed-prefix recovery](docs/program-017-exposed-prefix-recovery.md).
+
 ## Using historical data
 
 Alpaca imports are read-only and require research mode plus credentials:

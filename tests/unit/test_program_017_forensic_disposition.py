@@ -10,6 +10,9 @@ from systematic_trading_lab.fingerprints import fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _DISPOSITION = Path("config/research/program-017-predecessor-recovery-forensic-disposition-v1.json")
+_PROPOSAL = Path(
+    "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
+)
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -82,3 +85,41 @@ def test_program_017_forensic_disposition_is_bound_redacted_and_non_authorizing(
     reserved = {path for path in guard.PUBLIC_PROGRAM_JSON if "program-017" in path}
     assert len(reserved) == 8
     assert _DISPOSITION.as_posix() in reserved
+
+
+def test_program_017_proposal_is_single_reconstruction_and_non_authorizing() -> None:
+    proposal = _load(_PROPOSAL)
+    stored = proposal.pop("proposal_fingerprint")
+    assert stored == fingerprint(proposal)
+    for binding in proposal["predecessor"].values():
+        assert (
+            hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest()
+            == binding["sha256"]
+        )
+
+    recovery = proposal["recovery_contract"]
+    assert recovery["incomplete_program_016_session_reuse_allowed"] is False
+    assert recovery["incomplete_program_016_completed_page_reuse_allowed"] is False
+    assert recovery["incomplete_program_016_request_reissue_allowed"] is False
+    assert recovery["first_program_017_request"] == (
+        "NEXT-INDEPENDENT-SESSION-AFTER-DISCARDED-PARTIAL-SESSION"
+    )
+
+    reconstruction = proposal["single_reconstruction_contract"]
+    assert reconstruction["full_predecessor_validation_before_credential_presence"] is True
+    assert reconstruction["all_completed_predecessor_pages_reparsed_exactly_once_per_operation"]
+    assert reconstruction["full_predecessor_reconstruction_before_every_transport"] is False
+    assert reconstruction["completed_pages_reparsed_again_after_initial_spool"] is False
+
+    boundary = proposal["transport_boundary_contract"]
+    assert boundary["fixed_size_metadata_checks_only"] is True
+    assert boundary["predecessor_content_reparse_forbidden"] is True
+    assert boundary["any_identity_or_metadata_drift_fails_before_transport"] is True
+
+    budgets = proposal["cumulative_transport_and_working_space_budgets"]
+    assert budgets["maximum_combined_request_intents"] == 22176
+    assert budgets["maximum_effective_combined_responses"] == 22171
+    assert budgets["consumed_intent_without_response_count"] == 5
+    assert budgets["automatic_retries"] == 0
+    assert len(proposal["lock_and_launch_contract"]["control_acquisition_order"]) == 7
+    assert all(value is False for value in proposal["authority"].values())

@@ -14,9 +14,14 @@ programs remain immutable.
   presence, keep all predecessor and Git controls held, and use bounded metadata checks at transport
   boundaries without weakening content, chronology, budget, privacy, or one-use controls. Redacted
   disposition fingerprint is `695af60f7bece55b88da34ff8499e19c293b23b2db3cb914a42b5c6f9757e847`.
-  No credential access, provider request, evidence mutation, dataset admission, or strategy work
-  occurred. Next autonomous action: freeze and independently review a prospective Program 017
-  proposal.
+  Proposal v1 preserves all inherited science and authority boundaries, discards the partial session,
+  performs one full predecessor reconstruction per operation, and uses a bound private canonical
+  spool plus fixed-size transport checks under continuously held controls. Proposal
+  SHA-256/fingerprint is `a8205be3687326b7c02be74cac450319362ef15a6261b50aa9ab43998605af00` /
+  `0ed8cace9ea51677a06b65697af9c956294418656762edbf69b759fffda5f7a4`. Every authority remains
+  false. No credential access, provider request, evidence mutation, dataset admission, or strategy
+  work occurred. Next autonomous action: obtain fresh independent design/correctness and defensive
+  reviews before implementation.
 
 - Program 016, `multi-hour-sector-etf-research-015`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use after provider transport began. The process was interrupted

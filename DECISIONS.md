@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-07 - Freeze Program 017 with one validated predecessor spool
+
+- Decision: preserve Program 016's science and use one create-only, fsynced, hash-bound private canonical predecessor spool per Program 017 operation. Fully validate and reparse predecessor evidence once before credential presence under all seven controls; append only later complete sessions in frozen order. At each transport boundary, revalidate only fixed-size authority, Git, descriptor, manifest, spool, disk, and chronology metadata while all controls remain held.
+- Context: Program 016 repeated full predecessor reconstruction before every request, causing multi-minute inter-request CPU work. The existing locks already bind validation to use throughout the transaction. Repeating the corpus parse added no distinct scientific observation and made completion operationally unbounded.
+- Consequences: proposal SHA-256/fingerprint is `a8205be3687326b7c02be74cac450319362ef15a6261b50aa9ab43998605af00` / `0ed8cace9ea51677a06b65697af9c956294418656762edbf69b759fffda5f7a4`. The partial Program 016 session remains fully excluded and neither request may be reissued. Five consumed intents cap cumulative responses at 22,171. All retry, restart, credential, privacy, protected, admission, and strategy controls remain unchanged. Every proposal authority is false.
+- Revisit when: after fresh finding-free independent design and defensive reviews. Implementation and a separate reviewed child remain required before any credential or provider access.
+
 ## 2026-09-07 - Program 017 must discard the partial session and remove repeated reconstruction
 
 - Decision: keep Programs 012 through 016 terminal and immutable. A prospective Program 017 may reuse only the locally validated completed whole-session prefix. It must discard Program 016's partial session in full, never reissue either retained request, and begin provider work at the next independent session.
