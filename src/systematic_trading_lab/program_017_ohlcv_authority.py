@@ -114,7 +114,9 @@ _PUBLIC_TERMINAL_RESULT_ID = (
     "program-017-exposed-prefix-raw-alpaca-sip-recovery-and-"
     "structural-admission-terminal-result-2026-09-07-v1"
 )
-_PUBLIC_TERMINAL_SHA256: str | None = None
+_PUBLIC_TERMINAL_SHA256: str | None = (
+    "4bf6b7e644a72e052d9d861fbd6f3ac499a18fec7b159624bb3caf98e2741de3"
+)
 _WORKING_DISK_RESERVATION_BYTES = 16 * 1024**3
 _MAXIMUM_CANONICAL_PROJECTION_BYTES = 8 * 1024**3
 _PRIVATE_TERMINAL_KEYS = {

@@ -164,12 +164,11 @@ intent-only request. A finding-free independent terminal review confirms the clo
 redaction. Do not run Program 016 again. See
 [Program 016 exposed-prefix recovery](docs/program-016-exposed-prefix-recovery.md).
 
-Program 017 has a finding-free prospective runtime but no authority. It discards Program 016's
-partial session, preserves the unchanged cumulative science, and removes predecessor reconstruction
-from transport boundaries. The runtime uses one precredential validation pass and one post-transport
-projection pass under continuously held controls, with a 16 GiB free-space reservation and exact
-request, terminal, credential, mutable-root, failure-closeout, and runtime-topology contracts. Merge
-and a separate reviewed one-use child are still required. Do not run Program 017. See
+Program 017's reviewed one-use child is consumed and sealed as `FAIL-CONSUMED-NO-RETRY`. The
+redacted public terminal records a runtime failure, no structural admission, no dataset lineage, and
+no strategy work. Current code rejects every Program 017 lifecycle entrypoint before credential or
+private-root access. The frozen no-reissue rule prohibits resuming the transaction. Do not run
+Program 017 again. See
 [Program 017 exposed-prefix recovery](docs/program-017-exposed-prefix-recovery.md).
 
 ## Using historical data

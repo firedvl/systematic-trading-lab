@@ -1,9 +1,30 @@
 # Current state
 
-Program 017's reviewed prospective runtime is current. Program 016 and all earlier terminal programs
-remain immutable.
+Program 017's terminal result is current. Earlier Program 017 planning and implementation state is
+preserved below as historical context. Program 016 and all earlier terminal programs remain
+immutable.
 
-- Program 017, `multi-hour-sector-etf-research-016`, has a prospective proposal but no authority. Read-only offline
+- Program 017, `multi-hour-sector-etf-research-016`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
+  standing child consumed its one use, and the process ended before publishing a public terminal.
+  The built-in recovery path sealed the interrupted transaction without another credential load or
+  provider request. The exact redacted public terminal binds runtime source commit
+  `40d7f0a2628560eb7b586e4ff9a5df4480fb04fa` and records `RUNTIME-FAILURE`,
+  `admission_passed=false`, no dataset lineage, no Program 002 admission, and no strategy calculation
+  or return. Its SHA-256 is `4bf6b7e644a72e052d9d861fbd6f3ac499a18fec7b159624bb3caf98e2741de3`;
+  the derived active-authority fingerprint is
+  `ed1ff2abbf2ea7cc76a04a01f638873b61970bd31e5389588c7e0a763035123c`, distinct from child-artifact
+  fingerprint `09a303caec3c589921009c2d2865f115ddcf1b607514050dcb84a967a4225410`.
+  Dynamic acquisition counts, detailed failure evidence, private content identities, raw market
+  data, provider tokens, exact missingness, and exact unexpected exclusions remain private. Current
+  code requires the exact terminal and rejects credential preflight, authority derivation, and
+  execution before credential or private-root access. Program 017 cannot replay or retry. No dataset
+  was admitted and no strategy ran. Controlled or protected access, purchases, PAPER, broker writes,
+  and live execution remained disabled. Fresh independent terminal review passes finding-free with
+  review fingerprint `9fe0cf53e78db7768db04c29f6a9ae679f17ce49f73fd58be03cd8d1c4d75945`.
+  Next autonomous action: merge the closeout before any successor work.
+
+- Historical Program 017 planning snapshot: `multi-hour-sector-etf-research-016` had a prospective
+  proposal and reviewed runtime. Read-only offline
   validation binds Program 016's scientific contract, reviews, runtime, child, terminal, and terminal
   review. Retained evidence is a completed whole-session prefix followed by one partial session with
   a completed page and an intent-only next-page checkpoint. The partial session must be discarded in
@@ -39,10 +60,10 @@ remain immutable.
   `6bd870133b606d2232e00146cfe4777709a4888c` /
   `bce103b0719eea804d4ab1e320729f4272a79e18c47c3c313fcd07a32916225e`. Fresh independent
   design/correctness and defensive reviews of that exact source pass finding-free after every raised
-  temp-recovery finding was fixed prospectively. Every authority remains false. No credential access,
-  private Program 017 state, provider request, dataset admission, or strategy work occurred. Next
-  autonomous action: merge the runtime binding, synchronize clean main, then create and independently
-  review only the separate exact one-use child before any credential preflight or provider contact.
+  temp-recovery finding was fixed prospectively. At that checkpoint every authority remained false;
+  no credential access, private Program 017 state, provider request, dataset admission, or strategy
+  work had occurred. The runtime binding and separately reviewed one-use child subsequently merged
+  before execution.
 
 - Program 016, `multi-hour-sector-etf-research-015`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use after provider transport began. The process was interrupted

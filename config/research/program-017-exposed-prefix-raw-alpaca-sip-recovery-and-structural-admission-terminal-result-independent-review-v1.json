@@ -1,0 +1,136 @@
+{
+  "schema_version": "program-017-exposed-prefix-terminal-result-independent-review-v1",
+  "review_id": "program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-2026-09-07-v1",
+  "program_ordinal": 17,
+  "program_id": "multi-hour-sector-etf-research-016",
+  "reviewed_at": "2026-09-07T20:32:00Z",
+  "status": "PASS-TERMINAL-FAILURE-VERIFIED",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_execution_main": "82635812baefe333dfc2a63e0a3fc97146fbd9a3",
+  "reviewed_base_commit": "82635812baefe333dfc2a63e0a3fc97146fbd9a3",
+  "reviewed_head_commit": "380db86685718ac016225038af0c09ad6f0b8b6f",
+  "reviewed_head_tree": "8b3c1b9f5f58af417a23161f1a98145de0e879ab",
+  "reviewed_diff_sha256": "75a317c91f7ad350a0ddc4d2d92ce746e432d149dd2aa687a5a3d3b12add513f",
+  "reviewed_public_terminal": {
+    "path": "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+    "byte_count": 1479,
+    "sha256": "4bf6b7e644a72e052d9d861fbd6f3ac499a18fec7b159624bb3caf98e2741de3",
+    "schema_version": "program-017-exposed-prefix-terminal-result-v1",
+    "result_kind": "RUNTIME-FAILURE",
+    "status": "FAIL-CONSUMED-NO-RETRY",
+    "admission_passed": false,
+    "dataset_lineage_manifest_present": false,
+    "program_002_admission": false,
+    "strategy_calculations_present": false,
+    "strategy_returns_present": false,
+    "derived_active_authority_fingerprint": "ed1ff2abbf2ea7cc76a04a01f638873b61970bd31e5389588c7e0a763035123c",
+    "child_authority_artifact_fingerprint": "09a303caec3c589921009c2d2865f115ddcf1b607514050dcb84a967a4225410",
+    "runtime_source_commit": "40d7f0a2628560eb7b586e4ff9a5df4480fb04fa",
+    "runtime_source_tree": "f97d85ffd76b3cfd99d769542d2638c86fd015de"
+  },
+  "private_evidence_review": {
+    "ignored_private_root_inspected": false,
+    "credentials_or_private_evidence_accessed": false,
+    "public_terminal_exact_worktree_and_commit_bytes_confirmed": true,
+    "credentials_stored": false,
+    "private_details_remain_redacted_under_proposal_v5": true
+  },
+  "terminal_revocation": {
+    "guard_path": "src/systematic_trading_lab/program_017_ohlcv_authority.py",
+    "credential_preflight_rejects_before_credentials_or_private_root": true,
+    "authority_derivation_rejects_before_credentials_or_private_root": true,
+    "execution_rejects_before_credentials_or_private_root": true,
+    "cli_rejects_before_dotenv_credentials_private_roots_or_socket": true,
+    "missing_terminal_rejects_before_credentials_or_private_root": true,
+    "invalid_terminal_rejects_before_credentials_or_private_root": true,
+    "changed_terminal_shape_rejects_before_credentials_or_private_root": true,
+    "changed_terminal_bytes_reject_before_credentials_or_private_root": true,
+    "module_level_credential_reader_absent": true,
+    "loader_level_credential_reader_absent": true,
+    "credential_parsing_occurs_only_inside_historical_lock_bound_get": true,
+    "exact_terminal_bytes_bound": true,
+    "program_017_replay_retry_or_reissue_prohibited": true
+  },
+  "challenge_results": [
+    {
+      "challenge": "Does the committed public terminal preserve the exact generated redacted bytes?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "Does every public Program 017 lifecycle and CLI entrypoint reject before credential, private-root, dotenv, or socket access?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "Do absent, invalid, semantically changed, or byte-changed terminal artifacts fail closed?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "Does the terminal bind the independently reconstructed reviewed child and exact 34-file runtime source?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "Did Program 017 admit a dataset or calculate a strategy result?",
+      "answer": "NO",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "Were controlled, protected, PAPER, broker, live, and purchase boundaries disabled?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "Does the review preserve Program 017 as consumed rather than authorize replay, retry, or reissue?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "Does Program 016 remain byte-identical and terminal?",
+      "answer": "YES",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "Must any successor be prospective and independently reviewed?",
+      "answer": "YES",
+      "verdict": "PASS"
+    }
+  ],
+  "verification": {
+    "independent_terminal_review": "PASS-FINDING-FREE",
+    "reviewer_scope": "READ-ONLY-NO-CREDENTIAL-NO-PRIVATE-ROOT-NO-PROVIDER",
+    "focused_program_017_and_program_016_terminal_tests": "PASS-22",
+    "direct_actual_public_api_and_cli_rejection_sentinels": "PASS-14",
+    "runtime_source_bindings": "PASS-34-FILES",
+    "canonical_terminal_bytes": "PASS-1479",
+    "git_diff_and_fsck": "PASS",
+    "reviewed_working_tree": "clean at reviewed head before this review artifact"
+  },
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "The independent reviewer did not access credentials, Keychain, the ignored private root, or provider state; it verified exact public bytes and reachable lifecycle behavior using public Git evidence and synthetic sentinels.",
+    "Historical execution counts, interruption cause, and private-to-public recovery correspondence were not independently verified. The public evidence and source establish current lockout and consistent failure semantics, not independent attestation of private history."
+  ],
+  "scope_limit": "The review made no credential access, provider request, private-root read, strategy calculation, controlled or protected read, PAPER action, broker write, live action, or purchase.",
+  "required_next_action": "Merge the terminal closeout. Any successor must be a new prospective independently reviewed program and may inherit only validated completed evidence.",
+  "review_fingerprint": "9fe0cf53e78db7768db04c29f6a9ae679f17ce49f73fd58be03cd8d1c4d75945"
+}

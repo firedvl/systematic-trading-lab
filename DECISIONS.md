@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-07 - Program 017 terminal evidence is immutable and revokes every entrypoint
+
+- Decision: commit only Program 017's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, execution, or private-root access.
+- Context: the reviewed one-use transaction ended before publishing a public terminal. The built-in recovery path sealed `RUNTIME-FAILURE` / `FAIL-CONSUMED-NO-RETRY` without another credential load or provider request. The public projection records no structural admission, dataset lineage, Program 002 admission, strategy calculation, or strategy return.
+- Consequences: public terminal SHA-256 is `4bf6b7e644a72e052d9d861fbd6f3ac499a18fec7b159624bb3caf98e2741de3`; derived active-authority fingerprint is `ed1ff2abbf2ea7cc76a04a01f638873b61970bd31e5389588c7e0a763035123c`; child-artifact fingerprint is `09a303caec3c589921009c2d2865f115ddcf1b607514050dcb84a967a4225410`; source commit is `40d7f0a2628560eb7b586e4ff9a5df4480fb04fa`. Program 017 cannot replay or retry. No dataset was admitted and no strategy ran. Controlled or protected access, purchases, PAPER, broker writes, and live execution remain false.
+- Revisit when: never for Program 017. After independent terminal review and merge, any successor must use a new prospectively reviewed program and may inherit only validated completed evidence.
+
 ## 2026-09-07 - Freeze the Program 017 runtime implementation binding
 
 - Decision: bind the finding-free Program 017 runtime to exact source commit/tree/root `efcf5ef2abf56167be7f3741c10a98e2acf3e5f8` / `6bd870133b606d2232e00146cfe4777709a4888c` / `bce103b0719eea804d4ab1e320729f4272a79e18c47c3c313fcd07a32916225e`. Keep every authority field false.
