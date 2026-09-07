@@ -1,0 +1,80 @@
+{
+  "schema_version": "standing-autonomous-research-child-authority-independent-review-v1",
+  "review_id": "program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-2026-09-07-v1",
+  "status": "PASS-FINDING-FREE",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_child_authority": {
+    "path": "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",
+    "sha256": "807a8e18def7fd60b2274913fbd28577d64e52dd24a77f6f5d57d6b61f90033c",
+    "fingerprint": "09a303caec3c589921009c2d2865f115ddcf1b607514050dcb84a967a4225410"
+  },
+  "challenge_results": [
+    {
+      "challenge": "authority-boundaries",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "chronology",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "data-leakage",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "freshness",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "git-provenance-integrity",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "missingness-rules",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "overfitting",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "private-data-leakage",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "request-budgets",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "source-assumptions",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "specification-changes",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "statistical-validity",
+      "verdict": "PASS"
+    }
+  ],
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "review_fingerprint": "04a65e84e2c5279460069be8f35abb18579c28c104998554f3fba4e216d5366e"
+}
