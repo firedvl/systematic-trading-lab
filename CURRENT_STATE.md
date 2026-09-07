@@ -1,8 +1,21 @@
 # Current state
 
-Program 017's terminal result is current. Earlier Program 017 planning and implementation state is
-preserved below as historical context. Program 016 and all earlier terminal programs remain
-immutable.
+Program 018's read-only forensic disposition is current. Program 017 and all earlier terminal
+programs remain immutable.
+
+- Program 018, `multi-hour-sector-etf-research-017`, has no authority. A single low-priority offline
+  validation pass rederived Program 017's reviewed child identity, canonical private terminal, exact
+  public projection, and complete retained chain. Program 017 added an exact whole-session prefix,
+  followed by one partial session with a completed page and an intent-only next-page checkpoint. A
+  prospective successor must discard that partial session in full, never reissue either request, and
+  begin at the next independent scheduled session. Six cumulative intents without responses reduce
+  the unchanged 22,176-intent ceiling to at most 22,170 responses. Program 017's bounded design was
+  effective: no full predecessor reconstruction occurred between transports. Redacted disposition
+  fingerprint is `04f3c79aef5f1e05d9cc2a98f195b4306741de2a443754d91c24d9e030ae8ab0`.
+  No credential or provider access, evidence mutation, dataset admission, or strategy work occurred
+  during forensics. Next autonomous action: freeze and independently review a non-authorizing
+  Program 018 proposal that adds Program 017 as an immutable predecessor and preserves the bounded
+  transport-boundary design.
 
 - Program 017, `multi-hour-sector-etf-research-016`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use, and the process ended before publishing a public terminal.

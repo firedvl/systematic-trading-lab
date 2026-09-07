@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-07 - Program 018 may inherit only Program 017's completed whole-session prefix
+
+- Decision: keep Programs 012 through 017 terminal and immutable. A prospective Program 018 may reuse only the locally validated completed whole-session prefix. It must discard Program 017's partial session in full, never reissue either retained request, and begin at the next independent scheduled session.
+- Context: one low-priority offline replay with the frozen parser validated Program 017's terminal counts and retained chain. Its partial session contains completed page evidence followed by an intent-only next page, with no later evidence. The interruption cause is not established and is not needed for the no-reissue disposition.
+- Consequences: six consumed intents reduce the unchanged 22,176-intent ceiling to at most 22,170 responses. Program 018 must add Program 017 as a sixth immutable predecessor and inherit Program 017's one precredential validation pass, metadata-only transport boundaries, one final projection, privacy, storage, budget, and one-use controls. Redacted forensic fingerprint is `04f3c79aef5f1e05d9cc2a98f195b4306741de2a443754d91c24d9e030ae8ab0`. Every authority remains false.
+- Revisit when: after prospective Program 018 proposal, independent review, implementation, merge, and a separately reviewed child. Never revisit Programs 012 through 017 replay.
+
 ## 2026-09-07 - Program 017 terminal evidence is immutable and revokes every entrypoint
 
 - Decision: commit only Program 017's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, execution, or private-root access.
