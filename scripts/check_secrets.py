@@ -229,6 +229,7 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1.json",
         "config/research/program-017-predecessor-recovery-forensic-disposition-v1.json",
         "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json",
+        "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json",
         "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json",
         "config/research/program-017-exposed-prefix-runtime-implementation-v1.json",
         "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",

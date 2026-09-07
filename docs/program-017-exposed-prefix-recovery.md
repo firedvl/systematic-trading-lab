@@ -11,21 +11,27 @@ Five consumed intents leave at most 22,171 responses under the unchanged 22,176-
 
 ## Bounded runtime design
 
-Program 016 fully reconstructed the predecessor corpus before every transport. Program 017 instead
-requires one full validation and parse per preflight or execution. During execution, completed whole
-sessions are written once to a create-only, fsynced, hash-bound private canonical spool under all
-seven controls. Later complete sessions append in frozen chronology.
+Program 016 fully reconstructed the predecessor corpus before every transport. Independent review
+rejected Program 017 proposal v1 because its proposed spool lacked aggregate storage accounting and
+its protected terminal, credential, and topology contracts were implicit.
+
+Proposal v2 removes the spool. Credential preflight performs one full validation pass. Execution
+performs one full validation pass before credential presence, makes provider requests with no
+predecessor reconstruction at transport boundaries, then performs one final canonical projection
+pass after all provider requests complete. All seven controls remain held throughout.
 
 Before every provider call, the runtime must revalidate the exact reviewed authority, synchronized
 Git snapshot, held root and lock descriptors, predecessor manifest, spool descriptor, disk capacity,
-and protected chronology. Those checks are fixed-size and cannot reparse predecessor content. All
-locks remain held through private and public terminal fsync, preserving the validation-to-use binding.
+and protected chronology. Those checks use an exact descriptor metadata tuple and cannot reparse
+predecessor content. A final metadata check precedes terminal fsync. The stricter 16 GiB additional
+free-space reservation explicitly covers remaining raw responses, an 8 GiB final canonical projection
+cap, metadata and derived evidence, atomic publication, and safety margin.
 
 Source, pagination, missingness, admission gates, cumulative budgets, zero retry, no reissue,
 single-process execution, inline-only credential loading, privacy, and forbidden authority remain
-unchanged. Proposal SHA-256/fingerprint is
-`a8205be3687326b7c02be74cac450319362ef15a6261b50aa9ab43998605af00` /
-`0ed8cace9ea51677a06b65697af9c956294418656762edbf69b759fffda5f7a4`.
+unchanged. Proposal v2 SHA-256/fingerprint is
+`0b370290372b206c716d8c409ce169c726d4a6295e62fdff4fdf26f60cca46b7` /
+`d8ed5a6627754cff45d3f813f9e6ff0e5e0131044eadcfdf377158ae3ee3431c`.
 
 Fresh independent design/correctness and defensive reviews are required before implementation.
 Implementation must merge before a separate exact one-use child and review can exist. No credential

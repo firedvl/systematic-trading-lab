@@ -10,8 +10,11 @@ from systematic_trading_lab.fingerprints import fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _DISPOSITION = Path("config/research/program-017-predecessor-recovery-forensic-disposition-v1.json")
-_PROPOSAL = Path(
+_PROPOSAL_V1 = Path(
     "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
+)
+_PROPOSAL = Path(
+    "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json"
 )
 
 
@@ -83,14 +86,19 @@ def test_program_017_forensic_disposition_is_bound_redacted_and_non_authorizing(
     guard = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(guard)
     reserved = {path for path in guard.PUBLIC_PROGRAM_JSON if "program-017" in path}
-    assert len(reserved) == 8
-    assert _DISPOSITION.as_posix() in reserved
+    assert {_DISPOSITION.as_posix(), _PROPOSAL_V1.as_posix(), _PROPOSAL.as_posix()} <= reserved
 
 
 def test_program_017_proposal_is_single_reconstruction_and_non_authorizing() -> None:
     proposal = _load(_PROPOSAL)
     stored = proposal.pop("proposal_fingerprint")
     assert stored == fingerprint(proposal)
+    superseded = proposal["supersedes"]
+    assert superseded["path"] == _PROPOSAL_V1.as_posix()
+    assert (
+        hashlib.sha256((_REPOSITORY / _PROPOSAL_V1).read_bytes()).hexdigest()
+        == superseded["sha256"]
+    )
     for binding in proposal["predecessor"].values():
         assert (
             hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest()
@@ -98,28 +106,45 @@ def test_program_017_proposal_is_single_reconstruction_and_non_authorizing() -> 
         )
 
     recovery = proposal["recovery_contract"]
-    assert recovery["incomplete_program_016_session_reuse_allowed"] is False
-    assert recovery["incomplete_program_016_completed_page_reuse_allowed"] is False
+    assert recovery["incomplete_program_016_session_or_page_reuse_allowed"] is False
     assert recovery["incomplete_program_016_request_reissue_allowed"] is False
     assert recovery["first_program_017_request"] == (
         "NEXT-INDEPENDENT-SESSION-AFTER-DISCARDED-PARTIAL-SESSION"
     )
 
-    reconstruction = proposal["single_reconstruction_contract"]
-    assert reconstruction["full_predecessor_validation_before_credential_presence"] is True
-    assert reconstruction["all_completed_predecessor_pages_reparsed_exactly_once_per_operation"]
-    assert reconstruction["full_predecessor_reconstruction_before_every_transport"] is False
-    assert reconstruction["completed_pages_reparsed_again_after_initial_spool"] is False
+    reconstruction = proposal["bounded_reconstruction_contract"]
+    assert reconstruction["execution_precredential_full_predecessor_validation_passes"] == 1
+    assert reconstruction["execution_post_transport_final_projection_passes"] == 1
+    assert reconstruction["execution_maximum_full_predecessor_passes"] == 2
+    assert reconstruction["full_predecessor_reconstruction_between_transports"] is False
+    assert reconstruction["separate_predecessor_spool_allowed"] is False
 
     boundary = proposal["transport_boundary_contract"]
     assert boundary["fixed_size_metadata_checks_only"] is True
     assert boundary["predecessor_content_reparse_forbidden"] is True
-    assert boundary["any_identity_or_metadata_drift_fails_before_transport"] is True
+    assert boundary["any_identity_or_metadata_drift_fails_before_transport_or_closeout"] is True
+    assert boundary["root_and_lock_descriptors_opened_with_o_nofollow"] is True
+    assert len(boundary["descriptor_metadata_tuple"]) == 8
 
-    budgets = proposal["cumulative_transport_and_working_space_budgets"]
+    budgets = proposal["cumulative_transport_contract"]
     assert budgets["maximum_combined_request_intents"] == 22176
     assert budgets["maximum_effective_combined_responses"] == 22171
     assert budgets["consumed_intent_without_response_count"] == 5
     assert budgets["automatic_retries"] == 0
+    storage = proposal["storage_contract"]
+    assert storage["minimum_additional_available_bytes"] == 16 * 1024**3
+    assert storage["canonical_projection_hard_cap_enforced_while_writing"] is True
     assert len(proposal["lock_and_launch_contract"]["control_acquisition_order"]) == 7
+    assert set(proposal["private_terminal_contract"]["exact_top_level_keys"]) >= {
+        "program_017_credential_loads",
+        "strategy_calculations",
+        "strategy_returns",
+    }
+    assert proposal["public_terminal_contract"]["byte_exact_canonical_reconstruction_required"]
+    assert proposal["credential_contract"][
+        "process_global_latch_consumed_if_attempt_reservation_or_parsing_fails"
+    ]
+    assert proposal["runtime_and_child_topology_contract"][
+        "runtime_source_must_merge_before_child_creation"
+    ]
     assert all(value is False for value in proposal["authority"].values())

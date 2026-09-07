@@ -3,7 +3,7 @@
 Program 017's read-only forensic disposition is current. Program 016 and all earlier terminal
 programs remain immutable.
 
-- Program 017, `multi-hour-sector-etf-research-016`, has no proposal or authority. Read-only offline
+- Program 017, `multi-hour-sector-etf-research-016`, has a prospective proposal but no authority. Read-only offline
   validation binds Program 016's scientific contract, reviews, runtime, child, terminal, and terminal
   review. Retained evidence is a completed whole-session prefix followed by one partial session with
   a completed page and an intent-only next-page checkpoint. The partial session must be discarded in
@@ -14,14 +14,18 @@ programs remain immutable.
   presence, keep all predecessor and Git controls held, and use bounded metadata checks at transport
   boundaries without weakening content, chronology, budget, privacy, or one-use controls. Redacted
   disposition fingerprint is `695af60f7bece55b88da34ff8499e19c293b23b2db3cb914a42b5c6f9757e847`.
-  Proposal v1 preserves all inherited science and authority boundaries, discards the partial session,
-  performs one full predecessor reconstruction per operation, and uses a bound private canonical
-  spool plus fixed-size transport checks under continuously held controls. Proposal
-  SHA-256/fingerprint is `a8205be3687326b7c02be74cac450319362ef15a6261b50aa9ab43998605af00` /
-  `0ed8cace9ea51677a06b65697af9c956294418656762edbf69b759fffda5f7a4`. Every authority remains
-  false. No credential access, provider request, evidence mutation, dataset admission, or strategy
-  work occurred. Next autonomous action: obtain fresh independent design/correctness and defensive
-  reviews before implementation.
+  Independent review rejected proposal v1 for unbounded spool storage and implicit terminal,
+  credential, and runtime-topology contracts. Proposal v2 removes the spool, permits exactly one
+  precredential validation pass and one post-transport final projection pass, prohibits predecessor
+  reconstruction at transport boundaries, and raises the free-space reservation to 16 GiB with
+  explicit aggregate accounting. It freezes exact Program 017 private/public terminal and lineage
+  schemas, credential failure ordering, descriptor metadata, closeout checks, and runtime-before-child
+  topology. V2 SHA-256/fingerprint is
+  `0b370290372b206c716d8c409ce169c726d4a6295e62fdff4fdf26f60cca46b7` /
+  `d8ed5a6627754cff45d3f813f9e6ff0e5e0131044eadcfdf377158ae3ee3431c`. Every authority remains false.
+  No credential access, provider request, evidence mutation, dataset admission, or strategy work
+  occurred. Next autonomous action: obtain fresh independent design/correctness and defensive reviews
+  of v2 before implementation.
 
 - Program 016, `multi-hour-sector-etf-research-015`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use after provider transport began. The process was interrupted
