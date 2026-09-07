@@ -1283,7 +1283,6 @@ def test_partial_body_write_enters_failure_closeout_without_reissue(
     def partial_append(root_descriptor: int, key: str, payload: bytes) -> None:
         if key.endswith(".body"):
             original_append(root_descriptor, key, payload[: max(1, len(payload) // 2)])
-            original_append(root_descriptor, f"tmp-program-017-write-{key}", b"partial")
             raise OSError("synthetic partial body write")
         original_append(root_descriptor, key, payload)
 
@@ -1303,6 +1302,34 @@ def test_partial_body_write_enters_failure_closeout_without_reissue(
     assert private["result_kind"] == "RUNTIME-FAILURE"
     assert private["status"] == "FAIL-CONSUMED-NO-RETRY"
     assert len(transport.intents) == 1
+
+
+def test_impossible_atomic_body_temp_blocks_failure_terminal(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _, request, _ = _configure_finite_execution(tmp_path, monkeypatch)
+    original_append = predecessor._append
+
+    def partial_append(root_descriptor: int, key: str, payload: bytes) -> None:
+        if key.endswith(".body"):
+            original_append(root_descriptor, key, payload[: max(1, len(payload) // 2)])
+            original_append(root_descriptor, f"tmp-program-017-write-{key}", b"partial")
+            raise OSError("synthetic partial body write")
+        original_append(root_descriptor, key, payload)
+
+    monkeypatch.setattr(predecessor, "_append", partial_append)
+
+    with pytest.raises(authority.Program017PostClaimPersistenceError, match="terminal persistence"):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=authority.MockBarsTransport(
+                [raw_contract.RawResponse(200, _body(request, 0, None))]
+            ),
+        )
+
+    assert not (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
+    assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
 
 
 def test_restarted_wrong_stage_combined_temp_fails_terminal_persistence(
@@ -1332,6 +1359,67 @@ def test_restarted_unreachable_claim_temp_fails_terminal_persistence(
         authority.credential_presence_preflight(tmp_path, environ=_ForbiddenCredentialEnvironment())
 
     assert not (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
+
+
+def test_restarted_wrong_sequence_credential_temp_fails_terminal_persistence(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    active, request, state = _configure_finite_execution(tmp_path, monkeypatch, activated=True)
+    root = authority._open_root(tmp_path, authority.PRIVATE_ROOT, create=False)
+    intent = program_011.PageIntent(request.identity, 1, request.url(), None)
+    predecessor._append_atomic(
+        root,
+        f"{predecessor._page_prefix(request, 1)}.intent.json",
+        authority._intent_payload(active, state, request, intent),
+    )
+    predecessor._append(root, "tmp-program-017-write-credential-load-999999.attempt.json", b"x")
+    os.close(root)
+
+    with pytest.raises(authority.Program017PostClaimPersistenceError, match="terminal persistence"):
+        authority.credential_presence_preflight(tmp_path, environ=_ForbiddenCredentialEnvironment())
+
+    assert not (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
+    assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
+
+
+def test_restarted_complete_private_terminal_temp_is_promoted_without_credentials(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    active, _, state = _configure_finite_execution(tmp_path, monkeypatch, activated=True)
+    root = authority._open_root(tmp_path, authority.PRIVATE_ROOT, create=False)
+    payload = authority._runtime_failure_payload(
+        root,
+        state,
+        authority.Program017AuthorityError("synthetic interrupted closeout"),
+        active,
+    )
+    predecessor._append(root, "tmp-program-017-write-terminal.json", payload)
+    os.close(root)
+
+    with pytest.raises(authority.Program017AuthorityError, match="terminally sealed"):
+        authority.credential_presence_preflight(tmp_path, environ=_ForbiddenCredentialEnvironment())
+
+    private_path = tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY
+    assert private_path.read_bytes() == payload
+    assert not (tmp_path / authority.PRIVATE_ROOT / "tmp-program-017-write-terminal.json").exists()
+    assert (
+        tmp_path / authority.PUBLIC_TERMINAL_PATH
+    ).read_bytes() == authority._public_terminal_payload(json.loads(payload))
+
+
+def test_restarted_partial_private_terminal_temp_fails_closed(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _configure_finite_execution(tmp_path, monkeypatch, activated=True)
+    root = authority._open_root(tmp_path, authority.PRIVATE_ROOT, create=False)
+    predecessor._append(root, "tmp-program-017-write-terminal.json", b"partial")
+    os.close(root)
+
+    with pytest.raises(authority.Program017PostClaimPersistenceError, match="terminal persistence"):
+        authority.credential_presence_preflight(tmp_path, environ=_ForbiddenCredentialEnvironment())
+
+    assert not (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
+    assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
 
 
 def test_restarted_reachable_claim_temp_seals_without_credentials(

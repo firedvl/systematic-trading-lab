@@ -2753,9 +2753,13 @@ def _restart_temp_stage_is_reachable(
         base = {_LAUNCHER_KEY, "active-authority.json", "predecessor-import-manifest.json"}
         if not base <= entries or "claim.json" in entries or not pages:
             return False
-        return (kind == "attempt" and attempt not in entries and not credentials) or (
-            kind == "receipt" and attempt in entries and receipt not in entries
-        )
+        return (
+            kind == "attempt"
+            and sequence
+            == f"{_next_credential_sequence(root_descriptor, authority, predecessor_state):06d}"
+            and attempt not in entries
+            and not credentials
+        ) or (kind == "receipt" and attempt in entries and receipt not in entries)
     if _PAGE_KEY.fullmatch(target) is not None:
         return _restart_page_temp_is_reachable(
             root_descriptor, target, predecessor_state, authority
@@ -2789,7 +2793,10 @@ def _revalidate_failure_closeout_boundary(
                 expected = {f"tmp-program-017-{failed_key.removeprefix('tmp-')}"}
             elif (
                 failed_key in _STATIC_PRIVATE_KEYS
-                or _PAGE_KEY.fullmatch(failed_key) is not None
+                or (
+                    (page_match := _PAGE_KEY.fullmatch(failed_key)) is not None
+                    and page_match.group("kind") != "body"
+                )
                 or _CREDENTIAL_KEY.fullmatch(failed_key) is not None
             ):
                 expected = {f"tmp-program-017-write-{failed_key}"}
@@ -3230,8 +3237,10 @@ def _load_terminal_record(
     program_012_root: int,
     authority: Mapping[str, Any],
     predecessor_state: _PredecessorState,
+    *,
+    terminal_key: str = _TERMINAL_KEY,
 ) -> dict[str, Any]:
-    raw = predecessor._read(root_descriptor, _TERMINAL_KEY)
+    raw = predecessor._read(root_descriptor, terminal_key)
     record = _json_object(raw, "private terminal")
     unsigned = dict(record)
     stored_fingerprint = unsigned.pop("terminal_fingerprint", None)
@@ -3611,6 +3620,31 @@ def _recover_private_terminal_if_present(
     predecessor_state: _PredecessorState,
 ) -> None:
     recovered_manifest_temp = _recover_predecessor_manifest_temp(root_descriptor, predecessor_state)
+    terminal_temp = "tmp-program-017-write-terminal.json"
+    if predecessor._exists(root_descriptor, terminal_temp):
+        try:
+            _load_terminal_record(
+                repository,
+                root_descriptor,
+                program_016_root,
+                program_015_root,
+                program_014_root,
+                program_013_root,
+                program_012_root,
+                authority,
+                predecessor_state,
+                terminal_key=terminal_temp,
+            )
+            terminal_sha256 = hashlib.sha256(
+                predecessor._read(root_descriptor, terminal_temp)
+            ).hexdigest()
+            _publish_temp_or_validate(
+                root_descriptor, terminal_temp, _TERMINAL_KEY, terminal_sha256
+            )
+        except Exception as error:
+            raise Program017PostClaimPersistenceError(
+                "Program 017 terminal persistence failed after possible transport"
+            ) from error
     if predecessor._exists(root_descriptor, _TERMINAL_KEY):
         _validate_predecessor_manifest(root_descriptor, predecessor_state)
         if predecessor._exists(root_descriptor, "active-authority.json"):
