@@ -1,0 +1,129 @@
+{
+  "schema_version": "program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1",
+  "review_id": "program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-07-v1",
+  "program_ordinal": 18,
+  "program_id": "multi-hour-sector-etf-research-017",
+  "reviewed_at": "2026-09-07T21:39:00Z",
+  "status": "PASS-FINDING-FREE",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_source_commit": "ac312d173a2c5404575a06316db633ce59a9ade8",
+  "reviewed_source_tree": "d7df0953e405d9068fc92cea7a6a50e9796f8264",
+  "reviewed_proposal": {
+    "path": "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json",
+    "sha256": "4bb06e1097f2aa44af84aeb1570f74982a4db57fb16ba969cb85fae582dd59c3",
+    "fingerprint": "b7c8ac3f0794b2119a7ac27129ce14c665eea63eacba892b3c459b16c8686732"
+  },
+  "review_history": {
+    "proposal_v1": "FINDINGS-PRIVATE-PATH-CLASSIFIER-TERMINAL-SCHEMA-ROOT-TRANSITION",
+    "proposal_v2": "FINDINGS-PUBLIC-TERMINAL-TOPOLOGY-STALE-REVIEW-GATE",
+    "proposal_v3_correctness": "PASS-FINDING-FREE",
+    "proposal_v3_defensive": "PASS-FINDING-FREE",
+    "initial_defensive_service_failure": "HTTP-503-INFRASTRUCTURE-NOT-A-SCIENTIFIC-FINDING"
+  },
+  "challenge_results": [
+    {
+      "challenge": "scientific contract inheritance",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "partial-session discard and exact next frontier",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "six consumed intents and 22170 response ceiling",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "six immutable predecessors and eight held controls",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "bounded reconstruction and no between-transport replay",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "exact descriptor tuples O_NOFOLLOW and mutable-root refresh",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "irreversible failure closeout and deterministic temp recovery",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential ordering one-load latch and no secret persistence",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "16 GiB aggregate storage reservation",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "exact private public and pass-lineage schemas",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "strict private-path classification and complete public topology",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "runtime-before-child topology and false current authority",
+      "verdict": "PASS"
+    }
+  ],
+  "verified_assertions": {
+    "all_v1_and_v2_findings_resolved": true,
+    "program_017_v5_science_unchanged": true,
+    "partial_program_017_session_discarded_in_full": true,
+    "first_program_018_request_is_next_independent_session": true,
+    "completed_predecessor_requests_never_reissued": true,
+    "ambiguous_transport_consumed_without_retry": true,
+    "six_consumed_intents_leave_22170_responses": true,
+    "six_predecessor_roots_immutable": true,
+    "eight_controls_held_continuously": true,
+    "program_017_root_becomes_full_tuple_immutable": true,
+    "program_018_root_uses_stable_identity_and_expected_full_tuple": true,
+    "root_and_lock_descriptors_use_o_nofollow": true,
+    "predecessor_content_not_reparsed_between_transports": true,
+    "one_final_projection_reparses_completed_pages": true,
+    "deterministic_temp_stages_fail_closed": true,
+    "credential_values_loaded_once_after_all_gates": true,
+    "terminal_recovery_uses_no_credentials_or_transport": true,
+    "all_program_018_non_allowlisted_json_is_private": true,
+    "future_public_terminal_and_review_paths_reserved": true,
+    "proposal_review_gate_names_v3": true,
+    "current_authority_all_false": true
+  },
+  "verification": {
+    "correctness_review": "PASS-FINDING-FREE",
+    "defensive_review": "PASS-FINDING-FREE",
+    "focused_program_017_and_program_018_tests": "PASS-6",
+    "repository_secret_scan": "PASS-764-FILES",
+    "synthetic_private_and_public_path_cases": "PASS",
+    "terminal_lineage_and_topology_substitution_checks": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "This is a public proposal review, not validation of a Program 018 implementation or runtime behavior.",
+    "No private roots, credentials, Keychain, provider, market data, or strategy results were accessed."
+  ],
+  "required_next_action": "Merge proposal v3 and this finding-free review, then implement and independently review the exact Program 018 runtime before any child, credential access, private Program 018 state, or provider contact.",
+  "review_fingerprint": "a7dd85efb12466597de9740bcf7b90ef4b44f29c74da5116d2ceeab76d4050d2"
+}

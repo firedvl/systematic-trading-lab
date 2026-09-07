@@ -21,8 +21,11 @@ programs remain immutable.
   descriptor tuples, root-role substitutions, and a private-path regression. Review rejected v2
   because the strict classifier lacked future public terminal paths and its gate named superseded
   v1. V3 reserves the complete public topology and binds its own review gate. V3 fingerprint is
-  `b7c8ac3f0794b2119a7ac27129ce14c665eea63eacba892b3c459b16c8686732`; fresh independent review is
-  required before implementation.
+  `b7c8ac3f0794b2119a7ac27129ce14c665eea63eacba892b3c459b16c8686732`.
+  Fresh independent correctness and defensive reviews pass finding-free; combined review fingerprint
+  is `a7dd85efb12466597de9740bcf7b90ef4b44f29c74da5116d2ceeab76d4050d2`. Next autonomous action:
+  merge the forensic disposition, v3 proposal, and review, then implement and independently review
+  the runtime before any Program 018 child or runtime action.
 
 - Program 017, `multi-hour-sector-etf-research-016`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use, and the process ended before publishing a public terminal.

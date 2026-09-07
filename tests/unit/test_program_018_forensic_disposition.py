@@ -21,6 +21,9 @@ _PROPOSAL_V2 = Path(
 _PROPOSAL = Path(
     "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json"
 )
+_REVIEW = Path(
+    "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json"
+)
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -189,3 +192,20 @@ def test_program_018_secret_guard_rejects_private_json(
     errors = capsys.readouterr().err
     assert f"{private}:private-market-data-path" in errors
     assert all(str(public) not in errors for public in public_paths)
+
+
+def test_program_018_proposal_review_is_bound_finding_free_and_non_authorizing() -> None:
+    review = _load(_REVIEW)
+    stored = review.pop("review_fingerprint")
+    assert stored == fingerprint(review)
+    assert review["reviewed_source_commit"] == "ac312d173a2c5404575a06316db633ce59a9ade8"
+    binding = review["reviewed_proposal"]
+    assert (
+        hashlib.sha256((_REPOSITORY / binding["path"]).read_bytes()).hexdigest()
+        == binding["sha256"]
+    )
+    assert binding["fingerprint"] == _load(Path(binding["path"]))["proposal_fingerprint"]
+    assert review["verdict"] == "PASS"
+    assert review["findings"] == []
+    assert all(result["verdict"] == "PASS" for result in review["challenge_results"])
+    assert all(value is False for value in review["authority"].values())

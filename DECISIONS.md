@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-07 - Accept Program 018 proposal v3 for implementation
+
+- Decision: accept the exact-delta Program 018 proposal v3 after fresh independent correctness and defensive reviews found no remaining issue. Preserve Program 017 v5 science and bounded transport design; add only the sixth immutable predecessor, Program 018 identities/root, six-intent budget, next independent session, eight-control topology, and future child paths.
+- Context: v1 review found a Program 018 private-path scanner bypass plus ambiguous terminal and root-transition inheritance. V2 fixed those but omitted the future public terminal topology and named the wrong review gate. V3 resolves all findings and tests every reserved public Program 018 path against a rejected private terminal path.
+- Consequences: v3 fingerprint is `b7c8ac3f0794b2119a7ac27129ce14c665eea63eacba892b3c459b16c8686732`; review fingerprint is `a7dd85efb12466597de9740bcf7b90ef4b44f29c74da5116d2ceeab76d4050d2`. Every current authority remains false. No Program 018 credentials, private state, provider request, acquisition, admission, strategy, controlled/protected, PAPER, broker, live, or purchase action occurred.
+- Revisit when: after this proposal and review merge. The exact runtime must pass fresh independent implementation review before a separate child exists.
+
 ## 2026-09-07 - Program 018 may inherit only Program 017's completed whole-session prefix
 
 - Decision: keep Programs 012 through 017 terminal and immutable. A prospective Program 018 may reuse only the locally validated completed whole-session prefix. It must discard Program 017's partial session in full, never reissue either retained request, and begin at the next independent scheduled session.
