@@ -15,17 +15,19 @@ programs remain immutable.
   boundaries without weakening content, chronology, budget, privacy, or one-use controls. Redacted
   disposition fingerprint is `695af60f7bece55b88da34ff8499e19c293b23b2db3cb914a42b5c6f9757e847`.
   Independent review rejected proposal v1 for unbounded spool storage and implicit terminal,
-  credential, and runtime-topology contracts. Proposal v2 removes the spool, permits exactly one
+  credential, and runtime-topology contracts. Proposal v2 removed the spool, permitted exactly one
   precredential validation pass and one post-transport final projection pass, prohibits predecessor
   reconstruction at transport boundaries, and raises the free-space reservation to 16 GiB with
   explicit aggregate accounting. It freezes exact Program 017 private/public terminal and lineage
   schemas, credential failure ordering, descriptor metadata, closeout checks, and runtime-before-child
-  topology. V2 SHA-256/fingerprint is
-  `0b370290372b206c716d8c409ce169c726d4a6295e62fdff4fdf26f60cca46b7` /
-  `d8ed5a6627754cff45d3f813f9e6ff0e5e0131044eadcfdf377158ae3ee3431c`. Every authority remains false.
+  topology. Review rejected v2 for missing general post-intent no-reissue semantics, exact next-request
+  binding, closeout-only public timestamp semantics, and exact integer-zero typing. V3 restores those
+  inherited controls and removes the stale spool documentation. V3 SHA-256/fingerprint is
+  `8fdd3b4060da41211ffd8c197770fb72eb157d1303d5205c284b995d0a3120f7` /
+  `3bc611025c2aef9bd2fe3bd1ae6842fb0a32e8afa7283b03a2ef997c3ceb2b8f`. Every authority remains false.
   No credential access, provider request, evidence mutation, dataset admission, or strategy work
   occurred. Next autonomous action: obtain fresh independent design/correctness and defensive reviews
-  of v2 before implementation.
+  of v3 before implementation.
 
 - Program 016, `multi-hour-sector-etf-research-015`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use after provider transport began. The process was interrupted

@@ -13,8 +13,11 @@ _DISPOSITION = Path("config/research/program-017-predecessor-recovery-forensic-d
 _PROPOSAL_V1 = Path(
     "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
 )
-_PROPOSAL = Path(
+_PROPOSAL_V2 = Path(
     "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json"
+)
+_PROPOSAL = Path(
+    "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json"
 )
 
 
@@ -86,7 +89,12 @@ def test_program_017_forensic_disposition_is_bound_redacted_and_non_authorizing(
     guard = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(guard)
     reserved = {path for path in guard.PUBLIC_PROGRAM_JSON if "program-017" in path}
-    assert {_DISPOSITION.as_posix(), _PROPOSAL_V1.as_posix(), _PROPOSAL.as_posix()} <= reserved
+    assert {
+        _DISPOSITION.as_posix(),
+        _PROPOSAL_V1.as_posix(),
+        _PROPOSAL_V2.as_posix(),
+        _PROPOSAL.as_posix(),
+    } <= reserved
 
 
 def test_program_017_proposal_is_single_reconstruction_and_non_authorizing() -> None:
@@ -94,9 +102,9 @@ def test_program_017_proposal_is_single_reconstruction_and_non_authorizing() -> 
     stored = proposal.pop("proposal_fingerprint")
     assert stored == fingerprint(proposal)
     superseded = proposal["supersedes"]
-    assert superseded["path"] == _PROPOSAL_V1.as_posix()
+    assert superseded["path"] == _PROPOSAL_V2.as_posix()
     assert (
-        hashlib.sha256((_REPOSITORY / _PROPOSAL_V1).read_bytes()).hexdigest()
+        hashlib.sha256((_REPOSITORY / _PROPOSAL_V2).read_bytes()).hexdigest()
         == superseded["sha256"]
     )
     for binding in proposal["predecessor"].values():
@@ -108,6 +116,14 @@ def test_program_017_proposal_is_single_reconstruction_and_non_authorizing() -> 
     recovery = proposal["recovery_contract"]
     assert recovery["incomplete_program_016_session_or_page_reuse_allowed"] is False
     assert recovery["incomplete_program_016_request_reissue_allowed"] is False
+    assert recovery["program_017_request_reissue_after_durable_intent_allowed"] is False
+    assert recovery["ambiguous_program_017_transport_is_consumed_no_retry"] is True
+    assert recovery["retained_program_017_response_retry_allowed"] is False
+    first = recovery["first_program_017_request_private_derivation"]
+    assert first["request_index"] == "discarded partial-session request index plus one"
+    assert first["page_index"] == 1
+    assert first["incoming_page_token"] is None
+    assert first["skipped_scheduled_session_allowed"] is False
     assert recovery["first_program_017_request"] == (
         "NEXT-INDEPENDENT-SESSION-AFTER-DISCARDED-PARTIAL-SESSION"
     )
@@ -140,7 +156,16 @@ def test_program_017_proposal_is_single_reconstruction_and_non_authorizing() -> 
         "strategy_calculations",
         "strategy_returns",
     }
+    integer_zero = proposal["private_terminal_contract"]["exact_integer_zero_fields"]
+    for field in ("strategy_calculations", "strategy_returns"):
+        assert integer_zero[field] == {
+            "required_value": 0,
+            "python_type_predicate": "type(value) is int",
+        }
     assert proposal["public_terminal_contract"]["byte_exact_canonical_reconstruction_required"]
+    assert proposal["public_terminal_contract"][
+        "observed_at_is_sole_public_timestamp_and_records_terminal_closeout_only"
+    ]
     assert proposal["credential_contract"][
         "process_global_latch_consumed_if_attempt_reservation_or_parsing_fails"
     ]
