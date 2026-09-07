@@ -44,7 +44,9 @@ unchanged. Proposal v5 SHA-256/fingerprint is
 `10086f90ae320397914f95fdf9c780ae9c782f93a6b65f48f8d9af4f09cd41a7` /
 `ecb8bffdbc5af0c5ffc9d189c1d49d5ca99b6b7d2257dcfa1002d747142f8f98`.
 
-Fresh independent design/correctness and defensive reviews are required before implementation.
+Fresh independent design/correctness and defensive reviews pass finding-free. Review
+SHA-256/fingerprint is `e2aaecb0c6cd44e359d0ead286aae5513cd6d08ed75e7aa96a91c0506de81000` /
+`03ac9a8a0109d3d4a65cfd9d6e2f85d1418b73fdc89928a573e8f83ab89bbf32`.
 Implementation must merge before a separate exact one-use child and review can exist. No credential
 presence check, credential access, private Program 017 state, provider contact, dataset admission,
 strategy work, controlled or protected access, PAPER action, broker write, live action, or purchase
