@@ -511,11 +511,33 @@ def _tracked_write(root_descriptor: int, key: str, write: Callable[[], None]) ->
 
 
 def _tracked_append_atomic(root_descriptor: int, key: str, payload: bytes) -> None:
-    _tracked_write(
-        root_descriptor,
-        key,
-        lambda: predecessor._append_atomic(root_descriptor, key, payload),
-    )
+    def append() -> None:
+        predecessor._validate_evidence_input(key, payload)
+        temp_key, descriptor = _tracked_new_temp(root_descriptor, f"write-{key}")
+        try:
+            with os.fdopen(descriptor, "wb") as handle:
+                if handle.write(payload) != len(payload):
+                    raise Program017AuthorityError("Program 017 atomic write was incomplete")
+                handle.flush()
+                os.fsync(handle.fileno())
+            try:
+                os.link(
+                    temp_key,
+                    key,
+                    src_dir_fd=root_descriptor,
+                    dst_dir_fd=root_descriptor,
+                    follow_symlinks=False,
+                )
+            except FileExistsError:
+                raise Program017AuthorityError(
+                    f"Program 017 evidence already exists: {key}"
+                ) from None
+            os.fsync(root_descriptor)
+        finally:
+            with suppress(FileNotFoundError):
+                _tracked_unlink(root_descriptor, temp_key)
+
+    _tracked_write(root_descriptor, key, append)
 
 
 def _tracked_append(root_descriptor: int, key: str, payload: bytes) -> None:
@@ -527,7 +549,23 @@ def _tracked_new_temp(root_descriptor: int, label: str) -> tuple[str, int]:
 
     def create() -> None:
         nonlocal result
-        result = predecessor._new_temp(root_descriptor, label)
+        key = f"tmp-program-017-{label}"
+        try:
+            descriptor = os.open(
+                key,
+                os.O_WRONLY
+                | os.O_CREAT
+                | os.O_EXCL
+                | getattr(os, "O_CLOEXEC", 0)
+                | getattr(os, "O_NOFOLLOW", 0),
+                0o600,
+                dir_fd=root_descriptor,
+            )
+        except FileExistsError:
+            raise Program017AuthorityError(
+                f"Program 017 temporary evidence exists: {key}"
+            ) from None
+        result = key, descriptor
         os.fsync(root_descriptor)
 
     _tracked_write(root_descriptor, f"tmp-{label}", create)
@@ -544,11 +582,11 @@ def _tracked_unlink(root_descriptor: int, key: str) -> None:
 
 
 def _tracked_append_or_validate(root_descriptor: int, key: str, payload: bytes) -> None:
-    _tracked_write(
-        root_descriptor,
-        key,
-        lambda: predecessor._append_or_validate(root_descriptor, key, payload),
-    )
+    if predecessor._exists(root_descriptor, key):
+        if predecessor._read(root_descriptor, key) != payload:
+            raise Program017AuthorityError(f"Program 017 derived evidence differs: {key}")
+        return
+    _tracked_append_atomic(root_descriptor, key, payload)
 
 
 class _Budget:
@@ -726,6 +764,7 @@ def credential_presence_preflight(
                 predecessor_state,
             )
             snapshot.validate_continuation()
+            _require_working_disk_capacity(program_017_root)
             return credential_contract.credential_presence_preflight(environ)
         finally:
             _ROOT_TRACKERS.pop(program_017_root, None)
@@ -1230,6 +1269,7 @@ def _execute_acquisition(
                 authority,
                 predecessor_state,
             )
+            _require_working_disk_capacity(program_017_root)
             _activate_locked_authority(
                 program_017_root,
                 authority,
@@ -1571,7 +1611,7 @@ class _PersistentSessionSource:
             raw_contract.RawResponse(response.status, body),
             observed_at,
         )
-        _tracked_append(
+        _tracked_append_atomic(
             self._root_descriptor,
             f"{prefix}.receipt.json",
             (canonical_json(receipt) + "\n").encode(),
@@ -2019,13 +2059,32 @@ def _reconstruct_state(
         _TERMINAL_KEY,
     }
     page_entries: set[str] = set()
+    temporary_entries: set[str] = set()
     for entry in entries - allowed:
         if _PAGE_KEY.fullmatch(entry):
             page_entries.add(entry)
-        elif _CREDENTIAL_KEY.fullmatch(entry) or entry.startswith("tmp-"):
+        elif _CREDENTIAL_KEY.fullmatch(entry):
             continue
+        elif entry in {
+            "tmp-program-017-combined-canonical-raw",
+            "tmp-program-017-public-terminal",
+        }:
+            temporary_entries.add(entry)
+        elif entry.startswith("tmp-program-017-write-"):
+            target = entry.removeprefix("tmp-program-017-write-")
+            if (
+                target not in allowed
+                and _PAGE_KEY.fullmatch(target) is None
+                and _CREDENTIAL_KEY.fullmatch(target) is None
+            ):
+                raise Program017AuthorityError("Program 017 temporary target is invalid")
+            temporary_entries.add(entry)
         else:
             raise Program017AuthorityError("Program 017 private checkpoint contains unknown state")
+    if len(temporary_entries) > 1:
+        raise Program017AuthorityError(
+            "Program 017 private checkpoint has multiple temporary files"
+        )
     credential_loads, successful_loads = _credential_load_counts(
         root_descriptor, authority, predecessor_state
     )

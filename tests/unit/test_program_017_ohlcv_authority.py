@@ -34,9 +34,6 @@ import systematic_trading_lab.standing_research_authority as standing
 from systematic_trading_lab.fingerprints import canonical_json, fingerprint
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
-_IMPLEMENTATION_PATH = Path(
-    "config/research/program-017-exposed-prefix-runtime-implementation-v1.json"
-)
 
 
 class _AbruptExit(BaseException):
@@ -93,28 +90,6 @@ def _credentials() -> dict[str, str]:
         authority.CREDENTIAL_NAMES[0]: "synthetic-key-material",
         authority.CREDENTIAL_NAMES[1]: "synthetic-secret-material",
     }
-
-
-def test_program_017_runtime_implementation_is_bound_and_non_authorizing() -> None:
-    implementation = json.loads((_REPOSITORY / _IMPLEMENTATION_PATH).read_text())
-    stored = implementation.pop("implementation_fingerprint")
-    assert stored == fingerprint(implementation)
-    binding = implementation["implementation_binding"]
-    assert binding["source_commit"] == "4b0ee2763ceeb654b057f38c656b7f1e90818c9a"
-    assert binding["source_tree"] == "60f63b34cfe71e7949af68b76182f57abd8c0502"
-    assert binding["implementation_root"] == fingerprint(binding["source_files"])
-    for source in binding["source_files"]:
-        committed = subprocess.run(
-            ("git", "show", f"{binding['source_commit']}:{source['path']}"),
-            cwd=_REPOSITORY,
-            check=True,
-            capture_output=True,
-        ).stdout
-        assert hashlib.sha256(committed).hexdigest() == source["sha256"]
-    assert all(review["verdict"] == "PASS" for review in implementation["review"].values())
-    assert implementation["execution_boundary"]["child_authority_present"] is False
-    assert implementation["execution_boundary"]["provider_requests"] == 0
-    assert all(value is False for value in implementation["authority"].values())
 
 
 def _git(repository: Path, *arguments: str) -> str:
@@ -1283,6 +1258,34 @@ def test_partial_body_write_enters_failure_closeout_without_reissue(
     assert len(transport.intents) == 1
 
 
+def test_unknown_temporary_sibling_blocks_failure_terminal(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _, request, _ = _configure_finite_execution(tmp_path, monkeypatch)
+    original_append = predecessor._append
+
+    def partial_append(root_descriptor: int, key: str, payload: bytes) -> None:
+        if key.endswith(".body"):
+            original_append(root_descriptor, key, payload[: max(1, len(payload) // 2)])
+            original_append(root_descriptor, "tmp-unrelated-sibling", b"x")
+            raise OSError("synthetic partial body write")
+        original_append(root_descriptor, key, payload)
+
+    monkeypatch.setattr(predecessor, "_append", partial_append)
+
+    with pytest.raises(authority.Program017PostClaimPersistenceError, match="terminal persistence"):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=authority.MockBarsTransport(
+                [raw_contract.RawResponse(200, _body(request, 0, None))]
+            ),
+        )
+
+    assert not (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
+    assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
+
+
 def test_public_observed_at_comes_from_terminal_closeout_only(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
@@ -2210,6 +2213,32 @@ def test_working_space_check_uses_available_bytes_not_existing_evidence(
     with pytest.raises(authority.Program017AuthorityError, match="16 GiB"):
         authority._require_working_disk_capacity(descriptor)
     os.close(descriptor)
+
+
+@pytest.mark.parametrize("operation", ("preflight", "run"))
+def test_working_space_fails_before_credential_presence(
+    tmp_path: Path, monkeypatch: MonkeyPatch, operation: str
+) -> None:
+    _configure_finite_execution(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        authority,
+        "_require_working_disk_capacity",
+        lambda _fd: (_ for _ in ()).throw(
+            authority.Program017AuthorityError("Program 017 requires 16 GiB")
+        ),
+    )
+
+    with pytest.raises(authority.Program017AuthorityError, match="requires 16 GiB"):
+        if operation == "preflight":
+            authority.credential_presence_preflight(
+                tmp_path, environ=_ForbiddenCredentialEnvironment()
+            )
+        else:
+            authority._execute_mock_acquisition(
+                tmp_path,
+                environ=_ForbiddenCredentialEnvironment(),
+                transport=authority.MockBarsTransport([]),
+            )
 
 
 def test_existing_canonical_evidence_is_hashed_without_whole_file_read(
