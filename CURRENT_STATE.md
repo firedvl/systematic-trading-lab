@@ -1,8 +1,22 @@
 # Current state
 
-Program 016's terminal result is current. Earlier Program 016 planning and implementation state is
-preserved below as historical context. Program 015 and all earlier terminal programs remain
-immutable.
+Program 017's read-only forensic disposition is current. Program 016 and all earlier terminal
+programs remain immutable.
+
+- Program 017, `multi-hour-sector-etf-research-016`, has no proposal or authority. Read-only offline
+  validation binds Program 016's scientific contract, reviews, runtime, child, terminal, and terminal
+  review. Retained evidence is a completed whole-session prefix followed by one partial session with
+  a completed page and an intent-only next-page checkpoint. The partial session must be discarded in
+  full, neither request may be reissued, and its coordinates remain unobserved rather than
+  source-missing. Five cumulative intents without responses reduce the unchanged 22,176-intent
+  ceiling to at most 22,171 responses. The validated performance defect is full predecessor
+  reconstruction before every transport. Program 017 must validate the corpus once before credential
+  presence, keep all predecessor and Git controls held, and use bounded metadata checks at transport
+  boundaries without weakening content, chronology, budget, privacy, or one-use controls. Redacted
+  disposition fingerprint is `695af60f7bece55b88da34ff8499e19c293b23b2db3cb914a42b5c6f9757e847`.
+  No credential access, provider request, evidence mutation, dataset admission, or strategy work
+  occurred. Next autonomous action: freeze and independently review a prospective Program 017
+  proposal.
 
 - Program 016, `multi-hour-sector-etf-research-015`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use after provider transport began. The process was interrupted

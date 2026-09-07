@@ -73,3 +73,15 @@ SHA-256/fingerprint is
 
 Do not run Program 016 credential preflight or acquisition again. Controlled or protected access,
 purchases, PAPER, broker writes, and live execution remain disabled.
+
+## Prospective successor
+
+Read-only Program 017 forensics classify Program 016's last evidence as one partial session with a
+completed page followed by an intent-only next-page checkpoint. A successor must discard that session
+in full, never reissue either request, and continue at the next independent session. Five cumulative
+intents without responses leave at most 22,171 responses under the unchanged 22,176-intent ceiling.
+
+The successor must also validate the predecessor corpus once before credential presence under all
+continuously held controls, then replace per-request full reconstruction with bounded manifest,
+descriptor, Git, disk, and chronology checks. Every Program 017 authority remains false until a
+prospective proposal and independent review complete.

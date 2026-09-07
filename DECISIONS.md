@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-07 - Program 017 must discard the partial session and remove repeated reconstruction
+
+- Decision: keep Programs 012 through 016 terminal and immutable. A prospective Program 017 may reuse only the locally validated completed whole-session prefix. It must discard Program 016's partial session in full, never reissue either retained request, and begin provider work at the next independent session.
+- Context: Program 016 completed one page of its final session before persisting an intent for the next page and being interrupted. Five cumulative intents now lack responses. Timing and source tracing identify full predecessor reconstruction before every transport as the multi-minute inter-request bottleneck.
+- Consequences: the unchanged 22,176-intent ceiling permits at most 22,171 cumulative responses. Program 017 must validate the full predecessor corpus once before credential presence while holding all predecessor and Git controls through terminal fsync. Transport boundaries may use bounded manifest, descriptor, Git, disk, and chronology checks, but may not weaken content validation, no-reissue, privacy, budget, or one-use rules. Redacted forensic fingerprint is `695af60f7bece55b88da34ff8499e19c293b23b2db3cb914a42b5c6f9757e847`. Every authority remains false.
+- Revisit when: after prospective Program 017 proposal, independent review, implementation, merge, and a separately reviewed child. Never revisit Programs 012 through 016 replay.
+
 ## 2026-09-07 - Program 016 terminal evidence is immutable and revokes every entrypoint
 
 - Decision: commit only Program 016's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, execution, or private-root access.
