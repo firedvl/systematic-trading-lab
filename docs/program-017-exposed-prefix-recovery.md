@@ -1,7 +1,7 @@
 # Program 017 exposed-prefix recovery
 
 Program 017, `multi-hour-sector-etf-research-016`, is
-`IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED`. It is not a replay or retry of Program 016.
+`FAIL-CONSUMED-NO-RETRY`. It was not a replay or retry of Program 016.
 
 Read-only forensics bind Program 016's exact scientific contract, reviews, runtime, child, terminal,
 and terminal review. Its final partial session contains completed page evidence followed by one
@@ -52,7 +52,24 @@ The runtime is frozen at exact source commit/tree/root
 `bce103b0719eea804d4ab1e320729f4272a79e18c47c3c313fcd07a32916225e`.
 Fresh independent correctness and defensive reviews of that exact runtime pass finding-free after
 all raised temp-recovery findings were fixed prospectively. The implementation binding must merge
-before a separate exact one-use child and review can exist. No credential
-presence check, credential access, private Program 017 state, provider contact, dataset admission,
-strategy work, controlled or protected access, PAPER action, broker write, live action, or purchase
-is authorized.
+before a separate exact one-use child and review can exist.
+
+## Terminal result
+
+The reviewed one-use child and its independent review merged on exact clean main before activation.
+The transaction later ended before publishing a public terminal. The built-in credential-free
+recovery path sealed `RUNTIME-FAILURE` / `FAIL-CONSUMED-NO-RETRY` without another credential load or
+provider request. The redacted public terminal records `admission_passed=false`, no dataset lineage,
+no Program 002 admission, and no strategy calculation or return. Its SHA-256 is
+`4bf6b7e644a72e052d9d861fbd6f3ac499a18fec7b159624bb3caf98e2741de3`; its derived active-authority
+fingerprint is `ed1ff2abbf2ea7cc76a04a01f638873b61970bd31e5389588c7e0a763035123c`; its distinct child-artifact
+fingerprint is `09a303caec3c589921009c2d2865f115ddcf1b607514050dcb84a967a4225410`; and its runtime source commit
+is `40d7f0a2628560eb7b586e4ff9a5df4480fb04fa`.
+
+The closeout requires those exact public bytes and rejects a missing, changed, or invalid terminal
+before credential preflight, authority derivation, execution, or private-root access. Program 017
+cannot replay or retry. Dynamic acquisition counts, detailed failure evidence, private identities,
+exact missingness, provider tokens, and market observations remain private.
+
+Do not run Program 017 credential preflight or acquisition again. Controlled or protected access,
+purchases, PAPER, broker writes, and live execution remain disabled.
