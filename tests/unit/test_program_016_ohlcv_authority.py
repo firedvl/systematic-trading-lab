@@ -2182,6 +2182,16 @@ def test_every_lifecycle_entrypoint_rejects_an_exact_public_terminal_first(
     assert credential_checks == []
 
 
+def test_committed_terminal_is_immutably_bound() -> None:
+    payload = (_REPOSITORY / authority.PUBLIC_TERMINAL_PATH).read_bytes()
+
+    assert hashlib.sha256(payload).hexdigest() == authority._PUBLIC_TERMINAL_SHA256
+    assert not hasattr(authority, "read_credentials")
+    assert not hasattr(authority._CredentialLoader, "_read_credentials")
+    with pytest.raises(authority.Program016AuthorityError, match="terminally revoked"):
+        authority._reject_terminal_state(_REPOSITORY)
+
+
 def test_valid_shaped_terminal_without_immutable_binding_rejects_before_credentials(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:

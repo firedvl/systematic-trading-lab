@@ -1,9 +1,33 @@
 # Current state
 
-Program 016's read-only forensic disposition is current. Program 015's terminal result and all
-earlier terminal programs remain immutable.
+Program 016's terminal result is current. Earlier Program 016 planning and implementation state is
+preserved below as historical context. Program 015 and all earlier terminal programs remain
+immutable.
 
-- Program 016, `multi-hour-sector-etf-research-015`, is `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
+- Program 016, `multi-hour-sector-etf-research-015`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
+  standing child consumed its one use after provider transport began. The process was interrupted
+  after steady progress, leaving an intent-only request whose response status is unknowable; the
+  frozen no-reissue rule therefore prohibits resumption. The built-in recovery path sealed the
+  interrupted transaction without another credential load or provider request. The exact redacted
+  public terminal binds runtime source commit `1844fc378a2f11722acb1ac62844f9859e7f8974` and records
+  `RUNTIME-FAILURE`, `admission_passed=false`, no dataset lineage, no Program 002 admission, and no
+  strategy calculation or return. Its SHA-256 is
+  `2ecae63efafee1d34fc85fabd093d3881e6951ac935afb8f8f5083f8edc4c7a2`; the derived active-authority
+  fingerprint is `8be6e650694de9ca3f60279d0c4e6080f93f502a1087e9bb4159363f46de3d42`, distinct from child-artifact
+  fingerprint `b86dd5f6766caa9e5de793a111d04234b37caab9c5644e05a666504959849a06`.
+  Dynamic acquisition counts, detailed failure evidence, private content identities, raw market
+  data, provider tokens, exact missingness, and exact unexpected exclusions remain private. Current
+  code requires the exact terminal and rejects credential preflight, authority derivation, and
+  execution before credential or private-root access. Program 016 cannot replay or retry. Controlled
+  or protected access, purchases, PAPER, broker writes, and live execution remained disabled. The
+  runtime repeatedly reconstructs the immutable predecessor corpus at each transport boundary; a
+  successor must replace that operationally unbounded repeated work with an independently reviewed
+  constant-time binding check without weakening validation. Next autonomous action: obtain a
+  finding-free independent terminal review, merge the closeout, then perform bounded offline
+  forensics for a prospective successor.
+
+- Historical Program 016 planning snapshot: `multi-hour-sector-etf-research-015` was
+  `PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`.
   Read-only offline validation rederived Program 015's historical child identity, canonical private
   terminal, exact public projection, and retained completed whole-session prefix. The only reachable
   incomplete checkpoint is intent-only, with no body, response receipt, HTTP status, parsed
