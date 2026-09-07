@@ -1,5 +1,19 @@
 # Architecture decisions
 
+## 2026-09-07 - Freeze Program 017 with bounded reconstruction and no predecessor spool
+
+- Decision: preserve Program 016's science. Fully validate predecessor evidence once before credential presence, perform provider requests without any predecessor reconstruction at transport boundaries, then reparse once into the existing final canonical projection after transport completes. Do not add a predecessor spool. At each transport boundary, revalidate only exact authority, Git, descriptor, manifest, disk, and chronology metadata while all controls remain held.
+- Context: Program 016 repeated full predecessor reconstruction before every request, causing multi-minute inter-request CPU work. The existing locks already bind validation to use throughout the transaction. Repeating the corpus parse added no distinct scientific observation and made completion operationally unbounded.
+- Consequences: review iterations restored all storage, terminal, credential, topology, no-reissue, next-request, timestamp, integer typing, and mutable-root controls. V4 still made mandatory failure sealing impossible after a partially failed write changed root metadata. V5 keeps strict equality for continuation and permits only an irreversible failure-closeout path after validating immutable controls, stable root identity, and the exact known failed-target delta in one bounded scan. It never authorizes transport continuation. V5 SHA-256/fingerprint is `10086f90ae320397914f95fdf9c780ae9c782f93a6b65f48f8d9af4f09cd41a7` / `ecb8bffdbc5af0c5ffc9d189c1d49d5ca99b6b7d2257dcfa1002d747142f8f98`; finding-free review SHA-256/fingerprint is `e2aaecb0c6cd44e359d0ead286aae5513cd6d08ed75e7aa96a91c0506de81000` / `03ac9a8a0109d3d4a65cfd9d6e2f85d1418b73fdc89928a573e8f83ab89bbf32`. Every proposal authority is false.
+- Revisit when: after fresh finding-free independent design and defensive reviews. Implementation and a separate reviewed child remain required before any credential or provider access.
+
+## 2026-09-07 - Program 017 must discard the partial session and remove repeated reconstruction
+
+- Decision: keep Programs 012 through 016 terminal and immutable. A prospective Program 017 may reuse only the locally validated completed whole-session prefix. It must discard Program 016's partial session in full, never reissue either retained request, and begin provider work at the next independent session.
+- Context: Program 016 completed one page of its final session before persisting an intent for the next page and being interrupted. Five cumulative intents now lack responses. Timing and source tracing identify full predecessor reconstruction before every transport as the multi-minute inter-request bottleneck.
+- Consequences: the unchanged 22,176-intent ceiling permits at most 22,171 cumulative responses. Program 017 must validate the full predecessor corpus once before credential presence while holding all predecessor and Git controls through terminal fsync. Transport boundaries may use bounded manifest, descriptor, Git, disk, and chronology checks, but may not weaken content validation, no-reissue, privacy, budget, or one-use rules. Redacted forensic fingerprint is `695af60f7bece55b88da34ff8499e19c293b23b2db3cb914a42b5c6f9757e847`. Every authority remains false.
+- Revisit when: after prospective Program 017 proposal, independent review, implementation, merge, and a separately reviewed child. Never revisit Programs 012 through 016 replay.
+
 ## 2026-09-07 - Program 016 terminal evidence is immutable and revokes every entrypoint
 
 - Decision: commit only Program 016's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, execution, or private-root access.

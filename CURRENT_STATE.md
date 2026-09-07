@@ -1,8 +1,44 @@
 # Current state
 
-Program 016's terminal result is current. Earlier Program 016 planning and implementation state is
-preserved below as historical context. Program 015 and all earlier terminal programs remain
-immutable.
+Program 017's read-only forensic disposition is current. Program 016 and all earlier terminal
+programs remain immutable.
+
+- Program 017, `multi-hour-sector-etf-research-016`, has a prospective proposal but no authority. Read-only offline
+  validation binds Program 016's scientific contract, reviews, runtime, child, terminal, and terminal
+  review. Retained evidence is a completed whole-session prefix followed by one partial session with
+  a completed page and an intent-only next-page checkpoint. The partial session must be discarded in
+  full, neither request may be reissued, and its coordinates remain unobserved rather than
+  source-missing. Five cumulative intents without responses reduce the unchanged 22,176-intent
+  ceiling to at most 22,171 responses. The validated performance defect is full predecessor
+  reconstruction before every transport. Program 017 must validate the corpus once before credential
+  presence, keep all predecessor and Git controls held, and use bounded metadata checks at transport
+  boundaries without weakening content, chronology, budget, privacy, or one-use controls. Redacted
+  disposition fingerprint is `695af60f7bece55b88da34ff8499e19c293b23b2db3cb914a42b5c6f9757e847`.
+  Independent review rejected proposal v1 for unbounded spool storage and implicit terminal,
+  credential, and runtime-topology contracts. Proposal v2 removed the spool, permitted exactly one
+  precredential validation pass and one post-transport final projection pass, prohibits predecessor
+  reconstruction at transport boundaries, and raises the free-space reservation to 16 GiB with
+  explicit aggregate accounting. It freezes exact Program 017 private/public terminal and lineage
+  schemas, credential failure ordering, descriptor metadata, closeout checks, and runtime-before-child
+  topology. Review rejected v2 for missing general post-intent no-reissue semantics, exact next-request
+  binding, closeout-only public timestamp semantics, and exact integer-zero typing. V3 restores those
+  inherited controls and removes the stale spool documentation. Review rejected v3 because its full
+  metadata tuple could not distinguish immutable predecessor roots from Program 017's intentionally
+  mutable root. V4 freezes full tuples for immutable roots and every lock, while Program 017 keeps a
+  stable identity tuple and refreshes its expected full tuple only after authorized create-only writes
+  and parent fsync. Review rejected v4 because partial failed writes could prevent mandatory terminal
+  sealing. V5 preserves strict equality for continuation and adds an irreversible failure-closeout-only
+  path: validate immutable controls and stable root identity, scan once, accept only the exact known
+  failed target delta, prohibit transport, and seal without refreshing the continuation baseline.
+  V5 SHA-256/fingerprint is `10086f90ae320397914f95fdf9c780ae9c782f93a6b65f48f8d9af4f09cd41a7` /
+  `ecb8bffdbc5af0c5ffc9d189c1d49d5ca99b6b7d2257dcfa1002d747142f8f98`. Fresh independent
+  design/correctness and defensive reviews pass finding-free. Review SHA-256/fingerprint is
+  `e2aaecb0c6cd44e359d0ead286aae5513cd6d08ed75e7aa96a91c0506de81000` /
+  `03ac9a8a0109d3d4a65cfd9d6e2f85d1418b73fdc89928a573e8f83ab89bbf32`. Every authority remains false.
+  No credential access, provider request, evidence mutation, dataset admission, or strategy work
+  occurred. Next autonomous action: obtain fresh independent design/correctness and defensive reviews
+  merge the proposal, then implement and independently review the runtime before any child,
+  credential access, private Program 017 state, or provider contact.
 
 - Program 016, `multi-hour-sector-etf-research-015`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use after provider transport began. The process was interrupted

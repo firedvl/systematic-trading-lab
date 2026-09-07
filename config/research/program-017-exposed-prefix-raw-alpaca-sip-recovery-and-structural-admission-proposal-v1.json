@@ -1,0 +1,255 @@
+{
+  "schema_version": "program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1",
+  "proposal_id": "program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-2026-09-07-v1",
+  "program_ordinal": 17,
+  "program_id": "multi-hour-sector-etf-research-016",
+  "status": "PROPOSED-PROSPECTIVE-NOT-AUTHORIZED",
+  "purpose": "Continue the unchanged exposed raw SIP acquisition after Program 016's discarded partial session while replacing repeated full predecessor reconstruction with one validated private canonical spool and bounded transport-boundary checks.",
+  "predecessor": {
+    "redacted_private_forensic_disposition": {
+      "path": "config/research/program-017-predecessor-recovery-forensic-disposition-v1.json",
+      "sha256": "5d56f7cccdf779cc68545aa74cea3f9e3a5d241bb08ab3c66ed7c87606c8379b",
+      "fingerprint": "695af60f7bece55b88da34ff8499e19c293b23b2db3cb914a42b5c6f9757e847"
+    },
+    "program_016_scientific_contract": {
+      "path": "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json",
+      "sha256": "76f946df1a50f1e1a866f144c7fe5cf4d2f12b1c5cf874dc9d901f994ff59776",
+      "fingerprint": "48a2ce7333f9422609d3bf9c00e4f7fbc3a58414768585063b6f8db68abacafe"
+    },
+    "program_016_scientific_contract_review": {
+      "path": "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json",
+      "sha256": "fab92d4355453a9971df60b2609af39ab8ff2bece9ea2bfa9c32ec235343ea62",
+      "fingerprint": "c5f9626858ce72639becc0757351ae1451ec73fbfd5d710a2ff8621a2fac664d"
+    },
+    "program_016_runtime_implementation": {
+      "path": "config/research/program-016-exposed-prefix-runtime-implementation-v1.json",
+      "sha256": "267bb4b5197cc741692b2a2b62f76292996744748935dc5932c8b4e46e88ab2c",
+      "fingerprint": "80215fb0a0d3e3884aa29023f99a512430e2de37a69822ae427498e79ffd72a7"
+    },
+    "program_016_child_authority": {
+      "path": "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",
+      "sha256": "c632fd36ba9d9cb9fe1e223889b78a76972af5d518f1b0a9419a162498e637bb",
+      "fingerprint": "b86dd5f6766caa9e5de793a111d04234b37caab9c5644e05a666504959849a06"
+    },
+    "program_016_child_authority_review": {
+      "path": "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json",
+      "sha256": "a44abb19ee0552f0b8ac2ef847d01a16f9becdced7192cf9c4c6782a881090fb",
+      "fingerprint": "453a199b6cfd56d07a5664b9ea3e121a1411afcc1f54b7a230b983bc6e67e6d3"
+    },
+    "program_016_terminal_result": {
+      "path": "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+      "sha256": "2ecae63efafee1d34fc85fabd093d3881e6951ac935afb8f8f5083f8edc4c7a2"
+    },
+    "program_016_terminal_review": {
+      "path": "config/research/program-016-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1.json",
+      "sha256": "f8632711f4a5d1b53f28f976ca5911100ea61c35b1f3db90fe0bf3fed20299c9",
+      "fingerprint": "2cf5d4f0c65b0ea3cb1433cf0f4048b36001165af6dcee77f717b8ac0a34520e"
+    }
+  },
+  "inheritance_contract": {
+    "base_contract": "program_016_scientific_contract",
+    "hypothesis_changed": false,
+    "source_contract_changed": false,
+    "request_chronology_changed": false,
+    "pagination_semantics_changed": false,
+    "missingness_semantics_changed": false,
+    "structural_admission_gates_changed": false,
+    "thresholds_changed": false,
+    "public_privacy_contract_changed": false,
+    "program_012_through_program_016_history_mutation_allowed": false,
+    "observed_result_gate_changes_allowed": false
+  },
+  "recovery_contract": {
+    "program_012_private_root": ".trading-lab/program-012-exposed-prefix-raw-alpaca-sip-v1",
+    "program_013_private_root": ".trading-lab/program-013-exposed-prefix-raw-alpaca-sip-v1",
+    "program_014_private_root": ".trading-lab/program-014-exposed-prefix-raw-alpaca-sip-v1",
+    "program_015_private_root": ".trading-lab/program-015-exposed-prefix-raw-alpaca-sip-v1",
+    "program_016_private_root": ".trading-lab/program-016-exposed-prefix-raw-alpaca-sip-v1",
+    "program_017_private_root": ".trading-lab/program-017-exposed-prefix-raw-alpaca-sip-v1",
+    "predecessor_private_evidence_access": "READ-ONLY",
+    "program_017_private_root_must_be_distinct": true,
+    "accepted_predecessor_shape": "EXACT-COMPLETED-WHOLE-SESSION-PREFIX-PLUS-ONE-PARTIAL-SESSION-WITH-COMPLETED-PAGE-AND-INTENT-ONLY-NEXT-PAGE",
+    "reuse_unit": "COMPLETED-WHOLE-SESSION",
+    "completed_predecessor_pages_are_never_requested_again": true,
+    "incomplete_program_016_session_reuse_allowed": false,
+    "incomplete_program_016_completed_page_reuse_allowed": false,
+    "incomplete_program_016_request_reissue_allowed": false,
+    "partial_session_coordinates_classification": "UNOBSERVED-BECAUSE-CHAIN-INCOMPLETE",
+    "first_program_017_request": "NEXT-INDEPENDENT-SESSION-AFTER-DISCARDED-PARTIAL-SESSION",
+    "retained_response_retry_allowed": false,
+    "retained_http_result_retry_allowed": false,
+    "parsed_missingness_retry_allowed": false,
+    "data_quality_outcome_retry_allowed": false,
+    "program_017_automatic_retries": 0
+  },
+  "single_reconstruction_contract": {
+    "full_predecessor_validation_before_credential_presence": true,
+    "all_completed_predecessor_pages_reparsed_exactly_once_per_operation": true,
+    "private_canonical_predecessor_spool_created_under_all_controls": true,
+    "private_canonical_predecessor_spool_create_only_fsynced_and_hash_bound": true,
+    "private_predecessor_import_manifest_binds_every_source_page_and_spool_identity": true,
+    "spool_contains_only_completed_whole_sessions": true,
+    "discarded_partial_session_content_forbidden_from_spool": true,
+    "new_complete_sessions_appended_in_frozen_chronology_order": true,
+    "full_predecessor_reconstruction_before_every_transport": false,
+    "full_predecessor_reconstruction_at_closeout": false,
+    "completed_pages_reparsed_again_after_initial_spool": false,
+    "abrupt_exit_spool_remains_private_for_terminal_forensics": true
+  },
+  "transport_boundary_contract": {
+    "all_predecessor_private_root_locks_remain_held_shared": true,
+    "program_017_private_root_lock_remains_held_exclusive": true,
+    "git_policy_snapshot_lock_remains_held": true,
+    "rederive_exact_reviewed_authority": true,
+    "revalidate_synchronized_main_commit": true,
+    "revalidate_all_held_root_and_lock_descriptor_identities_with_fstat": true,
+    "revalidate_bound_predecessor_import_manifest_identity": true,
+    "revalidate_private_spool_descriptor_identity": true,
+    "revalidate_working_disk_capacity": true,
+    "revalidate_zero_protected_overlap": true,
+    "fixed_size_metadata_checks_only": true,
+    "predecessor_content_reparse_forbidden": true,
+    "any_identity_or_metadata_drift_fails_before_transport": true,
+    "continuous_lock_exclusion_is_part_of_validation_to_use_binding": true
+  },
+  "lock_and_launch_contract": {
+    "control_acquisition_order": [
+      "Program 017 exclusive lock",
+      "Program 016 read-only shared lock",
+      "Program 015 read-only shared lock",
+      "Program 014 read-only shared lock",
+      "Program 013 read-only shared lock",
+      "Program 012 read-only shared lock",
+      "Git policy snapshot bound to the exact post-child-and-review synchronized main commit"
+    ],
+    "all_controls_held_through_private_and_public_terminal_fsync": true,
+    "atomic_program_017_claim_required": true,
+    "claim_create_only_and_fsynced_before_first_program_017_transport": true,
+    "request_intent_create_only_and_fsynced_before_every_transport": true,
+    "response_body_fsynced_before_receipt": true,
+    "response_receipt_fsynced_before_parse_or_continuation": true,
+    "single_nonrestarting_process_required": true,
+    "automatic_restart": false,
+    "automatic_relaunch": false,
+    "launchctl_submit_allowed": false,
+    "scheduler_keepalive_allowed": false,
+    "scheduler_restart_on_exit_allowed": false,
+    "process_manager_retry_allowed": false,
+    "terminal_evidence_required_after_any_consumed_state": true
+  },
+  "cumulative_transport_and_working_space_budgets": {
+    "maximum_combined_request_intents": 22176,
+    "maximum_effective_combined_responses": 22171,
+    "consumed_intent_without_response_count": 5,
+    "completed_predecessor_pages_count_once": true,
+    "partial_program_016_session_completed_page_counts_as_consumed_response_but_is_excluded_from_dataset": true,
+    "maximum_response_page_bytes": 8388608,
+    "maximum_combined_session_response_bytes": 8388608,
+    "maximum_combined_response_bytes": 4294967296,
+    "working_disk_reservation_bytes": 8589934592,
+    "filesystem_available_bytes_must_cover_full_working_disk_reservation": true,
+    "working_disk_reservation_rechecked_before_spool_and_every_transport": true,
+    "maximum_requests_per_minute": 120,
+    "request_timeout_seconds": 30,
+    "credential_loads_per_program_017_process_max": 1,
+    "parallel_session_chains": 1,
+    "automatic_retries": 0,
+    "program_012_through_program_017_usage_must_not_exceed_any_combined_transport_cap": true
+  },
+  "credential_contract": {
+    "credential_names_inherited_from_program_006": true,
+    "presence_only_preflight_before_value_access": true,
+    "standalone_callable_credential_readers_allowed": false,
+    "credential_parsing_location": "INLINE-ONLY-IN-LOCK-BOUND-LOADER-OPERATION",
+    "credential_values_loaded_only_inside_all_locks": true,
+    "credential_attempt_create_only_fsynced_before_environment_access": true,
+    "process_global_credential_latch_consumed_before_environment_access": true,
+    "credential_failure_receipt_fsynced_before_error_propagation": true,
+    "credential_success_receipt_fsynced_before_client_construction_and_transport": true,
+    "credential_values_loaded_once_per_process_max": true,
+    "terminal_replay_and_recovery_paths_must_not_access_credential_environment": true,
+    "credential_values_never_logged_hashed_persisted_or_passed_as_cli_arguments": true,
+    "credential_values_absent_is_human_attention_boundary": true
+  },
+  "terminal_contract": {
+    "private_path": ".trading-lab/program-017-exposed-prefix-raw-alpaca-sip-v1/terminal.json",
+    "public_path": "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+    "single_private_terminal_for_runtime_failure_admission_failure_or_admission_pass": true,
+    "create_only_atomic_canonical_and_fsynced": true,
+    "public_projection_reuses_program_016_redaction": true,
+    "dynamic_counts_dates_hashes_tokens_failure_details_private_identities_and_market_observations_forbidden_publicly": true,
+    "strategy_calculations_exact_integer_zero": true,
+    "strategy_returns_exact_integer_zero": true,
+    "pass_only_public_dataset_lineage_is_control_lineage_not_content_identity": true,
+    "entrypoints_reject_terminal_presence_before_credentials_or_private_roots": true,
+    "missing_changed_or_invalid_terminal_after_closeout_rejects_before_credentials_or_private_roots": true
+  },
+  "protected_firewall": {
+    "inherit_program_016_registered_range_derivation": true,
+    "rederive_registered_ranges_from_synchronized_main_before_credential_presence": true,
+    "revalidate_zero_request_overlap_before_private_state": true,
+    "revalidate_zero_request_overlap_before_every_transport": true,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper": false,
+    "broker": false,
+    "live": false
+  },
+  "implementation_test_contract": {
+    "required_cases": [
+      "exact Program 016 child terminal and terminal-review binding",
+      "completed whole-session prefix replay excludes the entire partial Program 016 session",
+      "completed page and intent-only next page in the partial session are never requested or reused",
+      "first Program 017 request begins at the next independent session",
+      "five consumed intents reduce effective response capacity to 22171",
+      "full predecessor reconstruction occurs once per preflight or execution and never per transport",
+      "multi-page synthetic execution performs bounded transport checks without additional predecessor reconstruction",
+      "held descriptor manifest Git disk and chronology drift fail before transport",
+      "all seven controls remain held through terminal fsync",
+      "intent body receipt zero-retry and no-reissue durability ordering",
+      "credential parsing remains inline after durable reservation and process latch",
+      "terminal recovery performs no credential or provider access",
+      "no strategy controlled protected PAPER broker live or purchase authority"
+    ]
+  },
+  "future_child_authority": {
+    "standing_child_required": true,
+    "finding_free_independent_review_required": true,
+    "clean_synchronized_main_required": true,
+    "runtime_revalidation_required": true,
+    "atomic_one_use_claim_required": true,
+    "terminal_evidence_required": true,
+    "maximum_enabled_capabilities": [
+      "provider_contact",
+      "credential_access",
+      "source_requests",
+      "market_data_acquisition",
+      "real_dataset_admission"
+    ],
+    "source_qualification_allowed": false,
+    "strategy_capabilities_allowed": false,
+    "research_qualification_allowed": false,
+    "controlled_or_protected_allowed": false,
+    "paper_broker_or_live_allowed": false,
+    "purchase_allowed": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Obtain fresh finding-free independent design/correctness and defensive reviews of proposal v1 before implementing any Program 017 runtime, credential access, private Program 017 state, or provider contact.",
+  "proposal_fingerprint": "0ed8cace9ea51677a06b65697af9c956294418656762edbf69b759fffda5f7a4"
+}
