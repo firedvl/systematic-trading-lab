@@ -1237,6 +1237,7 @@ def test_partial_body_write_enters_failure_closeout_without_reissue(
     def partial_append(root_descriptor: int, key: str, payload: bytes) -> None:
         if key.endswith(".body"):
             original_append(root_descriptor, key, payload[: max(1, len(payload) // 2)])
+            original_append(root_descriptor, f"tmp-program-017-write-{key}", b"partial")
             raise OSError("synthetic partial body write")
         original_append(root_descriptor, key, payload)
 
@@ -1256,6 +1257,21 @@ def test_partial_body_write_enters_failure_closeout_without_reissue(
     assert private["result_kind"] == "RUNTIME-FAILURE"
     assert private["status"] == "FAIL-CONSUMED-NO-RETRY"
     assert len(transport.intents) == 1
+
+
+def test_restarted_wrong_stage_combined_temp_fails_terminal_persistence(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _configure_finite_execution(tmp_path, monkeypatch, activated=True)
+    root = authority._open_root(tmp_path, authority.PRIVATE_ROOT, create=False)
+    predecessor._append(root, "tmp-program-017-combined-canonical-raw", b"partial")
+    os.close(root)
+
+    with pytest.raises(authority.Program017PostClaimPersistenceError, match="terminal persistence"):
+        authority.credential_presence_preflight(tmp_path, environ=_ForbiddenCredentialEnvironment())
+
+    assert not (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
+    assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
 
 
 @pytest.mark.parametrize(
@@ -2591,6 +2607,20 @@ def test_atomic_publication_recovers_after_link_before_parent_fsync(
     monkeypatch.setattr(os, "fsync", original_fsync)
     authority._append_public_atomic(tmp_path, descriptor, payload)
     assert public_path.read_bytes() == payload
+    os.close(descriptor)
+
+
+@pytest.mark.parametrize("partial", (False, True))
+def test_publication_recovers_deterministic_public_temp(tmp_path: Path, partial: bool) -> None:
+    descriptor = _open_program_017_root(tmp_path)
+    payload = (canonical_json(_public_terminal()) + "\n").encode()
+    retained = payload[: len(payload) // 2] if partial else payload
+    predecessor._append(descriptor, "tmp-program-017-public-terminal", retained)
+
+    authority._append_public_atomic(tmp_path, descriptor, payload)
+
+    assert (tmp_path / authority.PUBLIC_TERMINAL_PATH).read_bytes() == payload
+    assert not predecessor._exists(descriptor, "tmp-program-017-public-terminal")
     os.close(descriptor)
 
 

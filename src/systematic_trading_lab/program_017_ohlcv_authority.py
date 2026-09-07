@@ -2641,13 +2641,31 @@ def _revalidate_failure_closeout_boundary(
         }
         if snapshot.failed_write is not None:
             failed_key = snapshot.failed_write[0]
-            expected = (
-                {f"tmp-program-017-{failed_key.removeprefix('tmp-')}"}
-                if failed_key.startswith("tmp-")
-                else set()
-            )
+            if failed_key.startswith("tmp-"):
+                expected = {f"tmp-program-017-{failed_key.removeprefix('tmp-')}"}
+            elif (
+                failed_key in _STATIC_PRIVATE_KEYS
+                or _PAGE_KEY.fullmatch(failed_key) is not None
+                or _CREDENTIAL_KEY.fullmatch(failed_key) is not None
+            ):
+                expected = {f"tmp-program-017-write-{failed_key}"}
+            else:
+                expected = set()
             if temporary_entries not in (set(), expected):
                 raise Program017AuthorityError("Program 017 failure temp does not match its stage")
+        elif temporary_entries:
+            target = _recognized_temporary_target(next(iter(temporary_entries)))
+            if target == "public-terminal" and not predecessor._exists(
+                root_descriptor, _TERMINAL_KEY
+            ):
+                raise Program017AuthorityError("Program 017 public temp precedes private terminal")
+            if target == "combined-canonical-raw.jsonl" or target in _DERIVED_KEYS:
+                _reconstruct_state(
+                    root_descriptor,
+                    predecessor_state,
+                    authority=authority,
+                    require_complete=True,
+                )
     _validate_predecessor_manifest(root_descriptor, predecessor_state)
     _reconstruct_state(
         root_descriptor,
@@ -3355,6 +3373,28 @@ def _append_public_atomic(repository: Path, root_descriptor: int, payload: bytes
                 raise Program017AuthorityError("Program 017 public terminal artifact differs")
             os.fsync(public_descriptor)
             return
+        recovery_temp = "tmp-program-017-public-terminal"
+        if predecessor._exists(root_descriptor, recovery_temp):
+            retained = predecessor._read(root_descriptor, recovery_temp)
+            if retained == payload:
+                try:
+                    os.link(
+                        recovery_temp,
+                        PUBLIC_TERMINAL_PATH.name,
+                        src_dir_fd=root_descriptor,
+                        dst_dir_fd=public_descriptor,
+                        follow_symlinks=False,
+                    )
+                except FileExistsError:
+                    raise Program017AuthorityError(
+                        "Program 017 public terminal recovery raced"
+                    ) from None
+                os.fsync(public_descriptor)
+                _tracked_unlink(root_descriptor, recovery_temp)
+                return
+            if not payload.startswith(retained):
+                raise Program017AuthorityError("Program 017 public terminal temp differs")
+            _tracked_unlink(root_descriptor, recovery_temp)
         temp_key, temp_descriptor = _tracked_new_temp(root_descriptor, "public-terminal")
         try:
             with os.fdopen(temp_descriptor, "wb") as handle:
