@@ -19,8 +19,11 @@ _PROPOSAL_V2 = Path(
 _PROPOSAL_V3 = Path(
     "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json"
 )
-_PROPOSAL = Path(
+_PROPOSAL_V4 = Path(
     "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v4.json"
+)
+_PROPOSAL = Path(
+    "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v5.json"
 )
 
 
@@ -97,6 +100,7 @@ def test_program_017_forensic_disposition_is_bound_redacted_and_non_authorizing(
         _PROPOSAL_V1.as_posix(),
         _PROPOSAL_V2.as_posix(),
         _PROPOSAL_V3.as_posix(),
+        _PROPOSAL_V4.as_posix(),
         _PROPOSAL.as_posix(),
     } <= reserved
 
@@ -106,9 +110,9 @@ def test_program_017_proposal_is_single_reconstruction_and_non_authorizing() -> 
     stored = proposal.pop("proposal_fingerprint")
     assert stored == fingerprint(proposal)
     superseded = proposal["supersedes"]
-    assert superseded["path"] == _PROPOSAL_V3.as_posix()
+    assert superseded["path"] == _PROPOSAL_V4.as_posix()
     assert (
-        hashlib.sha256((_REPOSITORY / _PROPOSAL_V3).read_bytes()).hexdigest()
+        hashlib.sha256((_REPOSITORY / _PROPOSAL_V4).read_bytes()).hexdigest()
         == superseded["sha256"]
     )
     for binding in proposal["predecessor"].values():
@@ -142,7 +146,7 @@ def test_program_017_proposal_is_single_reconstruction_and_non_authorizing() -> 
     boundary = proposal["transport_boundary_contract"]
     assert boundary["fixed_size_metadata_checks_only"] is True
     assert boundary["predecessor_content_reparse_forbidden"] is True
-    assert boundary["any_identity_or_metadata_drift_fails_before_transport_or_closeout"] is True
+    assert boundary["any_unaccounted_identity_or_metadata_drift_fails_before_transport_or_closeout"]
     assert boundary["root_and_lock_descriptors_opened_with_o_nofollow"] is True
     assert len(boundary["immutable_predecessor_root_and_all_lock_descriptor_metadata_tuple"]) == 8
     assert len(boundary["program_017_mutable_root_stable_identity_tuple"]) == 5
@@ -151,7 +155,16 @@ def test_program_017_proposal_is_single_reconstruction_and_non_authorizing() -> 
         "program_017_root_expected_full_tuple_refreshed_only_after_authorized_create_only_write_and_parent_fsync"
     ]
     assert boundary[
-        "program_017_root_current_full_tuple_must_equal_latest_expected_tuple_before_transport_and_closeout"
+        "program_017_root_current_full_tuple_must_equal_latest_expected_tuple_before_transport_and_normal_closeout"
+    ]
+    failure = proposal["failure_closeout_contract"]
+    assert failure["continuation_requires_exact_latest_expected_mutable_root_tuple"] is True
+    assert failure["authorized_write_failure_sets_irreversible_failure_closeout_only_latch"] is True
+    assert failure["failure_closeout_latch_prohibits_all_future_transport_and_normal_completion"]
+    assert failure["failure_closeout_may_scan_program_017_mutable_root_once"] is True
+    assert failure["accepted_failed_write_drift_does_not_refresh_continuation_baseline"] is True
+    assert failure[
+        "abrupt_process_exit_recovery_uses_same_bounded_failure_scan_without_credentials_or_transport"
     ]
 
     budgets = proposal["cumulative_transport_contract"]

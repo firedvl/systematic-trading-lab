@@ -26,12 +26,15 @@ programs remain immutable.
   metadata tuple could not distinguish immutable predecessor roots from Program 017's intentionally
   mutable root. V4 freezes full tuples for immutable roots and every lock, while Program 017 keeps a
   stable identity tuple and refreshes its expected full tuple only after authorized create-only writes
-  and parent fsync. V4 SHA-256/fingerprint is
-  `ae8ebcb4de841294fde5548baef97a75832684d472130557cb5812026e29e323` /
-  `f1f84a11c63e40e50bef54f889f6f1ee85a3e46e8ec7368ad9875797725ffefd`. Every authority remains false.
+  and parent fsync. Review rejected v4 because partial failed writes could prevent mandatory terminal
+  sealing. V5 preserves strict equality for continuation and adds an irreversible failure-closeout-only
+  path: validate immutable controls and stable root identity, scan once, accept only the exact known
+  failed target delta, prohibit transport, and seal without refreshing the continuation baseline.
+  V5 SHA-256/fingerprint is `10086f90ae320397914f95fdf9c780ae9c782f93a6b65f48f8d9af4f09cd41a7` /
+  `ecb8bffdbc5af0c5ffc9d189c1d49d5ca99b6b7d2257dcfa1002d747142f8f98`. Every authority remains false.
   No credential access, provider request, evidence mutation, dataset admission, or strategy work
   occurred. Next autonomous action: obtain fresh independent design/correctness and defensive reviews
-  of v4 before implementation.
+  of v5 before implementation.
 
 - Program 016, `multi-hour-sector-etf-research-015`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use after provider transport began. The process was interrupted
