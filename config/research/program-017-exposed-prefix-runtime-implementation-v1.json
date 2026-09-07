@@ -1,0 +1,146 @@
+{
+  "schema_version": "program-017-exposed-prefix-runtime-implementation-v1",
+  "implementation_id": "program-017-exposed-prefix-runtime-implementation-2026-09-07-v1",
+  "program_ordinal": 17,
+  "program_id": "multi-hour-sector-etf-research-016",
+  "status": "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED",
+  "review_status": "PASS-FINDING-FREE-EXACT-RUNTIME-REVIEW",
+  "implementation_binding": {
+    "source_commit": "efcf5ef2abf56167be7f3741c10a98e2acf3e5f8",
+    "source_tree": "6bd870133b606d2232e00146cfe4777709a4888c",
+    "implementation_root": "bce103b0719eea804d4ab1e320729f4272a79e18c47c3c313fcd07a32916225e",
+    "source_files": [
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "36450f3a64a77f27a90d3cabb81c7b21024e9ccfaa33cf2229da7d39659e7025"
+      },
+      {
+        "path": "src/systematic_trading_lab/cli.py",
+        "sha256": "119b47057aad3f686201a9b6a94a1ca8216d7cc9273215edf4385d2f3a9f78f9"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_017_ohlcv_authority.py",
+        "sha256": "a9cc693c479c4da91a8f4d08d26b8e1c05e9c2d89197ba91eb5ddf8402fd5fc3"
+      },
+      {
+        "path": "tests/unit/test_intraday_source_provenance.py",
+        "sha256": "eef63da59aadd0d9d6f29f8007431d08ca7ffff9131473c879ffb67b1881002f"
+      },
+      {
+        "path": "tests/unit/test_program_017_ohlcv_authority.py",
+        "sha256": "cde8ebc678e08423679867aab903d2f9b6a76d20d827d4c63505da4f9f3d7a71"
+      }
+    ]
+  },
+  "reviewed_diff": {
+    "base_commit": "983975d0e06d19451ca9b4093e831ed43fb2354a",
+    "source_commit": "efcf5ef2abf56167be7f3741c10a98e2acf3e5f8",
+    "sha256": "ad95966fd831bee88f64c131ccebd3c5161d34ee35d64055fb3b1f6b3129011f",
+    "files": [
+      "src/systematic_trading_lab/cli.py",
+      "src/systematic_trading_lab/program_017_ohlcv_authority.py",
+      "tests/unit/test_intraday_source_provenance.py",
+      "tests/unit/test_program_017_ohlcv_authority.py"
+    ]
+  },
+  "operation_contract": {
+    "path": "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v5.json",
+    "sha256": "10086f90ae320397914f95fdf9c780ae9c782f93a6b65f48f8d9af4f09cd41a7",
+    "fingerprint": "ecb8bffdbc5af0c5ffc9d189c1d49d5ca99b6b7d2257dcfa1002d747142f8f98"
+  },
+  "operation_contract_review": {
+    "path": "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json",
+    "sha256": "e2aaecb0c6cd44e359d0ead286aae5513cd6d08ed75e7aa96a91c0506de81000",
+    "fingerprint": "03ac9a8a0109d3d4a65cfd9d6e2f85d1418b73fdc89928a573e8f83ab89bbf32"
+  },
+  "runtime_contract": {
+    "entrypoint": "src/systematic_trading_lab/program_017_ohlcv_authority.py",
+    "cli": "data acquire program-017-ohlcv",
+    "actions": ["credential-preflight", "run"],
+    "activation_and_execution_share_one_lock_held_transaction": true,
+    "seven_control_lock_order_enforced": true,
+    "one_full_precredential_predecessor_validation": true,
+    "predecessor_reconstruction_at_transport_boundaries": false,
+    "one_post_transport_canonical_projection": true,
+    "program_016_partial_session_discarded_in_full": true,
+    "first_request_is_exact_following_session_page_one": true,
+    "predecessor_raw_pages_copied": false,
+    "separate_program_017_private_root": true,
+    "single_nonrestarting_process_enforced": true,
+    "durable_claim_intent_body_and_receipt_order_enforced": true,
+    "program_017_request_reissue_allowed": false,
+    "cumulative_request_intent_ceiling": 22176,
+    "effective_cumulative_response_ceiling": 22171,
+    "working_disk_reservation_bytes": 17179869184,
+    "canonical_projection_byte_ceiling": 8589934592,
+    "deterministic_temp_stage_recovery_enforced": true,
+    "standalone_callable_credential_reader_present": false,
+    "credential_parsing_inline_only_in_lock_bound_loader": true,
+    "credential_accesses_per_program_017_process": 1,
+    "private_terminal_recovery_before_credentials_or_transport": true,
+    "public_projection_shared_by_terminal_and_cli": true,
+    "maximum_requests_per_minute": 120,
+    "automatic_retries": 0,
+    "parallel_session_chains": 1,
+    "future_child_runtime_source": "EXACT-CLEAN-SYNCHRONIZED-MAIN-AFTER-RUNTIME-MERGE",
+    "allowed_later_repository_additions": [
+      "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",
+      "config/research/program-017-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json"
+    ]
+  },
+  "review": {
+    "design_and_correctness": {
+      "reviewer": "fresh independent read-only runtime design reviewer",
+      "verdict": "PASS",
+      "findings": [],
+      "reviewed_source_commit": "efcf5ef2abf56167be7f3741c10a98e2acf3e5f8",
+      "verification": "132 focused Program 017 and provenance tests, Ruff, mypy, and git diff check passed"
+    },
+    "defensive_boundary": {
+      "reviewer": "fresh independent read-only defensive trust-boundary reviewer",
+      "verdict": "PASS",
+      "findings": [],
+      "reviewed_source_commit": "efcf5ef2abf56167be7f3741c10a98e2acf3e5f8",
+      "verification": "129 scoped tests, Ruff, mypy, 754-file secret scan, and exact provenance checks passed",
+      "proof_gap": "No real process kill, private Program 017 root, credential, Keychain, or provider endpoint was used; crash behavior was tested with bounded synthetic faults."
+    }
+  },
+  "review_history": {
+    "earlier_findings_present": true,
+    "all_findings_remediated_prospectively": true,
+    "current_exact_source_findings": [],
+    "final_exact_source_status": "PASS-FINDING-FREE"
+  },
+  "execution_boundary": {
+    "credential_reader_present": false,
+    "provider_transport_present": true,
+    "private_store_present": true,
+    "authority_activation_present": true,
+    "child_authority_present": false,
+    "child_authority_review_present": false,
+    "credential_presence_or_values_accessed": false,
+    "provider_requests": 0,
+    "private_program_017_state_accessed": false,
+    "dataset_admitted": false,
+    "strategy_calculations_or_returns": 0,
+    "next_gate": "Merge the exact runtime binding, freeze clean synchronized main, then add and independently review only the exact one-use child before names-only credential preflight."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "1906b2ac4e2587d60c7ee29c3380a678e1ca4682415e0b2db34909d0a1b89dcd"
+}
