@@ -1,5 +1,19 @@
 # Architecture decisions
 
+## 2026-09-07 - Accept Program 018 proposal v3 for implementation
+
+- Decision: accept the exact-delta Program 018 proposal v3 after fresh independent correctness and defensive reviews found no remaining issue. Preserve Program 017 v5 science and bounded transport design; add only the sixth immutable predecessor, Program 018 identities/root, six-intent budget, next independent session, eight-control topology, and future child paths.
+- Context: v1 review found a Program 018 private-path scanner bypass plus ambiguous terminal and root-transition inheritance. V2 fixed those but omitted the future public terminal topology and named the wrong review gate. V3 resolves all findings and tests every reserved public Program 018 path against a rejected private terminal path.
+- Consequences: v3 fingerprint is `b7c8ac3f0794b2119a7ac27129ce14c665eea63eacba892b3c459b16c8686732`; review fingerprint is `a7dd85efb12466597de9740bcf7b90ef4b44f29c74da5116d2ceeab76d4050d2`. Every current authority remains false. No Program 018 credentials, private state, provider request, acquisition, admission, strategy, controlled/protected, PAPER, broker, live, or purchase action occurred.
+- Revisit when: after this proposal and review merge. The exact runtime must pass fresh independent implementation review before a separate child exists.
+
+## 2026-09-07 - Program 018 may inherit only Program 017's completed whole-session prefix
+
+- Decision: keep Programs 012 through 017 terminal and immutable. A prospective Program 018 may reuse only the locally validated completed whole-session prefix. It must discard Program 017's partial session in full, never reissue either retained request, and begin at the next independent scheduled session.
+- Context: one low-priority offline replay with the frozen parser validated Program 017's terminal counts and retained chain. Its partial session contains completed page evidence followed by an intent-only next page, with no later evidence. The interruption cause is not established and is not needed for the no-reissue disposition.
+- Consequences: six consumed intents reduce the unchanged 22,176-intent ceiling to at most 22,170 responses. Program 018 must add Program 017 as a sixth immutable predecessor and inherit Program 017's one precredential validation pass, metadata-only transport boundaries, one final projection, privacy, storage, budget, and one-use controls. Redacted forensic fingerprint is `04f3c79aef5f1e05d9cc2a98f195b4306741de2a443754d91c24d9e030ae8ab0`. Every authority remains false.
+- Revisit when: after prospective Program 018 proposal, independent review, implementation, merge, and a separately reviewed child. Never revisit Programs 012 through 017 replay.
+
 ## 2026-09-07 - Program 017 terminal evidence is immutable and revokes every entrypoint
 
 - Decision: commit only Program 017's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, execution, or private-root access.

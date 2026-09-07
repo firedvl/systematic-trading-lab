@@ -171,6 +171,11 @@ private-root access. The frozen no-reissue rule prohibits resuming the transacti
 Program 017 again. See
 [Program 017 exposed-prefix recovery](docs/program-017-exposed-prefix-recovery.md).
 
+Program 018 is a non-authorizing forensic successor. It may inherit only Program 017's validated
+completed whole-session prefix, must discard the final partial session, and may not reissue either
+request from that session. Proposal, independent review, runtime, and a separate reviewed child are
+required before credentials, private Program 018 state, or provider contact.
+
 ## Using historical data
 
 Alpaca imports are read-only and require research mode plus credentials:

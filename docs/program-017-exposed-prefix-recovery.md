@@ -77,3 +77,8 @@ fingerprint is `9fe0cf53e78db7768db04c29f6a9ae679f17ce49f73fd58be03cd8d1c4d75945
 
 Do not run Program 017 credential preflight or acquisition again. Controlled or protected access,
 purchases, PAPER, broker writes, and live execution remain disabled.
+
+Read-only Program 018 forensics validate a completed whole-session prefix followed by one partial
+session containing a completed page and an intent-only next page. Any successor must discard that
+session in full, preserve six consumed intents, begin at the next independent session, and inherit
+the bounded transport-boundary design. Program 018 has no authority.
