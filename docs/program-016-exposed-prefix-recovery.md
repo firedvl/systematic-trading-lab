@@ -1,8 +1,7 @@
 # Program 016 exposed-prefix recovery
 
 Program 016, `multi-hour-sector-etf-research-015`, is
-`PROPOSED-PROSPECTIVE-NOT-AUTHORIZED`. It is a new prospective successor, not a replay or retry of
-Program 015.
+`FAIL-CONSUMED-NO-RETRY`. It was a new prospective successor, not a replay or retry of Program 015.
 
 Read-only offline forensics bind Program 015's exact scientific contract and reviews, runtime
 implementation, reviewed child, terminal, and terminal review. Retained Programs 012 through 015
@@ -45,5 +44,32 @@ correctness and defensive reviews passed finding-free. Implementation fingerprin
 reviewed exact one-use child remain required before credentials, private Program 016 state, or
 provider contact.
 
-No Program 016 credential preflight or acquisition is authorized. Controlled or protected access,
+## Terminal result
+
+The reviewed child made steady provider progress before the process was interrupted with one final
+intent-only request. Its response status is unknowable, so the frozen no-reissue rule prohibits
+resumption. The built-in recovery path sealed `RUNTIME-FAILURE` without another credential load or
+provider request. The public terminal records `admission_passed=false`, no dataset lineage, no
+Program 002 admission, and no strategy calculation or return. Its SHA-256 is
+`2ecae63efafee1d34fc85fabd093d3881e6951ac935afb8f8f5083f8edc4c7a2`; its derived active-authority
+fingerprint is `8be6e650694de9ca3f60279d0c4e6080f93f502a1087e9bb4159363f46de3d42`; its distinct child-artifact
+fingerprint is `b86dd5f6766caa9e5de793a111d04234b37caab9c5644e05a666504959849a06`; and its runtime source commit
+is `1844fc378a2f11722acb1ac62844f9859e7f8974`.
+
+The closeout requires those exact public bytes and rejects a missing, changed, or invalid terminal
+before credential preflight, authority derivation, execution, or private-root access. Program 016
+cannot replay or retry. Dynamic acquisition counts, detailed failure evidence, private identities,
+exact missingness, provider tokens, and market observations remain private.
+
+Offline timing evidence also shows that Program 016 repeatedly reconstructed the immutable
+predecessor corpus at every transport boundary. Any prospective successor must replace that
+operationally unbounded repeated work with an independently reviewed constant-time binding check
+without weakening source, chronology, privacy, or one-use validation.
+
+Fresh independent correctness and defensive reviews pass finding-free. The review artifact
+SHA-256/fingerprint is
+`f8632711f4a5d1b53f28f976ca5911100ea61c35b1f3db90fe0bf3fed20299c9` /
+`2cf5d4f0c65b0ea3cb1433cf0f4048b36001165af6dcee77f717b8ac0a34520e`.
+
+Do not run Program 016 credential preflight or acquisition again. Controlled or protected access,
 purchases, PAPER, broker writes, and live execution remain disabled.

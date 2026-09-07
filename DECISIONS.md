@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-07 - Program 016 terminal evidence is immutable and revokes every entrypoint
+
+- Decision: commit only Program 016's frozen redacted terminal projection. Require its exact canonical SHA-256 and reject a missing, changed, or invalid terminal before credential preflight, authority derivation, execution, or private-root access.
+- Context: the one-use child made steady provider progress before interruption left one intent-only request with unknowable response status. The built-in recovery path sealed `RUNTIME-FAILURE` / `FAIL-CONSUMED-NO-RETRY` without another credential load or provider request. Offline timing evidence shows that every transport boundary repeated full immutable predecessor reconstruction, making the runtime operationally unbounded at the current evidence size.
+- Consequences: public terminal SHA-256 is `2ecae63efafee1d34fc85fabd093d3881e6951ac935afb8f8f5083f8edc4c7a2`; derived active-authority fingerprint is `8be6e650694de9ca3f60279d0c4e6080f93f502a1087e9bb4159363f46de3d42`; child-artifact fingerprint is `b86dd5f6766caa9e5de793a111d04234b37caab9c5644e05a666504959849a06`; source commit is `1844fc378a2f11722acb1ac62844f9859e7f8974`. Fresh independent correctness and defensive reviews pass finding-free; review SHA-256/fingerprint is `f8632711f4a5d1b53f28f976ca5911100ea61c35b1f3db90fe0bf3fed20299c9` / `2cf5d4f0c65b0ea3cb1433cf0f4048b36001165af6dcee77f717b8ac0a34520e`. Program 016 cannot replay or retry. No dataset was admitted and no strategy ran. Controlled or protected access, purchases, PAPER, broker writes, and live execution remain false.
+- Revisit when: never for Program 016. After independent terminal review and merge, a prospective successor may replace repeated predecessor reconstruction with an independently reviewed constant-time binding that preserves all validation guarantees.
+
 ## 2026-09-06 - Implement the reviewed Program 016 runtime without authority
 
 - Decision: reuse the Program 015 runtime controls and add only Program 015 as a fourth immutable predecessor layer, the sixth control lock, Program 016 identities, and the 22,172 effective response ceiling.

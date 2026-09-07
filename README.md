@@ -156,11 +156,12 @@ finding-free independent terminal review confirmed the exact terminal bytes, rep
 distinct runtime-derived and child-artifact fingerprints. Do not run Program 015 again.
 See [Program 015 exposed-prefix recovery](docs/program-015-exposed-prefix-recovery.md).
 
-Program 016 is a prospective, non-authorizing recovery proposal. It preserves Program 015's frozen
-science, keeps Programs 012 through 015 immutable, and reduces the unchanged cumulative response
-envelope for four consumed intent-only frontiers. Independent design and defensive reviews passed
-finding-free; runtime implementation and a later reviewed child remain required before credential
-access, private Program 016 state, or provider contact. See
+Program 016's reviewed one-use child is consumed and sealed as `FAIL-CONSUMED-NO-RETRY`. The
+redacted public terminal records a runtime failure after interruption, no structural admission, no
+dataset lineage, and no strategy work. Current code rejects every Program 016 lifecycle entrypoint
+before credential or private-root access. The frozen no-reissue rule prohibits resuming its final
+intent-only request. A finding-free independent terminal review confirms the closeout and public
+redaction. Do not run Program 016 again. See
 [Program 016 exposed-prefix recovery](docs/program-016-exposed-prefix-recovery.md).
 
 ## Using historical data
