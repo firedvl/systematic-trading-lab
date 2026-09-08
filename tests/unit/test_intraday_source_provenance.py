@@ -155,6 +155,7 @@ def test_campaign_v2_manifest_remains_immutable_closed_evidence() -> None:
         "systematic_trading_lab/program_015_ohlcv_authority.py",
         "systematic_trading_lab/program_016_ohlcv_authority.py",
         "systematic_trading_lab/program_017_ohlcv_authority.py",
+        "systematic_trading_lab/program_018_ohlcv_authority.py",
         "systematic_trading_lab/program_014_ohlcv_authority.py",
         "systematic_trading_lab/intraday_autonomous_research_program.py",
         "systematic_trading_lab/intraday_cost_calibration.py",
