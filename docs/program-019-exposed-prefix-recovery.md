@@ -15,8 +15,16 @@ once before credential presence, does not reconstruct them between transports, a
 projection after transport. Storage remains bounded by the 16 GiB reservation and 8 GiB canonical
 projection cap. No retry or automatic process restart is allowed.
 
-Runtime implementation and fresh independent reviews must finish before a separately scoped standing
-child is created, reviewed, merged, and internally activated. Until then there is no credential,
+Runtime implementation is reviewed finding-free at source
+`f11302c018e6a526e867a5b7f1434656c06e3e59`, tree `101ec574ea004a79e6289402417bc0040e90fbf3`,
+implementation root `67224e3bee764c96dd3662b221e11a36b0e8fcbc6eabb2463cb0d112961c7547`.
+The initial closeout finding was fixed prospectively: normal reconstruction remains strict while
+failure-only recovery validates the exact published derived prefix against completed page evidence.
+Both fresh reviews pass; 2,236 full-suite tests pass with four skips. A read-only retained-evidence
+check validates predecessors and stops at the fresh request frontier with no provider request.
+
+The runtime must merge before a separately scoped standing child is created, reviewed, merged, and
+internally activated. Until then there is no credential,
 provider, acquisition, admission, or strategy authority. Existing credential variable names remain
 `PROGRAM_006_ALPACA_API_KEY_ID` and `PROGRAM_006_ALPACA_API_SECRET_KEY`; values must stay inside the
 fixed scoped runtime and must never enter logs, artifacts, hashes, or command-line arguments.

@@ -178,9 +178,9 @@ private roots. Do not run Program 018 again. See
 [Program 018 exposed-prefix recovery](docs/program-018-exposed-prefix-recovery.md).
 
 Program 019's recovery proposal v2 and independent correctness and defensive reviews are merged.
-Its runtime awaits independent review with seven immutable predecessors, nine held controls, and no
-change to source, chronology, admission, privacy, or no-reissue rules. Runtime and child reviews must
-complete before credential or provider access. See
+Its runtime has finding-free independent reviews with seven immutable predecessors, nine held controls, and no
+change to source, chronology, admission, privacy, or no-reissue rules. Runtime merge and a separate
+reviewed child must complete before credential or provider access. See
 [Program 019 exposed-prefix recovery](docs/program-019-exposed-prefix-recovery.md).
 
 ## Using historical data

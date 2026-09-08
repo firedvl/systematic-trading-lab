@@ -83,6 +83,36 @@ def _credentials() -> dict[str, str]:
     }
 
 
+def test_runtime_review_binds_exact_source_and_is_non_authorizing() -> None:
+    path = _REPOSITORY / "config/research/program-019-exposed-prefix-runtime-implementation-v1.json"
+    artifact = json.loads(path.read_text())
+    assert artifact.pop("implementation_fingerprint") == fingerprint(artifact)
+    binding = artifact["implementation_binding"]
+    assert binding["source_commit"] == "f11302c018e6a526e867a5b7f1434656c06e3e59"
+    assert binding["implementation_root"] == fingerprint(binding["source_files"])
+    assert (
+        _git(_REPOSITORY, "rev-parse", f"{binding['source_commit']}^{{tree}}")
+        == binding["source_tree"]
+    )
+    for source in binding["source_files"]:
+        raw = subprocess.check_output(
+            ["git", "show", f"{binding['source_commit']}:{source['path']}"], cwd=_REPOSITORY
+        )
+        assert hashlib.sha256(raw).hexdigest() == source["sha256"]
+    reviewed = artifact["reviewed_diff"]
+    raw_diff = subprocess.check_output(
+        ["git", "diff", "--binary", reviewed["base_commit"], reviewed["source_commit"]],
+        cwd=_REPOSITORY,
+    )
+    assert hashlib.sha256(raw_diff).hexdigest() == reviewed["sha256"]
+    assert all(
+        review["verdict"] == "PASS" and review["findings"] == []
+        for review in artifact["review"].values()
+    )
+    assert all(value is False for value in artifact["authority"].values())
+    assert artifact["execution_boundary"]["provider_requests"] == 0
+
+
 def _git(repository: Path, *arguments: str) -> str:
     return subprocess.run(
         ("git", "-C", str(repository), *arguments),

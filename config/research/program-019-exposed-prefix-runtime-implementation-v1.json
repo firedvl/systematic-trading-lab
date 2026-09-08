@@ -1,0 +1,177 @@
+{
+  "schema_version": "program-019-exposed-prefix-runtime-implementation-v1",
+  "implementation_id": "program-019-exposed-prefix-runtime-implementation-2026-09-08-v1",
+  "program_ordinal": 19,
+  "program_id": "multi-hour-sector-etf-research-018",
+  "status": "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED",
+  "review_status": "PASS-FINDING-FREE-EXACT-RUNTIME-REVIEW",
+  "implementation_binding": {
+    "source_commit": "f11302c018e6a526e867a5b7f1434656c06e3e59",
+    "source_tree": "101ec574ea004a79e6289402417bc0040e90fbf3",
+    "source_files": [
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "b1883d0c681694a47c9c28eaa038f70a72f12e578f0f8982b917bf1543366b19"
+      },
+      {
+        "path": "src/systematic_trading_lab/cli.py",
+        "sha256": "70014b49f626bafdaee4a47c90f1bd6b652fbd52fc9486beb397746b59e42bc6"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_019_ohlcv_authority.py",
+        "sha256": "8fe030708a2ba0357802efc206fb2d0a39542575864e24d01426add25f48749b"
+      },
+      {
+        "path": "tests/unit/test_intraday_source_provenance.py",
+        "sha256": "0708516565fc9b48105ed9e4ae88511d615d4b2c4e95b2b50fac9cabc76643ec"
+      },
+      {
+        "path": "tests/unit/test_program_019_ohlcv_authority.py",
+        "sha256": "8349a3fc91cef840086cea075fd3869d95ce12f1c39e13f5724b0629403f9ebb"
+      }
+    ],
+    "implementation_root": "67224e3bee764c96dd3662b221e11a36b0e8fcbc6eabb2463cb0d112961c7547"
+  },
+  "reviewed_diff": {
+    "base_commit": "fac1e0b3d5dd37941e89f2291c69d21fc080f632",
+    "source_commit": "f11302c018e6a526e867a5b7f1434656c06e3e59",
+    "sha256": "09d5e389e1915938bdd2febe9f3f9ac401a8b93a05bf046af98502d6d0deb517",
+    "files": [
+      "CURRENT_STATE.md",
+      "README.md",
+      "docs/program-019-exposed-prefix-recovery.md",
+      "src/systematic_trading_lab/cli.py",
+      "src/systematic_trading_lab/program_019_ohlcv_authority.py",
+      "tests/unit/test_intraday_source_provenance.py",
+      "tests/unit/test_program_019_ohlcv_authority.py"
+    ]
+  },
+  "operation_contract": {
+    "path": "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json",
+    "sha256": "4a773eb765e3733803849706d51ea19995f191f3ec387688eeaf3de6af2cbced",
+    "fingerprint": "597cba6cdf264c51684c9f4325f0104764a51573d93c008d65593429de5397fb"
+  },
+  "operation_contract_review": {
+    "path": "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json",
+    "sha256": "bdb80b56b518de72e56bf43424533f46c150ba2a0213cb9bfc6e99103b394122",
+    "fingerprint": "e4cc3012b63d4d9a8032dc3b6c7a46752c7648b32be43451a38db6a65c93a203"
+  },
+  "runtime_contract": {
+    "entrypoint": "src/systematic_trading_lab/program_019_ohlcv_authority.py",
+    "cli": "data acquire program-019-ohlcv",
+    "actions": [
+      "credential-preflight",
+      "run"
+    ],
+    "activation_and_execution_share_one_lock_held_transaction": true,
+    "one_full_precredential_predecessor_validation": true,
+    "predecessor_reconstruction_at_transport_boundaries": false,
+    "one_post_transport_canonical_projection": true,
+    "first_request_is_exact_following_session_page_one": true,
+    "predecessor_raw_pages_copied": false,
+    "separate_program_019_private_root": true,
+    "single_nonrestarting_process_enforced": true,
+    "durable_claim_intent_body_and_receipt_order_enforced": true,
+    "program_019_request_reissue_allowed": false,
+    "cumulative_request_intent_ceiling": 22176,
+    "effective_cumulative_response_ceiling": 22169,
+    "working_disk_reservation_bytes": 17179869184,
+    "canonical_projection_byte_ceiling": 8589934592,
+    "tracked_writes_reject_preexisting_root_drift": true,
+    "runtime_failure_recovery_strictly_revalidates_completed_evidence": true,
+    "partial_snapshot_construction_closes_opened_descriptors": true,
+    "deterministic_temp_stage_recovery_enforced": true,
+    "standalone_callable_credential_reader_present": false,
+    "credential_parsing_inline_only_in_lock_bound_loader": true,
+    "credential_accesses_per_program_019_process": 1,
+    "private_terminal_recovery_before_credentials_or_transport": true,
+    "public_projection_shared_by_terminal_and_cli": true,
+    "maximum_requests_per_minute": 120,
+    "automatic_retries": 0,
+    "parallel_session_chains": 1,
+    "future_child_runtime_source": "EXACT-CLEAN-SYNCHRONIZED-MAIN-AFTER-RUNTIME-MERGE",
+    "allowed_later_repository_additions": [
+      "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",
+      "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json"
+    ],
+    "nine_control_lock_order_enforced": true,
+    "seven_immutable_predecessor_roots": true,
+    "program_016_program_017_and_program_018_partial_sessions_discarded_in_full": true,
+    "exact_derived_prefix_validated_before_failure_terminal": true,
+    "normal_reconstruction_rejects_unterminaled_derived_evidence": true,
+    "same_process_failure_closeout_reuses_expected_projection": true,
+    "restart_derived_prefix_reconstruction_uses_no_transport": true
+  },
+  "review": {
+    "design_and_correctness": {
+      "reviewer": "program019_runtime_final_correctness_review",
+      "verdict": "PASS",
+      "findings": [],
+      "reviewed_source_commit": "f11302c018e6a526e867a5b7f1434656c06e3e59",
+      "verification": "All seven changed files reviewed; 122 runtime tests and targeted closeout regressions passed."
+    },
+    "defensive_boundary": {
+      "reviewer": "program019_runtime_final_defensive_review",
+      "verdict": "PASS",
+      "findings": [],
+      "reviewed_source_commit": "f11302c018e6a526e867a5b7f1434656c06e3e59",
+      "verification": "Both source files and five supporting files reviewed; 29 focused regressions passed; eight instrumented publication-failure cases preserve one projection.",
+      "proof_gap": "Source and synthetic evidence only; no real credentials, Keychain, provider, private roots, strategy or protected data accessed by reviewer."
+    }
+  },
+  "review_history": {
+    "initial_exact_source_commit": "a45d16ca331754c93af05d07a4eb6e41821f96cd",
+    "initial_exact_source_status": "FINDINGS",
+    "initial_findings": [
+      "Known derived-publication failure after canonical output incorrectly blocked mandatory failure sealing.",
+      "Complete admission-terminal temp recovery reached the same premature derived-state guard."
+    ],
+    "all_findings_remediated_prospectively": true,
+    "current_exact_source_findings": [],
+    "final_exact_source_status": "PASS-FINDING-FREE"
+  },
+  "verification": {
+    "focused_runtime_tests": "122 passed",
+    "full_suite": "2236 passed; 4 skipped",
+    "mypy": "PASS-304-FILES",
+    "ruff_format_and_lint": "PASS",
+    "secret_scan": "PASS-781-FILES",
+    "shell_syntax": "PASS",
+    "wheel_and_source_build": "PASS",
+    "git_diff_check": "PASS",
+    "real_predecessor_reconstruction": "PASS-READ-ONLY-NO-CREDENTIAL-NO-PROVIDER",
+    "real_predecessor_projection_to_first_program_019_transport_boundary": "PASS-READ-ONLY-NO-CREDENTIAL-NO-PROVIDER"
+  },
+  "execution_boundary": {
+    "credential_reader_present": false,
+    "provider_transport_present": true,
+    "private_store_present": true,
+    "authority_activation_present": true,
+    "child_authority_present": false,
+    "child_authority_review_present": false,
+    "credential_presence_or_values_accessed": false,
+    "provider_requests": 0,
+    "private_program_019_state_accessed": false,
+    "dataset_admitted": false,
+    "strategy_calculations_or_returns": 0,
+    "next_gate": "Merge the exact runtime binding, freeze clean synchronized main, then add and independently review only the exact one-use child before names-only credential preflight."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "2acba0c75fdc70d8b22425916c602d3828d9e086de2c81e281f1e4b860b5f53a"
+}
