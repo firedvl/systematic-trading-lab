@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-08 - Freeze the repaired Program 019 recovery runtime
+
+- Decision: bind Program 019 to finding-free source `f11302c018e6a526e867a5b7f1434656c06e3e59`, tree `101ec574ea004a79e6289402417bc0040e90fbf3`, and implementation root `67224e3bee764c96dd3662b221e11a36b0e8fcbc6eabb2463cb0d112961c7547`. Keep authority false until runtime merge and a separately reviewed standing child.
+- Context: the runtime inherits Program 018 controls, adds its immutable predecessor, preserves all three partial-session exclusions, and carries seven consumed intents. Independent review confirmed that a known derived-file publication failure could prevent terminal sealing after canonical output. The prospective fix keeps normal reconstruction strict, validates only the exact reachable derived prefix during failure closeout, compares retained bytes and replay budgets, and recovers complete terminal temps without credentials or transport.
+- Consequences: both fresh independent reviews pass finding-free. Full local verification reports 2,236 passed and four skipped, with static, secret, shell and build gates passing. A credential-free read-only check validates retained predecessors and projection to the fresh frontier. No Program 019 private state, credential value, provider request, admission, or strategy work occurred. Implementation fingerprint is `2acba0c75fdc70d8b22425916c602d3828d9e086de2c81e281f1e4b860b5f53a`.
+- Revisit when: the runtime merges to clean synchronized main. Only the exact child and its independent review may follow before activation.
+
 ## 2026-09-08 - Program 018 terminal evidence is immutable and revokes every entrypoint
 
 - Decision: commit Program 018's frozen redacted terminal projection and require its exact canonical SHA-256 before every lifecycle entrypoint.

@@ -1,7 +1,8 @@
 # Current state
 
-Program 019 proposal v2 and its finding-free independent reviews are current. Program 018 and all
-earlier terminal programs remain immutable.
+Program 019 proposal v2 and its finding-free independent reviews merged in PR #284 at
+`fac1e0b3d5dd37941e89f2291c69d21fc080f632`. Runtime implementation is independently reviewed on
+`codex/program-019-runtime`. Program 018 and all earlier terminal programs remain immutable.
 
 - Program 019, `multi-hour-sector-etf-research-018`, has no authority. One low-priority offline pass
   validated Program 018's reviewed identity, terminal counts, completed whole-session prefix, and one
@@ -22,12 +23,32 @@ earlier terminal programs remain immutable.
   The complete 146-leaf old/new delta guard closes the final test gap without changing v2 bytes.
   Combined review fingerprint is
   `e4cc3012b63d4d9a8032dc3b6c7a46752c7648b32be43451a38db6a65c93a203`.
-  Restart checkpoint: branch `codex/program-019-proposal`; main and freshly fetched origin/main
-  `5e95784a79712d91a189f5c19f1cbe1e25a1ad9a`; no open PR at review persistence. Both reviews
-  are complete with no outstanding finding. No Program 019 runtime, child, credential access,
-  private state, provider contact, admission, or strategy work exists; its use is not consumed.
-  Next autonomous action: validate and merge the proposal/review branch, synchronize clean main,
-  then implement and independently review the exact runtime before child creation or execution.
+  Restart checkpoint: proposal PR #284 merged after full local and remote quality gates passed;
+  the merged proposal branch was deleted locally and remotely. Runtime base main/origin/main is
+  `fac1e0b3d5dd37941e89f2291c69d21fc080f632`. The new authority module and synthetic tests are
+  implemented on `codex/program-019-runtime`; finding-free runtime reviews are complete but no child
+  exists. No Program 019 credential access, private state, provider contact, admission, or strategy
+  work has occurred; its use is not consumed.
+  Integration restored the required Program 017 source/terminal bindings alongside Program 018,
+  preserved all three nested partial-session exclusions, and corrected successor diagnostic labels.
+  Initial exact runtime source `a45d16ca331754c93af05d07a4eb6e41821f96cd` passed 2,217 full-suite
+  tests with four skips and the static gates. Defensive review found no security vulnerability;
+  its separate closeout concern was independently confirmed as a high correctness finding:
+  unterminaled derived output incorrectly prevented mandatory failure sealing after canonical
+  publication. That source is not finding-free for execution. The prospective repair separates
+  strict normal reconstruction from exact failure-prefix validation, verifies completed bytes and
+  replay budgets, caches expected final evidence, and supports valid admission-terminal temp recovery.
+  No science or proposal changed. Fresh independent correctness and defensive reviews pass finding-free
+  at source/tree/root `f11302c018e6a526e867a5b7f1434656c06e3e59` /
+  `101ec574ea004a79e6289402417bc0040e90fbf3` /
+  `67224e3bee764c96dd3662b221e11a36b0e8fcbc6eabb2463cb0d112961c7547`.
+  Full local gates pass: 2,236 tests, four skips; Ruff, mypy, secret scan, shell, wheel and source builds.
+  A low-priority credential-free read-only check validates the complete retained predecessor chain
+  and projects it to the fresh Program 019 request frontier without provider contact or P019 state.
+  Implementation fingerprint is `2acba0c75fdc70d8b22425916c602d3828d9e086de2c81e281f1e4b860b5f53a`.
+  Next autonomous action: commit the exact runtime review, push and merge after remote CI, synchronize
+  main, then construct and independently review the scoped child. Credentials remain uninspected
+  until the separately reviewed runtime permits them.
   No human-attention boundary has been crossed.
 
 - Program 018, `multi-hour-sector-etf-research-017`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
