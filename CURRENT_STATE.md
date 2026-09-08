@@ -1,9 +1,23 @@
 # Current state
 
-Program 018's read-only forensic disposition is current. Program 017 and all earlier terminal
-programs remain immutable.
+Program 018's terminal result is current. Program 017 and all earlier terminal programs remain
+immutable.
 
-- Program 018, `multi-hour-sector-etf-research-017`, has no authority. A single low-priority offline
+- Program 018, `multi-hour-sector-etf-research-017`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
+  one-use child consumed its authority and the runtime sealed a failure terminal. The redacted public
+  terminal binds source commit `8e97e29e951e5e318f8139c1bbaa6a2372711f14`, records
+  `admission_passed=false`, no dataset lineage, no Program 002 admission, and no strategy calculation
+  or return. Its SHA-256 is `90102e72d90391ec5f9e342bf21993daf9613f4fcfaf0218bfd25f041e73d396`;
+  derived active-authority fingerprint is
+  `57be4d7a576061773b4507fb4a00a897ff073a56a8ce3c20417a5dc40b304c7b`, distinct from child-artifact
+  fingerprint `defa5f68c7b7f8937c1d904b20f1151be5fdacefd7a5fae525dd21234b12a7a6`.
+  Dynamic acquisition counts, detailed failure evidence, private identities, raw market data,
+  provider tokens, missingness, and exclusions remain private. Program 018 cannot replay or retry;
+  current code requires the exact terminal before every lifecycle entrypoint. No dataset was admitted
+  and no strategy ran. Controlled/protected, purchase, PAPER, broker, and live authority remained
+  disabled. Next autonomous action: finding-free independent terminal review and closeout merge.
+
+- Historical Program 018 planning snapshot: a single low-priority offline
   validation pass rederived Program 017's reviewed child identity, canonical private terminal, exact
   public projection, and complete retained chain. Program 017 added an exact whole-session prefix,
   followed by one partial session with a completed page and an intent-only next-page checkpoint. A
@@ -31,8 +45,7 @@ programs remain immutable.
   correctness and defensive reviews pass finding-free after root-drift, strict terminal recovery,
   and descriptor-cleanup findings were fixed prospectively. Every authority remains false. No
   Program 018 credential access, private state, provider request, dataset admission, or strategy work
-  occurred. Next autonomous action: merge the runtime binding, synchronize clean main, then create
-  and independently review only the separate exact one-use child before credential preflight.
+  had occurred at that checkpoint. The runtime and separately reviewed child subsequently merged.
 
 - Program 017, `multi-hour-sector-etf-research-016`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use, and the process ended before publishing a public terminal.
