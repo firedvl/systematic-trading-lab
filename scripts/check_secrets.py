@@ -249,6 +249,7 @@ PUBLIC_PROGRAM_JSON = frozenset(
         "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json",
         "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
         "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1.json",
+        "config/research/program-019-predecessor-recovery-forensic-disposition-v1.json",
     }
 )
 _PROVIDER_BAR_KEYS = frozenset({"t", "o", "h", "l", "c", "v"})
@@ -358,6 +359,7 @@ def main() -> int:
                         "program-016",
                         "program-017",
                         "program-018",
+                        "program-019",
                     )
                 )
                 and suffix in PRIVATE_MARKET_DATA_SUFFIXES
