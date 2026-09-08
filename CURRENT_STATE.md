@@ -10,7 +10,11 @@ programs remain immutable.
   session. Seven consumed intents leave at most 22,169 responses. Redacted disposition fingerprint is
   `e5ddb312ffd51b4246ec420a3b5586f41e97e58179ed93037a5a6b40529ee18d`. Every authority remains
   false; no credentials, provider, mutation, admission, or strategy work occurred during forensics.
-  Next autonomous action: freeze and independently review a prospective Program 019 proposal.
+  Proposal v1 is now frozen with fingerprint
+  `93678f8bfcbc4d155f9f930911c913e34ee936e5ea7404e1d97797180b3b1640`. It adds Program 018 as the
+  seventh immutable predecessor, nine held controls, seven-intent/22,169-response accounting, exact
+  Program 019 terminal schemas, and the complete public topology while preserving every other
+  Program 018 v3 control. Next autonomous action: fresh independent correctness and defensive review.
 
 - Program 018, `multi-hour-sector-etf-research-017`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   one-use child consumed its authority and the runtime sealed a failure terminal. The redacted public

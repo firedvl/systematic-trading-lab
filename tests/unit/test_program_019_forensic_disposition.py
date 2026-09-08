@@ -9,6 +9,9 @@ from systematic_trading_lab.fingerprints import fingerprint
 
 ROOT = Path(__file__).resolve().parents[2]
 PATH = Path("config/research/program-019-predecessor-recovery-forensic-disposition-v1.json")
+PROPOSAL = Path(
+    "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
+)
 
 
 def test_program_019_forensic_disposition_is_bound_and_non_authorizing() -> None:
@@ -36,6 +39,26 @@ def test_program_019_forensic_disposition_is_bound_and_non_authorizing() -> None
     assert all(flag is False for flag in value["authority"].values())
 
 
+def test_program_019_proposal_is_exact_and_non_authorizing() -> None:
+    value = json.loads((ROOT / PROPOSAL).read_text())
+    stored = value.pop("proposal_fingerprint")
+    assert stored == fingerprint(value)
+    for binding in value["predecessor"].values():
+        assert (
+            hashlib.sha256((ROOT / binding["path"]).read_bytes()).hexdigest() == binding["sha256"]
+        )
+    assert value["program_ordinal"] == 19
+    assert value["recovery_contract"]["incomplete_program_018_request_reissue_allowed"] is False
+    assert value["transport_boundary_contract"]["all_nine_controls_held_continuously"] is True
+    budget = value["cumulative_transport_contract"]
+    assert budget["consumed_intent_without_response_count"] == 7
+    assert budget["maximum_effective_combined_responses"] == 22169
+    assert (
+        value["public_terminal_contract"]["exact_static_identity_values"]["program_ordinal"] == 19
+    )
+    assert all(flag is False for flag in value["authority"].values())
+
+
 def test_program_019_secret_guard_rejects_private_json(
     tmp_path: Path, monkeypatch: MonkeyPatch, capsys: CaptureFixture[str]
 ) -> None:
@@ -49,10 +72,12 @@ def test_program_019_secret_guard_rejects_private_json(
     private = Path("config/research/program-019-private-terminal.json")
     private.parent.mkdir(parents=True)
     private.write_text("{}\n")
-    public = Path(PATH)
-    public.write_text("{}\n")
-    monkeypatch.setattr(guard, "tracked_files", lambda: [private, public])
+    public_paths = [Path(path) for path in guard.PUBLIC_PROGRAM_JSON if "program-019" in path]
+    for public in public_paths:
+        public.parent.mkdir(parents=True, exist_ok=True)
+        public.write_text("{}\n")
+    monkeypatch.setattr(guard, "tracked_files", lambda: [private, *public_paths])
     assert guard.main() == 1
     errors = capsys.readouterr().err
     assert f"{private}:private-market-data-path" in errors
-    assert str(public) not in errors
+    assert all(str(public) not in errors for public in public_paths)
