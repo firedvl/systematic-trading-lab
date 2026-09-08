@@ -448,19 +448,26 @@ class _ControlSnapshot:
         self.immutable_root_stats = tuple(
             _stat_tuple(descriptor, _FULL_STAT_FIELDS) for descriptor in self.immutable_roots
         )
-        self.lock_descriptors = tuple(
-            os.open(
-                "run.lock",
-                os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
-                dir_fd=descriptor,
+        lock_descriptors: list[int] = []
+        try:
+            for descriptor in (mutable_root, *self.immutable_roots):
+                lock_descriptors.append(
+                    os.open(
+                        "run.lock",
+                        os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+                        dir_fd=descriptor,
+                    )
+                )
+            self.lock_descriptors = tuple(lock_descriptors)
+            self.lock_stats = tuple(
+                _stat_tuple(descriptor, _FULL_STAT_FIELDS) for descriptor in self.lock_descriptors
             )
-            for descriptor in (mutable_root, *self.immutable_roots)
-        )
-        self.lock_stats = tuple(
-            _stat_tuple(descriptor, _FULL_STAT_FIELDS) for descriptor in self.lock_descriptors
-        )
-        self.mutable_stable = _stat_tuple(mutable_root, _STABLE_STAT_FIELDS)
-        self.mutable_expected = _stat_tuple(mutable_root, _FULL_STAT_FIELDS)
+            self.mutable_stable = _stat_tuple(mutable_root, _STABLE_STAT_FIELDS)
+            self.mutable_expected = _stat_tuple(mutable_root, _FULL_STAT_FIELDS)
+        except BaseException:
+            for descriptor in lock_descriptors:
+                os.close(descriptor)
+            raise
         self.failed_write: tuple[str, tuple[int, ...], tuple[int, ...], str] | None = None
         self.failure_only = False
         self.allow_failure_writes = False
@@ -529,6 +536,11 @@ _FINAL_VALIDATIONS: dict[int, tuple[_CombinedProjection, Mapping[str, Any]]] = {
 
 def _tracked_write(root_descriptor: int, key: str, write: Callable[[], None]) -> None:
     tracker = _ROOT_TRACKERS.get(root_descriptor)
+    if tracker is not None:
+        if tracker.failure_only and tracker.allow_failure_writes:
+            tracker.validate_failure_closeout()
+        else:
+            tracker.validate_continuation()
     before = _stat_tuple(root_descriptor, _FULL_STAT_FIELDS)
     try:
         write()
@@ -563,6 +575,9 @@ def _tracked_append_atomic(root_descriptor: int, key: str, payload: bytes) -> No
                     f"Program 018 evidence already exists: {key}"
                 ) from None
             os.fsync(root_descriptor)
+            tracker = _ROOT_TRACKERS.get(root_descriptor)
+            if tracker is not None:
+                tracker.refresh_after_write()
         finally:
             with suppress(FileNotFoundError):
                 _tracked_unlink(root_descriptor, temp_key)
@@ -3393,6 +3408,13 @@ def _load_terminal_record(
         else:
             snapshot.validate_continuation()
     result_kind = record.get("result_kind")
+    if result_kind == "RUNTIME-FAILURE" and (snapshot is None or not snapshot.failure_only):
+        _reconstruct_state(
+            root_descriptor,
+            predecessor_state,
+            authority=authority,
+            allow_terminal_failure=True,
+        )
     durable_credentials = (
         _runtime_failure_credential_load_count(root_descriptor, authority, predecessor_state)
         if result_kind == "RUNTIME-FAILURE"

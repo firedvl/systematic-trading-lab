@@ -1253,6 +1253,41 @@ def test_multi_page_execution_has_one_predecessor_derivation_and_one_projection(
     assert len(transport.intents) == 2
 
 
+def test_unaccounted_drift_after_page_stops_before_next_transport(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _, request, _ = _configure_finite_execution(tmp_path, monkeypatch)
+    transport = authority.MockBarsTransport(
+        [
+            raw_contract.RawResponse(200, _body(request, 0, "next")),
+            raw_contract.RawResponse(200, _body(request, 1, None)),
+        ]
+    )
+    pages = 0
+
+    def mutate_after_first_page() -> None:
+        nonlocal pages
+        pages += 1
+        if pages == 1:
+            descriptor = authority._open_root(tmp_path, authority.PRIVATE_ROOT, create=False)
+            try:
+                predecessor._append(descriptor, "unexpected", b"x")
+            finally:
+                os.close(descriptor)
+
+    with pytest.raises(authority.Program018PostClaimPersistenceError, match="terminal persistence"):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=transport,
+            after_page=mutate_after_first_page,
+        )
+
+    assert len(transport.intents) == 1
+    assert not (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
+    assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
+
+
 def test_mutable_root_tracker_accepts_tracked_writes_and_rejects_unaccounted_drift(
     tmp_path: Path,
 ) -> None:
@@ -1260,6 +1295,7 @@ def test_mutable_root_tracker_accepts_tracked_writes_and_rejects_unaccounted_dri
     immutable = tuple(
         authority._open_root(tmp_path, path, create=False)
         for path in (
+            authority.PROGRAM_017_PRIVATE_ROOT,
             authority.PROGRAM_016_PRIVATE_ROOT,
             authority.PROGRAM_015_PRIVATE_ROOT,
             authority.PROGRAM_014_PRIVATE_ROOT,
@@ -1283,6 +1319,35 @@ def test_mutable_root_tracker_accepts_tracked_writes_and_rejects_unaccounted_dri
             os.close(descriptor)
 
 
+def test_snapshot_construction_closes_locks_after_partial_open_failure(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    root = _open_program_018_root(tmp_path)
+    immutable = authority._open_root(tmp_path, authority.PROGRAM_017_PRIVATE_ROOT, create=False)
+    original_open = os.open
+    opened: list[int] = []
+
+    def fail_second_lock(path: str, *args: Any, **kwargs: Any) -> int:
+        if path == "run.lock":
+            if opened:
+                raise OSError("synthetic second lock open failure")
+            descriptor = original_open(path, *args, **kwargs)
+            opened.append(descriptor)
+            return descriptor
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", fail_second_lock)
+    try:
+        with pytest.raises(OSError, match="second lock open failure"):
+            authority._ControlSnapshot(root, (immutable,))
+        assert len(opened) == 1
+        with pytest.raises(OSError):
+            os.fstat(opened[0])
+    finally:
+        os.close(immutable)
+        os.close(root)
+
+
 def test_atomic_temp_unlink_failure_remains_valid_for_failure_closeout(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
@@ -1292,6 +1357,7 @@ def test_atomic_temp_unlink_failure_remains_valid_for_failure_closeout(
     immutable = tuple(
         authority._open_root(tmp_path, path, create=False)
         for path in (
+            authority.PROGRAM_017_PRIVATE_ROOT,
             authority.PROGRAM_016_PRIVATE_ROOT,
             authority.PROGRAM_015_PRIVATE_ROOT,
             authority.PROGRAM_014_PRIVATE_ROOT,
@@ -2816,6 +2882,40 @@ def test_valid_private_terminal_recovers_without_credentials_or_transport(
     private = json.loads(private_path.read_bytes())
     assert public_path.read_bytes() == authority._public_terminal_payload(private)
     assert transport.intents == ()
+
+
+def test_failure_terminal_recovery_rejects_changed_completed_receipt(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _, request, _ = _configure_finite_execution(tmp_path, monkeypatch)
+    original_append_public = authority._append_public_atomic
+    monkeypatch.setattr(
+        authority,
+        "_append_public_atomic",
+        lambda *_args: (_ for _ in ()).throw(_AbruptExit()),
+    )
+
+    with pytest.raises(authority.Program018PostClaimPersistenceError):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_credentials(),
+            transport=authority.MockBarsTransport(
+                [raw_contract.RawResponse(200, _body(request, 0, None))]
+            ),
+            after_page=lambda: (_ for _ in ()).throw(
+                authority.Program018AuthorityError("synthetic post-page failure")
+            ),
+        )
+
+    prefix = predecessor._page_prefix(request, 1)
+    receipt = tmp_path / authority.PRIVATE_ROOT / f"{prefix}.receipt.json"
+    receipt.write_bytes(b"changed")
+    monkeypatch.setattr(authority, "_append_public_atomic", original_append_public)
+
+    with pytest.raises(authority.Program018AuthorityError, match="terminal checkpoint"):
+        authority.credential_presence_preflight(tmp_path, environ=_ForbiddenCredentialEnvironment())
+
+    assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
 
 
 def test_atomic_publication_recovers_after_interruption_before_link(
