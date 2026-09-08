@@ -1,0 +1,581 @@
+{
+  "schema_version": "program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2",
+  "proposal_id": "program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-2026-09-08-v2",
+  "program_ordinal": 19,
+  "program_id": "multi-hour-sector-etf-research-018",
+  "status": "PROPOSED-PROSPECTIVE-NOT-AUTHORIZED",
+  "supersedes": {
+    "path": "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json",
+    "sha256": "fa00d0b54eb608e8f891a7ac9941db8b699d8dfe087c8f0ebd3e1df98d4b90fa",
+    "fingerprint": "93678f8bfcbc4d155f9f930911c913e34ee936e5ea7404e1d97797180b3b1640",
+    "status": "SUPERSEDED-AFTER-INDEPENDENT-REVIEW-FINDING"
+  },
+  "resolved_findings": [
+    {
+      "finding_id": "P019-V1-CORRECTNESS-001",
+      "severity": "LOW",
+      "resolution": "Declare that Program 018 revision-history metadata is predecessor provenance rather than inherited Program 019 semantics, and test the exact two-key exception."
+    }
+  ],
+  "predecessor": {
+    "redacted_private_forensic_disposition": {
+      "path": "config/research/program-019-predecessor-recovery-forensic-disposition-v1.json",
+      "sha256": "0be0a2bc60e0dce4c017a352ce14c95bc19ec73c751c43abd8d943d280fc5831",
+      "fingerprint": "e5ddb312ffd51b4246ec420a3b5586f41e97e58179ed93037a5a6b40529ee18d"
+    },
+    "program_018_scientific_contract": {
+      "path": "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json",
+      "sha256": "4bb06e1097f2aa44af84aeb1570f74982a4db57fb16ba969cb85fae582dd59c3",
+      "fingerprint": "b7c8ac3f0794b2119a7ac27129ce14c665eea63eacba892b3c459b16c8686732"
+    },
+    "program_018_scientific_contract_review": {
+      "path": "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json",
+      "sha256": "7c5f7fe2e0f875c4370151880e8c34506b34f5d256af85d0b4dcc6e8d63d2532",
+      "fingerprint": "a7dd85efb12466597de9740bcf7b90ef4b44f29c74da5116d2ceeab76d4050d2"
+    },
+    "program_018_runtime_implementation": {
+      "path": "config/research/program-018-exposed-prefix-runtime-implementation-v1.json",
+      "sha256": "8bc9d242cba666f93cf84ad2f8a005e60e1da656271ae78f851ffd49a1e402b9",
+      "fingerprint": "6b08085ef885988878ee51c260b72494abea6e79a29d0da781d0049122d1505a"
+    },
+    "program_018_terminal_result": {
+      "path": "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+      "sha256": "90102e72d90391ec5f9e342bf21993daf9613f4fcfaf0218bfd25f041e73d396"
+    },
+    "program_018_terminal_review": {
+      "path": "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1.json",
+      "sha256": "5f1783e66f21ecb43617caad6f90957c0f108bdda0bd27b6983619751cf9c93d",
+      "fingerprint": "d7fb37eb7be409e76d2d6ddd086d77f16b99b02a092f2d5ebed5ce05deb65bba"
+    }
+  },
+  "exact_inheritance_contract": {
+    "base_contract": "predecessor.program_018_scientific_contract",
+    "predecessor_revision_metadata_not_inherited": [
+      "supersedes",
+      "resolved_findings"
+    ],
+    "allowed_delta_keys": [
+      "program identity",
+      "Program 018 predecessor bindings",
+      "Program 019 private and terminal identities",
+      "partial-session owner",
+      "first successor request",
+      "seven consumed intent budget",
+      "Program 018 immutable root and ninth control",
+      "future Program 019 child paths"
+    ],
+    "hypothesis_changed": false,
+    "source_changed": false,
+    "chronology_changed": false,
+    "pagination_changed": false,
+    "missingness_changed": false,
+    "admission_gates_changed": false,
+    "statistical_gates_changed": false,
+    "privacy_changed": false,
+    "storage_reservation_changed": false,
+    "credential_contract_changed": false,
+    "failure_closeout_contract_changed": false,
+    "authority_expanded": false,
+    "all_unlisted_program_018_v3_fields_and_semantics_inherited_exactly": true,
+    "program_012_through_program_018_history_mutation_allowed": false
+  },
+  "recovery_contract": {
+    "predecessor_private_roots_in_lock_order": [
+      ".trading-lab/program-018-exposed-prefix-raw-alpaca-sip-v1",
+      ".trading-lab/program-017-exposed-prefix-raw-alpaca-sip-v1",
+      ".trading-lab/program-016-exposed-prefix-raw-alpaca-sip-v1",
+      ".trading-lab/program-015-exposed-prefix-raw-alpaca-sip-v1",
+      ".trading-lab/program-014-exposed-prefix-raw-alpaca-sip-v1",
+      ".trading-lab/program-013-exposed-prefix-raw-alpaca-sip-v1",
+      ".trading-lab/program-012-exposed-prefix-raw-alpaca-sip-v1"
+    ],
+    "predecessor_private_evidence_access": "READ-ONLY",
+    "program_019_private_root": ".trading-lab/program-019-exposed-prefix-raw-alpaca-sip-v1",
+    "program_019_private_root_must_be_distinct": true,
+    "accepted_predecessor_shape": "EXACT-COMPLETED-WHOLE-SESSION-PREFIX-PLUS-ONE-PARTIAL-SESSION-WITH-COMPLETED-PAGE-AND-INTENT-ONLY-NEXT-PAGE",
+    "reuse_unit": "COMPLETED-WHOLE-SESSION",
+    "completed_predecessor_pages_are_never_requested_again": true,
+    "partial_session_coordinates_classification": "UNOBSERVED-BECAUSE-CHAIN-INCOMPLETE",
+    "first_program_019_request": "NEXT-INDEPENDENT-SESSION-AFTER-DISCARDED-PARTIAL-SESSION",
+    "first_program_019_request_private_derivation": {
+      "request_schedule": "exact inherited acquisition_requests sequence",
+      "request_index": "discarded partial-session request index plus one",
+      "session": "exact scheduled session at that request index",
+      "page_index": 1,
+      "incoming_page_token": null,
+      "request_identity": "exact first-page identity rederived from the scheduled request",
+      "url": "exact first-page URL rederived from the scheduled request",
+      "skipped_scheduled_session_allowed": false
+    },
+    "program_019_request_reissue_after_durable_intent_allowed": false,
+    "ambiguous_program_019_transport_is_consumed_no_retry": true,
+    "retained_program_019_response_retry_allowed": false,
+    "retained_program_019_http_result_retry_allowed": false,
+    "parsed_program_019_missingness_retry_allowed": false,
+    "program_019_data_quality_outcome_retry_allowed": false,
+    "program_019_automatic_retries": 0,
+    "incomplete_program_018_session_or_page_reuse_allowed": false,
+    "incomplete_program_018_request_reissue_allowed": false
+  },
+  "bounded_reconstruction_contract": {
+    "credential_preflight_full_predecessor_validation_passes": 1,
+    "execution_precredential_full_predecessor_validation_passes": 1,
+    "execution_post_transport_final_projection_passes": 1,
+    "execution_maximum_full_predecessor_passes": 2,
+    "full_predecessor_reconstruction_before_transport": false,
+    "full_predecessor_reconstruction_between_transports": false,
+    "provider_transport_phase_writes_program_019_raw_page_evidence_only": true,
+    "final_projection_begins_only_after_all_provider_requests_complete": true,
+    "final_projection_uses_no_credentials_or_provider_transport": true,
+    "final_projection_reparses_each_completed_predecessor_and_program_019_page_once": true,
+    "separate_predecessor_spool_allowed": false,
+    "performance_regression_requires_multi_page_execution_with_constant_predecessor_pass_count": true
+  },
+  "transport_boundary_contract": {
+    "rederive_exact_reviewed_authority": true,
+    "revalidate_synchronized_main_commit": true,
+    "program_019_root_role_substitution": "NEW-MUTABLE-EXCLUSIVE-SUCCESSOR-ROOT",
+    "immutable_predecessor_root_and_all_lock_descriptor_metadata_tuple": [
+      "st_dev",
+      "st_ino",
+      "st_mode",
+      "st_uid",
+      "st_gid",
+      "st_size",
+      "st_mtime_ns",
+      "st_ctime_ns"
+    ],
+    "program_019_mutable_root_stable_identity_tuple": [
+      "st_dev",
+      "st_ino",
+      "st_mode",
+      "st_uid",
+      "st_gid"
+    ],
+    "program_019_mutable_root_expected_full_tuple": [
+      "st_dev",
+      "st_ino",
+      "st_mode",
+      "st_uid",
+      "st_gid",
+      "st_size",
+      "st_mtime_ns",
+      "st_ctime_ns"
+    ],
+    "root_and_lock_descriptors_opened_with_o_nofollow": true,
+    "immutable_predecessor_roots_and_all_lock_full_tuples_revalidated": true,
+    "program_019_root_stable_identity_revalidated": true,
+    "program_019_root_expected_full_tuple_refreshed_only_after_authorized_create_only_write_and_parent_fsync": true,
+    "program_019_root_current_full_tuple_must_equal_latest_expected_tuple_before_transport_and_normal_closeout": true,
+    "authorized_write_helper_returns_and_commits_refreshed_expected_tuple": true,
+    "failed_or_interrupted_write_does_not_silently_refresh_expected_tuple": true,
+    "bound_predecessor_import_manifest_bytes_and_sha256_revalidated": true,
+    "working_disk_capacity_revalidated": true,
+    "zero_protected_overlap_revalidated": true,
+    "fixed_size_metadata_checks_only": true,
+    "predecessor_content_reparse_forbidden": true,
+    "final_closeout_revalidates_all_metadata_before_terminal_fsync": true,
+    "any_unaccounted_identity_or_metadata_drift_fails_before_transport_or_closeout": true,
+    "all_nine_controls_held_continuously": true,
+    "program_018_root_role_substitution": "PROGRAM-018-MUTABLE-SUCCESSOR-ROOT-BECOMES-IMMUTABLE-READ-ONLY-PREDECESSOR-ROOT"
+  },
+  "failure_closeout_contract": {
+    "continuation_requires_exact_latest_expected_mutable_root_tuple": true,
+    "authorized_write_failure_sets_irreversible_failure_closeout_only_latch": true,
+    "failure_closeout_latch_prohibits_all_future_transport_and_normal_completion": true,
+    "failure_closeout_revalidates_all_immutable_root_lock_git_authority_and_chronology_controls": true,
+    "failure_closeout_requires_program_019_stable_root_identity_tuple_unchanged": true,
+    "failure_closeout_may_scan_program_019_mutable_root_once": true,
+    "failure_scan_rederives_deterministic_allowed_entry_set_from_durable_evidence": true,
+    "failure_scan_only_allowed_delta": "exact reachable target of the known failed create-only intent body receipt derived-evidence or terminal write",
+    "known_failed_write_binds_target_stage_before_tuple_observed_after_tuple_and_exception_class": true,
+    "unknown_impossible_wrong_stage_or_changed_completed_evidence_fails_terminal_persistence_closed": true,
+    "accepted_failed_write_drift_does_not_refresh_continuation_baseline": true,
+    "accepted_failed_write_drift_is_recorded_privately_and_redacted_publicly": true,
+    "abrupt_process_exit_recovery_uses_same_bounded_failure_scan_without_credentials_or_transport": true,
+    "complete_canonical_private_terminal_temp_may_be_promoted": true,
+    "partial_invalid_or_noncanonical_private_terminal_temp_fails_closed": true,
+    "failure_terminal_write_uses_create_only_atomic_fsync_and_parent_fsync": true,
+    "failure_terminal_success_may_refresh_tuple_only_for_terminal_durability_verification": true,
+    "post_claim_terminal_persistence_failure_is_distinct_and_nonretryable": true
+  },
+  "cumulative_transport_contract": {
+    "maximum_combined_request_intents": 22176,
+    "maximum_effective_combined_responses": 22169,
+    "consumed_intent_without_response_count": 7,
+    "completed_predecessor_pages_count_once": true,
+    "maximum_response_page_bytes": 8388608,
+    "maximum_combined_session_response_bytes": 8388608,
+    "maximum_requests_per_minute": 120,
+    "request_timeout_seconds": 30,
+    "credential_loads_per_program_019_process_max": 1,
+    "parallel_session_chains": 1,
+    "automatic_retries": 0,
+    "partial_program_018_session_completed_pages_count_as_consumed_responses_but_are_excluded_from_dataset": true
+  },
+  "storage_contract": {
+    "maximum_combined_response_bytes": 4294967296,
+    "maximum_final_canonical_projection_bytes": 8589934592,
+    "maximum_metadata_atomic_publication_derived_evidence_and_safety_margin_bytes": 4294967296,
+    "minimum_additional_available_bytes": 17179869184,
+    "capacity_checked_before_credential_presence": true,
+    "capacity_checked_before_every_intent": true,
+    "capacity_checked_before_final_projection": true,
+    "capacity_failure_before_intent_does_not_consume_request": true,
+    "canonical_projection_hard_cap_enforced_while_writing": true
+  },
+  "credential_contract": {
+    "credential_names_inherited_from_program_006": true,
+    "presence_only_preflight_before_value_access": true,
+    "standalone_callable_credential_readers_allowed": false,
+    "credential_values_loaded_only_inside_all_locks": true,
+    "credential_attempt_fsynced_before_environment_access": true,
+    "process_global_latch_consumed_before_environment_access": true,
+    "success_receipt_fsynced_before_client_construction_and_transport": true,
+    "credential_values_loaded_once_per_process_max": true,
+    "terminal_replay_and_recovery_paths_do_not_access_credential_environment": true,
+    "credential_values_never_logged_hashed_persisted_or_passed_as_cli_arguments": true,
+    "inherit_program_018_v3_credential_contract_exactly": true
+  },
+  "terminal_identity_substitution_contract": {
+    "program_018_to_program_019_substitutions_are_exhaustive": true,
+    "private_schema_version": {
+      "from": "program-018-private-terminal-v1",
+      "to": "program-019-private-terminal-v1"
+    },
+    "private_program_id": {
+      "from": "multi-hour-sector-etf-research-017",
+      "to": "multi-hour-sector-etf-research-018"
+    },
+    "private_credential_count_key": {
+      "from": "program_018_credential_loads",
+      "to": "program_019_credential_loads"
+    },
+    "private_response_manifest_hash_key": {
+      "from": "program_018_response_manifest_sha256",
+      "to": "program_019_response_manifest_sha256"
+    },
+    "public_schema_version": {
+      "from": "program-018-exposed-prefix-terminal-result-v1",
+      "to": "program-019-exposed-prefix-terminal-result-v1"
+    },
+    "public_program_ordinal": {
+      "from": 18,
+      "to": 19
+    },
+    "public_program_id": {
+      "from": "multi-hour-sector-etf-research-017",
+      "to": "multi-hour-sector-etf-research-018"
+    },
+    "admission_pass_status": {
+      "from": "ADMITTED-PROGRAM-018-RAW-STRUCTURAL-PREFIX",
+      "to": "ADMITTED-PROGRAM-019-RAW-STRUCTURAL-PREFIX"
+    },
+    "public_lineage_schema_version": {
+      "from": "program-018-public-raw-structural-prefix-lineage-manifest-v1",
+      "to": "program-019-public-raw-structural-prefix-lineage-manifest-v1"
+    }
+  },
+  "private_terminal_contract": {
+    "path": ".trading-lab/program-019-exposed-prefix-raw-alpaca-sip-v1/terminal.json",
+    "schema_version": "program-019-private-terminal-v1",
+    "exact_top_level_keys": [
+      "schema_version",
+      "program_id",
+      "authority_id",
+      "authority_fingerprint",
+      "source_commit",
+      "source_tree",
+      "runtime_implementation_root",
+      "operation_manifest",
+      "predecessor_import_manifest_sha256",
+      "public_terminal_path",
+      "result_kind",
+      "status",
+      "provider_transport_attempted",
+      "scientific_use_consumed",
+      "failure_class",
+      "failure_classification",
+      "program_019_credential_loads",
+      "cumulative_request_intents",
+      "cumulative_responses",
+      "cumulative_response_bytes",
+      "structural_admission_evaluated",
+      "admission_passed",
+      "private_evidence",
+      "public_dataset_lineage_manifest",
+      "dataset_lineage_identity",
+      "private_dataset_identity",
+      "automatic_retries",
+      "credentials_stored",
+      "program_002_admission",
+      "strategy_calculations",
+      "strategy_returns",
+      "observed_at",
+      "terminal_fingerprint"
+    ],
+    "private_evidence_exact_keys": [
+      "program_019_response_manifest_sha256",
+      "combined_canonical_raw_sha256",
+      "combined_missingness_sha256",
+      "combined_structural_admission_sha256",
+      "combined_dataset_manifest_sha256",
+      "raw_row_count",
+      "missing_coordinate_count",
+      "excluded_full_session_count"
+    ],
+    "exact_static_values": {
+      "schema_version": "program-019-private-terminal-v1",
+      "program_id": "multi-hour-sector-etf-research-018",
+      "public_terminal_path": "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+      "scientific_use_consumed": true,
+      "automatic_retries": 0,
+      "credentials_stored": false,
+      "program_002_admission": false,
+      "strategy_calculations": 0,
+      "strategy_returns": 0
+    },
+    "exact_integer_zero_fields": {
+      "strategy_calculations": {
+        "required_value": 0,
+        "python_type_predicate": "type(value) is int"
+      },
+      "strategy_returns": {
+        "required_value": 0,
+        "python_type_predicate": "type(value) is int"
+      }
+    },
+    "exact_key_set_equality_required": true,
+    "result_branches": {
+      "RUNTIME-FAILURE": {
+        "status": "FAIL-CONSUMED-NO-RETRY",
+        "structural_admission_evaluated": false,
+        "admission_passed": false,
+        "public_dataset_lineage_manifest": null,
+        "dataset_lineage_identity": null,
+        "private_dataset_identity": null,
+        "failure_class_required": true,
+        "failure_classification_required": true
+      },
+      "ADMISSION-FAILURE": {
+        "status": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+        "structural_admission_evaluated": true,
+        "admission_passed": false,
+        "public_dataset_lineage_manifest": null,
+        "dataset_lineage_identity": null,
+        "private_dataset_identity_required": true,
+        "failure_class": null,
+        "failure_classification": null
+      },
+      "ADMISSION-PASS": {
+        "status": "ADMITTED-PROGRAM-019-RAW-STRUCTURAL-PREFIX",
+        "structural_admission_evaluated": true,
+        "admission_passed": true,
+        "public_dataset_lineage_manifest_required": true,
+        "dataset_lineage_identity_required": true,
+        "private_dataset_identity_required_and_distinct": true,
+        "failure_class": null,
+        "failure_classification": null
+      }
+    },
+    "terminal_revalidated_from_canonical_private_evidence_before_public_projection": true
+  },
+  "public_terminal_contract": {
+    "path": "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+    "schema_version": "program-019-exposed-prefix-terminal-result-v1",
+    "terminal_result_id": "program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-2026-09-08-v1",
+    "exact_top_level_keys": [
+      "schema_version",
+      "terminal_result_id",
+      "program_ordinal",
+      "program_id",
+      "result_kind",
+      "status",
+      "authority_id",
+      "authority_fingerprint",
+      "source_commit",
+      "admission_passed",
+      "dataset_lineage_manifest",
+      "privacy_assertions",
+      "scientific_assertions",
+      "disabled_authority",
+      "observed_at"
+    ],
+    "exact_static_identity_values": {
+      "schema_version": "program-019-exposed-prefix-terminal-result-v1",
+      "terminal_result_id": "program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-2026-09-08-v1",
+      "program_ordinal": 19,
+      "program_id": "multi-hour-sector-etf-research-018"
+    },
+    "privacy_assertions_exact_value": {
+      "credentials_stored": false,
+      "provider_tokens_private": true,
+      "market_data_private": true,
+      "dynamic_acquisition_counts_private": true,
+      "data_derived_hashes_and_identities_private": true,
+      "detailed_gate_and_failure_evidence_private": true,
+      "private_dataset_content_identity_private": true,
+      "exact_missing_coordinates_private": true,
+      "exact_unexpected_exclusion_dates_private": true
+    },
+    "scientific_assertions_exact_value": {
+      "program_002_admission": false,
+      "strategy_calculations_present": false,
+      "strategy_returns_present": false
+    },
+    "disabled_authority_exact_value": {
+      "subscription_purchase": false,
+      "strategy_implementation": false,
+      "strategy_execution": false,
+      "research_qualification": false,
+      "controlled_evaluation": false,
+      "protected_holdout": false,
+      "paper_execution": false,
+      "broker_writes": false,
+      "live_execution": false
+    },
+    "failure_branch_semantics": {
+      "RUNTIME-FAILURE": {
+        "status": "FAIL-CONSUMED-NO-RETRY",
+        "admission_passed": false,
+        "dataset_lineage_manifest": null
+      },
+      "ADMISSION-FAILURE": {
+        "status": "TERMINAL-FAIL-CONSUMED-NO-RETRY",
+        "admission_passed": false,
+        "dataset_lineage_manifest": null
+      }
+    },
+    "pass_branch_semantics": {
+      "result_kind": "ADMISSION-PASS",
+      "status": "ADMITTED-PROGRAM-019-RAW-STRUCTURAL-PREFIX",
+      "admission_passed": true,
+      "dataset_lineage_manifest_required": true
+    },
+    "dynamic_counts_dates_hashes_tokens_failure_details_private_identities_market_observations_and_unknown_fields_forbidden": true,
+    "observed_at_is_sole_public_timestamp_and_records_terminal_closeout_only": true,
+    "observed_at_may_not_derive_from_request_response_market_or_provider_time": true,
+    "repository_artifact_and_cli_use_one_shared_projection": true,
+    "projection_input_must_be_validated_private_terminal": true,
+    "byte_exact_canonical_reconstruction_required": true,
+    "publication_create_only_atomic_canonical_and_parent_directory_fsynced": true,
+    "valid_private_terminal_missing_public_terminal_recovered_under_all_controls_without_credentials_or_transport": true,
+    "invalid_changed_or_unknown_private_or_public_terminal_fields_fail_closed": true,
+    "existing_different_public_terminal_never_overwritten": true,
+    "entrypoints_reject_terminal_presence_before_credentials_or_private_roots": true
+  },
+  "public_pass_lineage_contract": {
+    "schema_version": "program-019-public-raw-structural-prefix-lineage-manifest-v1",
+    "exact_keys": [
+      "schema_version",
+      "program_id",
+      "authority_id",
+      "authority_fingerprint",
+      "source_commit",
+      "status",
+      "dataset_lineage_identity"
+    ],
+    "status": "ADMITTED-PROGRAM-019-RAW-STRUCTURAL-PREFIX",
+    "data_derived_inputs_allowed": false,
+    "control_inputs": [
+      "Program 019 proposal",
+      "Program 019 child authority fingerprint",
+      "Program 019 runtime source commit",
+      "Programs 012 through 018 public terminal results",
+      "public unit-changing action ledger",
+      "admission-pass status"
+    ]
+  },
+  "lock_and_launch_contract": {
+    "control_acquisition_order": [
+      "Program 019 exclusive lock",
+      "Program 018 read-only shared lock",
+      "Program 017 read-only shared lock",
+      "Program 016 read-only shared lock",
+      "Program 015 read-only shared lock",
+      "Program 014 read-only shared lock",
+      "Program 013 read-only shared lock",
+      "Program 012 read-only shared lock",
+      "Git policy snapshot bound to the exact post-child-and-review synchronized main commit"
+    ],
+    "all_controls_held_through_private_and_public_terminal_fsync": true,
+    "single_nonrestarting_process_required": true,
+    "automatic_restart_relaunch_launchctl_keepalive_and_process_manager_retry_allowed": false,
+    "terminal_evidence_required_after_any_consumed_state": true
+  },
+  "runtime_and_child_topology_contract": {
+    "runtime_source_must_merge_before_child_creation": true,
+    "future_child_runtime_binding_source_commit": "EXACT-CLEAN-SYNCHRONIZED-MAIN-AFTER-PROGRAM-019-RUNTIME-MERGE",
+    "future_child_runtime_binding_source_tree_required": true,
+    "future_child_runtime_binding_implementation_root_required": true,
+    "only_allowed_paths_between_runtime_source_and_synchronized_main": [
+      "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",
+      "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json"
+    ],
+    "git_policy_snapshot_binds_synchronized_main_not_runtime_source": true,
+    "secret_guard_reserves_both_future_child_paths_before_runtime_source_is_frozen": true
+  },
+  "protected_firewall": {
+    "inherit_program_018_registered_range_derivation": true,
+    "rederive_registered_ranges_before_credential_presence_private_state_every_transport_and_closeout": true,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_broker_live": false
+  },
+  "implementation_test_contract": {
+    "required_cases": [
+      "exact Program 018 terminal and private predecessor reconstruction",
+      "partial Program 018 session discarded and neither request reused or reissued",
+      "first Program 019 intent exactly matches the next scheduled session page one null token identity and URL",
+      "seven consumed intents leave 22169 responses",
+      "nine controls held through public terminal fsync",
+      "constant predecessor pass count across multi-page transport",
+      "wrong-stage and impossible deterministic temps fail closed",
+      "complete private and public terminal temp recovery",
+      "credential access remains inline one-load and after disk authority chronology launcher and intent gates",
+      "missing invalid changed and terminal states reject before credentials private roots dotenv or sockets",
+      "no strategy controlled protected PAPER broker live or purchase authority"
+    ]
+  },
+  "future_child_authority": {
+    "standing_child_and_finding_free_independent_review_required": true,
+    "clean_synchronized_main_and_exact_runtime_binding_required": true,
+    "one_use": true,
+    "consumption_boundary": "immediately before first provider transport invocation",
+    "allowed_authority_subset": [
+      "provider_contact",
+      "credential_access",
+      "source_requests",
+      "market_data_acquisition",
+      "real_dataset_admission"
+    ],
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false,
+    "subscription_purchase": false
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Obtain fresh finding-free independent design/correctness and defensive reviews of proposal v2 before implementing any Program 019 runtime, credential access, private Program 019 state, or provider contact.",
+  "proposal_fingerprint": "597cba6cdf264c51684c9f4325f0104764a51573d93c008d65593429de5397fb"
+}

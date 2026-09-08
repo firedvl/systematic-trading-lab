@@ -1,0 +1,135 @@
+{
+  "schema_version": "program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1",
+  "review_id": "program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-2026-09-08-v1",
+  "program_ordinal": 19,
+  "program_id": "multi-hour-sector-etf-research-018",
+  "reviewed_at": "2026-09-08T07:50:33Z",
+  "status": "PASS-FINDING-FREE",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_source_commit": "1ed235da6125c41a72704d7d48e15231d7fcb4ac",
+  "reviewed_source_tree": "d6d294243387003cd933b17a2c53d674abef8aa5",
+  "reviewed_diff": {
+    "base_commit": "5e95784a79712d91a189f5c19f1cbe1e25a1ad9a",
+    "sha256": "44c894bcce79cc70a8c224dfad7a3344bd040723682c2e8a41e5064f6c7b1014"
+  },
+  "reviewed_proposal": {
+    "path": "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json",
+    "sha256": "4a773eb765e3733803849706d51ea19995f191f3ec387688eeaf3de6af2cbced",
+    "fingerprint": "597cba6cdf264c51684c9f4325f0104764a51573d93c008d65593429de5397fb"
+  },
+  "review_history": {
+    "proposal_v1": "FINDING-UNDECLARED-PREDECESSOR-REVISION-METADATA-EXCEPTION",
+    "proposal_v2_initial": "FINDING-INCOMPLETE-INHERITANCE-REGRESSION-GUARD",
+    "proposal_v2_final_correctness": "PASS-FINDING-FREE",
+    "proposal_v2_final_defensive": "PASS-FINDING-FREE",
+    "final_fix": "Recursive comparison binds all 146 old/new leaf deltas without changing proposal v2 bytes."
+  },
+  "independent_reviewers": [
+    {
+      "agent": "program019_proposal_correctness_review",
+      "role": "design-correctness",
+      "status": "PASS-FINDING-FREE"
+    },
+    {
+      "agent": "program019_proposal_security_review",
+      "role": "defensive-security",
+      "status": "PASS-FINDING-FREE"
+    }
+  ],
+  "challenge_results": [
+    {
+      "challenge": "exact scientific inheritance and two-key predecessor revision metadata exception",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "complete 146-leaf old/new delta guard",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "partial-session discard and next independent frontier",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "seven consumed intents and 22169 response ceiling",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "seven immutable predecessor roots and nine held controls",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "O_NOFOLLOW descriptor tuples and mutable-root transition",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "bounded precredential validation and one final projection",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "16 GiB reservation and 8 GiB canonical projection cap",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "credential ordering one-load latch and no secret persistence",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "no-reissue ambiguous transport and failure closeout",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "exact private public and pass-lineage schemas",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "strict private classification and nine reserved public paths",
+      "verdict": "PASS"
+    },
+    {
+      "challenge": "runtime-before-child topology and false current authority",
+      "verdict": "PASS"
+    }
+  ],
+  "verified_assertions": {
+    "all_prior_findings_resolved": true,
+    "program_018_v3_science_unchanged": true,
+    "normalized_delta_entries": 146,
+    "normalized_delta_fingerprint": "245dd9c60c7851a77f40d581fe39a03cbc21d8e2d3e79b4ba82ed3e54c6f9591",
+    "current_authority_all_false": true
+  },
+  "verification": {
+    "correctness_review": "PASS-FINDING-FREE",
+    "defensive_review": "PASS-FINDING-FREE",
+    "focused_program_019_tests": "PASS",
+    "synthetic_delta_mutations": "PASS",
+    "public_private_and_market_content_cases": "PASS",
+    "repository_secret_scan": "PASS-777-FILES",
+    "changed_python_ruff": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "proof_gaps": [
+    "Public proposal review only; Program 019 runtime requires separate implementation and fresh independent reviews.",
+    "The regression guard does not authenticate changes by someone authorized to change both proposal and tests.",
+    "No private roots, credential environment, Keychain, provider, market data, or strategy results were accessed by these reviews."
+  ],
+  "required_next_action": "Merge proposal v2 and this finding-free review, then implement and independently review the exact Program 019 runtime before child creation, credential access, private Program 019 state, or provider contact.",
+  "review_fingerprint": "e4cc3012b63d4d9a8032dc3b6c7a46752c7648b32be43451a38db6a65c93a203"
+}

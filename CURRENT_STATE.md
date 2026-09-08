@@ -1,7 +1,7 @@
 # Current state
 
-Program 019's read-only forensic disposition is current. Program 018 and all earlier terminal
-programs remain immutable.
+Program 019 proposal v2 and its finding-free independent reviews are current. Program 018 and all
+earlier terminal programs remain immutable.
 
 - Program 019, `multi-hour-sector-etf-research-018`, has no authority. One low-priority offline pass
   validated Program 018's reviewed identity, terminal counts, completed whole-session prefix, and one
@@ -10,7 +10,25 @@ programs remain immutable.
   session. Seven consumed intents leave at most 22,169 responses. Redacted disposition fingerprint is
   `e5ddb312ffd51b4246ec420a3b5586f41e97e58179ed93037a5a6b40529ee18d`. Every authority remains
   false; no credentials, provider, mutation, admission, or strategy work occurred during forensics.
-  Next autonomous action: freeze and independently review a prospective Program 019 proposal.
+  Proposal v1 is now frozen with fingerprint
+  `93678f8bfcbc4d155f9f930911c913e34ee936e5ea7404e1d97797180b3b1640`. It adds Program 018 as the
+  seventh immutable predecessor, nine held controls, seven-intent/22,169-response accounting, exact
+  Program 019 terminal schemas, and the complete public topology while preserving every other
+  Program 018 v3 control. Independent review found only that v1 omitted predecessor revision-history
+  metadata without declaring the exception. V2 binds that exact two-key provenance exception;
+  fingerprint is `597cba6cdf264c51684c9f4325f0104764a51573d93c008d65593429de5397fb`.
+  Fresh independent correctness and defensive reviews pass finding-free at source commit/tree
+  `1ed235da6125c41a72704d7d48e15231d7fcb4ac` / `d6d294243387003cd933b17a2c53d674abef8aa5`.
+  The complete 146-leaf old/new delta guard closes the final test gap without changing v2 bytes.
+  Combined review fingerprint is
+  `e4cc3012b63d4d9a8032dc3b6c7a46752c7648b32be43451a38db6a65c93a203`.
+  Restart checkpoint: branch `codex/program-019-proposal`; main and freshly fetched origin/main
+  `5e95784a79712d91a189f5c19f1cbe1e25a1ad9a`; no open PR at review persistence. Both reviews
+  are complete with no outstanding finding. No Program 019 runtime, child, credential access,
+  private state, provider contact, admission, or strategy work exists; its use is not consumed.
+  Next autonomous action: validate and merge the proposal/review branch, synchronize clean main,
+  then implement and independently review the exact runtime before child creation or execution.
+  No human-attention boundary has been crossed.
 
 - Program 018, `multi-hour-sector-etf-research-017`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   one-use child consumed its authority and the runtime sealed a failure terminal. The redacted public
