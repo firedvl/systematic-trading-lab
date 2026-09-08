@@ -17,6 +17,30 @@ PROPOSAL_V1 = Path(
 )
 
 
+def _changed_leaves(left: object, right: object, path: str = "") -> dict[str, list[object]]:
+    if type(left) is not type(right):
+        return {path: [left, right]}
+    if isinstance(left, dict) and isinstance(right, dict):
+        changed: dict[str, list[object]] = {}
+        for key in sorted(set(left) | set(right)):
+            child = f"{path}.{key}" if path else key
+            if key not in left:
+                changed[child] = [None, right[key]]
+            elif key not in right:
+                changed[child] = [left[key], None]
+            else:
+                changed.update(_changed_leaves(left[key], right[key], child))
+        return changed
+    if isinstance(left, list) and isinstance(right, list):
+        if len(left) != len(right):
+            return {path: [left, right]}
+        changed = {}
+        for index, (left_item, right_item) in enumerate(zip(left, right, strict=True)):
+            changed.update(_changed_leaves(left_item, right_item, f"{path}[{index}]"))
+        return changed
+    return {} if left == right else {path: [left, right]}
+
+
 def test_program_019_forensic_disposition_is_bound_and_non_authorizing() -> None:
     value = json.loads((ROOT / PATH).read_text())
     stored = value.pop("forensic_disposition_fingerprint")
@@ -53,6 +77,9 @@ def test_program_019_proposal_is_exact_and_non_authorizing() -> None:
     exception = value["exact_inheritance_contract"]["predecessor_revision_metadata_not_inherited"]
     assert exception == ["supersedes", "resolved_findings"]
     assert all(key in inherited for key in exception)
+    delta = _changed_leaves(inherited, {**value, "proposal_fingerprint": stored})
+    assert len(delta) == 146
+    assert fingerprint(delta) == "245dd9c60c7851a77f40d581fe39a03cbc21d8e2d3e79b4ba82ed3e54c6f9591"
     for binding in value["predecessor"].values():
         assert (
             hashlib.sha256((ROOT / binding["path"]).read_bytes()).hexdigest() == binding["sha256"]
