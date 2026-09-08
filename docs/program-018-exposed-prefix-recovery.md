@@ -35,3 +35,7 @@ The closeout rejects a missing, changed, invalid, or exact terminal before crede
 access. Program 018 cannot replay or retry. Dynamic counts, detailed failure evidence, private
 identities, market data, provider tokens, exact missingness, and exclusions remain private. Do not
 run Program 018 again. Controlled/protected, purchase, PAPER, broker, and live authority are disabled.
+
+Fresh independent terminal review reconstructed the child and active-authority identities, verified
+all 36 runtime bindings, and passed 22 direct API/CLI rejection sentinels with zero forbidden-boundary
+calls. Review fingerprint is `d7fb37eb7be409e76d2d6ddd086d77f16b99b02a092f2d5ebed5ce05deb65bba`.
