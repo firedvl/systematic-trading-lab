@@ -1704,6 +1704,181 @@ def test_canonical_publish_failure_seals_with_its_special_temp(
     assert (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
 
 
+@pytest.mark.parametrize("failure", (False, True))
+def test_normal_reconstruction_rejects_unterminaled_derived_evidence(
+    tmp_path: Path, failure: bool
+) -> None:
+    root = _open_program_019_root(tmp_path)
+    try:
+        predecessor._append(root, "combined-canonical-raw.jsonl", b"synthetic")
+        with pytest.raises(
+            authority.Program019AuthorityError, match="derived evidence lacks a terminal"
+        ):
+            authority._reconstruct_state(
+                root,
+                _predecessor_state(),
+                authority=_active_authority(),
+                allow_terminal_failure=failure,
+            )
+    finally:
+        os.close(root)
+
+
+@pytest.mark.parametrize(
+    "target",
+    (
+        "program-019-response-manifest.json",
+        "combined-missing-coordinates.json",
+        "combined-structural-admission.json",
+        "combined-dataset-manifest.json",
+    ),
+)
+@pytest.mark.parametrize("after_link", (False, True))
+def test_failed_derived_publication_after_canonical_seals_without_retry(
+    tmp_path: Path, monkeypatch: MonkeyPatch, target: str, after_link: bool
+) -> None:
+    _, request, _ = _configure_finite_execution(tmp_path, monkeypatch)
+    original_link = os.link
+
+    def fail_link(source: Any, destination: Any, *args: Any, **kwargs: Any) -> None:
+        if destination == target:
+            if after_link:
+                original_link(source, destination, *args, **kwargs)
+            raise OSError("synthetic derived publication failure")
+        original_link(source, destination, *args, **kwargs)
+
+    monkeypatch.setattr(os, "link", fail_link)
+    transport = authority.MockBarsTransport(
+        [raw_contract.RawResponse(200, _body(request, 0, None))]
+    )
+    with pytest.raises(authority.Program019AuthorityError, match="ended with a sealed failure"):
+        authority._execute_mock_acquisition(tmp_path, environ=_credentials(), transport=transport)
+    root = tmp_path / authority.PRIVATE_ROOT
+    assert (root / "combined-canonical-raw.jsonl").exists()
+    private = json.loads((root / "terminal.json").read_bytes())
+    public = json.loads((tmp_path / authority.PUBLIC_TERMINAL_PATH).read_bytes())
+    assert private["status"] == public["status"] == "FAIL-CONSUMED-NO-RETRY"
+    assert private["structural_admission_evaluated"] is False
+    assert private["admission_passed"] is False
+    assert private["program_019_credential_loads"] == 1
+    assert len(transport.intents) == 1
+    with pytest.raises(authority.Program019AuthorityError, match="terminally sealed"):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_ForbiddenCredentialEnvironment(),
+            transport=authority.MockBarsTransport([]),
+        )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        None,
+        "linked-temp",
+        "next-temp",
+        "different-temp",
+        "canonical",
+        "metadata",
+        "out-of-order",
+        "incomplete",
+    ),
+)
+def test_restarted_derived_prefix_is_verified_before_failure_sealing(
+    tmp_path: Path, monkeypatch: MonkeyPatch, mutation: str | None
+) -> None:
+    _, request, _ = _configure_finite_execution(tmp_path, monkeypatch)
+    original_link = os.link
+
+    def fail_link(source: Any, destination: Any, *args: Any, **kwargs: Any) -> None:
+        if destination == "combined-missing-coordinates.json":
+            raise OSError("synthetic derived publication failure")
+        original_link(source, destination, *args, **kwargs)
+
+    def interrupted(*_args: Any, **_kwargs: Any) -> None:
+        raise _AbruptExit
+
+    with monkeypatch.context() as fault:
+        fault.setattr(os, "link", fail_link)
+        fault.setattr(authority, "_seal_runtime_failure", interrupted)
+        with pytest.raises(authority.Program019PostClaimPersistenceError):
+            authority._execute_mock_acquisition(
+                tmp_path,
+                environ=_credentials(),
+                transport=authority.MockBarsTransport(
+                    [raw_contract.RawResponse(200, _body(request, 0, None))]
+                ),
+            )
+    root = tmp_path / authority.PRIVATE_ROOT
+    assert not (root / "terminal.json").exists()
+    assert authority._FINAL_VALIDATIONS == {}
+    if mutation == "linked-temp":
+        os.link(
+            root / "program-019-response-manifest.json",
+            root / "tmp-program-019-write-program-019-response-manifest.json",
+        )
+    elif mutation == "different-temp":
+        temporary = root / "tmp-program-019-write-program-019-response-manifest.json"
+        temporary.touch(mode=0o600)
+        temporary.write_bytes((root / "program-019-response-manifest.json").read_bytes())
+    elif mutation == "next-temp":
+        (root / "tmp-program-019-write-combined-missing-coordinates.json").touch(mode=0o600)
+    elif mutation == "canonical":
+        with (root / "combined-canonical-raw.jsonl").open("ab") as handle:
+            handle.write(b" ")
+    elif mutation == "metadata":
+        with (root / "program-019-response-manifest.json").open("ab") as handle:
+            handle.write(b" ")
+    elif mutation == "out-of-order":
+        (root / "program-019-response-manifest.json").rename(
+            root / "combined-dataset-manifest.json"
+        )
+    elif mutation == "incomplete":
+        (root / f"{predecessor._page_prefix(request, 1)}.receipt.json").unlink()
+    if mutation in {None, "linked-temp", "next-temp"}:
+        with pytest.raises(authority.Program019AuthorityError, match="terminally sealed"):
+            authority._execute_mock_acquisition(
+                tmp_path,
+                environ=_ForbiddenCredentialEnvironment(),
+                transport=authority.MockBarsTransport([]),
+            )
+        assert json.loads((root / "terminal.json").read_bytes())["result_kind"] == "RUNTIME-FAILURE"
+        assert (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
+    else:
+        with pytest.raises(authority.Program019PostClaimPersistenceError):
+            authority._execute_mock_acquisition(
+                tmp_path,
+                environ=_ForbiddenCredentialEnvironment(),
+                transport=authority.MockBarsTransport([]),
+            )
+        assert not (root / "terminal.json").exists()
+        assert not (tmp_path / authority.PUBLIC_TERMINAL_PATH).exists()
+
+
+def test_complete_admission_terminal_temp_recovers_without_credentials(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    _, request, _ = _configure_finite_execution(tmp_path, monkeypatch)
+    result = authority._execute_mock_acquisition(
+        tmp_path,
+        environ=_credentials(),
+        transport=authority.MockBarsTransport(
+            [raw_contract.RawResponse(200, _body(request, 0, None))]
+        ),
+    )
+    root = tmp_path / authority.PRIVATE_ROOT
+    terminal = (root / "terminal.json").read_bytes()
+    (root / "terminal.json").rename(root / "tmp-program-019-write-terminal.json")
+    (tmp_path / authority.PUBLIC_TERMINAL_PATH).unlink()
+    with pytest.raises(authority.Program019AuthorityError, match="terminally sealed"):
+        authority._execute_mock_acquisition(
+            tmp_path,
+            environ=_ForbiddenCredentialEnvironment(),
+            transport=authority.MockBarsTransport([]),
+        )
+    assert (root / "terminal.json").read_bytes() == terminal
+    assert (tmp_path / authority.PUBLIC_TERMINAL_PATH).read_bytes() == result.public_payload()
+
+
 def test_restarted_unreachable_claim_temp_fails_terminal_persistence(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
@@ -1893,7 +2068,7 @@ def test_closeout_rejection_precedes_private_success_terminal(
         ),
     )
 
-    with pytest.raises(authority.Program019PostClaimPersistenceError):
+    with pytest.raises(authority.Program019AuthorityError, match="ended with a sealed failure"):
         authority._execute_mock_acquisition(
             tmp_path,
             environ=_credentials(),
@@ -1902,7 +2077,9 @@ def test_closeout_rejection_precedes_private_success_terminal(
             ),
         )
 
-    assert not (tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).exists()
+    private = json.loads((tmp_path / authority.PRIVATE_ROOT / authority._TERMINAL_KEY).read_bytes())
+    assert private["result_kind"] == "RUNTIME-FAILURE"
+    assert private["admission_passed"] is False
 
 
 def test_crash_after_durable_activation_seals_before_unlock(

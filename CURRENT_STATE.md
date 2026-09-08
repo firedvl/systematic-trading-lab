@@ -31,9 +31,15 @@ Program 019 proposal v2 and its finding-free independent reviews merged in PR #2
   work has occurred; its use is not consumed.
   Integration restored the required Program 017 source/terminal bindings alongside Program 018,
   preserved all three nested partial-session exclusions, and corrected successor diagnostic labels.
-  The combined runtime, proposal, and provenance suite reports 143 passed. Ruff format/lint, mypy,
-  and secret scanning pass. Next autonomous action: freeze source, obtain fresh independent
-  correctness and defensive reviews, complete full quality gates, then merge runtime before child
+  Initial exact runtime source `a45d16ca331754c93af05d07a4eb6e41821f96cd` passed 2,217 full-suite
+  tests with four skips and the static gates. Defensive review found no security vulnerability;
+  its separate closeout concern was independently confirmed as a high correctness finding:
+  unterminaled derived output incorrectly prevented mandatory failure sealing after canonical
+  publication. That source is not finding-free for execution. The prospective repair separates
+  strict normal reconstruction from exact failure-prefix validation, verifies completed bytes and
+  replay budgets, caches expected final evidence, and supports valid admission-terminal temp recovery.
+  No science or proposal changed. Next autonomous action: freeze the repaired source, obtain fresh
+  independent correctness and defensive reviews, complete full quality gates, then merge runtime before child
   construction. Credentials remain uninspected until the separately reviewed runtime permits them.
   No human-attention boundary has been crossed.
 

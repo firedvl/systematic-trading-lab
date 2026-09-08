@@ -105,13 +105,14 @@ _PAGE_KEY = re.compile(
 _CREDENTIAL_KEY = re.compile(
     r"credential-load-(?P<sequence>[0-9]{6})\.(?P<kind>attempt|receipt)\.json"
 )
-_DERIVED_KEYS = {
+_DERIVED_ORDER = (
     "combined-canonical-raw.jsonl",
-    "combined-dataset-manifest.json",
+    "program-019-response-manifest.json",
     "combined-missing-coordinates.json",
     "combined-structural-admission.json",
-    "program-019-response-manifest.json",
-}
+    "combined-dataset-manifest.json",
+)
+_DERIVED_KEYS = set(_DERIVED_ORDER)
 _TERMINAL_KEY = "terminal.json"
 _LAUNCHER_KEY = "launcher.json"
 _PUBLIC_TERMINAL_RESULT_ID = (
@@ -822,6 +823,7 @@ def credential_presence_preflight(
             _require_working_disk_capacity(program_019_root)
             return credential_contract.credential_presence_preflight(environ)
         finally:
+            _FINAL_VALIDATIONS.pop(program_019_root, None)
             _ROOT_TRACKERS.pop(program_019_root, None)
             snapshot.close()
 
@@ -1463,20 +1465,20 @@ def _execute_acquisition(
                 if not completed:
                     with suppress(FileNotFoundError):
                         _tracked_unlink(program_019_root, temp_key)
+            if budget.new_requests != budget.new_responses:
+                raise Program019AuthorityError("Program 019 new request and response counts differ")
+            evidence = _derived_admission_evidence(
+                repository, authority, predecessor_state, projection
+            )
+            _FINAL_VALIDATIONS[program_019_root] = (projection, evidence)
             _publish_temp_or_validate(
                 program_019_root,
                 temp_key,
                 "combined-canonical-raw.jsonl",
                 projection.canonical_sha256,
             )
-            if budget.new_requests != budget.new_responses:
-                raise Program019AuthorityError("Program 019 new request and response counts differ")
-            evidence = _derived_admission_evidence(
-                repository, authority, predecessor_state, projection
-            )
             for key, payload in cast(Mapping[str, bytes], evidence["payloads"]).items():
                 _tracked_append_or_validate(program_019_root, key, payload)
-            _FINAL_VALIDATIONS[program_019_root] = (projection, evidence)
             terminal_payload = _admission_terminal_payload(
                 program_019_root,
                 authority,
@@ -2261,6 +2263,24 @@ def _reconstruct_state(
     entries = set(os.listdir(root_descriptor))
     if entries & _DERIVED_KEYS and _TERMINAL_KEY not in entries:
         raise Program019AuthorityError("Program 019 derived evidence lacks a terminal")
+    return _reconstruct_acquisition_state(
+        root_descriptor,
+        predecessor_state,
+        authority=authority,
+        allow_terminal_failure=allow_terminal_failure,
+        require_complete=require_complete,
+    )
+
+
+def _reconstruct_acquisition_state(
+    root_descriptor: int,
+    predecessor_state: _PredecessorState,
+    *,
+    authority: Mapping[str, Any],
+    allow_terminal_failure: bool = False,
+    require_complete: bool = False,
+) -> _Budget:
+    entries = set(os.listdir(root_descriptor))
     allowed = {
         "active-authority.json",
         "claim.json",
@@ -2887,7 +2907,7 @@ def _restart_temp_stage_is_reachable(
         return _TERMINAL_KEY in entries
     if target == "combined-canonical-raw.jsonl" or target in _DERIVED_KEYS:
         try:
-            _reconstruct_state(
+            _reconstruct_acquisition_state(
                 root_descriptor,
                 predecessor_state,
                 authority=authority,
@@ -2896,7 +2916,15 @@ def _restart_temp_stage_is_reachable(
         except (Program019AuthorityError, program_011.Program011Error):
             return False
         if target == "combined-canonical-raw.jsonl":
-            return "combined-canonical-raw.jsonl" not in entries
+            temporary = "tmp-program-019-combined-canonical-raw"
+            return not (entries & (_DERIVED_KEYS - {target})) and (
+                target not in entries
+                or (
+                    temporary in entries
+                    and os.stat(temporary, dir_fd=root_descriptor, follow_symlinks=False).st_ino
+                    == os.stat(target, dir_fd=root_descriptor, follow_symlinks=False).st_ino
+                )
+            )
         order = (
             "program-019-response-manifest.json",
             "combined-missing-coordinates.json",
@@ -2906,8 +2934,18 @@ def _restart_temp_stage_is_reachable(
         if target not in order or "combined-canonical-raw.jsonl" not in entries:
             return False
         index = order.index(target)
-        return all(key in entries for key in order[:index]) and all(
-            key not in entries for key in order[index:]
+        temporary = f"tmp-program-019-write-{target}"
+        return (
+            all(key in entries for key in order[:index])
+            and all(key not in entries for key in order[index + 1 :])
+            and (
+                target not in entries
+                or (
+                    temporary in entries
+                    and os.stat(temporary, dir_fd=root_descriptor, follow_symlinks=False).st_ino
+                    == os.stat(target, dir_fd=root_descriptor, follow_symlinks=False).st_ino
+                )
+            )
         )
     if target == _LAUNCHER_KEY:
         return "predecessor-import-manifest.json" in entries and not (
@@ -2957,6 +2995,96 @@ def _restart_temp_stage_is_reachable(
     return False
 
 
+def _validate_failure_derived_prefix(
+    repository: Path,
+    root_descriptor: int,
+    authority: Mapping[str, Any],
+    predecessor_state: _PredecessorState,
+) -> None:
+    entries = set(os.listdir(root_descriptor))
+    present = entries & _DERIVED_KEYS
+    if not present:
+        return
+    snapshot = _ROOT_TRACKERS.get(root_descriptor)
+    if snapshot is None or not snapshot.failure_only:
+        raise Program019AuthorityError("Program 019 derived recovery lacks failure controls")
+    snapshot.validate_failure_closeout()
+    count = len(present)
+    if present != set(_DERIVED_ORDER[:count]):
+        raise Program019AuthorityError("Program 019 derived recovery is not an ordered prefix")
+    if snapshot.failed_write is not None:
+        failed_key = snapshot.failed_write[0]
+        target = _recognized_temporary_target(failed_key)
+        if target is None and failed_key.startswith("tmp-"):
+            target = _recognized_temporary_target(
+                f"tmp-program-019-{failed_key.removeprefix('tmp-')}"
+            )
+        target = target or failed_key
+        if target in _DERIVED_KEYS:
+            index = _DERIVED_ORDER.index(target)
+            if count not in {index, index + 1}:
+                raise Program019AuthorityError(
+                    "Program 019 derived prefix differs from failed stage"
+                )
+        elif target not in {_TERMINAL_KEY, "public-terminal"} or count != len(_DERIVED_ORDER):
+            raise Program019AuthorityError("Program 019 derived failure target is unreachable")
+    budget = _reconstruct_acquisition_state(
+        root_descriptor, predecessor_state, authority=authority, require_complete=True
+    )
+    cached = _FINAL_VALIDATIONS.get(root_descriptor)
+    evidence: Mapping[str, Any]
+    if cached is None:
+        p18, p17, p16, p15, p14, p13, p12 = snapshot.immutable_roots
+        projection = _combined_projection(
+            root_descriptor,
+            p18,
+            p17,
+            p16,
+            p15,
+            p14,
+            p13,
+            p12,
+            predecessor_state,
+            authority,
+            budget,
+            canonical_file=None,
+            loader=None,
+        )
+        evidence = _derived_admission_evidence(repository, authority, predecessor_state, projection)
+    else:
+        projection, evidence = cached
+        if any(
+            getattr(budget, field) != getattr(projection.budget, field)
+            for field in ("requests", "responses", "response_bytes", "latest_response_at", "pages")
+        ):
+            raise Program019AuthorityError("Program 019 derived recovery page evidence changed")
+    if _evidence_sha256(root_descriptor, _DERIVED_ORDER[0]) != projection.canonical_sha256:
+        raise Program019AuthorityError("Program 019 derived recovery canonical content differs")
+    payloads = cast(Mapping[str, bytes], evidence["payloads"])
+    for key in _DERIVED_ORDER[1:count]:
+        if predecessor._read(root_descriptor, key) != payloads[key]:
+            raise Program019AuthorityError("Program 019 derived recovery payload differs")
+    for key in entries:
+        temporary_target = _recognized_temporary_target(key)
+        if temporary_target is not None and temporary_target in _DERIVED_KEYS:
+            index = _DERIVED_ORDER.index(temporary_target)
+            if index not in {count - 1, count}:
+                raise Program019AuthorityError("Program 019 derived recovery temp is out of order")
+            if temporary_target in present:
+                if (
+                    os.stat(key, dir_fd=root_descriptor, follow_symlinks=False).st_ino
+                    != os.stat(
+                        temporary_target, dir_fd=root_descriptor, follow_symlinks=False
+                    ).st_ino
+                ):
+                    raise Program019AuthorityError("Program 019 linked derived temp differs")
+            elif temporary_target != _DERIVED_ORDER[0] and not payloads[
+                temporary_target
+            ].startswith(predecessor._read(root_descriptor, key)):
+                raise Program019AuthorityError("Program 019 derived recovery temp content differs")
+    _FINAL_VALIDATIONS[root_descriptor] = (projection, evidence)
+
+
 def _revalidate_failure_closeout_boundary(
     repository: Path,
     root_descriptor: int,
@@ -2965,6 +3093,7 @@ def _revalidate_failure_closeout_boundary(
 ) -> None:
     if _derive_control_validated_authority(repository) != authority:
         raise Program019AuthorityError("Program 019 authority changed at failure closeout")
+    _validate_failure_derived_prefix(repository, root_descriptor, authority, predecessor_state)
     snapshot = _ROOT_TRACKERS.get(root_descriptor)
     if snapshot is not None:
         snapshot.validate_failure_closeout()
@@ -3001,7 +3130,7 @@ def _revalidate_failure_closeout_boundary(
             ):
                 raise Program019AuthorityError("Program 019 recovery temp stage is unreachable")
     _validate_predecessor_manifest(root_descriptor, predecessor_state)
-    _reconstruct_state(
+    _reconstruct_acquisition_state(
         root_descriptor,
         predecessor_state,
         authority=authority,
@@ -3458,6 +3587,8 @@ def _load_terminal_record(
     *,
     terminal_key: str = _TERMINAL_KEY,
 ) -> dict[str, Any]:
+    if terminal_key not in {_TERMINAL_KEY, "tmp-program-019-write-terminal.json"}:
+        raise Program019AuthorityError("Program 019 terminal recovery key differs")
     raw = predecessor._read(root_descriptor, terminal_key)
     record = _json_object(raw, "private terminal")
     unsigned = dict(record)
@@ -3497,6 +3628,11 @@ def _load_terminal_record(
         else:
             snapshot.validate_continuation()
     result_kind = record.get("result_kind")
+    if result_kind == "RUNTIME-FAILURE" and terminal_key != _TERMINAL_KEY:
+        if snapshot is None:
+            raise Program019AuthorityError("Program 019 terminal temp lacks failure controls")
+        snapshot.begin_failure_closeout()
+        _validate_failure_derived_prefix(repository, root_descriptor, authority, predecessor_state)
     if result_kind == "RUNTIME-FAILURE" and (snapshot is None or not snapshot.failure_only):
         _reconstruct_state(
             root_descriptor,
@@ -3551,7 +3687,12 @@ def _load_terminal_record(
         evidence: Mapping[str, Any]
         cached = _FINAL_VALIDATIONS.get(root_descriptor)
         if cached is None:
-            budget = _reconstruct_state(
+            reconstruct = (
+                _reconstruct_acquisition_state
+                if terminal_key != _TERMINAL_KEY
+                else _reconstruct_state
+            )
+            budget = reconstruct(
                 root_descriptor,
                 predecessor_state,
                 authority=authority,
@@ -3617,6 +3758,7 @@ def _load_terminal_record(
         ):
             raise Program019AuthorityError("Program 019 admission terminal semantics differ")
         _validate_budget_counts(record, projection.budget)
+        _FINAL_VALIDATIONS[root_descriptor] = (projection, evidence)
     else:
         raise Program019AuthorityError("Program 019 private terminal result kind differs")
     return record
