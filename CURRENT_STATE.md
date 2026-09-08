@@ -1,7 +1,16 @@
 # Current state
 
-Program 018's terminal result is current. Program 017 and all earlier terminal programs remain
-immutable.
+Program 019's read-only forensic disposition is current. Program 018 and all earlier terminal
+programs remain immutable.
+
+- Program 019, `multi-hour-sector-etf-research-018`, has no authority. One low-priority offline pass
+  validated Program 018's reviewed identity, terminal counts, completed whole-session prefix, and one
+  final partial session with a completed page followed by an intent-only next page. A successor must
+  discard that session in full, never reissue either request, and begin at the next independent
+  session. Seven consumed intents leave at most 22,169 responses. Redacted disposition fingerprint is
+  `e5ddb312ffd51b4246ec420a3b5586f41e97e58179ed93037a5a6b40529ee18d`. Every authority remains
+  false; no credentials, provider, mutation, admission, or strategy work occurred during forensics.
+  Next autonomous action: freeze and independently review a prospective Program 019 proposal.
 
 - Program 018, `multi-hour-sector-etf-research-017`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   one-use child consumed its authority and the runtime sealed a failure terminal. The redacted public
