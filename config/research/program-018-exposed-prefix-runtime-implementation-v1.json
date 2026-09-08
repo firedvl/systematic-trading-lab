@@ -1,0 +1,164 @@
+{
+  "schema_version": "program-018-exposed-prefix-runtime-implementation-v1",
+  "implementation_id": "program-018-exposed-prefix-runtime-implementation-2026-09-07-v1",
+  "program_ordinal": 18,
+  "program_id": "multi-hour-sector-etf-research-017",
+  "status": "IMPLEMENTED-PROSPECTIVE-NOT-AUTHORIZED",
+  "review_status": "PASS-FINDING-FREE-EXACT-RUNTIME-REVIEW",
+  "implementation_binding": {
+    "source_commit": "d53aec017d5ed5233f48e9bd1c32b46f06fd6480",
+    "source_tree": "f82d8cf53cc99b6db7d355b6b3e2ae4609187616",
+    "implementation_root": "a4a27e22a06e2e8d7436c0f7dd689f9f71f8f58900d96264dc00d631f4851369",
+    "source_files": [
+      {
+        "path": "scripts/check_secrets.py",
+        "sha256": "2866228f492f9dc7b1544028271a345f7c2a8aa867b08813dd4271b9162f7699"
+      },
+      {
+        "path": "src/systematic_trading_lab/cli.py",
+        "sha256": "9ad60c700f3659ec1ae23d96fd952a2c92ceffda2fea3cc35921ddd1937da477"
+      },
+      {
+        "path": "src/systematic_trading_lab/program_018_ohlcv_authority.py",
+        "sha256": "744457d68309b21665d8f8675890a09c8e0ac377d38cf23068b12d3069dd4c0a"
+      },
+      {
+        "path": "tests/unit/test_intraday_source_provenance.py",
+        "sha256": "2ca24e7dc98280f95055f79a4eb1559bc4f971ee95729a9a928ddd90b24d70c2"
+      },
+      {
+        "path": "tests/unit/test_program_018_ohlcv_authority.py",
+        "sha256": "111661bcabc0bb794b3df1ff3a9de5391c695d22cab545c20182bd617a961096"
+      }
+    ]
+  },
+  "reviewed_diff": {
+    "base_commit": "1e47c2bbd0fe234ddcbe4d51ecc606d8f0c5d4be",
+    "source_commit": "d53aec017d5ed5233f48e9bd1c32b46f06fd6480",
+    "sha256": "1db8367fda46ec68e6d42672a7ac91cb658320aed3d5e9ab8907a13f0505fd0d",
+    "files": [
+      "src/systematic_trading_lab/cli.py",
+      "src/systematic_trading_lab/program_018_ohlcv_authority.py",
+      "tests/unit/test_intraday_source_provenance.py",
+      "tests/unit/test_program_018_ohlcv_authority.py"
+    ]
+  },
+  "operation_contract": {
+    "path": "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v3.json",
+    "sha256": "4bb06e1097f2aa44af84aeb1570f74982a4db57fb16ba969cb85fae582dd59c3",
+    "fingerprint": "b7c8ac3f0794b2119a7ac27129ce14c665eea63eacba892b3c459b16c8686732"
+  },
+  "operation_contract_review": {
+    "path": "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json",
+    "sha256": "7c5f7fe2e0f875c4370151880e8c34506b34f5d256af85d0b4dcc6e8d63d2532",
+    "fingerprint": "a7dd85efb12466597de9740bcf7b90ef4b44f29c74da5116d2ceeab76d4050d2"
+  },
+  "runtime_contract": {
+    "entrypoint": "src/systematic_trading_lab/program_018_ohlcv_authority.py",
+    "cli": "data acquire program-018-ohlcv",
+    "actions": ["credential-preflight", "run"],
+    "activation_and_execution_share_one_lock_held_transaction": true,
+    "eight_control_lock_order_enforced": true,
+    "six_immutable_predecessor_roots": true,
+    "one_full_precredential_predecessor_validation": true,
+    "predecessor_reconstruction_at_transport_boundaries": false,
+    "one_post_transport_canonical_projection": true,
+    "program_016_and_program_017_partial_sessions_discarded_in_full": true,
+    "first_request_is_exact_following_session_page_one": true,
+    "predecessor_raw_pages_copied": false,
+    "separate_program_018_private_root": true,
+    "single_nonrestarting_process_enforced": true,
+    "durable_claim_intent_body_and_receipt_order_enforced": true,
+    "program_018_request_reissue_allowed": false,
+    "cumulative_request_intent_ceiling": 22176,
+    "effective_cumulative_response_ceiling": 22170,
+    "working_disk_reservation_bytes": 17179869184,
+    "canonical_projection_byte_ceiling": 8589934592,
+    "tracked_writes_reject_preexisting_root_drift": true,
+    "runtime_failure_recovery_strictly_revalidates_completed_evidence": true,
+    "partial_snapshot_construction_closes_opened_descriptors": true,
+    "deterministic_temp_stage_recovery_enforced": true,
+    "standalone_callable_credential_reader_present": false,
+    "credential_parsing_inline_only_in_lock_bound_loader": true,
+    "credential_accesses_per_program_018_process": 1,
+    "private_terminal_recovery_before_credentials_or_transport": true,
+    "public_projection_shared_by_terminal_and_cli": true,
+    "maximum_requests_per_minute": 120,
+    "automatic_retries": 0,
+    "parallel_session_chains": 1,
+    "future_child_runtime_source": "EXACT-CLEAN-SYNCHRONIZED-MAIN-AFTER-RUNTIME-MERGE",
+    "allowed_later_repository_additions": [
+      "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-v1.json",
+      "config/research/program-018-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-child-authority-independent-review-v1.json"
+    ]
+  },
+  "review": {
+    "design_and_correctness": {
+      "reviewer": "fresh independent read-only runtime design reviewer",
+      "verdict": "PASS",
+      "findings": [],
+      "reviewed_source_commit": "d53aec017d5ed5233f48e9bd1c32b46f06fd6480",
+      "verification": "Program 018 runtime and provenance tests passed; exact source tree and diff verified"
+    },
+    "defensive_boundary": {
+      "reviewer": "fresh independent read-only defensive trust-boundary reviewer",
+      "verdict": "PASS",
+      "findings": [],
+      "reviewed_source_commit": "d53aec017d5ed5233f48e9bd1c32b46f06fd6480",
+      "verification": "132 scoped tests and three independent integrity reproductions passed",
+      "proof_gap": "No real process kill, Program 018 private root, credential, Keychain, or provider endpoint was used; crash and drift behavior were tested with bounded synthetic faults."
+    }
+  },
+  "review_history": {
+    "initial_exact_source_status": "FINDINGS",
+    "initial_findings": [
+      "authorized writes absorbed preexisting mutable-root drift",
+      "failure-terminal recovery accepted corrupted completed evidence through count fallback",
+      "partial snapshot construction leaked opened lock descriptors"
+    ],
+    "all_findings_remediated_prospectively": true,
+    "current_exact_source_findings": [],
+    "final_exact_source_status": "PASS-FINDING-FREE"
+  },
+  "verification": {
+    "focused_program_018_and_provenance_tests": "136 passed",
+    "real_predecessor_reconstruction": "PASS-READ-ONLY-NO-CREDENTIAL-NO-PROVIDER",
+    "real_predecessor_projection_to_first_program_018_transport_boundary": "PASS-READ-ONLY-NO-CREDENTIAL-NO-PROVIDER",
+    "mypy": "PASS-4-FILES",
+    "ruff_format_and_lint": "PASS",
+    "secret_scan": "PASS-767-FILES",
+    "git_diff_check": "PASS"
+  },
+  "execution_boundary": {
+    "credential_reader_present": false,
+    "provider_transport_present": true,
+    "private_store_present": true,
+    "authority_activation_present": true,
+    "child_authority_present": false,
+    "child_authority_review_present": false,
+    "credential_presence_or_values_accessed": false,
+    "provider_requests": 0,
+    "private_program_018_state_accessed": false,
+    "dataset_admitted": false,
+    "strategy_calculations_or_returns": 0,
+    "next_gate": "Merge the exact runtime binding, freeze clean synchronized main, then add and independently review only the exact one-use child before names-only credential preflight."
+  },
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "implementation_fingerprint": "6b08085ef885988878ee51c260b72494abea6e79a29d0da781d0049122d1505a"
+}

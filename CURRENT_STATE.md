@@ -23,9 +23,16 @@ programs remain immutable.
   v1. V3 reserves the complete public topology and binds its own review gate. V3 fingerprint is
   `b7c8ac3f0794b2119a7ac27129ce14c665eea63eacba892b3c459b16c8686732`.
   Fresh independent correctness and defensive reviews pass finding-free; combined review fingerprint
-  is `a7dd85efb12466597de9740bcf7b90ef4b44f29c74da5116d2ceeab76d4050d2`. Next autonomous action:
-  merge the forensic disposition, v3 proposal, and review, then implement and independently review
-  the runtime before any Program 018 child or runtime action.
+  is `a7dd85efb12466597de9740bcf7b90ef4b44f29c74da5116d2ceeab76d4050d2`.
+  The runtime is implemented at exact source commit/tree/root
+  `d53aec017d5ed5233f48e9bd1c32b46f06fd6480` /
+  `f82d8cf53cc99b6db7d355b6b3e2ae4609187616` /
+  `a4a27e22a06e2e8d7436c0f7dd689f9f71f8f58900d96264dc00d631f4851369`. Fresh independent
+  correctness and defensive reviews pass finding-free after root-drift, strict terminal recovery,
+  and descriptor-cleanup findings were fixed prospectively. Every authority remains false. No
+  Program 018 credential access, private state, provider request, dataset admission, or strategy work
+  occurred. Next autonomous action: merge the runtime binding, synchronize clean main, then create
+  and independently review only the separate exact one-use child before credential preflight.
 
 - Program 017, `multi-hour-sector-etf-research-016`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   standing child consumed its one use, and the process ended before publishing a public terminal.
