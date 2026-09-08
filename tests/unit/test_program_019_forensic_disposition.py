@@ -1,6 +1,7 @@
 import hashlib
 import importlib.util
 import json
+import subprocess
 from pathlib import Path
 
 from pytest import CaptureFixture, MonkeyPatch
@@ -14,6 +15,9 @@ PROPOSAL = Path(
 )
 PROPOSAL_V1 = Path(
     "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
+)
+REVIEW = Path(
+    "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-independent-review-v1.json"
 )
 
 
@@ -94,6 +98,31 @@ def test_program_019_proposal_is_exact_and_non_authorizing() -> None:
         value["public_terminal_contract"]["exact_static_identity_values"]["program_ordinal"] == 19
     )
     assert all(flag is False for flag in value["authority"].values())
+
+
+def test_program_019_independent_review_binds_exact_source_and_proposal() -> None:
+    value = json.loads((ROOT / REVIEW).read_text())
+    assert value.pop("review_fingerprint") == fingerprint(value)
+    assert value["status"] == "PASS-FINDING-FREE"
+    assert value["findings"] == []
+    assert all(item["status"] == "PASS-FINDING-FREE" for item in value["independent_reviewers"])
+    assert all(item["verdict"] == "PASS" for item in value["challenge_results"])
+    assert all(flag is False for flag in value["authority"].values())
+    binding = value["reviewed_proposal"]
+    assert binding["path"] == PROPOSAL.as_posix()
+    assert hashlib.sha256((ROOT / PROPOSAL).read_bytes()).hexdigest() == binding["sha256"]
+    assert (
+        json.loads((ROOT / PROPOSAL).read_text())["proposal_fingerprint"] == binding["fingerprint"]
+    )
+    commit = value["reviewed_source_commit"]
+    tree = subprocess.check_output(["git", "rev-parse", f"{commit}^{{tree}}"], cwd=ROOT, text=True)
+    assert tree.strip() == value["reviewed_source_tree"]
+    reviewed = subprocess.check_output(["git", "show", f"{commit}:{PROPOSAL}"], cwd=ROOT)
+    assert reviewed == (ROOT / PROPOSAL).read_bytes()
+    diff = subprocess.check_output(
+        ["git", "diff", "--binary", value["reviewed_diff"]["base_commit"], commit], cwd=ROOT
+    )
+    assert hashlib.sha256(diff).hexdigest() == value["reviewed_diff"]["sha256"]
 
 
 def test_program_019_secret_guard_rejects_private_json(
