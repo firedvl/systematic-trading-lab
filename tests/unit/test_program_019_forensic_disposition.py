@@ -10,6 +10,9 @@ from systematic_trading_lab.fingerprints import fingerprint
 ROOT = Path(__file__).resolve().parents[2]
 PATH = Path("config/research/program-019-predecessor-recovery-forensic-disposition-v1.json")
 PROPOSAL = Path(
+    "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v2.json"
+)
+PROPOSAL_V1 = Path(
     "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-proposal-v1.json"
 )
 
@@ -43,6 +46,13 @@ def test_program_019_proposal_is_exact_and_non_authorizing() -> None:
     value = json.loads((ROOT / PROPOSAL).read_text())
     stored = value.pop("proposal_fingerprint")
     assert stored == fingerprint(value)
+    assert value["supersedes"]["path"] == PROPOSAL_V1.as_posix()
+    inherited = json.loads(
+        (ROOT / value["predecessor"]["program_018_scientific_contract"]["path"]).read_text()
+    )
+    exception = value["exact_inheritance_contract"]["predecessor_revision_metadata_not_inherited"]
+    assert exception == ["supersedes", "resolved_findings"]
+    assert all(key in inherited for key in exception)
     for binding in value["predecessor"].values():
         assert (
             hashlib.sha256((ROOT / binding["path"]).read_bytes()).hexdigest() == binding["sha256"]

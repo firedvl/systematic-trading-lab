@@ -14,7 +14,10 @@ programs remain immutable.
   `93678f8bfcbc4d155f9f930911c913e34ee936e5ea7404e1d97797180b3b1640`. It adds Program 018 as the
   seventh immutable predecessor, nine held controls, seven-intent/22,169-response accounting, exact
   Program 019 terminal schemas, and the complete public topology while preserving every other
-  Program 018 v3 control. Next autonomous action: fresh independent correctness and defensive review.
+  Program 018 v3 control. Independent review found only that v1 omitted predecessor revision-history
+  metadata without declaring the exception. V2 binds that exact two-key provenance exception;
+  fingerprint is `597cba6cdf264c51684c9f4325f0104764a51573d93c008d65593429de5397fb`.
+  Next autonomous action: fresh independent correctness and defensive review of v2.
 
 - Program 018, `multi-hour-sector-etf-research-017`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   one-use child consumed its authority and the runtime sealed a failure terminal. The redacted public
