@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-08 - Program 018 terminal evidence is immutable and revokes every entrypoint
+
+- Decision: commit Program 018's frozen redacted terminal projection and require its exact canonical SHA-256 before every lifecycle entrypoint.
+- Context: the reviewed one-use child consumed its authority and the runtime sealed `RUNTIME-FAILURE` / `FAIL-CONSUMED-NO-RETRY`. The public projection records no admission, dataset lineage, Program 002 admission, strategy calculation, or strategy return.
+- Consequences: public terminal SHA-256 is `90102e72d90391ec5f9e342bf21993daf9613f4fcfaf0218bfd25f041e73d396`; derived active-authority fingerprint is `57be4d7a576061773b4507fb4a00a897ff073a56a8ce3c20417a5dc40b304c7b`; child-artifact fingerprint is `defa5f68c7b7f8937c1d904b20f1151be5fdacefd7a5fae525dd21234b12a7a6`; runtime source is `8e97e29e951e5e318f8139c1bbaa6a2372711f14`. Program 018 cannot replay or retry. No dataset was admitted and no strategy ran; protected/PAPER/broker/live/purchase authority remained false.
+- Revisit when: never for Program 018. Any successor must be a new prospectively reviewed program and may inherit only independently validated completed evidence.
+
 ## 2026-09-07 - Freeze the Program 018 runtime implementation binding
 
 - Decision: bind the finding-free Program 018 runtime to exact source commit/tree/root `d53aec017d5ed5233f48e9bd1c32b46f06fd6480` / `f82d8cf53cc99b6db7d355b6b3e2ae4609187616` / `a4a27e22a06e2e8d7436c0f7dd689f9f71f8f58900d96264dc00d631f4851369`. Keep every authority field false.
