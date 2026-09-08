@@ -171,10 +171,12 @@ private-root access. The frozen no-reissue rule prohibits resuming the transacti
 Program 017 again. See
 [Program 017 exposed-prefix recovery](docs/program-017-exposed-prefix-recovery.md).
 
-Program 018 is a non-authorizing forensic successor. It may inherit only Program 017's validated
-completed whole-session prefix, must discard the final partial session, and may not reissue either
-request from that session. Proposal, independent review, runtime, and a separate reviewed child are
-required before credentials, private Program 018 state, or provider contact.
+Program 018 has a finding-free prospective runtime but no authority. It inherits only Program 017's
+validated completed whole-session prefix, discards the final partial session, and cannot reissue
+either request from that session. The runtime preserves one precredential validation, metadata-only
+transport boundaries, one final projection, six immutable predecessors, and eight held controls. It
+must merge before a separate reviewed child can permit credentials or provider contact. See
+[Program 018 exposed-prefix recovery](docs/program-018-exposed-prefix-recovery.md).
 
 ## Using historical data
 

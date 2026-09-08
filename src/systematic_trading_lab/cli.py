@@ -322,6 +322,11 @@ def parser() -> argparse.ArgumentParser:
         help="control the single-process Program 017 raw SIP recovery and admission",
     )
     program_017_ohlcv.add_argument("action", choices=("credential-preflight", "run"))
+    program_018_ohlcv = acquire_program.add_parser(
+        "program-018-ohlcv",
+        help="control the single-process Program 018 raw SIP recovery and admission",
+    )
+    program_018_ohlcv.add_argument("action", choices=("credential-preflight", "run"))
     for name in ("validate", "describe"):
         command = data.add_parser(name)
         command.add_argument("dataset_id", nargs="?")
@@ -659,6 +664,27 @@ def _run_program_017_ohlcv(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _run_program_018_ohlcv(arguments: argparse.Namespace) -> int:
+    from .program_018_ohlcv_authority import (
+        credential_presence_preflight as program_018_ohlcv_credential_preflight,
+    )
+    from .program_018_ohlcv_authority import (
+        execute_acquisition as execute_program_018_ohlcv,
+    )
+
+    repository = Path(__file__).resolve().parents[2]
+    if arguments.action == "credential-preflight":
+        missing = program_018_ohlcv_credential_preflight(repository)
+        print("PASS" if not missing else "\n".join(f"MISSING: {name}" for name in missing))
+        return 0 if not missing else 1
+    if os.environ.get("TRADING_LAB_MODE", TradingMode.OFFLINE.value).strip() != (
+        TradingMode.RESEARCH.value
+    ):
+        raise ValueError("Program 018 OHLCV acquisition requires TRADING_LAB_MODE=research")
+    sys.stdout.buffer.write(execute_program_018_ohlcv(repository).public_payload())
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     raw_arguments = tuple(sys.argv[1:] if argv is None else argv)
     if raw_arguments[:2] == ("program-002", "source"):
@@ -678,8 +704,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "program-015-ohlcv",
                 "program-016-ohlcv",
                 "program-017-ohlcv",
+                "program-018-ohlcv",
             }
         ):
+            if arguments.acquire_program == "program-018-ohlcv":
+                return _run_program_018_ohlcv(arguments)
             if arguments.acquire_program == "program-017-ohlcv":
                 return _run_program_017_ohlcv(arguments)
             if arguments.acquire_program == "program-016-ohlcv":
@@ -1486,6 +1515,8 @@ def run(arguments: argparse.Namespace, settings: Settings) -> int:
         )
         return 0
     if arguments.data_command == "acquire":
+        if arguments.acquire_program == "program-018-ohlcv":
+            return _run_program_018_ohlcv(arguments)
         if arguments.acquire_program == "program-017-ohlcv":
             return _run_program_017_ohlcv(arguments)
         if arguments.acquire_program == "program-016-ohlcv":

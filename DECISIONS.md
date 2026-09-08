@@ -1,5 +1,12 @@
 # Architecture decisions
 
+## 2026-09-07 - Freeze the Program 018 runtime implementation binding
+
+- Decision: bind the finding-free Program 018 runtime to exact source commit/tree/root `d53aec017d5ed5233f48e9bd1c32b46f06fd6480` / `f82d8cf53cc99b6db7d355b6b3e2ae4609187616` / `a4a27e22a06e2e8d7436c0f7dd689f9f71f8f58900d96264dc00d631f4851369`. Keep every authority field false.
+- Context: the runtime adds Program 017 as the sixth immutable predecessor and preserves proposal v3's bounded transport design. Initial defensive review found that later authorized writes could absorb preexisting root drift, recovery could accept corrupted completed evidence through count fallback, and partial snapshot construction leaked descriptors. The final source validates before every write, refreshes only after fsynced authorized mutations, strictly reconstructs restart terminals, and cleans partial construction.
+- Consequences: 136 focused tests, real read-only predecessor reconstruction and final projection to the first Program 018 transport boundary, Ruff, mypy, the 767-file secret scan, and Git checks pass. No Program 018 credential, private state, provider, acquisition, admission, strategy, controlled/protected, PAPER, broker, live, or purchase action occurred.
+- Revisit when: this binding merges to clean synchronized `main`. Freeze that exact main as the child runtime source, then add and independently review only the exact one-use child before credential preflight.
+
 ## 2026-09-07 - Accept Program 018 proposal v3 for implementation
 
 - Decision: accept the exact-delta Program 018 proposal v3 after fresh independent correctness and defensive reviews found no remaining issue. Preserve Program 017 v5 science and bounded transport design; add only the sixth immutable predecessor, Program 018 identities/root, six-intent budget, next independent session, eight-control topology, and future child paths.
