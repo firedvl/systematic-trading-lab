@@ -990,7 +990,7 @@ def test_operation_contract_revalidates_program_019_v2() -> None:
 
 @pytest.mark.parametrize("action", ("credential-preflight", "run"))
 def test_missing_child_stops_cli_before_credentials_private_roots_and_dotenv(
-    monkeypatch: MonkeyPatch, capsys: CaptureFixture[str], action: str
+    tmp_path: Path, monkeypatch: MonkeyPatch, capsys: CaptureFixture[str], action: str
 ) -> None:
     def forbidden(*_args: Any, **_kwargs: Any) -> Any:
         pytest.fail("unreviewed child crossed a runtime boundary")
@@ -1000,6 +1000,7 @@ def test_missing_child_stops_cli_before_credentials_private_roots_and_dotenv(
         "CHILD_AUTHORITY_PATH",
         Path("config/research/program-019-missing-child-authority-v1.json"),
     )
+    monkeypatch.setattr(authority, "PUBLIC_TERMINAL_PATH", tmp_path / "absent-terminal.json")
     monkeypatch.setattr(authority, "_open_root", forbidden)
     monkeypatch.setattr(credential_contract, "credential_presence_preflight", forbidden)
     monkeypatch.setattr(base_cli, "load_dotenv", forbidden)
