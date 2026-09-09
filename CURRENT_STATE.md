@@ -1,8 +1,8 @@
 # Current state
 
-Program 019 proposal v2 and its finding-free independent reviews merged in PR #284 at
-`fac1e0b3d5dd37941e89f2291c69d21fc080f632`. Runtime implementation is independently reviewed on
-`codex/program-019-runtime`. Program 018 and all earlier terminal programs remain immutable.
+Program 019 is terminally failed and consumed. Its proposal, runtime, child, and terminal review
+merged through PRs #284, #285, and #286; clean main is `d83ce3ca5f58eaa1b2a8ed9e478437a520c15943`.
+Program 018 and all earlier terminal programs remain immutable.
 
 - Program 019, `multi-hour-sector-etf-research-018`, has no authority. One low-priority offline pass
   validated Program 018's reviewed identity, terminal counts, completed whole-session prefix, and one
@@ -46,10 +46,13 @@ Program 019 proposal v2 and its finding-free independent reviews merged in PR #2
   A low-priority credential-free read-only check validates the complete retained predecessor chain
   and projects it to the fresh Program 019 request frontier without provider contact or P019 state.
   Implementation fingerprint is `2acba0c75fdc70d8b22425916c602d3828d9e086de2c81e281f1e4b860b5f53a`.
-  Next autonomous action: commit the exact runtime review, push and merge after remote CI, synchronize
-  main, then construct and independently review the scoped child. Credentials remain uninspected
-  until the separately reviewed runtime permits them.
-  No human-attention boundary has been crossed.
+  The separately reviewed child was merged and activated once. Keychain credentials were provisioned
+  privately into one process without exposure. The run consumed one transport sequence and sealed
+  `RUNTIME-FAILURE` / `FAIL-CONSUMED-NO-RETRY`; no dataset was admitted and no strategy ran. Public
+  terminal SHA-256 is `52c9919b1b1d93e256b8e8b2bd9848476905af6141991bf5d5d45bcade34154c`; terminal
+  review fingerprint is `9c0364922bc710c0c5ffe6b68cd6d98d95c4c9a9836e069b6741e0c7ac1bd169`.
+  Private evidence remains ignored. Do not retry or reactivate Program 019. A new prospective
+  successor is required for any further exposed acquisition.
 
 - Program 018, `multi-hour-sector-etf-research-017`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   one-use child consumed its authority and the runtime sealed a failure terminal. The redacted public

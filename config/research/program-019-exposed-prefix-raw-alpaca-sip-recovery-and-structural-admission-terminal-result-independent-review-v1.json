@@ -1,0 +1,58 @@
+{
+  "schema_version": "program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1",
+  "review_id": "program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-2026-09-08-v1",
+  "status": "PASS-FINDING-FREE",
+  "verdict": "PASS",
+  "findings": [],
+  "reviewed_public_terminal": {
+    "path": "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+    "sha256": "52c9919b1b1d93e256b8e8b2bd9848476905af6141991bf5d5d45bcade34154c"
+  },
+  "terminal_semantics": {
+    "result_kind": "RUNTIME-FAILURE",
+    "status": "FAIL-CONSUMED-NO-RETRY",
+    "admission_passed": false,
+    "dataset_lineage_manifest": null,
+    "program_ordinal": 19,
+    "program_id": "multi-hour-sector-etf-research-018"
+  },
+  "challenge_results": [
+    "exact canonical public schema",
+    "runtime failure branch and consumed no-retry status",
+    "privacy assertions and no credential/token/data leakage",
+    "no dataset lineage or strategy metrics",
+    "disabled authority and no protected/PAPER/broker/live scope",
+    "terminal identity and closeout timestamp"
+  ],
+  "authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "verification": {
+    "canonical_json": true,
+    "sha256": "52c9919b1b1d93e256b8e8b2bd9848476905af6141991bf5d5d45bcade34154c",
+    "program019_public_shape": true,
+    "private_terminal_not_published": true,
+    "credential_values_inspected": false,
+    "provider_requests": 0,
+    "strategy_calculations": 0
+  },
+  "proof_gaps": [
+    "Review is limited to the redacted public terminal and committed control contracts; private raw evidence and credential values were not accessed.",
+    "The terminal is terminal failure evidence and does not establish a source or dataset pass."
+  ],
+  "review_fingerprint": "9c0364922bc710c0c5ffe6b68cd6d98d95c4c9a9836e069b6741e0c7ac1bd169"
+}

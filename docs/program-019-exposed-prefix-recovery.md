@@ -23,8 +23,14 @@ failure-only recovery validates the exact published derived prefix against compl
 Both fresh reviews pass; 2,236 full-suite tests pass with four skips. A read-only retained-evidence
 check validates predecessors and stops at the fresh request frontier with no provider request.
 
-The runtime must merge before a separately scoped standing child is created, reviewed, merged, and
-internally activated. Until then there is no credential,
+The separately scoped child was merged and activated once. The run consumed its one-use transport
+authority and sealed `RUNTIME-FAILURE` / `FAIL-CONSUMED-NO-RETRY`. Its redacted public terminal has
+SHA-256 `52c9919b1b1d93e256b8e8b2bd9848476905af6141991bf5d5d45bcade34154c`; an independent terminal
+review passed finding-free with fingerprint
+`9c0364922bc710c0c5ffe6b68cd6d98d95c4c9a9836e069b6741e0c7ac1bd169`. No dataset was admitted and
+no strategy ran. Do not retry Program 019; a new prospective successor is required.
+
+Before activation there was no credential,
 provider, acquisition, admission, or strategy authority. Existing credential variable names remain
 `PROGRAM_006_ALPACA_API_KEY_ID` and `PROGRAM_006_ALPACA_API_SECRET_KEY`; values must stay inside the
 fixed scoped runtime and must never enter logs, artifacts, hashes, or command-line arguments.
