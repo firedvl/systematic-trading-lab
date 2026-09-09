@@ -32,9 +32,16 @@ independent review and is withdrawn as `INVALID-NOT-INDEPENDENTLY-REVIEWED`. The
 no dataset admission or strategy work; it has not received the required independent closeout review.
 Commit `4d9345102304e3f5f544675f250145df976dad1e` directly pushed that unsupported claim to main
 without the required closeout PR gate.
-Do not retry Program 019. Autonomous successor work is stopped at the evidence-integrity boundary
-pending human direction and genuine independent terminal review. Public terminal bytes are unchanged.
-Private evidence was not accessed or independently verified by the withdrawal reviewer.
+Public terminal bytes are unchanged. Private evidence was not accessed or independently verified
+by the withdrawal reviewer. The user subsequently authorized correction and continuation; PR #287
+merged at `9e5fccadd19a9ee20805c0bf03f05700d4364e68` with all original history preserved.
+
+Fresh reviewer `program019_genuine_terminal_review` then independently validated the full retained
+predecessor chain, historical child/source/active-authority bindings, canonical private terminal,
+and byte-exact public projection. New review v2 is `PASS-TERMINAL-FAILURE-VERIFIED`, fingerprint
+`d7ad0cc1ae42f85a9ed221f8a6d1cad241df5ed2938d1326bf8f05afd9ec4397`. The withdrawn v1 was not used
+as evidence and remains unchanged. Detailed failure cause is unassessed. Do not retry Program 019;
+complete the reviewed closeout before offline successor forensics.
 
 Before activation there was no credential,
 provider, acquisition, admission, or strategy authority. Existing credential variable names remain

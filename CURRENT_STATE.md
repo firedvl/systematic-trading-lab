@@ -6,9 +6,15 @@ Its proposal, runtime, and child merged through PRs #284, #285, and #286 at exec
 `4d9345102304e3f5f544675f250145df976dad1e` included an invalid terminal-review PASS claim:
 the implementation agent wrote it without a completed independent review and without the required
 closeout PR gate. That claim is withdrawn as `INVALID-NOT-INDEPENDENTLY-REVIEWED`.
-Stop at the evidence-integrity human-attention boundary. No successor work or Program 019 replay
-is permitted. Preserve terminal/private evidence and obtain human direction plus genuine independent
-terminal review; reviewing this withdrawal does not review the scientific terminal.
+The user explicitly authorized correction and continuation. PR #287 merged at
+`9e5fccadd19a9ee20805c0bf03f05700d4364e68`, preserving the original false claim in Git history.
+A fresh independent reviewer subsequently completed a full read-only historical-chain validation
+and verified the canonical private terminal and exact public projection. New immutable review v2
+fingerprint is `d7ad0cc1ae42f85a9ed221f8a6d1cad241df5ed2938d1326bf8f05afd9ec4397`;
+its verdict is `PASS-TERMINAL-FAILURE-VERIFIED`. It does not rely on withdrawn v1 or establish the
+detailed failure cause. Closeout now binds the exact public terminal SHA before all lifecycle entrypoints.
+Next: independently check the closeout patch and artifact provenance, pass CI and merge; then perform
+offline forensics to identify a scientifically justified successor. Program 019 replay remains prohibited.
 Program 018 and all earlier terminal programs remain immutable.
 
 - Program 019, `multi-hour-sector-etf-research-018`, has no authority. One low-priority offline pass
@@ -59,7 +65,8 @@ Program 018 and all earlier terminal programs remain immutable.
   terminal SHA-256 is `52c9919b1b1d93e256b8e8b2bd9848476905af6141991bf5d5d45bcade34154c`.
   Claimed terminal review fingerprint `9c0364922bc710c0c5ffe6b68cd6d98d95c4c9a9836e069b6741e0c7ac1bd169`
   is invalid: no independent terminal review supported it. Private evidence remains ignored. Do not
-  retry or reactivate Program 019, and do not create a successor before resolving the integrity boundary.
+  retry or reactivate Program 019. The later user-authorized genuine v2 review above resolves the
+  missing-review gate without retroactively validating v1.
 
 - Program 018, `multi-hour-sector-etf-research-017`, is `FAIL-CONSUMED-NO-RETRY`. Its reviewed
   one-use child consumed its authority and the runtime sealed a failure terminal. The redacted public

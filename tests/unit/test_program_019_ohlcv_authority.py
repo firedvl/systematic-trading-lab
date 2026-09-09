@@ -76,6 +76,19 @@ def _reset_process_credential_latch(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(authority, "_PROCESS_CREDENTIAL_PID", None)
 
 
+@pytest.fixture(autouse=True)
+def _allow_historical_synthetic_runtime(monkeypatch: MonkeyPatch) -> None:
+    original = authority._reject_terminal_state
+
+    def reject(repository: Path) -> None:
+        if repository.resolve() == _REPOSITORY.resolve() or os.path.lexists(
+            repository / authority.PUBLIC_TERMINAL_PATH
+        ):
+            original(repository)
+
+    monkeypatch.setattr(authority, "_reject_terminal_state", reject)
+
+
 def _credentials() -> dict[str, str]:
     return {
         authority.CREDENTIAL_NAMES[0]: "synthetic-key-material",
@@ -1001,6 +1014,7 @@ def test_missing_child_stops_cli_before_credentials_private_roots_and_dotenv(
         Path("config/research/program-019-missing-child-authority-v1.json"),
     )
     monkeypatch.setattr(authority, "PUBLIC_TERMINAL_PATH", tmp_path / "absent-terminal.json")
+    monkeypatch.setattr(authority, "_PUBLIC_TERMINAL_SHA256", None)
     monkeypatch.setattr(authority, "_open_root", forbidden)
     monkeypatch.setattr(credential_contract, "credential_presence_preflight", forbidden)
     monkeypatch.setattr(base_cli, "load_dotenv", forbidden)
@@ -3182,8 +3196,10 @@ def test_every_lifecycle_entrypoint_rejects_an_exact_public_terminal_first(
     assert credential_checks == []
 
 
-def test_unreviewed_terminal_remains_blocked_without_immutable_binding() -> None:
-    assert authority._PUBLIC_TERMINAL_SHA256 is None
+def test_reviewed_terminal_is_immutably_bound_and_revoked() -> None:
+    assert authority._PUBLIC_TERMINAL_SHA256 == (
+        "52c9919b1b1d93e256b8e8b2bd9848476905af6141991bf5d5d45bcade34154c"
+    )
     historical = subprocess.run(
         [
             "git",
@@ -3201,7 +3217,7 @@ def test_unreviewed_terminal_remains_blocked_without_immutable_binding() -> None
     )
     assert not hasattr(authority, "read_credentials")
     assert not hasattr(authority._CredentialLoader, "_read_credentials")
-    with pytest.raises(authority.Program019AuthorityError, match="lacks immutable binding"):
+    with pytest.raises(authority.Program019AuthorityError, match="terminally revoked"):
         authority._reject_terminal_state(_REPOSITORY)
 
 
