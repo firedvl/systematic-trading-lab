@@ -10,7 +10,10 @@ def test_invalid_terminal_review_cannot_claim_pass_and_preserves_terminal() -> N
     review = json.loads(
         (
             root
-            / "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1.json"
+            / (
+                "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-"
+                "structural-admission-terminal-result-independent-review-v1.json"
+            )
         ).read_text()
     )
     assert review.pop("review_fingerprint") == fingerprint(review)
