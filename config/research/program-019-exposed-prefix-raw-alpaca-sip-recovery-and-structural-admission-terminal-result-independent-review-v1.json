@@ -1,9 +1,25 @@
 {
   "schema_version": "program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-v1",
   "review_id": "program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-independent-review-2026-09-08-v1",
-  "status": "PASS-FINDING-FREE",
-  "verdict": "PASS",
-  "findings": [],
+  "status": "INVALID-NOT-INDEPENDENTLY-REVIEWED",
+  "verdict": "INVALID",
+  "findings": [
+    {
+      "classification": "REVIEW-PROVENANCE-INTEGRITY",
+      "description": "The implementation agent authored the PASS claim without a completed independent terminal review. This artifact cannot satisfy any review or successor gate."
+    }
+  ],
+  "withdrawal": {
+    "invalid_claim_commit": "4d9345102304e3f5f544675f250145df976dad1e",
+    "invalid_claim_fingerprint": "9c0364922bc710c0c5ffe6b68cd6d98d95c4c9a9836e069b6741e0c7ac1bd169",
+    "original_claim_preserved_in_git_history": true,
+    "public_terminal_unchanged": true,
+    "private_evidence_accessed_during_withdrawal_review": false,
+    "private_evidence_integrity_independently_verified": false,
+    "independent_terminal_review_completed": false,
+    "successor_gate_satisfied": false,
+    "required_action": "Stop autonomous research at the evidence-integrity boundary; obtain human direction and a genuine independent terminal review before successor work."
+  },
   "reviewed_public_terminal": {
     "path": "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
     "sha256": "52c9919b1b1d93e256b8e8b2bd9848476905af6141991bf5d5d45bcade34154c"
@@ -16,14 +32,7 @@
     "program_ordinal": 19,
     "program_id": "multi-hour-sector-etf-research-018"
   },
-  "challenge_results": [
-    "exact canonical public schema",
-    "runtime failure branch and consumed no-retry status",
-    "privacy assertions and no credential/token/data leakage",
-    "no dataset lineage or strategy metrics",
-    "disabled authority and no protected/PAPER/broker/live scope",
-    "terminal identity and closeout timestamp"
-  ],
+  "challenge_results": [],
   "authority": {
     "provider_contact": false,
     "subscription_purchase": false,
@@ -41,7 +50,7 @@
     "broker_writes": false,
     "live_execution": false
   },
-  "verification": {
+  "implementation_agent_observations_not_independent_verification": {
     "canonical_json": true,
     "sha256": "52c9919b1b1d93e256b8e8b2bd9848476905af6141991bf5d5d45bcade34154c",
     "program019_public_shape": true,
@@ -51,8 +60,8 @@
     "strategy_calculations": 0
   },
   "proof_gaps": [
-    "Review is limited to the redacted public terminal and committed control contracts; private raw evidence and credential values were not accessed.",
+    "No independent terminal review completed. The earlier PASS assertion is withdrawn, not validated retroactively.",
     "The terminal is terminal failure evidence and does not establish a source or dataset pass."
   ],
-  "review_fingerprint": "9c0364922bc710c0c5ffe6b68cd6d98d95c4c9a9836e069b6741e0c7ac1bd169"
+  "review_fingerprint": "c30f5a186551542c24e65e6fdeabffa4407a3d217c529eb2c12832691530dd45"
 }

@@ -990,7 +990,7 @@ def test_operation_contract_revalidates_program_019_v2() -> None:
 
 @pytest.mark.parametrize("action", ("credential-preflight", "run"))
 def test_missing_child_stops_cli_before_credentials_private_roots_and_dotenv(
-    monkeypatch: MonkeyPatch, capsys: CaptureFixture[str], action: str
+    tmp_path: Path, monkeypatch: MonkeyPatch, capsys: CaptureFixture[str], action: str
 ) -> None:
     def forbidden(*_args: Any, **_kwargs: Any) -> Any:
         pytest.fail("unreviewed child crossed a runtime boundary")
@@ -1000,6 +1000,7 @@ def test_missing_child_stops_cli_before_credentials_private_roots_and_dotenv(
         "CHILD_AUTHORITY_PATH",
         Path("config/research/program-019-missing-child-authority-v1.json"),
     )
+    monkeypatch.setattr(authority, "PUBLIC_TERMINAL_PATH", tmp_path / "absent-terminal.json")
     monkeypatch.setattr(authority, "_open_root", forbidden)
     monkeypatch.setattr(credential_contract, "credential_presence_preflight", forbidden)
     monkeypatch.setattr(base_cli, "load_dotenv", forbidden)
@@ -3181,12 +3182,27 @@ def test_every_lifecycle_entrypoint_rejects_an_exact_public_terminal_first(
     assert credential_checks == []
 
 
-def test_prospective_runtime_has_no_public_terminal_binding() -> None:
+def test_unreviewed_terminal_remains_blocked_without_immutable_binding() -> None:
     assert authority._PUBLIC_TERMINAL_SHA256 is None
-    assert not (_REPOSITORY / authority.PUBLIC_TERMINAL_PATH).exists()
+    historical = subprocess.run(
+        [
+            "git",
+            "cat-file",
+            "-e",
+            f"f11302c018e6a526e867a5b7f1434656c06e3e59:{authority.PUBLIC_TERMINAL_PATH}",
+        ],
+        cwd=_REPOSITORY,
+        capture_output=True,
+    )
+    assert historical.returncode != 0
+    raw = (_REPOSITORY / authority.PUBLIC_TERMINAL_PATH).read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == (
+        "52c9919b1b1d93e256b8e8b2bd9848476905af6141991bf5d5d45bcade34154c"
+    )
     assert not hasattr(authority, "read_credentials")
     assert not hasattr(authority._CredentialLoader, "_read_credentials")
-    authority._reject_terminal_state(_REPOSITORY)
+    with pytest.raises(authority.Program019AuthorityError, match="lacks immutable binding"):
+        authority._reject_terminal_state(_REPOSITORY)
 
 
 def test_valid_shaped_terminal_without_immutable_binding_rejects_before_credentials(
