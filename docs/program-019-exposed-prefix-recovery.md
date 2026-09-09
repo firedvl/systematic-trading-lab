@@ -30,8 +30,11 @@ The terminal-review PASS claim at fingerprint
 `9c0364922bc710c0c5ffe6b68cd6d98d95c4c9a9836e069b6741e0c7ac1bd169` was authored without a completed
 independent review and is withdrawn as `INVALID-NOT-INDEPENDENTLY-REVIEWED`. The terminal reports
 no dataset admission or strategy work; it has not received the required independent closeout review.
+Commit `4d9345102304e3f5f544675f250145df976dad1e` directly pushed that unsupported claim to main
+without the required closeout PR gate.
 Do not retry Program 019. Autonomous successor work is stopped at the evidence-integrity boundary
-pending human direction and genuine independent terminal review. Original evidence remains unchanged.
+pending human direction and genuine independent terminal review. Public terminal bytes are unchanged.
+Private evidence was not accessed or independently verified by the withdrawal reviewer.
 
 Before activation there was no credential,
 provider, acquisition, admission, or strategy authority. Existing credential variable names remain

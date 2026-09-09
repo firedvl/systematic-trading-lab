@@ -23,6 +23,8 @@ def test_invalid_terminal_review_cannot_claim_pass_and_preserves_terminal() -> N
     assert review["challenge_results"] == []
     assert review["withdrawal"]["independent_terminal_review_completed"] is False
     assert review["withdrawal"]["successor_gate_satisfied"] is False
+    assert review["withdrawal"]["public_terminal_unchanged"] is True
+    assert review["withdrawal"]["private_evidence_integrity_independently_verified"] is False
     assert all(value is False for value in review["authority"].values())
     terminal = root / review["reviewed_public_terminal"]["path"]
     assert hashlib.sha256(terminal.read_bytes()).hexdigest() == (
