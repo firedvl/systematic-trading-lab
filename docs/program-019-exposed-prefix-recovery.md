@@ -1,7 +1,7 @@
 # Program 019 exposed-prefix recovery
 
-Program 019, `multi-hour-sector-etf-research-018`, is a prospective successor to terminally failed
-Program 018. Proposal v2 and its finding-free independent correctness and defensive reviews merged
+Program 019, `multi-hour-sector-etf-research-018`, is consumed and its public terminal records failure.
+It was a prospective successor to terminally failed Program 018. Proposal v2 and its finding-free independent correctness and defensive reviews merged
 in PR #284 at `fac1e0b3d5dd37941e89f2291c69d21fc080f632`.
 
 The frozen contract adds Program 018 as the seventh immutable predecessor. It discards the entire
@@ -25,10 +25,13 @@ check validates predecessors and stops at the fresh request frontier with no pro
 
 The separately scoped child was merged and activated once. The run consumed its one-use transport
 authority and sealed `RUNTIME-FAILURE` / `FAIL-CONSUMED-NO-RETRY`. Its redacted public terminal has
-SHA-256 `52c9919b1b1d93e256b8e8b2bd9848476905af6141991bf5d5d45bcade34154c`; an independent terminal
-review passed finding-free with fingerprint
-`9c0364922bc710c0c5ffe6b68cd6d98d95c4c9a9836e069b6741e0c7ac1bd169`. No dataset was admitted and
-no strategy ran. Do not retry Program 019; a new prospective successor is required.
+SHA-256 `52c9919b1b1d93e256b8e8b2bd9848476905af6141991bf5d5d45bcade34154c`.
+The terminal-review PASS claim at fingerprint
+`9c0364922bc710c0c5ffe6b68cd6d98d95c4c9a9836e069b6741e0c7ac1bd169` was authored without a completed
+independent review and is withdrawn as `INVALID-NOT-INDEPENDENTLY-REVIEWED`. The terminal reports
+no dataset admission or strategy work; it has not received the required independent closeout review.
+Do not retry Program 019. Autonomous successor work is stopped at the evidence-integrity boundary
+pending human direction and genuine independent terminal review. Original evidence remains unchanged.
 
 Before activation there was no credential,
 provider, acquisition, admission, or strategy authority. Existing credential variable names remain
