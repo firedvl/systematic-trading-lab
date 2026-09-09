@@ -1,0 +1,80 @@
+{
+  "schema_version": "program-019-exposed-prefix-terminal-result-independent-review-v2",
+  "review_id": "program-019-genuine-terminal-review-2026-09-09-v2",
+  "program_ordinal": 19,
+  "program_id": "multi-hour-sector-etf-research-018",
+  "status": "PASS-TERMINAL-FAILURE-VERIFIED",
+  "verdict": "PASS",
+  "findings": [],
+  "independent_reviewer": "program019_genuine_terminal_review",
+  "reviewed_repository_commit": "9e5fccadd19a9ee20805c0bf03f05700d4364e68",
+  "reviewed_execution_main": "d83ce3ca5f58eaa1b2a8ed9e478437a520c15943",
+  "runtime_source_commit": "5fc60316297c4f0f5e4705797a0435e887698ba7",
+  "runtime_source_tree": "90ef814c6a4db76e4662d1ddcf5e96ff57a638b0",
+  "reviewed_public_terminal": {
+    "path": "config/research/program-019-exposed-prefix-raw-alpaca-sip-recovery-and-structural-admission-terminal-result-v1.json",
+    "sha256": "52c9919b1b1d93e256b8e8b2bd9848476905af6141991bf5d5d45bcade34154c",
+    "result_kind": "RUNTIME-FAILURE",
+    "status": "FAIL-CONSUMED-NO-RETRY",
+    "admission_passed": false
+  },
+  "review_provenance": {
+    "fresh_context": true,
+    "reviewer_created_terminal": false,
+    "reviewer_created_erroneous_review": false,
+    "withdrawn_v1_used_as_evidence": false,
+    "original_error_commit_preserved": "4d9345102304e3f5f544675f250145df976dad1e",
+    "withdrawal_merge": "9e5fccadd19a9ee20805c0bf03f05700d4364e68"
+  },
+  "verified_assertions": {
+    "all_child_bound_historical_source_blobs_match": true,
+    "child_and_review_fingerprints_valid": true,
+    "active_authority_identity_reconstructed": true,
+    "complete_nested_predecessor_chain_validated": true,
+    "retained_import_manifest_exact": true,
+    "canonical_private_terminal_valid": true,
+    "public_projection_byte_exact": true,
+    "scientific_use_consumed": true,
+    "retry_permitted": false,
+    "structural_admission_evaluated": false,
+    "dataset_lineage_present": false,
+    "strategy_calculations_exact_integer_zero": true,
+    "strategy_returns_exact_integer_zero": true
+  },
+  "verification": {
+    "full_read_only_chain_validator": {
+      "exit_status": 0,
+      "result": "PASS"
+    },
+    "focused_terminal_replay_guard_tests": "4 passed",
+    "credential_values_accessed": false,
+    "provider_requests": 0,
+    "lifecycle_activation": false,
+    "admission_or_strategy_execution": false,
+    "repository_or_private_evidence_modified": false
+  },
+  "proof_gaps": [
+    "Detailed runtime failure cause is unassessed; disposition validity does not establish cause.",
+    "Historical source bindings were checked against frozen Git objects rather than treating post-withdrawal files as the historical runtime.",
+    "This review does not authorize Program 019 replay, replacement authority, dataset admission or strategy execution."
+  ],
+  "effective_final_authority": {
+    "provider_contact": false,
+    "subscription_purchase": false,
+    "credential_access": false,
+    "source_requests": false,
+    "source_qualification": false,
+    "market_data_acquisition": false,
+    "real_dataset_admission": false,
+    "strategy_implementation": false,
+    "strategy_execution": false,
+    "research_qualification": false,
+    "controlled_evaluation": false,
+    "protected_holdout": false,
+    "paper_execution": false,
+    "broker_writes": false,
+    "live_execution": false
+  },
+  "required_next_action": "Complete independently checked immutable terminal revocation and closeout through PR/CI. Then perform read-only forensics before any prospectively justified successor; never replay Program 019.",
+  "review_fingerprint": "d7ad0cc1ae42f85a9ed221f8a6d1cad241df5ed2938d1326bf8f05afd9ec4397"
+}
